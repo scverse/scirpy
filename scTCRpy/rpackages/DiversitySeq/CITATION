@@ -1,0 +1,11 @@
+citEntry(
+   entry="article",
+   title = "Measuring the diversity of the human microbiota with targeted next-generation sequencing",
+   author = "Francesca Finotello and Eleonora Mastrorilli and Barbara Di Camillo",
+   journal="Briefings in Bioinformatics",
+   volume="19",
+   number="4",
+   pages="679-692",
+   year="2018",
+   textVersion = "Measuring the diversity of the human microbiota with targeted next-generation sequencing. Briefings in Bioinformatics 19 (4), 679-692, 2018."
+)

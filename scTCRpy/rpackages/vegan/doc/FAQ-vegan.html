@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title><strong>vegan</strong> FAQ</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<!--
+%\VignetteIndexEntry{vegan FAQ}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
+-->
+
+<h1><strong>vegan</strong> FAQ</h1>
+
+<p>This document contains answers to some of the most frequently asked
+questions about R package <strong>vegan</strong>.</p>
+
+<blockquote>
+<p>This work is licensed under the Creative Commons Attribution 3.0
+License. To view a copy of this license, visit
+<a href="http://creativecommons.org/licenses/by/3.0/">http://creativecommons.org/licenses/by/3.0/</a> or send a letter to
+Creative Commons, 543 Howard Street, 5th Floor, San Francisco,
+California, 94105, USA.</p>
+
+<p>Copyright © 2008-2016 vegan development team</p>
+</blockquote>
+
+<hr/>
+
+<h2>Introduction</h2>
+
+<hr/>
+
+<h3>What is <strong>vegan</strong>?</h3>
+
+<p><strong>Vegan</strong> is an R package for community ecologists. It contains the most
+popular methods of multivariate analysis needed in analysing ecological
+communities, and tools for diversity analysis, and other potentially
+useful functions. <strong>Vegan</strong> is not self-contained but it must be run
+under R statistical environment, and it also depends on many other R
+packages. <strong>Vegan</strong> is <a href="http://www.gnu.org/philosophy/free-sw.html">free
+software</a> and distributed
+under <a href="http://www.gnu.org/licenses/gpl.html">GPL2 license</a>.</p>
+
+<hr/>
+
+<h3>What is R?</h3>
+
+<p>R is a system for statistical computation and graphics. It consists of a
+language plus a run-time environment with graphics, a debugger, access
+to certain system functions, and the ability to run programs stored in
+script files.</p>
+
+<p>R has a home page at <a href="https://www.R-project.org/">https://www.R-project.org/</a>. It is <a href="http://www.gnu.org/philosophy/free-sw.html">free
+software</a> distributed under
+a GNU-style <a href="http://www.gnu.org/copyleft/copyleft.html">copyleft</a>, and
+an official part of the <a href="http://www.gnu.org/">GNU</a> project (“GNU S”).</p>
+
+<hr/>
+
+<h3>How to obtain <strong>vegan</strong> and R?</h3>
+
+<p>Both R and latest release version of <strong>vegan</strong> can be obtained through
+<a href="https://cran.r-project.org">CRAN</a>. Unstable development version of
+<strong>vegan</strong> can be obtained through
+<a href="https://github.com/vegandevs/vegan">GitHub</a>. Formerly <strong>vegan</strong> was
+developed in <a href="http://r-forge.r-project.org/projects/vegan/">R-Forge</a>,
+but after moving to <a href="https://github.com/vegandevs/vegan">GitHub</a> the
+R-Forge repository may be out of date.</p>
+
+<hr/>
+
+<h3>What R packages <strong>vegan</strong> depends on?</h3>
+
+<p><strong>Vegan</strong> depends on the <strong>permute</strong> package which will provide advanced
+and flexible permutation routines for <strong>vegan</strong>. The <strong>permute</strong> package
+is developed together with <strong>vegan</strong> in
+<a href="https://github.com/gavinsimpson/permute">GitHub</a>.</p>
+
+<p>Some individual <strong>vegan</strong> functions depend on packages <strong>MASS</strong>,
+<strong>mgcv</strong>, <strong>parallel</strong>, <strong>cluster</strong>, <strong>lattice</strong> and <strong>tcltk</strong>. These
+all are base or recommended R packages that should be available in
+every R installation.  <strong>Vegan</strong> declares these as suggested or
+imported packages, and you can install <strong>vegan</strong> and use most of its
+functions without these packages.</p>
+
+<p><strong>Vegan</strong> is accompanied with a supporting package <strong>vegan3d</strong> for
+three-dimensional and dynamic plotting. The <strong>vegan3d</strong> package needs
+non-standard packages <strong>rgl</strong> and <strong>scatterplot3d</strong>.</p>
+
+<hr/>
+
+<h3>What other packages are available for ecologists?</h3>
+
+<p>CRAN <a href="https://cran.r-project.org/web/views/">Task Views</a> include
+entries like <code>Environmetrics</code>, <code>Multivariate</code> and <code>Spatial</code> that
+describe several useful packages and functions. If you install R package
+<strong>ctv</strong>, you can inspect Task Views from your R session, and
+automatically install sets of most important packages.</p>
+
+<hr/>
+
+<h3>What other documentation is available for <strong>vegan</strong>?</h3>
+
+<p><strong>Vegan</strong> is a fully documented R package with standard help pages.
+These are the most authoritative sources of documentation (and as a
+last resource you can use the force and the read the source, as
+<strong>vegan</strong> is open source). <strong>Vegan</strong> package ships with other
+documents which can be read with <code>browseVignettes(&quot;vegan&quot;)</code>
+command. The documents included in the <strong>vegan</strong> package are</p>
+
+<ul>
+<li>  <strong>Vegan</strong> <code>NEWS</code></li>
+<li>  This document (<code>FAQ-vegan</code>).</li>
+<li>  Short introduction to basic ordination methods in <strong>vegan</strong>
+(<code>intro-vegan</code>).</li>
+<li>  Introduction to diversity methods in <strong>vegan</strong>
+(<code>diversity-vegan</code>).</li>
+<li>  Discussion on design decisions in <strong>vegan</strong> (<code>decision-vegan</code>).</li>
+<li>  Description of variance partition procedures in function <code>varpart</code>
+(<code>partitioning</code>).</li>
+</ul>
+
+<p>Web documents outside the package include:</p>
+
+<ul>
+<li>  <a href="https://github.com/vegandevs/vegan">https://github.com/vegandevs/vegan</a>: <strong>vegan</strong> homepage.</li>
+<li>  <a href="http://cc.oulu.fi/%7Ejarioksa/opetus/metodi/vegantutor.pdf">http://cc.oulu.fi/~jarioksa/opetus/metodi/vegantutor.pdf</a>:
+<strong>vegan</strong> tutorial.</li>
+</ul>
+
+<hr/>
+
+<h3>Is there a Graphical User Interface (GUI) for <strong>vegan</strong>?</h3>
+
+<p>Roeland Kindt has made package <strong>BiodiversityR</strong> which provides a GUI
+for <strong>vegan</strong>. The package is available at
+<a href="https://cran.r-project.org/package=BiodiversityR">CRAN</a>.
+It is not a mere GUI for <strong>vegan</strong>, but adds some new functions and
+complements <strong>vegan</strong> functions in order to provide a workbench for
+biodiversity analysis. You can install <strong>BiodiversityR</strong> using
+<code>install.packages(&quot;BiodiversityR&quot;)</code> or graphical package management menu
+in R. The GUI works on Windows, MacOS X and Linux.</p>
+
+<hr/>
+
+<h3>How to cite <strong>vegan</strong>?</h3>
+
+<p>Use command <code>citation(&quot;vegan&quot;)</code> in R to see the recommended citation to
+be used in publications.</p>
+
+<hr/>
+
+<h3>How to build <strong>vegan</strong> from sources?</h3>
+
+<p>In general, you do not need to build <strong>vegan</strong> from sources, but binary
+builds of release versions are available through
+<a href="https://cran.r-project.org/">CRAN</a> for Windows and MacOS X. If you use
+some other operating systems, you may have to use source packages.
+<strong>Vegan</strong> is a standard R package, and can be built like instructed in R
+documentation. <strong>Vegan</strong> contains source files in C and FORTRAN, and you
+need appropriate compilers (which may need more work in Windows and
+MacOS X).</p>
+
+<hr/>
+
+<h3>Are there binaries for devel versions?</h3>
+
+<p><a href="http://r-forge.r-project.org/projects/vegan/">R-Forge</a> runs daily tests
+on the devel package, and if passed, it builds source package together
+with Windows binaries. However, the R-Forge may be out of date, because
+<strong>vegan</strong> is mainly developed in
+<a href="https://github.com/vegandevs/vegan">GitHub</a>. You can install R-Forge
+packages within R with command
+<code>install.packages(&quot;vegan&quot;, repos=&quot;http://r-forge.r-project.org/&quot;)</code>. If
+you use GUI menu entry, you must select or define the R-Forge
+repository.</p>
+
+<hr/>
+
+<h3>How to report a bug in <strong>vegan</strong>?</h3>
+
+<p>If you think you have found a bug in <strong>vegan</strong>, you should report it to
+<strong>vegan</strong> maintainers or developers. The preferred forum to report bugs
+is <a href="https://github.com/vegandevs/vegan/issues">GitHub</a>. The bug report
+should be so detailed that the bug can be replicated and corrected.
+Preferably, you should send an example that causes a bug. If it needs a
+data set that is not available in R, you should send a minimal data set
+as well. You also should paste the output or error message in your
+message. You also should specify which version of <strong>vegan</strong> you used.</p>
+
+<p>Bug reports are welcome: they are the only way to make <strong>vegan</strong>
+non-buggy.</p>
+
+<p>Please note that you shall not send bug reports to R mailing lists,
+since <strong>vegan</strong> is not a standard R package.</p>
+
+<hr/>
+
+<h3>Is it a bug or a feature?</h3>
+
+<p>It is not necessarily a bug if some function gives different results
+than you expect: That may be a deliberate design decision. It may be
+useful to check the documentation of the function to see what was the
+intended behaviour. It may also happen that function has an argument to
+switch the behaviour to match your expectation. For instance, function
+<code>vegdist</code> always calculates quantitative indices (when this is
+possible). If you expect it to calculate a binary index, you should use
+argument <code>binary = TRUE</code>.</p>
+
+<hr/>
+
+<h3>Can I contribute to <strong>vegan</strong>?</h3>
+
+<p><strong>Vegan</strong> is dependent on user contribution. All feedback is welcome. If
+you have problems with <strong>vegan</strong>, it may be as simple as incomplete
+documentation, and we shall do our best to improve the documents.</p>
+
+<p>Feature requests also are welcome, but they are not necessarily
+fulfilled. A new feature will be added if it is easy to do and it looks
+useful, or if you submit code.</p>
+
+<p>If you can write code yourself, the best forum to contribute to vegan is
+<a href="https://github.com/vegandevs/vegan">GitHub</a>.</p>
+
+<hr/>
+
+<h2>Ordination</h2>
+
+<hr/>
+
+<h3>I have only numeric and positive data but <strong>vegan</strong> still complains</h3>
+
+<p>You are wrong! Computers are painfully pedantic, and if they find
+non-numeric or negative data entries, you really have them. Check your
+data. Most common reasons for non-numeric data are that row names were
+read as a non-numeric variable instead of being used as row names (check
+argument <code>row.names</code> in reading the data), or that the column names were
+interpreted as data (check argument <code>header = TRUE</code> in reading the
+data). Another common reason is that you had empty cells in your input
+data, and these were interpreted as missing values.</p>
+
+<hr/>
+
+<h3>Can I analyse binary or cover class data?</h3>
+
+<p>Yes. Most <strong>vegan</strong> methods can handle binary data or cover abundance
+data. Most statistical tests are based on permutation, and do not make
+distributional assumptions. There are some methods (mainly in diversity
+analysis) that need count data. These methods check that input data are
+integers, but they may be fooled by cover class data.</p>
+
+<hr/>
+
+<h3>Why dissimilarities in <strong>vegan</strong> differ from other sources?</h3>
+
+<p>Most commonly the reason is that other software use presence–absence
+data whereas <strong>vegan</strong> used quantitative data. Usually <strong>vegan</strong> indices
+are quantitative, but you can use argument <code>binary = TRUE</code> to make them
+presence–absence. However, the index name is the same in both cases,
+although different names usually occur in literature. For instance,
+Jaccard index actually refers to the binary index, but <strong>vegan</strong> uses
+name <code>&quot;jaccard&quot;</code> for the quantitative index, too.</p>
+
+<p>Another reason may be that indices indeed are defined differently,
+because people use same names for different indices.</p>
+
+<hr/>
+
+<h3>Why NMDS stress is sometimes 0.1 and sometimes 10?</h3>
+
+<p>Stress is a proportional measure of badness of fit. The proportions can
+be expressed either as parts of one or as percents. Function <code>isoMDS</code>
+(<strong>MASS</strong> package) uses percents, and function <code>monoMDS</code> (<strong>vegan</strong>
+package) uses proportions, and therefore the same stress is 100 times
+higher in <code>isoMDS</code>. The results of <code>goodness</code> function also depend on
+the definition of stress, and the same <code>goodness</code> is 100 times higher in
+<code>isoMDS</code> than in <code>monoMDS</code>. Both of these conventions are equally
+correct.</p>
+
+<hr/>
+
+<h3>I get zero stress but no convergent solutions in <code>metaMDS</code></h3>
+
+<p>Most common reason is that you have too few observations for your NMDS.
+For <code>n</code> observations (points) and <code>k</code> dimensions you need to estimate
+<code>n*k</code> parameters (ordination scores) using <code>n*(n-1)/2</code> dissimilarities.
+For <code>k</code> dimensions you must have <code>n &gt; 2*k + 1</code>, or for two dimensions at
+least six points. In some degenerate situations you may need even a
+larger number of points. If you have a lower number of points, you can
+find an undefined number of perfect (stress is zero) but different
+solutions. Conventional wisdom due to Kruskal is that you should have
+<code>n &gt; 4*k + 1</code> points for <code>k</code> dimensions. A typical symptom of
+insufficient data is that you have (nearly) zero stress but no two
+convergent solutions. In those cases you should reduce the number of
+dimensions (<code>k</code>) and with very small data sets you should not use
+<code>NMDS</code>, but rely on metric methods.</p>
+
+<p>It seems that local and hybrid scaling with <code>monoMDS</code> have similar lower
+limits in practice (although theoretically they could differ). However,
+higher number of dimensions can be used in metric scaling, both with
+<code>monoMDS</code> and in principal coordinates analysis (<code>cmdscale</code> in
+<strong>stats</strong>, <code>wcmdscale</code> in <strong>vegan</strong>).</p>
+
+<hr/>
+
+<h3>Zero dissimilarities in isoMDS</h3>
+
+<p>Function <code>metaMDS</code> uses function <code>monoMDS</code> as its default method for
+NMDS, and this function can handle zero dissimilarities. Alternative
+function <code>isoMDS</code> cannot handle zero dissimilarities. If you want to use
+<code>isoMDS</code>, you can use argument <code>zerodist = &quot;add&quot;</code> in <code>metaMDS</code> to handle
+zero dissimilarities. With this argument, zero dissimilarities are
+replaced with a small positive value, and they can be handled in
+<code>isoMDS</code>. This is a kluge, and some people do not like this. A more
+principal solution is to remove duplicate sites using R command
+<code>unique</code>. However, after some standardizations or with some
+dissimilarity indices, originally non-unique sites can have zero
+dissimilarity, and you have to resort to the kluge (or work harder with
+your data). Usually it is better to use <code>monoMDS</code>.</p>
+
+<hr/>
+
+<h3>I have heard that you cannot fit environmental vectors or surfaces to NMDS results which only have rank-order scores</h3>
+
+<p>Claims like this have indeed been at large in the Internet, but they are
+based on grave misunderstanding and are plainly wrong. NMDS ordination
+results are strictly metric, and in <strong>vegan</strong> <code>metaMDS</code> and <code>monoMDS</code>
+they are even strictly Euclidean. The method is called “non-metric”
+because the Euclidean distances in ordination space have a non-metric
+rank-order relationship to community dissimilarities. You can inspect
+this non-linear step curve using function <code>stressplot</code> in <strong>vegan</strong>.
+Because the ordination scores are strictly Euclidean, it is correct to
+use <strong>vegan</strong> functions <code>envfit</code> and <code>ordisurf</code> with NMDS results.</p>
+
+<hr/>
+
+<h3>Where can I find numerical scores of ordination axes?</h3>
+
+<p>Normally you can use function <code>scores</code> to extract ordination scores for
+any ordination method. The <code>scores</code> function can also find ordination
+scores for many non-<strong>vegan</strong> functions such as for <code>prcomp</code> and
+<code>princomp</code> and for some <strong>ade4</strong> functions.</p>
+
+<p>In some cases the ordination result object stores raw scores, and the
+axes are also scaled appropriate when you access them with <code>scores</code>. For
+instance, in <code>cca</code> and <code>rda</code> the ordination object has only so-called
+normalized scores, and they are scaled for ordination plots or for other
+use when they are accessed with <code>scores</code>.</p>
+
+<hr/>
+
+<h3>How the RDA results are scaled?</h3>
+
+<p>The scaling or RDA results indeed differ from most other software
+packages. The scaling of RDA is such a complicated issue that it cannot
+be explained in this FAQ, but it is explained in a separate pdf document
+on “Design decision and implementation details in vegan” that you can
+read with command <code>browseVignettes(&quot;vegan&quot;)</code>.</p>
+
+<hr/>
+
+<h3>I cannot print and plot RDA results properly</h3>
+
+<p>If the RDA ordination results have a weird format or you cannot plot
+them properly, you probably have a name clash with <strong>klaR</strong> package
+which also has function <code>rda</code>, and the <strong>klaR</strong> <code>print</code>, <code>plot</code> or
+<code>predict</code> functions are used for <strong>vegan</strong> RDA results. You can choose
+between <code>rda</code> functions using <code>vegan::rda()</code> or <code>klaR::rda()</code>: you
+will get obscure error messages if you use the wrong function. In
+general, <strong>vegan</strong> should be able to work normally if <strong>vegan</strong> was
+loaded after <strong>klaR</strong>, but if <strong>klaR</strong> was loaded later, its functions
+will take precedence over <strong>vegan</strong>. Sometimes <strong>vegan</strong> namespace is
+loaded automatically when restoring a previously stored workspace at
+the start-up, and then <strong>klaR</strong> methods will always take precedence
+over <strong>vegan</strong>. You should check your loaded packages. <strong>klaR</strong> may be
+also loaded indirectly via other packages (in the reported cases it
+was most often loaded via <strong>agricolae</strong> package). <strong>Vegan</strong> and
+<strong>klaR</strong> both have the same function name (<code>rda</code>), and it may not be
+possible to use these packages simultaneously, and the safest choice
+is to unload one of the packages if only possible. See discussion in
+<a href="https://github.com/vegandevs/vegan/issues/277">vegan github issues</a>.</p>
+
+<p>If you have a very old version of <strong>ade4</strong> (prior to 1.7-8), you may
+have similar name clashes with <code>cca</code>. The solution is to upgrade
+<strong>ade4</strong>.</p>
+
+<hr/>
+
+<h3>Ordination fails with “Error in La.svd”</h3>
+
+<p>Constrained ordination (<code>cca</code>, <code>rda</code>, <code>capscale</code>) will sometimes fail
+with error message
+<code>Error in La.svd(x, nu, nv): error code 1 from Lapack routine &#39;dgesdd&#39;.</code></p>
+
+<p>It seems that the basic problem is in the <code>svd</code> function of <code>LAPACK</code>
+that is used for numerical analysis in R. <code>LAPACK</code> is an external
+library that is beyond the control of package developers and R core team
+so that these problems may be unsolvable. It seems that the problems
+with the <code>LAPACK</code> code are so common that even the help page of <code>svd</code>
+warns about them</p>
+
+<p>Reducing the range of constraints (environmental variables) helps
+sometimes. For instance, multiplying constraints by a constant &lt; 1.
+This rescaling does not influence the numerical results of constrained
+ordination, but it can complicate further analyses when values of
+constraints are needed, because the same scaling must be applied there.
+We can only hope that this problem is fixed in the future versions of R
+and <code>LAPACK</code>.</p>
+
+<hr/>
+
+<h3>Variance explained by ordination axes.</h3>
+
+<p>In general, <strong>vegan</strong> does not directly give any statistics on the
+“variance explained” by ordination axes or by the constrained axes. This
+is a design decision: I think this information is normally useless and
+often misleading. In community ordination, the goal typically is not to
+explain the variance, but to find the “gradients” or main trends in the
+data. The “total variation” often is meaningless, and all proportions of
+meaningless values also are meaningless. Often a better solution
+explains a smaller part of “total variation”. For instance, in
+unstandardized principal components analysis most of the variance is
+generated by a small number of most abundant species, and they are easy
+to “explain” because data really are not very multivariate. If you
+standardize your data, all species are equally important. The first axes
+explains much less of the “total variation”, but now they explain all
+species equally, and results typically are much more useful for the
+whole community. Correspondence analysis uses another measure of
+variation (which is not variance), and again it typically explains a
+“smaller proportion” than principal components but with a better result.
+Detrended correspondence analysis and nonmetric multidimensional scaling
+even do not try to “explain” the variation, but use other criteria. All
+methods are incommensurable, and it is impossible to compare methods
+using “explanation of variation”.</p>
+
+<p>If you still want to get “explanation of variation” (or a deranged
+editor requests that from you), it is possible to get this information
+for some methods:</p>
+
+<ul>
+<li>  Eigenvector methods: Functions <code>rda</code>, <code>cca</code> and <code>capscale</code> give the
+variation of conditional (partialled), constrained (canonical) and
+residual components, but you must calculate the proportions by hand.
+Function <code>eigenvals</code> extracts the eigenvalues, and
+<code>summary(eigenvals(ord))</code> reports the proportions explained in the
+result object <code>ord</code>. Function <code>RsquareAdj</code> gives the R-squared and
+adjusted R-squared (if available) for constrained components.
+Function <code>goodness</code> gives the same statistics for individual species
+or sites (species are unavailable with <code>capscale</code>). In addition,
+there is a special function <code>varpart</code> for unbiased partitioning of
+variance between up to four separate components in redundancy
+analysis.</li>
+<li>  Detrended correspondence analysis (function <code>decorana</code>). The total
+amount of variation is undefined in detrended correspondence
+analysis, and therefore proportions from total are unknown and
+undefined. DCA is not a method for decomposition of variation, and
+therefore these proportions would not make sense either.</li>
+<li>  Nonmetric multidimensional scaling. NMDS is a method for nonlinear
+mapping, and the concept of of variation explained does not make
+sense. However, 1 - stress^2 transforms nonlinear stress into
+quantity analogous to squared correlation coefficient. Function
+<code>stressplot</code> displays the nonlinear fit and gives this statistic.</li>
+</ul>
+
+<hr/>
+
+<h3>Can I have random effects in constrained ordination or in <code>adonis</code>?</h3>
+
+<p>No. Strictly speaking, this is impossible. However, you can define
+models that respond to similar goals as random effects models, although
+they strictly speaking use only fixed effects.</p>
+
+<p>Constrained ordination functions <code>cca</code>, <code>rda</code> and <code>capscale</code> can have
+<code>Condition()</code> terms in their formula. The <code>Condition()</code> define partial
+terms that are fitted before other constraints and can be used to remove
+the effects of background variables, and their contribution to
+decomposing inertia (variance) is reported separately. These partial
+terms are often regarded as similar to random effects, but they are
+still fitted in the same way as other terms and strictly speaking they
+are fixed terms.</p>
+
+<p>Function <code>adonis</code> evaluates terms sequentially. In a model with
+right-hand-side <code>~ A + B</code> the effects of <code>A</code> are evaluated first, and
+the effects of <code>B</code> after removing the effects of <code>A</code>. Sequential tests
+are also available in <code>anova</code> function for constrained ordination
+results by setting argument <code>by = &quot;term&quot;</code>. In this way, the first terms
+can serve in a similar role as random effects, although they are fitted
+in the same way as all other terms, and strictly speaking they are fixed
+terms.</p>
+
+<p>All permutation tests in <strong>vegan</strong> are based on the <strong>permute</strong> package
+that allows constructing various restricted permutation schemes. For
+instance, you can set levels of <code>plots</code> or <code>blocks</code> for a factor
+regarded as a random term.</p>
+
+<p>A major reason why real random effects models are impossible in most
+<strong>vegan</strong> functions is that their tests are based on the permutation of
+the data. The data are given, that is fixed, and therefore permutation
+tests are basically tests of fixed terms on fixed data. Random effect
+terms would require permutations of data with a random component instead
+of the given, fixed data, and such tests are not available in <strong>vegan</strong>.</p>
+
+<hr/>
+
+<h3>Is it possible to have passive points in ordination?</h3>
+
+<p><strong>Vegan</strong> does not have a concept of passive points, or a point that
+should only little influence the ordination results. However, you can
+add points to eigenvector methods using <code>predict</code> functions with
+<code>newdata</code>. You can first perform an ordination without some species or
+sites, and then you can find scores for all points using your complete
+data as <code>newdata</code>. The <code>predict</code> functions are available for basic
+eigenvector methods in <strong>vegan</strong> (<code>cca</code>, <code>rda</code>, <code>decorana</code>, for an
+up-to-date list, use command <code>methods(&quot;predict&quot;)</code>). You also can
+simulate the passive points in R by using low weights to row and columns
+(this is the method used in software with passive points). For instance,
+the following command makes row 3 “passive”:
+<code>dune[3,] &lt;- 0.001*dune[3,]</code>.</p>
+
+<hr/>
+
+<h3>Class variables and dummies</h3>
+
+<p>You should define a class variable as an R <code>factor</code>, and <strong>vegan</strong> will
+automatically handle them with formula interface. You also can define
+constrained ordination without formula interface, but then you must code
+your class variables by hand.</p>
+
+<p>R (and <strong>vegan</strong>) knows both unordered and ordered factors. Unordered
+factors are internally coded as dummy variables, but one redundant level
+is removed or aliased. With default contrasts, the removed level is the
+first one. Ordered factors are expressed as polynomial contrasts. Both
+of these contrasts explained in standard R documentation.</p>
+
+<hr/>
+
+<h3>How are environmental arrows scaled?</h3>
+
+<p>The printed output of <code>envfit</code> gives the direction cosines which are the
+coordinates of unit length arrows. For plotting, these are scaled by
+their correlation (square roots of column <code>r2</code>). You can see the scaled
+lengths of <code>envfit</code> arrows using command <code>scores</code>.</p>
+
+<p>The scaled environmental vectors from <code>envfit</code> and the arrows for
+continuous environmental variables in constrained ordination (<code>cca</code>,
+<code>rda</code>, <code>capscale</code>) are adjusted to fill the current graph. The lengths
+of arrows do not have fixed meaning with respect to the points (species,
+sites), but they can only compared against each other, and therefore
+only their relative lengths are important.</p>
+
+<p>If you want change the scaling of the arrows, you can use <code>text</code>
+(plotting arrows and text) or <code>points</code> (plotting only arrows) functions
+for constrained ordination. These functions have argument <code>arrow.mul</code>
+which sets the multiplier. The <code>plot</code> function for <code>envfit</code> also has the
+<code>arrow.mul</code> argument to set the arrow multiplier. If you save the
+invisible result of the constrained ordination <code>plot</code> command, you can
+see the value of the currently used <code>arrow.mul</code> which is saved as an
+attribute of <code>biplot</code> scores.</p>
+
+<p>Function <code>ordiArrowMul</code> is used to find the scaling for the current
+plot. You can use this function to see how arrows would be scaled:</p>
+
+<pre><code class="r">sol &lt;- cca(varespec)
+ef &lt;- envfit(sol ~ ., varechem)
+plot(sol)
+ordiArrowMul(scores(ef, display=&quot;vectors&quot;))
+</code></pre>
+
+<hr/>
+
+<h3>I want to use Helmert or sum contrasts</h3>
+
+<p><code>vegan</code> uses standard R utilities for defining contrasts. The default in
+standard installations is to use treatment contrasts, but you can change
+the behaviour globally setting <code>options</code> or locally by using keyword
+<code>contrasts</code>. Please check the R help pages and user manuals for details.</p>
+
+<hr/>
+
+<h3>What are aliased variables and how to see them?</h3>
+
+<p>Aliased variable has no information because it can be expressed with the
+help of other variables. Such variables are automatically removed in
+constrained ordination in <strong>vegan</strong>. The aliased variables can be
+redundant levels of factors or whole variables.</p>
+
+<p><strong>Vegan</strong> function <code>alias</code> gives the defining equations for aliased
+variables. If you only want to see the names of aliased variables or
+levels in solution <code>sol</code>, use <code>alias(sol, names.only=TRUE)</code>.</p>
+
+<hr/>
+
+<h3>Plotting aliased variables</h3>
+
+<p>You can fit vectors or class centroids for aliased variables using
+<code>envfit</code> function. The <code>envfit</code> function uses weighted fitting, and the
+fitted vectors are identical to the vectors in correspondence analysis.</p>
+
+<hr/>
+
+<h3>Restricted permutations in <strong>vegan</strong></h3>
+
+<p><strong>Vegan</strong> uses <strong>permute</strong> package in all its permutation tests. The
+<strong>permute</strong> package will allow restricted permutation designs for time
+series, line transects, spatial grids and blocking factors. The
+construction of restricted permutation schemes is explained in the
+manual page <code>permutations</code> in <strong>vegan</strong> and in the documentation of the
+<strong>permute</strong> package.</p>
+
+<hr/>
+
+<h3>How to use different plotting symbols in ordination graphics?</h3>
+
+<p>The default ordination <code>plot</code> function is intended for fast plotting and
+it is not very configurable. To use different plotting symbols, you
+should first create and empty ordination plot with
+<code>plot(..., type=&quot;n&quot;)</code>, and then add <code>points</code> or <code>text</code> to the created
+empty frame (here <code>...</code> means other arguments you want to give to your
+<code>plot</code> command). The <code>points</code> and <code>text</code> commands are fully
+configurable, and allow different plotting symbols and characters.</p>
+
+<hr/>
+
+<h3>How to avoid cluttered ordination graphs?</h3>
+
+<p>If there is a really high number of species or sites, the graphs often
+are congested and many labels are overwritten. It may be impossible to
+have complete readable graphics with some data sets. Below we give a
+brief overview of tricks you can use. Gavin Simpson’s blog <a href="http://www.fromthebottomoftheheap.net">From the
+bottom of the heap</a> has a series
+of articles on “decluttering ordination plots” with more detailed
+discussion and examples.</p>
+
+<ul>
+<li>  Use only points, possibly with different types if you do not need to
+see the labels. You may need to first create an empty plot using
+<code>plot(..., type=&quot;n&quot;)</code>, if you are not satisfied with the default
+graph. (Here and below <code>...</code> means other arguments you want to give
+to your <code>plot</code> command.)</li>
+<li>  Use points and add labels to desired points using interactive
+<code>identify</code> command if you do not need to see all labels.</li>
+<li>  Add labels using function <code>ordilabel</code> which uses non-transparent
+background to the text. The labels still shadow each other, but the
+uppermost labels are readable. Argument <code>priority</code> will help in
+displaying the most interesting labels (see <a href="http://www.fromthebottomoftheheap.net/2013/01/12/decluttering-ordination-plots-in-vegan-part-1-ordilabel/">Decluttering blog, part
+1</a>).</li>
+<li>  Use <code>orditorp</code> function that uses labels only if these can be added
+to a graph without overwriting other labels, and points otherwise,
+if you do not need to see all labels. You must first create an empty
+plot using <code>plot(..., type=&quot;n&quot;)</code>, and then add labels or points with
+<code>orditorp</code> (see <a href="http://www.fromthebottomoftheheap.net/2013/01/13/decluttering-ordination-plots-in-vegan-part-2-orditorp/">Decluttering
+blog</a>).</li>
+<li>  Use <code>ordipointlabel</code> which uses points and text labels to the
+points, and tries to optimize the location of the text to minimize
+the overlap (see <a href="http://www.fromthebottomoftheheap.net/2013/06/27/decluttering-ordination-plots-in-vegan-part-3-ordipointlabel/">Decluttering
+blog</a>).</li>
+<li>  Ordination <code>text</code> and <code>points</code> functions have argument <code>select</code> that
+can be used for full control of selecting items plotted as text or
+points.</li>
+<li>  Use interactive <code>orditkplot</code> function that lets you drag labels of
+points to better positions if you need to see all labels. Only one
+set of points can be used (see <a href="http://www.fromthebottomoftheheap.net/2013/12/31/decluttering-ordination-in-vegan-part-4-orditkplot/">Decluttering
+blog</a>).</li>
+<li>  Most <code>plot</code> functions allow you to zoom to a part of the graph using
+<code>xlim</code> and <code>ylim</code> arguments to reduce clutter in congested areas.</li>
+</ul>
+
+<hr/>
+
+<h3>Can I flip an axis in ordination diagram?</h3>
+
+<p>Use <code>xlim</code> or <code>ylim</code> with flipped limits. If you have model
+<code>mod &lt;- cca(dune)</code> you can flip the first axis with
+<code>plot(mod, xlim = c(3, -2))</code>.</p>
+
+<hr/>
+
+<h3>Can I zoom into an ordination plot?</h3>
+
+<p>You can use <code>xlim</code> and <code>ylim</code> arguments in <code>plot</code> or <code>ordiplot</code> to zoom
+into ordination diagrams. Normally you must set both <code>xlim</code> and <code>ylim</code>
+because ordination plots will keep the equal aspect ratio of axes, and
+they will fill the graph so that the longer axis will fit.</p>
+
+<p>Dynamic zooming can be done with function <code>orditkplot</code>. You can directly
+save the edited <code>orditkplot</code> graph in various graphic formats, or you
+can export the graph object back to R and use <code>plot</code> to display the
+results.</p>
+
+<hr/>
+
+<h2>Other analysis methods</h2>
+
+<hr/>
+
+<h3>Is there TWINSPAN?</h3>
+
+<p>No. It may be possible to port TWINSPAN to <strong>vegan</strong>, but it is not
+among the <strong>vegan</strong> top priorities. If anybody wants to try porting, I
+will be happy to help. TWINSPAN has a very permissive license, and it
+would be completely legal to port the function into R.</p>
+
+<hr/>
+
+<h3>Why restricted permutation does not influence adonis results?</h3>
+
+<p>The permutation scheme influences the permutation distribution of the
+statistics and probably the significance levels, but does not influence
+the calculation of the statistics.</p>
+
+<hr/>
+
+<h3>How is deviance calculated?</h3>
+
+<p>Some <strong>vegan</strong> functions, such as <code>radfit</code> use base R facility of
+<code>family</code> in maximum likelihood estimation. This allows use of several
+alternative error distributions, among them <code>&quot;poisson&quot;</code> and
+<code>&quot;gaussian&quot;</code>. The R <code>family</code> also defines the deviance. You can see the
+equations for deviance with commands like <code>poisson()$dev</code> or
+<code>gaussian()$dev</code>.</p>
+
+<p>In general, deviance is 2 times log.likelihood shifted so that models
+with exact fit have zero deviance.</p>
+
+<hr/>
+
+</body>
+
+</html>
