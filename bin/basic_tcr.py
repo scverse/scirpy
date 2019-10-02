@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -15,6 +15,7 @@ def __main__():
     sample_features = []
     with open(project_root+'/'+samples_file, 'r') as f:
         for line in f:
+            if line.startswith("#"): continue
             line = line.replace('\n', '')
             line = line.replace('\r', '')
             sample_features.append(line.split('\t'))
