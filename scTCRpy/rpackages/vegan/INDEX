@@ -1,0 +1,180 @@
+BCI                     Barro Colorado Island Tree Counts
+CCorA                   Canonical Correlation Analysis
+MDSrotate               Rotate First MDS Dimension Parallel to an
+                        External Variable
+MOStest                 Mitchell-Olds & Shaw Test for the Location of
+                        Quadratic Extreme
+RsquareAdj              Adjusted R-square
+SSarrhenius             Self-Starting nls Species-Area Models
+add1.cca                Add or Drop Single Terms to a Constrained
+                        Ordination Model
+adipart                 Additive Diversity Partitioning and
+                        Hierarchical Null Model Testing
+adonis                  Permutational Multivariate Analysis of Variance
+                        Using Distance Matrices
+anosim                  Analysis of Similarities
+anova.cca               Permutation Test for Constrained Correspondence
+                        Analysis, Redundancy Analysis and Constrained
+                        Analysis of Principal Coordinates
+avgdist                 Averaged Subsampled Dissimilarity Matrices
+beals                   Beals Smoothing and Degree of Absence
+betadisper              Multivariate homogeneity of groups dispersions
+                        (variances)
+betadiver               Indices of beta Diversity
+bgdispersal             Coefficients of Biogeographical Dispersal
+                        Direction
+bioenv                  Best Subset of Environmental Variables with
+                        Maximum (Rank) Correlation with Community
+                        Dissimilarities
+biplot.rda              PCA biplot
+capscale                [Partial] Distance-based Redundancy Analysis
+cascadeKM               K-means partitioning using a range of values of
+                        K
+cca                     [Partial] [Constrained] Correspondence Analysis
+                        and Redundancy Analysis
+cca.object              Result Object from Constrained Ordination
+clamtest                Multinomial Species Classification Method
+                        (CLAM)
+commsim                 Create an Object for Null Model Algorithms
+contribdiv              Contribution Diversity Approach
+decorana                Detrended Correspondence Analysis and Basic
+                        Reciprocal Averaging
+decostand               Standardization Methods for Community Ecology
+designdist              Design your own Dissimilarities
+deviance.cca            Statistics Resembling Deviance and AIC for
+                        Constrained Ordination
+dispindmorisita         Morisita index of intraspecific aggregation
+dispweight              Dispersion-based weighting of species counts
+distconnected           Connectedness of Dissimilarities
+diversity               Ecological Diversity Indices
+dune                    Vegetation and Environment in Dutch Dune
+                        Meadows.
+dune.taxon              Taxonomic Classification and Phylogeny of Dune
+                        Meadow Species
+eigenvals               Extract Eigenvalues from an Ordination Object
+envfit                  Fits an Environmental Vector or Factor onto an
+                        Ordination
+eventstar               Scale Parameter at the Minimum of the Tsallis
+                        Evenness Profile
+fisherfit               Fit Fisher's Logseries and Preston's Lognormal
+                        Model to Abundance Data
+goodness.cca            Diagnostic Tools for [Constrained] Ordination
+                        (CCA, RDA, DCA, CA, PCA)
+goodness.metaMDS        Goodness of Fit and Shepard Plot for Nonmetric
+                        Multidimensional Scaling
+hatvalues.cca           Linear Model Diagnostics for Constrained
+                        Ordination
+humpfit-deprecated      No-interaction Model for Hump-backed Species
+                        Richness vs. Biomass
+indpower                Indicator Power of Species
+isomap                  Isometric Feature Mapping Ordination
+kendall.global          Kendall coefficient of concordance
+linestack               Plots One-dimensional Diagrams without
+                        Overwriting Labels
+make.cepnames           Abbreviates a Botanical or Zoological Latin
+                        Name into an Eight-character Name
+mantel                  Mantel and Partial Mantel Tests for
+                        Dissimilarity Matrices
+mantel.correlog         Mantel Correlogram
+metaMDS                 Nonmetric Multidimensional Scaling with Stable
+                        Solution from Random Starts, Axis Scaling and
+                        Species Scores
+mite                    Oribatid Mite Data with Explanatory Variables
+monoMDS                 Global and Local Non-metric Multidimensional
+                        Scaling and Linear and Hybrid Scaling
+mrpp                    Multi Response Permutation Procedure and Mean
+                        Dissimilarity Matrix
+mso                     Functions for performing and displaying a
+                        spatial partitioning of cca or rda results
+multipart               Multiplicative Diversity Partitioning
+nestedtemp              Nestedness Indices for Communities of Islands
+                        or Patches
+nobs.adonis             Extract the Number of Observations from a vegan
+                        Fit.
+nullmodel               Null Model and Simulation
+oecosimu                Evaluate Statistics with Null Models of
+                        Biological Communities
+ordiArrowTextXY         Support Functions for Drawing Vectors
+ordiarrows              Add Arrows and Line Segments to Ordination
+                        Diagrams
+ordihull                Display Groups or Factor Levels in Ordination
+                        Diagrams
+ordilabel               Add Text on Non-transparent Label to an
+                        Ordination Plot.
+ordiplot                Alternative plot and identify Functions for
+                        Ordination
+ordipointlabel          Ordination Plots with Points and Optimized
+                        Locations for Text
+ordiresids              Plots of Residuals and Fitted Values for
+                        Constrained Ordination
+ordistep                Choose a Model by Permutation Tests in
+                        Constrained Ordination
+ordisurf                Fit and Plot Smooth Surfaces of Variables on
+                        Ordination.
+orditkplot              Ordination Plot with Movable Labels
+orditorp                Add Text or Points to Ordination Plots
+ordixyplot              Trellis (Lattice) Plots for Ordination
+pcnm                    Principal Coordinates of Neighbourhood Matrix
+permatfull              Matrix Permutation Algorithms for
+                        Presence-Absence and Count Data
+permustats              Extract, Analyse and Display Permutation
+                        Results
+permutations            Permutation tests in Vegan
+permutest.betadisper    Permutation test of multivariate homogeneity of
+                        groups dispersions (variances)
+plot.cca                Plot or Extract Results of Constrained
+                        Correspondence Analysis or Redundancy Analysis
+prc                     Principal Response Curves for Treatments with
+                        Repeated Observations
+predict.cca             Prediction Tools for [Constrained] Ordination
+                        (CCA, RDA, DCA, CA, PCA)
+procrustes              Procrustes Rotation of Two Configurations and
+                        PROTEST
+pyrifos                 Response of Aquatic Invertebrates to
+                        Insecticide Treatment
+radfit                  Rank - Abundance or Dominance / Diversity
+                        Models
+rankindex               Compares Dissimilarity Indices for Gradient
+                        Detection
+rarefy                  Rarefaction Species Richness
+raupcrick               Raup-Crick Dissimilarity with Unequal Sampling
+                        Densities of Species
+read.cep                Reads a CEP (Canoco) data file
+renyi                   Renyi and Hill Diversities and Corresponding
+                        Accumulation Curves
+reorder.hclust          Reorder a Hierarchical Clustering Tree
+scores                  Get Species or Site Scores from an Ordination
+screeplot.cca           Screeplots for Ordination Results and Broken
+                        Stick Distributions
+simper                  Similarity Percentages
+simulate.rda            Simulate Responses with Gaussian Error or
+                        Permuted Residuals for Constrained Ordination
+sipoo                   Birds in the Archipelago of Sipoo (Sibbo and
+                        Borgå)
+spantree                Minimum Spanning Tree
+specaccum               Species Accumulation Curves
+specpool                Extrapolated Species Richness in a Species Pool
+sppscores               Add or Replace Species Scores in Distance-Based
+                        Ordination
+stepacross              Stepacross as Flexible Shortest Paths or
+                        Extended Dissimilarities
+stressplot.wcmdscale    Display Ordination Distances Against Observed
+                        Distances in Eigenvector Ordinations
+taxondive               Indices of Taxonomic Diversity and Distinctness
+tolerance               Species tolerances and sample heterogeneities
+treedive                Functional Diversity and Community Distances
+                        from Species Trees
+tsallis                 Tsallis Diversity and Corresponding
+                        Accumulation Curves
+varespec                Vegetation and environment in lichen pastures
+varpart                 Partition the Variation of Community Matrix by
+                        2, 3, or 4 Explanatory Matrices
+vegan-deprecated        Deprecated Functions in vegan package
+vegan-package           Community Ecology Package: Ordination,
+                        Diversity and Dissimilarities
+vegandocs               Display vegan Documentation
+vegdist                 Dissimilarity Indices for Community Ecologists
+vegemite                Display Compact Ordered Community Tables
+wascores                Weighted Averages Scores for Species
+wcmdscale               Weighted Classical (Metric) Multidimensional
+                        Scaling

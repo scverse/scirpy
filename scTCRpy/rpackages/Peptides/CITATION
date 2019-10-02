@@ -1,0 +1,12 @@
+citHeader("To cite Peptides in publications, please use:")
+citEntry(entry = "article",
+  author = personList(c(person(given = "Daniel", family = "Osorio"),person(given = "Paola", family = "Rondon-Villarreal"),person(given = "Rodrigo", family = "Torres"))),
+  title = "Peptides: A Package for Data Mining of Antimicrobial Peptides",
+  journal = "The R Journal",
+  year = "2015",
+  issn = "2073-4859",
+  volume = "7",
+  number = "1",
+  pages = "4-14",
+  textVersion = "Osorio, D., Rondon-Villarreal, P. & Torres, R. Peptides: A package for data mining of antimicrobial peptides. The R Journal. 7(1), 4-14 (2015)."
+)
