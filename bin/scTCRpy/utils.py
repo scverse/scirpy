@@ -3,6 +3,7 @@
 
 import os, datetime
 import base64, cStringIO
+import sys
 
 path_to_scripts = '/home/singlecell/scripts/Tamas/scTCRpy/'
 
@@ -21,6 +22,7 @@ def stampTime(text, before=None):
     if before != None:
         text += ' (elapsed time: ' + str(parttime-before) + ')'
     print text
+    sys.stdout.flush()
     return parttime
 
 def readORrun(fn, forced, ifread, ifrun, iffail, parentDir=None, kwargs={}):
@@ -416,7 +418,7 @@ def tabReader(fn, data=None, sep=None, linebr='\n', nan='', add_nan=True, rownam
             line = line.split('\r')[0]
             line = line.replace('"', '')
             line = line.split(sep)
-            data, firstline, includend = datparse(data, line, lineNum, firstline, includend, **passargs) 
+            data, firstline, includend = datparse(data, line, lineNum, firstline, includend, **passargs)
             lineNum += 1
     if isinstance(data, dict):
         if 'DeFaUlT' in data:
@@ -431,10 +433,10 @@ class namedMatrix:
         self.N = len(self.colnames)
         self.unique = unique
         return
-    
+
     def __getitem__(self, key):
         return self.data[key]
-    
+
     def __len__(self):
         return len(self.data)
 
@@ -442,16 +444,16 @@ class namedMatrix:
         for i in range(len(self.order)):
             name = self.order[i]
             yield i, name, self.data[name]
-    
+
     def rows(self):
         return self.data.keys()
-    
+
     def setColNames(self, names):
         for i in range(0, len(names)):
             self.colnames[names[i]] = i
         self.N = len(self.colnames)
         return
-    
+
     def add(self, row):
         key = row.key
         self.data[key] = row
@@ -480,7 +482,7 @@ class namedMatrix:
             self.key = key
             self.keys = parent.colnames
             return
-        
+
         def __getitem__(self, key):
             e = self.keys[key]
             return self.data[e]
@@ -490,13 +492,13 @@ class objectContainer:
         self.data = {}
         self.order = []
         return
-    
+
     def __str__(self):
         return str(len(self.order)) + 'items'
-    
+
     def __len__(self):
         return len(self.order)
-    
+
     def __getitem__(self, key):
         if isinstance(key, str):
             return self.data[key]
@@ -510,7 +512,7 @@ class objectContainer:
         for i in range(len(self.order)):
             name = self.order[i]
             yield i, name, self.data[name]
-    
+
     def __setitem__(self, key, item):
         if key not in self.data:
             self.order.append(key)
