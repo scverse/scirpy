@@ -1,0 +1,23 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+library(rhdf5)
+library(pheatmap)
+```
+
+```{r}
+sampleNames <- setNames(c('Sample 1', 'Sample 2'), c('Sample_1_', 'Sample_2_'))
+distFile <- 'Z:/myScratch/RepertoireSeq/nextflow_TCR_part/reports/test/kideraDistanceMatrix.h5'
+#h5ls(distFile)
+distMat <- h5read(distFile, '/squareCelldist_distances')
+labelList <- h5read(distFile, '/squareCelldist_names')
+```
+
+```{r}
+pheatmap(distMat, main='Hierarchical clustering of cells based on Kidera factors of their TCR chains')
+```
+
