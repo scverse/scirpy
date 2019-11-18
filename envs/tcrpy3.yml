@@ -1,0 +1,13 @@
+name: tcrpy3
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - biopython
+  - numpy
+  - h5py
+  - scipy
+  - python=3.7
+prefix: /home/sturm/.conda/envs/tcrpy3
+
