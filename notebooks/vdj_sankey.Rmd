@@ -1,0 +1,31 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+library(ggalluvial)
+```
+
+```{r}
+sampleNames <- setNames(c('Sample 1', 'Sample 2'), c('Sample_1_', 'Sample_2_'))
+cellTabFile <- 'Z:/myScratch/RepertoireSeq/nextflow_TCR_part/reports/test/cellTable.tsv'
+cellTab <- read.delim(cellTabFile, stringsAsFactors=FALSE)
+head(cellTab)
+```
+
+```{r}
+for (sampleN in names(sampleNames)){
+  plotTab <- cellTab[cellTab$sample == sampleN, c('dominantAgeneV', 'dominantAgeneD', 'dominantAgeneJ', 'dominantBgeneV', 'dominantBgeneD', 'dominantBgeneJ')]
+  plotTab$Freq <- rep(1, nrow(plotTab))
+  p <- ggplot(plotTab, aes(y = Freq, axis1 = dominantAgeneV, axis2 = dominantAgeneD, axis3 = dominantAgeneJ, axis4 = dominantBgeneV, axis5 = dominantBgeneD, axis6 = dominantBgeneJ)) +
+  geom_alluvium(aes(fill = dominantBgeneD), width = 1/12) +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", label.strata = TRUE) +
+  scale_x_discrete(limits = c('dominantAgeneV', 'dominantAgeneD', 'dominantAgeneJ', 'dominantBgeneV', 'dominantBgeneD', 'dominantBgeneJ'), expand = c(.05, .05)) +
+  ggtitle(paste0('Usage of VDJ genes in ', sampleNames[sampleN]))
+  print(p)
+}
+```
+

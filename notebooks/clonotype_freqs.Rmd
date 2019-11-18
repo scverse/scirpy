@@ -1,0 +1,67 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+```
+
+```{r}
+sampleNames <- setNames(c('Sample 1', 'Sample 2'), c('Sample_1_', 'Sample_2_'))
+clonoTabFile <- 'Z:/myScratch/RepertoireSeq/nextflow_TCR_part/reports/test/clonotypeTable.tsv'
+clonoTab <- read.delim(clonoTabFile, stringsAsFactors=FALSE)
+head(clonoTab)
+```
+
+```{r}
+plotTab <- melt(clonoTab[, c('Clonotype', 'Signiture', names(sampleNames))])
+plotTab$variable <- as.character(plotTab$variable)
+plotTab$variable <- sampleNames[plotTab$variable]
+sampleSums <- c()
+for (s in names(sampleNames)){
+  sampleSums[sampleNames[s]] <- sum(clonoTab[, s])
+}
+plotTab$relvalue <- sampleSums[plotTab$variable]
+plotTab$relvalue <- plotTab$value/plotTab$relvalue
+head(plotTab)
+```
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+p<-ggplot(data=plotTab, aes(x=Clonotype, y=value, fill=variable)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(title='Clonotype abundance in samples', fill='Sample', y='Number of cells in clonotype') +
+  scale_x_discrete(limits=clonoTab[1:15, 'Clonotype']) +
+  theme(axis.text.x = element_text(angle=30, hjust=1)) 
+print(p)
+```
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+p<-ggplot(data=plotTab, aes(x=Signiture, y=value, fill=variable)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(title='Clonotype abundance in samples', fill='Sample', x='Clonotype', y='Number of cells in clonotype') +
+  scale_x_discrete(limits=clonoTab[1:15, 'Signiture']) +
+  theme(axis.text.x = element_text(angle=30, hjust=1)) 
+print(p)
+```
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+p<-ggplot(data=plotTab, aes(x=Clonotype, y=relvalue, fill=variable)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(title='Relative clonotype abundance in samples', fill='Sample', y='Portion of clonotype in sample') +
+  scale_x_discrete(limits=clonoTab[1:15, 'Clonotype']) +
+  theme(axis.text.x = element_text(angle=30, hjust=1)) 
+print(p)
+```
+
+```{r message=FALSE, warning=FALSE, comment=FALSE}
+p<-ggplot(data=plotTab, aes(x=Signiture, y=relvalue, fill=variable)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(title='Relative clonotype abundance in samples', fill='Sample', x='Clonotype', y='Portion of clonotype in sample') +
+  scale_x_discrete(limits=clonoTab[1:15, 'Signiture']) +
+  theme(axis.text.x = element_text(angle=30, hjust=1)) 
+print(p)
+```
