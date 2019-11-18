@@ -1,17 +1,8 @@
 #!/usr/bin/env nextflow
-
-params.contigFiles = './test_data/s{1,2}/filtered_contig_annotations.csv'
-params.consensusFiles = './test_data/s{1,2}/consensus_annotations.json'
-params.barcodePrefixes = ['Sample_1_', 'Sample_2_']
-
-params.outFolder = "$workflow.projectDir/reports/test"
 params.packageFolder = "$workflow.projectDir/lib"
 params.condaEnvPy = 'envs/tcrpy3.yml'
 params.condaEnvR = 'envs/tcrpy_r.yml'
 
-params.includeCDRdistances = 'True' //'False'
-params.distanceDisambiguation = 'minimum'
-params.numCore = 4
 
 Channel
     .fromPath(params.contigFiles)
@@ -34,8 +25,8 @@ Channel
     .from(params.distanceDisambiguation)
     .into {distanceDisambiguation1; distanceDisambiguation2}
 Channel
-    .from(params.numCore)
-    .into {numCore1; numCore2}
+    .from(params.nCpus)
+    .into {nCpus1; nCpus2}
 
 
 
@@ -68,7 +59,7 @@ process callClonotypes {
 
     conda params.condaEnvPy
 
-    publishDir params.outFolder, mode: 'copy', pattern: '{clonotypeTable.tsv, chainNet.tsv}'
+    publishDir params.outDir, mode: 'copy', pattern: '{clonotypeTable.tsv, chainNet.tsv}'
 
     input:
         file mergedCDR3Table
@@ -123,15 +114,15 @@ process calcChainDiversity {
 
 process cdrDistances {
 
-    cpus params.numCore
+    cpus params.nCpus
     conda params.condaEnvPy
-    publishDir params.outFolder, mode: 'copy', pattern: 'cdrSeqDistanceMatrix.h5'
+    publishDir params.outDir, mode: 'copy', pattern: 'cdrSeqDistanceMatrix.h5'
 
     input:
         file inToDis
         file chainPairs1
         val distanceDisambiguation1
-        val numCore1
+        val nCpus1
         val includeCDRdistances
 
     output:
@@ -142,22 +133,22 @@ process cdrDistances {
 
     script:
         """
-        chainBasedCellDistanceCalculations.py cdrseq $inToDis cdrSeqDistanceMatrix.h5 $numCore1
-        chainBasedCellDistanceCalculations.py celldist cdrSeqDistanceMatrix.h5 $chainPairs1 $distanceDisambiguation1 $numCore1
+        chainBasedCellDistanceCalculations.py cdrseq $inToDis cdrSeqDistanceMatrix.h5 ${task.cpus}
+        chainBasedCellDistanceCalculations.py celldist cdrSeqDistanceMatrix.h5 $chainPairs1 $distanceDisambiguation1 ${task.cpus}
         """
 }
 
 process kideraDistances {
 
-    cpus params.numCore
+    cpus params.nCpus
     conda params.condaEnvPy
-    publishDir params.outFolder, mode: 'copy', pattern: 'kideraDistanceMatrix.h5'
+    publishDir params.outDir, mode: 'copy', pattern: 'kideraDistanceMatrix.h5'
 
     input:
         file kideraTable1
         file chainPairs2
         val distanceDisambiguation2
-        val numCore2
+        val nCpus2
 
     output:
         file 'kideraDistanceMatrix.h5' into kideraDistances
@@ -165,14 +156,14 @@ process kideraDistances {
     script:
         """
         chainBasedCellDistanceCalculations.py kidera $kideraTable1 kideraDistanceMatrix.h5
-        chainBasedCellDistanceCalculations.py celldist kideraDistanceMatrix.h5 $chainPairs2 $distanceDisambiguation2 $numCore2
+        chainBasedCellDistanceCalculations.py celldist kideraDistanceMatrix.h5 $chainPairs2 $distanceDisambiguation2 ${task.cpus}
         """
 }
 
 process summarizeChainData {
 
     conda params.condaEnvPy
-    publishDir params.outFolder
+    publishDir params.outDir
 
     input:
         file chainPairs3
@@ -193,7 +184,7 @@ process summarizeChainData {
 process summarizeCellData {
     conda params.condaEnvPy
 
-    publishDir params.outFolder
+    publishDir params.outDir
 
     input:
         file mergedCellTable
