@@ -5,8 +5,9 @@ params.consensusFiles = './test_data/s{1,2}/consensus_annotations.json'
 params.barcodePrefixes = ['Sample_1_', 'Sample_2_']
 
 params.outFolder = "$workflow.projectDir/reports/test"
-params.packageFolder = "$workflow.projectDir/packages"
-params.condaEnv = 'envs/tcrpy3.yml'
+params.packageFolder = "$workflow.projectDir/lib"
+params.condaEnvPy = 'envs/tcrpy3.yml'
+params.condaEnvR = 'envs/tcrpy_r.yml'
 
 params.includeCDRdistances = 'True' //'False'
 params.distanceDisambiguation = 'minimum'
@@ -36,7 +37,10 @@ Channel
     .from(params.numCore)
     .into {numCore1; numCore2}
 
+
+
 process parseVDJresults {
+    conda params.condaEnvPy
 
     input:
         file contigFiles
@@ -62,6 +66,8 @@ sampleChainTable.collectFile(name: 'mergedChains.tsv').set{mergedChainTable}
 
 process callClonotypes {
 
+    conda params.condaEnvPy
+
     publishDir params.outFolder, mode: 'copy', pattern: '{clonotypeTable.tsv, chainNet.tsv}'
 
     input:
@@ -84,6 +90,7 @@ process callClonotypes {
 }
 
 process calcKidera {
+    conda params.condaEnvR
 
     input:
         file inToKid
@@ -99,6 +106,7 @@ process calcKidera {
 }
 
 process calcChainDiversity {
+    conda params.condaEnvR
 
     input:
         file inToDiv
@@ -116,7 +124,7 @@ process calcChainDiversity {
 process cdrDistances {
 
     cpus params.numCore
-    conda params.condaEnv
+    conda params.condaEnvPy
     publishDir params.outFolder, mode: 'copy', pattern: 'cdrSeqDistanceMatrix.h5'
 
     input:
@@ -142,7 +150,7 @@ process cdrDistances {
 process kideraDistances {
 
     cpus params.numCore
-    conda params.condaEnv
+    conda params.condaEnvPy
     publishDir params.outFolder, mode: 'copy', pattern: 'kideraDistanceMatrix.h5'
 
     input:
@@ -163,7 +171,7 @@ process kideraDistances {
 
 process summarizeChainData {
 
-    conda params.condaEnv
+    conda params.condaEnvPy
     publishDir params.outFolder
 
     input:
@@ -183,6 +191,7 @@ process summarizeChainData {
 }
 
 process summarizeCellData {
+    conda params.condaEnvPy
 
     publishDir params.outFolder
 

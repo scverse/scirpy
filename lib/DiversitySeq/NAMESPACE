@@ -1,0 +1,8 @@
+export("simulatecounts")
+export("aindex")
+export("bindex")
+export("divplot")
+export("mergedatasets")
+
+importFrom("vegan", "estimateR")
+import("stats")

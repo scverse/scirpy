@@ -1,14 +1,11 @@
-#! /usr/local/bioinf/bin/Rscript
+#!/usr/bin/env Rscript
 
 args = commandArgs(trailingOnly=TRUE)
 chainpairFile  <- args[1]
 outFile  <- args[2]
 packageDir  <- args[3]
 
-if(!require("Peptides", lib=packageDir)){
-  install.packages("Peptides", lib=packageDir, repos="http://cran.us.r-project.org")
-  library(Peptides, lib=packageDir)
-}
+library(Peptides)
 
 chains <- read.delim(chainpairFile, header=FALSE, sep='\t')
 colnames(chains) <- c('chainId', 'TRA', 'TRB')
