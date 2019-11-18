@@ -1,32 +1,14 @@
 #!/usr/bin/env nextflow
-params.packageFolder = "$workflow.projectDir/lib"
+params.packageDir = "$workflow.projectDir/lib"
 params.condaEnvPy = 'envs/tcrpy3.yml'
 params.condaEnvR = 'envs/tcrpy_r.yml'
 
 
 Channel
     .fromPath(params.contigFiles)
-    .set {contigFiles}
-Channel
-    .fromPath(params.consensusFiles)
-    .set {consensusFiles}
-Channel
-    .from(params.barcodePrefixes)
-    .set {barcodePrefixes}
-
-Channel
-    .from(params.packageFolder)
-    .into {packageFolder1; packageFolder2; packageFolder3}
-
-Channel
-    .from(params.includeCDRdistances)
-    .set {includeCDRdistances}
-Channel
-    .from(params.distanceDisambiguation)
-    .into {distanceDisambiguation1; distanceDisambiguation2}
-Channel
-    .from(params.nCpus)
-    .into {nCpus1; nCpus2}
+    .merge(Channel.fromPath(params.consensusFiles))
+    .merge(Channel.from(params.barcodePrefixes))
+    .set {inputData}
 
 
 
@@ -34,9 +16,7 @@ process parseVDJresults {
     conda params.condaEnvPy
 
     input:
-        file contigFiles
-        file consensusFiles
-        val barcodePrefixes
+        set file(contigFiles), file(consensusFiles), val(barcodePrefixes) from inputData
 
     output:
         file 'cells.tsv' into sampleCellTable
@@ -85,14 +65,13 @@ process calcKidera {
 
     input:
         file inToKid
-        val packageFolder1
 
     output:
         file 'chainKideras.tsv' into kideraTable1, kideraTable2
 
     script:
         """
-        kideraCalc.r $inToKid chainKideras.tsv $packageFolder1
+        kideraCalc.r $inToKid chainKideras.tsv ${params.packageDir}
         """
 }
 
@@ -101,14 +80,13 @@ process calcChainDiversity {
 
     input:
         file inToDiv
-        val packageFolder2
 
     output:
         file 'chainDiv.tsv' into divTable
 
     script:
         """
-        chainDiversityCalc.r $inToDiv chainDiv.tsv $packageFolder2
+        chainDiversityCalc.r $inToDiv chainDiv.tsv ${params.packageDir}
         """
 }
 
@@ -121,20 +99,20 @@ process cdrDistances {
     input:
         file inToDis
         file chainPairs1
-        val distanceDisambiguation1
-        val nCpus1
-        val includeCDRdistances
 
     output:
         file 'cdrSeqDistanceMatrix.h5' into cdrDistances
 
     when:
-        includeCDRdistances == 'True'
+        params.includeCDRdistances
 
     script:
         """
-        chainBasedCellDistanceCalculations.py cdrseq $inToDis cdrSeqDistanceMatrix.h5 ${task.cpus}
-        chainBasedCellDistanceCalculations.py celldist cdrSeqDistanceMatrix.h5 $chainPairs1 $distanceDisambiguation1 ${task.cpus}
+        chainBasedCellDistanceCalculations.py cdrseq $inToDis \
+            cdrSeqDistanceMatrix.h5 ${task.cpus}
+        chainBasedCellDistanceCalculations.py celldist \
+            cdrSeqDistanceMatrix.h5 $chainPairs1 \
+            ${params.distanceDisambiguation} ${task.cpus}
         """
 }
 
@@ -147,16 +125,17 @@ process kideraDistances {
     input:
         file kideraTable1
         file chainPairs2
-        val distanceDisambiguation2
-        val nCpus2
 
     output:
         file 'kideraDistanceMatrix.h5' into kideraDistances
 
     script:
         """
-        chainBasedCellDistanceCalculations.py kidera $kideraTable1 kideraDistanceMatrix.h5
-        chainBasedCellDistanceCalculations.py celldist kideraDistanceMatrix.h5 $chainPairs2 $distanceDisambiguation2 ${task.cpus}
+        chainBasedCellDistanceCalculations.py kidera \
+            $kideraTable1 kideraDistanceMatrix.h5
+        chainBasedCellDistanceCalculations.py celldist \
+            kideraDistanceMatrix.h5 $chainPairs2 \
+            ${params.distanceDisambiguation} ${task.cpus}
         """
 }
 
@@ -177,7 +156,9 @@ process summarizeChainData {
 
     script:
         """
-        summarizeReceptorChainTables.py $chainPairs3 $divTable $kideraTable2 $chainMap $mergedChainTable receptorTable.tsv chainTable.tsv
+        summarizeReceptorChainTables.py $chainPairs3 $divTable \
+            $kideraTable2 $chainMap $mergedChainTable \
+            receptorTable.tsv chainTable.tsv
         """
 }
 
