@@ -1,22 +1,13 @@
-#! /usr/local/bioinf/bin/Rscript
+#!/usr/bin/env Rscript
 
 args = commandArgs(trailingOnly=TRUE)
 chainFile  <- args[1]
 outFile  <- args[2]
 packageDir  <- args[3]
 
-if(!require("stringr", lib=packageDir)){
-  install.packages("stringr", lib=packageDir, repos="http://cran.us.r-project.org")
-  library(stringr, lib=packageDir)
-}
-if(!require("vegan", lib=packageDir)){
-  install.packages("vegan", lib=packageDir, repos="http://cran.us.r-project.org")
-  library(vegan, lib=packageDir)
-}
-if(!require("DiversitySeq", lib=packageDir)){
-  install.packages(paste0(packageDir, '/DiversitySeq.tar.gz'), lib=packageDir, repos=NULL)
-  library(DiversitySeq, lib=packageDir)
-}
+library(stringr)
+library(vegan)
+library(DiversitySeq, lib=packageDir)
 
 nucBet <- c('G', 'A', 'T', 'C')
 aaBet <- c('G', 'A', 'L', 'M', 'F', 'W', 'K', 'Q', 'E', 'S', 'P', 'V', 'I', 'C', 'Y', 'H', 'R', 'N', 'D', 'T')
