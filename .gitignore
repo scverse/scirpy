@@ -1,5 +1,6 @@
 data
 work
+reports
 .nextflow*
 tmp_input
 
