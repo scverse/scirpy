@@ -6,7 +6,7 @@ params.barcodePrefixes = ['Sample_1_', 'Sample_2_']
 
 params.outFolder = "$workflow.projectDir/reports/test"
 params.packageFolder = "$workflow.projectDir/packages"
-params.condaFolder = '/home/szabo/.conda/envs/scTCR' //This should be changed for a local environment containing numpy, h5py and biopython
+params.condaEnv = 'envs/tcrpy3.yml'
 
 params.includeCDRdistances = 'True' //'False'
 params.distanceDisambiguation = 'minimum'
@@ -42,13 +42,13 @@ process parseVDJresults {
         file contigFiles
         file consensusFiles
         val barcodePrefixes
-    
-    output: 
+
+    output:
         file 'cells.tsv' into sampleCellTable
         file 'chains.tsv' into sampleChainTable
         file 'cdrs.tsv' into sampleCDR3Table
 
-    script:   
+    script:
         """
         parseVDJ.py $barcodePrefixes $contigFiles $consensusFiles cells.tsv chains.tsv cdrs.tsv
         """
@@ -66,8 +66,8 @@ process callClonotypes {
 
     input:
         file mergedCDR3Table
-    
-    output: 
+
+    output:
         file 'clonotypeTable.tsv' into mappedClonotypes
         file 'additionalCellInfo.tsv' into additionalCellInfo
         file 'chainConvergence.tsv' into chainConvergence
@@ -77,7 +77,7 @@ process callClonotypes {
         file 'inToDiv.txt' into inToDiv
         file 'inToDist.txt' into inToDis, inToKid
 
-    script:   
+    script:
         """
         callClonotype.py $mergedCDR3Table clonotypeTable.tsv additionalCellInfo.tsv chainConvergence.tsv chainMap.tsv chainPairs.tsv chainNet.tsv inToDiv.txt inToDist.txt
         """
@@ -88,11 +88,11 @@ process calcKidera {
     input:
         file inToKid
         val packageFolder1
-    
-    output: 
+
+    output:
         file 'chainKideras.tsv' into kideraTable1, kideraTable2
 
-    script:   
+    script:
         """
         kideraCalc.r $inToKid chainKideras.tsv $packageFolder1
         """
@@ -103,11 +103,11 @@ process calcChainDiversity {
     input:
         file inToDiv
         val packageFolder2
-    
-    output: 
+
+    output:
         file 'chainDiv.tsv' into divTable
 
-    script:   
+    script:
         """
         chainDiversityCalc.r $inToDiv chainDiv.tsv $packageFolder2
         """
@@ -116,7 +116,7 @@ process calcChainDiversity {
 process cdrDistances {
 
     cpus params.numCore
-    conda params.condaFolder
+    conda params.condaEnv
     publishDir params.outFolder, mode: 'copy', pattern: 'cdrSeqDistanceMatrix.h5'
 
     input:
@@ -125,14 +125,14 @@ process cdrDistances {
         val distanceDisambiguation1
         val numCore1
         val includeCDRdistances
-    
+
     output:
         file 'cdrSeqDistanceMatrix.h5' into cdrDistances
 
     when:
         includeCDRdistances == 'True'
 
-    script:   
+    script:
         """
         chainBasedCellDistanceCalculations.py cdrseq $inToDis cdrSeqDistanceMatrix.h5 $numCore1
         chainBasedCellDistanceCalculations.py celldist cdrSeqDistanceMatrix.h5 $chainPairs1 $distanceDisambiguation1 $numCore1
@@ -142,7 +142,7 @@ process cdrDistances {
 process kideraDistances {
 
     cpus params.numCore
-    conda params.condaFolder
+    conda params.condaEnv
     publishDir params.outFolder, mode: 'copy', pattern: 'kideraDistanceMatrix.h5'
 
     input:
@@ -150,11 +150,11 @@ process kideraDistances {
         file chainPairs2
         val distanceDisambiguation2
         val numCore2
-    
+
     output:
         file 'kideraDistanceMatrix.h5' into kideraDistances
 
-    script:   
+    script:
         """
         chainBasedCellDistanceCalculations.py kidera $kideraTable1 kideraDistanceMatrix.h5
         chainBasedCellDistanceCalculations.py celldist kideraDistanceMatrix.h5 $chainPairs2 $distanceDisambiguation2 $numCore2
@@ -162,8 +162,8 @@ process kideraDistances {
 }
 
 process summarizeChainData {
-    
-    conda params.condaFolder
+
+    conda params.condaEnv
     publishDir params.outFolder
 
     input:
@@ -176,7 +176,7 @@ process summarizeChainData {
     output:
         file 'chainTable.tsv' into sumChainTab
 
-    script:   
+    script:
         """
         summarizeReceptorChainTables.py $chainPairs3 $divTable $kideraTable2 $chainMap $mergedChainTable receptorTable.tsv chainTable.tsv
         """
@@ -189,11 +189,11 @@ process summarizeCellData {
     input:
         file mergedCellTable
         file additionalCellInfo
-    
+
     output:
         file 'cellTable.tsv' into sumCellTab
 
-    script:   
+    script:
         """
         summarizeCellTable.py $mergedCellTable $additionalCellInfo cellTable.tsv
         """
