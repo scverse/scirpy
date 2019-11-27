@@ -20,6 +20,14 @@ def __main__():
     return
 
 def callClonotypesAndChainPairs(cdrF, clonInfo, cellInfo, convergenceTab, chainMap, chainPairs, chainNet, seqsToDiv, seqsToDis, distance_method='minimum'):
+    #The existence of double alpha and double beta T cells urged us to redifine clonotypes instead of using the out-of-the-box definitions provived by 10x
+    #All cells that have the exact same pair of CDR3 amino acid sequences are considered to belong to the same clonotype by general consensus.
+    #Our slight modification of the definition (urged by the above mentioned imperfect exclusiveity of parental alleles) is to use tetrads instead of pairs.
+    #A tetrad consists of the CDR3 region of the more expressed alpha chain, the CDR3 region of the more expressed beta chain, plus their less expressed counterparts.
+    #If any of the four chains is missing, the CDR3 sequence is left empty, or in other words a default empty CDR3 chain is used.
+    #The conjunction of the four CDR3 sequences define the clonotype unequivocally.
+    #Frequency of each clonotype signiture is then assesed and the clonotype with the highest frequency is renamed the first clonotype.
+    #A 'zero clonotype' is also called in the process as a category that will hold all cells that did not contain any detectable TCR chains.
     chainMapping = {}
     cdrMapping = {}
     convergenceTable = {}
