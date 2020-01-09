@@ -2,7 +2,7 @@ image: continuumio/miniconda3:latest
 
 before_script:
   - conda create -y -n nextflow -c conda-forge -c bioconda nextflow
-  - conda activate nextflow 
+  - source activate nextflow 
 
 test:
   script:
