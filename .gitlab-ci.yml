@@ -1,0 +1,7 @@
+image: nextflow/nextflow:latest
+
+build:
+  stage: test
+  script:
+    - nextflow run main.nf -profiles example,ci
+
