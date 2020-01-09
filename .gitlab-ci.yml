@@ -1,5 +1,3 @@
-image: nextflow/nextflow:latest
-
 before_script:
  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
  - bash miniconda.sh -b -p $HOME/miniconda
@@ -9,6 +7,8 @@ before_script:
  - conda update -q conda
  # Useful for debugging any issues with conda
  - conda info -a
+ - conda create -q -c bioconda -c conda-forge -n nextflow nextflow
+ - conda activate nextflow
 
 test:
   script:
