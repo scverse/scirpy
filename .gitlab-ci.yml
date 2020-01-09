@@ -1,7 +1,10 @@
-image: nextflow/nextflow:latest
+image: continuumio/miniconda3:latest
 
-build:
-  stage: test
+before_script:
+  - conda create -y -n nextflow -c conda-forge -c bioconda nextflow
+  - conda activate nextflow 
+
+test:
   script:
     - nextflow run main.nf -profile example,ci
 
