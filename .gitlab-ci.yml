@@ -12,6 +12,8 @@ before_script:
  - conda info -a
  - conda create -q -c bioconda -c conda-forge -n nextflow nextflow
  - conda activate nextflow
+   # Work around #1195
+ - ln -s /home/travis/miniconda/bin/activate /usr/bin/activate
 
 test:
   script:
