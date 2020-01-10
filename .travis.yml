@@ -1,0 +1,43 @@
+language: c
+env:
+  - PYTHON_VER=3.6 R_VER=3.5
+  - PYTHON_VER=3.6 R_VER=3.6
+  - PYTHON_VER=3.7 R_VER=3.5
+  - PYTHON_VER=3.7 R_VER=3.6
+  - PYTHON_VER=3.8 R_VER=3.6
+
+install:
+  - sudo apt-get update
+  # We don't care any more about python2
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source "$HOME/miniconda/etc/profile.d/conda.sh"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q --all
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  - conda create -q -c bioconda -c conda-forge -n reportsrender
+    python=$PYTHON_VER
+    r-base=$R_VER
+    r-rmarkdown
+    r-reticulate
+    r-bookdown
+    black
+    flit
+    pandoc>=2.8
+    `# required for testing only`
+    matplotlib
+    r-ggplot2
+    pandas
+    pytest
+    r-dplyr
+    r-readr
+
+  - conda activate reportsrender
+
+script:
+  - black --check reportsrender
+  - pip install .
+  - cd tests && pytest
