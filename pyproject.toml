@@ -1,0 +1,34 @@
+[build-system]
+requires = ['flit']
+build-backend = 'flit.buildapi'
+
+[tool.flit.metadata]
+module = 'sctcrpy'
+author = 'Gregor Sturm'
+author-email = 'gregor.sturm@i-med.ac.at'
+home-page = 'https://github.com/grst/sctcrpy2'
+description-file = "README.rst"
+classifiers = [
+    'License :: OSI Approved :: MIT License',
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: R'
+]
+requires-python = '>= 3.6'
+requires = [
+    'scanpy',
+    'pandas',
+]
+
+[tool.flit.metadata.requires-extra]
+develop = [
+    'pytest',
+    'black'
+]
+doc = [
+    'sphinx>=2',
+    'sphinx_autodoc_typehints>=1.8.0',
+    'sphinx_rtd_theme>=0.4'
+]
