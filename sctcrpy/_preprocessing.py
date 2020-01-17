@@ -1,5 +1,6 @@
 import pandas as pd
 from typing import Iterable
+import numpy as np
 
 
 def concat(objs: Iterable[pd.DataFrame], names: Iterable[str] = None):
@@ -57,14 +58,16 @@ def define_clonotypes(clone_df, flavor="paired"):
             {
                 "dominant_alpha": df_a["cdr3"].values[0]
                 if df_a.shape[0] >= 1
-                else None,
-                "dominant_beta": df_b["cdr3"].values[0] if df_b.shape[0] >= 1 else None,
+                else np.nan,
+                "dominant_beta": df_b["cdr3"].values[0]
+                if df_b.shape[0] >= 1
+                else np.nan,
                 "secondary_alpha": df_a["cdr3"].values[1]
                 if df_a.shape[0] >= 2
-                else None,
+                else np.nan,
                 "secondary_beta": df_b["cdr3"].values[1]
                 if df_b.shape[0] >= 2
-                else None,
+                else np.nan,
             }
         )
 

@@ -23,7 +23,7 @@ def read_10x(path: str):
     -------
     pd.DataFrame
     """
-    contig_annotation = pd.read_csv(path)
+    contig_annotation = pd.read_csv(path, na_values="None")
     contig_annotation = contig_annotation[
         [
             "barcode",

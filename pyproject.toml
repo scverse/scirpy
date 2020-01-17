@@ -20,6 +20,8 @@ requires-python = '>= 3.6'
 requires = [
     'scanpy',
     'pandas',
+    'numpy',
+    'parasail-python'
 ]
 
 [tool.flit.metadata.requires-extra]
