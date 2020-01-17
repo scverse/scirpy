@@ -1,0 +1,9 @@
+image: centos:centos7
+
+install:
+  - pip install flit
+  - flit install --deps develop
+
+script:
+  - black --check sctcrpy
+  - pytest --black
