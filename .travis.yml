@@ -11,4 +11,4 @@ install:
 
 script:
   - black --check sctcrpy
-  - pytest --black
+  - pytest
