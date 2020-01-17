@@ -1,19 +1,31 @@
-Usage as Python library
-=======================
+API
+===
 
-Reportsrender provides a public API that can be used to execute and convert notebooks to HTML:
 
-.. module:: reportsrender
+.. module:: sctcrpy 
 
-.. automodule:: reportsrender
+.. automodule:: sctcrpy 
    :noindex:
+
+
+Input/Output
+------------
+
+.. module:: sctcrpy.io
 
 .. autosummary::
    :toctree: .
 
-   render_rmd
-   render_papermill
-   run_pandoc
-   build_index
+   read_10x
 
+
+Preprocessing
+-------------
+
+.. module:: sctcrpy.pp
+
+.. autosummary::
+   :toctree: .
+
+   pp.define_clonotypes
 
