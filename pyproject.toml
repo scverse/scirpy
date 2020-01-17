@@ -23,7 +23,7 @@ requires = [
 ]
 
 [tool.flit.metadata.requires-extra]
-develop = [
+test = [
     'pytest',
     'black'
 ]
