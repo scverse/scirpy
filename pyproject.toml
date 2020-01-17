@@ -25,6 +25,7 @@ requires = [
 [tool.flit.metadata.requires-extra]
 develop = [
     'pytest',
+    'pytest-black',
     'black'
 ]
 doc = [
