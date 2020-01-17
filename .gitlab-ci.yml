@@ -2,7 +2,7 @@ image: python:3.8
 
 before_script:
   - pip install flit
-  - flit install --deps develop
+  - FLIT_ROOT_INSTALL=1 flit install --deps develop
 
 test:
   script:
