@@ -7,7 +7,7 @@ python:
 
 install:
   - pip install flit
-  - flit install --deps deveop
+  - flit install --deps develop
 
 script:
   - pytest --black
