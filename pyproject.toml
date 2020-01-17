@@ -18,10 +18,11 @@ classifiers = [
 ]
 requires-python = '>= 3.6'
 requires = [
+    'get_version',
     'scanpy',
     'pandas',
     'numpy',
-    'parasail-python'
+    'parasail'
 ]
 
 [tool.flit.metadata.requires-extra]
