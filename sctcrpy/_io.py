@@ -1,25 +1,50 @@
 import pandas as pd
 from scanpy import AnnData
+import json
 
 
-def read_10x(path: str, into: AnnData = None):
+def _check_tcr_df(df):
+    """Ensure that the data read with whatever method follows the 
+    sctcrpy column definition. 
+    """
+    # TODO
+    assert True
+
+
+def read_10x(path: str):
     """Read TCR data from a 10x genomics sample.
     
     Parameters
     ----------
     path
-        Path to 
-    into
-        anndata object to inject the TCR data into. Will be stored in `obs`. 
-        If None is given, a new AnnData object is created. 
+        Path to filtered_contig_annotations.csv
 
-    Raises:
+    Returns
     -------
-    Warning: if cell barcodes do not exist in AnnData object
+    pd.DataFrame
     """
     contig_annotation = pd.read_csv(path)
-    print(contig_annotation)
-    pass
+    contig_annotation = contig_annotation[
+        [
+            "barcode",
+            "length",
+            "chain",
+            "productive",
+            "v_gene",
+            "d_gene",
+            "j_gene",
+            "c_gene",
+            "cdr3",
+            "cdr3_nt",
+            "reads",
+            "umis",
+            "full_length",
+            "is_cell",
+            "high_confidence",
+        ]
+    ]
+    _check_tcr_df(contig_annotation)
+    return contig_annotation
 
 
 def read_tracer():
