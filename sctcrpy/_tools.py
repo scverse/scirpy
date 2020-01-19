@@ -4,35 +4,32 @@ import numpy as np
 import pandas as pd
 
 
-def tcr_dist(clonotype_df, subst_mat=parasail.blosum62, gap_open=8, gap_extend=1):
+def tcr_dist(adata, subst_mat=parasail.blosum62, gap_open=8, gap_extend=1):
     """Compute the TCRdist on CDR3 sequences. 
 
     Currently takes into account only dominant alpha and dominant beta. 
     """
     # TODO parallelize
-    unique_alpha = clonotype_df["dominant_alpha"].dropna().unique()
-    unique_beta = clonotype_df["dominant_beta"].dropna().unique()
+    for chain in ["TRA", "TRB"]:
+        unique_cdr3s = unique_alpha = (
+            # TODO here we have a problem again with the categorical "nan"
+            adata.obs["{}_1_cdr3".format(chain)]
+            .dropna()
+            .unique()
+        )
 
-    dist_alpha = np.empty([len(unique_alpha)] * 2)
-    dist_beta = np.empty([len(unique_alpha)] * 2)
+        dist_mat = np.empty([len(unique_cdr3s)] * 2)
 
-    for i, s1 in enumerate(unique_alpha):
-        profile = parasail.profile_create_16(s1, subst_mat)
-        for j, s2 in enumerate(unique_alpha[i + 1 :]):
-            r = parasail.sw_striped_profile_16(profile, s2, gap_open, gap_extend)
-            dist_alpha[i, j] = r.score
+        for i, s1 in enumerate(unique_cdr3s):
+            profile = parasail.profile_create_16(s1, subst_mat)
+            for j, s2 in enumerate(unique_cdr3s[i + 1 :]):
+                r = parasail.sw_striped_profile_16(profile, s2, gap_open, gap_extend)
+                dist_mat[i, j] = r.score
 
-    # for i, s1 in enumerate(unique_beta):
-    #     profile = parasail.profile_create_16(s1, subst_mat)
-    #     for j, s2 in enumerate(unique_beta[i + 1 :]):
-    #         r = parasail.sw_striped_profile_16(profile, s2, gap_open, gap_extend)
-    #         dist_beta[i, j] = r.score
+        dist_df = pd.DataFrame(dist_mat)
+        dist_df.index = dist_df.columns = unique_cdr3s
 
-    df_alpha = pd.DataFrame(dist_alpha)
-    df_alpha.index = unique_alpha
-    df_alpha.columns = unique_alpha
-
-    return df_alpha
+        adata.uns["tcr_dist_alpha"] = dist_df
 
 
 def alpha_diversity(frequencies, flavor="shannon"):
