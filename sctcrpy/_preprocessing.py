@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Iterable, Union, List
+from typing import Union, List
 import numpy as np
 from scanpy import AnnData
 
@@ -45,7 +45,7 @@ def merge_with_tcr(
     )
 
 
-def define_clonotypes(clone_df, *, flavor: str = "paired", inplace: bool = True):
+def define_clonotypes(adata, *, flavor: str = "paired"):
     """Define clonotypes based on CDR3 region. 
     
     Parameters
@@ -61,27 +61,15 @@ def define_clonotypes(clone_df, *, flavor: str = "paired", inplace: bool = True)
         [description]
     """
     assert flavor == "paired", "Other flavors currently not supported"
-    clone_df = clone_df.loc[clone_df.chain.isin(["TRA", "TRB"]), :]
 
-    def _apply(df):
-        df_a = df[df["chain"] == "TRA"].sort_values("umis", ascending=False)
-        df_b = df[df["chain"] == "TRB"].sort_values("umis", ascending=False)
-
-        return pd.Series(
-            {
-                "dominant_alpha": df_a["cdr3"].values[0]
-                if df_a.shape[0] >= 1
-                else np.nan,
-                "dominant_beta": df_b["cdr3"].values[0]
-                if df_b.shape[0] >= 1
-                else np.nan,
-                "secondary_alpha": df_a["cdr3"].values[1]
-                if df_a.shape[0] >= 2
-                else np.nan,
-                "secondary_beta": df_b["cdr3"].values[1]
-                if df_b.shape[0] >= 2
-                else np.nan,
-            }
-        )
-
-    return clone_df.groupby(["sample", "barcode"]).apply(_apply)
+    clonotype_col = np.array(
+        [
+            "clonotype_{}".format(x)
+            for x in adata.obs.groupby(
+                ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"]
+            ).ngroup()
+        ]
+    )
+    # TODO this check needs to be improved (or make sure that it's always categorical)
+    clonotype_col[adata.obs["has_tcr"] != "True"] = np.nan
+    adata.obs["clonotype"] = clonotype_col
