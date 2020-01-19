@@ -1,6 +1,7 @@
 import itertools
 import parasail
 import numpy as np
+from scanpy import AnnData
 import pandas as pd
 
 
@@ -32,9 +33,33 @@ def tcr_dist(adata, subst_mat=parasail.blosum62, gap_open=8, gap_extend=1):
         adata.uns["tcr_dist_alpha"] = dist_df
 
 
-def alpha_diversity(frequencies, flavor="shannon"):
+def alpha_diversity(adata: AnnData, key: str, *, flavor="shannon", inplace=True):
     """
-    Alpha diversity. Could rely on skbio.math if more variants are required. 
+    Alpha diversity within groups. 
+
+    adata
+        AnnData object to use
+    key
+        Column of `obs` by which the grouping will be performed. 
     """
     assert flavor == "shannon", "Other types not supported yet"
-    return -np.sum(frequencies * np.log2(frequencies))
+
+    # Could rely on skbio.math if more variants are required.
+    def _shannon_entropy(freq):
+        np.testing.assert_almost_equal(np.sum(freq), 1)
+        return -np.sum(freq * np.log2(freq))
+
+    # TODO #8
+    tcr_obs = adata.obs.loc[adata.obs["has_tcr"] == "True", :]
+    clono_counts = tcr_obs.groupby([key, "clonotype"]).size().reset_index(name="count")
+
+    diversity = dict()
+    for k in tcr_obs[key].unique():
+        tmp_counts = clono_counts.loc[clono_counts[key] == k, "count"].values
+        tmp_freqs = tmp_counts / np.sum(tmp_counts)
+        diversity[k] = _shannon_entropy(tmp_freqs)
+
+    if inplace:
+        adata.uns["tcr_clonotype_counts_{}".format(key)] = diversity
+    else:
+        return diversity
