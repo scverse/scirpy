@@ -1,38 +1,51 @@
 import pandas as pd
-from typing import Iterable
+from typing import Iterable, Union, List
 import numpy as np
+from scanpy import AnnData
 
 
-def concat(objs: Iterable[pd.DataFrame], names: Iterable[str] = None):
-    """Concatenate scTCRpy sample dataframes
+def merge_with_tcr(
+    adata: AnnData,
+    adata_tcr: AnnData,
+    *,
+    how: str = "left",
+    on: Union[List[str], str] = None,
+    left_index: bool = True,
+    right_index: bool = True,
+    validate: str = "one_to_one",
+    **kwargs
+):
+    """Integrate the TCR AnnData into an existing AnnData object with transcriptomics data.  
+
+    Will keep all objects from `adata_tx` and integrate `obs` from adata_tcr
+    into `adata_tx`. Everything other than `.obs` from adata_tcr will be lost. 
+
+    `.obs` will be merged using `pandas.merge`. Additional kwargs are passed to 
+    `pandas.merge`. 
     
-    Parameters
-    ----------
-    objs
-        DataFrames to concatenate
-    names
-        List of sample names associated with the DataFrames. 
-        If none are provided, ascending numeric ids are used. 
-
-    Returns
-    -------
-    pd.DataFrame 
-        concatenated DataFrames with 'sample' column added. 
+    adata
+        AnnData with the transcriptomics data. Will be modified inplace. 
+    adata_tcr
+        AnnData with the TCR data
+    on
+        Columns to join on. Default: The index and "batch", if it exists in both `obs`. 
     """
-    if names is None:
-        names = range(len(objs))
+    if on is None:
+        if ("batch" in adata.obs.columns) and ("batch" in adata_tcr.obs.columns):
+            on = "batch"
 
-    def _add_sample_names(_objs, _names):
-        for name, obj in zip(_names, _objs):
-            # operate on a copy in order not to change input data
-            obj2 = obj.copy()
-            obj2.insert(0, "sample", str(name))
-            yield obj2
+    adata.obs = adata.obs.merge(
+        adata_tcr.obs,
+        how=how,
+        on=on,
+        left_index=left_index,
+        right_index=right_index,
+        validate=validate,
+        **kwargs
+    )
 
-    return pd.concat(_add_sample_names(objs, names))
 
-
-def define_clonotypes(clone_df, flavor="paired"):
+def define_clonotypes(clone_df, *, flavor: str = "paired", inplace: bool = True):
     """Define clonotypes based on CDR3 region. 
     
     Parameters
