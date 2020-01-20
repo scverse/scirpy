@@ -9,6 +9,8 @@ def tcr_dist(adata, subst_mat=parasail.blosum62, gap_open=8, gap_extend=1):
     """Compute the TCRdist on CDR3 sequences. 
 
     Currently takes into account only dominant alpha and dominant beta. 
+
+    High-performance sequence alignment through parasail library [Daily2016]_
     """
     # TODO parallelize
     for chain in ["TRA", "TRB"]:

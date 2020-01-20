@@ -8,5 +8,5 @@ Welcome to sctcrpy's documentation!
    introduction
    features
    api
-
+   references
 

@@ -36,6 +36,7 @@ extensions = [
 
 autosummary_generate = True
 autodoc_member_order = "bysource"
+default_role = "literal"
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
@@ -53,4 +54,19 @@ html_context = dict(
     github_repo=project,  # Repo name
     github_version="master",  # Version
     conf_py_path="/docs/",  # Path in the checkout to the docs root
+)
+
+intersphinx_mapping = dict(
+    scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
+    anndata=("https://anndata.readthedocs.io/en/stable/", None),
+    h5py=("http://docs.h5py.org/en/stable/", None),
+    ipython=("https://ipython.readthedocs.io/en/stable/", None),
+    leidenalg=("https://leidenalg.readthedocs.io/en/latest/", None),
+    matplotlib=("https://matplotlib.org/", None),
+    numpy=("https://docs.scipy.org/doc/numpy/", None),
+    pandas=("https://pandas.pydata.org/pandas-docs/stable/", None),
+    python=("https://docs.python.org/3", None),
+    scipy=("https://docs.scipy.org/doc/scipy/reference/", None),
+    seaborn=("https://seaborn.pydata.org/", None),
+    sklearn=("https://scikit-learn.org/stable/", None),
 )
