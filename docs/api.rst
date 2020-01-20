@@ -11,16 +11,14 @@ API
 Input/Output
 ------------
 
-.. module:: sctcrpy
-
 .. autosummary::
    :toctree: .
 
    read_10x
 
 
-Preprocessing
--------------
+Preprocessing: `pp`
+-------------------
 
 .. module:: sctcrpy.pp
 
@@ -29,3 +27,12 @@ Preprocessing
 
    define_clonotypes
 
+Tools: `tl`
+-----------
+
+.. module:: sctcrpy.tl
+
+.. autosummary::
+   :toctree: .
+
+   tcr_dist 
