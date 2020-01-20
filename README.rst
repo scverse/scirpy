@@ -15,4 +15,4 @@ Single cell analysis of T cell receptor sequencing in python
     :alt: The uncompromising python formatter
 
 
- * [Documentation](https://grst.github.io/sctcrpy/5vLj3lcBVp2VkVEpIt3j)
+* `Documentation <https://grst.github.io/sctcrpy/5vLj3lcBVp2VkVEpIt3j>`_
