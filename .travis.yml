@@ -14,7 +14,8 @@ script:
   - pytest
 
 after_success:
-  - mkdir -p deploy_docs && cd docs && make html && mv _build/html ../deploy_docs/5vLj3lcBVp2VkVEpIt3j
+  - mkdir -p deploy_docs && touch deploy_docs/.nojekyll 
+  - cd docs && make html && mv _build/html ../deploy_docs/5vLj3lcBVp2VkVEpIt3j
 
 deploy:
   provider: pages
