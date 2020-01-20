@@ -1,4 +1,4 @@
-Welcome to reportsrender's documentation!
+Welcome to sctcrpy's documentation!
 =========================================
 
 .. toctree::

@@ -11,7 +11,7 @@ API
 Input/Output
 ------------
 
-.. module:: sctcrpy.io
+.. module:: sctcrpy
 
 .. autosummary::
    :toctree: .
@@ -27,5 +27,5 @@ Preprocessing
 .. autosummary::
    :toctree: .
 
-   pp.define_clonotypes
+   define_clonotypes
 

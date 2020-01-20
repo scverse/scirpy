@@ -5,10 +5,10 @@ from datetime import datetime
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
 
-from reportsrender import __author__, __version__
+from sctcrpy import __author__, __version__
 
 # General information
-project = "reportsrender"
+project = "sctcrpy"
 author = __author__
 copyright = f"{datetime.now():%Y}, {author}."
 version = __version__

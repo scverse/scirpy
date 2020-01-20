@@ -1,1 +1,8 @@
-reportsrender[doc]
+get_version
+scanpy
+pandas
+numpy
+parasail
+sphinx>=2
+sphinx_autodoc_typehints>=1.8.0
+sphinx_rtd_theme>=0.4
