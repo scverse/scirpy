@@ -12,3 +12,15 @@ install:
 script:
   - black --check sctcrpy
   - pytest
+
+after_success:
+  - mkdir -p deploy_docs && cd docs && make html && mv _build/html ../deploy_docs/5vLj3lcBVp2VkVEpIt3j
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_PAT
+  keep-history: true
+  local-dir: deploy_docs 
+  on:
+    branch: master
