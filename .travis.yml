@@ -23,4 +23,4 @@ deploy:
   keep-history: true
   local-dir: deploy_docs 
   on:
-    branch: master
+    branch: package 
