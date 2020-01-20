@@ -9,7 +9,7 @@ author-email = 'gregor.sturm@i-med.ac.at'
 home-page = 'https://github.com/grst/sctcrpy2'
 description-file = "README.rst"
 classifiers = [
-    'License :: OSI Approved :: MIT License',
+    'License :: OSI Approved :: BSD License',
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'Intended Audience :: Science/Research',
