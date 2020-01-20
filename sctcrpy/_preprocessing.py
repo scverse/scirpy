@@ -14,7 +14,7 @@ def merge_with_tcr(
     right_index: bool = True,
     validate: str = "one_to_one",
     **kwargs
-):
+) -> None:
     """Integrate the TCR AnnData into an existing AnnData object with transcriptomics data.  
 
     Will keep all objects from `adata_tx` and integrate `obs` from adata_tcr
@@ -45,20 +45,15 @@ def merge_with_tcr(
     )
 
 
-def define_clonotypes(adata, *, flavor: str = "paired"):
+def define_clonotypes(adata: AnnData, *, flavor: str = "paired") -> None:
     """Define clonotypes based on CDR3 region. 
     
     Parameters
     ----------
-    clone_df : [type]
-        [description]
-    flavor : str, optional
-        [description], by default "paired"
+    adata
+    flavor
+        Currently, only "paried" is supported. 
     
-    Returns
-    -------
-    [type]
-        [description]
     """
     assert flavor == "paired", "Other flavors currently not supported"
 

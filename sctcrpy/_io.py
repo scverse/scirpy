@@ -4,7 +4,7 @@ from typing import Iterable, Collection
 import numpy as np
 
 
-def _check_anndata(adata):
+def _check_anndata(adata: AnnData) -> None:
     """Sanity checks on loaded data. Should be executed by 
     every read_xxx function"""
     assert (
@@ -13,7 +13,7 @@ def _check_anndata(adata):
     assert "has_tcr" in adata.obs.columns
 
 
-def read_10x(path: str):
+def read_10x(path: str) -> AnnData:
     """Read TCR data from a 10x genomics sample.
     
     Parameters
@@ -23,8 +23,7 @@ def read_10x(path: str):
 
     Returns
     -------
-    AnnData
-        AnnData object with TCR data in `obs` for each cell.  
+    AnnData object with TCR data in `obs` for each cell.  
     """
     contig_annotation = pd.read_csv(path, na_values="None")
 
