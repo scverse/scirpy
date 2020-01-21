@@ -6,3 +6,4 @@ parasail
 sphinx>=2
 sphinx_autodoc_typehints>=1.8.0
 sphinx_rtd_theme>=0.4
+scanpydoc

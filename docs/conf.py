@@ -32,6 +32,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
+    "scanpydoc",
 ]
 
 autosummary_generate = True

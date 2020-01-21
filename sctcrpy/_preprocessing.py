@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Union, List
 import numpy as np
-from scanpy import AnnData
+from anndata import AnnData
 
 
 def merge_with_tcr(
