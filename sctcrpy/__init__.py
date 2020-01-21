@@ -10,3 +10,4 @@ from scanpy import AnnData, read_h5ad
 from ._io import read_10x, read_tracer
 from . import _preprocessing as pp
 from . import _tools as tl
+from . import _plotting as pl

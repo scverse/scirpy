@@ -14,7 +14,9 @@ Input/Output
 .. autosummary::
    :toctree: .
 
+   read_h5ad
    read_10x
+   read_tracer
 
 
 Preprocessing: `pp`
@@ -25,7 +27,9 @@ Preprocessing: `pp`
 .. autosummary::
    :toctree: .
 
+   merge_with_tcr
    define_clonotypes
+
 
 Tools: `tl`
 -----------
@@ -36,3 +40,15 @@ Tools: `tl`
    :toctree: .
 
    tcr_dist 
+   alpha_diversity
+
+
+Plotting: `pl`
+--------------
+
+.. module:: sctcrpy.pl
+
+.. autosummary::
+   :toctree: . 
+
+   
