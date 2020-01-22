@@ -2,7 +2,7 @@ Single cell analysis of T cell receptor sequencing in python
 ============================================================
 |travis| |docs| |black|
 
-.. |travis| image:: https://travis-ci.com/grst/sctcrpy.svg?branch=master
+.. |travis| image:: https://api.travis-ci.com/grst/sctcrpy.svg?token=qqasgepMVJmJkMf3vBTL 
     :target: https://travis-ci.com/grst/sctcrpy
     :alt: Build Status
 
