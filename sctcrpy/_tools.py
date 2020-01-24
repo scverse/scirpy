@@ -74,7 +74,8 @@ def alpha_diversity(adata: AnnData, key: str, *, flavor="shannon", inplace=True)
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)
 
+    return_dict = {"key": key, "diversity": diversity}
     if inplace:
-        adata.uns["tcr_clonotype_counts_{}".format(key)] = diversity
+        adata.uns["tcr_alpha_diversity"] = return_dict
     else:
-        return diversity
+        return return_dict
