@@ -45,6 +45,19 @@ def merge_with_tcr(
     )
 
 
+def filter_tcrs(adata: AnnData, mask):
+    """remove certain TCRs, but keep the cells
+    
+    Parameters
+    ----------
+    adata : AnnData
+        [description]
+    mask : [type]
+        [description]
+    """
+    pass
+
+
 def define_clonotypes(adata: AnnData, *, flavor: str = "paired") -> None:
     """Define clonotypes based on CDR3 region. 
     
