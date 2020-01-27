@@ -1,0 +1,96 @@
+------------------
+Sample_PD10_ZZM_TTS98-0205
+------------------
+TCR_A recombinants: 1/2
+TCR_B recombinants: 2/2
+
+
+#TCR_A#
+##TRINITY_DN1_c0_g1_i1##
+V segment:	TRAV22*01
+J segment:	TRAJ58*01
+ID:	TRAV22_TGTGGGTGGGAAAC_TRAJ58
+TPM:	49.5101
+Productive:	False
+Stop codon:	True
+In frame:	False
+CDR3aa:	avggkpvalg*p
+CDR3nt:	gctgtgggtgggaaaccagtggctctaggttgacc
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN1_c0_g1_i1	TRAV22*01	100.000	267	0	0	0	1	267	2	268	3.52e-119	417
+V	TRINITY_DN1_c0_g1_i1	TRAV41*01	61.004	259	101	0	0	7	265	8	266	1.11e-20	90.6
+V	TRINITY_DN1_c0_g1_i1	TRAV17*01	60.153	261	96	2	8	11	263	10	270	4.71e-15	72.0
+V	TRINITY_DN1_c0_g1_i1	TRAV10*01	60.517	271	96	5	11	6	266	7	276	2.66e-11	59.5
+V	TRINITY_DN1_c0_g1_i1	TRAV7*01	60.219	274	94	5	15	6	270	7	274	7.84e-11	57.9
+J	TRINITY_DN1_c0_g1_i1	TRAJ58*01	100.000	58	0	0	0	272	329	6	63	2.56e-29	115
+
+
+##TRINITY_DN0_c0_g1_i3##
+V segment:	TRAV26-1*01
+J segment:	TRAJ54*01
+ID:	TRAV26-1_AGTCGAGGGGGGAG_TRAJ54
+TPM:	1031.16
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	IVRVEGGAQKLV
+CDR3nt:	ATCGTCAGAGTCGAGGGGGGAGCCCAGAAGCTGGTA
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i3	TRAV26-1*01	100.000	277	0	0	0	12	288	1	277	1.82e-123	433
+V	TRINITY_DN0_c0_g1_i3	TRAV26-1*02	99.635	274	1	0	0	12	285	1	274	4.04e-121	425
+V	TRINITY_DN0_c0_g1_i3	TRAV26-1*03	99.625	267	1	0	0	12	278	1	267	7.75e-118	414
+V	TRINITY_DN0_c0_g1_i3	TRAV26-2*01	77.372	274	62	0	0	12	285	1	274	6.74e-64	235
+V	TRINITY_DN0_c0_g1_i3	TRAV4*01	70.787	267	78	0	0	14	280	3	269	1.32e-45	174
+J	TRINITY_DN0_c0_g1_i3	TRAJ54*01	100.000	53	0	0	0	293	345	8	60	6.01e-26	105
+
+
+#TCR_B#
+##TRINITY_DN0_c0_g1_i2##
+V segment:	TRBV29-1*01
+D segment:	N/A
+J segment:	TRBJ1-1*01
+ID:	TRBV29-1_CCAAGGGGTTCTAGAAGC_TRBJ1-1
+TPM:	2390.44
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	SVQGVLEAF
+CDR3nt:	AGCGTCCAAGGGGTTCTAGAAGCTTTC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i2	TRBV29-1*01	98.962	289	3	0	0	14	302	1	289	2.56e-126	442
+V	reversed|TRINITY_DN0_c0_g1_i2	TRBV29-1*02	99.296	284	2	0	0	14	297	1	284	6.54e-125	438
+V	reversed|TRINITY_DN0_c0_g1_i2	TRBV29_OR9-2*01	95.502	289	13	0	0	14	302	1	289	6.16e-117	411
+V	reversed|TRINITY_DN0_c0_g1_i2	TRBV29_OR9-2*02	95.156	289	14	0	0	14	302	1	289	5.34e-116	408
+V	reversed|TRINITY_DN0_c0_g1_i2	TRBV29-1*03	99.115	226	2	0	0	71	296	1	226	1.05e-97	347
+J	reversed|TRINITY_DN0_c0_g1_i2	TRBJ1-1*01	100.000	40	0	0	0	311	350	9	48	3.16e-18	79.8
+
+
+##TRINITY_DN0_c0_g1_i1##
+V segment:	TRBV5-1*01
+D segment:	TRBD1*01
+J segment:	TRBJ2-3*01
+ID:	TRBV5-1_GCAGCCCTGAGGGGGCCCAAGATA_TRBJ2-3
+TPM:	79.139
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ASSPEGAQDTQY
+CDR3nt:	GCCAGCAGCCCTGAGGGGGCCCAAGATACGCAGTAT
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i1	TRBV5-1*01	100.000	282	0	0	0	4	285	1	282	7.47e-126	441
+V	reversed|TRINITY_DN0_c0_g1_i1	TRBV5-1*02	98.195	277	5	0	0	6	282	3	279	8.11e-119	417
+V	reversed|TRINITY_DN0_c0_g1_i1	TRBV5-3*01	83.630	281	46	0	0	5	285	2	282	3.12e-82	296
+V	reversed|TRINITY_DN0_c0_g1_i1	TRBV5-3*02	83.630	281	46	0	0	5	285	2	282	3.12e-82	296
+V	reversed|TRINITY_DN0_c0_g1_i1	TRBV5-8*01	81.139	281	53	0	0	5	285	2	282	1.15e-75	274
+D	reversed|TRINITY_DN0_c0_g1_i1	TRBD1*01	100.000	7	0	0	0	290	296	6	12	1.1	14.4
+D	reversed|TRINITY_DN0_c0_g1_i1	TRBD2*01	100.000	5	0	0	0	291	295	10	14	17	10.4
+D	reversed|TRINITY_DN0_c0_g1_i1	TRBD2*01	100.000	5	0	0	0	291	295	11	15	17	10.4
+D	reversed|TRINITY_DN0_c0_g1_i1	TRBD2*01	100.000	5	0	0	0	291	295	12	16	17	10.4
+D	reversed|TRINITY_DN0_c0_g1_i1	TRBD2*02	100.000	5	0	0	0	289	293	12	16	17	10.4
+J	reversed|TRINITY_DN0_c0_g1_i1	TRBJ2-3*01	100.000	44	0	0	0	300	343	6	49	1.28e-20	87.7
+
+

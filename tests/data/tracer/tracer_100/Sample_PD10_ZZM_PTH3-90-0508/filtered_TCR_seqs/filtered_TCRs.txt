@@ -1,0 +1,72 @@
+------------------
+Sample_PD10_ZZM_PTH3-90-0508
+------------------
+TCR_A recombinants: 1/2
+TCR_B recombinants: 1/1
+
+
+#TCR_A#
+##TRINITY_DN0_c0_g1_i3##
+V segment:	TRAV41*01
+J segment:	TRAJ42*01
+ID:	TRAV41_GTCAGTTAATTA_TRAJ42
+TPM:	70.3055
+Productive:	False
+Stop codon:	True
+In frame:	False
+CDR3aa:	avs*lwrkprksh
+CDR3nt:	gctgtcagttaattatggaggaagccaaggaaatctcatc
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i3	TRAV41*01	100.000	269	0	0	0	15	283	1	269	1.04e-119	420
+V	reversed|TRINITY_DN0_c0_g1_i3	TRAV10*01	62.230	278	96	2	9	15	283	1	278	1.11e-21	95.3
+V	reversed|TRINITY_DN0_c0_g1_i3	TRAV34*01	62.977	262	91	2	6	21	276	7	268	1.11e-21	95.3
+V	reversed|TRINITY_DN0_c0_g1_i3	TRAV22*01	61.004	259	101	0	0	22	280	8	266	2.83e-20	90.6
+V	reversed|TRINITY_DN0_c0_g1_i3	TRAV20*01	62.406	266	85	4	15	24	280	10	269	5.43e-17	79.7
+J	reversed|TRINITY_DN0_c0_g1_i3	TRAJ42*01	100.000	64	0	0	0	286	349	3	66	1.65e-32	127
+J	reversed|TRINITY_DN0_c0_g1_i3	TRAJ30*01	100.000	16	0	0	0	311	326	19	34	7.26e-04	32.2
+
+
+##TRINITY_DN0_c0_g1_i1##
+V segment:	TRAV38-2_DV8*01
+J segment:	TRAJ40*01
+ID:	TRAV38-2_DV8_TTTTACATTTGCAGGA_TRAJ40
+TPM:	459.323
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	AFTFAGTYKYI
+CDR3nt:	GCTTTTACATTTGCAGGAACCTACAAATACATC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV38-2_DV8*01	99.647	283	1	0	0	16	298	1	283	2.18e-125	439
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV38-1*02	96.786	280	9	0	0	16	295	1	280	1.78e-116	410
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV38-1*01	96.441	281	10	0	0	16	296	1	281	5.24e-116	408
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV38-1*03	96.441	281	10	0	0	16	296	1	281	5.24e-116	408
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV38-1*04	95.683	278	12	0	0	16	293	1	278	1.01e-112	397
+J	reversed|TRINITY_DN0_c0_g1_i1	TRAJ40*01	100.000	54	0	0	0	305	358	8	61	1.37e-26	107
+
+
+#TCR_B#
+##TRINITY_DN0_c0_g1_i1##
+V segment:	TRBV5-5*01
+D segment:	TRBD2*01
+J segment:	TRBJ1-1*01
+ID:	TRBV5-5_CTTGGCCCGGGGTGAAG_TRBJ1-1
+TPM:	1395.49
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ASSLARGEAF
+CDR3nt:	GCCAGCAGCTTGGCCCGGGGTGAAGCTTTC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i1	TRBV5-5*01	99.650	286	1	0	0	15	300	1	286	8.83e-127	444
+V	TRINITY_DN0_c0_g1_i1	TRBV5-5*02	100.000	282	0	0	0	15	296	1	282	7.66e-126	441
+V	TRINITY_DN0_c0_g1_i1	TRBV5-5*03	99.291	282	2	0	0	15	296	1	282	5.76e-124	434
+V	TRINITY_DN0_c0_g1_i1	TRBV5-7*01	96.853	286	9	0	0	15	300	1	286	2.82e-119	419
+V	TRINITY_DN0_c0_g1_i1	TRBV5-6*01	94.056	286	17	0	0	15	300	1	286	9.02e-112	394
+D	TRINITY_DN0_c0_g1_i1	TRBD2*01	100.000	5	0	0	0	303	307	9	13	18	10.4
+J	TRINITY_DN0_c0_g1_i1	TRBJ1-1*01	100.000	41	0	0	0	308	348	8	48	8.12e-19	81.8
+
+

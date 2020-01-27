@@ -1,0 +1,31 @@
+------------------
+Sample_PD10_ZZM_PTH9-0205
+------------------
+TCR_A recombinants: 0/0
+TCR_B recombinants: 1/1
+
+
+#TCR_A#
+#TCR_B#
+##TRINITY_DN0_c0_g1_i1##
+V segment:	TRBV2*01,TRBV2*02
+D segment:	TRBD1*01
+J segment:	TRBJ1-2*01
+ID:	TRBV2_CCAGCGAACAGGGTGTGGGAGGCTA_TRBJ1-2
+TPM:	291.462
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ASEQGVGGYT
+CDR3nt:	GCCAGCGAACAGGGTGTGGGAGGCTACACC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i1	TRBV2*01	100.000	207	0	0	0	33	239	76	282	1.04e-90	324
+V	TRINITY_DN0_c0_g1_i1	TRBV2*02	100.000	207	0	0	0	33	239	76	282	1.04e-90	324
+V	TRINITY_DN0_c0_g1_i1	TRBV2*03	99.517	207	1	0	0	33	239	76	282	9.01e-90	321
+V	TRINITY_DN0_c0_g1_i1	TRBV7-6*02	67.633	207	67	0	0	33	239	76	282	7.38e-28	115
+V	TRINITY_DN0_c0_g1_i1	TRBV7-6*01	67.839	199	64	0	0	41	239	84	282	6.40e-27	112
+D	TRINITY_DN0_c0_g1_i1	TRBD1*01	100.000	6	0	0	0	242	247	4	9	4.0	12.4
+J	TRINITY_DN0_c0_g1_i1	TRBJ1-2*01	100.000	40	0	0	0	255	294	9	48	2.90e-18	79.8
+
+
