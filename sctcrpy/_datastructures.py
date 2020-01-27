@@ -1,4 +1,4 @@
-from typing import Literal
+from ._compat import Literal
 
 
 class TcrChain:
@@ -34,8 +34,8 @@ class TcrChain:
             raise ValueError("Invalid chain type: {}".format(chain_type))
 
         self.chain_type = chain_type
-        self.cdr3 = cdr3
-        self.cdr3_nt = cdr3_nt
+        self.cdr3 = cdr3.upper()
+        self.cdr3_nt = cdr3_nt.upper()
         self.expr = expr
         self.expr_raw = expr_raw
         self.is_productive = is_productive
