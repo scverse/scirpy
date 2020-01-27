@@ -34,8 +34,8 @@ class TcrChain:
             raise ValueError("Invalid chain type: {}".format(chain_type))
 
         self.chain_type = chain_type
-        self.cdr3 = cdr3.upper()
-        self.cdr3_nt = cdr3_nt.upper()
+        self.cdr3 = cdr3.upper() if cdr3 is not None else None
+        self.cdr3_nt = cdr3_nt.upper() if cdr3_nt is not None else None
         self.expr = expr
         self.expr_raw = expr_raw
         self.is_productive = is_productive
