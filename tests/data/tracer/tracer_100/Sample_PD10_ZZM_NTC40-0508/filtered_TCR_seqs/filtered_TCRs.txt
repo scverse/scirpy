@@ -1,0 +1,70 @@
+------------------
+Sample_PD10_ZZM_NTC40-0508
+------------------
+TCR_A recombinants: 1/2
+TCR_B recombinants: 1/1
+
+
+#TCR_A#
+##TRINITY_DN0_c0_g1_i3##
+V segment:	TRAV9-2*01
+J segment:	TRAJ6*01
+ID:	TRAV9-2_GAGTGCTCAACTTCAGG_TRAJ6
+TPM:	264.575
+Productive:	False
+Stop codon:	False
+In frame:	False
+CDR3aa:	alsaqlqeeatyl
+CDR3nt:	gctctgagtgctcaacttcaggaggaagctacatacctaca
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i3	TRAV9-2*01	100.000	280	0	0	0	13	292	1	280	3.55e-125	438
+V	TRINITY_DN0_c0_g1_i3	TRAV9-2*02	99.634	273	1	0	0	13	285	1	273	5.91e-121	424
+V	TRINITY_DN0_c0_g1_i3	TRAV9-2*04	99.634	273	1	0	0	13	285	1	273	5.91e-121	424
+V	TRINITY_DN0_c0_g1_i3	TRAV9-2*03	99.267	273	2	0	0	13	285	1	273	5.13e-120	420
+V	TRINITY_DN0_c0_g1_i3	TRAV9-1*01	85.357	280	41	0	0	13	292	1	280	1.03e-86	310
+J	TRINITY_DN0_c0_g1_i3	TRAJ6*01	100.000	58	0	0	0	300	357	5	62	3.23e-29	115
+
+
+##TRINITY_DN0_c0_g1_i2##
+V segment:	TRAV1-2*01
+J segment:	TRAJ33*01
+ID:	TRAV1-2_GTGCTCTCATGGAT_TRAJ33
+TPM:	693.466
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ALMDSNYQLI
+CDR3nt:	GCTCTCATGGATAGCAACTATCAGTTAATC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i2	TRAV1-2*01	99.625	267	1	0	0	16	282	1	267	3.77e-118	414
+V	TRINITY_DN0_c0_g1_i2	TRAV1-1*01	88.015	267	32	0	0	16	282	1	267	4.53e-89	318
+V	TRINITY_DN0_c0_g1_i2	TRAV1-1*02	88.015	267	32	0	0	16	282	1	267	4.53e-89	318
+V	TRINITY_DN0_c0_g1_i2	TRAV1-2*02	98.864	176	2	0	0	16	191	1	176	1.57e-74	269
+V	TRINITY_DN0_c0_g1_i2	TRAV20*02	72.500	80	20	2	2	74	152	62	140	5.47e-07	45.5
+J	TRINITY_DN0_c0_g1_i2	TRAJ33*01	100.000	57	0	0	0	287	343	1	57	1.25e-28	113
+
+
+#TCR_B#
+##TRINITY_DN0_c0_g1_i4##
+V segment:	TRBV6-1*01
+D segment:	N/A
+J segment:	TRBJ1-5*01
+ID:	TRBV6-1_AGCGATGATCTCGAAGGCTATCAG_TRBJ1-5
+TPM:	1212.39
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ASSDDLEGYQPQH
+CDR3nt:	GCCAGCAGCGATGATCTCGAAGGCTATCAGCCCCAGCAT
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i4	TRBV6-1*01	99.648	284	1	0	0	15	298	1	284	7.75e-126	441
+V	TRINITY_DN0_c0_g1_i4	TRBV6-5*01	92.171	281	22	0	0	15	295	1	281	9.91e-105	371
+V	TRINITY_DN0_c0_g1_i4	TRBV6-6*02	91.459	281	24	0	0	15	295	1	281	7.45e-103	364
+V	TRINITY_DN0_c0_g1_i4	TRBV6-6*05	91.135	282	25	0	0	15	296	1	282	2.19e-102	363
+V	TRINITY_DN0_c0_g1_i4	TRBV6-2*01	91.103	281	25	0	0	15	295	1	281	6.46e-102	361
+J	TRINITY_DN0_c0_g1_i4	TRBJ1-5*01	100.000	45	0	0	0	313	357	6	50	3.37e-21	89.7
+
+

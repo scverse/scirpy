@@ -1,0 +1,55 @@
+------------------
+Sample_PD10_ZZM_TTH43-0322
+------------------
+TCR_A recombinants: 1/1
+TCR_B recombinants: 1/1
+
+
+#TCR_A#
+##TRINITY_DN0_c0_g1_i1##
+V segment:	TRAV8-4*01
+J segment:	TRAJ13*02
+ID:	TRAV8-4_TGAGTAAAGGCGGTTA_TRAJ13
+TPM:	1458.96
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	AVSKGGYQKVT
+CDR3nt:	GCTGTGAGTAAAGGCGGTTACCAGAAAGTTACC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV8-4*01	99.645	282	1	0	0	58	339	1	282	7.61e-125	438
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV8-4*02	99.291	282	2	0	0	58	339	1	282	6.60e-124	434
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV8-4*04	99.291	282	2	0	0	58	339	1	282	6.60e-124	434
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV8-4*05	99.291	282	2	0	0	58	339	1	282	6.60e-124	434
+V	reversed|TRINITY_DN0_c0_g1_i1	TRAV8-4*03	99.275	276	2	0	0	58	333	1	276	4.30e-121	425
+J	reversed|TRINITY_DN0_c0_g1_i1	TRAJ13*02	100.000	52	0	0	0	346	397	12	63	2.53e-25	103
+J	reversed|TRINITY_DN0_c0_g1_i1	TRAJ13*01	98.077	52	1	0	0	346	397	12	63	6.16e-23	95.6
+J	reversed|TRINITY_DN0_c0_g1_i1	TRAJ44*01	94.737	19	1	0	0	361	379	27	45	0.003	30.2
+J	reversed|TRINITY_DN0_c0_g1_i1	TRAJ48*01	94.737	19	1	0	0	361	379	27	45	0.003	30.2
+
+
+#TCR_B#
+##TRINITY_DN0_c0_g1_i2##
+V segment:	TRBV9*01
+D segment:	N/A
+J segment:	TRBJ2-7*01
+ID:	TRBV9_GCAGCTTGGAAGCTAGCTCCT_TRBJ2-7
+TPM:	220.55
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ASSLEASSYEQY
+CDR3nt:	GCCAGCAGCTTGGAAGCTAGCTCCTACGAGCAGTAC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i2	TRBV9*01	100.000	282	0	0	0	10	291	1	282	7.50e-126	441
+V	TRINITY_DN0_c0_g1_i2	TRBV9*02	99.645	282	1	0	0	10	291	1	282	6.51e-125	438
+V	TRINITY_DN0_c0_g1_i2	TRBV9*03	99.645	282	1	0	0	10	291	1	282	6.51e-125	438
+V	TRINITY_DN0_c0_g1_i2	TRBV5-5*01	76.596	282	66	0	0	14	295	5	286	6.14e-64	235
+V	TRINITY_DN0_c0_g1_i2	TRBV5-6*01	75.887	282	68	0	0	14	295	5	286	4.62e-62	229
+J	TRINITY_DN0_c0_g1_i2	TRBJ2-7*01	100.000	47	0	0	0	303	349	1	47	2.09e-22	93.7
+J	TRINITY_DN0_c0_g1_i2	TRBJ2-7*02	97.872	47	1	0	0	303	349	1	47	5.09e-20	85.7
+J	TRINITY_DN0_c0_g1_i2	TRBJ2-5*01	95.000	20	1	0	0	313	332	12	31	6.60e-04	32.2
+
+

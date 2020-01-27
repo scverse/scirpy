@@ -1,0 +1,72 @@
+------------------
+PD10_ZZM_TTC61-1116
+------------------
+TCR_A recombinants: 1/2
+TCR_B recombinants: 1/1
+
+
+#TCR_A#
+##TRINITY_DN0_c0_g1_i1##
+V segment:	TRAV3*01
+J segment:	TRAJ26*01
+ID:	TRAV3_GAGACGGGGGGAACTA_TRAJ26
+TPM:	1891.58
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	AVRDGGNYGQNFV
+CDR3nt:	GCTGTGAGAGACGGGGGGAACTATGGTCAGAATTTTGTC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i1	TRAV3*01	100.000	285	0	0	0	109	393	1	285	3.78e-127	445
+V	TRINITY_DN0_c0_g1_i1	TRAV8-4*01	74.737	285	70	2	2	109	392	1	284	7.44e-56	209
+V	TRINITY_DN0_c0_g1_i1	TRAV8-4*02	74.386	285	71	2	2	109	392	1	284	6.45e-55	205
+V	TRINITY_DN0_c0_g1_i1	TRAV8-4*04	74.386	285	71	2	2	109	392	1	284	6.45e-55	205
+V	TRINITY_DN0_c0_g1_i1	TRAV8-4*05	74.386	285	71	2	2	109	392	1	284	6.45e-55	205
+J	TRINITY_DN0_c0_g1_i1	TRAJ26*01	100.000	55	0	0	0	400	454	6	60	4.50e-27	109
+
+
+##TRINITY_DN0_c0_g1_i3##
+V segment:	TRAV2*01
+J segment:	TRAJ10*01
+ID:	TRAV2_TACTAGTCTCTAGGCGGGA_TRAJ10
+TPM:	812.591
+Productive:	False
+Stop codon:	True
+In frame:	False
+CDR3aa:	lggrrkqth
+CDR3nt:	ctaggcgggaggaggaaacaaactcacc
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	TRINITY_DN0_c0_g1_i3	TRAV2*01	100.000	248	0	0	0	110	357	1	248	8.27e-110	388
+V	TRINITY_DN0_c0_g1_i3	TRAV2*02	99.597	248	1	0	0	110	357	1	248	7.17e-109	385
+J	TRINITY_DN0_c0_g1_i3	TRAJ10*01	100.000	57	0	0	0	367	423	8	64	2.79e-28	113
+J	TRINITY_DN0_c0_g1_i3	TRAJ44*01	100.000	17	0	0	0	381	397	21	37	2.07e-04	34.2
+
+
+#TCR_B#
+##TRINITY_DN0_c0_g1_i9##
+V segment:	TRBV6-4*01
+D segment:	TRBD1*01
+J segment:	TRBJ1-2*01
+ID:	TRBV6-4_AGTGATCATTCCTCCGGGACAGGGCCCAATGGC_TRBJ1-2
+TPM:	763.48
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	ASSDHSSGTGPNGYT
+CDR3nt:	GCCAGCAGTGATCATTCCTCCGGGACAGGGCCCAATGGCTACACC
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i9	TRBV6-4*01	100.000	284	0	0	0	111	394	1	284	1.04e-126	444
+V	reversed|TRINITY_DN0_c0_g1_i9	TRBV6-4*02	99.645	282	1	0	0	113	394	3	284	7.85e-125	438
+V	reversed|TRINITY_DN0_c0_g1_i9	TRBV6-9*01	78.799	283	60	0	0	113	395	3	285	5.92e-70	255
+V	reversed|TRINITY_DN0_c0_g1_i9	TRBV6-1*01	78.369	282	61	0	0	113	394	3	284	1.51e-68	251
+V	reversed|TRINITY_DN0_c0_g1_i9	TRBV6-5*01	78.571	280	60	0	0	113	392	3	282	1.51e-68	251
+D	reversed|TRINITY_DN0_c0_g1_i9	TRBD1*01	100.000	9	0	0	0	405	413	1	9	0.082	18.4
+D	reversed|TRINITY_DN0_c0_g1_i9	TRBD2*01	100.000	5	0	0	0	405	409	1	5	21	10.4
+D	reversed|TRINITY_DN0_c0_g1_i9	TRBD2*02	100.000	5	0	0	0	405	409	1	5	21	10.4
+D	reversed|TRINITY_DN0_c0_g1_i9	TRBD2*02	100.000	5	0	0	0	404	408	9	13	21	10.4
+J	reversed|TRINITY_DN0_c0_g1_i9	TRBJ1-2*01	100.000	42	0	0	0	418	459	7	48	2.42e-19	83.8
+
+

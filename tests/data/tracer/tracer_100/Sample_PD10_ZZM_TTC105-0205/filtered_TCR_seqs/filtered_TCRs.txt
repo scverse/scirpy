@@ -1,0 +1,29 @@
+------------------
+Sample_PD10_ZZM_TTC105-0205
+------------------
+TCR_A recombinants: 1/1
+TCR_B recombinants: 0/0
+
+
+#TCR_A#
+##TRINITY_DN0_c0_g1_i2##
+V segment:	TRAV27*01
+J segment:	TRAJ28*01
+ID:	TRAV27_AGGAGCCGGCGGGGC_TRAJ28
+TPM:	68.2504
+Productive:	True
+Stop codon:	False
+In frame:	True
+CDR3aa:	AGAGGAGSYQLT
+CDR3nt:	GCAGGAGCCGGCGGGGCTGGGAGTTACCAACTCACT
+
+Segment	query_id	subject_id	% identity	alignment length	mismatches	gap opens	gaps	q start	q end	s start	s end	e value	bit score
+V	reversed|TRINITY_DN0_c0_g1_i2	TRAV27*01	100.000	66	0	0	0	20	85	209	274	9.99e-25	104
+V	reversed|TRINITY_DN0_c0_g1_i2	TRAV27*02	96.875	64	2	0	0	20	83	209	272	6.51e-22	95.3
+V	reversed|TRINITY_DN0_c0_g1_i2	TRAV27*03	98.387	62	1	0	0	20	81	209	270	6.51e-22	95.3
+V	reversed|TRINITY_DN0_c0_g1_i2	TRAV34*01	75.758	66	16	0	0	20	85	209	274	1.02e-09	54.8
+V	reversed|TRINITY_DN0_c0_g1_i2	TRAV25*01	73.438	64	17	0	0	20	83	209	272	7.67e-08	48.6
+J	reversed|TRINITY_DN0_c0_g1_i2	TRAJ28*01	100.000	58	0	0	0	91	148	9	66	3.81e-29	115
+
+
+#TCR_B#
