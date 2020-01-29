@@ -8,3 +8,4 @@ test:
   script:
     - black --check sctcrpy
     - pytest
+    - cd docs && make html
