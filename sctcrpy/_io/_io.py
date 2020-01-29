@@ -9,7 +9,6 @@ import pickle
 import os.path
 from . import tracerlib
 import sys
-from pprint import pprint
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pickling-after-changing-a-modules-directory
@@ -22,6 +21,11 @@ def _check_anndata(adata: AnnData) -> None:
     assert (
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
+
+
+def _tcr_objs_to_anndata(tcr_objs: Collection) -> AnnData:
+    """Convert a list of TcrCells to an AnnData object"""
+    pass
 
 
 def read_10x(path: str, filtered: bool = True) -> AnnData:

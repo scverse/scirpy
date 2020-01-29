@@ -1,4 +1,4 @@
-from sctcrpy.io import read_10x, read_tracer
+from sctcrpy import read_10x, read_tracer
 
 
 def test_read_10x():
