@@ -127,15 +127,7 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
             )
         )
 
-    tcr_df = pd.DataFrame()
-    barcodes, tcr_df["tcr_objs"] = zip(*tcr_objs.items())
-    tcr_df.index = barcodes
-
-    adata = AnnData(obs=tcr_df, X=np.empty([tcr_df.shape[0], 0]))
-
-    _check_anndata(adata)
-
-    return adata
+    return _tcr_objs_to_anndata(tcr_objs.values())
 
 
 def read_tracer(path: str):
@@ -219,12 +211,4 @@ def read_tracer(path: str):
 
         tcr_objs[cell_name] = tcr_obj
 
-    tcr_df = pd.DataFrame()
-    barcodes, tcr_df["tcr_objs"] = zip(*tcr_objs.items())
-    tcr_df.index = barcodes
-
-    adata = AnnData(obs=tcr_df, X=np.empty([tcr_df.shape[0], 0]))
-
-    _check_anndata(adata)
-
-    return adata
+    return _tcr_objs_to_anndata(tcr_objs.values())
