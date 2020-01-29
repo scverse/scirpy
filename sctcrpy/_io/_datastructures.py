@@ -1,3 +1,9 @@
+"""Datastructures for TCR data. 
+
+Currently only used as intermediate storage. 
+See also discussion at https://github.com/theislab/anndata/issues/115
+"""
+
 from .._compat import Literal
 from .._preprocessing import _process_tcr_cell
 
@@ -18,7 +24,7 @@ class TcrChain:
         c_gene: str = None,
         junction_ins: int = None,
     ):
-        """Data structure for a T cell receptor chain. jj
+        """Data structure for a T cell receptor chain. 
         
         Parameters
         ----------
@@ -35,6 +41,14 @@ class TcrChain:
             Raw read count for the CDR3 regions.
         is_productive 
             Is the chain productive?
+        v_gene
+            gene symbol of v gene
+        d_gene
+            gene symbol of d gene
+        j_gene
+            gene symbol of j gene
+        c_gene
+            gene symbol of c gene
         junction_ins
             nucleotides inserted in the junctions. 
             For type == TRA: nucleotides inserted in the VJ junction
@@ -61,6 +75,15 @@ class TcrChain:
 
 class TcrCell:
     def __init__(self, cell_id: str):
+        """Data structure for a Cell with TCR receptors. 
+
+        A TcrCell can hold multiple TcrChains. 
+
+        Parameters
+        ----------
+        cell_id 
+            cell id or barcode.  
+        """
         self._cell_id = cell_id
         self.chains = list()
 
