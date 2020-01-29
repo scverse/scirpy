@@ -28,7 +28,7 @@ def _tcr_objs_to_anndata(tcr_objs: Collection) -> AnnData:
     pass
 
 
-def read_10x(path: str, filtered: bool = True) -> AnnData:
+def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
     """Read TCR data from a 10x genomics sample.
     
     Parameters
