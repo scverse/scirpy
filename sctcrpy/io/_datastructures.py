@@ -49,6 +49,11 @@ class TcrChain:
         self.expr = expr
         self.expr_raw = expr_raw
         self.is_productive = is_productive
+        self.v_gene = v_gene
+        self.d_gene = d_gene
+        self.j_gene = j_gene
+        self.c_gene = c_gene
+        self.junction_ins = junction_ins
 
     def __repr__(self):
         return "TcrChain object: " + str(self.__dict__)
