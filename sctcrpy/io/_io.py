@@ -9,6 +9,7 @@ import pickle
 import os.path
 from . import tracerlib
 import sys
+from pprint import pprint
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pickling-after-changing-a-modules-directory
@@ -52,12 +53,59 @@ def read_10x(path: str, filtered: bool = True) -> AnnData:
         else:
             tcr_obj = tcr_objs[barcode]
 
-        # TODO get the individual genes here...
-        chain_types = [annot["feature"]["chain"] for annot in cell["annotations"]]
-        if len(set(chain_types)) == 1 and chain_types[0] in ["TRA", "TRB"]:
-            chain_type = chain_types[0]
+        genes = dict()
+        mapping = {
+            "L-REGION+V-REGION": "v",
+            "D-REGION": "d",
+            "J-REGION": "j",
+            "C-REGION": "c",
+        }
+        for annot in cell["annotations"]:
+            feat = annot["feature"]
+            if feat["region_type"] in mapping:
+                region = mapping[feat["region_type"]]
+                assert region not in genes, region
+                genes[region] = dict()
+                genes[region]["chain"] = feat["chain"]
+                genes[region]["gene"] = feat["gene_name"]
+                genes[region]["start"] = annot["contig_match_start"]
+                genes[region]["end"] = annot["contig_match_end"]
+
+        v_gene = genes["v"]["gene"] if "v" in genes else None
+        d_gene = genes["d"]["gene"] if "d" in genes else None
+        j_gene = genes["j"]["gene"] if "j" in genes else None
+        c_gene = genes["c"]["gene"] if "c" in genes else None
+
+        # check if chain type is consistent
+        chain_types = [g["chain"] for g in genes.values()]
+        chain_type = chain_types[0] if np.unique(chain_types).size == 1 else "other"
+        # for now, gamma/delta is "other" as well.
+        chain_type = chain_type if chain_type in ["TRA", "TRB"] else "other"
+
+        # compute inserted nucleotides
+        # VJ junction for TRA chains
+        # VD + DJ junction for TRB chains
+        #
+        # Notes on indexing:
+        # some tryouts have shown, that the indexes in the json file
+        # seem to be python-type indexes (i.e. the 'end' index is exclusive).
+        # Therefore, no `-1` needs to be subtracted when computing the number
+        # of inserted nucleotides.
+        if chain_type == "TRA" and v_gene is not None and j_gene is not None:
+            assert d_gene is None, "TRA chains should not have a D region"
+            inserted_nts = genes["j"]["start"] - genes["v"]["end"]
+        elif (
+            chain_type == "TRB"
+            and v_gene is not None
+            and d_gene is not None
+            and j_gene is not None
+        ):
+            inserted_nts = (genes["d"]["start"] - genes["v"]["end"]) + (
+                genes["j"]["start"] - genes["d"]["end"]
+            )
+            assert inserted_nts >= 0, inserted_nts
         else:
-            chain_type = "other"
+            inserted_nts = None
 
         tcr_obj.add_chain(
             TcrChain(
@@ -67,6 +115,11 @@ def read_10x(path: str, filtered: bool = True) -> AnnData:
                 expr=cell["umi_count"],
                 expr_raw=cell["read_count"],
                 is_productive=cell["productive"],
+                v_gene=v_gene,
+                d_gene=d_gene,
+                j_gene=j_gene,
+                c_gene=c_gene,
+                junction_ins=inserted_nts,
             )
         )
 
