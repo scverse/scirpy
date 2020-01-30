@@ -1,0 +1,188 @@
+[
+  {
+    "aa_sequence": "MDTRVLCCAVICLLGAGLSNAGVMQNPRHLVRRRGQEARLRCSPMKGHSHVYWYRQLPEEGLKFMVYLQKENIIDESGMPKERFSAEFPKEGPSILRIQQVVRGDSAAYFCASSPPSQGLSTGELFFGEGSRLTVLEDLKNVFPPEVAVFEPS",
+    "annotations": [
+      {
+        "annotation_length": 347,
+        "annotation_match_end": 347,
+        "annotation_match_start": 0,
+        "cigar": "65S347M114S",
+        "contig_match_end": 412,
+        "contig_match_start": 65,
+        "feature": {
+          "chain": "TRB",
+          "display_name": "TRBV18",
+          "feature_id": 651,
+          "gene_name": "TRBV18",
+          "region_type": "L-REGION+V-REGION"
+        },
+        "mismatches": [],
+        "score": 694
+      },
+      {
+        "annotation_length": 51,
+        "annotation_match_end": 51,
+        "annotation_match_start": 5,
+        "cigar": "428S46M52S",
+        "contig_match_end": 474,
+        "contig_match_start": 428,
+        "feature": {
+          "chain": "TRB",
+          "display_name": "TRBJ2-2",
+          "feature_id": 28,
+          "gene_name": "TRBJ2-2",
+          "region_type": "J-REGION"
+        },
+        "mismatches": [],
+        "score": 92
+      },
+      {
+        "annotation_length": 539,
+        "annotation_match_end": 52,
+        "annotation_match_start": 0,
+        "cigar": "474S52M",
+        "contig_match_end": 526,
+        "contig_match_start": 474,
+        "feature": {
+          "chain": "TRB",
+          "display_name": "TRBC2",
+          "feature_id": 222,
+          "gene_name": "TRBC2",
+          "region_type": "C-REGION"
+        },
+        "mismatches": [],
+        "score": 104
+      },
+      {
+        "annotation_length": 81,
+        "annotation_match_end": 81,
+        "annotation_match_start": 17,
+        "cigar": "1S64M461S",
+        "contig_match_end": 65,
+        "contig_match_start": 1,
+        "feature": {
+          "chain": "TRB",
+          "display_name": "TRBV18",
+          "feature_id": 505,
+          "gene_name": "TRBV18",
+          "region_type": "5'UTR"
+        },
+        "mismatches": [],
+        "score": 128
+      },
+      {
+        "annotation_length": 12,
+        "annotation_match_end": 9,
+        "annotation_match_start": 4,
+        "cigar": "416S5M105S",
+        "contig_match_end": 421,
+        "contig_match_start": 416,
+        "feature": {
+          "chain": "TRB",
+          "display_name": "TRBD1",
+          "feature_id": 106,
+          "gene_name": "TRBD1",
+          "region_type": "D-REGION"
+        },
+        "mismatches": [],
+        "score": 10
+      }
+    ],
+    "barcode": "AAACCTGAGACCTTTG-1",
+    "cdr3": "CASSPPSQGLSTGELFF",
+    "cdr3_seq": "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT",
+    "cdr3_start": 395,
+    "cdr3_stop": 446,
+    "clonotype": null,
+    "contig_name": "AAACCTGAGACCTTTG-1_contig_1",
+    "filtered": true,
+    "frame": null,
+    "high_confidence": true,
+    "info": {},
+    "is_cell": false,
+    "primer_annotations": [],
+    "productive": true,
+    "quals": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+    "read_count": 494,
+    "sequence": "GCCCCGACGTGCTGCAGCAAGTGCCTTTGCCCTGCCTGTGGGCTCCCTCCATGGCCAACTCTGCTATGGACACCAGAGTACTCTGCTGTGCGGTCATCTGTCTTCTGGGGGCAGGTCTCTCAAATGCCGGCGTCATGCAGAACCCAAGACACCTGGTCAGGAGGAGGGGACAGGAGGCAAGACTGAGATGCAGCCCAATGAAAGGACACAGTCATGTTTACTGGTATCGGCAGCTCCCAGAGGAAGGTCTGAAATTCATGGTTTATCTCCAGAAAGAAAATATCATAGATGAGTCAGGAATGCCAAAGGAACGATTTTCTGCTGAATTTCCCAAAGAGGGCCCCAGCATCCTGAGGATCCAGCAGGTAGTGCGAGGAGATTCGGCAGCTTATTTCTGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTTGGAGAAGGCTCTAGGCTGACCGTACTGGAGGACCTGAAAAACGTGTTCCCACCCGAGGTCGCTGTGTTTGAGCCATCAGA",
+    "start_codon_pos": 65,
+    "stop_codon_pos": null,
+    "umi_count": 1
+  },
+  {
+    "aa_sequence": "MSDAAEYFCAVSDRGTGGFKTIFGAGTRLFVKANIQNPDPAVYQLRD",
+    "annotations": [
+      {
+        "annotation_length": 341,
+        "annotation_match_end": 341,
+        "annotation_match_start": 45,
+        "cigar": "18S296M104S",
+        "contig_match_end": 314,
+        "contig_match_start": 18,
+        "feature": {
+          "chain": "TRA",
+          "display_name": "TRAV8-4",
+          "feature_id": 331,
+          "gene_name": "TRAV8-4",
+          "region_type": "L-REGION+V-REGION"
+        },
+        "mismatches": [],
+        "score": 592
+      },
+      {
+        "annotation_length": 61,
+        "annotation_match_end": 61,
+        "annotation_match_start": 5,
+        "cigar": "320S56M42S",
+        "contig_match_end": 376,
+        "contig_match_start": 320,
+        "feature": {
+          "chain": "TRA",
+          "display_name": "TRAJ9",
+          "feature_id": 205,
+          "gene_name": "TRAJ9",
+          "region_type": "J-REGION"
+        },
+        "mismatches": [],
+        "score": 112
+      },
+      {
+        "annotation_length": 422,
+        "annotation_match_end": 42,
+        "annotation_match_start": 0,
+        "cigar": "376S42M",
+        "contig_match_end": 418,
+        "contig_match_start": 376,
+        "feature": {
+          "chain": "TRA",
+          "display_name": "TRAC",
+          "feature_id": 422,
+          "gene_name": "TRAC",
+          "region_type": "C-REGION"
+        },
+        "mismatches": [],
+        "score": 84
+      }
+    ],
+    "barcode": "AAACCTGAGACTCGGA-1",
+    "cdr3": "CAVSDRGTGGFKTIF",
+    "cdr3_seq": "TGTGCTGTGAGTGATCGGGGTACTGGAGGCTTCAAAACTATCTTT",
+    "cdr3_start": 300,
+    "cdr3_stop": 345,
+    "clonotype": null,
+    "contig_name": "AAACCTGAGACTCGGA-1_contig_1",
+    "filtered": true,
+    "frame": null,
+    "high_confidence": true,
+    "info": {},
+    "is_cell": false,
+    "primer_annotations": [],
+    "productive": true,
+    "quals": "HHIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+    "read_count": 785,
+    "sequence": "GGGAGCATTGGTGTTGCAGGAGGAACCAGAGCCCAGTCGGTGACCCAGCTTGGCAGCCACGTCTCTGTCTCTGAAGGAGCCCTGGTTCTGCTGAGGTGCAACTACTCATCGTCTGTTCCACCATATCTCTTCTGGTATGTGCAATACCCCAACCAAGGACTCCAGCTTCTCCTGAAGTACACATCAGCGGCCACCCTGGTTAAAGGCATCAACGGTTTTGAGGCTGAATTTAAGAAGAGTGAAACCTCCTTCCACCTGACGAAACCCTCAGCCCATATGAGCGACGCGGCTGAGTACTTCTGTGCTGTGAGTGATCGGGGTACTGGAGGCTTCAAAACTATCTTTGGAGCAGGAACAAGACTATTTGTTAAAGCAAATATCCAGAACCCTGACCCTGCCGTGTACCAGCTGAGAGACT",
+    "start_codon_pos": 276,
+    "stop_codon_pos": null,
+    "umi_count": 1
+  }
+]
