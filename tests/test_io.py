@@ -1,5 +1,9 @@
-from sctcrpy._io import read_10x
+from sctcrpy import read_10x_vdj, read_tracer
 
 
 def test_read_10x():
-    anndata = read_10x("tests/data/10x/vdbg_141_tcr_filtered_contig_annotations.csv")
+    anndata = read_10x_vdj("tests/data/10x/all_contig_annotations.json")
+
+
+def test_read_tracer():
+    anndata = read_tracer("tests/data/tracer/tracer_100")

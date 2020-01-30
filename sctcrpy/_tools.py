@@ -5,6 +5,57 @@ from anndata import AnnData
 import pandas as pd
 
 
+def define_clonotypes(adata: AnnData, *, flavor: str = "paired") -> None:
+    """Define clonotypes based on CDR3 region. 
+
+    Parameters
+    ----------
+    adata
+    flavor
+        Currently, only "paried" is supported. 
+    
+    """
+    assert flavor == "paired", "Other flavors currently not supported"
+    clonotypes = dict()
+    i = 0
+    clonotype_col = []
+    for tcr_obj in adata.obs["tcr_objs"]:
+        if pd.isnull(tcr_obj):
+            clonotype_col.append()
+
+        else:
+            tra_chains = sorted(
+                [x for x in tcr_obj.chains if x.chain_type == "TRA"],
+                key=lambda x: x.expr,
+                reverse=True,
+            )
+            trb_chains = sorted(
+                [x for x in tcr_obj.chains if x.chain_type == "TRB"],
+                key=lambda x: x.expr,
+                reverse=True,
+            )
+            assert len(tra_chains) <= 2, "Too many TRA chains. Filter chains first. "
+            assert len(trb_chains) <= 2, "Too many TRB chains, Filter chains first. "
+
+            tra_cdrs = [x.cdr3 for x in tra_chains]
+            trb_cdrs = [x.cdr3 for x in trb_chains]
+            tra_cdrs += [None] * (2 - len(tra_cdrs))
+            trb_cdrs += [None] * (2 - len(trb_cdrs))
+
+            clonotype_tuple = (*tra_cdrs, *trb_cdrs)
+
+            if clonotype_tuple in clonotypes:
+                clonotype_id = clonotypes[clonotype_tuple]
+            else:
+                i += 1
+                clonotype_id = "clonotype_{}".format(i)
+                clonotypes[clonotype_tuple] = clonotype_id
+
+            clonotype_col.append(clonotype_id)
+
+    adata.obs["tcr_clonotype"] = clonotype_col
+
+
 def tcr_dist(
     adata: AnnData,
     *,

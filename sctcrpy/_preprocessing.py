@@ -45,26 +45,14 @@ def merge_with_tcr(
     )
 
 
-def define_clonotypes(adata: AnnData, *, flavor: str = "paired") -> None:
-    """Define clonotypes based on CDR3 region. 
+def filter_tcrs(adata: AnnData, mask):
+    """remove certain TCRs, but keep the cells
     
     Parameters
     ----------
-    adata
-    flavor
-        Currently, only "paried" is supported. 
-    
+    adata : AnnData
+        [description]
+    mask : [chain_type]
+        [description]
     """
-    assert flavor == "paired", "Other flavors currently not supported"
-
-    clonotype_col = np.array(
-        [
-            "clonotype_{}".format(x)
-            for x in adata.obs.groupby(
-                ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"]
-            ).ngroup()
-        ]
-    )
-    # TODO this check needs to be improved (or make sure that it's always categorical)
-    clonotype_col[adata.obs["has_tcr"] != "True"] = np.nan
-    adata.obs["clonotype"] = clonotype_col
+    pass
