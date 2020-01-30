@@ -15,7 +15,7 @@ Input/Output
    :toctree: .
 
    read_h5ad
-   read_10x
+   read_10x_vdj
    read_tracer
 
 
