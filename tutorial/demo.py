@@ -123,3 +123,6 @@ sc.pl.umap(
 )
 
 # %%
+sc.pl.violin(adata, ["TRA_1_cdr3_len", "TRA_1_junction_ins"], groupby="TRA_1_cdr3_len")
+
+# %%
