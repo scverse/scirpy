@@ -58,6 +58,7 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     """
     res_dict = dict()
     res_dict["cell_id"] = tcr_obj.cell_id
+    res_dict["has_tcr"] = True
     chain_dict = dict()
     for c in ["TRA", "TRB"]:
         tmp_chains = sorted(
