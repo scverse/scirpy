@@ -11,7 +11,7 @@ from . import tracerlib
 import sys
 
 # patch sys.modules to enable pickle import.
-# see https://stackoverflow.com/questions/2121874/python-pickling-after-changing-a-modules-directory
+# see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = tracerlib
 
 
@@ -82,6 +82,7 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
         "d_gene",
         "j_gene",
         "c_gene",
+        "cdr3_nt",
     ]:
         for c, tmp_chains in chain_dict.items():
             for i, chain in enumerate(tmp_chains):
@@ -278,5 +279,12 @@ def read_tracer(path: str) -> AnnData:
                     tcr_obj.add_chain(tmp_chain)
 
         tcr_objs[cell_name] = tcr_obj
+
+    if not len(tcr_objs):
+        raise IOError(
+            "Could not find any TraCeR *.pkl files. Make sure you are "
+            "using a TraCeR output folder that looks like "
+            "<CELL>/filtered_TCR_seqs/*.pkl"
+        )
 
     return _tcr_objs_to_anndata(tcr_objs.values())
