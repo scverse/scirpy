@@ -85,7 +85,7 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     ]:
         for c, tmp_chains in chain_dict.items():
             for i, chain in enumerate(tmp_chains):
-                res_dict["{}_{}_{}".format(c, i, key)] = (
+                res_dict["{}_{}_{}".format(c, i + 1, key)] = (
                     getattr(chain, key) if chain is not None else None
                 )
 

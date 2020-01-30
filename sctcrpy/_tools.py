@@ -3,57 +3,37 @@ import parasail
 import numpy as np
 from anndata import AnnData
 import pandas as pd
+from ._util import _is_na
 
 
-def define_clonotypes(adata: AnnData, *, flavor: str = "paired") -> None:
-    """Define clonotypes based on CDR3 region. 
+def define_clonotypes(adata: AnnData) -> None:
+    """Define clonotypes based on CDR3 region.
+
+    The current definition of a clonotype is
+    same CDR3 sequence for both primary and secondary
+    TRA and TRB chains. 
 
     Parameters
     ----------
     adata
     flavor
         Currently, only "paried" is supported. 
+
+    Returns
+    -------
+    Nothing, but adds a column `clonotype` to `adata.obs`. 
     
     """
-    assert flavor == "paired", "Other flavors currently not supported"
-    clonotypes = dict()
-    i = 0
-    clonotype_col = []
-    for tcr_obj in adata.obs["tcr_objs"]:
-        if pd.isnull(tcr_obj):
-            clonotype_col.append()
-
-        else:
-            tra_chains = sorted(
-                [x for x in tcr_obj.chains if x.chain_type == "TRA"],
-                key=lambda x: x.expr,
-                reverse=True,
-            )
-            trb_chains = sorted(
-                [x for x in tcr_obj.chains if x.chain_type == "TRB"],
-                key=lambda x: x.expr,
-                reverse=True,
-            )
-            assert len(tra_chains) <= 2, "Too many TRA chains. Filter chains first. "
-            assert len(trb_chains) <= 2, "Too many TRB chains, Filter chains first. "
-
-            tra_cdrs = [x.cdr3 for x in tra_chains]
-            trb_cdrs = [x.cdr3 for x in trb_chains]
-            tra_cdrs += [None] * (2 - len(tra_cdrs))
-            trb_cdrs += [None] * (2 - len(trb_cdrs))
-
-            clonotype_tuple = (*tra_cdrs, *trb_cdrs)
-
-            if clonotype_tuple in clonotypes:
-                clonotype_id = clonotypes[clonotype_tuple]
-            else:
-                i += 1
-                clonotype_id = "clonotype_{}".format(i)
-                clonotypes[clonotype_tuple] = clonotype_id
-
-            clonotype_col.append(clonotype_id)
-
-    adata.obs["tcr_clonotype"] = clonotype_col
+    clonotype_col = np.array(
+        [
+            "clonotype_{}".format(x)
+            for x in adata.obs.groupby(
+                ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"]
+            ).ngroup()
+        ]
+    )
+    clonotype_col[adata.obs["has_tcr"] != "True"] = np.nan
+    adata.obs["clonotype"] = clonotype_col
 
 
 def tcr_dist(
@@ -78,12 +58,8 @@ def tcr_dist(
     """
     # TODO parallelize
     for chain in ["TRA", "TRB"]:
-        unique_cdr3s = unique_alpha = (
-            # TODO here we have a problem again with the categorical "nan"
-            adata.obs["{}_1_cdr3".format(chain)]
-            .dropna()
-            .unique()
-        )
+        col = "{}_1_cdr3".format(chain)
+        unique_cdr3s = adata.obs.loc[_is_na(adata.obs[col]), col].unique()
 
         dist_mat = np.empty([len(unique_cdr3s)] * 2)
 
@@ -115,7 +91,6 @@ def alpha_diversity(adata: AnnData, key: str, *, flavor="shannon", inplace=True)
         np.testing.assert_almost_equal(np.sum(freq), 1)
         return -np.sum(freq * np.log2(freq))
 
-    # TODO #8
     tcr_obs = adata.obs.loc[adata.obs["has_tcr"] == "True", :]
     clono_counts = tcr_obs.groupby([key, "clonotype"]).size().reset_index(name="count")
 
