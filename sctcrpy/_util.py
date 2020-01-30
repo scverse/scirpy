@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from textwrap import dedent
 
 
 def _is_na(x):
@@ -33,3 +34,16 @@ def _is_false(x):
         ((x == "False") | (x == "false") | (x == "0") | ~np.bool_(x))
         & ~np.bool_(_is_na(x))
     )
+
+
+def _doc_params(**kwds):
+    """\
+    Docstrings should start with "\" in the first line for proper formatting.
+    """
+
+    def dec(obj):
+        obj.__orig_doc__ = obj.__doc__
+        obj.__doc__ = dedent(obj.__doc__).format_map(kwds)
+        return obj
+
+    return dec
