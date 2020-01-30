@@ -5,7 +5,6 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from .._compat import Literal
-from .._preprocessing import _process_tcr_cell
 
 
 class TcrChain:
@@ -72,6 +71,10 @@ class TcrChain:
     def __repr__(self):
         return "TcrChain object: " + str(self.__dict__)
 
+    @property
+    def cdr3_len(self):
+        return len(self.cdr3) if self.cdr3 is not None else None
+
 
 class TcrCell:
     def __init__(self, cell_id: str):
@@ -96,9 +99,3 @@ class TcrCell:
 
     def add_chain(self, chain: TcrChain):
         self.chains.append(chain)
-
-    def to_series(self):
-        """Convert the raw data to our working definition of a T cell receptor 
-        in column format. 
-        """
-        return _process_tcr_cell(self)
