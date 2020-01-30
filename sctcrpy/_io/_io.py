@@ -15,17 +15,80 @@ import sys
 sys.modules["tracerlib"] = tracerlib
 
 
-def _check_anndata(adata: AnnData) -> None:
-    """Sanity checks on loaded data. Should be executed by 
-    every read_xxx function"""
+def _sanitize_anndata(adata: AnnData) -> None:
+    """Sanitization and sanity checks on TCR-anndata object. 
+    Should be executed by every read_xxx function"""
     assert (
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
+    adata._sanitize()
 
 
 def _tcr_objs_to_anndata(tcr_objs: Collection) -> AnnData:
     """Convert a list of TcrCells to an AnnData object"""
-    pass
+    tcr_df = pd.DataFrame.from_records(
+        (_process_tcr_cell(x) for x in tcr_objs), index="cell_id"
+    )
+    adata = AnnData(obs=tcr_df, X=np.empty([tcr_df.shape[0], 0]))
+    _sanitize_anndata(adata)
+    return adata
+
+
+def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
+    """Filter chains to our working model of TCRs
+
+    i.e.
+     * There are only alpha and beta chains
+     * each cell can contain at most two alpha and two beta chains
+     * remove non-productive chains
+     * if there are more than four chains, the most abundant ones will be taken. 
+       Such cells will be flagged with 'multi_chain' = True
+
+    
+    Parameters
+    ----------
+    tcr_obj
+        TcrCell object to process
+
+    Returns
+    -------
+    Dictionary representing one row of the final `AnnData.obs` 
+    data frame. 
+    
+    """
+    res_dict = dict()
+    res_dict["cell_id"] = tcr_obj.cell_id
+    chain_dict = dict()
+    for c in ["TRA", "TRB"]:
+        tmp_chains = sorted(
+            [x for x in tcr_obj.chains if x.chain_type == c and x.is_productive],
+            key=lambda x: x.expr,
+            reverse=True,
+        )
+        res_dict["multi_chain"] = len(tmp_chains) > 2
+        # slice to max two chains
+        tmp_chains = tmp_chains[:2]
+        # add None if less than two chains
+        tmp_chains += [None] * (2 - len(tmp_chains))
+        chain_dict[c] = tmp_chains
+
+    for key in [
+        "cdr3",
+        "cdr3_len",
+        "junction_ins",
+        "expr",
+        "v_gene",
+        "d_gene",
+        "j_gene",
+        "c_gene",
+    ]:
+        for c, tmp_chains in chain_dict.items():
+            for i, chain in enumerate(tmp_chains):
+                res_dict["{}_{}_{}".format(c, i, key)] = (
+                    getattr(chain, key) if chain is not None else None
+                )
+
+    return res_dict
 
 
 def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
@@ -130,7 +193,7 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
     return _tcr_objs_to_anndata(tcr_objs.values())
 
 
-def read_tracer(path: str):
+def read_tracer(path: str) -> AnnData:
     """Read data from TraCeR. 
 
     Requires the TraCeR output directory containing a folder for each cell. 
@@ -142,7 +205,11 @@ def read_tracer(path: str):
     Parameters
     ----------
     path
-        Path to the TraCeR output folder. 
+        Path to the TraCeR output folder.
+
+    Returns
+    -------
+    AnnData object with TCR data in `obs` for each cell. 
     """
     tcr_objs = {}
 
