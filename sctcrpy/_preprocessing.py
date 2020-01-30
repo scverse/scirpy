@@ -23,6 +23,8 @@ def merge_with_tcr(
     `.obs` will be merged using `pandas.merge`. Additional kwargs are passed to 
     `pandas.merge`. 
     
+    Parameters
+    ----------
     adata
         AnnData with the transcriptomics data. Will be modified inplace. 
     adata_tcr
@@ -55,4 +57,4 @@ def filter_tcrs(adata: AnnData, mask):
     mask : [chain_type]
         [description]
     """
-    pass
+    assert False, "not implemented"
