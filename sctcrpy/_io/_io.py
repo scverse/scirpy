@@ -20,14 +20,14 @@ doc_working_model = """\
     model for TCRs. 
 
     Simplifying assumptions: 
-    * There are only alpha and beta chains
-    * each cell can contain at most two alpha and two beta chains
-    * non-productive chains are not relevant
+     * There are only alpha and beta chains
+     * each cell can contain at most two alpha and two beta chains
+     * non-productive chains are not relevant
 
     These assumptions lead to the following filtering rules:
-    * All chains that are not of type "TRA" or "TRB" will be removed. 
-    * Non-productive chains will be removed. 
-    * if there are more than two non-produrvice chains for either TRA/TRB,
+     * All chains that are not of type "TRA" or "TRB" will be removed. 
+     * Non-productive chains will be removed. 
+     * if there are more than two non-produrvice chains for either TRA/TRB,
     the least abundant ones (by `expr`) will be removed until 
     there are only two left. Cells that had chains removed are flagged
     with 'multi_chain' = True. 
@@ -69,7 +69,6 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     -------
     Dictionary representing one row of the final `AnnData.obs` 
     data frame. 
-    
     """
     res_dict = dict()
     res_dict["cell_id"] = tcr_obj.cell_id
@@ -120,7 +119,6 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
         Path to all_contig_annotations.json
     filtered
         Only keep filtered contig annotations (= is_cell and high_confidence)
-
 
     Returns
     -------
