@@ -15,22 +15,22 @@ from .._util import _doc_params
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = tracerlib
 
-doc_working_model = """\
-    Filters and processes cells according to our current working 
-    model for TCRs. 
+doc_working_model = """Filters and processes
+cells according to our current working 
+model for TCRs. 
 
-    Simplifying assumptions: 
-     * There are only alpha and beta chains
-     * each cell can contain at most two alpha and two beta chains
-     * non-productive chains are not relevant
+Simplifying assumptions: 
+ * There are only alpha and beta chains
+ * each cell can contain at most two alpha and two beta chains
+ * non-productive chains are not relevant
 
-    These assumptions lead to the following filtering rules:
-     * All chains that are not of type "TRA" or "TRB" will be removed. 
-     * Non-productive chains will be removed. 
-     * if there are more than two non-produrvice chains for either TRA/TRB,
-    the least abundant ones (by `expr`) will be removed until 
-    there are only two left. Cells that had chains removed are flagged
-    with 'multi_chain' = True. 
+These assumptions lead to the following filtering rules:
+ * All chains that are not of type "TRA" or "TRB" will be removed. 
+ * Non-productive chains will be removed. 
+ * if there are more than two non-produrvice chains for either TRA/TRB,
+the least abundant ones (by `expr`) will be removed until 
+there are only two left. Cells that had chains removed are flagged
+with 'multi_chain' = True. 
 """
 
 
