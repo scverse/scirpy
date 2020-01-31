@@ -28,7 +28,6 @@ Preprocessing: `pp`
    :toctree: .
 
    merge_with_tcr
-   define_clonotypes
 
 
 Tools: `tl`
@@ -39,6 +38,7 @@ Tools: `tl`
 .. autosummary::
    :toctree: .
 
+   define_clonotypes
    tcr_dist 
    alpha_diversity
 

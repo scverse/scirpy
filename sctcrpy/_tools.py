@@ -3,7 +3,7 @@ import parasail
 import numpy as np
 from anndata import AnnData
 import pandas as pd
-from ._util import _is_na
+from ._util import _is_na, _is_true
 
 
 def define_clonotypes(adata: AnnData) -> None:
@@ -32,7 +32,7 @@ def define_clonotypes(adata: AnnData) -> None:
             ).ngroup()
         ]
     )
-    clonotype_col[adata.obs["has_tcr"] != "True"] = np.nan
+    clonotype_col[_is_false(adata.obs["has_tcr"])] = np.nan
     adata.obs["clonotype"] = clonotype_col
 
 
@@ -91,7 +91,7 @@ def alpha_diversity(adata: AnnData, key: str, *, flavor="shannon", inplace=True)
         np.testing.assert_almost_equal(np.sum(freq), 1)
         return -np.sum(freq * np.log2(freq))
 
-    tcr_obs = adata.obs.loc[adata.obs["has_tcr"] == "True", :]
+    tcr_obs = adata.obs.loc[_is_true(adata.obs["has_tcr"]), :]
     clono_counts = tcr_obs.groupby([key, "clonotype"]).size().reset_index(name="count")
 
     diversity = dict()

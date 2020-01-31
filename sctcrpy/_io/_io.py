@@ -9,10 +9,29 @@ import pickle
 import os.path
 from . import tracerlib
 import sys
+from .._util import _doc_params
 
 # patch sys.modules to enable pickle import.
-# see https://stackoverflow.com/questions/2121874/python-pickling-after-changing-a-modules-directory
+# see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = tracerlib
+
+doc_working_model = """Filters and processes
+cells according to our current working 
+model for TCRs. 
+
+Simplifying assumptions: 
+ * There are only alpha and beta chains
+ * each cell can contain at most two alpha and two beta chains
+ * non-productive chains are not relevant
+
+These assumptions lead to the following filtering rules:
+ * All chains that are not of type "TRA" or "TRB" will be removed. 
+ * Non-productive chains will be removed. 
+ * if there are more than two non-produrvice chains for either TRA/TRB,
+the least abundant ones (by `expr`) will be removed until 
+there are only two left. Cells that had chains removed are flagged
+with 'multi_chain' = True. 
+"""
 
 
 def _sanitize_anndata(adata: AnnData) -> None:
@@ -34,16 +53,12 @@ def _tcr_objs_to_anndata(tcr_objs: Collection) -> AnnData:
     return adata
 
 
+@_doc_params(doc_working_model=doc_working_model)
 def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
-    """Filter chains to our working model of TCRs
+    """Process a TcrCell object into a dictionary according
+    to wour working model of TCRs. 
 
-    i.e.
-     * There are only alpha and beta chains
-     * each cell can contain at most two alpha and two beta chains
-     * remove non-productive chains
-     * if there are more than four chains, the most abundant ones will be taken. 
-       Such cells will be flagged with 'multi_chain' = True
-
+    {doc_working_model}
     
     Parameters
     ----------
@@ -54,7 +69,6 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     -------
     Dictionary representing one row of the final `AnnData.obs` 
     data frame. 
-    
     """
     res_dict = dict()
     res_dict["cell_id"] = tcr_obj.cell_id
@@ -82,6 +96,7 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
         "d_gene",
         "j_gene",
         "c_gene",
+        "cdr3_nt",
     ]:
         for c, tmp_chains in chain_dict.items():
             for i, chain in enumerate(tmp_chains):
@@ -92,8 +107,11 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     return res_dict
 
 
+@_doc_params(doc_working_model=doc_working_model)
 def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
     """Read TCR data from a 10x genomics sample.
+
+    {doc_working_model}
     
     Parameters
     ----------
@@ -101,7 +119,6 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
         Path to all_contig_annotations.json
     filtered
         Only keep filtered contig annotations (= is_cell and high_confidence)
-
 
     Returns
     -------
@@ -194,6 +211,7 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
     return _tcr_objs_to_anndata(tcr_objs.values())
 
 
+@_doc_params(doc_working_model=doc_working_model)
 def read_tracer(path: str) -> AnnData:
     """Read data from TraCeR. 
 
@@ -202,6 +220,8 @@ def read_tracer(path: str) -> AnnData:
     contain all required information.
 
     Will read from `filtered_TCR_seqs/<CELL_ID>.pkl` 
+
+    {doc_working_model}
     
     Parameters
     ----------
@@ -278,5 +298,12 @@ def read_tracer(path: str) -> AnnData:
                     tcr_obj.add_chain(tmp_chain)
 
         tcr_objs[cell_name] = tcr_obj
+
+    if not len(tcr_objs):
+        raise IOError(
+            "Could not find any TraCeR *.pkl files. Make sure you are "
+            "using a TraCeR output folder that looks like "
+            "<CELL>/filtered_TCR_seqs/*.pkl"
+        )
 
     return _tcr_objs_to_anndata(tcr_objs.values())
