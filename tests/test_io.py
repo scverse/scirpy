@@ -45,7 +45,7 @@ def test_read_10x():
     assert cell2["TRA_2_cdr3"] == "CATDAKDSNYQLIW"
     assert cell2["TRA_1_expr"] == 9
     assert cell2["TRA_2_expr"] == 4
-    assert np.all(_is_na(cell2[["TRB_1_cdr3", "TRB_2_cdre"]]))
+    assert np.all(_is_na(cell2[["TRB_1_cdr3", "TRB_2_cdr3"]]))
     assert cell2["TRA_1_junction_ins"] == 4
     assert cell2["TRA_2_junction_ins"] == 4
 
