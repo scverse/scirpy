@@ -35,5 +35,7 @@ doc = [
     'sphinx>=2',
     'sphinx_autodoc_typehints>=1.8.0',
     'sphinx_rtd_theme>=0.4',
-    'scanpydoc'
+    'scanpydoc',
+    # for tutorial
+    'leidenalg'
 ]
