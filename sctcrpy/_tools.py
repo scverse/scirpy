@@ -17,7 +17,9 @@ def _add_to_uns(adata: AnnData, tool: str, result_dict: dict) -> None:
         adata.uns["sctcrpy"][tool] = result_dict
 
 
-def define_clonotypes(adata: AnnData, inplace: bool = True) -> Union[None, pd.Series]:
+def define_clonotypes(
+    adata: AnnData, *, inplace: bool = True, key_added: str = "clonotype"
+) -> Union[None, np.ndarray]:
     """Define clonotypes based on CDR3 region.
 
     The current definition of a clonotype is
@@ -28,8 +30,10 @@ def define_clonotypes(adata: AnnData, inplace: bool = True) -> Union[None, pd.Se
     ----------
     adata
         Annotated data matrix
-    flavor
-        Currently, only "paried" is supported. 
+    inplace
+        If True, adds a column to adata.obs
+    key_added
+        Column name to add to 'obs'
 
     Returns
     -------
@@ -46,10 +50,15 @@ def define_clonotypes(adata: AnnData, inplace: bool = True) -> Union[None, pd.Se
             ).ngroup()
         ]
     )
-    clonotype_col[_is_false(adata.obs["has_tcr"])] = np.nan
+    clonotype_col[
+        _is_na(adata.obs["TRA_1_cdr3"])
+        & _is_na(adata.obs["TRA_2_cdr3"])
+        & _is_na(adata.obs["TRB_1_cdr3"])
+        & _is_na(adata.obs["TRB_2_cdr3"])
+    ] = np.nan
 
     if inplace:
-        adata.obs["clonotype"] = clonotype_col
+        adata.obs[key_added] = clonotype_col
     else:
         return clonotype_col
 
