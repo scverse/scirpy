@@ -2,10 +2,34 @@ import pandas as pd
 import sctcrpy as st
 from scanpy import AnnData
 import pytest
+import numpy.testing as npt
+import numpy as np
 
 
 def test_define_clonotypes():
-    pass
+    obs = pd.DataFrame.from_records(
+        [
+            ["cell1", "AAAA", "nan", "nan", "nan"],
+            ["cell2", "nan", "nan", "nan", "nan"],
+            ["cell3", "AAAA", "nan", "nan", "nan"],
+            ["cell4", "AAAA", "BBBB", "nan", "nan"],
+            ["cell5", "nan", "nan", "CCCC", "DDDD"],
+        ],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+
+    res = st.tl.define_clonotypes(adata, inplace=False)
+    npt.assert_equal(
+        # order is by alphabet: BBBB < nan
+        # we don't care about the order of numbers, so this is ok.
+        res,
+        ["clonotype_1", np.nan, "clonotype_1", "clonotype_0", "clonotype_2"],
+    )
+
+    # test inplace
+    st.tl.define_clonotypes(adata, key_added="clonotype_")
+    npt.assert_equal(res, adata.obs["clonotype_"].values)
 
 
 def test_alpha_diversity():
