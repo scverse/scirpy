@@ -28,10 +28,10 @@ import scanpy as sc
 # ## Read in the TCR data
 
 # %%
-adata_vdj = st.read_10x_vdj("../tests/data/10x/all_contig_annotations.json")
+adata_vdj = st.read_10x_vdj("../tutorial/example_data/10x/all_contig_annotations.json")
 
 # %%
-adata_tracer = st.read_tracer("../tests/data/tracer/tracer_100/")
+adata_tracer = st.read_tracer("../tutorial/example_data/tracer/tracer_100/")
 
 # %% [markdown]
 # The sample is a `AnnData` object with all TCR information stored in `.obs` and an empty gene expression matrix `X`.
@@ -48,7 +48,9 @@ adata_tracer.obs
 # Let's now read in the corresponding transcriptomics data (for the 10x sample) with scanpy and combine it with TCR data.
 
 # %%
-adata = sc.read_10x_h5("../tests/data/10x/vdbg_141_gex_filtered_feature_bc_matrix.h5")
+adata = sc.read_10x_h5(
+    "../tutorial/example_data/10x/vdbg_141_gex_filtered_feature_bc_matrix.h5"
+)
 
 # %%
 adata
@@ -116,13 +118,31 @@ sc.pl.umap(
         "CD4",
         "leiden",
         "multi_chain",
-        "TRA_0_cdr3_len",
-        "TRA_0_junction_ins",
+        "TRA_1_cdr3_len",
+        "TRA_1_junction_ins",
     ],
     ncols=3,
 )
 
 # %%
-sc.pl.violin(adata, ["TRA_1_cdr3_len", "TRA_1_junction_ins"], groupby="TRA_1_cdr3_len")
+sc.pl.violin(adata, ["TRA_1_cdr3_len", "TRA_1_junction_ins"], groupby="leiden")
+
+# %% [markdown]
+# ## Apply TCR-basesd tools
+
+# %%
+st.tl.define_clonotypes(adata)
+
+# %%
+st.tl.alpha_diversity(adata, groupby="leiden")
+
+# %%
+st.pl.alpha_diversity(adata, groupby="leiden")
+
+# %%
+st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
+
+# %%
+st.pl.clonal_expansion(adata, groupby="leiden")
 
 # %%

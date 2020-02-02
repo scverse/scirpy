@@ -3,18 +3,7 @@ import numpy as np
 from anndata import AnnData
 import pandas as pd
 from typing import Union
-from ._util import _is_na, _is_true, _is_false
-
-
-def _add_to_uns(adata: AnnData, tool: str, result_dict: dict) -> None:
-    """Store results of a tool in `adata.uns`."""
-    assert isinstance(result_dict, dict)
-    if "sctcrpy" not in adata.uns:
-        adata.uns["sctcrpy"] = dict()
-    if tool in adata.uns["sctcrpy"]:
-        adata.uns["sctcrpy"]["tool"].update(result_dict)
-    else:
-        adata.uns["sctcrpy"][tool] = result_dict
+from ._util import _is_na, _add_to_uns
 
 
 def define_clonotypes(
@@ -143,11 +132,15 @@ def alpha_diversity(
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)
 
-    result_dict = {"groupby": groupby, "target_col": target_col, "diversity": diversity}
     if inplace:
-        _add_to_uns(adata, "alpha_diversity", result_dict)
+        _add_to_uns(
+            adata,
+            "alpha_diversity",
+            diversity,
+            parameters={"groupby": groupby, "target_col": target_col},
+        )
     else:
-        return result_dict
+        return diversity
 
 
 def clonal_expansion(
@@ -209,6 +202,16 @@ def clonal_expansion(
             result_dict[group][label] = tmp_count
 
     if inplace:
-        _add_to_uns(adata, "clonal_expansion", result_dict)
+        _add_to_uns(
+            adata,
+            "clonal_expansion",
+            result_dict,
+            parameters={
+                "groupby": groupby,
+                "target_col": target_col,
+                "clip_at": clip_at,
+                "fraction": fraction,
+            },
+        )
     else:
         return result_dict
