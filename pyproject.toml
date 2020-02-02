@@ -20,7 +20,8 @@ requires-python = '>= 3.6'
 requires = [
     'get_version',
     'scanpy',
-    'pandas',
+    # pandas <1 until scanpy is fully compatible...
+    'pandas<1',
     'numpy',
     'parasail'
 ]

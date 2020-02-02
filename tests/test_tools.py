@@ -4,6 +4,7 @@ from scanpy import AnnData
 import pytest
 import numpy.testing as npt
 import numpy as np
+from sctcrpy._util import _get_from_uns
 
 
 def test_define_clonotypes():
@@ -51,11 +52,18 @@ def test_alpha_diversity():
     res = st.tl.alpha_diversity(
         adata, groupby="group", target_col="clonotype_", inplace=False
     )
-    assert res["diversity"] == {"A": 0, "B": 2}
+    assert res == {"A": 0, "B": 2}
 
     # test that inplace works
     st.tl.alpha_diversity(adata, groupby="group", target_col="clonotype_")
-    assert adata.uns["sctcrpy"]["alpha_diversity"] == res
+    assert (
+        _get_from_uns(
+            adata,
+            "alpha_diversity",
+            parameters={"groupby": "group", "target_col": "clonotype_"},
+        )
+        == res
+    )
 
 
 def test_clonal_expansion():
@@ -85,16 +93,32 @@ def test_clonal_expansion():
 
     # check if inplace works
     st.tl.clonal_expansion(adata, groupby="group", clip_at=2, inplace=True)
-    assert adata.uns["sctcrpy"]["clonal_expansion"] == res_frac
+    assert (
+        _get_from_uns(
+            adata,
+            "clonal_expansion",
+            parameters={
+                "groupby": "group",
+                "clip_at": 2,
+                "fraction": True,
+                "target_col": "clonotype",
+            },
+        )
+        == res_frac
+    )
 
     # check if target_col works
     adata.obs["new_col"] = adata.obs["clonotype"]
     adata.obs.drop("clonotype", axis="columns", inplace=True)
+
+    # check if it raises value error if target_col does not exist
     with pytest.raises(ValueError):
-        res = st.tl.clonal_expansion(
+        res2 = st.tl.clonal_expansion(
             adata, groupby="group", clip_at=2, inplace=False, fraction=False
         )
-    res = st.tl.clonal_expansion(
+
+    # check if it works with correct target_col
+    res2 = st.tl.clonal_expansion(
         adata,
         groupby="group",
         clip_at=2,
@@ -102,4 +126,4 @@ def test_clonal_expansion():
         fraction=False,
         target_col="new_col",
     )
-    assert res == {"A": {"1": 0, ">= 2": 1}, "B": {"1": 3, ">= 2": 1}}
+    assert res2 == res
