@@ -6,7 +6,7 @@ build-backend = 'flit.buildapi'
 module = 'sctcrpy'
 author = 'Gregor Sturm'
 author-email = 'gregor.sturm@i-med.ac.at'
-home-page = 'https://github.com/grst/sctcrpy2'
+home-page = 'https://github.com/grst/sctcrpy'
 description-file = "README.rst"
 classifiers = [
     'License :: OSI Approved :: BSD License',
