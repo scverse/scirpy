@@ -13,7 +13,8 @@ def define_clonotypes(
 
     The current definition of a clonotype is
     same CDR3 sequence for both primary and secondary
-    TRA and TRB chains. 
+    TRA and TRB chains. If all chains are `NaN`, the clonotype will
+    be `NaN` as well. 
 
     Parameters
     ----------
@@ -98,6 +99,8 @@ def alpha_diversity(
 ) -> Union[None, dict]:
     """Computes the alpha diversity of clonotypes within a group. 
 
+    Ignores NaN values. 
+
     Parameters
     ----------
     adata
@@ -154,6 +157,8 @@ def clonal_expansion(
 ) -> Union[None, dict]:
     """Creates summary statsitics on how many
     clonotypes are expanded within a certain groups. 
+
+    Ignores NaN values. 
     
     Parameters
     ----------
