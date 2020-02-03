@@ -6,6 +6,8 @@ before_script:
 
 test:
   script:
+    - CWD=$(pwd)
     - black --check sctcrpy
     - pytest
     - cd docs && make html
+    - cd $CWD/tutorial && python demo.py

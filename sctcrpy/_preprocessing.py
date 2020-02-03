@@ -45,16 +45,3 @@ def merge_with_tcr(
         validate=validate,
         **kwargs
     )
-
-
-def filter_tcrs(adata: AnnData, mask):
-    """remove certain TCRs, but keep the cells
-    
-    Parameters
-    ----------
-    adata : AnnData
-        [description]
-    mask : [chain_type]
-        [description]
-    """
-    assert False, "not implemented"
