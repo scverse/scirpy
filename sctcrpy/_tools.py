@@ -220,3 +220,136 @@ def clonal_expansion(
         )
     else:
         return result_dict
+
+def group_abundance(
+    adata: AnnData,
+    groupby: str,
+    *,
+    target_col: str = "clonotype",
+    inplace: bool = True,
+    fraction: bool = True
+) -> Union[None, dict]:
+    """Creates summary statsitics on how many
+    cells belong to each clonotype within a certain sample. 
+
+    Ignores NaN values. 
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to work on.
+    groupby
+        Group by this column from `obs`. Samples or diagnosis for example.
+    target_col
+        Column on which to compute the expansion.        
+    inplace
+        If True, the results are added to `adata.uns`. Otherwise it returns a dict
+        with the computed values. 
+    fraction
+        If True, compute fractions of clonotypes rather than reporting
+        abosolute numbers. Always relative to the main grouping variable.
+
+    Returns
+    -------
+    Depending on the value of `inplcae`, either returns a dictionary 
+    or adds it to `adata.uns`. 
+    """
+    if target_col not in adata.obs.columns:
+        raise ValueError(
+            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
+        )
+    # count abundance of each clonotype
+    tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
+    clonotype_counts = (
+        tcr_obs.groupby([groupby, target_col]).size().reset_index(name="count")
+    )
+    ranked_clonotypes = tcr_obs.groupby([target_col]).size().reset_index(name="count").sort_values(by="count", ascending=False).loc[:, target_col].tolist()
+    groups = tcr_obs.loc[:,groupby].value_counts().to_dict()
+
+    result_dict = dict()
+    for target in ranked_clonotypes:
+        mask_target = clonotype_counts[target_col] == target
+        result_dict[target] = dict()
+        for group in groups.keys():
+            mask_group = clonotype_counts[groupby] == group
+            tmp_count = clonotype_counts[mask_group & mask_target].loc[:, 'count'].sum()
+            if fraction:
+                tmp_count /= groups[group]
+            result_dict[target][group] = tmp_count
+    
+    result_dict['_order'] = ranked_clonotypes
+
+    if inplace:
+        _add_to_uns(
+            adata,
+            "group_abundance",
+            result_dict,
+            parameters={
+                "groupby": groupby,
+                "target_col": target_col,
+                "fraction": fraction,
+            },
+        )
+    else:
+        return result_dict
+
+def group_abundance_lazy(
+    adata: AnnData,
+    groupby: str,
+    *,
+    target_col: str = "clonotype",
+    subgroupby: str = "none",
+    inplace: bool = True,
+    fraction: bool = True
+) -> Union[None, dict]:
+    """Creates summary statsitics on how many
+    cells belong to each clonotype within a certain sample. 
+
+    It is lazy because it uses Seaborn to do all the actual work.
+
+    Ignores NaN values. 
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to work on.
+    groupby
+        Group by this column from `obs`. Samples or diagnosis for example.
+    target_col
+        Column on which to compute the expansion. 
+    subgroupby
+        A secondary grouping column from `obs`.       
+    inplace
+        If True, the results are added to `adata.uns`. Otherwise it returns a dict
+        with the computed values. 
+    fraction
+        If True, compute fractions of clonotypes rather than reporting
+        abosolute numbers. Always relative to the main grouping variable.
+
+    Returns
+    -------
+    Depending on the value of `inplcae`, either returns a dictionary 
+    or adds it to `adata.uns`. 
+    """
+    if target_col not in adata.obs.columns:
+        raise ValueError(
+            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
+        )
+    tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), [target_col,groupby] ]
+    result_dict = dict()
+    result_dict['df'] = tcr_obs
+    result_dict['order'] = tcr_obs.groupby([target_col]).size().reset_index(name="count").sort_values(by="count", ascending=False).loc[:, target_col].tolist()
+
+    if inplace:
+        _add_to_uns(
+            adata,
+            "group_abundance_lazy",
+            result_dict,
+            parameters={
+                "groupby": groupby,
+                "target_col": target_col,
+                "fraction": fraction,
+            },
+        )
+    else:
+        return result_dict
