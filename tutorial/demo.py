@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.0
+#       jupytext_version: 1.3.2
 #   kernelspec:
-#     display_name: Python [conda env:sctcrpy2]
+#     display_name: Python [conda env:.conda-scTCR]
 #     language: python
-#     name: conda-env-sctcrpy2-py
+#     name: conda-env-.conda-scTCR-py
 # ---
 
 # %%
@@ -144,5 +144,32 @@ st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
 
 # %%
 st.pl.clonal_expansion(adata, groupby="leiden")
+
+# %% [markdown]
+# To plot clonotype abundances, I experimented with two approaches. One uses Pandas and precomputes before passing data to the plotting function and a more lazy one that relies on Seaborn.
+
+# %%
+st.pl.group_abundance(adata, groupby="leiden", fraction=False)
+
+# %%
+st.pl.group_abundance(adata, groupby="leiden")
+
+# %%
+st.pl.group_abundance(adata, target_col='TRB_1_v_gene', label_col='TRB_1_v_gene', groupby="leiden")
+
+# %%
+st.pl.group_abundance_lazy(adata, groupby="leiden")
+
+# %%
+st.tl.group_abundance(adata, groupby='leiden')
+
+# %%
+adata.uns['sctcrpy'].keys()
+
+# %%
+adata.uns['sctcrpy']['group_abundance_lazy']
+
+# %%
+adata.uns['sctcrpy'].pop('group_abundance')
 
 # %%
