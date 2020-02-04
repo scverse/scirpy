@@ -42,6 +42,8 @@ Tools: `tl`
    tcr_dist 
    alpha_diversity
    clonal_expansion
+   group_abundance
+   group_abundance_lazy
 
 
 Plotting: `pl`
