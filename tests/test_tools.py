@@ -127,3 +127,26 @@ def test_clonal_expansion():
         target_col="new_col",
     )
     assert res2 == res
+
+def test_group_abundance():
+    obs = pd.DataFrame.from_records(
+        [
+            ["cell1", "A", "ct1"],
+            ["cell2", "A", "ct1"],
+            ["cell3", "A", "ct1"],
+            ["cell3", "A", "NaN"],
+            ["cell4", "B", "ct1"],
+            ["cell5", "B", "ct2"],
+        ],
+        columns=["cell_id", "group", "clonotype"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+
+    res = st.tl.clonal_expansion(
+        adata, groupby="group", inplace=False, fraction=False
+    )
+    assert res == {"ct1": {"A": 3, "B": 1}, "ct2": {"A": 0, "B": 1}}
+
+    res_frac = st.tl.clonal_expansion(adata, groupby="group", inplace=False)
+    assert res_frac == {"ct1": {"A": 0.75, "B": 0.25}, "ct2": {"A": 0.0, "B": 1.0}}
+
