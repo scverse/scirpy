@@ -34,5 +34,8 @@ def test_clonal_expansion(adata_clonotype):
 def test_group_abundance(adata_clonotype):
     pl.group_abundance(adata_clonotype, groupby="group")
 
+def test_group_abundance_complicated(adata_clonotype):
+    pl.group_abundance_complicated(adata_clonotype, groupby="group")
+
 def test_group_abundance_lazy(adata_clonotype):
     pl.group_abundance_lazy(adata_clonotype, groupby="group")
