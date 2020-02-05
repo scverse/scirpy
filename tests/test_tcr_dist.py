@@ -6,12 +6,28 @@ from sctcrpy._tools._tcr_dist import (
     tcr_dist,
 )
 import numpy as np
+import pandas as pd
 import numpy.testing as npt
+from anndata import AnnData
 
 
 @pytest.fixture
 def aligner():
     return _Aligner()
+
+
+@pytest.fixture
+def adata_cdr3():
+    obs = pd.DataFrame(
+        [
+            ["cell1", "AAAAA", "WWWWW"],
+            ["cell2", "AAAVV", "WWWYY"],
+            ["cell3", "HHAHH", "PPWPP"],
+        ],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+    return adata
 
 
 def test_align_row(aligner):
@@ -45,3 +61,7 @@ def test_score_to_dist():
     npt.assert_almost_equal(
         dist_mat, np.array([[0, 0.181, 1], [0.181, 0, 0.4], [1, 0.4, 0]]), decimal=2
     )
+
+
+def test_tcr_dist(adata_cdr3):
+    tcr_dist(adata_cdr3)

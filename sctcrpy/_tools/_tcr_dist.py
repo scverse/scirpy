@@ -6,12 +6,9 @@ from anndata import AnnData
 from typing import Union
 import pandas as pd
 import numpy as np
-from .._util import _is_na
-
-
-def _is_symmetric(M) -> bool:
-    """check if matrix M is symmetric"""
-    return np.allclose(M, M.T, 1e-8, 1e-8)
+from scanpy import logging
+import numpy.testing as npt
+from .._util import _is_na, _is_symmetric
 
 
 class _Aligner:
@@ -101,12 +98,9 @@ def _calc_norm_factors(score_mat: np.ndarray) -> np.ndarray:
     of each pair of sequences. The refers to the max. possible score of an alignment
     between the two sequences. 
     """
-    norm_factors = np.empty(score_mat.shape)
-    for i, a in enumerate(np.diag(score_mat)):
-        for j, b in enumerate(np.diag(score_mat)[i:], start=i):
-            norm_factors[i, j] = np.min([a, b])
-    i_lower = np.tril_indices(norm_factors.shape[0], -1)
-    norm_factors[i_lower] = norm_factors.T[i_lower]
+    self_scores = np.diag(score_mat)
+    a1, a2 = np.meshgrid(self_scores, self_scores)
+    norm_factors = np.minimum(a1, a2)
 
     assert _is_symmetric(norm_factors), "Matrix not symmetric"
 
@@ -150,34 +144,41 @@ def tcr_dist(adata: AnnData, *, inplace: bool = True) -> Union[None, dict]:
 
     aligner = _Aligner()
 
-    unique_cdr3s = np.unique(
-        np.hstack(
-            [
-                adata.obs.loc[~_is_na(adata.obs["TRA_1_cdr3"]), "TRA_1_cdr3"].values,
-                adata.obs.loc[~_is_na(adata.obs["TRA_2_cdr3"]), "TRA_2_cdr3"].values,
-            ]
-        )
-    )
+    chain = "TRA"
+    chains = ["{}_{}".format(chain, i) for i in ["1", "2"]]
+    tr_seqs = {k: adata.obs["{}_cdr3".format(k)].values for k in chains}
+    unique_seqs = np.hstack(list(tr_seqs.values()))
+    unique_seqs = np.unique(unique_seqs[~_is_na(unique_seqs)]).astype(str)
+    # reverse mapping of amino acid sequence to index in distance matrix
+    seq_to_index = {seq: i for i, seq in enumerate(unique_seqs)}
 
-    score_mat = aligner.make_score_mat(unique_cdr3s)
-    print("done w. alignments", flush=True)
+    logging.debug("Started computing alignments.")
+    score_mat = aligner.make_score_mat(unique_seqs)
+    logging.info("Finished computing alignments.")
+    dist_mat = _score_to_dist(score_mat)
 
-    norm_factors = _calc_norm_factors(score_mat)
-    print("done w. norm factors", flush=True)
+    # indices of cells in adata that have a CDR3 sequence.
+    cells_with_chain = {k: np.where(~_is_na(tr_seqs[k]))[0] for k in chains}
+    # indices of the corresponding sequences in the distance matrix.
+    seq_inds = {
+        k: np.array([seq_to_index[tr_seqs[k][i]] for i in cells_with_chain[k]])
+        for k in chains
+    }
 
-    dist_mat = score_mat / norm_factors
-    dist_mat = pd.DataFrame(dist_mat)
-    dist_mat.index = dist_mat.columns = unique_cdr3s
+    # assert that the indices are right...
+    for k in chains:
+        npt.assert_equal(unique_seqs[seq_inds[k]], tr_seqs[k][~_is_na(tr_seqs[k])])
 
-    res = np.zeros((adata.shape[0], adata.shape[0]))
+    cell_mats = dict()
+    for chain1, chain2 in itertools.combinations_with_replacement(chains, 2):
+        k = "{}_{}".format(chain1, chain2)
+        cell_mats[k] = np.full([adata.n_obs] * 2, np.nan)
+        i_cm_0, i_cm_1 = np.meshgrid(cells_with_chain[chain1], cells_with_chain[chain2])
+        i_dm_0, i_dm_1 = np.meshgrid(seq_inds[chain1], seq_inds[chain2])
 
-    cells_with_cdr3 = adata.obs.reset_index(drop=True)["TRA_1_cdr3"]
-    cells_with_cdr3 = cells_with_cdr3[~_is_na(cells_with_cdr3)]
+        cell_mats[k][i_cm_0, i_cm_1] = dist_mat[i_dm_0, i_dm_1]
 
-    for i, cdr3_1 in cells_with_cdr3.items():
-        for j, cdr3_2 in cells_with_cdr3.items():
-            res[i, j] = dist_mat.loc[cdr3_1, cdr3_2]
+        if chain1 == chain2:
+            assert _is_symmetric(cell_mats[k]), "matrix not symmetric"
 
-    assert _is_symmetric(res), "matrix not symmetrics"
-
-    return res
+    return cell_mats
