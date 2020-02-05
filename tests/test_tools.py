@@ -144,70 +144,8 @@ def test_group_abundance():
     adata = AnnData(obs=obs)
 
     res = st.tl.group_abundance(adata, groupby="group", inplace=False, fraction=False)
-    assert res == {"ct1": {"A": 3, "B": 1}, "ct2": {"A": 0, "B": 1}}
-
-    res_frac = st.tl.group_abundance(adata, groupby="group", inplace=False)
-    assert res_frac == {
-        "ct1": {"A": 0.75, "B": 0.25},
-        "ct2": {"A": 0.0, "B": 1.0},
-        "_order": ["ct1", "ct2"],
+    npt.assert_equal(res["order"], ["ct1", "NaN", "ct2"])
+    assert res["df"].to_dict() == {
+        "A": {"NaN": 1.0, "ct1": 3.0, "ct2": 0.0},
+        "B": {"NaN": 0.0, "ct1": 1.0, "ct2": 1.0},
     }
-
-
-def test_group_abundance_complicated():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "A", "ct1"],
-            ["cell2", "A", "ct1"],
-            ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
-            ["cell4", "B", "ct1"],
-            ["cell5", "B", "ct2"],
-        ],
-        columns=["cell_id", "group", "clonotype"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    res = st.tl.group_abundance_complicated(
-        adata, groupby="group", inplace=False, fraction=False
-    )
-    assert res == {"ct1": {"A": 3, "B": 1}, "ct2": {"A": 0, "B": 1}}
-
-    res_frac = st.tl.group_abundance_complicated(adata, groupby="group", inplace=False)
-    assert res_frac == {
-        "ct1": {"A": 0.75, "B": 0.25},
-        "ct2": {"A": 0.0, "B": 1.0},
-        "_order": ["ct1", "ct2"],
-    }
-
-
-def test_group_abundance_lazy():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "A", "ct1"],
-            ["cell2", "A", "ct1"],
-            ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
-            ["cell4", "B", "ct1"],
-            ["cell5", "B", "ct2"],
-        ],
-        columns=["cell_id", "group", "clonotype"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    res = st.tl.group_abundance_lazy(
-        adata, groupby="group", inplace=False, fraction=False
-    )
-    res["df"] = res["df"].to_dict()
-    assert res == {
-        "clonotype": {
-            "cell1": "ct1",
-            "cell2": "ct1",
-            "cell3": "ct1",
-            "cell4": "ct1",
-            "cell5": "ct2",
-        },
-        "group": {"cell1": "A", "cell2": "A", "cell3": "A", "cell4": "B", "cell5": "B"},
-        "order": ["ct1", "ct2"],
-    }
-

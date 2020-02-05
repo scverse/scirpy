@@ -146,7 +146,7 @@ st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
 st.pl.clonal_expansion(adata, groupby="leiden")
 
 # %% [markdown]
-# To plot clonotype abundances, I experimented with two approaches. One uses Pandas and precomputes before passing data to the plotting function and a more lazy one that relies on Seaborn.
+# To plot clonotype abundances, I experimented with three approaches. One uses Pandas and precomputes before passing data to the plotting function and a more lazy one that relies on Seaborn and finally the one I favour is using pandas to select the data and stores the dataframe.
 
 # %%
 st.pl.group_abundance(adata, groupby="leiden", fraction=False)
@@ -155,80 +155,12 @@ st.pl.group_abundance(adata, groupby="leiden", fraction=False)
 st.pl.group_abundance(adata, groupby="leiden")
 
 # %%
-st.pl.group_abundance(adata, target_col='TRB_1_v_gene', label_col='TRB_1_v_gene', groupby="leiden")
+st.pl.group_abundance(adata, groupby="leiden", viztype='stacked')
 
 # %%
-st.pl.group_abundance_lazy(adata, groupby="leiden")
+st.pl.group_abundance(adata, groupby="leiden", viztype='table')
 
 # %%
-st.tl.group_abundance(adata, groupby='leiden')
+st.pl.group_abundance(adata, target_col='TRB_1_v_gene', groupby="leiden")
 
 # %%
-adata.obs.loc[~_is_na(adata.obs[groupby]), [groupby, target_col]]
-
-# %%
-tcr_obs.groupby([target_col]).size().reset_index(name="count").sort_values(by="count", ascending=False)
-
-# %%
-overall_abundaces = tcr_obs.groupby([target_col]).size().reset_index(name="count").sort_values(by="count", ascending=False)
-
-# %%
-z = tcr_obs.groupby([target_col]).size().reset_index(name="count").sort_values(by="count", ascending=False)
-z['size'] = 
-
-# %%
-groupsizes = tcr_obs.loc[:, groupby].value_counts().to_dict()
-clonotype_counts = (tcr_obs.groupby([groupby, target_col]).size().reset_index(name="count"))
-clonotype_counts['groupsize'] = clonotype_counts[groupby].map(groupsizes)
-clonotype_counts.groupsize = clonotype_counts.groupsize.astype('int32')
-#clonotype_counts['count'] = clonotype_counts['count']/clonotype_counts['groupsize']
-clonotype_counts
-
-# %%
-clonotype_counts.groupby([target_col]).sum().loc['clonotype_919', :]
-
-# %%
-clonotype_counts.groupby([target_col]).sum().sort_values(by="count", ascending=False).index.values
-
-# %%
-piw = clonotype_counts.pivot(index='clonotype', columns='leiden', values='count').fillna(0.0)
-piw
-
-
-# %%
-sns.countplot(y='clonotype', data=piw)
-
-# %%
-piw.plot.bar()
-
-# %%
-adata.uns['sctcrpy'].keys()
-
-# %%
-tcr_obs.loc[:,groupby].value_counts().to_dict()
-
-# %%
-z = adata.uns['sctcrpy']['group_abundance_lazy']
-
-# %%
-z = adata.uns['sctcrpy'].pop('group_abundance')
-
-# %%
-obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "A", "ct1"],
-            ["cell2", "A", "ct1"],
-            ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
-            ["cell4", "B", "ct1"],
-            ["cell5", "B", "ct2"],
-        ],
-        columns=["cell_id", "group", "clonotype"],
-    ).set_index("cell_id")
-zadata = sc.AnnData(obs=obs)
-
-# %%
-st.tl.group_abundance_lazy(zadata, groupby="group", inplace=False)['df'].to_dict()
-
-# %%
-st.pl.group_abundance()
