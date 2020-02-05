@@ -288,9 +288,8 @@ def group_abundance(
 
     # Calculate the frequency table already here and maybe save a little time for plotting by supplying wide format data
     result_dict["df"] = clonotype_counts.pivot(
-        index=target_col, columns=groupby, values="count", fill_value=0.0
-    )
-
+        index=target_col, columns=groupby, values="count"
+    ).fillna(value=0.0)
     if inplace:
         _add_to_uns(
             adata,

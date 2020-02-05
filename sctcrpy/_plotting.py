@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 from ._util import _get_from_uns
 from . import tl
+from typing import Union
 
 
 def alpha_diversity(
@@ -104,17 +105,21 @@ def clonal_expansion(
 
     pd.DataFrame.from_dict(expansion, orient="index").plot.bar(stacked=True)
 
+
 def group_abundance(
-    adata: AnnData,
+    adata: Union[dict, AnnData],
     groupby: str,
     *,
     target_col: str = "clonotype",
     label_col: Union[str, None] = None,
+    group_order: Union[list, None] = None,
     top_n: int = 10,
-    group_order: list = [],
+    viztype: str = "bar",
+    vizarg: dict = dict(),
+    ax: Union[plt.axes, None] = None,
     inplace: bool = True,
     fraction: bool = True
-):
+) -> plt.axes:
     """Plots how many cells belong to each clonotype. 
 
     Ignores NaN values. 
@@ -129,68 +134,97 @@ def group_abundance(
         Column on which to compute the abundance. 
     label_col
         Column containing names for clonotypes. 
+    grouporder
+        Specifies the order of group (samples).
     top_n
-        Top clonotypes to plot.        
+        Top clonotypes to plot. 
+    viztype
+        The user can later choose the layout of the plot. Currently supports `bar` and `stacked`.  
+    vizarg
+        Custom values to be passed to the plot in a dictionary of arguments.      
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
     fraction
         If True, compute fractions of clonotypes rather than reporting
-        abosolute numbers. Always relative to the main grouping variable.leton, doublet or triplet clonotype. 
+        abosolute numbers. Always relative to the main grouping variable.leton, doublet or triplet clonotype.
+    
+    Returns
+    -------
+    The plotting axis for now; maybe a list of axes later
     """
-    # Get pre-comuted results. If not available, compute them.
-    try:
-        abundance = _get_from_uns(
-            adata,
-            "group_abundance",
-            parameters={
-                "groupby": groupby,
-                "target_col": target_col,
-                "fraction": fraction,
-            },
-        )
-    except KeyError:
-        logging.warning(
-            "No precomputed data found for current parameters. "
-            "Computing group abundance now. "
-        )
-        tl.group_abundance(
-            adata, groupby, target_col=target_col, fraction=fraction
-        )
-        abundance = _get_from_uns(
-            adata,
-            "group_abundance",
-            parameters={
-                "groupby": groupby,
-                "target_col": target_col,
-                "fraction": fraction,
-            },
-        )
 
-    target_ranks_ = abundance.pop('_order')
-    target_ranks = target_ranks_[:top_n]
-    target_ranks = target_ranks[::-1]
-    if len(group_order) < 1:
-        group_order = list(abundance[target_ranks[0]].keys())
-    abundance_toplot = dict()
-    if target_col != label_col:
+    # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
+    if type(adata) == dict:
+        abundance = adata
+    else:
+        try:
+            abundance = _get_from_uns(
+                adata,
+                "group_abundance",
+                parameters={
+                    "groupby": groupby,
+                    "target_col": target_col,
+                    "fraction": fraction,
+                },
+            )
+        except KeyError:
+            logging.warning(
+                "No precomputed data found for current parameters. "
+                "Computing group abundance now. "
+            )
+            tl.group_abundance(adata, groupby, target_col=target_col, fraction=fraction)
+            abundance = _get_from_uns(
+                adata,
+                "group_abundance",
+                parameters={
+                    "groupby": groupby,
+                    "target_col": target_col,
+                    "fraction": fraction,
+                },
+            )
+
+    # This plotting function uses a dictionary that contains two pieces of information: the data table as a data frame or dictionary and a ranked list that helps us order the clonotypes.
+    if "df" in abundance:
+        df = abundance["df"]
+    else:
+        raise KeyError("No data table supplied")
+    if "order" in abundance:
+        target_ranks = abundance["order"]
+    else:
+        if type(df) == dict:
+            target_ranks = df.keys()
+        else:
+            target_ranks = (
+                df.index.values
+            )  # Will throw an error if df is not a dataframe
+    if type(df) == dict:
+        df = pd.DataFrame.from_dict(df, orient="index")
+
+    # Further filter the pivot table to leave only data that we want to plot
+    target_ranks = target_ranks[:top_n]
+    if viztype in ["bar"]:
+        target_ranks = target_ranks[::-1]
+    target_ranks = target_ranks[~np.isin(target_ranks, ["nan"])]
+    if group_order == None:
+        group_order = df.columns.values
+    df = df.loc[target_ranks, group_order]
+    if label_col != None:
         relabels = dict()
         for d in adata.obs.loc[:, [label_col, target_col]].to_dict(orient="records"):
             relabels[d[target_col]] = d[label_col]
-        for t in target_ranks:
-            bd = dict()
-            for g in group_order:
-                bd[g] = abundance[t][g]
-            abundance_toplot[relabels[t]] = bd
-    else:
-        for t in target_ranks:
-            bd = dict()
-            for g in group_order:
-                bd[g] = abundance[t][g]
-            abundance_toplot[t] = bd
-    
-    pd.DataFrame.from_dict(abundance_toplot, orient="index").plot.barh()
-    abundance['_order'] = target_ranks_
+        df.index = df.index.map(relabels)
+
+    # Create a dictionary of plot layouts
+    plot_router = {
+        "table": {"f": lambda: df, "arg": {}},
+        "bar": {"f": df.plot.barh, "arg": {"ax": ax}},
+        "stacked": {"f": df.plot.bar, "arg": {"ax": ax, "stacked": True}},
+    }
+    main_args = dict(**plot_router[viztype]["arg"], **vizarg)
+    ax = plot_router[viztype]["f"](**main_args)
+    return ax
+
 
 def group_abundance_complicated(
     adata: AnnData,
@@ -242,9 +276,7 @@ def group_abundance_complicated(
             "No precomputed data found for current parameters. "
             "Computing group abundance now. "
         )
-        tl.group_abundance(
-            adata, groupby, target_col=target_col, fraction=fraction
-        )
+        tl.group_abundance(adata, groupby, target_col=target_col, fraction=fraction)
         abundance = _get_from_uns(
             adata,
             "group_abundance_complicated",
@@ -255,7 +287,7 @@ def group_abundance_complicated(
             },
         )
 
-    target_ranks_ = abundance.pop('_order')
+    target_ranks_ = abundance.pop("_order")
     target_ranks = target_ranks_[:top_n]
     target_ranks = target_ranks[::-1]
     if len(group_order) < 1:
@@ -276,9 +308,10 @@ def group_abundance_complicated(
             for g in group_order:
                 bd[g] = abundance[t][g]
             abundance_toplot[t] = bd
-    
+
     pd.DataFrame.from_dict(abundance_toplot, orient="index").plot.barh()
-    abundance['_order'] = target_ranks_
+    abundance["_order"] = target_ranks_
+
 
 def group_abundance_lazy(
     adata: AnnData,
@@ -345,9 +378,15 @@ def group_abundance_lazy(
             },
         )
 
-    target_ranks = abundance['order']
+    target_ranks = abundance["order"]
     target_ranks = target_ranks[:top_n]
     if len(group_order) < 1:
-        group_order = abundance['df'].loc[:, groupby].unique().tolist()
-    ax = sns.countplot(y=target_col, hue=groupby, data=abundance['df'], order=target_ranks, hue_order=group_order)
+        group_order = abundance["df"].loc[:, groupby].unique().tolist()
+    ax = sns.countplot(
+        y=target_col,
+        hue=groupby,
+        data=abundance["df"],
+        order=target_ranks,
+        hue_order=group_order,
+    )
     return ax
