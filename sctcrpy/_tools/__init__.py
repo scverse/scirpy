@@ -1,9 +1,8 @@
-import parasail
 import numpy as np
 from anndata import AnnData
-import pandas as pd
 from typing import Union
-from ._util import _is_na, _add_to_uns
+from .._util import _is_na, _add_to_uns
+from ._tcr_dist import tcr_dist
 
 
 def define_clonotypes(
@@ -51,47 +50,6 @@ def define_clonotypes(
         adata.obs[key_added] = clonotype_col
     else:
         return clonotype_col
-
-
-def tcr_dist(
-    adata: AnnData,
-    *,
-    subst_mat=parasail.blosum62,
-    gap_open: int = 8,
-    gap_extend: int = 1,
-    inplace: bool = True
-) -> Union[None, dict]:
-    """Compute the TCRdist on CDR3 sequences. 
-
-    Currently takes into account only dominant alpha and dominant beta. 
-
-    High-performance sequence alignment through parasail library [Daily2016]_
-
-    Parameters
-    ----------
-    adata
-    subst_mat
-    gap_open
-    gap_extend
-    """
-    # TODO parallelize
-    for chain in ["TRA", "TRB"]:
-        col = "{}_1_cdr3".format(chain)
-        unique_cdr3s = adata.obs.loc[_is_na(adata.obs[col]), col].unique()
-
-        dist_mat = np.empty([len(unique_cdr3s)] * 2)
-
-        for i, s1 in enumerate(unique_cdr3s):
-            profile = parasail.profile_create_16(s1, subst_mat)
-            for j, s2 in enumerate(unique_cdr3s[i + 1 :]):
-                r = parasail.sw_striped_profile_16(profile, s2, gap_open, gap_extend)
-                dist_mat[i, j] = r.score
-
-        dist_df = pd.DataFrame(dist_mat)
-        dist_df.index = dist_df.columns = unique_cdr3s
-
-        # TODO work on each chain and implement inplace
-        adata.uns["tcr_dist_alpha"] = dist_df
 
 
 def alpha_diversity(

@@ -13,7 +13,7 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clonotype",
-    vistype: Literal["bar"] = "bar"
+    vistype: Literal["bar"] = "bar",
 ) -> None:
     """Plot the alpha diversity per group. 
 
@@ -26,7 +26,7 @@ def alpha_diversity(
     target_col
         Column on which to compute the alpha diversity
     vistype
-        Visualization type. Currently only 'bar' is supported. 
+        Visualization type. Currently only 'bar' is supported.
     """
     try:
         diversity = _get_from_uns(
@@ -65,7 +65,7 @@ def clonal_expansion(
     *,
     target_col: str = "clonotype",
     clip_at: int = 3,
-    fraction: bool = True
+    fraction: bool = True,
 ):
     """Plot the fraction of cells in each group belonging to
     singleton, doublet or triplet clonotype. 
