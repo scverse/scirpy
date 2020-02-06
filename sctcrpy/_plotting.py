@@ -151,7 +151,7 @@ def group_abundance(
     
     Returns
     -------
-    The plotting axis for now; maybe a list of axes later
+    The plotting axis.
     """
 
     # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
