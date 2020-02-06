@@ -43,8 +43,6 @@ Tools: `tl`
    alpha_diversity
    clonal_expansion
    group_abundance
-   group_abundance_lazy
-   group_abundance_complicated
 
 
 Plotting: `pl`
