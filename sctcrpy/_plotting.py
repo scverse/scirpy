@@ -206,7 +206,7 @@ def group_abundance(
     if viztype in ["bar"]:
         target_ranks = target_ranks[::-1]
     target_ranks = target_ranks[~np.isin(target_ranks, ["nan"])]
-    if group_order == None:
+    if group_order is None:
         group_order = df.columns.values
     df = df.loc[target_ranks, group_order]
     if label_col != None:
