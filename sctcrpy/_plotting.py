@@ -209,7 +209,7 @@ def group_abundance(
     if group_order is None:
         group_order = df.columns.values
     df = df.loc[target_ranks, group_order]
-    if label_col != None:
+    if label_col is not None:
         relabels = dict()
         for d in adata.obs.loc[:, [label_col, target_col]].to_dict(orient="records"):
             relabels[d[target_col]] = d[label_col]
