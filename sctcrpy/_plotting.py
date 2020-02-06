@@ -114,7 +114,7 @@ def group_abundance(
     label_col: Union[str, None] = None,
     group_order: Union[list, None] = None,
     top_n: int = 10,
-    viztype: str = "bar",
+    viztype: Literal["bar", "stacked", "table"] = "bar",
     vizarg: dict = dict(),
     ax: Union[plt.axes, None] = None,
     inplace: bool = True,
