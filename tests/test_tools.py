@@ -143,9 +143,16 @@ def test_group_abundance():
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
 
-    res = st.tl.group_abundance(adata, groupby="group", inplace=False, fraction=False)
-    npt.assert_equal(res["order"], ["ct1", "NaN", "ct2"])
-    assert res["df"].to_dict() == {
+    # Check numbers
+    res = st.tl.group_abundance(adata, groupby="group", inplace=False, fraction=False, as_dict=True)
+    assert res == {
         "A": {"NaN": 1.0, "ct1": 3.0, "ct2": 0.0},
         "B": {"NaN": 0.0, "ct1": 1.0, "ct2": 1.0},
+    }
+
+    # Check fractions
+    res = st.tl.group_abundance(adata, groupby="group", inplace=False, as_dict=True)
+    assert res == {
+        "A": {"NaN": 0.25, "ct1": 0.75, "ct2": 0.0},
+        "B": {"NaN": 0.0, "ct1": 0.5, "ct2": 0.5},
     }
