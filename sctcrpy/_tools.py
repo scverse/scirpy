@@ -59,7 +59,7 @@ def tcr_dist(
     subst_mat=parasail.blosum62,
     gap_open: int = 8,
     gap_extend: int = 1,
-    inplace: bool = True
+    inplace: bool = True,
 ) -> Union[None, dict]:
     """Compute the TCRdist on CDR3 sequences. 
 
@@ -153,7 +153,7 @@ def clonal_expansion(
     target_col: str = "clonotype",
     clip_at: int = 3,
     inplace: bool = True,
-    fraction: bool = True
+    fraction: bool = True,
 ) -> Union[None, dict]:
     """Creates summary statsitics on how many
     clonotypes are expanded within a certain groups. 
@@ -269,15 +269,17 @@ def group_abundance(
     clonotype_counts = (
         tcr_obs.groupby([groupby, target_col]).size().reset_index(name="count")
     )
-    clonotype_counts["groupsize"] = clonotype_counts[groupby].map(group_sizes).astype("int32")
+    clonotype_counts["groupsize"] = (
+        clonotype_counts[groupby].map(group_sizes).astype("int32")
+    )
     if fraction:
-        clonotype_counts["count"] /=  clonotype_counts["groupsize"]
+        clonotype_counts["count"] /= clonotype_counts["groupsize"]
 
     # Calculate the frequency table already here and maybe save a little time for plotting by supplying wide format data
     result_df = clonotype_counts.pivot(
         index=target_col, columns=groupby, values="count"
     ).fillna(value=0.0)
-    
+
     # By default, the most abundant clonotype should be the first on the plot, therefore we need their order
     ranked_clonotypes = (
         clonotype_counts.groupby([target_col])
@@ -288,7 +290,7 @@ def group_abundance(
     result_df = result_df.loc[ranked_clonotypes, :]
 
     if as_dict:
-        result_df = result_df.to_dict(orient='index')
+        result_df = result_df.to_dict(orient="index")
 
     # Pass on the resulting dataframe as requested
     if inplace:

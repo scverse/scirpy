@@ -117,6 +117,7 @@ def group_abundance(
     viztype: Literal["bar", "stacked", "table"] = "bar",
     vizarg: Union[dict, None] = None,
     ax: Union[plt.axes, None] = None,
+    sizeprofile: Literal["small"] = "small",
     inplace: bool = True,
     fraction: bool = True
 ) -> plt.axes:
@@ -141,7 +142,11 @@ def group_abundance(
     viztype
         The user can later choose the layout of the plot. Currently supports `bar` and `stacked`.  
     vizarg
-        Custom values to be passed to the plot in a dictionary of arguments.      
+        Custom values to be passed to the plot in a dictionary of arguments.   
+    ax
+        Custom axis if needed.   
+    sizeprofile
+        Figure size and font sizes to make everything legible. Currenty only `small` is supported.      
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
@@ -183,13 +188,13 @@ def group_abundance(
                     "fraction": fraction,
                 },
             )
-    
+
     if type(abundance) == dict:
         abundance = pd.DataFrame.from_dict(adata, orient="index")
-    
+
     if vizarg is None:
         vizarg = dict()
-    
+
     # Filter the pivot table to leave only data that we want to plot
     target_ranks = abundance.index.values
     target_ranks = target_ranks[:top_n]
@@ -205,6 +210,48 @@ def group_abundance(
             relabels[d[target_col]] = d[label_col]
         abundance.index = abundance.index.map(relabels)
 
+    # If not yet part of the figure / supplied, create the axis in a new figure
+    figsize = (3.44, 2.58)
+    figresolution = 300
+    title_loc = "center"
+    title_pad = 0.5
+    title_fontsize = 12
+    axis_fontsize = 10
+    tick_fontsize = 8
+
+    title = vizarg.pop("title", None)
+    if title is None:
+        if fraction:
+            title = "Fraction of top " + target_col + "s in each " + groupby
+        else:
+            title = "Number of cells in top " + target_col + "s by " + groupby
+
+    xlab = vizarg.pop("xlab", None)
+    if xlab is None:
+        if viztype in ["stacked"]:
+            xlab = ""
+        else:
+            if fraction:
+                xlab = "Fraction of cells"
+            else:
+                xlab = "Number of cells"
+
+    ylab = vizarg.pop("ylab", None)
+    if ylab is None:
+        if viztype in ["stacked"]:
+            if fraction:
+                xlab = "Fraction of cells"
+            else:
+                xlab = "Number of cells"
+        else:
+            ylab = ""
+
+    needprettier = False
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
+        if viztype != "table":
+            needprettier = True
+
     # Create a dictionary of plot layouts
     plot_router = {
         "table": {"f": lambda: abundance, "arg": {}},
@@ -213,4 +260,14 @@ def group_abundance(
     }
     main_args = dict(**plot_router[viztype]["arg"], **vizarg)
     ax = plot_router[viztype]["f"](**main_args)
+
+    # Make plot prettier
+    if needprettier:
+        ax.set_title(
+            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
+        )
+        ax.set_xlabel(xlab)
+        ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
+        ax.set_ylabel(ylab)
+        ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
     return ax
