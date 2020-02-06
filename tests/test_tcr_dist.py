@@ -63,5 +63,9 @@ def test_score_to_dist():
     )
 
 
+def test_dist_for_chain():
+    pass
+
+
 def test_tcr_dist(adata_cdr3):
     tcr_dist(adata_cdr3)
