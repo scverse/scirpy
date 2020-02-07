@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 from ._compat import Literal
 from anndata import AnnData
 from scanpy import logging
 import pandas as pd
 import seaborn as sns
-from ._util import _get_from_uns
+from ._util import _get_from_uns, _add_to_uns
 from . import tl
-from typing import Union
+from typing import Union, List, Tuple
 
 
 def alpha_diversity(
@@ -117,10 +118,10 @@ def group_abundance(
     viztype: Literal["bar", "stacked", "table"] = "bar",
     vizarg: Union[dict, None] = None,
     ax: Union[plt.axes, None] = None,
-    sizeprofile: Literal["small"] = "small",
+    sizeprofile: Union[Literal["small"], None] = None,
     inplace: bool = True,
     fraction: bool = True
-) -> plt.axes:
+) -> List[plt.axes]:
     """Plots how many cells belong to each clonotype. 
 
     Ignores NaN values. 
@@ -156,7 +157,7 @@ def group_abundance(
     
     Returns
     -------
-    The plotting axis.
+    List of axes.
     """
 
     # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
@@ -210,64 +211,313 @@ def group_abundance(
             relabels[d[target_col]] = d[label_col]
         abundance.index = abundance.index.map(relabels)
 
-    # If not yet part of the figure / supplied, create the axis in a new figure
-    figsize = (3.44, 2.58)
-    figresolution = 300
-    title_loc = "center"
-    title_pad = 0.5
-    title_fontsize = 12
-    axis_fontsize = 10
-    tick_fontsize = 8
-
-    title = vizarg.pop("title", None)
-    if title is None:
-        if fraction:
-            title = "Fraction of top " + target_col + "s in each " + groupby
-        else:
-            title = "Number of cells in top " + target_col + "s by " + groupby
-
-    xlab = vizarg.pop("xlab", None)
-    if xlab is None:
-        if viztype in ["stacked"]:
-            xlab = ""
-        else:
-            if fraction:
-                xlab = "Fraction of cells"
-            else:
-                xlab = "Number of cells"
-
-    ylab = vizarg.pop("ylab", None)
-    if ylab is None:
-        if viztype in ["stacked"]:
-            if fraction:
-                xlab = "Fraction of cells"
-            else:
-                xlab = "Number of cells"
-        else:
-            ylab = ""
-
-    needprettier = False
-    if ax is None:
-        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
-        if viztype != "table":
-            needprettier = True
+    # Create text for default labels
+    if fraction:
+        title = "Fraction of top " + target_col + "s in each " + groupby
+        xlab = "Fraction of cells"
+        ylab = "Fraction of cells"
+    else:
+        title = "Number of cells in top " + target_col + "s by " + groupby
+        xlab = "Number of cells"
+        ylab = "Number of cells"
 
     # Create a dictionary of plot layouts
     plot_router = {
         "table": {"f": lambda: abundance, "arg": {}},
-        "bar": {"f": abundance.plot.barh, "arg": {"ax": ax}},
-        "stacked": {"f": abundance.plot.bar, "arg": {"ax": ax, "stacked": True}},
+        "bar": {
+            "f": nice_stripe_plain,
+            "arg": {
+                "data": abundance,
+                "title": title,
+                "legend_title": groupby,
+                "xlab": xlab,
+                "ax": ax,
+                "fraction": fraction,
+            },
+        },
+        "stacked": {
+            "f": nice_bar_plain,
+            "arg": {
+                "data": abundance,
+                "title": title,
+                "legend_title": groupby,
+                "ylab": ylab,
+                "ax": ax,
+                "fraction": fraction,
+                "stacked": True,
+            },
+        },
     }
-    main_args = dict(**plot_router[viztype]["arg"], **vizarg)
-    ax = plot_router[viztype]["f"](**main_args)
 
-    # Make plot prettier
+    # Check for settings in the profile and call the basic plotting function with merged arguments
+    if sizeprofile is None:
+        profile_args = check_for_plotting_profile(adata)
+    else:
+        profile_args = check_for_plotting_profile(sizeprofile)
+    main_args = dict(dict(profile_args, **plot_router[viztype]["arg"]), **vizarg)
+    axl = plot_router[viztype]["f"](**main_args)
+
+    return axl
+
+
+############################################################
+# Basic plotting functions
+############################################################
+
+
+def nice_bar_plain(
+    data: Union[dict, np.ndarray, pd.DataFrame, AnnData],
+    *,
+    ax: Union[plt.axes, list, None] = None,
+    title: str = "",
+    legend_title: str = "",
+    xlab: str = "",
+    ylab: str = "",
+    figsize: Tuple[float, float] = (3.44, 2.58),
+    figresolution: int = 300,
+    title_loc: Literal["center", "left", "right"] = "center",
+    title_pad: float = 1.5,
+    title_fontsize: int = 12,
+    label_fontsize: int = 10,
+    tick_fontsize: int = 8,
+    stacked: bool = True,
+    **kwds
+) -> List[plt.axes]:
+    """Basic plotting function built on top of bar plot in Pandas.
+    Draws bars without stdev. 
+
+    Parameters
+    ----------
+    data
+        Data to show (wide format).
+    ax
+        Custom axis if needed.  
+    title
+        Figure title.
+    legend_title
+        Figure legend title.
+    xlab
+        Label for the x axis.
+    ylab
+        Label for the y axis.
+    figsize
+        Size of the resulting figure in inches.
+    figresolution
+        Resolution of the figure in dpi. 
+    title_loc
+        Position of the plot title (can be {'center', 'left', 'right'}). 
+    title_pad
+        Padding of the plot title.
+    title_fontsize
+        Font size of the plot title. 
+    label_fontsize
+        Font size of the axis labels.   
+    tick_fontsize
+        Font size of the axis tick labels. 
+    stacked
+        Determines if the vars should be stacked.   
+    **kwds
+        Arguments not used by the current plotting layout.
+    
+    Returns
+    -------
+    List of axes.
+    """
+
+    # Convert data to a Pandas dataframe if not already a dataframe.
+    if not isinstance(data, pd.DataFrame):
+        if type(data) == dict:
+            data = pd.DataFrame.from_dict(data, orient="index")
+        else:
+            if type(data) is np.ndarray:
+                data = pd.DataFrame(
+                    data=data[1:, 1:], index=data[1:, 0], columns=data[0, 1:]
+                )
+            else:
+                raise ValueError("`data` does not seem to be a valid input type")
+
+    # Create figure if not supplied already. If multiple axes are supplied, it is assumed that the first one is relevant to the plot.
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
+        needprettier = True
+    else:
+        needprettier = False
+        if type(ax) is list:
+            ax = ax[0]
+
+    # Draw the plot with Pandas
+    ax = data.plot.bar(ax=ax, stacked=stacked)
+
+    # Make plot a bit prettier
     if needprettier:
         ax.set_title(
             title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
         )
-        ax.set_xlabel(xlab)
+        ax.set_xlabel(xlab, fontsize=label_fontsize)
         ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
-        ax.set_ylabel(ylab)
+        ax.set_ylabel(ylab, fontsize=label_fontsize)
         ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
-    return ax
+    return [ax]
+
+
+def nice_stripe_plain(
+    data: Union[dict, np.ndarray, pd.DataFrame, AnnData],
+    *,
+    ax: Union[plt.axes, list, None] = None,
+    title: str = "",
+    legend_title: str = "",
+    xlab: str = "",
+    ylab: str = "",
+    figsize: Tuple[float, float] = (3.44, 2.58),
+    figresolution: int = 300,
+    title_loc: Literal["center", "left", "right"] = "center",
+    title_pad: float = 10,
+    title_fontsize: int = 10,
+    label_fontsize: int = 8,
+    tick_fontsize: int = 6,
+    stacked: bool = True,
+    fraction: bool = True,
+    **kwds
+) -> List[plt.axes]:
+    """Basic plotting function built on top of bar plot in Pandas.
+    Draws bars without stdev. 
+
+    Parameters
+    ----------
+    data
+        Data to show (wide format).
+    ax
+        Custom axis if needed.  
+    title
+        Figure title.
+    legend_title
+        Figure legend title.
+    xlab
+        Label for the x axis.
+    ylab
+        Label for the y axis.
+    figsize
+        Size of the resulting figure in inches.
+    figresolution
+        Resolution of the figure in dpi. 
+    title_loc
+        Position of the plot title (can be {'center', 'left', 'right'}). 
+    title_pad
+        Padding of the plot title.
+    title_fontsize
+        Font size of the plot title. 
+    label_fontsize
+        Font size of the axis labels.   
+    tick_fontsize
+        Font size of the axis tick labels. 
+    stacked
+        Determines if the vars should be stacked.   
+    **kwds
+        Arguments not used by the current plotting layout.
+    
+    Returns
+    -------
+    List of axes.
+    """
+
+    # Convert data to a Pandas dataframe if not already a dataframe.
+    if not isinstance(data, pd.DataFrame):
+        if type(data) == dict:
+            data = pd.DataFrame.from_dict(data, orient="index")
+        else:
+            if type(data) is np.ndarray:
+                data = pd.DataFrame(
+                    data=data[1:, 1:], index=data[1:, 0], columns=data[0, 1:]
+                )
+            else:
+                raise ValueError("`data` does not seem to be a valid input type")
+
+    # Create figure if not supplied already. If multiple axes are supplied, it is assumed that the first one is relevant to the plot.
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
+        needprettier = True
+    else:
+        needprettier = False
+        if type(ax) is list:
+            ax = ax[0]
+
+    # Draw the plot with Pandas
+    ax = data.plot.barh(ax=ax)
+
+    # Make plot a bit prettier
+    if needprettier:
+        ax.set_title(
+            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
+        )
+        ax.set_xlabel(xlab, fontsize=label_fontsize)
+        if fraction:
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        else:
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
+            #ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
+            #ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: str(int(x))))
+        ax.set_xticklabels([str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize)
+        ax.set_ylabel(ylab, fontsize=label_fontsize)
+        ax.set_yticklabels(
+            ax.get_yticklabels(), fontsize=tick_fontsize, horizontalalignment="left"
+        )
+        yax = ax.get_yaxis()
+        yax.set_tick_params(length=0, pad=60)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.legend(
+            title=legend_title,
+            loc="center left",
+            bbox_to_anchor=(1.2, 0.75),
+            title_fontsize=label_fontsize,
+            fontsize=tick_fontsize,
+            frameon=False,
+        )
+        ax.set_position([0.3, 0.2, 0.4, 0.65])
+    return [ax]
+
+
+def reset_plotting_profile(adata: AnnData) -> None:
+    """
+    Reverts plotting profile to matplotlib defaults (rcParams).  
+    """
+    try:
+        p = _get_from_uns(adata, "plotting_profile")
+    except KeyError:
+        p = dict()
+    p["title_loc"] = plt.rcParams["axes.titleloc"]
+    p["title_pad"] = plt.rcParams["axes.titlepad"]
+    p["title_fontsize"] = plt.rcParams["axes.titlesize"]
+    p["label_fontsize"] = plt.rcParams["axes.labelsize"]
+    p["tick_fontsize"] = plt.rcParams["xtick.labelsize"]
+    _add_to_uns(adata, "plotting_profile", p)
+    return
+
+
+def check_for_plotting_profile(profile: Union[AnnData, str, None] = None) -> dict:
+    """
+    Passes a predefined set of plotting atributes to basic plotting fnctions.
+    """
+    profiles = {
+        "vanilla": {},
+        "small": {
+            "figsize": (3.44, 2.58),
+            "figresolution": 300,
+            "title_loc": "center",
+            "title_pad": 10,
+            "title_fontsize": 10,
+            "label_fontsize": 8,
+            "tick_fontsize": 6,
+        },
+    }
+    if profile in profiles:
+        return profiles[profile]
+    else:
+        if profile is None:
+            return profiles["small"]
+        else:
+            try:
+                p = _get_from_uns(profile, "plotting_profile")
+            except KeyError:
+                p = profiles["small"]
+            return p
