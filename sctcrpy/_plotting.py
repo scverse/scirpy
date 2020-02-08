@@ -121,7 +121,7 @@ def group_abundance(
     sizeprofile: Union[Literal["small"], None] = None,
     inplace: bool = True,
     fraction: bool = True
-) -> List[plt.axes]:
+) -> Union[List[plt.axes], AnnData]:
     """Plots how many cells belong to each clonotype. 
 
     Ignores NaN values. 
@@ -157,7 +157,7 @@ def group_abundance(
     
     Returns
     -------
-    List of axes.
+    List of axes or the dataFrame to plot.
     """
 
     # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
@@ -223,7 +223,6 @@ def group_abundance(
 
     # Create a dictionary of plot layouts
     plot_router = {
-        "table": {"f": lambda: abundance, "arg": {}},
         "bar": {
             "f": nice_stripe_plain,
             "arg": {
@@ -250,14 +249,18 @@ def group_abundance(
     }
 
     # Check for settings in the profile and call the basic plotting function with merged arguments
-    if sizeprofile is None:
-        profile_args = check_for_plotting_profile(adata)
+    if viztype == "table":
+        return abundance
     else:
-        profile_args = check_for_plotting_profile(sizeprofile)
-    main_args = dict(dict(profile_args, **plot_router[viztype]["arg"]), **vizarg)
-    axl = plot_router[viztype]["f"](**main_args)
-
-    return axl
+        if sizeprofile is None:
+            profile_args = check_for_plotting_profile(adata)
+        else:
+            profile_args = check_for_plotting_profile(sizeprofile)
+            main_args = dict(
+                dict(profile_args, **plot_router[viztype]["arg"]), **vizarg
+            )
+        axl = plot_router[viztype]["f"](**main_args)
+        return axl
 
 
 ############################################################
@@ -281,6 +284,7 @@ def nice_bar_plain(
     label_fontsize: int = 10,
     tick_fontsize: int = 8,
     stacked: bool = True,
+    fraction: bool = True,
     **kwds
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
@@ -357,6 +361,40 @@ def nice_bar_plain(
         ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
         ax.set_ylabel(ylab, fontsize=label_fontsize)
         ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
+
+    if needprettier:
+        ax.set_title(
+            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
+        )
+        ax.set_xlabel(xlab, fontsize=label_fontsize)
+        ax.set_xticklabels(
+            ax.get_xticklabels(), fontsize=tick_fontsize, rotation=30, ha="right"
+        )
+        xax = ax.get_yaxis()
+        xax.set_tick_params(length=0)
+        ax.set_ylabel(ylab, fontsize=label_fontsize)
+        if fraction:
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
+        else:
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
+            # ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
+            # ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: str(int(x))))
+            ax.set_yticklabels(
+                [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
+            )
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.legend(
+            title=legend_title,
+            loc="center left",
+            bbox_to_anchor=(1.2, 0.75),
+            title_fontsize=label_fontsize,
+            fontsize=tick_fontsize,
+            frameon=False,
+        )
+        ax.set_position([0.1, 0.3, 0.6, 0.55])
+
     return [ax]
 
 
@@ -452,11 +490,14 @@ def nice_stripe_plain(
         ax.set_xlabel(xlab, fontsize=label_fontsize)
         if fraction:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.set_xticklabels(ax.get_xticks(), fontsize=tick_fontsize)
         else:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
-            #ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
-            #ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: str(int(x))))
-        ax.set_xticklabels([str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize)
+            # ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
+            # ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: str(int(x))))
+            ax.set_xticklabels(
+                [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
+            )
         ax.set_ylabel(ylab, fontsize=label_fontsize)
         ax.set_yticklabels(
             ax.get_yticklabels(), fontsize=tick_fontsize, horizontalalignment="left"
