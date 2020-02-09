@@ -53,6 +53,86 @@ def define_clonotypes(
         return clonotype_col
 
 
+def decide_chain_cat(x: pd.Series) -> str:
+    """Helper function of `chain_pairing`. Associates categories to  a cell based on how many TRA and TRB chains they have.
+
+    Parameters
+    ----------
+    x
+        A Series contaning immune receptor chain information of a single cell.
+
+    Returns
+    -------
+    The category the cell belongs to. 
+    
+    """
+    s = "Uncategorized"
+    if x["has_tcr"]:
+        if x["multichain"] not in [False]:
+            if x["TRA_1_cdr3"] not in [None, "None", "nan"]:
+                if x["TRB_1_cdr3"] not in [None, "None", "nan"]:
+                    if x["TRA_2_cdr3"] not in [None, "None", "nan"]:
+                        if x["TRB_2_cdr3"] not in [None, "None", "nan"]:
+                            s = "Two full chains"
+                        else:
+                            s = "Extra alpha"
+                    else:
+                        if x["TRB_2_cdr3"] not in [None, "None", "nan"]:
+                            s = "Extra beta"
+                        else:
+                            s = "Single pair"
+                else:
+                    "Orphan alpha"
+            else:
+                if x["TRB_1_cdr3"] not in [None, "None", "nan"]:
+                    "Orphan beta"
+        else:
+            s = "Multichain"
+    else:
+        s = "No TCR"
+    return s
+
+
+def chain_pairing(
+    adata: AnnData, *, inplace: bool = True, key_added: str = "chain_pairing"
+) -> Union[None, np.ndarray]:
+    """Associate categories to cells based on how many TRA and TRB chains they have.
+
+    Parameters
+    ----------
+    adata
+        Annotated data matrix
+    inplace
+        If True, adds a column to adata.obs
+    key_added
+        Column name to add to 'obs'
+
+    Returns
+    -------
+    Depending on the value of `inplace`, either
+    returns a Series with a chain pairing category for each cell 
+    or adds a `chain_pairing` column to `adata`. 
+    
+    """
+
+    cp_col = obs.loc[
+        :,
+        [
+            "has_tcr",
+            "multichain",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+        ],
+    ].apply(decide_chain_cat, axis=1)
+
+    if inplace:
+        adata.obs[key_added] = cp_col
+    else:
+        return cp_col
+
+
 def tcr_dist(
     adata: AnnData,
     *,
@@ -222,13 +302,241 @@ def clonal_expansion(
         return result_dict
 
 
+def cdr_convergence(
+    adata: AnnData,
+    groupby: str,
+    *,
+    target_col: str = "clonotype",
+    fun: str = np.sum,
+    for_cells: Union[None, list, np.ndarray] = None,
+    fraction: Union[None, str, bool] = None,
+    inplace: bool = True,
+    as_dict: bool = False,
+) -> Union[None, AnnData, dict]:
+    """Creates summary statsitics on how many nucleotide versions a single cdr amino acid sequence typically has in a given group
+    cells belong to each clonotype within a certain sample. 
+
+    Ignores NaN values. 
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to work on.
+    groupby
+        Group by this column from `obs`. Samples or diagnosis for example.
+    fun
+        A function definining how the target columns should be merged (e.g. sum, mean, median, etc).  
+    target_col
+        Column on which to compute the expansion.        
+    for_cells
+        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.         
+    fraction
+        If True, compute fractions of expanded clonotypes rather than reporting
+        abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+    inplace
+        If True, the results are added to `adata.uns`. Otherwise it returns a dict
+        with the computed values. 
+    as_dict
+        If True, returns a dictionary instead of a dataframe. Useful for testing.
+
+    Returns
+    -------
+    Depending on the value of `inplace`, either returns a data frame 
+    or adds it to `adata.uns`. 
+    """
+    if target_col not in adata.obs.columns:
+        raise ValueError(
+            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
+        )
+
+    # Check how fractions should be computed
+    if fraction is None:
+        fraction_base = groupby
+        fraction = True
+    else:
+        if type(fraction) == bool:
+            fraction_base = groupby
+        else:
+            fraction_base = fraction
+            fraction = True
+    target_col = pd.unique(target_col).tolist()
+
+    # Preproces the data table (remove unnecessary columns and rows)
+    if (for_cells is None) or (len(for_cells) < 2):
+        for_cells = np.intersect1d(
+            adata.obs.loc[~_is_na(obs[fraction_base])].index.values,
+            adata.obs.loc[~_is_na(obs[groupby])].index.values,
+        )
+    tcr_obs = adata.obs.loc[
+        for_cells, pd.unique([groupby, fraction_base] + target_col).tolist()
+    ]
+
+    # Merge target columns into one single column applying the desired function rowwise
+    tcr_obs["lengths"] = tcr_obs.loc[:, target_col].apply(fun, axis=1)
+
+    # Compute group sizes as a basis of fractions)
+    group_sizes = tcr_obs.loc[:, fraction_base].value_counts().to_dict()
+
+    # Calculate distribution of lengths in each group
+    cdr3_lengths = (
+        tcr_obs.groupby(pd.unique([groupby, fraction_base, "lengths"]).tolist())
+        .size()
+        .reset_index(name="count")
+    )
+    cdr3_lengths["groupsize"] = (
+        cdr3_lengths[fraction_base].map(group_sizes).astype("int32")
+    )
+    if fraction:
+        cdr3_lengths["count"] /= cdr3_lengths["groupsize"]
+    cdr3_lengths = cdr3_lengths.groupby([groupby, "lengths"]).sum().reset_index()
+    cdr3_lengths = cdr3_lengths.pivot(index="lengths", columns=groupby, values="count")
+    cdr3_lengths = cdr3_lengths.loc[range(int(tcr_obs["lengths"].max()) + 1), :].fillna(
+        value=0.0
+    )
+
+    # By default, the most abundant group should be the first on the plot, therefore we need their order
+    cdr3_lengths[cdr3_lengths.apply(np.sum, axis=0).index.values]
+
+    if as_dict:
+        cdr3_lengths = cdr3_lengths.to_dict(orient="index")
+
+    # Pass on the resulting dataframe as requested
+    if inplace:
+        _add_to_uns(
+            adata,
+            "spectratype",
+            cdr3_lengths,
+            parameters={
+                "groupby": groupby,
+                "target_col": "|".join(target_col),
+                "fraction": fraction_base,
+            },
+        )
+    else:
+        return result_df
+
+
+def spectratype(
+    adata: AnnData,
+    groupby: str,
+    *,
+    target_col: list = ["TRB_1_cdr3_len"],
+    fun: str = np.sum,
+    for_cells: Union[None, list, np.ndarray] = None,
+    fraction: Union[None, str, bool] = None,
+    inplace: bool = True,
+    as_dict: bool = False,
+) -> Union[None, AnnData, dict]:
+    """Show the distribution of CDR3 region lengths. 
+
+    Ignores NaN values. 
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to work on.
+    groupby
+        Group by this column from `obs`. Samples or diagnosis for example.
+    fun
+        A function definining how the target columns should be merged (e.g. sum, mean, median, etc).  
+    target_col
+        Columns containing CDR3 lengths.        
+    for_cells
+        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.         
+    fraction
+        If True, compute fractions of expanded clonotypes rather than reporting
+        abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+    inplace
+        If True, the results are added to `adata.uns`. Otherwise it returns a dict
+        with the computed values. 
+    as_dict
+        If True, returns a dictionary instead of a dataframe. Useful for testing.
+
+    Returns
+    -------
+    Depending on the value of `inplace`, either returns a data frame 
+    or adds it to `adata.uns`. 
+    """
+    if target_col not in adata.obs.columns:
+        raise ValueError(
+            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
+        )
+
+    # Check how fractions should be computed
+    if fraction is None:
+        fraction_base = groupby
+        fraction = True
+    else:
+        if type(fraction) == bool:
+            fraction_base = groupby
+        else:
+            fraction_base = fraction
+            fraction = True
+    target_col = pd.unique(target_col).tolist()
+
+    # Preproces the data table (remove unnecessary columns and rows)
+    if (for_cells is None) or (len(for_cells) < 2):
+        for_cells = np.intersect1d(
+            adata.obs.loc[~_is_na(obs[fraction_base])].index.values,
+            adata.obs.loc[~_is_na(obs[groupby])].index.values,
+        )
+    tcr_obs = adata.obs.loc[
+        for_cells, pd.unique([groupby, fraction_base] + target_col).tolist()
+    ]
+
+    # Merge target columns into one single column applying the desired function rowwise
+    tcr_obs["lengths"] = tcr_obs.loc[:, target_col].apply(fun, axis=1)
+
+    # Compute group sizes as a basis of fractions)
+    group_sizes = tcr_obs.loc[:, fraction_base].value_counts().to_dict()
+
+    # Calculate distribution of lengths in each group
+    cdr3_lengths = (
+        tcr_obs.groupby(pd.unique([groupby, fraction_base, "lengths"]).tolist())
+        .size()
+        .reset_index(name="count")
+    )
+    cdr3_lengths["groupsize"] = (
+        cdr3_lengths[fraction_base].map(group_sizes).astype("int32")
+    )
+    if fraction:
+        cdr3_lengths["count"] /= cdr3_lengths["groupsize"]
+    cdr3_lengths = cdr3_lengths.groupby([groupby, "lengths"]).sum().reset_index()
+    cdr3_lengths = cdr3_lengths.pivot(index="lengths", columns=groupby, values="count")
+    cdr3_lengths = cdr3_lengths.loc[range(int(tcr_obs["lengths"].max()) + 1), :].fillna(
+        value=0.0
+    )
+
+    # By default, the most abundant group should be the first on the plot, therefore we need their order
+    cdr3_lengths[cdr3_lengths.apply(np.sum, axis=0).index.values]
+
+    if as_dict:
+        cdr3_lengths = cdr3_lengths.to_dict(orient="index")
+
+    # Pass on the resulting dataframe as requested
+    if inplace:
+        _add_to_uns(
+            adata,
+            "spectratype",
+            cdr3_lengths,
+            parameters={
+                "groupby": groupby,
+                "target_col": "|".join(target_col),
+                "fraction": fraction_base,
+            },
+        )
+    else:
+        return cdr3_lengths
+
+
 def group_abundance(
     adata: AnnData,
     groupby: str,
     *,
     target_col: str = "clonotype",
+    for_cells: Union[None, list, np.ndarray] = None,
+    fraction: Union[None, str, bool] = None,
     inplace: bool = True,
-    fraction: bool = True,
     as_dict: bool = False,
 ) -> Union[None, AnnData, dict]:
     """Creates summary statsitics on how many
@@ -241,19 +549,23 @@ def group_abundance(
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. Samples or diagnosis for example.
+        Group by this column from `obs`. Samples or diagnosis for example.  
     target_col
         Column on which to compute the expansion.        
+    for_cells
+        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.         
+    fraction
+        If True, compute fractions of expanded clonotypes rather than reporting
+        abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
-    fraction
-        If True, compute fractions of clonotypes rather than reporting
-        abosolute numbers. Always relative to the main grouping variable.
+    as_dict
+        If True, returns a dictionary instead of a dataframe. Useful for testing.
 
     Returns
     -------
-    Depending on the value of `inplace`, either returns a dictionary 
+    Depending on the value of `inplace`, either returns a data frame 
     or adds it to `adata.uns`. 
     """
     if target_col not in adata.obs.columns:
@@ -261,19 +573,47 @@ def group_abundance(
             "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
         )
 
-    # Preproces the data table (remove NAs and unnecessary columns, sum group sizes as a basis of fractions)
-    tcr_obs = adata.obs.loc[~_is_na(adata.obs[groupby]), [groupby, target_col]]
-    group_sizes = tcr_obs.loc[:, groupby].value_counts().to_dict()
+    # Check how fractions should be computed
+    if fraction is None:
+        fraction_base = groupby
+        fraction = True
+    else:
+        if type(fraction) == bool:
+            fraction_base = groupby
+        else:
+            fraction_base = fraction
+            fraction = True
+
+    # Preproces the data table (remove unnecessary rows and columns)
+    if (for_cells is None) or (len(for_cells) < 2):
+        for_cells = np.intersect1d(
+            obs.loc[~_is_na(obs[fraction_base])].index.values,
+            obs.loc[~_is_na(obs[groupby])].index.values,
+        )
+    tcr_obs = obs.loc[
+        for_cells, pd.unique([groupby, fraction_base, target_col]).tolist()
+    ]
+    tcr_obs.groupby(
+        pd.unique([groupby, fraction_base, target_col]).tolist()
+    ).size().reset_index(name="count")
+
+    # Compute group sizes as a basis of fractions
+    group_sizes = tcr_obs.loc[:, fraction_base].value_counts().to_dict()
 
     # Calculate clonotype abundance
     clonotype_counts = (
-        tcr_obs.groupby([groupby, target_col]).size().reset_index(name="count")
+        tcr_obs.groupby(pd.unique([groupby, fraction_base, target_col]).tolist())
+        .size()
+        .reset_index(name="count")
     )
     clonotype_counts["groupsize"] = (
-        clonotype_counts[groupby].map(group_sizes).astype("int32")
+        clonotype_counts[fraction_base].map(group_sizes).astype("int32")
     )
     if fraction:
         clonotype_counts["count"] /= clonotype_counts["groupsize"]
+    clonotype_counts = (
+        clonotype_counts.groupby([groupby, target_col]).sum().reset_index()
+    )
 
     # Calculate the frequency table already here and maybe save a little time for plotting by supplying wide format data
     result_df = clonotype_counts.pivot(
@@ -291,6 +631,7 @@ def group_abundance(
 
     if as_dict:
         result_df = result_df.to_dict(orient="index")
+    return result_df
 
     # Pass on the resulting dataframe as requested
     if inplace:
@@ -301,7 +642,7 @@ def group_abundance(
             parameters={
                 "groupby": groupby,
                 "target_col": target_col,
-                "fraction": fraction,
+                "fraction": fraction_base,
             },
         )
     else:
