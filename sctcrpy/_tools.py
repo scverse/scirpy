@@ -2,8 +2,8 @@ import parasail
 import numpy as np
 from anndata import AnnData
 import pandas as pd
-from typing import Union
-from ._util import _is_na, _add_to_uns
+from typing import Union, Callable
+from ._util import _is_na, _add_to_uns, _which_fractions
 
 
 def define_clonotypes(
@@ -115,7 +115,7 @@ def chain_pairing(
     
     """
 
-    cp_col = obs.loc[
+    cp_col = adata.obs.loc[
         :,
         [
             "has_tcr",
@@ -349,57 +349,6 @@ def cdr_convergence(
             "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
         )
 
-    # Check how fractions should be computed
-    if fraction is None:
-        fraction_base = groupby
-        fraction = True
-    else:
-        if type(fraction) == bool:
-            fraction_base = groupby
-        else:
-            fraction_base = fraction
-            fraction = True
-    target_col = pd.unique(target_col).tolist()
-
-    # Preproces the data table (remove unnecessary columns and rows)
-    if (for_cells is None) or (len(for_cells) < 2):
-        for_cells = np.intersect1d(
-            adata.obs.loc[~_is_na(obs[fraction_base])].index.values,
-            adata.obs.loc[~_is_na(obs[groupby])].index.values,
-        )
-    tcr_obs = adata.obs.loc[
-        for_cells, pd.unique([groupby, fraction_base] + target_col).tolist()
-    ]
-
-    # Merge target columns into one single column applying the desired function rowwise
-    tcr_obs["lengths"] = tcr_obs.loc[:, target_col].apply(fun, axis=1)
-
-    # Compute group sizes as a basis of fractions)
-    group_sizes = tcr_obs.loc[:, fraction_base].value_counts().to_dict()
-
-    # Calculate distribution of lengths in each group
-    cdr3_lengths = (
-        tcr_obs.groupby(pd.unique([groupby, fraction_base, "lengths"]).tolist())
-        .size()
-        .reset_index(name="count")
-    )
-    cdr3_lengths["groupsize"] = (
-        cdr3_lengths[fraction_base].map(group_sizes).astype("int32")
-    )
-    if fraction:
-        cdr3_lengths["count"] /= cdr3_lengths["groupsize"]
-    cdr3_lengths = cdr3_lengths.groupby([groupby, "lengths"]).sum().reset_index()
-    cdr3_lengths = cdr3_lengths.pivot(index="lengths", columns=groupby, values="count")
-    cdr3_lengths = cdr3_lengths.loc[range(int(tcr_obs["lengths"].max()) + 1), :].fillna(
-        value=0.0
-    )
-
-    # By default, the most abundant group should be the first on the plot, therefore we need their order
-    cdr3_lengths[cdr3_lengths.apply(np.sum, axis=0).index.values]
-
-    if as_dict:
-        cdr3_lengths = cdr3_lengths.to_dict(orient="index")
-
     # Pass on the resulting dataframe as requested
     if inplace:
         _add_to_uns(
@@ -421,9 +370,10 @@ def spectratype(
     groupby: str,
     *,
     target_col: list = ["TRB_1_cdr3_len"],
-    fun: str = np.sum,
+    fun: Callable = np.sum,
     for_cells: Union[None, list, np.ndarray] = None,
     fraction: Union[None, str, bool] = None,
+    fraction_base: Union[None, str] = None,
     inplace: bool = True,
     as_dict: bool = False,
 ) -> Union[None, AnnData, dict]:
@@ -446,6 +396,8 @@ def spectratype(
     fraction
         If True, compute fractions of expanded clonotypes rather than reporting
         abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+    fraction_base
+        Sets the column used as a bsis for fraction calculation explicitely. Overrides the column set by `fraction`, but gets ignored if `fraction` is `False`. 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
@@ -457,28 +409,20 @@ def spectratype(
     Depending on the value of `inplace`, either returns a data frame 
     or adds it to `adata.uns`. 
     """
-    if target_col not in adata.obs.columns:
+    if len(np.intersect1d(adata.obs.columns, target_col)) < 1:
         raise ValueError(
-            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
+            "`target_col` not found in obs. Where do you store CDR3 length information?"
         )
 
     # Check how fractions should be computed
-    if fraction is None:
-        fraction_base = groupby
-        fraction = True
-    else:
-        if type(fraction) == bool:
-            fraction_base = groupby
-        else:
-            fraction_base = fraction
-            fraction = True
+    fraction, fraction_base = _which_fractions(fraction, fraction_base, groupby)
     target_col = pd.unique(target_col).tolist()
 
     # Preproces the data table (remove unnecessary columns and rows)
     if (for_cells is None) or (len(for_cells) < 2):
         for_cells = np.intersect1d(
-            adata.obs.loc[~_is_na(obs[fraction_base])].index.values,
-            adata.obs.loc[~_is_na(obs[groupby])].index.values,
+            adata.obs.loc[~_is_na(adata.obs[fraction_base])].index.values,
+            adata.obs.loc[~_is_na(adata.obs[groupby])].index.values,
         )
     tcr_obs = adata.obs.loc[
         for_cells, pd.unique([groupby, fraction_base] + target_col).tolist()
@@ -522,7 +466,8 @@ def spectratype(
             parameters={
                 "groupby": groupby,
                 "target_col": "|".join(target_col),
-                "fraction": fraction_base,
+                "fraction": fraction,
+                "fraction_base": fraction_base,
             },
         )
     else:
@@ -536,6 +481,7 @@ def group_abundance(
     target_col: str = "clonotype",
     for_cells: Union[None, list, np.ndarray] = None,
     fraction: Union[None, str, bool] = None,
+    fraction_base: Union[None, str] = None,
     inplace: bool = True,
     as_dict: bool = False,
 ) -> Union[None, AnnData, dict]:
@@ -557,6 +503,8 @@ def group_abundance(
     fraction
         If True, compute fractions of expanded clonotypes rather than reporting
         abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+    fraction_base
+        Sets the column used as a bsis for fraction calculation explicitely. Overrides the column set by `fraction`, but gets ignored if `fraction` is `False`. 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
@@ -574,23 +522,15 @@ def group_abundance(
         )
 
     # Check how fractions should be computed
-    if fraction is None:
-        fraction_base = groupby
-        fraction = True
-    else:
-        if type(fraction) == bool:
-            fraction_base = groupby
-        else:
-            fraction_base = fraction
-            fraction = True
+    fraction, fraction_base = _which_fractions(fraction, fraction_base, groupby)
 
     # Preproces the data table (remove unnecessary rows and columns)
     if (for_cells is None) or (len(for_cells) < 2):
         for_cells = np.intersect1d(
-            obs.loc[~_is_na(obs[fraction_base])].index.values,
-            obs.loc[~_is_na(obs[groupby])].index.values,
+            adata.obs.loc[~_is_na(adata.obs[fraction_base])].index.values,
+            adata.obs.loc[~_is_na(adata.obs[groupby])].index.values,
         )
-    tcr_obs = obs.loc[
+    tcr_obs = adata.obs.loc[
         for_cells, pd.unique([groupby, fraction_base, target_col]).tolist()
     ]
     tcr_obs.groupby(
@@ -627,11 +567,15 @@ def group_abundance(
         .sort_values(by="count", ascending=False)
         .index.values
     )
-    result_df = result_df.loc[ranked_clonotypes, :]
+
+    # Sort the groups as well
+    ranked_groups = (
+        result_df.apply(np.sum, axis=0).sort_values(ascending=False).index.values
+    )
+    result_df = result_df.loc[ranked_clonotypes, ranked_groups]
 
     if as_dict:
         result_df = result_df.to_dict(orient="index")
-    return result_df
 
     # Pass on the resulting dataframe as requested
     if inplace:
@@ -642,7 +586,8 @@ def group_abundance(
             parameters={
                 "groupby": groupby,
                 "target_col": target_col,
-                "fraction": fraction_base,
+                "fraction": fraction,
+                "fraction_base": fraction_base,
             },
         )
     else:
