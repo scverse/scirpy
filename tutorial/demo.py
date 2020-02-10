@@ -64,6 +64,16 @@ adata
 # %%
 adata.obs
 
+
+# %% [markdown]
+# Just to make some plottings clearer, let us simulate we have more than one samples
+
+# %%
+def f(x):
+    return np.random.randint(6)
+adata.obs['sample'] = adata.obs.apply(f, axis=1)
+adata.obs.head()
+
 # %% [markdown]
 # ## Standard-preprocessing for the transcriptomics data
 
@@ -146,21 +156,90 @@ st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
 st.pl.clonal_expansion(adata, groupby="leiden")
 
 # %% [markdown]
-# To plot clonotype abundances, I experimented with three approaches. One uses Pandas and precomputes before passing data to the plotting function and a more lazy one that relies on Seaborn and finally the one I favour is using pandas to select the data and stores the dataframe.
+# ## Clonotype abundances
 
 # %%
-st.pl.group_abundance(adata, groupby="leiden", fraction=False)
+ax = st.pl.group_abundance(adata, groupby="leiden")
+#ax = ax[0]
+#fig = ax.get_figure()
+#fig.savefig('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/abundance.png')
+
+# %% [markdown]
+# Perhaps an even more straightforward question would be comparing clonotype composition of samples
 
 # %%
-st.pl.group_abundance(adata, groupby="leiden")
+st.pl.group_abundance(adata, groupby="sample", fraction=False)
 
 # %%
-st.pl.group_abundance(adata, groupby="leiden", viztype='stacked')
+st.pl.group_abundance(adata, groupby="sample")
 
 # %%
-st.pl.group_abundance(adata, groupby="leiden", viztype='table')
+st.pl.group_abundance(adata, groupby="sample", viztype='stacked')
 
 # %%
-st.pl.group_abundance(adata, target_col='TRB_1_v_gene', groupby="leiden")
+st.pl.group_abundance(adata, groupby="sample", viztype='table')
+
+# %% [markdown]
+# If cell types are considered, it is still probably better to normalize to cell numbers in a sample.
+
+# %%
+st.pl.group_abundance(adata, groupby="leiden", fraction='sample')
+
+# %%
+I would simply use group abundance plots to show shain usage (it would of course not check if chain usage tool has been run then)
+
+# %%
+st.tl.chain_pairing(adata)
+
+# %%
+adata.obs.loc[:,[
+            "has_tcr",
+            "multichain",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+        ]]
+
+# %%
+st.pl.group_abundance(adata, groupby='sample', target_col='chain_pairing', viztype='stacked')
+
+# %%
+st.pl.group_abundance(adata, groupby='chain_pairing', target_col='sample', viztype='stacked', fraction='sample')
+
+# %%
+Group abundance plots can also give some information on VDJ usage
+
+# %%
+st.pl.group_abundance(adata, groupby='leiden', target_col='TRB_1_v_gene', fraction='sample', viztype='stacked')
+
+# %%
+tb = st.pl.group_abundance(adata, groupby='TRB_1_v_gene', target_col='leiden', fraction='sample', viztype='table')
+tb.head()
+
+# %%
+st.pl.group_abundance(adata, groupby='TRB_1_v_gene', target_col='leiden', fraction='sample', viztype='stacked', group_order=tb.columns.tolist()[1:10])
+
+# %% [markdown]
+# ## Spectratype plots
+
+# %%
+st.pl.spectratype(adata, groupby='leiden')
+
+# %%
+st.pl.spectratype(adata, groupby='leiden', fraction='sample')
+
+# %%
+st.pl.spectratype(adata, groupby='leiden', fraction='sample', viztype='line')
+
+# %%
+
+# %%
+
+# %%
+z = adata.uns['sctcrpy'].pop('group_abundance')
+
+# %%
+adata.obs.to_csv('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/toytable.csv')
 
 # %%
