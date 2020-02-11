@@ -306,14 +306,15 @@ def cdr_convergence(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
-    fun: str = np.sum,
+    target_col: str = "TRB_1_cdr3",
     for_cells: Union[None, list, np.ndarray] = None,
     fraction: Union[None, str, bool] = None,
+    fraction_base: Union[None, str] = None,
+    clip_at: int = 3,
     inplace: bool = True,
     as_dict: bool = False,
 ) -> Union[None, AnnData, dict]:
-    """Creates summary statsitics on how many nucleotide versions a single cdr amino acid sequence typically has in a given group
+    """Creates summary statsitics on how many nucleotide versions a single CDR3 amino acid sequence typically has in a given group
     cells belong to each clonotype within a certain sample. 
 
     Ignores NaN values. 
@@ -324,14 +325,15 @@ def cdr_convergence(
         AnnData object to work on.
     groupby
         Group by this column from `obs`. Samples or diagnosis for example.
-    fun
-        A function definining how the target columns should be merged (e.g. sum, mean, median, etc).  
     target_col
-        Column on which to compute the expansion.        
+        Column on which to compute the expansion. Useful if we want to specify the chain.        
     for_cells
-        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.         
+        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.          
+    clip_at
+        All clonotypes with more copies than `clip_at` will be summarized into 
+        a single group. 
     fraction
-        If True, compute fractions of expanded clonotypes rather than reporting
+        If True, compute fractions cells rather than reporting
         abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
@@ -346,19 +348,50 @@ def cdr_convergence(
     """
     if target_col not in adata.obs.columns:
         raise ValueError(
-            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
+            "`target_col` not found in obs. Where do you store CDR3 amino acid sequence information??"
         )
+
+    # Check how fractions should be computed
+    fraction, fraction_base = _which_fractions(fraction, None, groupby)
+
+    # Preprocess data
+    tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
+    result_df = (
+        tcr_obs.groupby([groupby, target_col, target_col + "_nt"])
+        .size()
+        .reset_index(name="count")
+    )
+    result_df.loc[result_df["count"] >= clip_at, "count"] = clip_at
+
+    result_dict = dict()
+    for group in result_df[groupby].unique():
+        result_dict[group] = dict()
+        for n in range(1, clip_at + 1):
+            label = ">= {}".format(n) if n == clip_at else str(n)
+            mask_group = result_df[groupby] == group
+            mask_count = result_df["count"] == n
+            tmp_count = np.sum(mask_group & mask_count)
+            if fraction:
+                tmp_count /= np.sum(mask_group)
+            result_dict[group][label] = tmp_count
+
+    if as_dict:
+        result_df = result_dict
+    else:
+        result_df = pd.DataFrame.from_dict(result_dict, orient="index")
 
     # Pass on the resulting dataframe as requested
     if inplace:
         _add_to_uns(
             adata,
-            "spectratype",
-            cdr3_lengths,
+            "cdr_convergence",
+            result_df,
             parameters={
                 "groupby": groupby,
-                "target_col": "|".join(target_col),
-                "fraction": fraction_base,
+                "target_col": target_col,
+                "clip_at": clip_at,
+                "fraction": fraction,
+                "fraction_base": fraction_base,
             },
         )
     else:
