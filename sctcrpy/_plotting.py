@@ -113,11 +113,14 @@ def spectratype(
     *,
     target_col: list = ["TRB_1_cdr3_len"],
     group_order: Union[list, None] = None,
-    viztype: Literal["bar", "line", "table"] = "bar",
+    top_n: int = 10,
+    viztype: Literal["bar", "line", "curve", "table"] = "bar",
     vizarg: Union[dict, None] = None,
     ax: Union[plt.axes, None] = None,
+    curve_layout: Literal["overlay", "stacked", "shifetd"] = "overlay",
     sizeprofile: Union[Literal["small"], None] = None,
-    fraction: Union[None, str, bool] = None
+    fraction: Union[None, str, bool] = None,
+    **kwds
 ) -> Union[List[plt.axes], AnnData]:
     """Plots how many cells belong to each clonotype. 
 
@@ -134,13 +137,15 @@ def spectratype(
     grouporder
         Specifies the order of group (samples).
     top_n
-        Top clonotypes to plot. 
+        Number of groups to plot. 
     viztype
         The user can later choose the layout of the plot. Currently supports `bar` and `stacked`.  
     vizarg
         Custom values to be passed to the plot in a dictionary of arguments.   
     ax
-        Custom axis if needed.   
+        Custom axis if needed.  
+    curve_layout
+        if the KDE-based curves should be stacked or shifted vetrically.  
     sizeprofile
         Figure size and font sizes to make everything legible. Currenty only `small` is supported.      
     fraction
@@ -204,6 +209,17 @@ def spectratype(
         group_order = plottable.columns.values
     plottable = plottable.loc[:, group_order]
 
+    # We need to convert the contingency tables back for the KDE in seaborn, using pseudo-counts in case of fractions
+    if fraction:
+        ftr = 1000 / plottable.max().max()
+    countable, counted = [], []
+    for cn in plottable.columns:
+        counts = np.round(plottable[cn] * ftr)
+        if counts.sum() > 0:
+            countable.append(np.repeat(plottable.index.values, counts))
+            counted.append(cn)
+    countable, counted = countable[:top_n], counted[:top_n]
+
     # Create text for default labels
     title = "Spectratype of " + groupby + " (" + target_col_l + ")"
     if fraction:
@@ -240,6 +256,20 @@ def spectratype(
                 "fraction": fraction,
             },
         },
+        "curve": {
+            "f": nice_curve_plain,
+            "arg": {
+                "data": countable,
+                "labels": counted,
+                "title": title,
+                "legend_title": groupby,
+                "ylab": ylab,
+                "xlab": target_col_l,
+                "ax": ax,
+                "fraction": fraction,
+                "curve_layout": curve_layout,
+            },
+        },
     }
 
     # Check for settings in the profile and call the basic plotting function with merged arguments
@@ -250,7 +280,9 @@ def spectratype(
             profile_args = check_for_plotting_profile(adata)
         else:
             profile_args = check_for_plotting_profile(sizeprofile)
-        main_args = dict(dict(profile_args, **plot_router[viztype]["arg"]), **vizarg)
+        main_args = dict(
+            dict(dict(profile_args, **kwds), **plot_router[viztype]["arg"]), **vizarg
+        )
         axl = plot_router[viztype]["f"](**main_args)
         return axl
 
@@ -666,6 +698,192 @@ def nice_line_plain(
             frameon=False,
         )
         ax.set_position([0.3, 0.2, 0.5, 0.75])
+    return [ax]
+
+
+def nice_curve_plain(
+    data: List[Union[np.ndarray, pd.Series]],
+    labels: Union[list, np.ndarray, pd.Series],
+    *,
+    ax: Union[plt.axes, list, None] = None,
+    curve_layout: Literal["overlay", "stacked", "shifetd"] = "overlay",
+    title: str = "",
+    legend_title: str = "",
+    xlab: str = "",
+    ylab: str = "",
+    figsize: Tuple[float, float] = (3.44, 2.58),
+    figresolution: int = 300,
+    title_loc: Literal["center", "left", "right"] = "center",
+    title_pad: float = 10,
+    title_fontsize: int = 10,
+    label_fontsize: int = 8,
+    tick_fontsize: int = 6,
+    shade: bool = True,
+    outline: bool = True,
+    fraction: bool = True,
+    **kwds
+) -> List[plt.axes]:
+    """Basic plotting function built on top of bar plot in Pandas.
+    Draws bars without stdev. 
+
+    Parameters
+    ----------
+    data
+        Counts or pseudo-counts for KDE.
+    labels
+        The label to display for each curve
+    ax
+        Custom axis if needed.
+    curve_layout
+        if the KDE-based curves should be stacked or shifted vetrically.  
+    title
+        Figure title.
+    legend_title
+        Figure legend title.
+    xlab
+        Label for the x axis.
+    ylab
+        Label for the y axis.
+    figsize
+        Size of the resulting figure in inches.
+    figresolution
+        Resolution of the figure in dpi. 
+    title_loc
+        Position of the plot title (can be {'center', 'left', 'right'}). 
+    title_pad
+        Padding of the plot title.
+    title_fontsize
+        Font size of the plot title. 
+    label_fontsize
+        Font size of the axis labels.   
+    tick_fontsize
+        Font size of the axis tick labels. 
+    stacked
+        Determines if the vars should be stacked.   
+    **kwds
+        Arguments not used by the current plotting layout.
+    
+    Returns
+    -------
+    List of axes.
+    """
+
+    # Create figure if not supplied already. If multiple axes are supplied, it is assumed that the first one is relevant to the plot.
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
+        needprettier = True
+    else:
+        needprettier = False
+        if type(ax) is list:
+            ax = ax[0]
+
+    # Draw a curve for every series
+    if curve_layout in ["stacked", "shifted"]:
+        shade = False
+    xmax = 0
+    for d in data:
+        try:
+            m = max(d)
+            if m > xmax:
+                xmax = m
+        except:
+            pass
+    xmax += 1
+    for i in range(len(data)):
+        label = labels[i]
+        lnlabel = "_nolegend_"
+        if curve_layout == "overlay":
+            lnlabel = label[:]
+            ylabel = "Permille of cells"  # This is the equivalent of pseudocounts
+        ax = sns.kdeplot(
+            data[i],
+            clip=(-1, xmax),
+            label=lnlabel,
+            shade=shade,
+            gridsize=xmax / 2,
+            ax=ax,
+        )
+        ln = ax.lines[i]
+        x = ln.get_xdata()
+        y = ln.get_ydata()
+        # x_a, y_a = [], []
+        # print(y[:15])
+        # lm = len(y)
+        # for x_n in np.arange(0.3, xmax, 0.1):
+        # y_n = 0.0
+        # for j in range(lm):
+        # x_m = round(10*(x[j]))
+        # if int(x_m) == int(x_n*10):
+        # y_n = y[j]
+        # x_a.append(x_n)
+        # y_a.append(y_n)
+        # x, y = np.array(x_a), np.array(y_a)
+        if curve_layout == "shifted":
+            y = y + i
+            if outline:
+                ln.set_xdata(x)
+                ln.set_ydata(y)
+            else:
+                ln.set_visible(False)
+            ax.fill_between(x, y, i, alpha=0.6, label=label)
+            ylab = ""
+        else:
+            ln.set_visible(False)
+            if curve_layout == "stacked":
+                if i < 1:
+                    _y = np.zeros(len(y))
+                y = _y + y
+                ax.fill_between(x, _y, y, alpha=0.6, label=label)
+                _y = y[:]
+            else:
+                y = (
+                    y / 1000
+                )  # If we show the plot directly, fraction should be used instead of pseudocounts
+                ln.set_ydata(y)
+                ln.set_visible(True)
+
+    # Make plot a bit prettier
+    if needprettier:
+        ax.set_title(
+            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
+        )
+        ax.set_xlabel(xlab, fontsize=label_fontsize)
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=8))
+        ax.set_xticklabels(
+            [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
+        )
+        ax.set_ylabel(ylab, fontsize=label_fontsize)
+        ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
+        if fraction:
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+            ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
+            ax.yaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.4f}"))
+        else:
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
+            ax.set_yticklabels(
+                [str(int(x)) for x in ax.get_yticks()], fontsize=tick_fontsize
+            )
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        if curve_layout == "shifted":
+            for e in range(xmax):
+                ax.axvline(e, color="whitesmoke", lw=0.1)
+            ax.set_position([0.3, 0.2, 0.7, 0.75])
+            ax.set_yticks(range(i + 1))
+            ax.set_yticklabels(
+                [labels[e] for e in range(i + 1)], fontsize=tick_fontsize
+            )
+            ax.legend().remove()
+        else:
+            ax.legend(
+                title=legend_title,
+                loc="upper left",
+                bbox_to_anchor=(1.2, 1),
+                title_fontsize=label_fontsize,
+                fontsize=tick_fontsize,
+                frameon=False,
+            )
+            ax.set_position([0.3, 0.2, 0.5, 0.75])
     return [ax]
 
 

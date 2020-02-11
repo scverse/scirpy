@@ -233,11 +233,40 @@ st.pl.spectratype(adata, groupby='leiden', fraction='sample')
 st.pl.spectratype(adata, groupby='leiden', fraction='sample', viztype='line')
 
 # %%
+st.pl.spectratype(adata, groupby='leiden', fraction='sample', viztype='curve', curve_layout='stacked')
+
+# %% [markdown]
+# Stacked spectratype plots are not working yet, but we can also shift the curves for better visibility.
+
+# %%
+st.pl.spectratype(adata, groupby='leiden', fraction='sample', viztype='curve', curve_layout='shifted', outline=False)
+
+# %% [markdown]
+# Spectratypes with V genes
+
+# %%
+st.pl.spectratype(adata, groupby='TRB_1_v_gene', fraction='sample', viztype='table')
+
+# %%
+st.pl.spectratype(adata, groupby='TRB_1_v_gene', fraction='sample', viztype='curve', curve_layout='shifted', outline=False)
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
 
 # %%
 
 # %%
 z = adata.uns['sctcrpy'].pop('group_abundance')
+
+# %%
+z = adata.uns['sctcrpy'].pop('spectratype')
 
 # %%
 adata.obs.to_csv('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/toytable.csv')
