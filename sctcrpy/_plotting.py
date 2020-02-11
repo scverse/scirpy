@@ -107,6 +107,156 @@ def clonal_expansion(
     pd.DataFrame.from_dict(expansion, orient="index").plot.bar(stacked=True)
 
 
+def cdr_convergence(
+    adata: Union[dict, AnnData],
+    groupby: str,
+    *,
+    target_col: str = "TRB_1_cdr3",
+    clip_at: int = 3,
+    group_order: Union[list, None] = None,
+    top_n: int = 10,
+    viztype: Literal["bar", "table"] = "bar",
+    vizarg: Union[dict, None] = None,
+    ax: Union[plt.axes, None] = None,
+    sizeprofile: Union[Literal["small"], None] = None,
+    fraction: Union[None, str, bool] = None,
+    **kwds
+) -> Union[List[plt.axes], AnnData]:
+    """how many nucleotide versions a single CDR3 amino acid sequence typically has in a given group
+    cells belong to each clonotype within a certain sample.
+
+    Ignores NaN values. 
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to work on.
+    groupby
+        Group by this column from `obs`. Samples or diagnosis for example.
+    target_col
+        Column on which to compute the expansion. Useful if we want to specify the chain.        
+    for_cells
+        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.          
+    clip_at
+        All clonotypes with more copies than `clip_at` will be summarized into 
+        a single group. 
+    grouporder
+        Specifies the order of group (samples).
+    top_n
+        Number of groups to plot. 
+    viztype
+        The user can later choose the layout of the plot. Currently supports `bar` and `stacked`.  
+    vizarg
+        Custom values to be passed to the plot in a dictionary of arguments.   
+    ax
+        Custom axis if needed.  
+    curve_layout
+        if the KDE-based curves should be stacked or shifted vetrically.  
+    sizeprofile
+        Figure size and font sizes to make everything legible. Currenty only `small` is supported.      
+    fraction
+        If True, compute fractions of cells rather than reporting
+        abosolute numbers. Always relative to the main grouping variable.leton, doublet or triplet clonotype.
+    
+    Returns
+    -------
+    List of axes or the dataFrame to plot.
+    """
+
+    # Check how fractions should be computed
+    fraction, fraction_base = _which_fractions(fraction, None, groupby)
+
+    # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
+    if type(adata) == dict:
+        plottable = pd.DataFrame.from_dict(adata, orient="index")
+    else:
+        try:
+            plottable = _get_from_uns(
+                adata,
+                "cdr_convergence",
+                parameters={
+                    "groupby": groupby,
+                    "target_col": target_col,
+                    "clip_at": clip_at,
+                    "fraction": fraction,
+                    "fraction_base": fraction_base,
+                },
+            )
+        except KeyError:
+            logging.warning(
+                "No precomputed data found for current parameters. "
+                "Computing group CDR3 convergence now. "
+            )
+            tl.cdr_convergence(
+                adata,
+                groupby,
+                target_col=target_col,
+                fraction=fraction,
+                fraction_base=fraction_base,
+            )
+            plottable = _get_from_uns(
+                adata,
+                "cdr_convergence",
+                parameters={
+                    "groupby": groupby,
+                    "target_col": target_col,
+                    "clip_at": clip_at,
+                    "fraction": fraction,
+                    "fraction_base": fraction_base,
+                },
+            )
+
+    if type(plottable) == dict:
+        plottable = pd.DataFrame.from_dict(adata, orient="index")
+
+    if vizarg is None:
+        vizarg = dict()
+
+    if group_order is None:
+        group_order = plottable.columns.values
+    plottable = plottable.loc[:, group_order]
+
+    # Create text for default labels
+    title = "Convergence of CDR3 regions in " + groupby + "s"
+    if fraction:
+        xlab = "Fraction of cells in " + fraction_base
+        ylab = "Fraction of cells in " + fraction_base
+    else:
+        xlab = "Number of cells"
+        ylab = "Number of cells"
+
+    # Create a dictionary of plot layouts
+    plot_router = {
+        "bar": {
+            "f": nice_bar_plain,
+            "arg": {
+                "data": plottable,
+                "title": title,
+                "legend_title": "Versions",
+                "ylab": ylab,
+                "xlab": target_col,
+                "ax": ax,
+                "fraction": fraction,
+                "stacked": True,
+            },
+        },
+    }
+
+    # Check for settings in the profile and call the basic plotting function with merged arguments
+    if viztype == "table":
+        return plottable
+    else:
+        if sizeprofile is None:
+            profile_args = check_for_plotting_profile(adata)
+        else:
+            profile_args = check_for_plotting_profile(sizeprofile)
+        main_args = dict(
+            dict(dict(profile_args, **kwds), **plot_router[viztype]["arg"]), **vizarg
+        )
+        axl = plot_router[viztype]["f"](**main_args)
+        return axl
+
+
 def spectratype(
     adata: Union[dict, AnnData],
     groupby: str,

@@ -250,11 +250,15 @@ st.pl.spectratype(adata, groupby='TRB_1_v_gene', fraction='sample', viztype='tab
 # %%
 st.pl.spectratype(adata, groupby='TRB_1_v_gene', fraction='sample', viztype='curve', curve_layout='shifted', outline=False)
 
-# %%
+# %% [markdown]
+# ## Convergence of CDR3 amino acid sequences
 
 # %%
+tb = st.pl.cdr_convergence(adata, groupby='sample', viztype='table')
+tb.head()
 
 # %%
+st.pl.cdr_convergence(adata, groupby='sample', viztype='bar')
 
 # %%
 
@@ -267,6 +271,9 @@ z = adata.uns['sctcrpy'].pop('group_abundance')
 
 # %%
 z = adata.uns['sctcrpy'].pop('spectratype')
+
+# %%
+z = adata.uns['sctcrpy'].pop('cdr_convergence')
 
 # %%
 adata.obs.to_csv('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/toytable.csv')
