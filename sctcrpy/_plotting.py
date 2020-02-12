@@ -1190,14 +1190,14 @@ def check_for_plotting_profile(profile: Union[AnnData, str, None] = None) -> dic
             "tick_fontsize": 6,
         },
     }
-    if profile in profiles:
-        return profiles[profile]
+    p = profiles["small"]
+    if isinstance(profile, AnnData):
+        try:
+            p = _get_from_uns(profile, "plotting_profile")
+        except KeyError:
+            pass
     else:
-        if profile is None:
-            return profiles["small"]
-        else:
-            try:
-                p = _get_from_uns(profile, "plotting_profile")
-            except KeyError:
-                p = profiles["small"]
-            return p
+        if isinstance(profile, str):
+            if profile in profiles:
+                p = profiles[profile]
+    return p
