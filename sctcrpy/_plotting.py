@@ -6,6 +6,7 @@ from anndata import AnnData
 from scanpy import logging
 import pandas as pd
 import seaborn as sns
+from sklearn.neighbors import KernelDensity
 from ._util import _get_from_uns, _add_to_uns, _which_fractions
 from . import tl
 from typing import Union, List, Tuple
