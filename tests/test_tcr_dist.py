@@ -92,9 +92,11 @@ def test_alignment_dist(aligner):
 def adata_cdr3():
     obs = pd.DataFrame(
         [
-            ["cell1", "AAAAA", "WWWWW"],
-            ["cell2", "AAAVV", "WWWYY"],
-            ["cell3", "HHAHH", "PPWPP"],
+            ["cell1", "AAA", "AHA"],
+            ["cell2", "AHA", "nan"],
+            ["cell3", "nan", "nan"],
+            ["cell4", "AAA", "AAA"],
+            ["cell5", "nan", "AAA"],
         ],
         columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3"],
     ).set_index("cell_id")
@@ -102,22 +104,89 @@ def adata_cdr3():
     return adata
 
 
-class MockDistanceCalculator(_DistanceCalculator):
-    def __init__(self, dist):
-        self.dist = dist
-        pass
+@pytest.fixture
+def adata_cdr3_mock_distance_calculator():
+    class MockDistanceCalculator(_DistanceCalculator):
+        def __init__(self, n_jobs=None):
+            pass
 
-    def calc_dist_mat(self, seqs):
-        """Don't calculate distances, but return the 
-        dist matrix passed to the constructor."""
-        assert self.dist.shape[0] == self.dist.shape[1] == len(seqs)
-        return self.dist
+        def calc_dist_mat(self, seqs):
+            """Don't calculate distances, but return the
+            dist matrix passed to the constructor."""
+            npt.assert_equal(seqs, ["AAA", "AHA"])
+            return np.array([[0, 1], [1, 0]])
 
-
-def test_dist_for_chain(adata_cdr3):
-    dist_calc = MockDistanceCalculator(np.array([[]]))
-    _dist_for_chain(adata_cdr3, "TRA", dist_calc)
+    return MockDistanceCalculator()
 
 
-def test_tcr_dist(adata_cdr3):
-    assert False
+def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    """The _dist_for_chain function returns four matrices for 
+    all combinations of tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2. 
+    Tests if these matrices are correct. """
+    cell_mats = _dist_for_chain(adata_cdr3, "TRA", adata_cdr3_mock_distance_calculator)
+    tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2 = cell_mats
+
+    npt.assert_equal(
+        tra1_tra1,
+        np.array(
+            [
+                [0, 1, np.nan, 0, np.nan],
+                [1, 0, np.nan, 1, np.nan],
+                [np.nan] * 5,
+                [0, 1, np.nan, 0, np.nan],
+                [np.nan] * 5,
+            ]
+        ),
+    )
+
+    npt.assert_equal(
+        tra1_tra2,
+        np.array(
+            [
+                [1, np.nan, np.nan, 0, 0],
+                [0, np.nan, np.nan, 1, 1],
+                [np.nan] * 5,
+                [1, np.nan, np.nan, 0, 0],
+                [np.nan] * 5,
+            ]
+        ),
+    )
+
+    npt.assert_equal(
+        tra2_tra1,
+        np.array(
+            [
+                [1, 0, np.nan, 1, np.nan],
+                [np.nan] * 5,
+                [np.nan] * 5,
+                [0, 1, np.nan, 0, np.nan],
+                [0, 1, np.nan, 0, np.nan],
+            ]
+        ),
+    )
+
+    npt.assert_equal(
+        tra2_tra2,
+        np.array(
+            [
+                [0, np.nan, np.nan, 1, 1],
+                [np.nan] * 5,
+                [np.nan] * 5,
+                [1, np.nan, np.nan, 0, 0],
+                [1, np.nan, np.nan, 0, 0],
+            ]
+        ),
+    )
+
+    npt.assert_equal(
+        np.fmin.reduce(cell_mats),
+        np.array(
+            [
+                [0, 0, np.nan, 0, 0],
+                [0, 0, np.nan, 1, 1],
+                [np.nan] * 5,
+                [0, 1, np.nan, 0, 0],
+                [0, 1, np.nan, 0, 0],
+            ]
+        ),
+    )
