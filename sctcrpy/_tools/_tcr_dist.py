@@ -125,8 +125,48 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         return result
 
+    def _calc_norm_factors(self, score_mat: np.ndarray) -> np.ndarray:
+        """Calculate normalization factors to normaliza a score matrix between 0 and 1. 
+        
+        We define the normalization factors as the minimum of the self-alignment score
+        of each pair of sequences. The refers to the max. possible score of an alignment
+        between the two sequences. 
+        """
+        self_scores = np.diag(score_mat)
+        a1, a2 = np.meshgrid(self_scores, self_scores)
+        norm_factors = np.minimum(a1, a2)
+
+        assert _is_symmetric(norm_factors), "Matrix not symmetric"
+
+        return norm_factors
+
+    def _score_to_dist(self, score_mat: np.ndarray) -> np.ndarray:
+        """Convert an alignment score matrix into a distance between 0 and 1.
+        This is achieved by dividing the alignment score with a normalization
+        factor that refers to the maximum possible alignment score between
+        two sequences. """
+        assert np.all(
+            np.argmax(score_mat, axis=1) == np.diag_indices_from(score_mat)
+        ), """Max value not on the diagonal"""
+
+        norm_factors = self._calc_norm_factors(score_mat)
+        # normalize
+        dist_mat = score_mat / norm_factors
+
+        # upper bound is 1 already, set lower bound to 0
+        dist_mat[dist_mat < 0] = 0
+
+        # inverse (= turn into distance)
+        dist_mat = 1 - dist_mat
+
+        assert np.min(dist_mat) >= 0
+        assert np.max(dist_mat) <= 1
+
+        return dist_mat
+
     def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
-        """Calculate the scores of all-against-all pairwise sequence alignments.
+        """Calculate the distances between amino acid sequences based on
+        of all-against-all pairwise sequence alignments.
 
         Parameters
         ----------
@@ -135,7 +175,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         Returns
         -------
-        Symmetric, square matrix of pairwise alignment scores
+        Symmetric, square matrix of normalized alignment distances. 
         """
         p = Pool(self.n_jobs)
         rows = p.starmap(self._align_row, zip(itertools.repeat(seqs), range(len(seqs))))
@@ -150,44 +190,6 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         assert _is_symmetric(score_mat), "Matrix not symmetric"
 
         return score_mat
-
-
-def _calc_norm_factors(score_mat: np.ndarray) -> np.ndarray:
-    """Calculate normalization factors to normaliza a score matrix between 0 and 1. 
-    
-    We define the normalization factors as the minimum of the self-alignment score
-    of each pair of sequences. The refers to the max. possible score of an alignment
-    between the two sequences. 
-    """
-    self_scores = np.diag(score_mat)
-    a1, a2 = np.meshgrid(self_scores, self_scores)
-    norm_factors = np.minimum(a1, a2)
-
-    assert _is_symmetric(norm_factors), "Matrix not symmetric"
-
-    return norm_factors
-
-
-def _score_to_dist(score_mat: np.ndarray) -> np.ndarray:
-    """Convert an alignment score matrix into a distance between 0 and 1."""
-    assert np.all(
-        np.argmax(score_mat, axis=1) == np.diag_indices_from(score_mat)
-    ), """Max value not on the diagonal"""
-
-    norm_factors = _calc_norm_factors(score_mat)
-    # normalize
-    dist_mat = score_mat / norm_factors
-
-    # upper bound is 1 already, set lower bound to 0
-    dist_mat[dist_mat < 0] = 0
-
-    # inverse (= turn into distance)
-    dist_mat = 1 - dist_mat
-
-    assert np.min(dist_mat) >= 0
-    assert np.max(dist_mat) <= 1
-
-    return dist_mat
 
 
 def _dist_for_chain(adata, chain):
