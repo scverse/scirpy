@@ -909,6 +909,10 @@ def nice_curve_plain(
         Font size of the axis labels.   
     tick_fontsize
         Font size of the axis tick labels. 
+    shade
+        If shade area should be plotted. 
+    outline
+        If the outline should be drawn. 
     stacked
         Determines if the vars should be stacked.   
     **kwds
@@ -928,9 +932,7 @@ def nice_curve_plain(
         if type(ax) is list:
             ax = ax[0]
 
-    # Draw a curve for every series
-    if curve_layout in ["stacked", "shifted"]:
-        shade = False
+    # Check what would be the plotting range
     xmax = 0
     for d in data:
         try:
@@ -940,58 +942,32 @@ def nice_curve_plain(
         except:
             pass
     xmax += 1
+    x = np.arange(0, xmax, 0.1)
+
+    # Draw a curve for every series
     for i in range(len(data)):
-        label = labels[i]
-        lnlabel = "_nolegend_"
-        if curve_layout == "overlay":
-            lnlabel = label[:]
-            ylabel = "Permille of cells"  # This is the equivalent of pseudocounts
-        ax = sns.kdeplot(
-            data[i],
-            clip=(-1, xmax),
-            label=lnlabel,
-            shade=shade,
-            # gridsize=xmax / 2,
-            ax=ax,
-        )
-        ln = ax.lines[i]
-        x = ln.get_xdata()
-        y = ln.get_ydata()
-        # x_a, y_a = [], []
-        # print(y[:15])
-        # lm = len(y)
-        # for x_n in np.arange(0.3, xmax, 0.1):
-        # y_n = 0.0
-        # for j in range(lm):
-        # x_m = round(10*(x[j]))
-        # if int(x_m) == int(x_n*10):
-        # y_n = y[j]
-        # x_a.append(x_n)
-        # y_a.append(y_n)
-        # x, y = np.array(x_a), np.array(y_a)
+        X = np.array([data[i]]).reshape(-1, 1)
+        kde = KernelDensity(kernel="epanechnikov", bandwidth=3).fit(X)
+        y = np.exp(kde.score_samples(x.reshape(-1, 1)))
         if curve_layout == "shifted":
             y = y + i
-            if outline:
-                ln.set_xdata(x)
-                ln.set_ydata(y)
-            else:
-                ln.set_visible(False)
-            ax.fill_between(x, y, i, alpha=0.6, label=label)
-            ylab = ""
+            fy = i
         else:
-            ln.set_visible(False)
             if curve_layout == "stacked":
+                outline = False
                 if i < 1:
                     _y = np.zeros(len(y))
-                y = _y + y
-                ax.fill_between(x, _y, y, alpha=0.6, label=label)
-                _y = y[:]
+                fy = _y[:]
+                _y = _y + y
+                y = fy + y
+        if shade:
+            if outline:
+                ax.plot(x, y, label=labels[i])
+                ax.fill_between(x, y, fy, alpha=0.6)
             else:
-                y = (
-                    y / 1000
-                )  # If we show the plot directly, fraction should be used instead of pseudocounts
-                ln.set_ydata(y)
-                ln.set_visible(True)
+                ax.fill_between(x, y, fy, alpha=0.6, label=labels[i])
+        else:
+            ax.plot(x, y, label=labels[i])
 
     # Make plot a bit prettier
     if needprettier:
