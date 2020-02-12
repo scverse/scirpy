@@ -80,7 +80,7 @@ class _KideraDistanceCalculator(_DistanceCalculator):
         Sums over the kidera factors for each amino acid. """
         return np.vstack(
             [
-                np.sum(
+                np.mean(
                     np.vstack([self.kidera_factors.loc[c, :].values for c in seq]),
                     axis=0,
                 )
@@ -105,6 +105,8 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
     ):
         """Class to generate pairwise alignment distances
         
+        High-performance sequence alignment through parasail library [Daily2016]_
+
         Parameters
         ----------
         subst_mat
@@ -299,7 +301,6 @@ def tcr_dist(
 ) -> Union[None, dict]:
     """Compute the TCRdist on CDR3 sequences. 
 
-    High-performance sequence alignment through parasail library [Daily2016]_
 
     Parameters
     ----------
@@ -317,8 +318,9 @@ def tcr_dist(
     tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
     trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
 
-    # return tra_dists, trb_dists
+    return tra_dists, trb_dists
+    # return np.fmax.reduce(tra_dists)
 
-    return reduction_other_chain.reduce(
-        [reduction_same_chain.reduce(tra_dists), reduction_same_chain.reduce(trb_dists)]
-    )
+    # return reduction_other_chain.reduce(
+    #     [reduction_same_chain.reduce(tra_dists), reduction_same_chain.reduce(trb_dists)]
+    # )
