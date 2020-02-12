@@ -1,6 +1,7 @@
 import pytest
 from sctcrpy._tools._tcr_dist import (
-    _Aligner,
+    _AlignmentDistanceCalculator,
+    _KideraDistanceCalculator,
     _calc_norm_factors,
     _score_to_dist,
     tcr_dist,
@@ -13,7 +14,12 @@ from anndata import AnnData
 
 @pytest.fixture
 def aligner():
-    return _Aligner()
+    return _AlignmentDistanceCalculator()
+
+
+@pytest.fixture
+def kidera():
+    return _KideraDistanceCalculator()
 
 
 @pytest.fixture
@@ -28,6 +34,33 @@ def adata_cdr3():
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata
+
+
+def test_kidera_vectors(kidera):
+    AR_KIDERA_VECTORS = np.array(
+        [
+            [-1.56, 0.22],
+            [-1.67, 1.27],
+            [-0.97, 1.37],
+            [-0.27, 1.87],
+            [-0.93, -1.7],
+            [-0.78, 0.46],
+            [-0.2, 0.92],
+            [-0.08, -0.39],
+            [0.21, 0.23],
+            [-0.48, 0.93],
+        ]
+    ).T
+    npt.assert_almost_equal(kidera._make_kidera_vectors(["A", "R"]), AR_KIDERA_VECTORS)
+    npt.assert_almost_equal(
+        kidera._make_kidera_vectors(["AAA", "RRR"]), 3 * AR_KIDERA_VECTORS
+    )
+
+
+def test_kidera_dist(kidera):
+    npt.assert_almost_equal(
+        kidera.calc_dist_mat(["ARS", "ARS", "RSA", "SRA"]), np.zeros((4, 4))
+    )
 
 
 def test_align_row(aligner):
