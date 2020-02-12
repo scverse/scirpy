@@ -2,7 +2,8 @@ import parasail
 from multiprocessing import Pool
 import itertools
 from anndata import AnnData
-from typing import Union, Collection
+from typing import Union, Collection, List
+from .._compat import Literal
 import pandas as pd
 import numpy as np
 from scanpy import logging
@@ -15,6 +16,17 @@ from io import StringIO
 
 
 class _DistanceCalculator(abc.ABC):
+    @abc.abstractmethod
+    def __init__(self, n_jobs: Union[int, None]):
+        """
+        Parameters
+        ----------
+        n_jobs
+            Number of jobs to use for the pairwise distance calculation. 
+            If None, use all jobs. 
+        """
+        self.n_jobs = n_jobs
+
     @abc.abstractmethod
     def calc_dist_mat(self, seqs: np.ndarray) -> np.ndarray:
         """Calculate a symmetric, pairwise distance matrix of all sequences in `seq`.
@@ -48,14 +60,20 @@ class _KideraDistanceCalculator(_DistanceCalculator):
     """
     )
 
-    def __init__(self, n_jobs=-1):
+    def __init__(self, n_jobs: Union[int, None] = None):
         """Class to generate pairwise distances between amino acid sequences
         based on kidera factors.
+
+        Parameters
+        ----------
+        n_jobs
+            Number of jobs to use for the pairwise distance calculation. 
+            If None, use all jobs. 
         """
         self.kidera_factors = pd.read_csv(
             StringIO(self.KIDERA_FACTORS), sep=" ", header=None, index_col=0
         )
-        self.n_jobs = n_jobs
+        self.n_jobs = -1 if n_jobs is None else n_jobs
 
     def _make_kidera_vectors(self, seqs: Collection) -> np.ndarray:
         """Convert each AA-sequence into a vector of kidera factors. 
@@ -78,7 +96,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 1,
-        n_jobs=None,
+        n_jobs: Union[int, None] = None,
     ):
         """Class to generate pairwise alignment distances
         
@@ -164,19 +182,9 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         return dist_mat
 
-    def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
-        """Calculate the distances between amino acid sequences based on
-        of all-against-all pairwise sequence alignments.
-
-        Parameters
-        ----------
-        seqs
-            Array of amino acid sequences
-
-        Returns
-        -------
-        Symmetric, square matrix of normalized alignment distances. 
-        """
+    def _calc_score_mat(self, seqs: Collection) -> np.ndarray:
+        """Calculate the alignment scores of all-against-all pairwise
+        sequence alignments"""
         p = Pool(self.n_jobs)
         rows = p.starmap(self._align_row, zip(itertools.repeat(seqs), range(len(seqs))))
 
@@ -191,11 +199,29 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         return score_mat
 
+    def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
+        """Calculate the distances between amino acid sequences based on
+        of all-against-all pairwise sequence alignments.
 
-def _dist_for_chain(adata, chain):
+        Parameters
+        ----------
+        seqs
+            Array of amino acid sequences
+
+        Returns
+        -------
+        Symmetric, square matrix of normalized alignment distances. 
+        """
+        score_mat = self._calc_score_mat(seqs)
+        dist_mat = self._score_to_dist(score_mat)
+        return dist_mat
+
+
+def _dist_for_chain(
+    adata, chain: Literal["TRA", "TRB"], distance_calculator: _DistanceCalculator
+) -> List[np.ndarray]:
     """Compute distances for all combinations of 
-    (TRX1,TRX1), (TRX1,TRX2), (TRX2, TRX1), (TRX2, TRX2)"""
-    aligner = _Aligner()
+    (TRx1,TRx1), (TRx1,TRx2), (TRx2, TRx1), (TRx2, TRx2)"""
 
     chains = ["{}_{}".format(chain, i) for i in ["1", "2"]]
     tr_seqs = {k: adata.obs["{}_cdr3".format(k)].values for k in chains}
@@ -204,10 +230,9 @@ def _dist_for_chain(adata, chain):
     # reverse mapping of amino acid sequence to index in distance matrix
     seq_to_index = {seq: i for i, seq in enumerate(unique_seqs)}
 
-    logging.debug("Started computing {} alignments.".format(chain))
-    score_mat = aligner.make_score_mat(unique_seqs)
-    logging.info("Finished computing {} alignments.".format(chain))
-    dist_mat = _score_to_dist(score_mat)
+    logging.debug("Started computing {} pairwise distances.".format(chain))
+    dist_mat = distance_calculator.calc_dist_mat(unique_seqs)
+    logging.info("Finished computing {} pairwise distances.".format(chain))
 
     # indices of cells in adata that have a CDR3 sequence.
     cells_with_chain = {k: np.where(~_is_na(tr_seqs[k]))[0] for k in chains}
@@ -217,7 +242,7 @@ def _dist_for_chain(adata, chain):
         for k in chains
     }
 
-    # assert that the indices are right...
+    # assert that the indices are correct...
     for k in chains:
         npt.assert_equal(unique_seqs[seq_inds[k]], tr_seqs[k][~_is_na(tr_seqs[k])])
 
@@ -240,6 +265,8 @@ def _dist_for_chain(adata, chain):
             assert _is_symmetric(cell_mat), "matrix not symmetric"
 
         cell_mats.append(cell_mat)
+        if chain1 != chain2:
+            cell_mats.append(cell_mat.T)
 
     return cell_mats
 
@@ -247,7 +274,9 @@ def _dist_for_chain(adata, chain):
 def tcr_dist(
     adata: AnnData,
     *,
+    n_jobs: [int, None] = None,
     inplace: bool = True,
+    metric: Literal["alignment", "kidera"] = "alignment",
     reduction_same_chain=np.fmin,
     reduction_other_chain=np.fmin
 ) -> Union[None, dict]:
@@ -257,14 +286,15 @@ def tcr_dist(
 
     Parameters
     ----------
-    adata
-    subst_mat
-    gap_open
-    gap_extend
-    """
 
-    tra_dists = _dist_for_chain(adata, "TRA")
-    trb_dists = _dist_for_chain(adata, "TRB")
+    """
+    if metric == "alignment":
+        dist_calc = _AlignmentDistanceCalculator(n_jobs=n_jobs)
+    else:
+        dist_calc = _KideraDistanceCalculator(n_jobs=n_jobs)
+
+    tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
+    trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
 
     return reduction_other_chain.reduce(
         [reduction_same_chain.reduce(tra_dists), reduction_same_chain.reduce(trb_dists)]
