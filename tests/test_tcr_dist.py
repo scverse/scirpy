@@ -2,8 +2,6 @@ import pytest
 from sctcrpy._tools._tcr_dist import (
     _AlignmentDistanceCalculator,
     _KideraDistanceCalculator,
-    _calc_norm_factors,
-    _score_to_dist,
     tcr_dist,
 )
 import numpy as np
@@ -71,34 +69,34 @@ def test_align_row(aligner):
     npt.assert_equal(row2, [np.nan, np.nan, 4 * 8])
 
 
-def test_make_score_mat(aligner):
-    seqs = np.array(["AAAA", "HHHH"])
-    res = aligner.make_score_mat(seqs)
-    npt.assert_equal(res, np.array([[4 * 4, 4 * -2], [4 * -2, 4 * 8]]))
-
-
-def test_calc_norm_factors():
+def test_calc_norm_factors(aligner):
     score_mat = np.array([[15, 9, -2], [9, 11, 3], [-2, 3, 5]])
-    norm_factors = _calc_norm_factors(score_mat)
+    norm_factors = aligner._calc_norm_factors(score_mat)
     npt.assert_equal(norm_factors, np.array([[15, 11, 5], [11, 11, 5], [5, 5, 5]]))
 
 
-def test_score_to_dist():
+def test_score_to_dist(aligner):
     with pytest.raises(AssertionError):
         # Violates assumption that max value is on diagonal
         score_mat = np.array([[15, 12, -2], [12, 11, 3], [-2, 3, 5]])
-        _score_to_dist(score_mat)
+        aligner._score_to_dist(score_mat)
 
     score_mat = np.array([[15, 9, -2], [9, 11, 3], [-2, 3, 5]])
-    dist_mat = _score_to_dist(score_mat)
+    dist_mat = aligner._score_to_dist(score_mat)
     npt.assert_almost_equal(
         dist_mat, np.array([[0, 0.181, 1], [0.181, 0, 0.4], [1, 0.4, 0]]), decimal=2
     )
 
 
+def test_alignment_dist(aligner):
+    seqs = np.array(["AAAA", "HHHH"])
+    res = aligner.calc_dist_mat(seqs)
+    npt.assert_equal(res, np.array([[4 * 4, 4 * -2], [4 * -2, 4 * 8]]))
+
+
 def test_dist_for_chain():
-    pass
+    assert False
 
 
 def test_tcr_dist(adata_cdr3):
-    tcr_dist(adata_cdr3)
+    assert False
