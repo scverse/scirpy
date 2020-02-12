@@ -42,6 +42,8 @@ Tools: `tl`
    tcr_dist 
    alpha_diversity
    clonal_expansion
+   cdr_convergence
+   spectratype
    group_abundance
 
 
@@ -55,5 +57,14 @@ Plotting: `pl`
 
    alpha_diversity
    clonal_expansion
+   cdr_convergence
+   spectratype
+   group_abundance
+   nice_bar_plain
+   nice_line_plain
+   nice_curve_plain
+   nice_stripe_plain
+   check_for_plotting_profile
+   reset_plotting_profile
 
    
