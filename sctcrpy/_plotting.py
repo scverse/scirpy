@@ -947,7 +947,8 @@ def nice_curve_plain(
     # Draw a curve for every series
     for i in range(len(data)):
         X = np.array([data[i]]).reshape(-1, 1)
-        kde = KernelDensity(kernel="epanechnikov", bandwidth=3).fit(X)
+        # kde = KernelDensity(kernel="epanechnikov", bandwidth=3).fit(X)
+        kde = KernelDensity(kernel="gaussian", bandwidth=0.6).fit(X)
         y = np.exp(kde.score_samples(x.reshape(-1, 1)))
         if curve_layout == "shifted":
             y = y + i
