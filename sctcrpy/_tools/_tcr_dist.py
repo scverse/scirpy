@@ -1,12 +1,12 @@
-import scipy.sparse
 import parasail
 from multiprocessing import Pool
 import itertools
 from anndata import AnnData
-from typing import Union
+from typing import Union, Collection
 import pandas as pd
 import numpy as np
 from scanpy import logging
+from sklearn.metrics import pairwise_distances
 import numpy.testing as npt
 from .._util import _is_na, _is_symmetric
 import abc
@@ -18,7 +18,7 @@ class _DistanceCalculator(abc.ABC):
     @abc.abstractmethod
     def calc_dist_mat(self, seqs: np.ndarray) -> np.ndarray:
         """Calculate a symmetric, pairwise distance matrix of all sequences in `seq`.
-        Distances are scaled between 0 and 1"""
+        Distances are non-negative values"""
         pass
 
 
@@ -48,23 +48,31 @@ class _KideraDistanceCalculator(_DistanceCalculator):
     """
     )
 
-    def __init__(self):
-        tmp_df = pd.read_csv(
+    def __init__(self, n_jobs=-1):
+        """Class to generate pairwise distances between amino acid sequences
+        based on kidera factors.
+        """
+        self.kidera_factors = pd.read_csv(
             StringIO(self.KIDERA_FACTORS), sep=" ", header=None, index_col=0
         )
-        self.aa_dict = {aa: i for i, aa in enumerate(tmp_df.index)}
-        self.kidera_factors = tmp_df.values
+        self.n_jobs = n_jobs
 
-    def calc_dist_mat(self, seqs):
-        seq_as_inds = np.vstack(
-            [np.array([self.aa_dict[c] for c in seq]) for seq in seqs]
-        ).T
-        seq_as_kidera = self.kidera_factors[seqs_as_inds, :]
-        # some meshgrid magic...
-        pass
+    def _make_kidera_vectors(self, seqs: Collection) -> np.ndarray:
+        """Convert each AA-sequence into a vector of kidera factors. 
+        Sums over the kidera factors for each amino acid. """
+        return np.vstack(
+            np.sum(np.vstack(self.kidera_factors.loc[c, :].values for c in seq), axis=0)
+            for seq in seqs
+        )
+
+    def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
+        kidera_vectors = self._make_kidera_vectors(seqs)
+        return pairwise_distances(
+            kidera_vectors, metric="euclidean", n_jobs=self.n_jobs
+        )
 
 
-class _AliggnmentDistanceCalculator(_DistanceCalculator):
+class _AlignmentDistanceCalculator(_DistanceCalculator):
     def __init__(
         self,
         subst_mat: str = "blosum62",
@@ -117,7 +125,7 @@ class _AliggnmentDistanceCalculator(_DistanceCalculator):
 
         return result
 
-    def make_score_mat(self, seqs: np.ndarray) -> np.ndarray:
+    def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
         """Calculate the scores of all-against-all pairwise sequence alignments.
 
         Parameters
