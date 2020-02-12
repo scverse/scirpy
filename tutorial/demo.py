@@ -185,8 +185,8 @@ st.pl.group_abundance(adata, groupby="sample", viztype='table')
 # %%
 st.pl.group_abundance(adata, groupby="leiden", fraction='sample')
 
-# %%
-I would simply use group abundance plots to show shain usage (it would of course not check if chain usage tool has been run then)
+# %% [markdown]
+# I would simply use group abundance plots to show shain usage (it would of course not check if chain usage tool has been run then)
 
 # %%
 st.tl.chain_pairing(adata)
@@ -207,8 +207,8 @@ st.pl.group_abundance(adata, groupby='sample', target_col='chain_pairing', vizty
 # %%
 st.pl.group_abundance(adata, groupby='chain_pairing', target_col='sample', viztype='stacked', fraction='sample')
 
-# %%
-Group abundance plots can also give some information on VDJ usage
+# %% [markdown]
+# Group abundance plots can also give some information on VDJ usage
 
 # %%
 st.pl.group_abundance(adata, groupby='leiden', target_col='TRB_1_v_gene', fraction='sample', viztype='stacked')
@@ -261,10 +261,27 @@ tb.head()
 st.pl.cdr_convergence(adata, groupby='sample', viztype='bar')
 
 # %%
+zobs = pd.DataFrame.from_records(
+    [
+        ["cell1", "A", "ct1"],
+        ["cell2", "A", "ct1"],
+        ["cell3", "A", "ct1"],
+        ["cell3", "A", "NaN"],
+        ["cell4", "B", "ct1"],
+        ["cell5", "B", "ct2"],
+    ],
+    columns=["cell_id", "group", "clonotype"],
+).set_index("cell_id")
+zadata = st.AnnData(obs=zobs)
 
 # %%
+zadata
 
 # %%
+st.tl.group_abundance(zadata, groupby="group", inplace=False, fraction=False, as_dict=True)
+
+# %%
+st.tl.group_abundance(zadata, groupby="group", inplace=False, as_dict=True)
 
 # %%
 z = adata.uns['sctcrpy'].pop('group_abundance')

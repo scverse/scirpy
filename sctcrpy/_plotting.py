@@ -950,7 +950,7 @@ def nice_curve_plain(
             clip=(-1, xmax),
             label=lnlabel,
             shade=shade,
-            gridsize=xmax / 2,
+            # gridsize=xmax / 2,
             ax=ax,
         )
         ln = ax.lines[i]

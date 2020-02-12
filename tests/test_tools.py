@@ -144,15 +144,19 @@ def test_group_abundance():
     adata = AnnData(obs=obs)
 
     # Check numbers
-    res = st.tl.group_abundance(adata, groupby="group", inplace=False, fraction=False, as_dict=True)
+    res = st.tl.group_abundance(
+        adata, groupby="group", inplace=False, fraction=False, as_dict=True
+    )
     assert res == {
-        "A": {"NaN": 1.0, "ct1": 3.0, "ct2": 0.0},
-        "B": {"NaN": 0.0, "ct1": 1.0, "ct2": 1.0},
+        "ct1": {"A": 3.0, "B": 1.0},
+        "NaN": {"A": 1.0, "B": 0.0},
+        "ct2": {"A": 0.0, "B": 1.0},
     }
 
     # Check fractions
     res = st.tl.group_abundance(adata, groupby="group", inplace=False, as_dict=True)
     assert res == {
-        "A": {"NaN": 0.25, "ct1": 0.75, "ct2": 0.0},
-        "B": {"NaN": 0.0, "ct1": 0.5, "ct2": 0.5},
+        "ct1": {"A": 0.75, "B": 0.5},
+        "NaN": {"A": 0.25, "B": 0.0},
+        "ct2": {"A": 0.0, "B": 0.5},
     }
