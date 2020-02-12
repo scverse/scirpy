@@ -41,6 +41,7 @@ Tools: `tl`
    define_clonotypes
    tcr_dist 
    alpha_diversity
+   clonal_expansion
 
 
 Plotting: `pl`
@@ -50,5 +51,8 @@ Plotting: `pl`
 
 .. autosummary::
    :toctree: . 
+
+   alpha_diversity
+   clonal_expansion
 
    
