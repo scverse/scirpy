@@ -39,6 +39,8 @@ Tools: `tl`
    :toctree: .
 
    define_clonotypes
+   decide_chain_cat
+   chain_pairing
    tcr_dist 
    alpha_diversity
    clonal_expansion
