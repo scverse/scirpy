@@ -79,8 +79,13 @@ class _KideraDistanceCalculator(_DistanceCalculator):
         """Convert each AA-sequence into a vector of kidera factors. 
         Sums over the kidera factors for each amino acid. """
         return np.vstack(
-            np.sum(np.vstack(self.kidera_factors.loc[c, :].values for c in seq), axis=0)
-            for seq in seqs
+            [
+                np.sum(
+                    np.vstack([self.kidera_factors.loc[c, :].values for c in seq]),
+                    axis=0,
+                )
+                for seq in seqs
+            ]
         )
 
     def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
@@ -221,7 +226,19 @@ def _dist_for_chain(
     adata, chain: Literal["TRA", "TRB"], distance_calculator: _DistanceCalculator
 ) -> List[np.ndarray]:
     """Compute distances for all combinations of 
-    (TRx1,TRx1), (TRx1,TRx2), (TRx2, TRx1), (TRx2, TRx2)"""
+    (TRx1,TRx1), (TRx1,TRx2), (TRx2, TRx1), (TRx2, TRx2). 
+    
+    Parameters
+    ----------
+    adata
+        Annotated data matrix
+    chain
+        Chain to work on. Can be "TRA" or "TRB". Will include both 
+        primary (TRA_1_cdr3) and secondary (TRA_2_cdr3) chains. 
+    distance_calculator
+        Class implementing a calc_dist_mat(seqs) function 
+        that computes pariwise distances between all cdr3 sequences. 
+    """
 
     chains = ["{}_{}".format(chain, i) for i in ["1", "2"]]
     tr_seqs = {k: adata.obs["{}_cdr3".format(k)].values for k in chains}
@@ -274,9 +291,9 @@ def _dist_for_chain(
 def tcr_dist(
     adata: AnnData,
     *,
+    metric: Literal["alignment", "kidera"] = "alignment",
     n_jobs: [int, None] = None,
     inplace: bool = True,
-    metric: Literal["alignment", "kidera"] = "alignment",
     reduction_same_chain=np.fmin,
     reduction_other_chain=np.fmin
 ) -> Union[None, dict]:
@@ -286,15 +303,21 @@ def tcr_dist(
 
     Parameters
     ----------
+    metric
+        Distance metric to use. `alignment` will calculate an alignment distance
+        based on normalized BLOSUM62 scores. `kidera` calculates a distance 
+        based on kidera factors. 
 
     """
     if metric == "alignment":
         dist_calc = _AlignmentDistanceCalculator(n_jobs=n_jobs)
-    else:
+    elif metric == "kidera":
         dist_calc = _KideraDistanceCalculator(n_jobs=n_jobs)
 
     tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
     trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
+
+    # return tra_dists, trb_dists
 
     return reduction_other_chain.reduce(
         [reduction_same_chain.reduce(tra_dists), reduction_same_chain.reduce(trb_dists)]
