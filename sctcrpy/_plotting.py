@@ -120,6 +120,7 @@ def cdr_convergence(
     vizarg: Union[dict, None] = None,
     ax: Union[plt.axes, None] = None,
     sizeprofile: Union[Literal["small"], None] = None,
+    no_singles: bool = False,
     fraction: Union[None, str, bool] = None,
     **kwds
 ) -> Union[List[plt.axes], AnnData]:
@@ -158,6 +159,8 @@ def cdr_convergence(
     fraction
         If True, compute fractions of cells rather than reporting
         abosolute numbers. Always relative to the main grouping variable.leton, doublet or triplet clonotype.
+    no_singles
+        If non-convergent clonotypes should be shown explicitely.
     
     Returns
     -------
@@ -209,13 +212,15 @@ def cdr_convergence(
 
     if type(plottable) == dict:
         plottable = pd.DataFrame.from_dict(adata, orient="index")
+    if no_singles:
+        plottable = plottable.drop("1", axis=1)
 
     if vizarg is None:
         vizarg = dict()
 
     if group_order is None:
-        group_order = plottable.columns.values
-    plottable = plottable.loc[:, group_order]
+        group_order = plottable.index.values
+    plottable = plottable.loc[group_order, :]
 
     # Create text for default labels
     title = "Convergence of CDR3 regions in " + groupby + "s"

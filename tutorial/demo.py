@@ -258,41 +258,26 @@ tb = st.pl.cdr_convergence(adata, groupby='sample', viztype='table')
 tb.head()
 
 # %%
-st.pl.cdr_convergence(adata, groupby='sample', viztype='bar')
+st.pl.cdr_convergence(adata, target_col='TRA_1_cdr3', groupby='sample', viztype='bar')
 
 # %%
-zobs = pd.DataFrame.from_records(
-    [
-        ["cell1", "A", "ct1"],
-        ["cell2", "A", "ct1"],
-        ["cell3", "A", "ct1"],
-        ["cell3", "A", "NaN"],
-        ["cell4", "B", "ct1"],
-        ["cell5", "B", "ct2"],
-    ],
-    columns=["cell_id", "group", "clonotype"],
-).set_index("cell_id")
-zadata = st.AnnData(obs=zobs)
+st.pl.cdr_convergence(adata, target_col='TRA_1_cdr3', groupby='sample', viztype='bar', no_singles=True)
+
+# %% [markdown]
+# The number of nucleotide versions for the CDR3 of each cell can be shown on a umap
 
 # %%
-zadata
+st.tl.cdr_convergence(adata, target_col='TRA_1_cdr3', groupby='sample')
+sc.pl.umap(adata, color=["convergence_TRA_1_cdr3_sample",])
 
 # %%
-st.tl.group_abundance(zadata, groupby="group", inplace=False, fraction=False, as_dict=True)
+#z = adata.uns['sctcrpy'].pop('group_abundance')
 
 # %%
-st.tl.group_abundance(zadata, groupby="group", inplace=False, as_dict=True)
+#z = adata.uns['sctcrpy'].pop('spectratype')
 
 # %%
-z = adata.uns['sctcrpy'].pop('group_abundance')
+#z = adata.uns['sctcrpy'].pop('cdr_convergence')
 
 # %%
-z = adata.uns['sctcrpy'].pop('spectratype')
-
-# %%
-z = adata.uns['sctcrpy'].pop('cdr_convergence')
-
-# %%
-adata.obs.to_csv('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/toytable.csv')
-
-# %%
+#adata.obs.to_csv('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/toytable.csv')
