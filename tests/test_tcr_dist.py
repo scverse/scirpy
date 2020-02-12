@@ -2,6 +2,8 @@ import pytest
 from sctcrpy._tools._tcr_dist import (
     _AlignmentDistanceCalculator,
     _KideraDistanceCalculator,
+    _DistanceCalculator,
+    _dist_for_chain,
     tcr_dist,
 )
 import numpy as np
@@ -18,20 +20,6 @@ def aligner():
 @pytest.fixture
 def kidera():
     return _KideraDistanceCalculator()
-
-
-@pytest.fixture
-def adata_cdr3():
-    obs = pd.DataFrame(
-        [
-            ["cell1", "AAAAA", "WWWWW"],
-            ["cell2", "AAAVV", "WWWYY"],
-            ["cell3", "HHAHH", "PPWPP"],
-        ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-    return adata
 
 
 def test_kidera_vectors(kidera):
@@ -88,14 +76,47 @@ def test_score_to_dist(aligner):
     )
 
 
-def test_alignment_dist(aligner):
+def test_alignment_score(aligner):
     seqs = np.array(["AAAA", "HHHH"])
-    res = aligner.calc_dist_mat(seqs)
+    res = aligner._calc_score_mat(seqs)
     npt.assert_equal(res, np.array([[4 * 4, 4 * -2], [4 * -2, 4 * 8]]))
 
 
-def test_dist_for_chain():
-    assert False
+def test_alignment_dist(aligner):
+    seqs = np.array(["AAAA", "AAHA"])
+    res = aligner.calc_dist_mat(seqs)
+    npt.assert_almost_equal(res, np.array([[0, 1 - 10 / 16], [1 - 10 / 16, 0]]))
+
+
+@pytest.fixture
+def adata_cdr3():
+    obs = pd.DataFrame(
+        [
+            ["cell1", "AAAAA", "WWWWW"],
+            ["cell2", "AAAVV", "WWWYY"],
+            ["cell3", "HHAHH", "PPWPP"],
+        ],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+    return adata
+
+
+class MockDistanceCalculator(_DistanceCalculator):
+    def __init__(self, dist):
+        self.dist = dist
+        pass
+
+    def calc_dist_mat(self, seqs):
+        """Don't calculate distances, but return the 
+        dist matrix passed to the constructor."""
+        assert self.dist.shape[0] == self.dist.shape[1] == len(seqs)
+        return self.dist
+
+
+def test_dist_for_chain(adata_cdr3):
+    dist_calc = MockDistanceCalculator(np.array([[]]))
+    _dist_for_chain(adata_cdr3, "TRA", dist_calc)
 
 
 def test_tcr_dist(adata_cdr3):
