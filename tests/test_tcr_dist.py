@@ -39,7 +39,7 @@ def test_kidera_vectors(kidera):
     ).T
     npt.assert_almost_equal(kidera._make_kidera_vectors(["A", "R"]), AR_KIDERA_VECTORS)
     npt.assert_almost_equal(
-        kidera._make_kidera_vectors(["AAA", "RRR"]), 3 * AR_KIDERA_VECTORS
+        kidera._make_kidera_vectors(["AAA", "RRR"]), AR_KIDERA_VECTORS
     )
 
 
