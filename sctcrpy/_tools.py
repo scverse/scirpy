@@ -4,10 +4,15 @@ from anndata import AnnData
 import pandas as pd
 from typing import Union
 from ._util import _is_na, _add_to_uns
+from ._compat import Literal
 
 
 def define_clonotypes(
-    adata: AnnData, *, inplace: bool = True, key_added: str = "clonotype"
+    adata: AnnData,
+    *,
+    flavor: Literal["all_chains", "primary_only"] = "all_chains",
+    inplace: bool = True,
+    key_added: str = "clonotype"
 ) -> Union[None, np.ndarray]:
     """Define clonotypes based on CDR3 region.
 
@@ -20,6 +25,10 @@ def define_clonotypes(
     ----------
     adata
         Annotated data matrix
+    flavor
+        Biological model to define clonotypes. 
+        `all_chains`: All four chains of a cell in a clonotype need to be the same. 
+        `primary_only`: Only primary alpha and beta chain need to be the same. 
     inplace
         If True, adds a column to adata.obs
     key_added
@@ -32,12 +41,14 @@ def define_clonotypes(
     or adds a `clonotype` column to `adata`. 
     
     """
+    groupby_cols = {
+        "all_chains": ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"],
+        "primary_only": ["TRA_1_cdr3", "TRB_1_cdr3"],
+    }
     clonotype_col = np.array(
         [
             "clonotype_{}".format(x)
-            for x in adata.obs.groupby(
-                ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"]
-            ).ngroup()
+            for x in adata.obs.groupby(groupby_cols[flavor]).ngroup()
         ]
     )
     clonotype_col[
