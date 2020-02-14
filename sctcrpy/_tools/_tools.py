@@ -301,19 +301,23 @@ def cdr_convergence(
     groupby
         Group by this column from `obs`. Samples or diagnosis for example.
     target_col
-        Column on which to compute the expansion. Useful if we want to specify the chain.        
+        Column on which to compute the expansion. Useful if we want to
+        specify the chain.        
     key_added
-        Manually specified name for the column where convergence information should be added.
+        Manually specified name for the column where convergence information 
+        should be added.
     for_cells
         A whitelist of cells that should be included in the analysis. If not specified,
-        cells with NaN values in the group definition columns will be ignored. When the tool is
-        executed by the plotting function, the whitelist is not updated.          
+        cells with NaN values in the group definition columns will be ignored.
+        When the tool is executed by the plotting function, the
+        whitelist is not updated.          
     clip_at
         All clonotypes with more copies than `clip_at` will be summarized into 
         a single group. 
     fraction
         If True, compute fractions cells rather than reporting
-        abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+        abosolute numbers. If a string is supplied, that should be the column name 
+        of a grouping (e.g. samples). 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
@@ -323,12 +327,13 @@ def cdr_convergence(
     Returns
     -------
     Depending on the value of `inplace`, either returns a data frame 
-    or adds it to `adata.uns`. Also adds a column to `obs` with the name convergence_`target_col`_`groupby`
-    or the name specified by key_added.
+    or adds it to `adata.uns`. Also adds a column to `obs` with the name 
+    convergence_`target_col`_`groupby` or the name specified by key_added.
     """
     if target_col not in adata.obs.columns:
         raise ValueError(
-            "`target_col` not found in obs. Where do you store CDR3 amino acid sequence information?"
+            "`target_col` not found in obs. Where do you store"
+            " CDR3 amino acid sequence information?"
         )
 
     # Check how fractions should be computed
@@ -369,7 +374,8 @@ def cdr_convergence(
     else:
         result_df = pd.DataFrame.from_dict(result_dict, orient="index")
 
-    # Add a column to `obs` that is basically the fraction of cells having more than two nucleotide versions of the CDR3
+    # Add a column to `obs` that is basically the fraction of cells
+    # having more than two nucleotide versions of the CDR3
     if key_added is None:
         key_added = "convergence_" + target_col + "_" + groupby
     adata.obs[key_added] = adata.obs.apply(
@@ -418,16 +424,23 @@ def spectratype(
     groupby
         Group by this column from `obs`. Samples or diagnosis for example.
     fun
-        A function definining how the target columns should be merged (e.g. sum, mean, median, etc).  
+        A function definining how the target columns should be merged 
+        (e.g. sum, mean, median, etc).  
     target_col
         Columns containing CDR3 lengths.        
     for_cells
-        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.         
+        A whitelist of cells that should be included in the analysis. 
+        If not specified, cells with NaN values in the group definition columns 
+        will be ignored. When the tool is executed by the plotting function,
+         the whitelist is not updated.         
     fraction
         If True, compute fractions of expanded clonotypes rather than reporting
-        abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+        abosolute numbers. If a string is supplied, that should be the column name 
+        of a grouping (e.g. samples). 
     fraction_base
-        Sets the column used as a bsis for fraction calculation explicitely. Overrides the column set by `fraction`, but gets ignored if `fraction` is `False`. 
+        Sets the column used as a bsis for fraction calculation explicitely.
+        Overrides the column set by `fraction`, but gets
+        ignored if `fraction` is `False`. 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
@@ -529,12 +542,18 @@ def group_abundance(
     target_col
         Column on which to compute the expansion.        
     for_cells
-        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.         
+        A whitelist of cells that should be included in the analysis. If not specified,
+        cells with NaN values in the group definition columns will be ignored. 
+        When the tool is executed by the plotting function, 
+        the whitelist is not updated.         
     fraction
         If True, compute fractions of expanded clonotypes rather than reporting
-        abosolute numbers. If a string is supplied, that should be the column name of a grouping (e.g. samples). 
+        abosolute numbers. If a string is supplied, that should be the column name
+        of a grouping (e.g. samples). 
     fraction_base
-        Sets the column used as a bsis for fraction calculation explicitely. Overrides the column set by `fraction`, but gets ignored if `fraction` is `False`. 
+        Sets the column used as a bsis for fraction calculation explicitely.
+         Overrides the column set by `fraction`, but gets 
+         ignored if `fraction` is `False`. 
     inplace
         If True, the results are added to `adata.uns`. Otherwise it returns a dict
         with the computed values. 
@@ -585,12 +604,14 @@ def group_abundance(
         clonotype_counts.groupby([groupby, target_col]).sum().reset_index()
     )
 
-    # Calculate the frequency table already here and maybe save a little time for plotting by supplying wide format data
+    # Calculate the frequency table already here and maybe save a little time
+    #  for plotting by supplying wide format data
     result_df = clonotype_counts.pivot(
         index=target_col, columns=groupby, values="count"
     ).fillna(value=0.0)
 
-    # By default, the most abundant clonotype should be the first on the plot, therefore we need their order
+    # By default, the most abundant clonotype should be the first on the plot,
+    # therefore we need their order
     ranked_clonotypes = (
         clonotype_counts.groupby([target_col])
         .sum()
