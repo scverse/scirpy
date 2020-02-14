@@ -492,3 +492,45 @@ def test_group_abundance():
         "NaN": {"A": 0.25, "B": 0.0},
         "ct2": {"A": 0.0, "B": 0.5},
     }
+
+
+def test_chain_pairing():
+    obs = pd.DataFrame.from_records(
+        [
+            ["False", "nan", "nan", "nan", "nan", "nan"],
+            ["True", "True", "AAAA", "BBBB", "CCCC", "DDDD"],
+            ["True", "False", "AAAA", "BBBB", "CCCC", "DDDD"],
+            ["True", "nan", "AAAA", "nan", "nan", "nan"],
+            ["True", "False", "AAAA", "nan", "CCCC", "nan"],
+            ["True", "False", "AAAA", "BBBB", "nan", "nan"],
+            ["True", "False", "AAAA", "BBBB", "CCCC", "nan"],
+            ["True", "False", "nan", "nan", "CCCC", "nan"],
+            ["True", "False", "nan", "nan", "CCCC", "DDDD"],
+            ["True", "False", "AAAA", "nan", "CCCC", "DDDD"],
+        ],
+        columns=[
+            "has_tcr",
+            "multichain",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+        ],
+    )
+    adata = AnnData(obs=obs)
+    res = st.tl.chain_pairing(adata, inplace=False)
+    npt.assert_equal(
+        res,
+        [
+            "No TCR",
+            "Multichain",
+            "Two full chains",
+            "Orphan alpha",
+            "Single pair",
+            "Orphan alpha",
+            "Extra alpha",
+            "Orphan beta",
+            "Orphan beta",
+            "Extra beta",
+        ],
+    )

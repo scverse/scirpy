@@ -3,7 +3,8 @@ import numpy as np
 from anndata import AnnData
 import pandas as pd
 from typing import Union, Callable
-from ._util import _is_na, _add_to_uns, _which_fractions
+from .._util import _is_na, _is_true, _is_false, _add_to_uns, _which_fractions
+from .._compat import Literal
 
 
 def define_clonotypes(
@@ -63,8 +64,9 @@ def define_clonotypes(
         return clonotype_col
 
 
-def decide_chain_cat(x: pd.Series) -> str:
-    """Helper function of `chain_pairing`. Associates categories to  a cell based on how many TRA and TRB chains they have.
+def _decide_chain_cat(x: pd.Series) -> str:
+    """Helper function of `chain_pairing`. Associates categories to  a cell based 
+    on how many TRA and TRB chains they have.
 
     Parameters
     ----------
@@ -76,31 +78,30 @@ def decide_chain_cat(x: pd.Series) -> str:
     The category the cell belongs to. 
     
     """
-    s = "Uncategorized"
-    if x["has_tcr"]:
-        if x["multichain"] not in [False]:
-            if x["TRA_1_cdr3"] not in [None, "None", "nan"]:
-                if x["TRB_1_cdr3"] not in [None, "None", "nan"]:
-                    if x["TRA_2_cdr3"] not in [None, "None", "nan"]:
-                        if x["TRB_2_cdr3"] not in [None, "None", "nan"]:
-                            s = "Two full chains"
+    if _is_true(x["has_tcr"]):
+        if not _is_true(x["multichain"]):
+            if not _is_na(x["TRA_1_cdr3"]):
+                if not _is_na(x["TRB_1_cdr3"]):
+                    if not _is_na(x["TRA_2_cdr3"]):
+                        if not _is_na(x["TRB_2_cdr3"]):
+                            return "Two full chains"
                         else:
-                            s = "Extra alpha"
+                            return "Extra alpha"
                     else:
-                        if x["TRB_2_cdr3"] not in [None, "None", "nan"]:
-                            s = "Extra beta"
+                        if not _is_na(x["TRB_2_cdr3"]):
+                            return "Extra beta"
                         else:
-                            s = "Single pair"
+                            return "Single pair"
                 else:
-                    "Orphan alpha"
+                    return "Orphan alpha"
             else:
-                if x["TRB_1_cdr3"] not in [None, "None", "nan"]:
-                    "Orphan beta"
+                if not _is_na(x["TRB_1_cdr3"]):
+                    return "Orphan beta"
         else:
-            s = "Multichain"
+            return "Multichain"
     else:
-        s = "No TCR"
-    return s
+        return "No TCR"
+    assert False, "Chain not characterized"
 
 
 def chain_pairing(
@@ -125,63 +126,26 @@ def chain_pairing(
     
     """
 
-    cp_col = adata.obs.loc[
-        :,
-        [
-            "has_tcr",
-            "multichain",
-            "TRA_1_cdr3",
-            "TRA_2_cdr3",
-            "TRB_1_cdr3",
-            "TRB_2_cdr3",
-        ],
-    ].apply(decide_chain_cat, axis=1)
+    cp_col = (
+        adata.obs.loc[
+            :,
+            [
+                "has_tcr",
+                "multichain",
+                "TRA_1_cdr3",
+                "TRA_2_cdr3",
+                "TRB_1_cdr3",
+                "TRB_2_cdr3",
+            ],
+        ]
+        .apply(_decide_chain_cat, axis=1)
+        .values
+    )
 
     if inplace:
         adata.obs[key_added] = cp_col
     else:
         return cp_col
-
-
-def tcr_dist(
-    adata: AnnData,
-    *,
-    subst_mat=parasail.blosum62,
-    gap_open: int = 8,
-    gap_extend: int = 1,
-    inplace: bool = True,
-) -> Union[None, dict]:
-    """Compute the TCRdist on CDR3 sequences. 
-
-    Currently takes into account only dominant alpha and dominant beta. 
-
-    High-performance sequence alignment through parasail library [Daily2016]_
-
-    Parameters
-    ----------
-    adata
-    subst_mat
-    gap_open
-    gap_extend
-    """
-    # TODO parallelize
-    for chain in ["TRA", "TRB"]:
-        col = "{}_1_cdr3".format(chain)
-        unique_cdr3s = adata.obs.loc[_is_na(adata.obs[col]), col].unique()
-
-        dist_mat = np.empty([len(unique_cdr3s)] * 2)
-
-        for i, s1 in enumerate(unique_cdr3s):
-            profile = parasail.profile_create_16(s1, subst_mat)
-            for j, s2 in enumerate(unique_cdr3s[i + 1 :]):
-                r = parasail.sw_striped_profile_16(profile, s2, gap_open, gap_extend)
-                dist_mat[i, j] = r.score
-
-        dist_df = pd.DataFrame(dist_mat)
-        dist_df.index = dist_df.columns = unique_cdr3s
-
-        # TODO work on each chain and implement inplace
-        adata.uns["tcr_dist_alpha"] = dist_df
 
 
 def alpha_diversity(
