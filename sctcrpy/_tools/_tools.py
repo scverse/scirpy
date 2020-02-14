@@ -1,9 +1,8 @@
-import parasail
 import numpy as np
 from anndata import AnnData
 import pandas as pd
 from typing import Union, Callable
-from .._util import _is_na, _is_true, _is_false, _add_to_uns, _which_fractions
+from .._util import _is_na, _is_true, _add_to_uns, _which_fractions
 from .._compat import Literal
 
 
