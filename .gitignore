@@ -1,3 +1,5 @@
+.vscode/*
+!.vscode/settings.json.default
 notebooks
 tutorial/TraCeR
 # Byte-compiled / optimized / DLL files
