@@ -287,15 +287,20 @@ def read_tracer(path: str) -> AnnData:
     ):
         cell_name = summary_file.split(os.sep)[-3]
         tcr_obj = TcrCell(cell_name)
-        with open(summary_file, "rb") as f:
-            tracer_obj = pickle.load(f)
-            chains = tracer_obj.recombinants["TCR"]
-            if "A" in chains:
-                for tmp_chain in _process_chains(chains["A"], "TRA"):
-                    tcr_obj.add_chain(tmp_chain)
-            if "B" in chains:
-                for tmp_chain in _process_chains(chains["B"], "TRB"):
-                    tcr_obj.add_chain(tmp_chain)
+        try:
+            with open(summary_file, "rb") as f:
+                tracer_obj = pickle.load(f)
+                chains = tracer_obj.recombinants["TCR"]
+                if "A" in chains and chains["A"] is not None:
+                    for tmp_chain in _process_chains(chains["A"], "TRA"):
+                        tcr_obj.add_chain(tmp_chain)
+                if "B" in chains and chains["B"] is not None:
+                    for tmp_chain in _process_chains(chains["B"], "TRB"):
+                        tcr_obj.add_chain(tmp_chain)
+        except Exception as e:
+            raise Exception(
+                "Error loading TCR data from cell {}".format(summary_file)
+            ) from e
 
         tcr_objs[cell_name] = tcr_obj
 
