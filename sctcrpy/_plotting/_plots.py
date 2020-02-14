@@ -1,15 +1,14 @@
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
-from ._compat import Literal
+from .._compat import Literal
 from anndata import AnnData
 from scanpy import logging
 import pandas as pd
-import seaborn as sns
-from sklearn.neighbors import KernelDensity
-from ._util import _get_from_uns, _add_to_uns, _which_fractions
-from . import tl
-from typing import Union, List, Tuple
+from .._util import _get_from_uns, _which_fractions
+from .. import tl
+from . import _base as base
+from typing import Union, List
+from ._styling import _check_for_plotting_profile
 
 
 def alpha_diversity(
@@ -234,7 +233,7 @@ def cdr_convergence(
     # Create a dictionary of plot layouts
     plot_router = {
         "bar": {
-            "f": nice_bar_plain,
+            "f": base.bar,
             "arg": {
                 "data": plottable,
                 "title": title,
@@ -253,9 +252,9 @@ def cdr_convergence(
         return plottable
     else:
         if sizeprofile is None:
-            profile_args = check_for_plotting_profile(adata)
+            profile_args = _check_for_plotting_profile(adata)
         else:
-            profile_args = check_for_plotting_profile(sizeprofile)
+            profile_args = _check_for_plotting_profile(sizeprofile)
         main_args = dict(
             dict(dict(profile_args, **kwds), **plot_router[viztype]["arg"]), **vizarg
         )
@@ -388,7 +387,7 @@ def spectratype(
     # Create a dictionary of plot layouts
     plot_router = {
         "bar": {
-            "f": nice_bar_plain,
+            "f": base.bar,
             "arg": {
                 "data": plottable,
                 "title": title,
@@ -401,7 +400,7 @@ def spectratype(
             },
         },
         "line": {
-            "f": nice_line_plain,
+            "f": base.line,
             "arg": {
                 "data": plottable,
                 "title": title,
@@ -413,7 +412,7 @@ def spectratype(
             },
         },
         "curve": {
-            "f": nice_curve_plain,
+            "f": base.curve,
             "arg": {
                 "data": countable,
                 "labels": counted,
@@ -433,9 +432,9 @@ def spectratype(
         return plottable
     else:
         if sizeprofile is None:
-            profile_args = check_for_plotting_profile(adata)
+            profile_args = _check_for_plotting_profile(adata)
         else:
-            profile_args = check_for_plotting_profile(sizeprofile)
+            profile_args = _check_for_plotting_profile(sizeprofile)
         main_args = dict(
             dict(dict(profile_args, **kwds), **plot_router[viztype]["arg"]), **vizarg
         )
@@ -566,7 +565,7 @@ def group_abundance(
     # Create a dictionary of plot layouts
     plot_router = {
         "bar": {
-            "f": nice_stripe_plain,
+            "f": base.stripe,
             "arg": {
                 "data": abundance,
                 "title": title,
@@ -577,7 +576,7 @@ def group_abundance(
             },
         },
         "stacked": {
-            "f": nice_bar_plain,
+            "f": base.bar,
             "arg": {
                 "data": abundance,
                 "title": title,
@@ -595,9 +594,9 @@ def group_abundance(
         return abundance
     else:
         if sizeprofile is None:
-            profile_args = check_for_plotting_profile(adata)
+            profile_args = _check_for_plotting_profile(adata)
         else:
-            profile_args = check_for_plotting_profile(sizeprofile)
+            profile_args = _check_for_plotting_profile(sizeprofile)
         main_args = dict(dict(profile_args, **plot_router[viztype]["arg"]), **vizarg)
         axl = plot_router[viztype]["f"](**main_args)
         return axl

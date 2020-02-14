@@ -1,24 +1,44 @@
 """Base plotting functions"""
 
+from typing import Union, Tuple, List
+from .._compat import Literal
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from ._styling import _prettify, _prettify_doc
+from .._util import _doc_params
+import matplotlib.ticker as ticker
 
-def nice_bar_plain(
-    data: Union[dict, np.ndarray, pd.DataFrame, AnnData],
+_figsize_doc = """
+    figsize
+        Size of the resulting figure in inches.
+    figresolution
+        Resolution of the figure in dpi. 
+"""
+
+
+def _to_df(data: Union[dict, np.ndarray, pd.DataFrame]) -> pd.DataFrame:
+    """Convert input data to pandas dataframe if it is not one already"""
+    if not isinstance(data, pd.DataFrame):
+        if isinstance(data, dict):
+            data = pd.DataFrame.from_dict(data, orient="index")
+        else:
+            if isinstance(data, np.ndarray):
+                data = pd.DataFrame(data)
+            else:
+                raise ValueError("`data` does not seem to be a valid input type")
+
+    return data
+
+
+def bar(
+    data: Union[dict, np.ndarray, pd.DataFrame],
     *,
-    ax: Union[plt.axes, list, None] = None,
-    title: str = "",
-    legend_title: str = "",
-    xlab: str = "",
-    ylab: str = "",
+    ax: Union[plt.axes, None] = None,
+    stacked: bool = True,
     figsize: Tuple[float, float] = (3.44, 2.58),
     figresolution: int = 300,
-    title_loc: Literal["center", "left", "right"] = "center",
-    title_pad: float = 1.5,
-    title_fontsize: int = 12,
-    label_fontsize: int = 10,
-    tick_fontsize: int = 8,
-    stacked: bool = True,
-    fraction: bool = True,
-    **kwds
+    **kwargs
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -28,127 +48,42 @@ def nice_bar_plain(
     data
         Data to show (wide format).
     ax
-        Custom axis if needed.  
-    title
-        Figure title.
-    legend_title
-        Figure legend title.
-    xlab
-        Label for the x axis.
-    ylab
-        Label for the y axis.
-    figsize
-        Size of the resulting figure in inches.
-    figresolution
-        Resolution of the figure in dpi. 
-    title_loc
-        Position of the plot title (can be {'center', 'left', 'right'}). 
-    title_pad
-        Padding of the plot title.
-    title_fontsize
-        Font size of the plot title. 
-    label_fontsize
-        Font size of the axis labels.   
-    tick_fontsize
-        Font size of the axis tick labels. 
+        Custom axis if needed.
     stacked
-        Determines if the vars should be stacked.   
-    **kwds
-        Arguments not used by the current plotting layout.
+        Determines if the vars should be stacked.  
+    {figsize_doc}
+    {prettify_doc}
     
     Returns
     -------
     List of axes.
     """
 
-    # Convert data to a Pandas dataframe if not already a dataframe.
-    if not isinstance(data, pd.DataFrame):
-        if type(data) == dict:
-            data = pd.DataFrame.from_dict(data, orient="index")
-        else:
-            if type(data) is np.ndarray:
-                data = pd.DataFrame(
-                    data=data[1:, 1:], index=data[1:, 0], columns=data[0, 1:]
-                )
-            else:
-                raise ValueError("`data` does not seem to be a valid input type")
+    data = _to_df(data)
 
-    # Create figure if not supplied already. If multiple axes are supplied, it is assumed that the first one is relevant to the plot.
+    # Create figure if not supplied already.
+    prettify = False
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
-        needprettier = True
-    else:
-        needprettier = False
-        if type(ax) is list:
-            ax = ax[0]
+        _, ax = plt.subplots(figsize=figsize, dpi=figresolution)
+        prettify = True
 
     # Draw the plot with Pandas
     ax = data.plot.bar(ax=ax, stacked=stacked)
 
-    # Make plot a bit prettier
-    if needprettier:
-        ax.set_title(
-            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
-        )
-        ax.set_xlabel(xlab, fontsize=label_fontsize)
-        ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
-        ax.set_ylabel(ylab, fontsize=label_fontsize)
-        ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
-
-    if needprettier:
-        ax.set_title(
-            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
-        )
-        ax.set_xlabel(xlab, fontsize=label_fontsize)
-        ax.set_xticklabels(
-            ax.get_xticklabels(), fontsize=tick_fontsize, rotation=30, ha="right"
-        )
-        xax = ax.get_xaxis()
-        xax.set_tick_params(length=0)
-        ax.set_ylabel(ylab, fontsize=label_fontsize)
-        if fraction:
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-            ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
-            ax.yaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.4f}"))
-        else:
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
-            # ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
-            # ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: str(int(x))))
-            ax.set_yticklabels(
-                [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
-            )
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.legend(
-            title=legend_title,
-            loc="upper left",
-            bbox_to_anchor=(1.2, 1),
-            title_fontsize=label_fontsize,
-            fontsize=tick_fontsize,
-            frameon=False,
-        )
-        ax.set_position([0.1, 0.3, 0.6, 0.55])
+    if prettify:
+        _prettify(ax, **kwargs)
 
     return [ax]
 
 
-def nice_line_plain(
-    data: Union[dict, np.ndarray, pd.DataFrame, AnnData],
+@_doc_params(prettify_doc=_prettify_doc, figsize_doc=_figsize_doc)
+def line(
+    data: Union[dict, np.ndarray, pd.DataFrame],
     *,
     ax: Union[plt.axes, list, None] = None,
-    title: str = "",
-    legend_title: str = "",
-    xlab: str = "",
-    ylab: str = "",
     figsize: Tuple[float, float] = (3.44, 2.58),
     figresolution: int = 300,
-    title_loc: Literal["center", "left", "right"] = "center",
-    title_pad: float = 10,
-    title_fontsize: int = 10,
-    label_fontsize: int = 8,
-    tick_fontsize: int = 6,
-    fraction: bool = True,
-    **kwds
+    **kwargs
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -159,98 +94,60 @@ def nice_line_plain(
         Data to show (wide format).
     ax
         Custom axis if needed.  
-    title
-        Figure title.
-    legend_title
-        Figure legend title.
-    xlab
-        Label for the x axis.
-    ylab
-        Label for the y axis.
-    figsize
-        Size of the resulting figure in inches.
-    figresolution
-        Resolution of the figure in dpi. 
-    title_loc
-        Position of the plot title (can be {'center', 'left', 'right'}). 
-    title_pad
-        Padding of the plot title.
-    title_fontsize
-        Font size of the plot title. 
-    label_fontsize
-        Font size of the axis labels.   
-    tick_fontsize
-        Font size of the axis tick labels. 
-    stacked
-        Determines if the vars should be stacked.   
-    **kwds
-        Arguments not used by the current plotting layout.
+    {figsize_doc}
+    {prettify_doc}
     
     Returns
     -------
     List of axes.
     """
+    data = _to_df(data)
 
-    # Convert data to a Pandas dataframe if not already a dataframe.
-    if not isinstance(data, pd.DataFrame):
-        if type(data) == dict:
-            data = pd.DataFrame.from_dict(data, orient="index")
-        else:
-            if type(data) is np.ndarray:
-                data = pd.DataFrame(
-                    data=data[1:, 1:], index=data[1:, 0], columns=data[0, 1:]
-                )
-            else:
-                raise ValueError("`data` does not seem to be a valid input type")
-
-    # Create figure if not supplied already. If multiple axes are supplied, it is assumed that the first one is relevant to the plot.
+    prettify = False
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
-        needprettier = True
-    else:
-        needprettier = False
-        if type(ax) is list:
-            ax = ax[0]
+        prettify = True
 
     # Draw the plot with Pandas
     ax = data.plot.line(ax=ax)
 
     # Make plot a bit prettier
-    if needprettier:
-        ax.set_title(
-            title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
-        )
-        ax.set_xlabel(xlab, fontsize=label_fontsize)
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=8))
-        ax.set_xticklabels(
-            [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
-        )
-        ax.set_ylabel(ylab, fontsize=label_fontsize)
-        ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
-        if fraction:
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-            ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
-            ax.yaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.4f}"))
-        else:
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
-            ax.set_yticklabels(
-                [str(int(x)) for x in ax.get_yticks()], fontsize=tick_fontsize
-            )
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.legend(
-            title=legend_title,
-            loc="upper left",
-            bbox_to_anchor=(1.2, 1),
-            title_fontsize=label_fontsize,
-            fontsize=tick_fontsize,
-            frameon=False,
-        )
-        ax.set_position([0.3, 0.2, 0.5, 0.75])
+    if prettify:
+        _prettify(ax, **kwargs)
+        # ax.set_title(
+        #     title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
+        # )
+        # ax.set_xlabel(xlab, fontsize=label_fontsize)
+        # ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=8))
+        # ax.set_xticklabels(
+        #     [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
+        # )
+        # ax.set_ylabel(ylab, fontsize=label_fontsize)
+        # ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
+        # if fraction:
+        #     ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        #     ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
+        #     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.4f}"))
+        # else:
+        #     ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
+        #     ax.set_yticklabels(
+        #         [str(int(x)) for x in ax.get_yticks()], fontsize=tick_fontsize
+        #     )
+        # ax.spines["top"].set_visible(False)
+        # ax.spines["right"].set_visible(False)
+        # ax.legend(
+        #     title=legend_title,
+        #     loc="upper left",
+        #     bbox_to_anchor=(1.2, 1),
+        #     title_fontsize=label_fontsize,
+        #     fontsize=tick_fontsize,
+        #     frameon=False,
+        # )
+        # ax.set_position([0.3, 0.2, 0.5, 0.75])
     return [ax]
 
 
-def nice_curve_plain(
+def curve(
     data: List[Union[np.ndarray, pd.Series]],
     labels: Union[list, np.ndarray, pd.Series],
     *,
@@ -413,8 +310,8 @@ def nice_curve_plain(
     return [ax]
 
 
-def nice_stripe_plain(
-    data: Union[dict, np.ndarray, pd.DataFrame, AnnData],
+def stripe(
+    data: Union[dict, np.ndarray, pd.DataFrame],
     *,
     ax: Union[plt.axes, list, None] = None,
     title: str = "",
@@ -474,18 +371,10 @@ def nice_stripe_plain(
     """
 
     # Convert data to a Pandas dataframe if not already a dataframe.
-    if not isinstance(data, pd.DataFrame):
-        if type(data) == dict:
-            data = pd.DataFrame.from_dict(data, orient="index")
-        else:
-            if type(data) is np.ndarray:
-                data = pd.DataFrame(
-                    data=data[1:, 1:], index=data[1:, 0], columns=data[0, 1:]
-                )
-            else:
-                raise ValueError("`data` does not seem to be a valid input type")
+    data = _to_df(data)
 
-    # Create figure if not supplied already. If multiple axes are supplied, it is assumed that the first one is relevant to the plot.
+    # Create figure if not supplied already. If multiple axes are supplied,
+    # it is assumed that the first one is relevant to the plot.
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
         needprettier = True
