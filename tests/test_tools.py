@@ -137,3 +137,400 @@ def test_clonal_expansion():
         target_col="new_col",
     )
     assert res2 == res
+
+
+def test_cdr_convergence():
+    obs = {
+        "AAGGTTCCACCCAGTG-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CALSDPNTNAGKSTF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_458",
+            "chain_pairing": "Extra alpha",
+        },
+        "ACTATCTAGGGCTTCC-1": {
+            "TRA_1_cdr3_len": 14.0,
+            "TRA_1_cdr3": "CAVDGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCCGTGGACGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 1,
+            "clonotype": "clonotype_739",
+            "chain_pairing": "Extra alpha",
+        },
+        "CAGTAACAGGCATGTG-1": {
+            "TRA_1_cdr3_len": 12.0,
+            "TRA_1_cdr3": "CAVRDSNYQLIW",
+            "TRA_1_cdr3_nt": "TGTGCTGTGAGAGATAGCAACTATCAGTTAATCTGG",
+            "sample": 1,
+            "clonotype": "clonotype_986",
+            "chain_pairing": "Two full chains",
+        },
+        "CCTTACGGTCATCCCT-1": {
+            "TRA_1_cdr3_len": 12.0,
+            "TRA_1_cdr3": "CAVRDSNYQLIW",
+            "TRA_1_cdr3_nt": "TGTGCTGTGAGGGATAGCAACTATCAGTTAATCTGG",
+            "sample": 1,
+            "clonotype": "clonotype_987",
+            "chain_pairing": "Single pair",
+        },
+        "CGTCCATTCATAACCG-1": {
+            "TRA_1_cdr3_len": 17.0,
+            "TRA_1_cdr3": "CAASRNAGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCAGCAAGTCGCAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 5,
+            "clonotype": "clonotype_158",
+            "chain_pairing": "Single pair",
+        },
+        "CTTAGGAAGGGCATGT-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CALSDPNTNAGKSTF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
+            "sample": 1,
+            "clonotype": "clonotype_459",
+            "chain_pairing": "Single pair",
+        },
+        "GCAAACTGTTGATTGC-1": {
+            "TRA_1_cdr3_len": 14.0,
+            "TRA_1_cdr3": "CAVDGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCCGTGGATGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 1,
+            "clonotype": "clonotype_738",
+            "chain_pairing": "Single pair",
+        },
+        "GCTCCTACAAATTGCC-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CALSDPNTNAGKSTF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGTGATCCCAACACCAATGCAGGCAAATCAACCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_460",
+            "chain_pairing": "Two full chains",
+        },
+        "GGAATAATCCGATATG-1": {
+            "TRA_1_cdr3_len": 17.0,
+            "TRA_1_cdr3": "CAASRNAGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCAGCAAGTAGGAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 5,
+            "clonotype": "clonotype_157",
+            "chain_pairing": "Single pair",
+        },
+        "AAACCTGAGATAGCAT-1": {
+            "TRA_1_cdr3_len": 13.0,
+            "TRA_1_cdr3": "CAGGGSGTYKYIF",
+            "TRA_1_cdr3_nt": "TGTGCAGGGGGGGGCTCAGGAACCTACAAATACATCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_330",
+            "chain_pairing": "Single pair",
+        },
+        "AAACCTGAGTACGCCC-1": {
+            "TRA_1_cdr3_len": 14.0,
+            "TRA_1_cdr3": "CAMRVGGSQGNLIF",
+            "TRA_1_cdr3_nt": "TGTGCAATGAGGGTCGGAGGAAGCCAAGGAAATCTCATCTTT",
+            "sample": 5,
+            "clonotype": "clonotype_592",
+            "chain_pairing": "Two full chains",
+        },
+        "AAACCTGCATAGAAAC-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CAFMKPFTAGNQFYF",
+            "TRA_1_cdr3_nt": "TGTGCTTTCATGAAGCCTTTTACCGCCGGTAACCAGTTCTATTTT",
+            "sample": 5,
+            "clonotype": "clonotype_284",
+            "chain_pairing": "Extra alpha",
+        },
+        "AAACCTGGTCCGTTAA-1": {
+            "TRA_1_cdr3_len": 12.0,
+            "TRA_1_cdr3": "CALNTGGFKTIF",
+            "TRA_1_cdr3_nt": "TGTGCTCTCAATACTGGAGGCTTCAAAACTATCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_425",
+            "chain_pairing": "Extra alpha",
+        },
+        "AAACCTGGTTTGTGTG-1": {
+            "TRA_1_cdr3_len": 13.0,
+            "TRA_1_cdr3": "CALRGGRDDKIIF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGAGGGGGTAGAGATGACAAGATCATCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_430",
+            "chain_pairing": "Single pair",
+        },
+    }
+    obs = pd.DataFrame.from_dict(obs, orient="index")
+    adata = AnnData(obs=obs)
+
+    # Check numbers
+    res = st.tl.cdr_convergence(
+        adata,
+        target_col="TRA_1_cdr3",
+        groupby="sample",
+        fraction=False,
+        inplace=False,
+        as_dict=True,
+    )
+    assert res == {
+        1: {"1": 1, "2": 2, ">= 3": 0},
+        3: {"1": 3, "2": 1, ">= 3": 0},
+        5: {"1": 2, "2": 1, ">= 3": 0},
+    }
+
+    # Check fractions
+    res = st.tl.cdr_convergence(
+        adata, target_col="TRA_1_cdr3", groupby="sample", inplace=False, as_dict=True
+    )
+    assert res == {
+        1: {"1": 0.3333333333333333, "2": 0.6666666666666666, ">= 3": 0.0},
+        3: {"1": 0.75, "2": 0.25, ">= 3": 0.0},
+        5: {"1": 0.6666666666666666, "2": 0.3333333333333333, ">= 3": 0.0},
+    }
+
+
+def test_spectratype():
+    obs = {
+        "AAGGTTCCACCCAGTG-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CALSDPNTNAGKSTF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_458",
+            "chain_pairing": "Extra alpha",
+        },
+        "ACTATCTAGGGCTTCC-1": {
+            "TRA_1_cdr3_len": 14.0,
+            "TRA_1_cdr3": "CAVDGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCCGTGGACGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 1,
+            "clonotype": "clonotype_739",
+            "chain_pairing": "Extra alpha",
+        },
+        "CAGTAACAGGCATGTG-1": {
+            "TRA_1_cdr3_len": 12.0,
+            "TRA_1_cdr3": "CAVRDSNYQLIW",
+            "TRA_1_cdr3_nt": "TGTGCTGTGAGAGATAGCAACTATCAGTTAATCTGG",
+            "sample": 1,
+            "clonotype": "clonotype_986",
+            "chain_pairing": "Two full chains",
+        },
+        "CCTTACGGTCATCCCT-1": {
+            "TRA_1_cdr3_len": 12.0,
+            "TRA_1_cdr3": "CAVRDSNYQLIW",
+            "TRA_1_cdr3_nt": "TGTGCTGTGAGGGATAGCAACTATCAGTTAATCTGG",
+            "sample": 1,
+            "clonotype": "clonotype_987",
+            "chain_pairing": "Single pair",
+        },
+        "CGTCCATTCATAACCG-1": {
+            "TRA_1_cdr3_len": 17.0,
+            "TRA_1_cdr3": "CAASRNAGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCAGCAAGTCGCAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 5,
+            "clonotype": "clonotype_158",
+            "chain_pairing": "Single pair",
+        },
+        "CTTAGGAAGGGCATGT-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CALSDPNTNAGKSTF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
+            "sample": 1,
+            "clonotype": "clonotype_459",
+            "chain_pairing": "Single pair",
+        },
+        "GCAAACTGTTGATTGC-1": {
+            "TRA_1_cdr3_len": 14.0,
+            "TRA_1_cdr3": "CAVDGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCCGTGGATGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 1,
+            "clonotype": "clonotype_738",
+            "chain_pairing": "Single pair",
+        },
+        "GCTCCTACAAATTGCC-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CALSDPNTNAGKSTF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGTGATCCCAACACCAATGCAGGCAAATCAACCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_460",
+            "chain_pairing": "Two full chains",
+        },
+        "GGAATAATCCGATATG-1": {
+            "TRA_1_cdr3_len": 17.0,
+            "TRA_1_cdr3": "CAASRNAGGTSYGKLTF",
+            "TRA_1_cdr3_nt": "TGTGCAGCAAGTAGGAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "sample": 5,
+            "clonotype": "clonotype_157",
+            "chain_pairing": "Single pair",
+        },
+        "AAACCTGAGATAGCAT-1": {
+            "TRA_1_cdr3_len": 13.0,
+            "TRA_1_cdr3": "CAGGGSGTYKYIF",
+            "TRA_1_cdr3_nt": "TGTGCAGGGGGGGGCTCAGGAACCTACAAATACATCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_330",
+            "chain_pairing": "Single pair",
+        },
+        "AAACCTGAGTACGCCC-1": {
+            "TRA_1_cdr3_len": 14.0,
+            "TRA_1_cdr3": "CAMRVGGSQGNLIF",
+            "TRA_1_cdr3_nt": "TGTGCAATGAGGGTCGGAGGAAGCCAAGGAAATCTCATCTTT",
+            "sample": 5,
+            "clonotype": "clonotype_592",
+            "chain_pairing": "Two full chains",
+        },
+        "AAACCTGCATAGAAAC-1": {
+            "TRA_1_cdr3_len": 15.0,
+            "TRA_1_cdr3": "CAFMKPFTAGNQFYF",
+            "TRA_1_cdr3_nt": "TGTGCTTTCATGAAGCCTTTTACCGCCGGTAACCAGTTCTATTTT",
+            "sample": 5,
+            "clonotype": "clonotype_284",
+            "chain_pairing": "Extra alpha",
+        },
+        "AAACCTGGTCCGTTAA-1": {
+            "TRA_1_cdr3_len": 12.0,
+            "TRA_1_cdr3": "CALNTGGFKTIF",
+            "TRA_1_cdr3_nt": "TGTGCTCTCAATACTGGAGGCTTCAAAACTATCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_425",
+            "chain_pairing": "Extra alpha",
+        },
+        "AAACCTGGTTTGTGTG-1": {
+            "TRA_1_cdr3_len": 13.0,
+            "TRA_1_cdr3": "CALRGGRDDKIIF",
+            "TRA_1_cdr3_nt": "TGTGCTCTGAGAGGGGGTAGAGATGACAAGATCATCTTT",
+            "sample": 3,
+            "clonotype": "clonotype_430",
+            "chain_pairing": "Single pair",
+        },
+    }
+    obs = pd.DataFrame.from_dict(obs, orient="index")
+    adata = AnnData(obs=obs)
+
+    # Check numbers
+    res = st.tl.spectratype(
+        adata,
+        target_col="TRA_1_cdr3_len",
+        groupby="sample",
+        inplace=False,
+        as_dict=True,
+        fraction=False,
+    )
+    assert res == {
+        0: {1: 0.0, 3: 0.0, 5: 0.0},
+        1: {1: 0.0, 3: 0.0, 5: 0.0},
+        2: {1: 0.0, 3: 0.0, 5: 0.0},
+        3: {1: 0.0, 3: 0.0, 5: 0.0},
+        4: {1: 0.0, 3: 0.0, 5: 0.0},
+        5: {1: 0.0, 3: 0.0, 5: 0.0},
+        6: {1: 0.0, 3: 0.0, 5: 0.0},
+        7: {1: 0.0, 3: 0.0, 5: 0.0},
+        8: {1: 0.0, 3: 0.0, 5: 0.0},
+        9: {1: 0.0, 3: 0.0, 5: 0.0},
+        10: {1: 0.0, 3: 0.0, 5: 0.0},
+        11: {1: 0.0, 3: 0.0, 5: 0.0},
+        12: {1: 2.0, 3: 1.0, 5: 0.0},
+        13: {1: 0.0, 3: 2.0, 5: 0.0},
+        14: {1: 2.0, 3: 0.0, 5: 1.0},
+        15: {1: 1.0, 3: 2.0, 5: 1.0},
+        16: {1: 0.0, 3: 0.0, 5: 0.0},
+        17: {1: 0.0, 3: 0.0, 5: 2.0},
+    }
+
+    # Check fractions
+    res = st.tl.spectratype(
+        adata,
+        target_col="TRA_1_cdr3_len",
+        groupby="sample",
+        inplace=False,
+        as_dict=True,
+    )
+    assert res == {
+        0: {1: 0.0, 3: 0.0, 5: 0.0},
+        1: {1: 0.0, 3: 0.0, 5: 0.0},
+        2: {1: 0.0, 3: 0.0, 5: 0.0},
+        3: {1: 0.0, 3: 0.0, 5: 0.0},
+        4: {1: 0.0, 3: 0.0, 5: 0.0},
+        5: {1: 0.0, 3: 0.0, 5: 0.0},
+        6: {1: 0.0, 3: 0.0, 5: 0.0},
+        7: {1: 0.0, 3: 0.0, 5: 0.0},
+        8: {1: 0.0, 3: 0.0, 5: 0.0},
+        9: {1: 0.0, 3: 0.0, 5: 0.0},
+        10: {1: 0.0, 3: 0.0, 5: 0.0},
+        11: {1: 0.0, 3: 0.0, 5: 0.0},
+        12: {1: 0.4, 3: 0.2, 5: 0.0},
+        13: {1: 0.0, 3: 0.4, 5: 0.0},
+        14: {1: 0.4, 3: 0.0, 5: 0.25},
+        15: {1: 0.2, 3: 0.4, 5: 0.25},
+        16: {1: 0.0, 3: 0.0, 5: 0.0},
+        17: {1: 0.0, 3: 0.0, 5: 0.5},
+    }
+
+
+def test_group_abundance():
+    obs = pd.DataFrame.from_records(
+        [
+            ["cell1", "A", "ct1"],
+            ["cell2", "A", "ct1"],
+            ["cell3", "A", "ct1"],
+            ["cell3", "A", "NaN"],
+            ["cell4", "B", "ct1"],
+            ["cell5", "B", "ct2"],
+        ],
+        columns=["cell_id", "group", "clonotype"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+
+    # Check numbers
+    res = st.tl.group_abundance(
+        adata, groupby="group", inplace=False, fraction=False, as_dict=True
+    )
+    assert res == {
+        "ct1": {"A": 3.0, "B": 1.0},
+        "NaN": {"A": 1.0, "B": 0.0},
+        "ct2": {"A": 0.0, "B": 1.0},
+    }
+
+    # Check fractions
+    res = st.tl.group_abundance(adata, groupby="group", inplace=False, as_dict=True)
+    assert res == {
+        "ct1": {"A": 0.75, "B": 0.5},
+        "NaN": {"A": 0.25, "B": 0.0},
+        "ct2": {"A": 0.0, "B": 0.5},
+    }
+
+
+def test_chain_pairing():
+    obs = pd.DataFrame.from_records(
+        [
+            ["False", "nan", "nan", "nan", "nan", "nan"],
+            ["True", "True", "AAAA", "BBBB", "CCCC", "DDDD"],
+            ["True", "False", "AAAA", "BBBB", "CCCC", "DDDD"],
+            ["True", "nan", "AAAA", "nan", "nan", "nan"],
+            ["True", "False", "AAAA", "nan", "CCCC", "nan"],
+            ["True", "False", "AAAA", "BBBB", "nan", "nan"],
+            ["True", "False", "AAAA", "BBBB", "CCCC", "nan"],
+            ["True", "False", "nan", "nan", "CCCC", "nan"],
+            ["True", "False", "nan", "nan", "CCCC", "DDDD"],
+            ["True", "False", "AAAA", "nan", "CCCC", "DDDD"],
+        ],
+        columns=[
+            "has_tcr",
+            "multi_chain",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+        ],
+    )
+    adata = AnnData(obs=obs)
+    res = st.tl.chain_pairing(adata, inplace=False)
+    npt.assert_equal(
+        res,
+        [
+            "No TCR",
+            "Multichain",
+            "Two full chains",
+            "Orphan alpha",
+            "Single pair",
+            "Orphan alpha",
+            "Extra alpha",
+            "Orphan beta",
+            "Orphan beta",
+            "Extra beta",
+        ],
+    )

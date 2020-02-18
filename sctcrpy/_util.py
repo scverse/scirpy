@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from textwrap import dedent
-from typing import Any
+from typing import Any, Tuple, Union
 from anndata import AnnData
 from collections import namedtuple
 
@@ -125,3 +125,34 @@ def _doc_params(**kwds):
         return obj
 
     return dec
+
+
+def _which_fractions(
+    fraction: Union[None, str, bool], fraction_base: Union[None, str], groupby: str
+) -> Tuple[bool, str]:
+    """Check if fractions should be computed and if yes, what is the name of the base column. 
+
+    Parameters
+    ----------
+    fraction
+        The value supplied by the user. Can be boolean or the column name
+    groupby
+        The name of the column used as a base by default
+    Returns
+    -------
+    A boolean stating if fractions should be calculated and a column name. 
+    """
+    if fraction_base is None:
+        if fraction is None:
+            fraction_base = groupby
+            fraction = True
+        else:
+            if type(fraction) == bool:
+                fraction_base = groupby
+            else:
+                fraction_base = fraction
+                fraction = True
+    else:
+        if type(fraction) != bool:
+            fraction = True
+    return (fraction, fraction_base)
