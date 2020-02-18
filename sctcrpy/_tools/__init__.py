@@ -2,7 +2,8 @@ import numpy as np
 from anndata import AnnData
 from typing import Union
 from .._util import _is_na, _add_to_uns
-from ._tcr_dist import tcr_dist
+from ._tcr_dist import tcr_neighbors
+from .._compat import Literal
 
 
 def define_clonotypes(
