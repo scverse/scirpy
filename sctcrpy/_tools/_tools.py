@@ -78,7 +78,7 @@ def _decide_chain_cat(x: pd.Series) -> str:
     
     """
     if _is_true(x["has_tcr"]):
-        if not _is_true(x["multichain"]):
+        if not _is_true(x["multi_chain"]):
             if not _is_na(x["TRA_1_cdr3"]):
                 if not _is_na(x["TRB_1_cdr3"]):
                     if not _is_na(x["TRA_2_cdr3"]):
@@ -130,7 +130,7 @@ def chain_pairing(
             :,
             [
                 "has_tcr",
-                "multichain",
+                "multi_chain",
                 "TRA_1_cdr3",
                 "TRA_2_cdr3",
                 "TRB_1_cdr3",

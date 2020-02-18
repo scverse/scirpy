@@ -8,6 +8,7 @@ import numpy as np
 from ._styling import _prettify, _prettify_doc
 from .._util import _doc_params
 import matplotlib.ticker as ticker
+from sklearn.neighbors import KernelDensity
 
 _figsize_doc = """
     figsize
