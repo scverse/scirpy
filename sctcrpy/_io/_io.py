@@ -9,7 +9,7 @@ import pickle
 import os.path
 from . import tracerlib
 import sys
-from .._util import _doc_params
+from .._util import _doc_params, _is_na
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -72,7 +72,6 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     """
     res_dict = dict()
     res_dict["cell_id"] = tcr_obj.cell_id
-    res_dict["has_tcr"] = True
     chain_dict = dict()
     for c in ["TRA", "TRB"]:
         tmp_chains = sorted(
@@ -103,6 +102,21 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
                 res_dict["{}_{}_{}".format(c, i + 1, key)] = (
                     getattr(chain, key) if chain is not None else None
                 )
+
+    # in some weird reasons, it can happen that a cell has been called from
+    # TCR-seq but no TCR seqs have been found. `has_tcr` should be equal
+    # to "at least one productive chain"
+    res_dict["has_tcr"] = not (
+        _is_na(res_dict["TRA_1_cdr3"]) and _is_na(res_dict["TRB_1_cdr3"])
+    )
+    if _is_na(res_dict["TRA_1_cdr3"]):
+        assert _is_na(
+            res_dict["TRA_2_cdr3"]
+        ), "There can't be a secondary chain if there is no primary one"
+    if _is_na(res_dict["TRB_1_cdr3"]):
+        assert _is_na(
+            res_dict["TRB_2_cdr3"]
+        ), "There can't be a secondary chain if there is no primary one"
 
     return res_dict
 
