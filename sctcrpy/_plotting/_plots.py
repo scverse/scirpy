@@ -4,7 +4,7 @@ from .._compat import Literal
 from anndata import AnnData
 from scanpy import logging
 import pandas as pd
-from .._util import _get_from_uns, _which_fractions
+from .._util import _get_from_uns, _which_fractions, _is_na
 from .. import tl
 from . import _base as base
 from typing import Union, List
@@ -542,7 +542,7 @@ def group_abundance(
     target_ranks = target_ranks[:top_n]
     if viztype in ["bar"]:
         target_ranks = target_ranks[::-1]
-    target_ranks = target_ranks[~np.isin(target_ranks, ["nan"])]
+    target_ranks = target_ranks[_is_na(target_ranks)]
     if group_order is None:
         group_order = abundance.columns.values
     abundance = abundance.loc[target_ranks, group_order]
