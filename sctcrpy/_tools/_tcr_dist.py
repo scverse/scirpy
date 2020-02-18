@@ -290,7 +290,7 @@ def _dist_for_chain(
     return cell_mats
 
 
-def tcr_dist(
+def tcr_neighbors(
     adata: AnnData,
     *,
     metric: Literal["alignment", "kidera"] = "alignment",
@@ -300,6 +300,7 @@ def tcr_dist(
     reduction_other_chain=np.fmin
 ) -> Union[None, dict]:
     """Compute the TCRdist on CDR3 sequences. 
+    The equivalent of scanpy.pp.neighbors for TCR sequences. 
 
 
     Parameters
@@ -324,3 +325,11 @@ def tcr_dist(
     # return reduction_other_chain.reduce(
     #     [reduction_same_chain.reduce(tra_dists), reduction_same_chain.reduce(trb_dists)]
     # )
+
+
+def tcr_umap(adata):
+    """
+    Compute umap embedding of the TCR neighborhood graph. 
+
+    """
+    pass

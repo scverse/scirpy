@@ -8,6 +8,11 @@ from ._util import _get_from_uns
 from . import tl
 
 
+def tcr_umap(adata: AnnData):
+    """Plot the TCR umap"""
+    pass
+
+
 def alpha_diversity(
     adata: AnnData,
     groupby: str,
