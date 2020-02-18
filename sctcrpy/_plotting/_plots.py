@@ -542,7 +542,7 @@ def group_abundance(
     target_ranks = target_ranks[:top_n]
     if viztype in ["bar"]:
         target_ranks = target_ranks[::-1]
-    target_ranks = target_ranks[_is_na(target_ranks)]
+    target_ranks = target_ranks[~_is_na(target_ranks)]
     if group_order is None:
         group_order = abundance.columns.values
     abundance = abundance.loc[target_ranks, group_order]
