@@ -39,9 +39,14 @@ Tools: `tl`
    :toctree: .
 
    define_clonotypes
+   decide_chain_cat
+   chain_pairing
    tcr_dist 
    alpha_diversity
    clonal_expansion
+   cdr_convergence
+   spectratype
+   group_abundance
 
 
 Plotting: `pl`
@@ -54,5 +59,14 @@ Plotting: `pl`
 
    alpha_diversity
    clonal_expansion
+   cdr_convergence
+   spectratype
+   group_abundance
+   nice_bar_plain
+   nice_line_plain
+   nice_curve_plain
+   nice_stripe_plain
+   check_for_plotting_profile
+   reset_plotting_profile
 
    
