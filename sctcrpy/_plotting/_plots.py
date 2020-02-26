@@ -16,7 +16,7 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clonotype",
-    vistype: Literal["bar"] = "bar"
+    vistype: Literal["bar"] = "bar",
 ) -> None:
     """Plot the alpha diversity per group. 
 
@@ -68,7 +68,7 @@ def clonal_expansion(
     *,
     target_col: str = "clonotype",
     clip_at: int = 3,
-    fraction: bool = True
+    fraction: bool = True,
 ):
     """Plot the fraction of cells in each group belonging to
     singleton, doublet or triplet clonotype. 
@@ -121,7 +121,7 @@ def cdr_convergence(
     sizeprofile: Union[Literal["small"], None] = None,
     no_singles: bool = False,
     fraction: Union[None, str, bool] = None,
-    **kwds
+    **kwds,
 ) -> Union[List[plt.axes], AnnData]:
     """how many nucleotide versions a single CDR3 amino acid sequence typically has in a given group
     cells belong to each clonotype within a certain sample.
@@ -275,7 +275,7 @@ def spectratype(
     curve_layout: Literal["overlay", "stacked", "shifetd"] = "overlay",
     sizeprofile: Union[Literal["small"], None] = None,
     fraction: Union[None, str, bool] = None,
-    **kwds
+    **kwds,
 ) -> Union[List[plt.axes], AnnData]:
     """Plots how many cells belong to each clonotype. 
 
@@ -454,7 +454,7 @@ def group_abundance(
     vizarg: Union[dict, None] = None,
     ax: Union[plt.axes, None] = None,
     sizeprofile: Union[Literal["small"], None] = None,
-    fraction: Union[None, str, bool] = None
+    fraction: Union[None, str, bool] = None,
 ) -> Union[List[plt.axes], AnnData]:
     """Plots how many cells belong to each clonotype. 
 
@@ -600,3 +600,171 @@ def group_abundance(
         main_args = dict(dict(profile_args, **plot_router[viztype]["arg"]), **vizarg)
         axl = plot_router[viztype]["f"](**main_args)
         return axl
+
+
+def vdj_usage(
+    adata: AnnData,
+    *,
+    target_cols: list = [
+        "TRA_1_j_gene",
+        "TRA_1_v_gene",
+        "TRB_1_v_gene",
+        "TRB_1_d_gene",
+        "TRB_1_j_gene",
+    ],
+    for_cells: Union[None, list, np.ndarray, pd.Series] = None,
+    cell_weights: Union[None, str, list, np.ndarray, pd.Series] = None,
+    fraction_base: Union[None, str] = None,
+    ax: Union[plt.axes, None] = None,
+    bar_clip: int = 5,
+    top_n: Union[None, int] = 10,
+    barwidth: float = 0.4,
+    draw_bars: bool = True,
+) -> Union[AnnData, dict]:
+    """Creates a ribbon plot of the most abundant VDJ combinations in a given subset of cells. 
+
+    Currently works with primary alpha and beta chains only.
+    Does not search for precomputed results in `adata`.
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to work on.
+    target_cols
+        Columns containing gene segment information. Overwrite default only if you know what you are doing!         
+    for_cells
+        A whitelist of cells that should be included in the analysis. If not specified,
+        all cells in  `adata` will be used that have at least a primary alpha or beta chain.
+    cell_weights
+        A size factor for each cell. By default, each cell count as 1, but due to normalization
+        to different sample sizes for example, it is possible that one cell in a small sample
+        is weighted more than a cell in a large sample.
+    fraction_base
+        As an alternative to supplying ready-made cell weights, this feature can also be calculated
+        on the fly if a grouping column name is supplied. The parameter `cell_weights` takes piority
+        over `fraction_base`. If both is `None`, each cell will have a weight of 1.
+    ax
+        Custom axis if needed.
+    bar_clip
+        The maximum number of stocks for bars (number of different V, D or J segments
+        that should be shown separately).
+    top_n
+        The maximum number of ribbons (individual VDJ combinations). If set to `None`,
+        all ribbons are drawn.
+    barwidth
+        Width of bars.
+    draw_bars
+        If `False`, only ribbons are drawn and no bars.
+
+    Returns
+    -------
+    List of axes. 
+    """
+
+    # Execute the tool
+    df = tl.vdj_usage(
+        adata,
+        target_cols=target_cols,
+        for_cells=for_cells,
+        cell_weights=cell_weights,
+        fraction_base=fraction_base,
+    )
+    size_column = "cell_weights"
+    if top_n is None:
+        top_n = df.shape[0]
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    # Draw a stacked bar for every gene loci and save positions on the bar
+    gene_tops = dict()
+    for i in range(len(target_cols)):
+        td = (
+            df.groupby(target_cols[i])[size_column]
+            .agg("sum")
+            .sort_values(ascending=False)
+        )
+        genes = td.index.values
+        sector = target_cols[i][2:7]
+        unct = td[bar_clip + 1 :,].sum()
+        if td.size > bar_clip:
+            if draw_bars:
+                ax.bar(i + 1, unct, width=barwidth, color="grey", edgecolor="black")
+            gene_tops["other_" + sector] = unct
+            bottom = unct
+        else:
+            gene_tops["other_" + sector] = 0
+            bottom = 0
+        for j in range(bar_clip + 1):
+            try:
+                y = td[bar_clip - j]
+                gene = genes[bar_clip - j]
+                if gene == "None":
+                    gene = "No_" + sector
+                gene_tops[gene] = bottom + y
+                if draw_bars:
+                    ax.bar(
+                        i + 1,
+                        y,
+                        width=barwidth,
+                        bottom=bottom,
+                        color="lightgrey",
+                        edgecolor="black",
+                    )
+                    ax.text(
+                        1 + i - barwidth / 2 + 0.05,
+                        bottom + 0.05,
+                        gene.replace("TRA", "").replace("TRB", ""),
+                    )
+                bottom += y
+            except:
+                pass
+
+    # Collect data for ribbons
+    def generow_formatter(r, loci):
+        l = [r[size_column]]
+        for g in loci:
+            l.append(r[g])
+        return l
+
+    td = (
+        df.groupby(target_cols)[size_column]
+        .agg("sum")
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+    td["genecombination"] = td.apply(generow_formatter, axis=1, loci=target_cols)
+
+    # Draw ribbons
+    for r in td["genecombination"][1 : top_n + 1]:
+        d = []
+        ht = r[0]
+        for i in range(len(r) - 1):
+            g = r[i + 1]
+            sector = target_cols[i][2:7]
+            if g == "None":
+                g = "No_" + sector
+            if g not in gene_tops:
+                g = "other_" + sector
+            t = gene_tops[g]
+            d.append([t - ht, t])
+            t = t - ht
+            gene_tops[g] = t
+        if draw_bars:
+            base.gapped_ribbons(d, ax, gapwidth=barwidth)
+        else:
+            base.gapped_ribbons(d, ax, gapwidth=0.1)
+
+    # Make tick labels nicer
+    ax.set_xticks(range(1, len(target_cols) + 1))
+    if target_cols == [
+        "TRA_1_j_gene",
+        "TRA_1_v_gene",
+        "TRB_1_v_gene",
+        "TRB_1_d_gene",
+        "TRB_1_j_gene",
+    ]:
+        ax.set_xticklabels(["TRAJ", "TRAV", "TRBV", "TRBD", "TRBJ"])
+    else:
+        ax.set_xticklabels(target_cols)
+
+    return [ax]

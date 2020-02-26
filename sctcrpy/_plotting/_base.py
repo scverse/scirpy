@@ -421,3 +421,35 @@ def stripe(
         )
         ax.set_position([0.3, 0.2, 0.4, 0.65])
     return [ax]
+
+
+def gapped_ribbons(
+    data,
+    ax,
+    xstart=1.2,
+    gapfreq=1,
+    gapwidth=0.4,
+    fun=lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
+):
+    spread = 10
+    xw = gapfreq - gapwidth
+    slope = xw * 0.8
+    x, y1, y2 = [], [], []
+    for i in range(1, len(data)):
+        xmin = xstart + (i - 1) * gapfreq
+        tx = np.linspace(xmin, xmin + xw, 100)
+        xshift = xmin + xw / 2
+        p1, p2 = data[i - 1]
+        p3, p4 = data[i]
+        yshift1 = p1
+        ty1 = fun((tx, xshift, slope, p1, p3 - p1, spread))
+        ty2 = fun((tx, xshift, slope, p2, p4 - p2, spread))
+        x += tx.tolist()
+        y1 += ty1.tolist()
+        y2 += ty2.tolist()
+        x += np.linspace(xmin + xw, xstart + i * gapfreq, 10).tolist()
+        y1 += np.zeros(10).tolist()
+        y2 += np.zeros(10).tolist()
+    ax.fill_between(x, y1, y2, alpha=0.6)
+    return ax
+

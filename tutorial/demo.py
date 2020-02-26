@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.0
+#       jupytext_version: 1.3.2
 #   kernelspec:
-#     display_name: Python [conda env:sctcrpy2]
+#     display_name: Python [conda env:.conda-scTCR]
 #     language: python
-#     name: conda-env-sctcrpy2-py
+#     name: conda-env-.conda-scTCR-py
 # ---
 
 # %%
@@ -315,6 +315,34 @@ st.pl.cdr_convergence(
 # %%
 st.tl.cdr_convergence(adata, target_col="TRA_1_cdr3", groupby="sample")
 sc.pl.umap(adata, color=["convergence_TRA_1_cdr3_sample"])
+
+# %% [markdown]
+# ### VDJ combinations
+
+# %% [markdown]
+# Top gene segments and the most common VDJ combinations with default settings
+
+# %%
+st.pl.vdj_usage(adata)
+
+# %% [markdown]
+# All VDJ combinations without the barplot
+
+# %%
+st.pl.vdj_usage(adata, top_n=None, draw_bars=False)
+
+# %% [markdown]
+# Maybe even better if done for individual samples
+
+# %%
+cell_list = adata.obs.loc[adata.obs['sample'] == 1,:].index.values
+ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base='sample')
+ax[0].set_title('VDJ usage in Sample 1')
+
+# %%
+cell_list = adata.obs.loc[adata.obs['sample'] == 2,:].index.values
+ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base='sample')
+ax[0]ax.set_title('VDJ usage in Sample 2')
 
 # %%
 # z = adata.uns['sctcrpy'].pop('group_abundance')
