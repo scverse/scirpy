@@ -342,7 +342,7 @@ ax[0].set_title('VDJ usage in Sample 1')
 # %%
 cell_list = adata.obs.loc[adata.obs['sample'] == 2,:].index.values
 ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base='sample')
-ax[0]ax.set_title('VDJ usage in Sample 2')
+ax[0].set_title('VDJ usage in Sample 2')
 
 # %%
 # z = adata.uns['sctcrpy'].pop('group_abundance')

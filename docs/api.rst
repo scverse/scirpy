@@ -47,6 +47,7 @@ Tools: `tl`
    cdr_convergence
    spectratype
    group_abundance
+   vdj_usage
 
 
 Plotting: `pl`
@@ -62,6 +63,7 @@ Plotting: `pl`
    cdr_convergence
    spectratype
    group_abundance
+   vdj_usage
    nice_bar_plain
    nice_line_plain
    nice_curve_plain

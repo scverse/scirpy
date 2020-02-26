@@ -112,3 +112,7 @@ def test_spectratype(adata_clonotype):
 
 def test_group_abundance(adata_clonotype):
     pl.group_abundance(adata_clonotype, groupby="group")
+
+
+def vdj_usage(adata_clonotype):
+    pl.group_abundance(adata_clonotype, groupby="group")
