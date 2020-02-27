@@ -430,7 +430,8 @@ def gapped_ribbons(
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
-    fun: Callable = lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
+    fun: Callable = lambda x: x[3]
+    + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
     figsize: Tuple[float, float] = (3.44, 2.58),
     figresolution: int = 300,
 ) -> plt.axes:
@@ -472,7 +473,7 @@ def gapped_ribbons(
     else:
         if isinstance(ax, list):
             ax = ax[0]
-    
+
     spread = 10
     xw = gapfreq - gapwidth
     slope = xw * 0.8
