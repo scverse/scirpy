@@ -654,7 +654,7 @@ def vdj_usage(
         "TRB_1_v_gene",
         "TRB_1_d_gene",
         "TRB_1_j_gene",
-    ],
+    ),
     for_cells: Union[None, list, np.ndarray, pd.Series] = None,
     cell_weights: Union[None, str, list, np.ndarray, pd.Series] = None,
     fraction_base: Union[None, str] = None,
