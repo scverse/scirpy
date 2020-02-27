@@ -161,9 +161,6 @@ st.pl.clonal_expansion(adata, "leiden", target_col="clonotype")
 adata.uns["sctcrpy"]["clonal_expansion"]
 
 # %%
-sc.tl.dendrogram(adata,)
-
-# %%
 sc.pl.dendrogram(adata, "leiden")
 
 # %% [markdown]
