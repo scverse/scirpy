@@ -648,7 +648,7 @@ def group_abundance(
 def vdj_usage(
     adata: AnnData,
     *,
-    target_cols: list = [
+    target_cols: Collection = (
         "TRA_1_j_gene",
         "TRA_1_v_gene",
         "TRB_1_v_gene",
