@@ -750,9 +750,9 @@ def vdj_usage(
             t = t - ht
             gene_tops[g] = t
         if draw_bars:
-            base.gapped_ribbons(d, ax, gapwidth=barwidth)
+            base.gapped_ribbons(d, ax=ax, gapwidth=barwidth)
         else:
-            base.gapped_ribbons(d, ax, gapwidth=0.1)
+            base.gapped_ribbons(d, ax=ax, gapwidth=0.1)
 
     # Make tick labels nicer
     ax.set_xticks(range(1, len(target_cols) + 1))
