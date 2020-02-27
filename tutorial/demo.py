@@ -335,14 +335,14 @@ st.pl.vdj_usage(adata, top_n=None, draw_bars=False)
 # Maybe even better if done for individual samples
 
 # %%
-cell_list = adata.obs.loc[adata.obs['sample'] == 1,:].index.values
-ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base='sample')
-ax[0].set_title('VDJ usage in Sample 1')
+cell_list = adata.obs.loc[adata.obs["sample"] == 1, :].index.values
+ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base="sample")
+ax[0].set_title("VDJ usage in Sample 1")
 
 # %%
-cell_list = adata.obs.loc[adata.obs['sample'] == 2,:].index.values
-ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base='sample')
-ax[0].set_title('VDJ usage in Sample 2')
+cell_list = adata.obs.loc[adata.obs["sample"] == 2, :].index.values
+ax = st.pl.vdj_usage(adata, for_cells=cell_list, fraction_base="sample")
+ax[0].set_title("VDJ usage in Sample 2")
 
 # %%
 # z = adata.uns['sctcrpy'].pop('group_abundance')

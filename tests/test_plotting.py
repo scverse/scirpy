@@ -103,11 +103,11 @@ def test_clonal_expansion(adata_clonotype):
 
 
 def test_cdr_convergence(adata_clonotype):
-    pl.group_abundance(adata_clonotype, groupby="group")
+    pl.cdr_convergence(adata_clonotype, groupby="group")
 
 
 def test_spectratype(adata_clonotype):
-    pl.group_abundance(adata_clonotype, groupby="group")
+    pl.spectratype(adata_clonotype, groupby="group")
 
 
 def test_group_abundance(adata_clonotype):
@@ -115,4 +115,4 @@ def test_group_abundance(adata_clonotype):
 
 
 def vdj_usage(adata_clonotype):
-    pl.group_abundance(adata_clonotype, groupby="group")
+    pl.vdj_usage(adata_clonotype)

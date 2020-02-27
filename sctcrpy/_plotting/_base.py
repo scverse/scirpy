@@ -1,6 +1,6 @@
 """Base plotting functions"""
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Callable
 from .._compat import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -39,7 +39,7 @@ def bar(
     stacked: bool = True,
     figsize: Tuple[float, float] = (3.44, 2.58),
     figresolution: int = 300,
-    **kwargs
+    **kwargs,
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -84,7 +84,7 @@ def line(
     ax: Union[plt.axes, list, None] = None,
     figsize: Tuple[float, float] = (3.44, 2.58),
     figresolution: int = 300,
-    **kwargs
+    **kwargs,
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -168,7 +168,7 @@ def curve(
     shade: bool = True,
     outline: bool = True,
     fraction: bool = True,
-    **kwds
+    **kwds,
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -328,7 +328,7 @@ def stripe(
     tick_fontsize: int = 6,
     stacked: bool = True,
     fraction: bool = True,
-    **kwds
+    **kwds,
 ) -> List[plt.axes]:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -424,13 +424,55 @@ def stripe(
 
 
 def gapped_ribbons(
-    data,
-    ax,
-    xstart=1.2,
-    gapfreq=1,
-    gapwidth=0.4,
-    fun=lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
-):
+    data: Union[list, np.ndarray],
+    *,
+    ax: Union[plt.axes, list, None] = None,
+    xstart: float = 1.2,
+    gapfreq: float = 1.0,
+    gapwidth: float = 0.4,
+    fun: Callable = lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
+    figsize: Tuple[float, float] = (3.44, 2.58),
+    figresolution: int = 300,
+) -> plt.axes:
+    """Draws ribbons using `fill_between`
+    Called by VDJ usage plot to connect bars. 
+
+    Parameters
+    ----------
+    data
+        Breakpoints defining the ribbon as a 2D matrix. Each row is an x position, columns are the lower and upper extent of the ribbon at that position.
+    ax
+        Custom axis, almost always called with an axis supplied.  
+    xstart
+        The midpoint of the first bar.
+    gapfreq
+        Frequency of bars. Normally a bar would be drawn at every integer x position, hence default is 1.
+    gapwidth
+        At every bar position, there will be a gap. The width of this gap is identical to bar widths, but could also be set to 0 if we need continous ribbons.
+    fun
+        A function defining the curve of each ribbon segment from breakpoint to breakpoint. By default, it is a sigmoid with 6 parameters:
+            range between x position of bars,
+            curve start on the x axis,
+            slope of curve,
+            curve start y position,
+            curve end y position,
+            compression factor of the sigmoid curve
+    figsize
+        Size of the resulting figure in inches.
+    figresolution
+        Resolution of the figure in dpi. 
+    
+    Returns
+    -------
+    The axis with ribbons.
+    """
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize, dpi=figresolution)
+    else:
+        if isinstance(ax, list):
+            ax = ax[0]
+    
     spread = 10
     xw = gapfreq - gapwidth
     slope = xw * 0.8
@@ -441,7 +483,6 @@ def gapped_ribbons(
         xshift = xmin + xw / 2
         p1, p2 = data[i - 1]
         p3, p4 = data[i]
-        yshift1 = p1
         ty1 = fun((tx, xshift, slope, p1, p3 - p1, spread))
         ty2 = fun((tx, xshift, slope, p2, p4 - p2, spread))
         x += tx.tolist()
@@ -451,5 +492,5 @@ def gapped_ribbons(
         y1 += np.zeros(10).tolist()
         y2 += np.zeros(10).tolist()
     ax.fill_between(x, y1, y2, alpha=0.6)
-    return ax
 
+    return ax
