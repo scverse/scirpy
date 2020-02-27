@@ -16,8 +16,7 @@ from io import StringIO
 
 
 class _DistanceCalculator(abc.ABC):
-    @abc.abstractmethod
-    def __init__(self, n_jobs: Union[int, None]):
+    def __init__(self, n_jobs: Union[int, None] = None):
         """
         Parameters
         ----------
@@ -32,6 +31,15 @@ class _DistanceCalculator(abc.ABC):
         """Calculate a symmetric, pairwise distance matrix of all sequences in `seq`.
         Distances are non-negative values"""
         pass
+
+
+class _IdentityDistanceCalculator(_DistanceCalculator):
+    """Calculate the distance between TCR based on the identity 
+    of sequences. I.e. 0 = sequence identical, 1 = sequences not identical
+    """
+
+    def calc_dist_mat(self, seqs: np.ndarray) -> np.ndarray:
+        return 1 - np.identity(len(seqs))
 
 
 class _KideraDistanceCalculator(_DistanceCalculator):
@@ -293,7 +301,7 @@ def _dist_for_chain(
 def tcr_neighbors(
     adata: AnnData,
     *,
-    metric: Literal["alignment", "kidera"] = "alignment",
+    metric: Literal["alignment", "kidera", "identity"] = "alignment",
     n_jobs: [int, None] = None,
     inplace: bool = True,
     reduction_same_chain=np.fmin,
@@ -315,6 +323,8 @@ def tcr_neighbors(
         dist_calc = _AlignmentDistanceCalculator(n_jobs=n_jobs)
     elif metric == "kidera":
         dist_calc = _KideraDistanceCalculator(n_jobs=n_jobs)
+    elif metric == "identity":
+        dist_calc = _IdentityDistanceCalculator()
 
     tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
     trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
