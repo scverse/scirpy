@@ -155,7 +155,13 @@ st.pl.alpha_diversity(adata, groupby="leiden")
 st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
 
 # %%
-st.pl.clonal_expansion(adata, groupby="leiden")
+st.pl.clonal_expansion(adata, "leiden", target_col="clonotype")
+
+# %%
+adata.uns["sctcrpy"]["clonal_expansion"]
+
+# %%
+sc.pl.dendrogram(adata, "leiden")
 
 # %% [markdown]
 # ## Clonotype abundances

@@ -23,7 +23,8 @@ requires = [
     # pandas <1 until scanpy is fully compatible...
     'pandas<1',
     'numpy',
-    'parasail'
+    'parasail',
+    'scikit-learn'
 ]
 
 [tool.flit.metadata.requires-extra]

@@ -9,6 +9,7 @@ from .. import tl
 from . import _base as base
 from typing import Union, List
 from ._styling import _check_for_plotting_profile
+import scanpy as sc
 
 
 def alpha_diversity(
@@ -600,3 +601,11 @@ def group_abundance(
         main_args = dict(dict(profile_args, **plot_router[viztype]["arg"]), **vizarg)
         axl = plot_router[viztype]["f"](**main_args)
         return axl
+
+
+def umap_tra(adata: AnnData, **kwargs):
+    return sc.pl.embedding(adata, "X_umap_tra", **kwargs)
+
+
+def umap_trb(adata: AnnData, **kwargs):
+    return sc.pl.embedding(adata, "X_umap_trb", **kwargs)
