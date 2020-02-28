@@ -6,6 +6,11 @@ from anndata import AnnData
 from collections import namedtuple
 
 
+def _is_symmetric(M) -> bool:
+    """check if matrix M is symmetric"""
+    return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
+
+
 def _is_na(x):
     """Check if an object or string is NaN. 
     The function is vectorized over numpy arrays or pandas Series 

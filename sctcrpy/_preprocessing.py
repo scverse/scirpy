@@ -1,6 +1,4 @@
-import pandas as pd
 from typing import Union, List
-import numpy as np
 from anndata import AnnData
 
 
