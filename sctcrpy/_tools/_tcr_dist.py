@@ -13,6 +13,7 @@ from .._util import _is_na, _is_symmetric
 import abc
 import textwrap
 from io import StringIO
+import umap
 
 
 class _DistanceCalculator(abc.ABC):
@@ -316,7 +317,8 @@ def tcr_neighbors(
     metric
         Distance metric to use. `alignment` will calculate an alignment distance
         based on normalized BLOSUM62 scores. `kidera` calculates a distance 
-        based on kidera factors. 
+        based on kidera factors. `identity` results in `0` for an identical sequence, 
+        `1` for different sequence. 
 
     """
     if metric == "alignment":
@@ -325,21 +327,41 @@ def tcr_neighbors(
         dist_calc = _KideraDistanceCalculator(n_jobs=n_jobs)
     elif metric == "identity":
         dist_calc = _IdentityDistanceCalculator()
+    else:
+        raise ValueError("Invalid distance metric.")
 
     tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
     trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
 
-    return tra_dists, trb_dists
-    # return np.fmax.reduce(tra_dists)
+    if inplace:
+        if "sctcrpy" not in adata.uns:
+            adata.uns["sctcrpy"] = dict()
+        adata.uns["sctcrpy"]["tra_neighbors"] = tra_dists[0]
+        adata.uns["sctcrpy"]["trb_neighbors"] = trb_dists[0]
+    else:
+        return tra_dists, trb_dists
 
-    # return reduction_other_chain.reduce(
-    #     [reduction_same_chain.reduce(tra_dists), reduction_same_chain.reduce(trb_dists)]
-    # )
 
-
-def tcr_umap(adata):
+def tcr_umap(adata: AnnData, inplace: bool = True):
     """
     Compute umap embedding of the TCR neighborhood graph. 
 
     """
-    pass
+    U = umap.umap_.UMAP(metric="precomputed", min_dist=0.1, spread=2)
+    tra_dist = np.nan_to_num(adata.uns["sctcrpy"]["tra_neighbors"], nan=1)
+    trb_dist = np.nan_to_num(adata.uns["sctcrpy"]["trb_neighbors"], nan=1)
+    umap_tra = U.fit_transform(tra_dist)
+    umap_trb = U.fit_transform(trb_dist)
+
+    if inplace:
+        adata.obsm["X_umap_tra"] = umap_tra
+        adata.obsm["X_umap_trb"] = umap_trb
+    else:
+        return umap_tra, umap_trb
+
+
+# def tcr_leiden(adata):
+#     """
+#     Define clonotypes by unsupervised graph-based clustering
+#     """
+#     pass
