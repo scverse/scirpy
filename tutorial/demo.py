@@ -205,7 +205,15 @@ st.tl.chain_pairing(adata)
 # %%
 adata.obs.loc[
     :,
-    ["has_tcr", "multi_chain", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+    [
+        "has_tcr",
+        "multi_chain",
+        "TRA_1_cdr3",
+        "TRA_2_cdr3",
+        "TRB_1_cdr3",
+        "TRB_2_cdr3",
+        "chain_pairing",
+    ],
 ]
 
 # %%
