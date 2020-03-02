@@ -21,6 +21,8 @@ def alpha_diversity(
 ) -> None:
     """Plot the alpha diversity per group. 
 
+    Calls :meth:`tl.alpha_diversity` on-the-fly. 
+
     Parameters
     ----------
     adata
@@ -32,23 +34,7 @@ def alpha_diversity(
     vistype
         Visualization type. Currently only 'bar' is supported. 
     """
-    try:
-        diversity = _get_from_uns(
-            adata,
-            "alpha_diversity",
-            parameters={"groupby": groupby, "target_col": target_col},
-        )
-    except KeyError:
-        logging.warning(
-            "No precomputed data found for current parameters. "
-            "Computing alpha diversity now. "
-        )
-        tl.alpha_diversity(adata, groupby, target_col=target_col)
-        diversity = _get_from_uns(
-            adata,
-            "alpha_diversity",
-            parameters={"groupby": groupby, "target_col": target_col},
-        )
+    diversity = tl.alpha_diversity(adata, groupby, target_col=target_col)
 
     groups, diversity = zip(*diversity.items())
 
@@ -74,36 +60,9 @@ def clonal_expansion(
     """Plot the fraction of cells in each group belonging to
     singleton, doublet or triplet clonotype. 
     """
-    # Get pre-comuted results. If not available, compute them.
-    try:
-        expansion = _get_from_uns(
-            adata,
-            "clonal_expansion",
-            parameters={
-                "groupby": groupby,
-                "target_col": target_col,
-                "clip_at": clip_at,
-                "fraction": fraction,
-            },
-        )
-    except KeyError:
-        logging.warning(
-            "No precomputed data found for current parameters. "
-            "Computing clonal expansion now. "
-        )
-        tl.clonal_expansion(
-            adata, groupby, target_col=target_col, clip_at=clip_at, fraction=fraction
-        )
-        expansion = _get_from_uns(
-            adata,
-            "clonal_expansion",
-            parameters={
-                "groupby": groupby,
-                "target_col": target_col,
-                "clip_at": clip_at,
-                "fraction": fraction,
-            },
-        )
+    expansion = tl.clonal_expansion(
+        adata, groupby, target_col=target_col, clip_at=clip_at, fraction=fraction
+    )
 
     pd.DataFrame.from_dict(expansion, orient="index").plot.bar(stacked=True)
 
@@ -169,46 +128,13 @@ def cdr_convergence(
 
     # Check how fractions should be computed
     fraction, fraction_base = _which_fractions(fraction, None, groupby)
-
-    # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
-    if type(adata) == dict:
-        plottable = pd.DataFrame.from_dict(adata, orient="index")
-    else:
-        try:
-            plottable = _get_from_uns(
-                adata,
-                "cdr_convergence",
-                parameters={
-                    "groupby": groupby,
-                    "target_col": target_col,
-                    "clip_at": clip_at,
-                    "fraction": fraction,
-                    "fraction_base": fraction_base,
-                },
-            )
-        except KeyError:
-            logging.warning(
-                "No precomputed data found for current parameters. "
-                "Computing group CDR3 convergence now. "
-            )
-            tl.cdr_convergence(
-                adata,
-                groupby,
-                target_col=target_col,
-                fraction=fraction,
-                fraction_base=fraction_base,
-            )
-            plottable = _get_from_uns(
-                adata,
-                "cdr_convergence",
-                parameters={
-                    "groupby": groupby,
-                    "target_col": target_col,
-                    "clip_at": clip_at,
-                    "fraction": fraction,
-                    "fraction_base": fraction_base,
-                },
-            )
+    plottable = tl.cdr_convergence(
+        adata,
+        groupby,
+        target_col=target_col,
+        fraction=fraction,
+        fraction_base=fraction_base,
+    )
 
     if type(plottable) == dict:
         plottable = pd.DataFrame.from_dict(adata, orient="index")
@@ -317,43 +243,13 @@ def spectratype(
     fraction, fraction_base = _which_fractions(fraction, None, groupby)
     target_col_l = "|".join(target_col)
 
-    # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
-    if type(adata) == dict:
-        plottable = pd.DataFrame.from_dict(adata, orient="index")
-    else:
-        try:
-            plottable = _get_from_uns(
-                adata,
-                "spectratype",
-                parameters={
-                    "groupby": groupby,
-                    "target_col": target_col_l,
-                    "fraction": fraction,
-                    "fraction_base": fraction_base,
-                },
-            )
-        except KeyError:
-            logging.warning(
-                "No precomputed data found for current parameters. "
-                "Computing group abundance now. "
-            )
-            tl.spectratype(
-                adata,
-                groupby,
-                target_col=target_col,
-                fraction=fraction,
-                fraction_base=fraction_base,
-            )
-            plottable = _get_from_uns(
-                adata,
-                "spectratype",
-                parameters={
-                    "groupby": groupby,
-                    "target_col": target_col_l,
-                    "fraction": fraction,
-                    "fraction_base": fraction_base,
-                },
-            )
+    plottable = tl.spectratype(
+        adata,
+        groupby,
+        target_col=target_col,
+        fraction=fraction,
+        fraction_base=fraction_base,
+    )
 
     if type(plottable) == dict:
         plottable = pd.DataFrame.from_dict(adata, orient="index")
@@ -493,44 +389,13 @@ def group_abundance(
     """
 
     fraction, fraction_base = _which_fractions(fraction, None, groupby)
-
-    # If we get an adata object, get pre-computed results. If not available, compute them. Otherwise use the dictionary as is.
-    if type(adata) == dict:
-        abundance = pd.DataFrame.from_dict(adata, orient="index")
-    else:
-        try:
-            abundance = _get_from_uns(
-                adata,
-                "group_abundance",
-                parameters={
-                    "groupby": groupby,
-                    "target_col": target_col,
-                    "fraction": fraction,
-                    "fraction_base": fraction_base,
-                },
-            )
-        except KeyError:
-            logging.warning(
-                "No precomputed data found for current parameters. "
-                "Computing group abundance now. "
-            )
-            tl.group_abundance(
-                adata,
-                groupby,
-                target_col=target_col,
-                fraction=fraction,
-                fraction_base=fraction_base,
-            )
-            abundance = _get_from_uns(
-                adata,
-                "group_abundance",
-                parameters={
-                    "groupby": groupby,
-                    "target_col": target_col,
-                    "fraction": fraction,
-                    "fraction_base": fraction_base,
-                },
-            )
+    abundance = tl.group_abundance(
+        adata,
+        groupby,
+        target_col=target_col,
+        fraction=fraction,
+        fraction_base=fraction_base,
+    )
 
     if type(abundance) == dict:
         abundance = pd.DataFrame.from_dict(adata, orient="index")
