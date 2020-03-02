@@ -4,17 +4,17 @@ from .._util import _is_na
 import numpy as np
 
 
-def clonal_expansion(
+def clip_and_count(
     adata: AnnData,
     groupby: str,
+    target_col: str,
     *,
-    target_col: str = "clonotype",
     clip_at: int = 3,
     inplace: bool = True,
     fraction: bool = True,
 ) -> Dict:
-    """Creates summary statsitics on how many
-    clonotypes are expanded within a certain groups. 
+    """Counts the number of identical entries in `target_col` 
+    for each group in `group_by`. 
 
     Ignores NaN values. 
     
@@ -27,20 +27,18 @@ def clonal_expansion(
     target_col
         Column on which to compute the expansion. 
     clip_at
-        All clonotypes with more copies than `clip_at` will be summarized into 
-        a single group.         
+        All entries in `target_col` with more copies than `clip_at`
+        will be summarized into a single group.         
     fraction
-        If True, compute fractions of expanded clonotypes rather than reporting
+        If True, compute fractions rather than reporting
         abosolute numbers
 
     Returns
     -------
-    A dictionary with the number of expanded clonotypes per group
+    Dictionary with counts/fractions per group 
     """
     if target_col not in adata.obs.columns:
-        raise ValueError(
-            "`target_col` not found in obs. Did you run `tl.define_clonotypes`?"
-        )
+        raise ValueError("`target_col` not found in obs.")
     # count abundance of each clonotype
     tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clonotype_counts = (
