@@ -1,5 +1,5 @@
 from anndata import AnnData
-from typing import Callable, Union
+from typing import Callable, Union, Collection
 import numpy as np
 import pandas as pd
 from .._util import _which_fractions, _is_na
