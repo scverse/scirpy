@@ -4,7 +4,7 @@ from .._compat import Literal
 from anndata import AnnData
 from scanpy import logging
 import pandas as pd
-from .._util import _get_from_uns, _which_fractions, _is_na
+from .._util import _get_from_uns, _is_na
 from .. import tl
 from . import _base as base
 from typing import Union, List
