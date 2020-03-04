@@ -1,7 +1,8 @@
-from sctcrpy._util import _is_na, _is_false, _is_true
+from sctcrpy._util import _is_na, _is_false, _is_true, _normalize_counts
 import numpy as np
 import pandas as pd
 import numpy.testing as npt
+import pytest
 
 
 def test_is_na():
@@ -76,3 +77,22 @@ def test_is_true():
     npt.assert_equal(_is_true(array_test_str), array_expect)
     npt.assert_equal(_is_true(pd.Series(array_test).values), array_expect)
     npt.assert_equal(_is_true(pd.Series(array_test_str).values), array_expect)
+
+
+@pytest.fixture
+def group_df():
+    return pd.DataFrame().assign(
+        cell=["c1", "c2", "c3", "c4", "c5", "c6"],
+        sample=["s2", "s1", "s2", "s2", "s2", "s1"],
+    )
+
+
+def test_normalize_counts(group_df):
+    with pytest.raises(ValueError):
+        _normalize_counts(group_df, True, None)
+
+    npt.assert_equal(_normalize_counts(group_df, False).values, [1] * 6)
+    npt.assert_equal(_normalize_counts(group_df, "sample").values, [4, 2, 4, 4, 4, 2])
+    npt.assert_equal(
+        _normalize_counts(group_df, True, "sample").values, [4, 2, 4, 4, 4, 2]
+    )
