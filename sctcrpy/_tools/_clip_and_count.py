@@ -10,7 +10,6 @@ def clip_and_count(
     target_col: str,
     *,
     clip_at: int = 3,
-    inplace: bool = True,
     fraction: bool = True,
 ) -> Dict:
     """Counts the number of identical entries in `target_col` 
@@ -25,13 +24,13 @@ def clip_and_count(
     groupby
         Group by this column from `obs`
     target_col
-        Column on which to compute the expansion. 
+        Column to count on.
     clip_at
         All entries in `target_col` with more copies than `clip_at`
         will be summarized into a single group.         
     fraction
         If True, compute fractions rather than reporting
-        abosolute numbers
+        abosolute numbers.
 
     Returns
     -------
