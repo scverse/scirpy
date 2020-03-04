@@ -80,6 +80,33 @@ def _add_to_uns(
         adata.uns[domain][tool][param_tuple] = result
 
 
+def _normalize_counts(
+    obs: pd.DataFrame, normalize: Union[bool, str], default_col: Union[None, str] = None
+) -> pd.Series:
+    """
+    Produces a pd.Series with group sizes that can be used to normalize
+    counts in a DataFrame. 
+
+    Parameters
+    ----------
+    normalize
+        If False, returns a scaling factor of `1`
+        If True, computes the group sizes according to `default_col`
+        If normalize is a colname, compute the group sizes according to the colname. 
+    """
+    if not normalize:
+        return pd.Series(np.ones(obs.shape[0]))
+    elif isinstance(normalize, str):
+        normalize_col = normalize
+    elif normalize is True and default_col is not None:
+        normalize_col = default_col
+    else:
+        raise ValueError("No colname specified in either `normalize` or `default_col")
+
+    # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
+    return obs.groupby(normalize_col)[normalize_col].transform("count")
+
+
 def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:
     """Get results of a tool from `adata.uns`. 
 
