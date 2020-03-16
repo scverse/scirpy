@@ -1,6 +1,7 @@
 from sctcrpy import pl
 import pytest
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 @pytest.fixture
@@ -13,20 +14,24 @@ def test_df():
 
 def test_bar(test_df):
     pl.base.bar(test_df)
-    pl.base.bar(test_df, style=None)
+    p = pl.base.bar(test_df, style=None)
+    assert isinstance(p, plt.Axes)
 
 
 def test_line(test_df):
-    pl.base.line(test_df)
+    p = pl.base.line(test_df)
+    assert isinstance(p, plt.Axes)
 
 
 def test_barh(test_df):
-    pl.base.barh(test_df)
+    p = pl.base.barh(test_df)
+    assert isinstance(p, plt.Axes)
 
 
 def test_curve(test_df):
     # with default options
-    pl.base.curve(test_df)
+    p = pl.base.curve(test_df)
+    assert isinstance(p, plt.Axes)
 
     # test curve layouts
     for cl in ["overlay", "stacked", "shifted"]:

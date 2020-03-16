@@ -5,7 +5,7 @@ from typing import Union
 
 
 def style_axes(
-    ax: plt.axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
+    ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
 ) -> None:
     """Apply a style to an axis object. 
 
@@ -28,7 +28,7 @@ def style_axes(
 
 
 def _style_axes(
-    ax: plt.axes,
+    ax: plt.Axes,
     title: str = "",
     legend_title: str = "",
     xlab: str = "",

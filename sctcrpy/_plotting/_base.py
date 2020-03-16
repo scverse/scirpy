@@ -1,13 +1,12 @@
 """Base plotting functions"""
 
-from typing import Union, Tuple, List, Collection
+from typing import Union
 from .._compat import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from ._styling import style_axes
 from .._util import _doc_params
-import matplotlib.ticker as ticker
 from sklearn.neighbors import KernelDensity
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 300}
@@ -26,7 +25,7 @@ _common_doc = """
 )
 
 
-def _init_ax(fig_kws: Union[dict, None] = None) -> plt.axes:
+def _init_ax(fig_kws: Union[dict, None] = None) -> plt.Axes:
     fig_kws = DEFAULT_FIG_KWS if fig_kws is None else fig_kws
     _, ax = plt.subplots(**fig_kws)
     return ax
@@ -36,19 +35,19 @@ def _init_ax(fig_kws: Union[dict, None] = None) -> plt.axes:
 def bar(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.axes, None] = None,
+    ax: Union[plt.Axes, None] = None,
     stacked: bool = True,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
-) -> plt.axes:
+) -> plt.Axes:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
 
     Parameters
     ----------
     data
-        Data to show (wide format).
+        Data to plot in wide-format (i.e. groups are in columns)
     ax
         Plot into this axes object
     stacked
@@ -70,11 +69,11 @@ def bar(
 def line(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.axes, None] = None,
+    ax: Union[plt.Axes, None] = None,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
-) -> plt.axes:
+) -> plt.Axes:
     """Basic plotting function built on top of line plot in Pandas.
 
     Parameters
@@ -99,11 +98,11 @@ def line(
 def barh(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.axes, None] = None,
+    ax: Union[plt.Axes, None] = None,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
-) -> plt.axes:
+) -> plt.Axes:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws a horizontal bar plot. 
 
@@ -130,13 +129,13 @@ def barh(
 def curve(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.axes, None] = None,
+    ax: Union[plt.Axes, None] = None,
     curve_layout: Literal["overlay", "stacked", "shifetd"] = "overlay",
     shade: bool = False,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
-) -> plt.axes:
+) -> plt.Axes:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
 
