@@ -95,7 +95,7 @@ def _normalize_counts(
         If normalize is a colname, compute the group sizes according to the colname. 
     """
     if not normalize:
-        return pd.Series(np.ones(obs.shape[0]))
+        return np.ones(obs.shape[0])
     elif isinstance(normalize, str):
         normalize_col = normalize
     elif normalize is True and default_col is not None:
@@ -104,7 +104,7 @@ def _normalize_counts(
         raise ValueError("No colname specified in either `normalize` or `default_col")
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
-    return obs.groupby(normalize_col)[normalize_col].transform("count")
+    return obs.groupby(normalize_col)[normalize_col].transform("count").values
 
 
 def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:

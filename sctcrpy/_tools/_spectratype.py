@@ -3,6 +3,7 @@ from typing import Callable, Union, Collection
 import numpy as np
 import pandas as pd
 from .._util import _is_na, _normalize_counts
+from ._group_abundance import _group_abundance
 
 
 def spectratype(
@@ -47,28 +48,18 @@ def spectratype(
         target_col = [target_col]
     else:
         target_col = list(set(target_col))
+
+    # combine (potentially) multiple length columns into one
     tcr_obs = adata.obs.copy()
     tcr_obs["lengths"] = tcr_obs.loc[:, target_col].apply(combine_fun, axis=1)
 
-    na_mask = _is_na(tcr_obs[groupby]) | _is_na(tcr_obs["lengths"])
-    tcr_obs = tcr_obs.loc[~na_mask, :]
-
-    # Calculate distribution of lengths in each group
-    cdr3_lengths = (
-        tcr_obs.groupby([groupby, "lengths"]).size().reset_index(name="count")
+    cdr3_lengths = _group_abundance(
+        tcr_obs, groupby, target_col="lengths", fraction=fraction
     )
 
-    # normalize to fractions
-    scale_vector = _normalize_counts(tcr_obs, normalize=fraction, default_col=groupby)
-    cdr3_lengths["count"] /= scale_vector
-
-    cdr3_lengths = cdr3_lengths.pivot(index="lengths", columns=groupby, values="count")
+    # should include all lengths, not just the abundant ones
     cdr3_lengths = cdr3_lengths.reindex(
         range(int(tcr_obs["lengths"].max()) + 1)
     ).fillna(value=0.0)
-
-    # By default, the most abundant group should be the first on the plot,
-    # therefore we need their order
-    cdr3_lengths[cdr3_lengths.apply(np.sum, axis=0).index.values]
 
     return cdr3_lengths
