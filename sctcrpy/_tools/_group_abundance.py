@@ -18,25 +18,30 @@ def _group_abundance(
 
     # normalize to fractions
     scale_vector = _normalize_counts(tcr_obs, normalize=fraction, default_col=groupby)
-    tcr_obs = tcr_obs.assign(weight=1 / scale_vector)
+    tcr_obs = tcr_obs.assign(count=1, weight=1 / scale_vector)
 
     # Calculate distribution of lengths in each group. Use sum instead of count
     # to reflect weights
     group_counts = (
-        tcr_obs.groupby([groupby, target_col])["weight"]
+        tcr_obs.groupby([groupby, target_col])["count", "weight"]
         .sum()
         .reset_index()
-        .rename(columns={"weight": "count"})
+        .rename(columns={"weight": "weighted_count"})
     )
 
     result_df = group_counts.pivot(
+        index=target_col, columns=groupby, values="weighted_count"
+    ).fillna(value=0.0)
+
+    # required that we can still sort by abundance even if normalized
+    result_df_count = group_counts.pivot(
         index=target_col, columns=groupby, values="count"
     ).fillna(value=0.0)
 
     # By default, the most abundant group should be the first on the plot,
     # therefore we need their order
     ranked_groups = (
-        result_df.apply(np.sum, axis=0).sort_values(ascending=False).index.values
+        result_df_count.apply(np.sum, axis=0).sort_values(ascending=False).index.values
     )
     ranked_target = (
         result_df.apply(np.sum, axis=1).sort_values(ascending=False).index.values
@@ -63,15 +68,14 @@ def group_abundance(
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. Samples or diagnosis for example.  
+        Group by this column from `obs`. E.g, sample, or group. 
     target_col
-        Column containing a grouping variable, according to which to compute the 
-        abundance       
+        Caregorical variable from `obs` according to which the abundance/fractions
+        will be computed.        
     fraction
-        If True, compute fractions of expanded clonotypes rather than reporting
-        abosolute numbers. If a string is supplied, that should be the column name
-        of a grouping (e.g. samples).  
-
+        If True, compute fractions of abundances relative to the `groupby` column
+        rather than reporting abosolute numbers. Alternatively, a column 
+        name can be provided according to that the values will be normalized.  
 
     Returns
     -------
