@@ -6,7 +6,6 @@ from .._util import _is_na
 from .. import tl
 from . import _base as base
 from typing import Union, List
-from ._styling import _check_for_plotting_profile
 
 
 def group_abundance(

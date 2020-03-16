@@ -6,7 +6,6 @@ import pandas as pd
 from .. import tl
 from . import _base as base
 from typing import Union, List
-from ._styling import _check_for_plotting_profile
 
 
 def spectratype(
