@@ -2,6 +2,7 @@ import numpy as np
 from .._util import _is_na
 from anndata import AnnData
 from typing import Dict
+import pandas as pd
 
 
 def alpha_diversity(
@@ -22,7 +23,7 @@ def alpha_diversity(
 
     Returns
     -------
-    Dictionary with the alpha diversity for each group. 
+    DataFrame with the alpha diversity for each group. 
     """
     # Could rely on skbio.math if more variants are required.
     def _shannon_entropy(freq):
@@ -40,4 +41,4 @@ def alpha_diversity(
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)
 
-    return diversity
+    return pd.DataFrame().from_dict(diversity, orient="index")

@@ -282,7 +282,7 @@ def test_alpha_diversity():
     adata = AnnData(obs=obs)
 
     res = st.tl.alpha_diversity(adata, groupby="group", target_col="clonotype_")
-    assert res == {"A": 0, "B": 2}
+    assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 2.0}}
 
 
 def test_group_abundance():
