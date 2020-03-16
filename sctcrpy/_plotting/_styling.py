@@ -1,84 +1,32 @@
-from typing import Union
 from .._compat import Literal
 import matplotlib.pyplot as plt
-from .._util import _doc_params, _get_from_uns, _add_to_uns
 import matplotlib.ticker as ticker
-from anndata import AnnData
+from typing import Union
 
 
-def _reset_plotting_profile(adata: AnnData) -> None:
+def style_axes(
+    ax: plt.axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
+) -> None:
+    """Apply a style to an axis object. 
+
+    Parameters:
+    -----------
+    ax
+        Axes object
+    style
+        Style to apply to the axes. Currently supported are `None` (disable styling)
+        and default (default style). 
+    style_kws
+        Parameters passed to :meth:`_plotting._styling._style_axes`
     """
-    Reverts plotting profile to matplotlib defaults (rcParams).  
-    """
-    try:
-        p = _get_from_uns(adata, "plotting_profile")
-    except KeyError:
-        p = dict()
-    p["title_loc"] = plt.rcParams["axes.titleloc"]
-    p["title_pad"] = plt.rcParams["axes.titlepad"]
-    p["title_fontsize"] = plt.rcParams["axes.titlesize"]
-    p["label_fontsize"] = plt.rcParams["axes.labelsize"]
-    p["tick_fontsize"] = plt.rcParams["xtick.labelsize"]
-    _add_to_uns(adata, "plotting_profile", p)
-    return
+    if style is not None:
+        if style == "default":
+            return _style_axes(ax, **style_kws)
+        else:
+            raise ValueError("Unknown style: {}".format(style))
 
 
-def _check_for_plotting_profile(profile: Union[AnnData, str, None] = None) -> dict:
-    """
-    Passes a predefined set of plotting atributes to basic plotting fnctions.
-    """
-    profiles = {
-        "vanilla": {},
-        "small": {
-            "figsize": (3.44, 2.58),
-            "figresolution": 300,
-            "title_loc": "center",
-            "title_pad": 10,
-            "title_fontsize": 10,
-            "label_fontsize": 8,
-            "tick_fontsize": 6,
-        },
-    }
-    p = profiles["small"]
-    if isinstance(profile, AnnData):
-        try:
-            p = _get_from_uns(profile, "plotting_profile")
-        except KeyError:
-            pass
-    else:
-        if isinstance(profile, str):
-            if profile in profiles:
-                p = profiles[profile]
-    return p
-
-
-_prettify_doc = """
-    title
-        Figure title.
-    legend_title
-        Figure legend title.
-    xlab
-        Label for the x axis.
-    ylab
-        Label for the y axis.
-
-    title_loc
-        Position of the plot title (can be {'center', 'left', 'right'}). 
-    title_pad
-        Padding of the plot title.
-    title_fontsize
-        Font size of the plot title. 
-    label_fontsize
-        Font size of the axis labels.   
-    tick_fontsize
-        Font size of the axis tick labels. 
-    fraction
-        Style as though the plot shows fractions
-"""
-
-
-@_doc_params(prettify_doc=_prettify_doc)
-def _prettify(
+def _style_axes(
     ax: plt.axes,
     title: str = "",
     legend_title: str = "",
@@ -97,7 +45,26 @@ def _prettify(
     ----------
     ax
         Axis object to style
-    {prettify_doc}
+    title
+        Figure title.
+    legend_title
+        Figure legend title.
+    xlab
+        Label for the x axis.
+    ylab
+        Label for the y axis.
+    title_loc
+        Position of the plot title (can be {'center', 'left', 'right'}). 
+    title_pad
+        Padding of the plot title.
+    title_fontsize
+        Font size of the plot title. 
+    label_fontsize
+        Font size of the axis labels.   
+    tick_fontsize
+        Font size of the axis tick labels. 
+    fraction
+        Style as though the plot shows fractions
     
     """
     ax.set_title(
