@@ -361,20 +361,26 @@ def test_group_abundance():
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
 
-    # Check numbers
-    res = st.tl.group_abundance(
-        adata, groupby="group", inplace=False, fraction=False, as_dict=True
+    # Check counts
+    res = st.tl.group_abundance(adata, groupby="group", fraction=False)
+    expected_count = pd.DataFrame.from_dict(
+        {
+            "ct1": {"A": 3.0, "B": 1.0},
+            "NaN": {"A": 1.0, "B": 0.0},
+            "ct2": {"A": 0.0, "B": 1.0},
+        },
+        orient="index",
     )
-    assert res == {
-        "ct1": {"A": 3.0, "B": 1.0},
-        "NaN": {"A": 1.0, "B": 0.0},
-        "ct2": {"A": 0.0, "B": 1.0},
-    }
+    npt.assert_equal(res.values, expected_count.values)
 
     # Check fractions
-    res = st.tl.group_abundance(adata, groupby="group", inplace=False, as_dict=True)
-    assert res == {
-        "ct1": {"A": 0.75, "B": 0.5},
-        "NaN": {"A": 0.25, "B": 0.0},
-        "ct2": {"A": 0.0, "B": 0.5},
-    }
+    res = st.tl.group_abundance(adata, groupby="group", fraction=True)
+    expected_frac = pd.DataFrame.from_dict(
+        {
+            "ct1": {"A": 0.75, "B": 0.5},
+            "NaN": {"A": 0.25, "B": 0.0},
+            "ct2": {"A": 0.0, "B": 0.5},
+        },
+        orient="index",
+    )
+    npt.assert_equal(res.values, expected_frac.values)

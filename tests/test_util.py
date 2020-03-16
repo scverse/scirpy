@@ -91,8 +91,6 @@ def test_normalize_counts(group_df):
     with pytest.raises(ValueError):
         _normalize_counts(group_df, True, None)
 
-    npt.assert_equal(_normalize_counts(group_df, False).values, [1] * 6)
-    npt.assert_equal(_normalize_counts(group_df, "sample").values, [4, 2, 4, 4, 4, 2])
-    npt.assert_equal(
-        _normalize_counts(group_df, True, "sample").values, [4, 2, 4, 4, 4, 2]
-    )
+    npt.assert_equal(_normalize_counts(group_df, False), [1] * 6)
+    npt.assert_equal(_normalize_counts(group_df, "sample"), [4, 2, 4, 4, 4, 2])
+    npt.assert_equal(_normalize_counts(group_df, True, "sample"), [4, 2, 4, 4, 4, 2])
