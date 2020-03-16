@@ -2,6 +2,7 @@ from anndata import AnnData
 from typing import Dict
 from .._util import _is_na
 import numpy as np
+import pandas as pd
 
 
 def clip_and_count(
@@ -57,4 +58,4 @@ def clip_and_count(
                 tmp_count /= np.sum(mask_group)
             result_dict[group][label] = tmp_count
 
-    return result_dict
+    return pd.DataFrame.from_dict(result_dict, orient="index")

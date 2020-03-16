@@ -9,7 +9,8 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clonotype",
-    vistype: Literal["bar"] = "bar"
+    vistype: Literal["bar"] = "bar",
+    **kwargs
 ) -> None:
     """Plot the alpha diversity per group. 
 
@@ -25,10 +26,14 @@ def alpha_diversity(
         Column on which to compute the alpha diversity
     vistype
         Visualization type. Currently only 'bar' is supported. 
+    **kwargs
+        Additional parameters passed to :meth:`pl.base.bar`
     """
     diversity = tl.alpha_diversity(adata, groupby, target_col=target_col)
-
-    return base.bar(diversity)
-
-    # ax.set_ylabel("Shannon entropy")
-    # ax.set_title("Alpha diversity of {} by {}".format(target_col, groupby))
+    default_style_kws = {
+        "title": "Alpha diversity of {} by {}".format(target_col, groupby),
+        "ylab": "Shannon entropy",
+    }
+    if "style_kws" in kwargs:
+        default_style_kws.update(kwargs["style_kws"])
+    return base.bar(diversity, style_kws=default_style_kws, **kwargs)
