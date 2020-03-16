@@ -23,16 +23,16 @@ def spectratype(
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. Samples or diagnosis for example.
+        Group by this column from `obs`. E.g. sample or diagnosis 
     target_col
-        Columns containing CDR3 lengths.        
+        Column(s) containing CDR3 lengths.        
     combine_fun
         A function definining how the target columns should be merged 
         (e.g. sum, mean, median, etc).  
     fraction
-        If True, compute fractions of expanded clonotypes rather than reporting
-        abosolute numbers. If a string is supplied, that should be the column name 
-        of a grouping (e.g. samples). 
+        If True, compute fractions of abundances relative to the `groupby` column
+        rather than reporting abosolute numbers. Alternatively, a column 
+        name can be provided according to that the values will be normalized.  
 
 
     Returns

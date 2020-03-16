@@ -285,6 +285,45 @@ def test_alpha_diversity():
     assert res == {"A": 0, "B": 2}
 
 
+def test_group_abundance():
+    obs = pd.DataFrame.from_records(
+        [
+            ["cell1", "A", "ct1"],
+            ["cell2", "A", "ct1"],
+            ["cell3", "A", "ct1"],
+            ["cell3", "A", "NaN"],
+            ["cell4", "B", "ct1"],
+            ["cell5", "B", "ct2"],
+        ],
+        columns=["cell_id", "group", "clonotype"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+
+    # Check counts
+    res = st.tl.group_abundance(adata, groupby="group", fraction=False)
+    expected_count = pd.DataFrame.from_dict(
+        {"ct1": {"A": 3.0, "B": 1.0}, "ct2": {"A": 0.0, "B": 1.0},}, orient="index",
+    )
+    npt.assert_equal(res.values, expected_count.values)
+
+    # Check fractions
+    res = st.tl.group_abundance(adata, groupby="group", fraction=True)
+    expected_frac = pd.DataFrame.from_dict(
+        {"ct1": {"A": 1.0, "B": 0.5}, "ct2": {"A": 0.0, "B": 0.5},}, orient="index",
+    )
+    npt.assert_equal(res.values, expected_frac.values)
+
+    # Check swapped
+    res = st.tl.group_abundance(
+        adata, groupby="clonotype", target_col="group", fraction=True
+    )
+    expected_frac = pd.DataFrame.from_dict(
+        {"B": {"ct1": 0.25, "ct2": 1.0}, "A": {"ct1": 0.75, "ct2": 0.0}},
+        orient="index",
+    )
+    npt.assert_equal(res.values, expected_frac.values)
+
+
 def test_spectratype(adata_tra):
     # Check numbers
     res1 = st.tl.spectratype(
@@ -307,10 +346,10 @@ def test_spectratype(adata_tra):
             9: {1: 0.0, 3: 0.0, 5: 0.0},
             10: {1: 0.0, 3: 0.0, 5: 0.0},
             11: {1: 0.0, 3: 0.0, 5: 0.0},
-            12: {1: 2.0, 3: 1.0, 5: 0.0},
-            13: {1: 0.0, 3: 2.0, 5: 0.0},
-            14: {1: 2.0, 3: 0.0, 5: 1.0},
-            15: {1: 1.0, 3: 2.0, 5: 1.0},
+            12: {1: 1.0, 3: 2.0, 5: 0.0},
+            13: {1: 2.0, 3: 0.0, 5: 0.0},
+            14: {1: 0.0, 3: 2.0, 5: 1.0},
+            15: {1: 2.0, 3: 1.0, 5: 1.0},
             16: {1: 0.0, 3: 0.0, 5: 0.0},
             17: {1: 0.0, 3: 0.0, 5: 2.0},
         },
@@ -320,7 +359,9 @@ def test_spectratype(adata_tra):
     npt.assert_equal(res2.values, expected_count.values)
 
     # Check fractions
-    res = st.tl.spectratype(adata_tra, target_col="TRA_1_cdr3_len", groupby="sample",)
+    res = st.tl.spectratype(
+        adata_tra, target_col="TRA_1_cdr3_len", groupby="sample", fraction=True
+    )
     expected_frac = pd.DataFrame.from_dict(
         {
             0: {1: 0.0, 3: 0.0, 5: 0.0},
@@ -335,51 +376,12 @@ def test_spectratype(adata_tra):
             9: {1: 0.0, 3: 0.0, 5: 0.0},
             10: {1: 0.0, 3: 0.0, 5: 0.0},
             11: {1: 0.0, 3: 0.0, 5: 0.0},
-            12: {1: 0.4, 3: 0.2, 5: 0.0},
-            13: {1: 0.0, 3: 0.4, 5: 0.0},
-            14: {1: 0.4, 3: 0.0, 5: 0.25},
-            15: {1: 0.2, 3: 0.4, 5: 0.25},
+            12: {1: 0.2, 3: 0.4, 5: 0.0},
+            13: {1: 0.4, 3: 0.0, 5: 0.0},
+            14: {1: 0.0, 3: 0.4, 5: 0.25},
+            15: {1: 0.4, 3: 0.2, 5: 0.25},
             16: {1: 0.0, 3: 0.0, 5: 0.0},
             17: {1: 0.0, 3: 0.0, 5: 0.5},
-        },
-        orient="index",
-    )
-    npt.assert_equal(res.values, expected_count.values)
-
-
-def test_group_abundance():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "A", "ct1"],
-            ["cell2", "A", "ct1"],
-            ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
-            ["cell4", "B", "ct1"],
-            ["cell5", "B", "ct2"],
-        ],
-        columns=["cell_id", "group", "clonotype"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    # Check counts
-    res = st.tl.group_abundance(adata, groupby="group", fraction=False)
-    expected_count = pd.DataFrame.from_dict(
-        {
-            "ct1": {"A": 3.0, "B": 1.0},
-            "NaN": {"A": 1.0, "B": 0.0},
-            "ct2": {"A": 0.0, "B": 1.0},
-        },
-        orient="index",
-    )
-    npt.assert_equal(res.values, expected_count.values)
-
-    # Check fractions
-    res = st.tl.group_abundance(adata, groupby="group", fraction=True)
-    expected_frac = pd.DataFrame.from_dict(
-        {
-            "ct1": {"A": 0.75, "B": 0.5},
-            "NaN": {"A": 0.25, "B": 0.0},
-            "ct2": {"A": 0.0, "B": 0.5},
         },
         orient="index",
     )
