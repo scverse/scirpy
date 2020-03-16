@@ -20,6 +20,7 @@ def style_axes(
         Parameters passed to :meth:`_plotting._styling._style_axes`
     """
     if style is not None:
+        style_kws = dict() if style_kws is None else style_kws
         if style == "default":
             return _style_axes(ax, **style_kws)
         else:
