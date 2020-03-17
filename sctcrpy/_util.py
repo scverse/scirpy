@@ -80,6 +80,33 @@ def _add_to_uns(
         adata.uns[domain][tool][param_tuple] = result
 
 
+def _normalize_counts(
+    obs: pd.DataFrame, normalize: Union[bool, str], default_col: Union[None, str] = None
+) -> pd.Series:
+    """
+    Produces a pd.Series with group sizes that can be used to normalize
+    counts in a DataFrame. 
+
+    Parameters
+    ----------
+    normalize
+        If False, returns a scaling factor of `1`
+        If True, computes the group sizes according to `default_col`
+        If normalize is a colname, compute the group sizes according to the colname. 
+    """
+    if not normalize:
+        return np.ones(obs.shape[0])
+    elif isinstance(normalize, str):
+        normalize_col = normalize
+    elif normalize is True and default_col is not None:
+        normalize_col = default_col
+    else:
+        raise ValueError("No colname specified in either `normalize` or `default_col")
+
+    # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
+    return obs.groupby(normalize_col)[normalize_col].transform("count").values
+
+
 def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:
     """Get results of a tool from `adata.uns`. 
 
@@ -125,34 +152,3 @@ def _doc_params(**kwds):
         return obj
 
     return dec
-
-
-def _which_fractions(
-    fraction: Union[None, str, bool], fraction_base: Union[None, str], groupby: str
-) -> Tuple[bool, str]:
-    """Check if fractions should be computed and if yes, what is the name of the base column. 
-
-    Parameters
-    ----------
-    fraction
-        The value supplied by the user. Can be boolean or the column name
-    groupby
-        The name of the column used as a base by default
-    Returns
-    -------
-    A boolean stating if fractions should be calculated and a column name. 
-    """
-    if fraction_base is None:
-        if fraction is None:
-            fraction_base = groupby
-            fraction = True
-        else:
-            if type(fraction) == bool:
-                fraction_base = groupby
-            else:
-                fraction_base = fraction
-                fraction = True
-    else:
-        if type(fraction) != bool:
-            fraction = True
-    return (fraction, fraction_base)
