@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from typing import Union
 
+DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
+
 
 def style_axes(
     ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
@@ -27,6 +29,12 @@ def style_axes(
             raise ValueError("Unknown style: {}".format(style))
 
 
+def _init_ax(fig_kws: Union[dict, None] = None) -> plt.Axes:
+    fig_kws = DEFAULT_FIG_KWS if fig_kws is None else fig_kws
+    _, ax = plt.subplots(**fig_kws)
+    return ax
+
+
 def _style_axes(
     ax: plt.Axes,
     title: str = "",
@@ -34,7 +42,7 @@ def _style_axes(
     xlab: str = "",
     ylab: str = "",
     title_loc: Literal["center", "left", "right"] = "center",
-    title_pad: float = 1.5,
+    title_pad: float = None,
     title_fontsize: int = 12,
     label_fontsize: int = 10,
     tick_fontsize: int = 8,
@@ -72,9 +80,9 @@ def _style_axes(
         title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
     )
     ax.set_xlabel(xlab, fontsize=label_fontsize)
-    ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
+    # ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
     ax.set_ylabel(ylab, fontsize=label_fontsize)
-    ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
+    # ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
 
     ax.set_title(
         title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
@@ -86,15 +94,6 @@ def _style_axes(
     xax = ax.get_xaxis()
     xax.set_tick_params(length=0)
     ax.set_ylabel(ylab, fontsize=label_fontsize)
-    if fraction:
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-        ax.set_yticklabels(ax.get_yticks(), fontsize=tick_fontsize)
-        ax.yaxis.set_major_formatter(ticker.StrMethodFormatter("{x:,.4f}"))
-    else:
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=5, integer=True))
-        ax.set_yticklabels(
-            [str(int(x)) for x in ax.get_xticks()], fontsize=tick_fontsize
-        )
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.legend(

@@ -2,15 +2,14 @@ from anndata import AnnData
 from typing import Callable, Union, Collection
 import numpy as np
 import pandas as pd
-from .._util import _is_na, _normalize_counts
 from ._group_abundance import _group_abundance
 
 
 def spectratype(
     adata: AnnData,
-    groupby: str,
+    groupby: Union[str, Collection[str]] = "TRA_1_cdr3_len",
     *,
-    target_col: Union[str, Collection] = "TRA_1_cdr3_len",
+    target_col: str,
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:
@@ -23,11 +22,11 @@ def spectratype(
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. E.g. sample or diagnosis 
-    target_col
         Column(s) containing CDR3 lengths.        
+    target_col
+        Color by this column from `obs`. E.g. sample or diagnosis 
     combine_fun
-        A function definining how the target columns should be merged 
+        A function definining how the groupby columns should be merged 
         (e.g. sum, mean, median, etc).  
     fraction
         If True, compute fractions of abundances relative to the `groupby` column
@@ -39,22 +38,22 @@ def spectratype(
     -------
     A DataFrame with spectratype information. 
     """
-    if len(np.intersect1d(adata.obs.columns, target_col)) < 1:
+    if len(np.intersect1d(adata.obs.columns, groupby)) < 1:
         raise ValueError(
-            "`target_col` not found in obs. Where do you store CDR3 length information?"
+            "`groupby` not found in obs. Where do you store CDR3 length information?"
         )
 
-    if isinstance(target_col, str):
-        target_col = [target_col]
+    if isinstance(groupby, str):
+        groupby = [groupby]
     else:
-        target_col = list(set(target_col))
+        groupby = list(set(groupby))
 
     # combine (potentially) multiple length columns into one
     tcr_obs = adata.obs.copy()
-    tcr_obs["lengths"] = tcr_obs.loc[:, target_col].apply(combine_fun, axis=1)
+    tcr_obs["lengths"] = tcr_obs.loc[:, groupby].apply(combine_fun, axis=1)
 
     cdr3_lengths = _group_abundance(
-        tcr_obs, groupby, target_col="lengths", fraction=fraction
+        tcr_obs, groupby="lengths", target_col=target_col, fraction=fraction
     )
 
     # should include all lengths, not just the abundant ones

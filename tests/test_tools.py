@@ -160,26 +160,29 @@ def test_group_abundance():
     adata = AnnData(obs=obs)
 
     # Check counts
-    res = st.tl.group_abundance(adata, groupby="group", fraction=False)
+    res = st.tl.group_abundance(
+        adata, groupby="clonotype", target_col="group", fraction=False
+    )
     expected_count = pd.DataFrame.from_dict(
         {"ct1": {"A": 3.0, "B": 1.0}, "ct2": {"A": 0.0, "B": 1.0},}, orient="index",
     )
     npt.assert_equal(res.values, expected_count.values)
 
     # Check fractions
-    res = st.tl.group_abundance(adata, groupby="group", fraction=True)
+    res = st.tl.group_abundance(
+        adata, groupby="clonotype", target_col="group", fraction=True
+    )
     expected_frac = pd.DataFrame.from_dict(
-        {"ct1": {"A": 1.0, "B": 0.5}, "ct2": {"A": 0.0, "B": 0.5},}, orient="index",
+        {"ct1": {"A": 0.75, "B": 0.25}, "ct2": {"A": 0.0, "B": 1.0},}, orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
 
     # Check swapped
     res = st.tl.group_abundance(
-        adata, groupby="clonotype", target_col="group", fraction=True
+        adata, groupby="group", target_col="clonotype", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
-        {"B": {"ct1": 0.25, "ct2": 1.0}, "A": {"ct1": 0.75, "ct2": 0.0}},
-        orient="index",
+        {"A": {"ct1": 1.0, "ct2": 0.0}, "B": {"ct1": 0.5, "ct2": 0.5},}, orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
 
@@ -187,10 +190,10 @@ def test_group_abundance():
 def test_spectratype(adata_tra):
     # Check numbers
     res1 = st.tl.spectratype(
-        adata_tra, target_col="TRA_1_cdr3_len", groupby="sample", fraction=False,
+        adata_tra, groupby="TRA_1_cdr3_len", target_col="sample", fraction=False,
     )
     res2 = st.tl.spectratype(
-        adata_tra, target_col=("TRA_1_cdr3_len",), groupby="sample", fraction=False,
+        adata_tra, groupby=("TRA_1_cdr3_len",), target_col="sample", fraction=False,
     )
     expected_count = pd.DataFrame.from_dict(
         {
@@ -220,7 +223,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = st.tl.spectratype(
-        adata_tra, target_col="TRA_1_cdr3_len", groupby="sample", fraction=True
+        adata_tra, groupby="TRA_1_cdr3_len", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {

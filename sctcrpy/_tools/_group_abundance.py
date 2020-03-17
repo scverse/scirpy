@@ -8,8 +8,8 @@ from .._util import _is_na, _normalize_counts
 def _group_abundance(
     tcr_obs: pd.DataFrame,
     groupby: str,
-    *,
     target_col: str,
+    *,
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:
     # remove NA rows
@@ -30,12 +30,12 @@ def _group_abundance(
     )
 
     result_df = group_counts.pivot(
-        index=target_col, columns=groupby, values="weighted_count"
+        index=groupby, columns=target_col, values="weighted_count"
     ).fillna(value=0.0)
 
     # required that we can still sort by abundance even if normalized
     result_df_count = group_counts.pivot(
-        index=target_col, columns=groupby, values="count"
+        index=groupby, columns=target_col, values="count"
     ).fillna(value=0.0)
 
     # By default, the most abundant group should be the first on the plot,
@@ -44,7 +44,7 @@ def _group_abundance(
         result_df_count.apply(np.sum, axis=0).sort_values(ascending=False).index.values
     )
     ranked_target = (
-        result_df.apply(np.sum, axis=1).sort_values(ascending=False).index.values
+        result_df_count.apply(np.sum, axis=1).sort_values(ascending=False).index.values
     )
     result_df = result_df.loc[ranked_target, ranked_groups]
 
@@ -54,8 +54,8 @@ def _group_abundance(
 def group_abundance(
     adata: AnnData,
     groupby: str,
+    target_col: str,
     *,
-    target_col: str = "clonotype",
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:
     """Creates summary statsitics on how many
