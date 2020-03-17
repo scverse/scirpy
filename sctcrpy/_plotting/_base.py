@@ -5,11 +5,10 @@ from .._compat import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from ._styling import style_axes
+from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
 from .._util import _doc_params
 from sklearn.neighbors import KernelDensity
 
-DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 300}
 
 _common_doc = """
     style
@@ -23,12 +22,6 @@ _common_doc = """
 """.format(
     str(DEFAULT_FIG_KWS)
 )
-
-
-def _init_ax(fig_kws: Union[dict, None] = None) -> plt.Axes:
-    fig_kws = DEFAULT_FIG_KWS if fig_kws is None else fig_kws
-    _, ax = plt.subplots(**fig_kws)
-    return ax
 
 
 @_doc_params(common_doc=_common_doc)
@@ -47,7 +40,7 @@ def bar(
     Parameters
     ----------
     data
-        Data to plot in wide-format (i.e. groups are in columns)
+        Data to plot in wide-format (i.e. each row becomes a bar)
     ax
         Plot into this axes object
     stacked
@@ -162,6 +155,18 @@ def curve(
     fy = 0
 
     outline = curve_layout != "stacked"
+
+    # # We need to convert the contingency tables back for the KDE in seaborn,
+    # # using pseudo-counts in case of fractions
+    # if fraction:
+    #     ftr = 1000 / np.max(data.values)
+    # countable, counted = [], []
+    # for cn in data.columns:
+    #     counts = np.round(data[cn] * ftr)
+    #     if counts.sum() > 0:
+    #         countable.append(np.repeat(data.index.values, counts))
+    #         counted.append(cn)
+    # # countable, counted = countable[:top_n], counted[:top_n]
 
     # Draw a curve for every series
     for i, (label, col) in enumerate(data.iteritems()):

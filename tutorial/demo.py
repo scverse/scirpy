@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.0
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python [conda env:sctcrpy2]
 #     language: python
@@ -23,6 +23,7 @@ import sctcrpy as st
 import pandas as pd
 import numpy as np
 import scanpy as sc
+from matplotlib import pyplot as plt
 
 # %% [markdown]
 # ## Read in the TCR data
@@ -155,10 +156,10 @@ st.pl.alpha_diversity(adata, groupby="leiden")
 st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
 
 # %%
-st.pl.clonal_expansion(adata, "leiden", target_col="clonotype")
+st.tl.clip_and_count(adata, groupby="leiden", target_col="clonotype")
 
 # %%
-adata.uns["sctcrpy"]["clonal_expansion"]
+st.pl.clonal_expansion(adata, "leiden")
 
 # %%
 sc.pl.dendrogram(adata, "leiden")
@@ -167,37 +168,28 @@ sc.pl.dendrogram(adata, "leiden")
 # ## Clonotype abundances
 
 # %%
-ax = st.pl.group_abundance(adata, groupby="leiden")
-# ax = ax[0]
-# fig = ax.get_figure()
-# fig.savefig('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/abundance.png')
+st.pl.group_abundance(
+    adata, groupby="clonotype", target_col="leiden", max_cols=10, fraction=False
+)
 
 # %% [markdown]
 # Perhaps an even more straightforward question would be comparing clonotype composition of samples
 
 # %%
-st.pl.group_abundance(adata, groupby="sample", fraction=False)
-
-# %%
-st.pl.group_abundance(adata, groupby="sample")
-
-# %%
-st.pl.group_abundance(adata, groupby="sample", viztype="stacked")
-
-# %%
-st.pl.group_abundance(adata, groupby="sample", viztype="table")
+st.pl.group_abundance(
+    adata, groupby="clonotype", target_col="sample", max_cols=10, stacked=False
+)
 
 # %% [markdown]
 # If cell types are considered, it is still probably better to normalize to cell numbers in a sample.
 
 # %%
-st.pl.group_abundance(adata, groupby="leiden", fraction="sample")
+st.pl.group_abundance(
+    adata, groupby="clonotype", target_col="leiden", fraction="sample", max_cols=10
+)
 
 # %% [markdown]
-# I would simply use group abundance plots to show shain usage (it would of course not check if chain usage tool has been run then)
-
-# %%
-adata.obs
+# Group abundance plots can also be used to visualize chain pairing
 
 # %%
 st.tl.chain_pairing(adata)
@@ -217,17 +209,11 @@ adata.obs.loc[
 ]
 
 # %%
-st.pl.group_abundance(
-    adata, groupby="sample", target_col="chain_pairing", viztype="stacked"
-)
+st.pl.group_abundance(adata, groupby="leiden", target_col="chain_pairing")
 
 # %%
 st.pl.group_abundance(
-    adata,
-    groupby="chain_pairing",
-    target_col="sample",
-    viztype="stacked",
-    fraction="sample",
+    adata, groupby="chain_pairing", target_col="sample", fraction="sample",
 )
 
 # %% [markdown]
@@ -236,48 +222,38 @@ st.pl.group_abundance(
 # %%
 st.pl.group_abundance(
     adata,
-    groupby="leiden",
-    target_col="TRB_1_v_gene",
-    fraction="sample",
-    viztype="stacked",
-)
-
-# %%
-tb = st.pl.group_abundance(
-    adata,
     groupby="TRB_1_v_gene",
     target_col="leiden",
     fraction="sample",
-    viztype="table",
+    max_cols=10,
+    fig_kws={"dpi": 170},
 )
-tb.head()
 
 # %%
-st.pl.group_abundance(
-    adata,
-    groupby="TRB_1_v_gene",
-    target_col="leiden",
-    fraction="sample",
-    viztype="stacked",
-    group_order=tb.columns.tolist()[1:10],
+vdj_usage = st.tl.group_abundance(
+    adata, groupby="leiden", target_col="TRB_1_v_gene", fraction=True
 )
+
+# %%
+vdj_usage = vdj_usage.loc[:, ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]]
+
+# %%
+st.pl.base.bar(vdj_usage)
 
 # %% [markdown]
 # ## Spectratype plots
 
 # %%
-st.pl.spectratype(adata, groupby="leiden")
+st.pl.spectratype(adata, target_col="leiden")
 
 # %%
-st.pl.spectratype(adata, groupby="leiden", fraction="sample")
+st.pl.spectratype(adata, target_col="leiden", fraction="sample")
 
 # %%
-st.pl.spectratype(adata, groupby="leiden", fraction="sample", viztype="line")
+st.pl.spectratype(adata, target_col="leiden", fraction="sample", viztype="line")
 
 # %%
-st.pl.spectratype(
-    adata, groupby="leiden", fraction="sample", viztype="curve", curve_layout="stacked"
-)
+st.pl.spectratype(adata, target_col="leiden", fraction=False, viztype="line")
 
 # %% [markdown]
 # Stacked spectratype plots are not working yet, but we can also shift the curves for better visibility.
@@ -285,59 +261,35 @@ st.pl.spectratype(
 # %%
 st.pl.spectratype(
     adata,
-    groupby="leiden",
+    target_col="leiden",
     fraction="sample",
     viztype="curve",
     curve_layout="shifted",
-    outline=False,
 )
 
 # %% [markdown]
 # Spectratypes with V genes
 
 # %%
-st.pl.spectratype(adata, groupby="TRB_1_v_gene", fraction="sample", viztype="table")
+adata.obs.columns
+
+# %%
+st.pl.spectratype(
+    adata, groupby="TRB_1_cdr3_len", target_col="TRB_1_v_gene", fraction="sample"
+)
 
 # %%
 st.pl.spectratype(
     adata,
-    groupby="TRB_1_v_gene",
+    groupby="TRB_1_cdr3_len",
+    target_col="TRB_1_v_gene",
     fraction="sample",
     viztype="curve",
     curve_layout="shifted",
-    outline=False,
 )
 
 # %% [markdown]
 # ## Convergence of CDR3 amino acid sequences
 
 # %%
-tb = st.pl.cdr_convergence(adata, groupby="sample", viztype="table")
-tb.head()
-
-# %%
-st.pl.cdr_convergence(adata, target_col="TRA_1_cdr3", groupby="sample", viztype="bar")
-
-# %%
-st.pl.cdr_convergence(
-    adata, target_col="TRA_1_cdr3", groupby="sample", viztype="bar", no_singles=True
-)
-
-# %% [markdown]
-# The number of nucleotide versions for the CDR3 of each cell can be shown on a umap
-
-# %%
-st.tl.cdr_convergence(adata, target_col="TRA_1_cdr3", groupby="sample")
-sc.pl.umap(adata, color=["convergence_TRA_1_cdr3_sample"])
-
-# %%
-# z = adata.uns['sctcrpy'].pop('group_abundance')
-
-# %%
-# z = adata.uns['sctcrpy'].pop('spectratype')
-
-# %%
-# z = adata.uns['sctcrpy'].pop('cdr_convergence')
-
-# %%
-# adata.obs.to_csv('/data/scratch/szabo/RepertoireSeq/singlecell_tcr/tutorial/toytable.csv')
+st.pl.clip_and_count(adata, target_col="TRA_1_cdr3", groupby="sample")
