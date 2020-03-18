@@ -1,4 +1,4 @@
-from sctcrpy import read_10x_vdj, read_tracer
+from sctcrpy import read_10x_vdj, read_tracer, read_10x_vdj_csv
 from sctcrpy._util import _is_na, _is_false
 import numpy as np
 import pytest
@@ -10,6 +10,33 @@ def test_read_10x_example():
 
 def test_read_tracer_example():
     anndata = read_tracer("tutorial/example_data/tracer/tracer_100")
+
+
+def test_read_10x_csv():
+    anndata = read_10x_vdj_csv("tests/data/10x/filtered_contig_annotations.csv")
+    obs = anndata.obs
+    assert obs.shape[0] == 4
+    cell1 = obs.iloc[1, :]
+    cell2 = obs.iloc[3, :]
+
+    assert cell1.name == "AAACCTGAGTACGCCC-1"
+    assert cell1["TRB_1_cdr3"] == "CASSLGPSTDTQYF"
+    assert cell1["TRB_1_cdr3_nt"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
+    assert cell1["TRB_1_cdr3_len"] == len("CASSLGPSTDTQYF")
+    assert _is_na(cell1["TRB_1_junction_ins"])
+    assert cell1["TRB_1_expr"] == 55
+    assert cell1["TRB_1_v_gene"] == "TRBV7-2"
+    assert cell1["TRB_1_d_gene"] == "TRBD2"
+    assert cell1["TRB_1_j_gene"] == "TRBJ2-3"
+    assert cell1["TRB_1_c_gene"] == "TRBC2"
+    assert _is_false(cell1["multi_chain"])
+
+    assert cell2.name == "AAACCTGGTCCGTTAA-1"
+    assert cell2["TRA_1_cdr3"] == "CALNTGGFKTIF"
+    assert cell2["TRA_2_cdr3"] == "CAVILDARLMF"
+    assert cell2["TRA_1_expr"] == 5
+    assert cell2["TRA_2_expr"] == 5
+    assert _is_na(cell2["TRB_2_cdr3"])
 
 
 def test_read_10x():
