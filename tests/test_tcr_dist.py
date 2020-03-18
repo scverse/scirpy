@@ -4,6 +4,7 @@ from sctcrpy._tools._tcr_dist import (
     _KideraDistanceCalculator,
     _DistanceCalculator,
     _IdentityDistanceCalculator,
+    _LevenshteinDistanceCalculator,
     _dist_for_chain,
     tcr_neighbors,
 )
@@ -26,6 +27,11 @@ def kidera():
 @pytest.fixture
 def identity():
     return _IdentityDistanceCalculator()
+
+
+@pytest.fixture
+def levenshtein():
+    return _LevenshteinDistanceCalculator()
 
 
 @pytest.fixture
@@ -108,6 +114,13 @@ def test_kidera_vectors(kidera):
 def test_kidera_dist(kidera):
     npt.assert_almost_equal(
         kidera.calc_dist_mat(["ARS", "ARS", "RSA", "SRA"]), np.zeros((4, 4))
+    )
+
+
+def test_levensthein_dist(levenshtein):
+    npt.assert_almost_equal(
+        levenshtein.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])),
+        np.array([[0, 1, 2, 2], [1, 0, 1, 1], [2, 1, 0, 1], [2, 1, 1, 0]]),
     )
 
 
