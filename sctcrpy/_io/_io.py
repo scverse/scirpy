@@ -2,14 +2,14 @@ import pandas as pd
 import json
 from scanpy import AnnData
 from ._datastructures import TcrCell, TcrChain
-from typing import Iterable, Collection
+from typing import Collection
 import numpy as np
 from glob import iglob
 import pickle
 import os.path
 from . import tracerlib
 import sys
-from .._util import _doc_params, _is_na
+from .._util import _doc_params, _is_na, _is_true
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -221,6 +221,59 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
                 junction_ins=inserted_nts,
             )
         )
+
+    return _tcr_objs_to_anndata(tcr_objs.values())
+
+
+@_doc_params(doc_working_model=doc_working_model)
+def read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
+    """Read TCR data from a 10x genomics `_contig_annotations.csv` file
+
+    If the `all_contig_annotations.json` file is available it is perferable! 
+    For instance, the `csv` file does not contain information about
+    junctions. 
+
+    {doc_working_model}
+
+    Parameters
+    ----------
+    path
+        Path to filterd_contig_annotations.csv or all_contig_annotationgs.csv
+    filtered
+        Only keep filtered contig annotations (= is_cell and high_confidence)
+        If using `filtered_contig_annotations.csv` already, this option
+        is futile. 
+
+    Returns
+    -------
+    AnnData object with TCR data in `obs` for each cell. 
+    """
+    df = pd.read_csv(path)
+
+    tcr_objs = {}
+    if filtered:
+        df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
+    for barcode, cell_df in df.groupby("barcode"):
+        tcr_obj = TcrCell(barcode)
+        for _, chain_series in cell_df.iterrows():
+            tcr_obj.add_chain(
+                TcrChain(
+                    chain_type=chain_series["chain"]
+                    if chain_series["chain"] in ["TRA", "TRB"]
+                    else "other",
+                    cdr3=chain_series["cdr3"],
+                    cdr3_nt=chain_series["cdr3_nt"],
+                    expr=chain_series["umis"],
+                    expr_raw=chain_series["reads"],
+                    is_productive=chain_series["productive"],
+                    v_gene=chain_series["v_gene"],
+                    d_gene=chain_series["d_gene"],
+                    j_gene=chain_series["j_gene"],
+                    c_gene=chain_series["c_gene"],
+                )
+            )
+
+        tcr_objs[barcode] = tcr_obj
 
     return _tcr_objs_to_anndata(tcr_objs.values())
 
