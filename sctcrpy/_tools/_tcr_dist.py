@@ -17,6 +17,7 @@ import umap
 from scipy.sparse import coo_matrix
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
+import igraph as ig
 
 
 def _get_sparse_matrix_from_indices_distances_umap(
@@ -409,11 +410,8 @@ def tcr_neighbors(
     adata: AnnData,
     *,
     metric: Literal["alignment", "kidera", "identity", "levenshtein"] = "alignment",
-    n_neighbors: int = 15,
     n_jobs: [int, None] = None,
     inplace: bool = True,
-    reduction_same_chain=np.fmin,
-    reduction_other_chain=np.fmin,
 ) -> Union[None, dict]:
     """Compute the TCRdist on CDR3 sequences. 
     The equivalent of scanpy.pp.neighbors for TCR sequences. 
@@ -451,26 +449,111 @@ def tcr_neighbors(
         return tra_dists, trb_dists
 
 
-def tcr_umap(adata: AnnData, inplace: bool = True):
+def get_igraph_from_adjacency(adj, edge_type=None, directed=None):
+    """Get igraph graph from adjacency matrix.
+    Better than Graph.Adjacency for sparse matrices
     """
-    Compute umap embedding of the TCR neighborhood graph. 
+
+    g = ig.Graph(directed=False)
+    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
+
+    sources, targets = np.triu(adj, k=1).nonzero()
+    weights = adj[sources, targets].astype("float")
+    g.add_edges(list(zip(sources, targets)))
+
+    g.es["weight"] = weights
+    if edge_type is not None:
+        g.es["type"] = edge_type
+
+    if g.vcount() != adj.shape[0]:
+        logging.warning(
+            f"The constructed graph has only {g.vcount()} nodes. "
+            "Your adjacency matrix contained redundant nodes."
+        )
+    return g
+
+
+def _merge_graphs(g1, g2):
+    g = g1.copy()
+    g.add_edges(g2.get_edgelist())
+    assert g.ecount() == g1.ecount() + g2.ecount()
+    g.es[: g1.ecount()]["type"] = g1.es["type"]
+    g.es[g1.ecount() :]["type"] = g2.es["type"]
+    return g
+
+
+def define_clonotypes(
+    adata, strategy: Literal["all", "any", "lenient"] = "any", inplace=True
+):
+    """Define clonotypes based on cdr3 identity.
+    
+    For now, uses primary TRA and TRB only. 
+
+    Parameters
+    ----------
+    strategy:
+        "all" - both TRA and TRB need to match
+        "any" - either TRA or TRB need to match
+        "lenient" - both TRA and TRB need to match, however it is tolerated if for a 
+          given cell pair, no TRA or TRB sequence is available. 
 
     """
-    U = umap.umap_.UMAP(metric="precomputed", min_dist=0.1, spread=2)
-    tra_dist = np.nan_to_num(adata.uns["sctcrpy"]["tra_neighbors"], nan=1)
-    trb_dist = np.nan_to_num(adata.uns["sctcrpy"]["trb_neighbors"], nan=1)
-    umap_tra = U.fit_transform(tra_dist)
-    umap_trb = U.fit_transform(trb_dist)
+    tra_dists, trb_dists = tcr_neighbors(adata, metric="identity", inplace=False)
 
-    if inplace:
-        adata.obsm["X_umap_tra"] = umap_tra
-        adata.obsm["X_umap_trb"] = umap_trb
+    if strategy == "any":
+        adj_tra = tra_dists[0] == 0
+        adj_trb = trb_dists[0] == 0
+
+        g_tra = get_igraph_from_adjacency(adj_tra, "TRA")
+        g_trb = get_igraph_from_adjacency(adj_trb, "TRB")
+
+        g = _merge_graphs(g_tra, g_trb)
+
+    elif strategy == "all":
+        adj = (tra_dists[0] == 0) & (trb_dists[0] == 0)
+
+        g = get_igraph_from_adjacency(adj)
     else:
-        return umap_tra, umap_trb
+        raise ValueError("Unknown strategy. ")
+
+    # find all connected partitions that are
+    # connected by at least one edge
+    partitions = g.components(mode="weak")
+
+    if not inplace:
+        return partitions.membership, partitions.graph
+    else:
+        if "sctcrpy" not in adata.uns:
+            adata.uns["sctcrpy"] = dict()
+        # TODO this cannot be saved with adata.write_h5ad
+        adata.uns["sctcrpy"]["clonotype_graph"] = partitions.graph
+        assert len(partitions.membership) == adata.obs.shape[0]
+        adata.obs["clonotype"] = partitions.membership
+        adata.obs["clonotype_size"] = adata.obs.groupby("clonotype")[
+            "clonotype"
+        ].transform("count")
 
 
-# def tcr_leiden(adata):
-#     """
-#     Define clonotypes by unsupervised graph-based clustering
-#     """
-#     pass
+def clonotype_network(
+    adata, *, layout="fr", key_added="X_clonotype_network", min_size=1
+):
+    """Build the clonotype network for plotting
+    
+    Parameters
+    ----------
+    min_size
+        Only show clonotypes with at least `min_size` cells.
+    """
+    if (
+        "clonotype" not in adata.obs.columns
+        or "clonotype_size" not in adata.obs.columns
+    ):
+        raise ValueError("You need to run define_clonotypes first.")
+
+    graph = adata.uns["sctcrpy"]["clonotype_graph"]
+    subgraph_idx = np.where(adata.obs["clonotype_size"].values >= min_size)[0]
+    graph = graph.subgraph(subgraph_idx)
+    layout_ = graph.layout(layout)
+    adata.uns["sctcrpy"]["clonotype_subgraph"] = graph
+    adata.uns["sctcrpy"]["clonotype_layout"] = layout_
+    adata.uns["sctcrpy"]["clonotype_subgraph_idx"] = subgraph_idx
