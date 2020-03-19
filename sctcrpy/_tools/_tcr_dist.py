@@ -483,7 +483,10 @@ def _merge_graphs(g1, g2):
 
 
 def define_clonotypes(
-    adata, strategy: Literal["all", "any", "lenient"] = "any", inplace=True
+    adata,
+    strategy: Literal["TRA", "TRB", "all", "any", "lenient"] = "any",
+    chains: Literal["primary_only", "all"] = "primary_only",
+    inplace=True,
 ):
     """Define clonotypes based on cdr3 identity.
     
@@ -500,9 +503,27 @@ def define_clonotypes(
     """
     tra_dists, trb_dists = tcr_neighbors(adata, metric="identity", inplace=False)
 
-    if strategy == "any":
-        adj_tra = tra_dists[0] == 0
-        adj_trb = trb_dists[0] == 0
+    if chains == "primary_only":
+        tra_dist = tra_dists[0]
+        trb_dist = trb_dists[0]
+    elif chains == "all":
+        tra_dist = np.fmin.reduce(tra_dists)
+        trb_dist = np.fmin.reduce(trb_dists)
+    else:
+        raise ValueError("Unknown value for `chains`")
+
+    assert _is_symmetric(tra_dist)
+    assert _is_symmetric(trb_dist)
+
+    if strategy == "TRA":
+        adj = tra_dist == 0
+        g = get_igraph_from_adjacency(adj)
+    elif strategy == "TRB":
+        adj = trb_dist == 0
+        g = get_igraph_from_adjacency(adj)
+    elif strategy == "any":
+        adj_tra = tra_dist == 0
+        adj_trb = trb_dist == 0
 
         g_tra = get_igraph_from_adjacency(adj_tra, "TRA")
         g_trb = get_igraph_from_adjacency(adj_trb, "TRB")
@@ -510,16 +531,16 @@ def define_clonotypes(
         g = _merge_graphs(g_tra, g_trb)
 
     elif strategy == "all":
-        adj = (tra_dists[0] == 0) & (trb_dists[0] == 0)
+        adj = (tra_dist == 0) & (trb_dist == 0)
 
         g = get_igraph_from_adjacency(adj)
 
     elif strategy == "lenient":
         # Allow one of the two dists to be NA, but not both
         adj = (
-            ((tra_dists[0] == 0) | np.isnan(tra_dists[0]))
-            & ((trb_dists[0] == 0) | np.isnan(trb_dists[0]))
-            & ~(np.isnan(tra_dists[0]) & np.isnan(trb_dists[0]))
+            ((tra_dist == 0) | np.isnan(tra_dist))
+            & ((trb_dist == 0) | np.isnan(trb_dist))
+            & ~(np.isnan(tra_dist) & np.isnan(trb_dist))
         )
 
         g = get_igraph_from_adjacency(adj)
