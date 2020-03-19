@@ -513,6 +513,82 @@ def define_clonotypes(
         adj = (tra_dists[0] == 0) & (trb_dists[0] == 0)
 
         g = get_igraph_from_adjacency(adj)
+
+    elif strategy == "lenient":
+        # Allow one of the two dists to be NA, but not both
+        adj = (
+            ((tra_dists[0] == 0) | np.isnan(tra_dists[0]))
+            & ((trb_dists[0] == 0) | np.isnan(trb_dists[0]))
+            & ~(np.isnan(tra_dists[0]) & np.isnan(trb_dists[0]))
+        )
+
+        g = get_igraph_from_adjacency(adj)
+    else:
+        raise ValueError("Unknown strategy. ")
+
+    # find all connected partitions that are
+    # connected by at least one edge
+    partitions = g.components(mode="weak")
+
+    if not inplace:
+        return partitions.membership, partitions.graph
+    else:
+        if "sctcrpy" not in adata.uns:
+            adata.uns["sctcrpy"] = dict()
+        # TODO this cannot be saved with adata.write_h5ad
+        adata.uns["sctcrpy"]["clonotype_graph"] = partitions.graph
+        assert len(partitions.membership) == adata.obs.shape[0]
+        adata.obs["clonotype"] = partitions.membership
+        adata.obs["clonotype_size"] = adata.obs.groupby("clonotype")[
+            "clonotype"
+        ].transform("count")
+
+
+def define_clonotypes_levenshtein(
+    adata,
+    strategy: Literal["tra", "trb", "all", "any", "lenient"] = "any",
+    cutoff=2,
+    inplace=True,
+):
+    """Define clonotypes based on cdr3 identity.
+    
+    For now, uses primary TRA and TRB only. 
+
+    Parameters
+    ----------
+    strategy:
+        "all" - both TRA and TRB need to match
+        "any" - either TRA or TRB need to match
+        "lenient" - both TRA and TRB need to match, however it is tolerated if for a 
+          given cell pair, no TRA or TRB sequence is available. 
+
+    """
+    tra_dists, trb_dists = tcr_neighbors(adata, metric="levenshtein", inplace=False)
+
+    if strategy == "TRA":
+        adj = tra_dists[0] <= cutoff
+        g = get_igraph_from_adjacency(adj)
+
+    elif strategy == "TRB":
+        adj = trb_dists[0] <= cutoff
+        g = get_igraph_from_adjacency(adj)
+
+    elif strategy == "any":
+        adj_tra = tra_dists[0] <= cutoff
+        adj_trb = trb_dists[0] <= cutoff
+
+        g_tra = get_igraph_from_adjacency(adj_tra, "TRA")
+        g_trb = get_igraph_from_adjacency(adj_trb, "TRB")
+
+        g = _merge_graphs(g_tra, g_trb)
+
+    elif strategy == "all":
+        adj = (tra_dists[0] <= cutoff) & (trb_dists[0] <= cutoff)
+
+        g = get_igraph_from_adjacency(adj)
+
+    elif strategy == "lenient":
+        raise NotImplementedError()
     else:
         raise ValueError("Unknown strategy. ")
 
