@@ -4,4 +4,4 @@ from ._clonotype_definition import define_clonotypes
 from ._diversity import alpha_diversity
 from ._group_abundance import group_abundance
 from ._spectratype import spectratype
-from ._tcr_dist import tcr_neighbors, tcr_umap
+from ._tcr_dist import *
