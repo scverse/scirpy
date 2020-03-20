@@ -32,7 +32,7 @@ def wu2020() -> AnnData:
 @_doc_params(processing_code=_read_to_str(HERE / "_processing_scripts/wu2020_3k.py"))
 def wu2020_3k() -> AnnData:
     """
-    Return the dataset from [Wu2020]_ as AnnData object, downsampled 
+    Return the dataset from :cite:`Wu2020` as AnnData object, downsampled 
     to 3000 TCR-containing cells. 
 
     This is how the dataset was processed:
