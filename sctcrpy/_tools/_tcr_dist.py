@@ -393,22 +393,23 @@ def define_clonotypes(
     assert _is_symmetric(trb_dist)
 
     # TODO implement weights
-    if strategy == "TRA":
-        adj = tra_dist <= cutoff
-    elif strategy == "TRB":
-        adj = trb_dist <= cutoff
-    elif strategy == "any":
-        adj = (tra_dist <= cutoff) | (trb_dist <= cutoff)
-    elif strategy == "all":
-        adj = (tra_dist <= cutoff) & (trb_dist <= cutoff)
-    elif strategy == "lenient":
-        adj = (
-            ((tra_dist == 0) | np.isnan(tra_dist))
-            & ((trb_dist == 0) | np.isnan(trb_dist))
-            & ~(np.isnan(tra_dist) & np.isnan(trb_dist))
-        )
-    else:
-        raise ValueError("Unknown strategy. ")
+    with np.errstate(invalid="ignore"):
+        if strategy == "TRA":
+            adj = tra_dist <= cutoff
+        elif strategy == "TRB":
+            adj = trb_dist <= cutoff
+        elif strategy == "any":
+            adj = (tra_dist <= cutoff) | (trb_dist <= cutoff)
+        elif strategy == "all":
+            adj = (tra_dist <= cutoff) & (trb_dist <= cutoff)
+        elif strategy == "lenient":
+            adj = (
+                ((tra_dist == 0) | np.isnan(tra_dist))
+                & ((trb_dist == 0) | np.isnan(trb_dist))
+                & ~(np.isnan(tra_dist) & np.isnan(trb_dist))
+            )
+        else:
+            raise ValueError("Unknown strategy. ")
 
     g = get_igraph_from_adjacency(adj)
 
