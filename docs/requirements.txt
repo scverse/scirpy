@@ -10,3 +10,4 @@ scanpydoc
 jupytext
 nbsphinx
 sphinxcontrib-bibtex
+jupyter_client
