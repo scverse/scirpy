@@ -7,6 +7,9 @@ Welcome to sctcrpy's documentation!
 
    introduction
    features
+   tutorials
    api
-   references
+   bibliography
+
+
 

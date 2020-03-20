@@ -1,7 +1,15 @@
-image: python:3.8
+image: continuumio/miniconda3:latest
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
 
 before_script:
-  - pip install flit
+  - conda info -a
+  - conda install -c conda-forge -c bioconda -y flit pandoc python-igraph leidenalg make
   - FLIT_ROOT_INSTALL=1 flit install --deps develop
 
 test:
@@ -9,5 +17,7 @@ test:
     - CWD=$(pwd)
     - black --check sctcrpy
     - pytest
+
+docs:
+  script:
     - cd docs && make html
-    - cd $CWD/tutorial && python demo.py

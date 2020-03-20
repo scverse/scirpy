@@ -152,3 +152,9 @@ def _doc_params(**kwds):
         return obj
 
     return dec
+
+
+def _read_to_str(path):
+    """Read a file into a string"""
+    with open(path, "r") as f:
+        return f.read()

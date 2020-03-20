@@ -6,6 +6,7 @@ python:
   - "3.8"
 
 install:
+  - sudo apt-get install -y pandoc
   - pip install flit
   - flit install --deps develop
 
@@ -14,7 +15,7 @@ script:
   - pytest
 
 after_success:
-  - mkdir -p deploy_docs && touch deploy_docs/.nojekyll 
+  - mkdir -p deploy_docs && touch deploy_docs/.nojekyll
   - cd docs && make html && mv _build/html ../deploy_docs/5vLj3lcBVp2VkVEpIt3j
 
 deploy:
@@ -22,6 +23,6 @@ deploy:
   skip-cleanup: true
   github-token: $GITHUB_PAT
   keep-history: true
-  local-dir: deploy_docs 
+  local-dir: deploy_docs
   on:
-    branch: master 
+    branch: master
