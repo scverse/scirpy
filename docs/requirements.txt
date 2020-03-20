@@ -12,3 +12,4 @@ nbsphinx
 sphinxcontrib-bibtex
 jupyter_client
 ipykernel
+ipywidgets
