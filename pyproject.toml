@@ -42,5 +42,6 @@ doc = [
     'nbsphinx',
     'jupytext',
     'sphinxcontrib-bibtex',
-    'jupyter_client'
+    'jupyter_client',
+    'ipykernel'
 ]
