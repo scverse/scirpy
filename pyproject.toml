@@ -25,7 +25,8 @@ requires = [
     'numpy',
     'parasail',
     'scikit-learn',
-    'python-levenshtein'
+    'python-levenshtein',
+    'python-igraph'
 ]
 
 [tool.flit.metadata.requires-extra]
@@ -45,5 +46,5 @@ doc = [
     'sphinxcontrib-bibtex',
     'jupyter_client',
     'ipykernel',
-    'ipywidgets'
+    'ipywidgets',
 ]
