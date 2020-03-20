@@ -7,143 +7,13 @@ from .._compat import Literal
 import pandas as pd
 import numpy as np
 from scanpy import logging
-from sklearn.metrics import pairwise_distances
 import numpy.testing as npt
 from .._util import _is_na, _is_symmetric
 import abc
-import textwrap
-from io import StringIO
-import umap
-from scipy.sparse import coo_matrix
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
 import igraph as ig
-
-
-def _merge_graphs(g1, g2):
-    g = g1.copy()
-    g.add_edges(g2.get_edgelist())
-    assert g.ecount() == g1.ecount() + g2.ecount()
-    g.es[: g1.ecount()]["type"] = g1.es["type"]
-    g.es[g1.ecount() :]["type"] = g2.es["type"]
-    return g
-
-
-def get_igraph_from_adjacency(adj, edge_type=None, directed=None):
-    """Get igraph graph from adjacency matrix.
-    Better than Graph.Adjacency for sparse matrices
-    """
-
-    g = ig.Graph(directed=False)
-    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
-
-    sources, targets = np.triu(adj, k=1).nonzero()
-    weights = adj[sources, targets].astype("float")
-    g.add_edges(list(zip(sources, targets)))
-
-    g.es["weight"] = weights
-    if edge_type is not None:
-        g.es["type"] = edge_type
-
-    if g.vcount() != adj.shape[0]:
-        logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. "
-            "Your adjacency matrix contained redundant nodes."
-        )
-    return g
-
-
-def _get_sparse_matrix_from_indices_distances_umap(
-    knn_indices, knn_dists, n_obs, n_neighbors
-):
-    """This is from scanpy.neighbors [Wolf18]_."""
-    rows = np.zeros((n_obs * n_neighbors), dtype=np.int64)
-    cols = np.zeros((n_obs * n_neighbors), dtype=np.int64)
-    vals = np.zeros((n_obs * n_neighbors), dtype=np.float64)
-
-    for i in range(knn_indices.shape[0]):
-        for j in range(n_neighbors):
-            if knn_indices[i, j] == -1:
-                continue  # We didn't get the full knn for i
-            if knn_indices[i, j] == i:
-                val = 0.0
-            else:
-                val = knn_dists[i, j]
-
-            rows[i * n_neighbors + j] = i
-            cols[i * n_neighbors + j] = knn_indices[i, j]
-            vals[i * n_neighbors + j] = val
-
-    result = coo_matrix((vals, (rows, cols)), shape=(n_obs, n_obs))
-    result.eliminate_zeros()
-    return result.tocsr()
-
-
-def _compute_connectivities_umap(
-    knn_indices,
-    knn_dists,
-    n_obs,
-    n_neighbors,
-    *,
-    set_op_mix_ratio=1.0,
-    local_connectivity=1.0,
-):
-    """\
-    This is from scanpy.neighbors [Wolf18]_ which again has taken it 
-    from umap.fuzzy_simplicial_set [McInnes18]_.
-
-    Given a set of data X, a neighborhood size, and a measure of distance
-    compute the fuzzy simplicial set (here represented as a fuzzy graph in
-    the form of a sparse matrix) associated to the data. This is done by
-    locally approximating geodesic distance at each point, creating a fuzzy
-    simplicial set for each such point, and then combining all the local
-    fuzzy simplicial sets into a global one via a fuzzy union.
-    """
-    from umap.umap_ import fuzzy_simplicial_set
-
-    X = coo_matrix(([], ([], [])), shape=(n_obs, 1))
-    connectivities = fuzzy_simplicial_set(
-        X,
-        n_neighbors,
-        None,
-        None,
-        knn_indices=knn_indices,
-        knn_dists=knn_dists,
-        set_op_mix_ratio=set_op_mix_ratio,
-        local_connectivity=local_connectivity,
-    )
-
-    if isinstance(connectivities, tuple):
-        # In umap-learn 0.4, this returns (result, sigmas, rhos)
-        connectivities = connectivities[0]
-
-    distances = _get_sparse_matrix_from_indices_distances_umap(
-        knn_indices, knn_dists, n_obs, n_neighbors
-    )
-
-    return distances, connectivities.tocsr()
-
-
-def _dist_to_connectivities(
-    dist_mat: np.array, n_neighbors: int, *, random_state: int = 0
-):
-    """Convert a distance matrix into a sparse, nearest-neighbor distance 
-    matrix and a sparse adjacencey matrix using umap.nearest_neighbors 
-    and a fuzzy-simlicital-set embedding"""
-    knn_indices, knn_dists, forest = umap.umap_.nearest_neighbors(
-        dist_mat,
-        n_neighbors=n_neighbors,
-        metric="precomputed",
-        metric_kwds=dict(),
-        angular=False,
-        random_state=random_state,
-    )
-
-    dist, connectivities = _compute_connectivities_umap(
-        knn_indices, knn_dists, n_obs=dist_mat.shape[0], n_neighbors=n_neighbors
-    )
-
-    return dist, connectivities
+from .._util import get_igraph_from_adjacency
 
 
 class _DistanceCalculator(abc.ABC):
@@ -181,67 +51,6 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
             seqs.reshape(-1, 1), metric=lambda x, y: levenshtein_dist(x[0], y[0])
         )
         return scipy.spatial.distance.squareform(dist)
-
-
-class _KideraDistanceCalculator(_DistanceCalculator):
-    KIDERA_FACTORS = textwrap.dedent(
-        """
-        A -1.56 -1.67 -0.97 -0.27 -0.93 -0.78 -0.20 -0.08 0.21 -0.48
-        R 0.22 1.27 1.37 1.87 -1.70 0.46 0.92 -0.39 0.23 0.93
-        N 1.14 -0.07 -0.12 0.81 0.18 0.37 -0.09 1.23 1.10 -1.73
-        D 0.58 -0.22 -1.58 0.81 -0.92 0.15 -1.52 0.47 0.76 0.70
-        C 0.12 -0.89 0.45 -1.05 -0.71 2.41 1.52 -0.69 1.13 1.10
-        Q -0.47 0.24 0.07 1.10 1.10 0.59 0.84 -0.71 -0.03 -2.33
-        E -1.45 0.19 -1.61 1.17 -1.31 0.40 0.04 0.38 -0.35 -0.12
-        G 1.46 -1.96 -0.23 -0.16 0.10 -0.11 1.32 2.36 -1.66 0.46
-        H -0.41 0.52 -0.28 0.28 1.61 1.01 -1.85 0.47 1.13 1.63
-        I -0.73 -0.16 1.79 -0.77 -0.54 0.03 -0.83 0.51 0.66 -1.78
-        L -1.04 0.00 -0.24 -1.10 -0.55 -2.05 0.96 -0.76 0.45 0.93
-        K -0.34 0.82 -0.23 1.70 1.54 -1.62 1.15 -0.08 -0.48 0.60
-        M -1.40 0.18 -0.42 -0.73 2.00 1.52 0.26 0.11 -1.27 0.27
-        F -0.21 0.98 -0.36 -1.43 0.22 -0.81 0.67 1.10 1.71 -0.44
-        P 2.06 -0.33 -1.15 -0.75 0.88 -0.45 0.30 -2.30 0.74 -0.28
-        S 0.81 -1.08 0.16 0.42 -0.21 -0.43 -1.89 -1.15 -0.97 -0.23
-        T 0.26 -0.70 1.21 0.63 -0.10 0.21 0.24 -1.15 -0.56 0.19
-        W 0.30 2.10 -0.72 -1.57 -1.16 0.57 -0.48 -0.40 -2.30 -0.60
-        Y 1.38 1.48 0.80 -0.56 -0.00 -0.68 -0.31 1.03 -0.05 0.53
-        V -0.74 -0.71 2.04 -0.40 0.50 -0.81 -1.07 0.06 -0.46 0.65
-    """
-    )
-
-    def __init__(self, n_jobs: Union[int, None] = None):
-        """Class to generate pairwise distances between amino acid sequences
-        based on kidera factors.
-
-        Parameters
-        ----------
-        n_jobs
-            Number of jobs to use for the pairwise distance calculation. 
-            If None, use all jobs. 
-        """
-        self.kidera_factors = pd.read_csv(
-            StringIO(self.KIDERA_FACTORS), sep=" ", header=None, index_col=0
-        )
-        self.n_jobs = -1 if n_jobs is None else n_jobs
-
-    def _make_kidera_vectors(self, seqs: Collection) -> np.ndarray:
-        """Convert each AA-sequence into a vector of kidera factors. 
-        Sums over the kidera factors for each amino acid. """
-        return np.vstack(
-            [
-                np.mean(
-                    np.vstack([self.kidera_factors.loc[c, :].values for c in seq]),
-                    axis=0,
-                )
-                for seq in seqs
-            ]
-        )
-
-    def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
-        kidera_vectors = self._make_kidera_vectors(seqs)
-        return pairwise_distances(
-            kidera_vectors, metric="euclidean", n_jobs=self.n_jobs
-        )
 
 
 class _AlignmentDistanceCalculator(_DistanceCalculator):
@@ -315,9 +124,10 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         return norm_factors
 
     def _score_to_dist(self, score_mat: np.ndarray) -> np.ndarray:
-        """Convert an alignment score matrix into a distance between 0 and 1.
-        This is achieved by dividing the alignment score with a normalization
-        factor that refers to the maximum possible alignment score between
+        """Convert an alignment score matrix into a distance. 
+        
+        This is achieved by subtracting the alignment score from a normalization
+        vector that refers to the maximum possible alignment score between
         two sequences. """
         assert np.all(
             np.argmax(score_mat, axis=1) == np.diag_indices_from(score_mat)
@@ -325,27 +135,12 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         norm_factors = self._calc_norm_factors(score_mat)
 
-        # New approach: subtract the score from norm_factors, i.e. the max achievable score
         dist_mat = norm_factors - score_mat
         assert np.all(
             dist_mat >= 0
         ), "The norm factors should be the highest achievable score. "
 
         return dist_mat
-
-        # # normalize
-        # dist_mat = score_mat / norm_factors
-
-        # # upper bound is 1 already, set lower bound to 0
-        # dist_mat[dist_mat < 0] = 0
-
-        # # inverse (= turn into distance)
-        # dist_mat = 1 - dist_mat
-
-        # assert np.min(dist_mat) >= 0
-        # assert np.max(dist_mat) <= 1
-
-        # return dist_mat
 
     def _calc_score_mat(self, seqs: Collection) -> np.ndarray:
         """Calculate the alignment scores of all-against-all pairwise
@@ -451,7 +246,7 @@ def _dist_for_chain(
 def tcr_dist(
     adata: AnnData,
     *,
-    metric: Literal["alignment", "kidera", "identity", "levenshtein"] = "alignment",
+    metric: Literal["alignment", "identity", "levenshtein"] = "alignment",
     n_jobs: Union[int, None] = None,
 ) -> Tuple:
     """Computes the distances between CDR3 sequences 
@@ -460,9 +255,9 @@ def tcr_dist(
     ----------
     metric
         Distance metric to use. `alignment` will calculate an alignment distance
-        based on normalized BLOSUM62 scores. `kidera` calculates a distance 
-        based on kidera factors. `identity` results in `0` for an identical sequence, 
-        `1` for different sequence. 
+        based on normalized BLOSUM62 scores. 
+        `identity` results in `0` for an identical sequence, `1` for different sequence. 
+        `levenshtein` is the Levenshtein edit distance between two strings. 
 
     Returns
     -------
@@ -471,8 +266,6 @@ def tcr_dist(
     """
     if metric == "alignment":
         dist_calc = _AlignmentDistanceCalculator(n_jobs=n_jobs)
-    elif metric == "kidera":
-        dist_calc = _KideraDistanceCalculator(n_jobs=n_jobs)
     elif metric == "identity":
         dist_calc = _IdentityDistanceCalculator()
     elif metric == "levenshtein":
@@ -488,7 +281,9 @@ def tcr_dist(
 
 def define_clonotypes(
     adata: AnnData,
+    *,
     metric: Literal["alignment", "levenshtein"] = "alignment",
+    key_added: str = "clonotype",
     cutoff: int = 2,
     strategy: Literal["TRA", "TRB", "all", "any", "lenient"] = "any",
     chains: Literal["primary_only", "all"] = "primary_only",
@@ -577,14 +372,13 @@ def define_clonotypes(
     else:
         if "sctcrpy" not in adata.uns:
             adata.uns["sctcrpy"] = dict()
-        # TODO this cannot be saved with adata.write_h5ad
-        adata.uns["sctcrpy"]["connectivities"] = adj
-        adata.obs["clonotype"] = clonotype
-        adata.obs["clonotype_size"] = clonotype_size
+        adata.uns["sctcrpy"][key_added + "_connectivities"] = adj
+        adata.obs[key_added] = clonotype
+        adata.obs[key_added + "_size"] = clonotype_size
 
 
 def clonotype_network(
-    adata, *, layout="fr", key_added="X_clonotype_network", min_size=1
+    adata, *, layout="fr", key="clonotype", key_added="X_clonotype_network", min_size=1
 ):
     """Build the clonotype network for plotting
     
@@ -594,11 +388,11 @@ def clonotype_network(
         Only show clonotypes with at least `min_size` cells.
     """
     try:
-        graph = get_igraph_from_adjacency(adata.uns["sctcrpy"]["connectivities"])
+        graph = get_igraph_from_adjacency(adata.uns["sctcrpy"][key + "_connectivities"])
     except KeyError:
         raise ValueError("You need to run define_clonotypes first.")
 
-    subgraph_idx = np.where(adata.obs["clonotype_size"].values >= min_size)[0]
+    subgraph_idx = np.where(adata.obs[key + "_size"].values >= min_size)[0]
     if len(subgraph_idx) == 0:
         raise ValueError("No subgraphs with size >= {} found.".format(min_size))
     graph = graph.subgraph(subgraph_idx)

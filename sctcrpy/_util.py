@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 from textwrap import dedent
-from typing import Any, Tuple, Union
+from typing import Any, Union
 from anndata import AnnData
 from collections import namedtuple
+import igraph as ig
+from scanpy import logging
 
 
 def _is_symmetric(M) -> bool:
@@ -158,3 +160,34 @@ def _read_to_str(path):
     """Read a file into a string"""
     with open(path, "r") as f:
         return f.read()
+
+
+def get_igraph_from_adjacency(adj: np.array, edge_type: str = None):
+    """Get igraph graph from adjacency matrix.
+    Better than Graph.Adjacency for sparse matrices
+
+    Parameters
+    ----------
+    adj
+        (weighted) adjacency matrix
+    edge_type
+        A type attribute added to all edges
+    """
+
+    g = ig.Graph(directed=False)
+    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
+
+    sources, targets = np.triu(adj, k=1).nonzero()
+    weights = adj[sources, targets].astype("float")
+    g.add_edges(list(zip(sources, targets)))
+
+    g.es["weight"] = weights
+    if edge_type is not None:
+        g.es["type"] = edge_type
+
+    if g.vcount() != adj.shape[0]:
+        logging.warning(
+            f"The constructed graph has only {g.vcount()} nodes. "
+            "Your adjacency matrix contained redundant nodes."
+        )
+    return g
