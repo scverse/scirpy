@@ -19,6 +19,19 @@ Input/Output
    read_tracer
 
 
+Datasets
+--------
+
+.. module:: sctcrpy.datasets
+
+.. autosummary::
+   :toctree: .
+
+   wu2020
+   wu2020_3k
+
+
+
 Preprocessing: `pp`
 -------------------
 

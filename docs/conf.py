@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 from datetime import datetime
+import jupytext
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
@@ -13,7 +14,7 @@ author = __author__
 copyright = f"{datetime.now():%Y}, {author}."
 version = __version__
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 nitpicky = True  # Warn about broken links
 nitpick_ignore = [
@@ -32,7 +33,9 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
+    "sphinxcontrib.bibtex",
     "scanpydoc",
+    "nbsphinx",
 ]
 
 autosummary_generate = True
@@ -45,6 +48,11 @@ napoleon_use_rtype = True  # having a separate entry generally helps readability
 napoleon_use_param = True
 todo_include_todos = False
 
+# Enable jupytext notebooks
+nbsphinx_custom_formats = {
+    ".md": lambda s: jupytext.reads(s, ".md"),
+}
+nbsphinx_execute = "always"
 
 # styling
 html_theme = "sphinx_rtd_theme"
