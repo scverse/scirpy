@@ -9,5 +9,7 @@ test:
     - CWD=$(pwd)
     - black --check sctcrpy
     - pytest
+
+docs:
+  script:
     - cd docs && make html
-    - cd $CWD/tutorial && python demo.py
