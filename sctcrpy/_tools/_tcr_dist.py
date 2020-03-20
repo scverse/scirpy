@@ -2,7 +2,7 @@ import parasail
 from multiprocessing import Pool
 import itertools
 from anndata import AnnData
-from typing import Union, Collection, List
+from typing import Union, Collection, List, Tuple
 from .._compat import Literal
 import pandas as pd
 import numpy as np
@@ -18,6 +18,39 @@ from scipy.sparse import coo_matrix
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
 import igraph as ig
+
+
+def _merge_graphs(g1, g2):
+    g = g1.copy()
+    g.add_edges(g2.get_edgelist())
+    assert g.ecount() == g1.ecount() + g2.ecount()
+    g.es[: g1.ecount()]["type"] = g1.es["type"]
+    g.es[g1.ecount() :]["type"] = g2.es["type"]
+    return g
+
+
+def get_igraph_from_adjacency(adj, edge_type=None, directed=None):
+    """Get igraph graph from adjacency matrix.
+    Better than Graph.Adjacency for sparse matrices
+    """
+
+    g = ig.Graph(directed=False)
+    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
+
+    sources, targets = np.triu(adj, k=1).nonzero()
+    weights = adj[sources, targets].astype("float")
+    g.add_edges(list(zip(sources, targets)))
+
+    g.es["weight"] = weights
+    if edge_type is not None:
+        g.es["type"] = edge_type
+
+    if g.vcount() != adj.shape[0]:
+        logging.warning(
+            f"The constructed graph has only {g.vcount()} nodes. "
+            "Your adjacency matrix contained redundant nodes."
+        )
+    return g
 
 
 def _get_sparse_matrix_from_indices_distances_umap(
@@ -291,19 +324,28 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         ), """Max value not on the diagonal"""
 
         norm_factors = self._calc_norm_factors(score_mat)
-        # normalize
-        dist_mat = score_mat / norm_factors
 
-        # upper bound is 1 already, set lower bound to 0
-        dist_mat[dist_mat < 0] = 0
-
-        # inverse (= turn into distance)
-        dist_mat = 1 - dist_mat
-
-        assert np.min(dist_mat) >= 0
-        assert np.max(dist_mat) <= 1
+        # New approach: subtract the score from norm_factors, i.e. the max achievable score
+        dist_mat = norm_factors - score_mat
+        assert np.all(
+            dist_mat >= 0
+        ), "The norm factors should be the highest achievable score. "
 
         return dist_mat
+
+        # # normalize
+        # dist_mat = score_mat / norm_factors
+
+        # # upper bound is 1 already, set lower bound to 0
+        # dist_mat[dist_mat < 0] = 0
+
+        # # inverse (= turn into distance)
+        # dist_mat = 1 - dist_mat
+
+        # assert np.min(dist_mat) >= 0
+        # assert np.max(dist_mat) <= 1
+
+        # return dist_mat
 
     def _calc_score_mat(self, seqs: Collection) -> np.ndarray:
         """Calculate the alignment scores of all-against-all pairwise
@@ -406,16 +448,13 @@ def _dist_for_chain(
     return cell_mats
 
 
-def tcr_neighbors(
+def tcr_dist(
     adata: AnnData,
     *,
     metric: Literal["alignment", "kidera", "identity", "levenshtein"] = "alignment",
-    n_jobs: [int, None] = None,
-    inplace: bool = True,
-) -> Union[None, dict]:
-    """Compute the TCRdist on CDR3 sequences. 
-    The equivalent of scanpy.pp.neighbors for TCR sequences. 
-
+    n_jobs: Union[int, None] = None,
+) -> Tuple:
+    """Computes the distances between CDR3 sequences 
 
     Parameters
     ----------
@@ -424,6 +463,10 @@ def tcr_neighbors(
         based on normalized BLOSUM62 scores. `kidera` calculates a distance 
         based on kidera factors. `identity` results in `0` for an identical sequence, 
         `1` for different sequence. 
+
+    Returns
+    -------
+    tra_dists, trb_dists
 
     """
     if metric == "alignment":
@@ -440,68 +483,50 @@ def tcr_neighbors(
     tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
     trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
 
-    if inplace:
-        if "sctcrpy" not in adata.uns:
-            adata.uns["sctcrpy"] = dict()
-        adata.uns["sctcrpy"]["tra_neighbors"] = tra_dists[0]
-        adata.uns["sctcrpy"]["trb_neighbors"] = trb_dists[0]
-    else:
-        return tra_dists, trb_dists
-
-
-def get_igraph_from_adjacency(adj, edge_type=None, directed=None):
-    """Get igraph graph from adjacency matrix.
-    Better than Graph.Adjacency for sparse matrices
-    """
-
-    g = ig.Graph(directed=False)
-    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
-
-    sources, targets = np.triu(adj, k=1).nonzero()
-    weights = adj[sources, targets].astype("float")
-    g.add_edges(list(zip(sources, targets)))
-
-    g.es["weight"] = weights
-    if edge_type is not None:
-        g.es["type"] = edge_type
-
-    if g.vcount() != adj.shape[0]:
-        logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. "
-            "Your adjacency matrix contained redundant nodes."
-        )
-    return g
-
-
-def _merge_graphs(g1, g2):
-    g = g1.copy()
-    g.add_edges(g2.get_edgelist())
-    assert g.ecount() == g1.ecount() + g2.ecount()
-    g.es[: g1.ecount()]["type"] = g1.es["type"]
-    g.es[g1.ecount() :]["type"] = g2.es["type"]
-    return g
+    return tra_dists, trb_dists
 
 
 def define_clonotypes(
-    adata,
+    adata: AnnData,
+    metric: Literal["alignment", "levenshtein"] = "alignment",
+    cutoff: int = 2,
     strategy: Literal["TRA", "TRB", "all", "any", "lenient"] = "any",
     chains: Literal["primary_only", "all"] = "primary_only",
-    inplace=True,
-):
-    """Define clonotypes based on cdr3 identity.
+    inplace: bool = True,
+    resolution: float = 1,
+    n_iterations: int = 5,
+    n_jobs: Union[int, None] = None,
+) -> Union[Tuple, None]:
+    """Define clonotypes based on cdr3 distance.
     
     For now, uses primary TRA and TRB only. 
 
     Parameters
     ----------
+    metric
+        "alignment" - Calculate distance using pairwise sequence alignment 
+            and BLOSUM62 matrix
+        "levenshtein" - Levenshtein edit distance
+    cutoff
+        Two cells with a distance <= the cutoff will be connected. 
+        If cutoff = 0, the CDR3 sequences need to be identical. In this 
+        case, no alignment is performed. 
     strategy:
+        "TRA" - only consider TRA sequences
+        "TRB" - only consider TRB sequences
         "all" - both TRA and TRB need to match
         "any" - either TRA or TRB need to match
         "lenient" - both TRA and TRB need to match, however it is tolerated if for a 
           given cell pair, no TRA or TRB sequence is available. 
+    chains:
+        Use only primary chains ("TRA_1", "TRB_1") or all four chains? 
+        When considering all four chains, at least one of them needs
+        to match. 
 
     """
-    tra_dists, trb_dists = tcr_neighbors(adata, metric="identity", inplace=False)
+    if cutoff == 0:
+        metric = "identity"
+    tra_dists, trb_dists = tcr_dist(adata, metric=metric, n_jobs=n_jobs)
 
     if chains == "primary_only":
         tra_dist = tra_dists[0]
@@ -515,120 +540,47 @@ def define_clonotypes(
     assert _is_symmetric(tra_dist)
     assert _is_symmetric(trb_dist)
 
+    # TODO implement weights
     if strategy == "TRA":
-        adj = tra_dist == 0
-        g = get_igraph_from_adjacency(adj)
+        adj = tra_dist <= cutoff
     elif strategy == "TRB":
-        adj = trb_dist == 0
-        g = get_igraph_from_adjacency(adj)
+        adj = trb_dist <= cutoff
     elif strategy == "any":
-        adj_tra = tra_dist == 0
-        adj_trb = trb_dist == 0
-
-        g_tra = get_igraph_from_adjacency(adj_tra, "TRA")
-        g_trb = get_igraph_from_adjacency(adj_trb, "TRB")
-
-        g = _merge_graphs(g_tra, g_trb)
-
+        adj = (tra_dist <= cutoff) | (trb_dist <= cutoff)
     elif strategy == "all":
-        adj = (tra_dist == 0) & (trb_dist == 0)
-
-        g = get_igraph_from_adjacency(adj)
-
+        adj = (tra_dist <= cutoff) & (trb_dist <= cutoff)
     elif strategy == "lenient":
-        # Allow one of the two dists to be NA, but not both
         adj = (
             ((tra_dist == 0) | np.isnan(tra_dist))
             & ((trb_dist == 0) | np.isnan(trb_dist))
             & ~(np.isnan(tra_dist) & np.isnan(trb_dist))
         )
-
-        g = get_igraph_from_adjacency(adj)
     else:
         raise ValueError("Unknown strategy. ")
 
+    g = get_igraph_from_adjacency(adj)
+
     # find all connected partitions that are
     # connected by at least one edge
-    partitions = g.components(mode="weak")
+    partitions = g.community_leiden(
+        objective_function="modularity",
+        resolution_parameter=resolution,
+        n_iterations=n_iterations,
+    )
+
+    clonotype = np.array([str(x) for x in partitions.membership])
+    clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
+    assert len(clonotype) == len(clonotype_size) == adata.obs.shape[0]
 
     if not inplace:
-        return partitions.membership, partitions.graph
+        return (adj, clonotype, clonotype_size)
     else:
         if "sctcrpy" not in adata.uns:
             adata.uns["sctcrpy"] = dict()
         # TODO this cannot be saved with adata.write_h5ad
-        adata.uns["sctcrpy"]["clonotype_graph"] = partitions.graph
-        assert len(partitions.membership) == adata.obs.shape[0]
-        adata.obs["clonotype"] = partitions.membership
-        adata.obs["clonotype_size"] = adata.obs.groupby("clonotype")[
-            "clonotype"
-        ].transform("count")
-
-
-def define_clonotypes_levenshtein(
-    adata,
-    strategy: Literal["tra", "trb", "all", "any", "lenient"] = "any",
-    cutoff=2,
-    inplace=True,
-):
-    """Define clonotypes based on cdr3 identity.
-    
-    For now, uses primary TRA and TRB only. 
-
-    Parameters
-    ----------
-    strategy:
-        "all" - both TRA and TRB need to match
-        "any" - either TRA or TRB need to match
-        "lenient" - both TRA and TRB need to match, however it is tolerated if for a 
-          given cell pair, no TRA or TRB sequence is available. 
-
-    """
-    tra_dists, trb_dists = tcr_neighbors(adata, metric="levenshtein", inplace=False)
-
-    if strategy == "TRA":
-        adj = tra_dists[0] <= cutoff
-        g = get_igraph_from_adjacency(adj)
-
-    elif strategy == "TRB":
-        adj = trb_dists[0] <= cutoff
-        g = get_igraph_from_adjacency(adj)
-
-    elif strategy == "any":
-        adj_tra = tra_dists[0] <= cutoff
-        adj_trb = trb_dists[0] <= cutoff
-
-        g_tra = get_igraph_from_adjacency(adj_tra, "TRA")
-        g_trb = get_igraph_from_adjacency(adj_trb, "TRB")
-
-        g = _merge_graphs(g_tra, g_trb)
-
-    elif strategy == "all":
-        adj = (tra_dists[0] <= cutoff) & (trb_dists[0] <= cutoff)
-
-        g = get_igraph_from_adjacency(adj)
-
-    elif strategy == "lenient":
-        raise NotImplementedError()
-    else:
-        raise ValueError("Unknown strategy. ")
-
-    # find all connected partitions that are
-    # connected by at least one edge
-    partitions = g.components(mode="weak")
-
-    if not inplace:
-        return partitions.membership, partitions.graph
-    else:
-        if "sctcrpy" not in adata.uns:
-            adata.uns["sctcrpy"] = dict()
-        # TODO this cannot be saved with adata.write_h5ad
-        adata.uns["sctcrpy"]["clonotype_graph"] = partitions.graph
-        assert len(partitions.membership) == adata.obs.shape[0]
-        adata.obs["clonotype"] = partitions.membership
-        adata.obs["clonotype_size"] = adata.obs.groupby("clonotype")[
-            "clonotype"
-        ].transform("count")
+        adata.uns["sctcrpy"]["connectivities"] = adj
+        adata.obs["clonotype"] = clonotype
+        adata.obs["clonotype_size"] = clonotype_size
 
 
 def clonotype_network(
@@ -641,16 +593,16 @@ def clonotype_network(
     min_size
         Only show clonotypes with at least `min_size` cells.
     """
-    if (
-        "clonotype" not in adata.obs.columns
-        or "clonotype_size" not in adata.obs.columns
-    ):
+    try:
+        graph = get_igraph_from_adjacency(adata.uns["sctcrpy"]["connectivities"])
+    except KeyError:
         raise ValueError("You need to run define_clonotypes first.")
 
-    graph = adata.uns["sctcrpy"]["clonotype_graph"]
     subgraph_idx = np.where(adata.obs["clonotype_size"].values >= min_size)[0]
+    if len(subgraph_idx) == 0:
+        raise ValueError("No subgraphs with size >= {} found.".format(min_size))
     graph = graph.subgraph(subgraph_idx)
     layout_ = graph.layout(layout)
-    adata.uns["sctcrpy"]["clonotype_subgraph"] = graph
-    adata.uns["sctcrpy"]["clonotype_layout"] = layout_
-    adata.uns["sctcrpy"]["clonotype_subgraph_idx"] = subgraph_idx
+    coordinates = np.full((adata.n_obs, 2), fill_value=np.nan)
+    coordinates[subgraph_idx, :] = layout_.coords
+    adata.obsm["X_clonotype_network"] = coordinates
