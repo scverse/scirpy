@@ -47,4 +47,5 @@ doc = [
     'jupyter_client',
     'ipykernel',
     'ipywidgets',
+    'pycairo'
 ]
