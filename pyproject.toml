@@ -41,5 +41,6 @@ doc = [
     'leidenalg',
     'nbsphinx',
     'jupytext',
-    'sphinxcontrib-bibtex'
+    'sphinxcontrib-bibtex',
+    'jupyter_client'
 ]
