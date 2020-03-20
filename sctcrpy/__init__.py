@@ -11,3 +11,4 @@ from ._io import read_10x_vdj, read_tracer, read_10x_vdj_csv
 from . import _preprocessing as pp
 from . import _tools as tl
 from . import _plotting as pl
+from . import datasets
