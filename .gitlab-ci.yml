@@ -9,7 +9,7 @@ cache:
 
 before_script:
   - conda info -a
-  - conda install -c conda-forge -c bioconda -y flit pandoc python-igraph leidenalg
+  - conda install -c conda-forge -c bioconda -y flit pandoc python-igraph leidenalg make
   - FLIT_ROOT_INSTALL=1 flit install --deps develop
 
 test:
