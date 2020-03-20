@@ -7,4 +7,4 @@ from ._clip_and_count import clip_and_count, clonal_expansion
 from ._group_abundance import group_abundance
 from ._spectratype import spectratype
 
-from ._tcr_dist import *
+from ._tcr_dist import clonotype_network
