@@ -16,6 +16,7 @@ Input/Output
 
    read_h5ad
    read_10x_vdj
+   read_10x_vdj_csv
    read_tracer
 
 
@@ -52,18 +53,30 @@ Tools: `tl`
    :toctree: .
 
    define_clonotypes
-   decide_chain_cat
+   clonotype_network
+   tcr_dist
    chain_pairing
-   tcr_dist 
+   clip_and_count
    alpha_diversity
-   clonal_expansion
-   cdr_convergence
-   spectratype
    group_abundance
+   spectratype
 
 
 Plotting: `pl`
 --------------
+
+Base plotting functions: `pl.base`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. module:: sctcrpy.pl.base
+
+.. autosummary::
+   :toctree: .
+   bar
+   line
+   barh
+   curve
+
 
 .. module:: sctcrpy.pl
 
@@ -71,15 +84,10 @@ Plotting: `pl`
    :toctree: . 
 
    alpha_diversity
+   clip_and_count
    clonal_expansion
-   cdr_convergence
-   spectratype
    group_abundance
-   nice_bar_plain
-   nice_line_plain
-   nice_curve_plain
-   nice_stripe_plain
-   check_for_plotting_profile
-   reset_plotting_profile
+   spectratype
+   clonotype_network
 
    

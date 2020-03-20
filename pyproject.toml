@@ -24,7 +24,8 @@ requires = [
     'pandas<1',
     'numpy',
     'parasail',
-    'scikit-learn'
+    'scikit-learn',
+    'python-levenshtein'
 ]
 
 [tool.flit.metadata.requires-extra]

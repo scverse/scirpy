@@ -102,42 +102,6 @@ def test_clip_and_count_convergence(adata_tra):
     }
 
 
-def test_define_clonotypes():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "AAAA", "nan", "nan", "nan"],
-            ["cell2", "nan", "nan", "nan", "nan"],
-            ["cell3", "AAAA", "nan", "nan", "nan"],
-            ["cell4", "AAAA", "BBBB", "nan", "nan"],
-            ["cell5", "nan", "nan", "CCCC", "DDDD"],
-        ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    res = st.tl.define_clonotypes(adata, inplace=False)
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res,
-        ["clonotype_1", np.nan, "clonotype_1", "clonotype_0", "clonotype_2"],
-    )
-
-    res_primary_only = st.tl.define_clonotypes(
-        adata, flavor="primary_only", inplace=False
-    )
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res_primary_only,
-        ["clonotype_0", np.nan, "clonotype_0", "clonotype_0", "clonotype_1"],
-    )
-
-    # test inplace
-    st.tl.define_clonotypes(adata, key_added="clonotype_")
-    npt.assert_equal(res, adata.obs["clonotype_"].values)
-
-
 def test_alpha_diversity(adata_diversity):
     res = st.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_"

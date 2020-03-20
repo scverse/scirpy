@@ -1,16 +1,17 @@
 import pytest
 from sctcrpy._tools._tcr_dist import (
     _AlignmentDistanceCalculator,
-    _KideraDistanceCalculator,
     _DistanceCalculator,
     _IdentityDistanceCalculator,
+    _LevenshteinDistanceCalculator,
     _dist_for_chain,
-    tcr_neighbors,
+    tcr_dist,
 )
 import numpy as np
 import pandas as pd
 import numpy.testing as npt
 from anndata import AnnData
+import sctcrpy as st
 
 
 @pytest.fixture
@@ -19,13 +20,13 @@ def aligner():
 
 
 @pytest.fixture
-def kidera():
-    return _KideraDistanceCalculator()
+def identity():
+    return _IdentityDistanceCalculator()
 
 
 @pytest.fixture
-def identity():
-    return _IdentityDistanceCalculator()
+def levenshtein():
+    return _LevenshteinDistanceCalculator()
 
 
 @pytest.fixture
@@ -84,30 +85,10 @@ def test_chain_dist_identity(adata_cdr3, identity):
     )
 
 
-def test_kidera_vectors(kidera):
-    AR_KIDERA_VECTORS = np.array(
-        [
-            [-1.56, 0.22],
-            [-1.67, 1.27],
-            [-0.97, 1.37],
-            [-0.27, 1.87],
-            [-0.93, -1.7],
-            [-0.78, 0.46],
-            [-0.2, 0.92],
-            [-0.08, -0.39],
-            [0.21, 0.23],
-            [-0.48, 0.93],
-        ]
-    ).T
-    npt.assert_almost_equal(kidera._make_kidera_vectors(["A", "R"]), AR_KIDERA_VECTORS)
+def test_levensthein_dist(levenshtein):
     npt.assert_almost_equal(
-        kidera._make_kidera_vectors(["AAA", "RRR"]), AR_KIDERA_VECTORS
-    )
-
-
-def test_kidera_dist(kidera):
-    npt.assert_almost_equal(
-        kidera.calc_dist_mat(["ARS", "ARS", "RSA", "SRA"]), np.zeros((4, 4))
+        levenshtein.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])),
+        np.array([[0, 1, 2, 2], [1, 0, 1, 1], [2, 1, 0, 1], [2, 1, 1, 0]]),
     )
 
 
@@ -134,7 +115,7 @@ def test_score_to_dist(aligner):
     score_mat = np.array([[15, 9, -2], [9, 11, 3], [-2, 3, 5]])
     dist_mat = aligner._score_to_dist(score_mat)
     npt.assert_almost_equal(
-        dist_mat, np.array([[0, 0.181, 1], [0.181, 0, 0.4], [1, 0.4, 0]]), decimal=2
+        dist_mat, np.array([[0, 2, 7], [2, 0, 2], [7, 2, 0]]), decimal=2
     )
 
 
@@ -147,7 +128,7 @@ def test_alignment_score(aligner):
 def test_alignment_dist(aligner):
     seqs = np.array(["AAAA", "AAHA"])
     res = aligner.calc_dist_mat(seqs)
-    npt.assert_almost_equal(res, np.array([[0, 1 - 10 / 16], [1 - 10 / 16, 0]]))
+    npt.assert_almost_equal(res, np.array([[0, 6], [6, 0]]))
 
 
 def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
@@ -221,3 +202,39 @@ def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
             ]
         ),
     )
+
+
+def test_define_clonotypes_no_graph():
+    obs = pd.DataFrame.from_records(
+        [
+            ["cell1", "AAAA", "nan", "nan", "nan"],
+            ["cell2", "nan", "nan", "nan", "nan"],
+            ["cell3", "AAAA", "nan", "nan", "nan"],
+            ["cell4", "AAAA", "BBBB", "nan", "nan"],
+            ["cell5", "nan", "nan", "CCCC", "DDDD"],
+        ],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+
+    res = st.tl._define_clonotypes_no_graph(adata, inplace=False)
+    npt.assert_equal(
+        # order is by alphabet: BBBB < nan
+        # we don't care about the order of numbers, so this is ok.
+        res,
+        ["clonotype_1", np.nan, "clonotype_1", "clonotype_0", "clonotype_2"],
+    )
+
+    res_primary_only = st.tl._define_clonotypes_no_graph(
+        adata, flavor="primary_only", inplace=False
+    )
+    npt.assert_equal(
+        # order is by alphabet: BBBB < nan
+        # we don't care about the order of numbers, so this is ok.
+        res_primary_only,
+        ["clonotype_0", np.nan, "clonotype_0", "clonotype_0", "clonotype_1"],
+    )
+
+    # test inplace
+    st.tl._define_clonotypes_no_graph(adata, key_added="clonotype_")
+    npt.assert_equal(res, adata.obs["clonotype_"].values)
