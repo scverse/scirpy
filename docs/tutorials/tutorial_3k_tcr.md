@@ -6,7 +6,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: "1.2"
+      format_version: '1.2'
       jupytext_version: 1.4.1
 ---
 
@@ -118,21 +118,63 @@ adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 
 ## Define clonotypes
 
-Next, we need to define clonotypes
+Next, we need to define clonotypes. This will add a `clonotype` and `clonotype_size` columng to `obs`. 
 
-<div class="alert alert-warning">
+Clonotype definition uses a graph-based approach. We will construct a network, that connects cells with identical, or similar, CDR3 sequences. 
+All connected nodes form a clonotype. 
 
-**Warning:** Clonotype definition will soon change to a graph-based approach
-
-</div>
+* If you want to define clonotypes by cells having **identical** sequences, set the `cutoff` to 0
+* With the `stragegy` parameter, it is possible to choose if the alpha chain, the beta chain, or both need to match. Here we set it to `all` in order to require both chains to match. 
+* With the `chains` parameter, we can specify if we want to consider only the most abundant TRA and TRB sequences (`primary_only`), or all four CDR3 sequences, if available (`all`). 
 
 ```python
-st.tl.define_clonotypes(adata)
+st.tl.define_clonotypes(adata, strategy="all", chains="primary_only", cutoff=0)
 ```
+
+Let's visualize the resulting graph. 
+We first use `st.tl.clonotype_network` to compute the layout and store it in the `AnnData` object. Next, we use `st.pl.clonotype_network` to show it. 
+
+If we don't filter the network, the plot will be clutterted by singleton clonotypes. We, therefore, use the `min_size` option to only show clonotypes with at least two members. 
+
+```python
+st.tl.clonotype_network(adata, min_size=2)
+```
+
+```python
+st.pl.clonotype_network(adata, color="clonotype")
+```
+
+Now, we allow a TCR-distance of 20. That's the equivalent of 4 `R`s mutating into `N`.  
+Also we now use `chains='all'`
+
+```python
+st.tl.define_clonotypes(adata, strategy="all", chains="all", cutoff=20)
+```
+
+```python
+st.tl.clonotype_network(adata, min_size=2)
+```
+
+When coloring by clonotype, we can see that the large, connected Hairball has been sub-divided in multiple clonotypes by 
+Graph-based clustering using the "Leiden" algorithm. 
+
+```python
+st.pl.clonotype_network(adata, color="clonotype")
+```
+
+We can now color by sample, which gives us information about public and private TCRs
+
+```python
+st.pl.clonotype_network(adata, color="sample")
+```
+
+Next, visualize the clonal expansion by cell-type cluster
 
 ```python
 st.pl.clonal_expansion(adata, groupby="leiden", clip_at=4, fraction=False)
 ```
+
+Normalized to the cluster size
 
 ```python
 st.pl.clonal_expansion(adata, "leiden")
