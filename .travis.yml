@@ -6,15 +6,13 @@ python:
   - "3.8"
 
 install:
-  - sudo apt-get install -y pandoc
+  - sudo apt-get install -y pandoc libcairo2-dev
   - pip install flit
   - flit install --deps develop
 
 script:
   - black --check sctcrpy
   - pytest
-
-after_success:
   - mkdir -p deploy_docs && touch deploy_docs/.nojekyll
   - cd docs && make html && mv _build/html ../deploy_docs/5vLj3lcBVp2VkVEpIt3j
 
