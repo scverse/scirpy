@@ -337,7 +337,7 @@ def _dist_for_chain(
     cell_mats = list()
     for chain1, chain2 in [(1, 1), (1, 2), (2, 2)]:
         chain1, chain2 = "{}_{}".format(chain, chain1), "{}_{}".format(chain, chain2)
-        cell_mat = np.full([adata.n_obs] * 2, np.nan)
+        cell_mat = csr_matrix((adata.n_obs, adata.n_obs))
 
         # 2d indices in the cell matrix
         # This is several orders of magnitudes faster than using nested for loops.

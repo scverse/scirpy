@@ -12,6 +12,7 @@ import pandas as pd
 import numpy.testing as npt
 from anndata import AnnData
 import sctcrpy as st
+import scipy.sparse
 
 
 @pytest.fixture
@@ -38,9 +39,9 @@ def adata_cdr3_mock_distance_calculator():
 
         def calc_dist_mat(self, seqs):
             """Don't calculate distances, but return the
-            dist matrix passed to the constructor."""
+            hard-coded distance matrix needed for the test"""
             npt.assert_equal(seqs, ["AAA", "AHA"])
-            return np.array([[0, 1], [1, 0]])
+            return scipy.sparse.csr_matrix(np.array([[1, 4], [4, 1]]))
 
     return MockDistanceCalculator()
 
@@ -53,20 +54,15 @@ def test_identity_dist():
     )
 
 
-def test_chain_dist_identity(adata_cdr3, identity):
+def test_chain_dist_identity(adata_cdr3):
+    identity = _IdentityDistanceCalculator()
     cell_mats = _dist_for_chain(adata_cdr3, "TRA", identity)
     tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2 = cell_mats
 
     npt.assert_equal(
-        tra1_tra1,
+        tra1_tra1.toarray(),
         np.array(
-            [
-                [0, 1, np.nan, 0, np.nan],
-                [1, 0, np.nan, 1, np.nan],
-                [np.nan] * 5,
-                [0, 1, np.nan, 0, np.nan],
-                [np.nan] * 5,
-            ]
+            [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
         ),
     )
 
@@ -132,67 +128,47 @@ def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
     cell_mats = _dist_for_chain(adata_cdr3, "TRA", adata_cdr3_mock_distance_calculator)
     tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2 = cell_mats
 
+    assert tra1_tra1.nnz == 9
     npt.assert_equal(
-        tra1_tra1,
+        tra1_tra1.toarray(),
         np.array(
-            [
-                [0, 1, np.nan, 0, np.nan],
-                [1, 0, np.nan, 1, np.nan],
-                [np.nan] * 5,
-                [0, 1, np.nan, 0, np.nan],
-                [np.nan] * 5,
-            ]
+            [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
+        ),
+    )
+
+    assert tra1_tra2.nnz == 9
+    npt.assert_equal(
+        tra1_tra2.toarray(),
+        np.array(
+            [[4, 0, 0, 1, 1], [1, 0, 0, 4, 4], [0] * 5, [4, 0, 0, 1, 1], [0] * 5,]
+        ),
+    )
+
+    assert tra2_tra1.nnz == 9
+    npt.assert_equal(
+        tra2_tra1.toarray(),
+        np.array(
+            [[4, 1, 0, 4, 0], [0] * 5, [0] * 5, [1, 4, 0, 1, 0], [1, 4, 0, 1, 0],]
+        ),
+    )
+
+    assert tra2_tra2.nnz == 9
+    npt.assert_equal(
+        tra2_tra2.toarray(),
+        np.array(
+            [[1, 0, 0, 4, 4], [0] * 5, [0] * 5, [4, 0, 0, 1, 1], [4, 0, 0, 1, 1],]
         ),
     )
 
     npt.assert_equal(
-        tra1_tra2,
+        np.fmin.reduce(cell_mats).toarray(),
         np.array(
             [
-                [1, np.nan, np.nan, 0, 0],
-                [0, np.nan, np.nan, 1, 1],
-                [np.nan] * 5,
-                [1, np.nan, np.nan, 0, 0],
-                [np.nan] * 5,
-            ]
-        ),
-    )
-
-    npt.assert_equal(
-        tra2_tra1,
-        np.array(
-            [
-                [1, 0, np.nan, 1, np.nan],
-                [np.nan] * 5,
-                [np.nan] * 5,
-                [0, 1, np.nan, 0, np.nan],
-                [0, 1, np.nan, 0, np.nan],
-            ]
-        ),
-    )
-
-    npt.assert_equal(
-        tra2_tra2,
-        np.array(
-            [
-                [0, np.nan, np.nan, 1, 1],
-                [np.nan] * 5,
-                [np.nan] * 5,
-                [1, np.nan, np.nan, 0, 0],
-                [1, np.nan, np.nan, 0, 0],
-            ]
-        ),
-    )
-
-    npt.assert_equal(
-        np.fmin.reduce(cell_mats),
-        np.array(
-            [
-                [0, 0, np.nan, 0, 0],
-                [0, 0, np.nan, 1, 1],
-                [np.nan] * 5,
-                [0, 1, np.nan, 0, 0],
-                [0, 1, np.nan, 0, 0],
+                [1, 1, 0, 1, 1],
+                [1, 1, 0, 4, 4],
+                [0] * 5,
+                [1, 4, 0, 1, 1],
+                [1, 4, 0, 1, 1],
             ]
         ),
     )
