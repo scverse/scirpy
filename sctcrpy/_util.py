@@ -6,7 +6,7 @@ from anndata import AnnData
 from collections import namedtuple
 import igraph as ig
 from scanpy import logging
-from scipy.sparse import issparse, find
+from scipy.sparse import issparse, find, csr_matrix, csc_matrix
 
 
 def _allclose_sparse(A, B, atol=1e-8):
@@ -25,6 +25,36 @@ def _allclose_sparse(A, B, atol=1e-8):
         return False
     else:
         return np.allclose(v1, v2, atol=atol, equal_nan=True)
+
+
+def _reduce_nonzero(A, B, f=np.min):
+    """Apply a reduction function to two sparse matrices ignoring
+    0-entries"""
+    if A.shape != B.shape:
+        raise ValueError("Shapes of a and B must match. ")
+    if not isinstance(A, (csc_matrix, csr_matrix)) or not isinstance(
+        B, (csc_matrix, csr_matrix)
+    ):
+        raise ValueError("This only works with sparse matrices in CSC or CSR format. ")
+
+    def _setdiff_coords(A, B):
+        """Returns X and Y coords that only exist in matrix A, but not in B"""
+        coords_A = set(zip(*A.nonzero()))
+        coords_B = set(zip(*B.nonzero()))
+        setdiff = coords_A - coords_B
+        ind0, ind1 = zip(*setdiff)
+        return np.array(ind0), np.array(ind1)
+
+    # now the indices that exist in both matrices contain the mimimum.
+    # those that only exist in one matrix 0
+    X = A.minimum(B)
+    # Therefore, we fill those that are in one matrix, but not another
+    not_in_b0, not_in_b1 = _setdiff_coords(A, X)
+    not_in_a0, not_in_a1 = _setdiff_coords(B, X)
+    X[not_in_b0, not_in_b1] = A[not_in_b0, not_in_b1]
+    X[not_in_a0, not_in_a1] = B[not_in_a0, not_in_a1]
+
+    return X
 
 
 def _is_symmetric(M) -> bool:

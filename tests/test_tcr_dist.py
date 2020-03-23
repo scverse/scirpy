@@ -13,6 +13,8 @@ import numpy.testing as npt
 from anndata import AnnData
 import sctcrpy as st
 import scipy.sparse
+from sctcrpy._util import _reduce_nonzero
+from functools import reduce
 
 
 @pytest.fixture
@@ -161,7 +163,7 @@ def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
     )
 
     npt.assert_equal(
-        np.fmin.reduce(cell_mats).toarray(),
+        reduce(_reduce_nonzero, cell_mats).toarray(),
         np.array(
             [
                 [1, 1, 0, 1, 1],
