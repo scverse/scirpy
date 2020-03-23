@@ -127,6 +127,7 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
     """Calculates the Levenshtein (i.e. edit-distance) between sequences. """
 
     def _compute_row(self, seqs: np.ndarray, i_row: int) -> coo_matrix:
+        """Compute a row of the upper diagnomal distance matrix"""
         target = seqs[i_row]
 
         def coord_generator():
@@ -160,6 +161,14 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
 
 
 class _AlignmentDistanceCalculator(_DistanceCalculator):
+    """Calculates distance between sequences based on pairwise sequence alignment. 
+
+    The distance between two sequences is defined as $S_{1,2}^{max} - S_{1,2}$ 
+    where $S_{1,2} $ is the alignment score of sequences 1 and 2 and $S_{1,2}^{max}$ 
+    is the max. achievable alignment score of sequences 1 and 2 defined as 
+    $\\min(S_{1,1}, S_{2,2})$. 
+    """
+
     def __init__(
         self,
         cutoff: float,
@@ -191,7 +200,9 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         self.gap_open = gap_open
         self.gap_extend = gap_extend
 
-    def _align_row(self, seqs: np.ndarray, i_row: int) -> np.ndarray:
+    def _align_row(
+        self, seqs: np.ndarray, self_alignment_scores: np.array, i_row: int
+    ) -> np.ndarray:
         """Generates a row of the triangular distance matrix. 
         
         Aligns `seqs[i_row]` with all other sequences in `seqs[i_row:]`. 
@@ -199,7 +210,11 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         Parameters
         ----------
         seqs
-            Array of amino acid sequences 
+            Array of amino acid sequences
+        self_alignment_scores
+            Array containing the scores of aligning each sequence in `seqs` 
+            with itself. This is used as a reference value to turn 
+            alignment scores into distances. 
         i_row
             Index of the row in the final distance matrix. Determines the target sequence. 
 
@@ -210,64 +225,20 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         subst_mat = parasail.Matrix(self.subst_mat)
         target = seqs[i_row]
         profile = parasail.profile_create_16(target, subst_mat)
-        result = np.full(len(seqs))
-        result[:] = np.nan
-        for j, s2 in enumerate(seqs[i_row:], start=i_row):
-            r = parasail.nw_scan_profile_16(profile, s2, self.gap_open, self.gap_extend)
-            result[j] = r.score
 
-        return result
+        def coord_generator():
+            for j, s2 in enumerate(seqs[i_row:], start=i_row):
+                r = parasail.nw_scan_profile_16(
+                    profile, s2, self.gap_open, self.gap_extend
+                )
+                max_score = np.min(self_alignment_scores[[i_row, j]])
+                d = max_score - r.score
+                if d <= self.cutoff:
+                    yield d + 1, j
 
-    def _calc_norm_factors(self, score_mat: np.ndarray) -> np.ndarray:
-        """Calculate normalization factors to normaliza a score matrix between 0 and 1. 
-        
-        We define the normalization factors as the minimum of the self-alignment score
-        of each pair of sequences. The refers to the max. possible score of an alignment
-        between the two sequences. 
-        """
-        self_scores = np.diag(score_mat)
-        a1, a2 = np.meshgrid(self_scores, self_scores)
-        norm_factors = np.minimum(a1, a2)
-
-        assert _is_symmetric(norm_factors), "Matrix not symmetric"
-
-        return norm_factors
-
-    def _score_to_dist(self, score_mat: np.ndarray) -> np.ndarray:
-        """Convert an alignment score matrix into a distance. 
-        
-        This is achieved by subtracting the alignment score from a normalization
-        vector that refers to the maximum possible alignment score between
-        two sequences. """
-        assert np.all(
-            np.argmax(score_mat, axis=1) == np.diag_indices_from(score_mat)
-        ), """Max value not on the diagonal"""
-
-        norm_factors = self._calc_norm_factors(score_mat)
-
-        dist_mat = norm_factors - score_mat
-        assert np.all(
-            dist_mat >= 0
-        ), "The norm factors should be the highest achievable score. "
-
-        return dist_mat
-
-    def _calc_score_mat(self, seqs: Collection) -> np.ndarray:
-        """Calculate the alignment scores of all-against-all pairwise
-        sequence alignments"""
-        p = Pool(self.n_jobs)
-        rows = p.starmap(self._align_row, zip(itertools.repeat(seqs), range(len(seqs))))
-
-        score_mat = np.vstack(rows)
-        assert score_mat.shape[0] == score_mat.shape[1]
-
-        # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
-        i_lower = np.tril_indices(score_mat.shape[0], -1)
-        score_mat[i_lower] = score_mat.T[i_lower]
-
-        assert _is_symmetric(score_mat), "Matrix not symmetric"
-
-        return score_mat
+        d, col = zip(*coord_generator())
+        row = np.zeros(len(col), dtype="int")
+        return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
 
     def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
         """Calculate the distances between amino acid sequences based on
@@ -282,9 +253,43 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         -------
         Symmetric, square matrix of normalized alignment distances. 
         """
-        score_mat = self._calc_score_mat(seqs)
-        dist_mat = self._score_to_dist(score_mat)
-        return dist_mat
+        # first, calculate self-alignments. We need them as refererence values
+        # to turn scores into dists
+        self_alignment_scores = np.array(
+            [
+                parasail.nw_scan_16(
+                    s,
+                    s,
+                    self.gap_open,
+                    self.gap_extend,
+                    parasail.Matrix(self.subst_mat),
+                ).score
+                for s in seqs
+            ]
+        )
+
+        p = Pool(self.n_jobs)
+        rows = p.starmap(
+            self._align_row,
+            zip(
+                itertools.repeat(seqs),
+                itertools.repeat(self_alignment_scores),
+                range(len(seqs)),
+            ),
+        )
+
+        score_mat = scipy.sparse.vstack(rows)
+        score_mat.eliminate_zeros()
+        score_mat = score_mat.tocsr()
+        assert score_mat.shape[0] == score_mat.shape[1]
+
+        # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
+        i_lower = np.tril_indices(score_mat.shape[0], -1)
+        score_mat[i_lower] = score_mat.T[i_lower]
+
+        assert _is_symmetric(score_mat), "Matrix not symmetric"
+
+        return score_mat
 
 
 def _dist_for_chain(
