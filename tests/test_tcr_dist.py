@@ -96,43 +96,33 @@ def test_levensthein_dist():
 
 
 def test_align_row():
-    aligner = _AlignmentDistanceCalculator(cutoff=10)
-    seqs = np.array(["AWAW", "VWVW", "HHHH"])
-    row0 = aligner._align_row(seqs, 0)
-    row2 = aligner._align_row(seqs, 2)
-    npt.assert_equal(row0, [2 * 4 + 2 * 11, 2 * 0 + 2 * 11, 2 * -2 + 2 * -2])
-    npt.assert_equal(row2, [np.nan, np.nan, 4 * 8])
+    aligner = _AlignmentDistanceCalculator(cutoff=255)
+    aligner10 = _AlignmentDistanceCalculator(cutoff=10)
+    seqs = ["AWAW", "VWVW", "HHHH"]
+    self_alignment_scores = np.array([30, 30, 32])
+    row0 = aligner._align_row(seqs, self_alignment_scores, 0)
+    row2 = aligner._align_row(seqs, self_alignment_scores, 2)
+    npt.assert_equal(row0.toarray(), [[1, 9, 39]])
+    npt.assert_equal(row2.toarray(), [[0, 0, 1]])
+
+    row0_10 = aligner10._align_row(seqs, self_alignment_scores, 0)
+    npt.assert_equal(row0_10.toarray(), [[1, 9, 0]])
 
 
-def test_calc_norm_factors(aligner):
-    score_mat = np.array([[15, 9, -2], [9, 11, 3], [-2, 3, 5]])
-    norm_factors = aligner._calc_norm_factors(score_mat)
-    npt.assert_equal(norm_factors, np.array([[15, 11, 5], [11, 11, 5], [5, 5, 5]]))
+def test_alignment_dist():
+    with pytest.raises(ValueError):
+        _AlignmentDistanceCalculator(3000)
+    aligner = _AlignmentDistanceCalculator(cutoff=255, n_jobs=1)
+    aligner10 = _AlignmentDistanceCalculator(cutoff=10)
+    seqs = np.array(["AAAA", "AAHA", "HHHH"])
 
-
-def test_score_to_dist(aligner):
-    with pytest.raises(AssertionError):
-        # Violates assumption that max value is on diagonal
-        score_mat = np.array([[15, 12, -2], [12, 11, 3], [-2, 3, 5]])
-        aligner._score_to_dist(score_mat)
-
-    score_mat = np.array([[15, 9, -2], [9, 11, 3], [-2, 3, 5]])
-    dist_mat = aligner._score_to_dist(score_mat)
+    res = aligner.calc_dist_mat(seqs)
     npt.assert_almost_equal(
-        dist_mat, np.array([[0, 2, 7], [2, 0, 2], [7, 2, 0]]), decimal=2
+        res.toarray(), np.array([[1, 7, 25], [7, 1, 19], [25, 19, 1]])
     )
 
-
-def test_alignment_score(aligner):
-    seqs = np.array(["AAAA", "HHHH"])
-    res = aligner._calc_score_mat(seqs)
-    npt.assert_equal(res, np.array([[4 * 4, 4 * -2], [4 * -2, 4 * 8]]))
-
-
-def test_alignment_dist(aligner):
-    seqs = np.array(["AAAA", "AAHA"])
-    res = aligner.calc_dist_mat(seqs)
-    npt.assert_almost_equal(res, np.array([[0, 6], [6, 0]]))
+    res = aligner10.calc_dist_mat(seqs)
+    npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [7, 1, 0], [0, 0, 1]]))
 
 
 def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
