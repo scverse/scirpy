@@ -15,21 +15,6 @@ import sctcrpy as st
 
 
 @pytest.fixture
-def aligner():
-    return _AlignmentDistanceCalculator()
-
-
-@pytest.fixture
-def identity():
-    return _IdentityDistanceCalculator()
-
-
-@pytest.fixture
-def levenshtein():
-    return _LevenshteinDistanceCalculator()
-
-
-@pytest.fixture
 def adata_cdr3():
     obs = pd.DataFrame(
         [
@@ -60,10 +45,11 @@ def adata_cdr3_mock_distance_calculator():
     return MockDistanceCalculator()
 
 
-def test_identity_dist(identity):
+def test_identity_dist():
+    identity = _IdentityDistanceCalculator()
     npt.assert_almost_equal(
-        identity.calc_dist_mat(["ARS", "ARS", "RSA"]),
-        np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]),
+        identity.calc_dist_mat(["ARS", "ARS", "RSA"]).toarray(),
+        np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
     )
 
 
@@ -85,14 +71,32 @@ def test_chain_dist_identity(adata_cdr3, identity):
     )
 
 
-def test_levensthein_dist(levenshtein):
+def test_levenshtein_compute_row():
+    levenshtein1 = _LevenshteinDistanceCalculator(1)
+    seqs = np.array(["A", "AAA", "AA"])
+    row0 = levenshtein1._compute_row(seqs, 0)
+    row2 = levenshtein1._compute_row(seqs, 2)
+    assert row0.getnnz() == 2
+    assert row2.getnnz() == 1
+    npt.assert_equal(row0.toarray(), [[1, 0, 2]])
+    npt.assert_equal(row2.toarray(), [[0, 0, 1]])
+
+
+def test_levensthein_dist():
+    levenshtein10 = _LevenshteinDistanceCalculator(10)
+    levenshtein1 = _LevenshteinDistanceCalculator(1, n_jobs=1)
     npt.assert_almost_equal(
-        levenshtein.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])),
-        np.array([[0, 1, 2, 2], [1, 0, 1, 1], [2, 1, 0, 1], [2, 1, 1, 0]]),
+        levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])).toarray(),
+        np.array([[1, 2, 3, 3], [2, 1, 2, 2], [3, 2, 1, 2], [3, 2, 2, 1]]),
+    )
+    npt.assert_almost_equal(
+        levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])).toarray(),
+        np.array([[1, 2, 0, 0], [2, 1, 2, 2], [0, 2, 1, 2], [0, 2, 2, 1]]),
     )
 
 
-def test_align_row(aligner):
+def test_align_row():
+    aligner = _AlignmentDistanceCalculator(cutoff=10)
     seqs = np.array(["AWAW", "VWVW", "HHHH"])
     row0 = aligner._align_row(seqs, 0)
     row2 = aligner._align_row(seqs, 2)

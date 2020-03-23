@@ -12,7 +12,8 @@ from .._util import _is_na, _is_symmetric
 import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
-import igraph as ig
+import scipy.sparse
+from scipy.sparse import coo_matrix, csr_matrix
 from .._util import get_igraph_from_adjacency
 
 
@@ -74,20 +75,36 @@ def _define_clonotypes_no_graph(
 
 
 class _DistanceCalculator(abc.ABC):
-    def __init__(self, n_jobs: Union[int, None] = None):
+    DTYPE = "uint8"
+
+    def __init__(self, cutoff: float, n_jobs: Union[int, None] = None):
         """
         Parameters
         ----------
+        cutoff:
+            Will eleminate distances > cutoff to make efficient 
+            use of sparse matrices. 
         n_jobs
             Number of jobs to use for the pairwise distance calculation. 
             If None, use all jobs. 
         """
+        if cutoff > 255:
+            raise ValueError(
+                "Using a cutoff > 255 is not possible due to the `uint8` dtype used"
+            )
+        self.cutoff = cutoff
         self.n_jobs = n_jobs
 
     @abc.abstractmethod
-    def calc_dist_mat(self, seqs: np.ndarray) -> np.ndarray:
+    def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
         """Calculate a symmetric, pairwise distance matrix of all sequences in `seq`.
-        Distances are non-negative values"""
+
+         * Only returns distances <= cutoff
+         * Distances are non-negative values.
+         * The resulting matrix is offsetted by 1 to allow efficient use
+           of sparse matrices ($d' = d+1$).
+           I.e. 0 -> d > cutoff; 1 -> d == 0; 2 -> d == 1; ...
+        """
         pass
 
 
@@ -96,27 +113,61 @@ class _IdentityDistanceCalculator(_DistanceCalculator):
     of sequences. I.e. 0 = sequence identical, 1 = sequences not identical
     """
 
-    def calc_dist_mat(self, seqs: np.ndarray) -> np.ndarray:
-        return 1 - np.identity(len(seqs))
+    def __init__(self, cutoff: float = 0, n_jobs: Union[int, None] = None):
+        """For this DistanceCalculator, per definition, the cutoff = 0. 
+        The `cutoff` argument is ignored. """
+        super().__init__(cutoff, n_jobs)
+
+    def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
+        """The offsetted matrix is the identity matrix."""
+        return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="csr")
 
 
 class _LevenshteinDistanceCalculator(_DistanceCalculator):
     """Calculates the Levenshtein (i.e. edit-distance) between sequences. """
 
-    def calc_dist_mat(self, seqs: np.ndarray) -> np.ndarray:
-        dist = scipy.spatial.distance.pdist(
-            seqs.reshape(-1, 1), metric=lambda x, y: levenshtein_dist(x[0], y[0])
+    def _compute_row(self, seqs: np.ndarray, i_row: int) -> coo_matrix:
+        target = seqs[i_row]
+
+        def coord_generator():
+            for j, s2 in enumerate(seqs[i_row:], start=i_row):
+                d = levenshtein_dist(target, s2)
+                if d <= self.cutoff:
+                    yield d + 1, j
+
+        d, col = zip(*coord_generator())
+        row = np.zeros(len(col), dtype="int")
+        return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, seqs.size))
+
+    def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
+        p = Pool(self.n_jobs)
+        rows = p.starmap(
+            self._compute_row, zip(itertools.repeat(seqs), range(len(seqs)))
         )
-        return scipy.spatial.distance.squareform(dist)
+
+        score_mat = scipy.sparse.vstack(rows)
+        score_mat.eliminate_zeros()
+        score_mat = score_mat.tocsr()
+        assert score_mat.shape[0] == score_mat.shape[1]
+
+        # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
+        i_lower = np.tril_indices(score_mat.shape[0], -1)
+        score_mat[i_lower] = score_mat.T[i_lower]
+
+        assert _is_symmetric(score_mat), "Matrix not symmetric"
+
+        return score_mat
 
 
 class _AlignmentDistanceCalculator(_DistanceCalculator):
     def __init__(
         self,
+        cutoff: float,
+        n_jobs: Union[int, None] = None,
+        *,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 1,
-        n_jobs: Union[int, None] = None,
     ):
         """Class to generate pairwise alignment distances
         
@@ -124,19 +175,21 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         Parameters
         ----------
+        cutoff
+            see `_DistanceCalculator`
+        n_jobs
+            see `_DistanceCalculator`
         subst_mat
             Name of parasail substitution matrix
         gap_open
             Gap open penalty
         gap_extend
             Gap extend penatly
-        n_jobs
-            Number of processes to use. Will be passed to :meth:`multiprocessing.Pool`
         """
+        super().__init__(cutoff, n_jobs)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend
-        self.n_jobs = n_jobs
 
     def _align_row(self, seqs: np.ndarray, i_row: int) -> np.ndarray:
         """Generates a row of the triangular distance matrix. 
@@ -157,7 +210,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         subst_mat = parasail.Matrix(self.subst_mat)
         target = seqs[i_row]
         profile = parasail.profile_create_16(target, subst_mat)
-        result = np.empty(len(seqs))
+        result = np.full(len(seqs))
         result[:] = np.nan
         for j, s2 in enumerate(seqs[i_row:], start=i_row):
             r = parasail.nw_scan_profile_16(profile, s2, self.gap_open, self.gap_extend)

@@ -6,11 +6,33 @@ from anndata import AnnData
 from collections import namedtuple
 import igraph as ig
 from scanpy import logging
+from scipy.sparse import issparse, find
+
+
+def _allclose_sparse(A, B, atol=1e-8):
+    """Check if two sparse matrices are almost equal. 
+
+    From https://stackoverflow.com/questions/47770906/how-to-test-if-two-sparse-arrays-are-almost-equal/47771340#47771340
+    """
+    if np.array_equal(A.shape, B.shape) == 0:
+        return False
+
+    r1, c1, v1 = find(A)
+    r2, c2, v2 = find(B)
+    index_match = np.array_equal(r1, r2) & np.array_equal(c1, c2)
+
+    if index_match == 0:
+        return False
+    else:
+        return np.allclose(v1, v2, atol=atol, equal_nan=True)
 
 
 def _is_symmetric(M) -> bool:
     """check if matrix M is symmetric"""
-    return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
+    if issparse(M):
+        return _allclose_sparse(M, M.T)
+    else:
+        return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
 
 
 def _is_na(x):
