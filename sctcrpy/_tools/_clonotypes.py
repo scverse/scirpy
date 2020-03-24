@@ -135,7 +135,14 @@ def define_clonotypes(
 
 
 def clonotype_network(
-    adata, *, layout="fr", key="clonotype", key_added="X_clonotype_network", min_size=1
+    adata,
+    *,
+    layout: str = "fr",
+    min_size: int = 1,
+    neighbors_key: str = "neighbors",
+    key_clonotype_size: str = "clonotype_size",
+    key_added: str = "X_clonotype_network",
+    inplace: bool = False,
 ):
     """Build the clonotype network for plotting
     
@@ -145,15 +152,26 @@ def clonotype_network(
         Only show clonotypes with at least `min_size` cells.
     """
     try:
-        graph = get_igraph_from_adjacency(adata.uns["sctcrpy"][key + "_connectivities"])
+        conn = adata.uns["sctcrpy"][neighbors_key]["connectivities"]
     except KeyError:
-        raise ValueError("You need to run define_clonotypes first.")
+        raise ValueError("Connectivity data not found. Did you run `pp.tcr_neighbors`?")
 
-    subgraph_idx = np.where(adata.obs[key + "_size"].values >= min_size)[0]
+    try:
+        clonotype_size = adata.obs[key_clonotype_size].values
+    except KeyError:
+        raise ValueError(
+            "Clonotype size information not found. Did you run `tl.define_clonotypes`?"
+        )
+
+    graph = get_igraph_from_adjacency(conn)
+
+    # remove singletons/small subgraphs
+    subgraph_idx = np.where(clonotype_size >= min_size)[0]
     if len(subgraph_idx) == 0:
         raise ValueError("No subgraphs with size >= {} found.".format(min_size))
+
     graph = graph.subgraph(subgraph_idx)
     layout_ = graph.layout(layout)
     coordinates = np.full((adata.n_obs, 2), fill_value=np.nan)
     coordinates[subgraph_idx, :] = layout_.coords
-    adata.obsm["X_clonotype_network"] = coordinates
+    adata.obsm[key_added] = coordinates

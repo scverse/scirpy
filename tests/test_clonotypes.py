@@ -78,3 +78,7 @@ def test_define_clonotypes(adata_conn):
     st.tl.define_clonotypes(adata_conn, key_added="ct2", resolution=2, n_iterations=10)
     npt.assert_equal(adata_conn.obs["ct2"].values, ["0", "1", "2", "3"])
     npt.assert_equal(adata_conn.obs["ct2_size"].values, [1] * 4)
+
+
+# def test_clonotype_network():
+#     pass

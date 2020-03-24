@@ -216,6 +216,15 @@ def test_dist_to_connectivities():
         np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
     )
 
+    D = scipy.sparse.csr_matrix(
+        [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
+    )
+    C = _dist_to_connectivities(D, 0)
+    assert C.nnz == D.nnz
+    npt.assert_equal(
+        C.toarray(), D.toarray(),
+    )
+
 
 def test_tcr_neighbors(adata_cdr3):
     conn, dist = st.pp.tcr_neighbors(adata_cdr3, inplace=False)

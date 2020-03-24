@@ -403,9 +403,15 @@ def _dist_to_connectivities(dist, cutoff):
         to the maximum possible value in dist. 
     """
     assert isinstance(dist, csr_matrix)
-    # actual distances
+
+    if cutoff == 0:
+        return dist
+
     connectivities = dist.copy()
+
+    # actual distances
     d = connectivities.data - 1
+
     # structure of the matrix stayes the same, we can safely change the data only
     connectivities.data = (cutoff - d) / cutoff
     return connectivities
