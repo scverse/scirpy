@@ -42,6 +42,8 @@ Preprocessing: `pp`
    :toctree: .
 
    merge_with_tcr
+   tcr_dist
+   tcr_neighbors
 
 
 Tools: `tl`
@@ -54,7 +56,6 @@ Tools: `tl`
 
    define_clonotypes
    clonotype_network
-   tcr_dist
    chain_pairing
    clip_and_count
    alpha_diversity
