@@ -225,7 +225,6 @@ def get_igraph_from_adjacency(adj: np.array, edge_type: str = None):
     edge_type
         A type attribute added to all edges
     """
-
     g = ig.Graph(directed=False)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
 
