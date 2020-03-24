@@ -6,11 +6,67 @@ from anndata import AnnData
 from collections import namedtuple
 import igraph as ig
 from scanpy import logging
+from scipy.sparse import issparse, csr_matrix, csc_matrix
+import scipy.sparse
+
+
+def _allclose_sparse(A, B, atol=1e-8):
+    """Check if two sparse matrices are almost equal. 
+
+    From https://stackoverflow.com/questions/47770906/how-to-test-if-two-sparse-arrays-are-almost-equal/47771340#47771340
+    """
+    if np.array_equal(A.shape, B.shape) == 0:
+        return False
+
+    r1, c1, v1 = scipy.sparse.find(A)
+    r2, c2, v2 = scipy.sparse.find(B)
+    index_match = np.array_equal(r1, r2) & np.array_equal(c1, c2)
+
+    if index_match == 0:
+        return False
+    else:
+        return np.allclose(v1, v2, atol=atol, equal_nan=True)
+
+
+def _reduce_nonzero(A, B, f=np.min):
+    """Apply a reduction function to two sparse matrices ignoring
+    0-entries"""
+    if A.shape != B.shape:
+        raise ValueError("Shapes of a and B must match. ")
+    if not isinstance(A, (csc_matrix, csr_matrix)) or not isinstance(
+        B, (csc_matrix, csr_matrix)
+    ):
+        raise ValueError("This only works with sparse matrices in CSC or CSR format. ")
+
+    def _setdiff_coords(A, B):
+        """Returns X and Y coords that only exist in matrix A, but not in B"""
+        coords_A = set(zip(*A.nonzero()))
+        coords_B = set(zip(*B.nonzero()))
+        setdiff = coords_A - coords_B
+        if len(setdiff):
+            ind0, ind1 = zip(*setdiff)
+            return np.array(ind0), np.array(ind1)
+        else:
+            return np.array([]), np.array([])
+
+    # now the indices that exist in both matrices contain the mimimum.
+    # those that only exist in one matrix 0
+    X = A.minimum(B).tolil()
+    # Therefore, we fill those that are in one matrix, but not another
+    not_in_b0, not_in_b1 = _setdiff_coords(A, X)
+    not_in_a0, not_in_a1 = _setdiff_coords(B, X)
+    X[not_in_b0, not_in_b1] = A[not_in_b0, not_in_b1]
+    X[not_in_a0, not_in_a1] = B[not_in_a0, not_in_a1]
+
+    return X.tocsr()
 
 
 def _is_symmetric(M) -> bool:
     """check if matrix M is symmetric"""
-    return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
+    if issparse(M):
+        return _allclose_sparse(M, M.T)
+    else:
+        return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
 
 
 def _is_na(x):
@@ -162,7 +218,7 @@ def _read_to_str(path):
         return f.read()
 
 
-def get_igraph_from_adjacency(adj: np.array, edge_type: str = None):
+def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
     """Get igraph graph from adjacency matrix.
     Better than Graph.Adjacency for sparse matrices
 
@@ -173,11 +229,10 @@ def get_igraph_from_adjacency(adj: np.array, edge_type: str = None):
     edge_type
         A type attribute added to all edges
     """
-
     g = ig.Graph(directed=False)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
 
-    sources, targets = np.triu(adj, k=1).nonzero()
+    sources, targets = scipy.sparse.triu(adj, k=1).nonzero()
     weights = adj[sources, targets].astype("float")
     g.add_edges(list(zip(sources, targets)))
 
