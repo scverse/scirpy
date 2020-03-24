@@ -6,7 +6,8 @@ from anndata import AnnData
 from collections import namedtuple
 import igraph as ig
 from scanpy import logging
-from scipy.sparse import issparse, find, csr_matrix, csc_matrix
+from scipy.sparse import issparse, csr_matrix, csc_matrix
+import scipy.sparse
 
 
 def _allclose_sparse(A, B, atol=1e-8):
@@ -17,8 +18,8 @@ def _allclose_sparse(A, B, atol=1e-8):
     if np.array_equal(A.shape, B.shape) == 0:
         return False
 
-    r1, c1, v1 = find(A)
-    r2, c2, v2 = find(B)
+    r1, c1, v1 = scipy.sparse.find(A)
+    r2, c2, v2 = scipy.sparse.find(B)
     index_match = np.array_equal(r1, r2) & np.array_equal(c1, c2)
 
     if index_match == 0:
@@ -217,7 +218,7 @@ def _read_to_str(path):
         return f.read()
 
 
-def get_igraph_from_adjacency(adj: np.array, edge_type: str = None):
+def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
     """Get igraph graph from adjacency matrix.
     Better than Graph.Adjacency for sparse matrices
 
@@ -231,7 +232,7 @@ def get_igraph_from_adjacency(adj: np.array, edge_type: str = None):
     g = ig.Graph(directed=False)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
 
-    sources, targets = np.triu(adj, k=1).nonzero()
+    sources, targets = scipy.sparse.triu(adj, k=1).nonzero()
     weights = adj[sources, targets].astype("float")
     g.add_edges(list(zip(sources, targets)))
 

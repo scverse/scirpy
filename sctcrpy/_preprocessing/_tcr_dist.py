@@ -293,9 +293,9 @@ def _dist_for_chain(
         cell_mat[i_cm_0, i_cm_1] = dist_mat[i_dm_0, i_dm_1]
         cell_mat = cell_mat.tocsr()
 
-        if chain1 == chain2:
-            # TRX1:TRX2 is not supposed to be symmetric
-            assert _is_symmetric(cell_mat), "matrix not symmetric"
+        # if chain1 == chain2:
+        #     # TRX1:TRX2 is not supposed to be symmetric
+        #     assert _is_symmetric(cell_mat), "matrix not symmetric"
 
         cell_mats.append(cell_mat)
         if chain1 != chain2:
@@ -471,12 +471,16 @@ def tcr_neighbors(
         _reduce_chains(tra_dists, chains),
         _reduce_chains(trb_dists, chains),
     )
+    logging.debug("Finished reducing dists per chain. ")
 
-    assert _is_symmetric(tra_dist)
-    assert _is_symmetric(trb_dist)
+    # assert _is_symmetric(tra_dist)
+    # assert _is_symmetric(trb_dist)
 
     dist = _reduce_dists(tra_dist, trb_dist, strategy)
+    logging.debug("Finished reducing dists across chains.")
+
     connectivities = _dist_to_connectivities(dist, cutoff=cutoff)
+    logging.debug("Finished converting distances to connectivities. ")
 
     if not inplace:
         return connectivities, dist
