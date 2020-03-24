@@ -12,7 +12,7 @@ import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
 import scipy.sparse
-from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
 from functools import reduce
 
 
@@ -90,12 +90,14 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
-        score_mat = score_mat.tocsr()
+        score_mat = score_mat.tolil()
         assert score_mat.shape[0] == score_mat.shape[1]
 
         # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
         i_lower = np.tril_indices(score_mat.shape[0], -1)
         score_mat[i_lower] = score_mat.T[i_lower]
+
+        score_mat = score_mat.tocsr()
 
         assert _is_symmetric(score_mat), "Matrix not symmetric"
 
@@ -222,13 +224,14 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
-        score_mat = score_mat.tocsr()
+        score_mat = score_mat.tolil()
         assert score_mat.shape[0] == score_mat.shape[1]
 
         # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
         i_lower = np.tril_indices(score_mat.shape[0], -1)
         score_mat[i_lower] = score_mat.T[i_lower]
 
+        score_mat = score_mat.tocsr()
         assert _is_symmetric(score_mat), "Matrix not symmetric"
 
         return score_mat
@@ -279,7 +282,7 @@ def _dist_for_chain(
     cell_mats = list()
     for chain1, chain2 in [(1, 1), (1, 2), (2, 2)]:
         chain1, chain2 = "{}_{}".format(chain, chain1), "{}_{}".format(chain, chain2)
-        cell_mat = csr_matrix((adata.n_obs, adata.n_obs))
+        cell_mat = lil_matrix((adata.n_obs, adata.n_obs))
 
         # 2d indices in the cell matrix
         # This is several orders of magnitudes faster than using nested for loops.
@@ -288,6 +291,7 @@ def _dist_for_chain(
         i_dm_0, i_dm_1 = np.meshgrid(seq_inds[chain1], seq_inds[chain2])
 
         cell_mat[i_cm_0, i_cm_1] = dist_mat[i_dm_0, i_dm_1]
+        cell_mat = cell_mat.tocsr()
 
         if chain1 == chain2:
             # TRX1:TRX2 is not supposed to be symmetric
