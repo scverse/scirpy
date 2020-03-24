@@ -51,14 +51,14 @@ def _reduce_nonzero(A, B, f=np.min):
 
     # now the indices that exist in both matrices contain the mimimum.
     # those that only exist in one matrix 0
-    X = A.minimum(B)
+    X = A.minimum(B).tolil()
     # Therefore, we fill those that are in one matrix, but not another
     not_in_b0, not_in_b1 = _setdiff_coords(A, X)
     not_in_a0, not_in_a1 = _setdiff_coords(B, X)
     X[not_in_b0, not_in_b1] = A[not_in_b0, not_in_b1]
     X[not_in_a0, not_in_a1] = B[not_in_a0, not_in_a1]
 
-    return X
+    return X.tocsr()
 
 
 def _is_symmetric(M) -> bool:
