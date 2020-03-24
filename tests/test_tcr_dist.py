@@ -1,13 +1,13 @@
 import pytest
-from sctcrpy._tools._tcr_dist import (
+from sctcrpy._preprocessing._tcr_dist import (
     _AlignmentDistanceCalculator,
     _DistanceCalculator,
     _IdentityDistanceCalculator,
     _LevenshteinDistanceCalculator,
     _dist_for_chain,
     _reduce_dists,
+    _reduce_chains,
     _dist_to_connectivities,
-    tcr_dist,
 )
 import numpy as np
 import pandas as pd
@@ -216,7 +216,7 @@ def test_define_clonotypes_no_graph():
 
 def test_tcr_dist(adata_cdr3):
     for metric in ["alignment", "identity", "levenshtein"]:
-        tra_dists, trb_dists = st.tl.tcr_dist(adata_cdr3, metric=metric)
+        tra_dists, trb_dists = st.pp.tcr_dist(adata_cdr3, metric=metric)
         assert len(tra_dists) == len(trb_dists) == 4
         for tra_dist, trb_dist in zip(tra_dists, trb_dists):
             assert (
@@ -252,3 +252,19 @@ def test_dist_to_connectivities():
         C.toarray(),
         np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
     )
+
+
+def test_tcr_neighbors(adata_cdr3):
+    conn, dist = st.pp.tcr_neighbors(adata_cdr3, inplace=False)
+    assert conn.shape == dist.shape == (5, 5)
+
+    st.pp.tcr_neighbors(
+        adata_cdr3,
+        metric="levenshtein",
+        cutoff=3,
+        strategy="TRA",
+        chains="all",
+        key_added="nbs",
+    )
+    assert adata_cdr3.uns["sctcrpy"]["nbs"]["connectivities"].shape == (5, 5)
+    assert adata_cdr3.uns["sctcrpy"]["nbs"]["distances"].shape == (5, 5)

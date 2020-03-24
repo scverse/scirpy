@@ -42,8 +42,11 @@ def _reduce_nonzero(A, B, f=np.min):
         coords_A = set(zip(*A.nonzero()))
         coords_B = set(zip(*B.nonzero()))
         setdiff = coords_A - coords_B
-        ind0, ind1 = zip(*setdiff)
-        return np.array(ind0), np.array(ind1)
+        if len(setdiff):
+            ind0, ind1 = zip(*setdiff)
+            return np.array(ind0), np.array(ind1)
+        else:
+            return np.array([]), np.array([])
 
     # now the indices that exist in both matrices contain the mimimum.
     # those that only exist in one matrix 0

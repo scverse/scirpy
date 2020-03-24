@@ -27,6 +27,7 @@ def test_reduce_nonzero():
         _reduce_nonzero(A, B)
     npt.assert_equal(_reduce_nonzero(A_csr, B_csr).toarray(), expected)
     npt.assert_equal(_reduce_nonzero(A_csc, B_csc).toarray(), expected)
+    npt.assert_equal(_reduce_nonzero(A_csr, A_csr.copy()).toarray(), A_csr.toarray())
 
 
 def test_is_symmatric():
