@@ -53,10 +53,6 @@ It just has additional TCR-related columns in `obs`:
 adata.obs
 ```
 
-```python
-
-```
-
 ## Preprocess Transcriptomics data
 
 Transcriptomics data needs to be filtered and preprocessed as with any other single-cell dataset.
@@ -128,7 +124,11 @@ All connected nodes form a clonotype.
 * With the `chains` parameter, we can specify if we want to consider only the most abundant TRA and TRB sequences (`primary_only`), or all four CDR3 sequences, if available (`all`). 
 
 ```python
-st.tl.define_clonotypes(adata, strategy="all", chains="primary_only", cutoff=0)
+st.pp.tcr_neighbors(adata, strategy="all", chains="primary_only", cutoff=0)
+```
+
+```python
+st.tl.define_clonotypes(adata)
 ```
 
 Let's visualize the resulting graph. 
@@ -148,7 +148,8 @@ Now, we allow a TCR-distance of 20. That's the equivalent of 4 `R`s mutating int
 Also we now use `chains='all'`
 
 ```python
-st.tl.define_clonotypes(adata, strategy="all", chains="all", cutoff=20)
+st.pp.tcr_neighbors(adata, strategy="all", chains="all", cutoff=20)
+st.tl.define_clonotypes(adata)
 ```
 
 ```python

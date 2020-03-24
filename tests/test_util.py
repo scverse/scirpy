@@ -1,8 +1,62 @@
-from sctcrpy._util import _is_na, _is_false, _is_true, _normalize_counts
+from sctcrpy._util import (
+    _is_na,
+    _is_false,
+    _is_true,
+    _normalize_counts,
+    _is_symmetric,
+    _reduce_nonzero,
+)
 import numpy as np
 import pandas as pd
 import numpy.testing as npt
 import pytest
+import scipy.sparse
+
+
+def test_reduce_nonzero():
+    A = np.array([[0, 0, 3], [1, 2, 5], [7, 0, 0]])
+    B = np.array([[1, 0, 3], [2, 1, 0], [6, 0, 5]])
+    A_csr = scipy.sparse.csr_matrix(A)
+    B_csr = scipy.sparse.csr_matrix(B)
+    A_csc = scipy.sparse.csc_matrix(A)
+    B_csc = scipy.sparse.csc_matrix(B)
+
+    expected = np.array([[1, 0, 3], [1, 1, 5], [6, 0, 5]])
+
+    with pytest.raises(ValueError):
+        _reduce_nonzero(A, B)
+    npt.assert_equal(_reduce_nonzero(A_csr, B_csr).toarray(), expected)
+    npt.assert_equal(_reduce_nonzero(A_csc, B_csc).toarray(), expected)
+    npt.assert_equal(_reduce_nonzero(A_csr, A_csr.copy()).toarray(), A_csr.toarray())
+
+
+def test_is_symmatric():
+    M = np.array([[1, 2, 2], [2, 1, 3], [2, 3, 1]])
+    S_csr = scipy.sparse.csr_matrix(M)
+    S_csc = scipy.sparse.csc_matrix(M)
+    S_lil = scipy.sparse.lil_matrix(M)
+    assert _is_symmetric(M)
+    assert _is_symmetric(S_csr)
+    assert _is_symmetric(S_csc)
+    assert _is_symmetric(S_lil)
+
+    M = np.array([[1, 2, 2], [2, 1, np.nan], [2, np.nan, np.nan]])
+    S_csr = scipy.sparse.csr_matrix(M)
+    S_csc = scipy.sparse.csc_matrix(M)
+    S_lil = scipy.sparse.lil_matrix(M)
+    assert _is_symmetric(M)
+    assert _is_symmetric(S_csr)
+    assert _is_symmetric(S_csc)
+    assert _is_symmetric(S_lil)
+
+    M = np.array([[1, 2, 2], [2, 1, 3], [3, 2, 1]])
+    S_csr = scipy.sparse.csr_matrix(M)
+    S_csc = scipy.sparse.csc_matrix(M)
+    S_lil = scipy.sparse.lil_matrix(M)
+    assert not _is_symmetric(M)
+    assert not _is_symmetric(S_csr)
+    assert not _is_symmetric(S_csc)
+    assert not _is_symmetric(S_lil)
 
 
 def test_is_na():
