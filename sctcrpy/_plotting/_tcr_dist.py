@@ -2,7 +2,7 @@ import scanpy as sc
 from anndata import AnnData
 import igraph as ig
 import numpy as np
-from .._tools._tcr_dist import get_igraph_from_adjacency
+from .._util import get_igraph_from_adjacency
 
 
 def clonotype_network(adata, color, *, key="clonotype", obsm_key="X_clonotype_network"):
