@@ -8,13 +8,14 @@ import pandas as pd
 import numpy as np
 from scanpy import logging
 import numpy.testing as npt
-from .._util import _is_na, _is_symmetric
+from .._util import _is_na, _is_symmetric, _reduce_nonzero
 import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
 import scipy.sparse
 from scipy.sparse import coo_matrix, csr_matrix
 from .._util import get_igraph_from_adjacency
+from functools import reduce
 
 
 def _define_clonotypes_no_graph(
@@ -362,8 +363,9 @@ def tcr_dist(
     adata: AnnData,
     *,
     metric: Literal["alignment", "identity", "levenshtein"] = "alignment",
+    cutoff: float = 2,
     n_jobs: Union[int, None] = None,
-) -> Tuple:
+) -> Tuple[csr_matrix, csr_matrix]:
     """Computes the distances between CDR3 sequences 
 
     Parameters
@@ -373,6 +375,11 @@ def tcr_dist(
         based on normalized BLOSUM62 scores. 
         `identity` results in `0` for an identical sequence, `1` for different sequence. 
         `levenshtein` is the Levenshtein edit distance between two strings. 
+    cutoff
+        Only store distances < cutoff in the sparse distance matrix
+    j_jobs
+        Number of CPUs to use for alignment and levenshtein distance. 
+        Default: use all CPUS. 
 
     Returns
     -------
@@ -380,11 +387,11 @@ def tcr_dist(
 
     """
     if metric == "alignment":
-        dist_calc = _AlignmentDistanceCalculator(n_jobs=n_jobs)
+        dist_calc = _AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     elif metric == "identity":
-        dist_calc = _IdentityDistanceCalculator()
+        dist_calc = _IdentityDistanceCalculator(cutoff=cutoff)
     elif metric == "levenshtein":
-        dist_calc = _LevenshteinDistanceCalculator()
+        dist_calc = _LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     else:
         raise ValueError("Invalid distance metric.")
 
@@ -394,26 +401,90 @@ def tcr_dist(
     return tra_dists, trb_dists
 
 
-def define_clonotypes(
+def _reduce_chains(
+    dists: csr_matrix, mode: Literal["primary_only", "all"]
+) -> csr_matrix:
+    """Combine distances between primary and secondary cdr3 chains. 
+
+    Possible modes are
+     * "primary only": use only the primary chain
+     * "all": use the minimal distance between any of the primary and secondary chains. 
+     """
+    if mode == "primary_only":
+        return dists[0]
+    elif mode == "all":
+        return reduce(_reduce_nonzero, dists)
+    else:
+        raise ValueError("Unknown value for `mode`")
+
+
+def _reduce_dists(
+    tra_dist, trb_dist, mode: Literal["TRA", "TRB", "all", "any"]
+) -> csr_matrix:
+    """Combine TRA and TRB distances into a single distance matrix based on `mode`. 
+
+    modes: 
+     * "TRA": use only the TRA distance
+     * "TRB": use only the TRB distance 
+     * "any": Either TRA or TRB needs to have a distance < cutoff. The 
+        resulting distance will be the minimum distance of either TRA or TRB. 
+     * "all": Both TRA and TRB need to have a distance < cutoff. The 
+        resulting distance will be the maximum distance of either TRA or TRB. 
+    """
+    if mode == "TRA":
+        return tra_dist
+    elif mode == "TRB":
+        return trb_dist
+    elif mode == "any":
+        return _reduce_nonzero(tra_dist, trb_dist)
+    elif mode == "all":
+        # multiply == logical and for boolean (sparse) matrices
+        return tra_dist.maximum(trb_dist).multiply(tra_dist > 0).multiply(trb_dist > 0)
+    else:
+        raise ValueError("Unknown mode. ")
+
+
+def _dist_to_connectivities(dist, cutoff):
+    """Convert a (sparse) distance matrix to a weighted adjacency matrix. 
+
+    Parameters
+    ----------
+    dist
+        distance matrix. already contains `0` entries for edges 
+        that are not connected. 
+    cutoff
+        cutoff that was used to filter the distance matrix. 
+        Will be used to normalize the distances and refers
+        to the maximum possible value in dist. 
+    """
+    assert isinstance(dist, csr_matrix)
+    # actual distances
+    connectivities = dist.copy()
+    d = connectivities.data - 1
+    # structure of the matrix stayes the same, we can safely change the data only
+    connectivities.data = (cutoff - d) / cutoff
+    return connectivities
+
+
+def tcr_neighbors(
     adata: AnnData,
     *,
-    metric: Literal["alignment", "levenshtein"] = "alignment",
-    key_added: str = "clonotype",
+    metric: Literal["identity", "alignment", "levenshtein"] = "alignment",
     cutoff: int = 2,
-    strategy: Literal["TRA", "TRB", "all", "any", "lenient"] = "any",
+    strategy: Literal["TRA", "TRB", "all", "any"] = "any",
     chains: Literal["primary_only", "all"] = "primary_only",
+    key_added: str = "neighbors",
     inplace: bool = True,
-    resolution: float = 1,
-    n_iterations: int = 5,
     n_jobs: Union[int, None] = None,
-) -> Union[Tuple, None]:
-    """Define clonotypes based on cdr3 distance.
-    
-    For now, uses primary TRA and TRB only. 
+) -> Union[Tuple[csr_matrix, csr_matrix], None]:
+    """Construct a cell x cell neighborhood graph based on CDR3 sequence
+    similarity. 
 
     Parameters
     ----------
     metric
+        "identity" = Calculate 0/1 distance based on sequence identity. Equals a 
+            cutoff of 0. 
         "alignment" - Calculate distance using pairwise sequence alignment 
             and BLOSUM62 matrix
         "levenshtein" - Levenshtein edit distance
@@ -426,69 +497,125 @@ def define_clonotypes(
         "TRB" - only consider TRB sequences
         "all" - both TRA and TRB need to match
         "any" - either TRA or TRB need to match
-        "lenient" - both TRA and TRB need to match, however it is tolerated if for a 
-          given cell pair, no TRA or TRB sequence is available. 
     chains:
         Use only primary chains ("TRA_1", "TRB_1") or all four chains? 
         When considering all four chains, at least one of them needs
         to match. 
-
+    key_added:
+        dict key under which the result will be stored in `adata.uns["sctcrpy"]`
+        when `inplace` is True. 
+    inplace:
+        If True, store the results in adata.uns. If False, returns
+        the results. 
+    n_jobs:
+        Number of cores to use for alignment and levenshtein distance. 
+    
+    Returns
+    -------
+    connectivities
+        weighted adjacency matrix
+    dist
+        cell x cell distance matrix with the distances as computed according to `metric`
+        offsetted by 1 to make use of sparse matrices. 
     """
     if cutoff == 0:
         metric = "identity"
-    tra_dists, trb_dists = tcr_dist(adata, metric=metric, n_jobs=n_jobs)
+    tra_dists, trb_dists = tcr_dist(adata, metric=metric, n_jobs=n_jobs, cutoff=cutoff)
 
-    if chains == "primary_only":
-        tra_dist = tra_dists[0]
-        trb_dist = trb_dists[0]
-    elif chains == "all":
-        tra_dist = np.fmin.reduce(tra_dists)
-        trb_dist = np.fmin.reduce(trb_dists)
-    else:
-        raise ValueError("Unknown value for `chains`")
+    tra_dist, trb_dist = (
+        _reduce_chains(tra_dists, chains),
+        _reduce_chains(trb_dists, chains),
+    )
 
     assert _is_symmetric(tra_dist)
     assert _is_symmetric(trb_dist)
 
-    # TODO implement weights
-    with np.errstate(invalid="ignore"):
-        if strategy == "TRA":
-            adj = tra_dist <= cutoff
-        elif strategy == "TRB":
-            adj = trb_dist <= cutoff
-        elif strategy == "any":
-            adj = (tra_dist <= cutoff) | (trb_dist <= cutoff)
-        elif strategy == "all":
-            adj = (tra_dist <= cutoff) & (trb_dist <= cutoff)
-        elif strategy == "lenient":
-            adj = (
-                ((tra_dist == 0) | np.isnan(tra_dist))
-                & ((trb_dist == 0) | np.isnan(trb_dist))
-                & ~(np.isnan(tra_dist) & np.isnan(trb_dist))
-            )
-        else:
-            raise ValueError("Unknown strategy. ")
+    dist = _reduce_dists(tra_dist, trb_dist, strategy)
+    connectivities = _dist_to_connectivities(dist)
 
-    g = get_igraph_from_adjacency(adj)
+    if not inplace:
+        return connectivities, dist
+    else:
+        if "sctcrpy" not in adata.uns:
+            adata.uns["sctcrpy"] = dict()
+        adata.uns["sctcrpy"][key_added] = dict()
+        adata.uns["sctcrpy"][key_added]["params"] = {
+            "metric": metric,
+            "cutoff": cutoff,
+            "strategy": strategy,
+            "chains": chains,
+        }
+        adata.uns["sctcrpy"][key_added]["connectivities"] = connectivities
+        adata.uns["sctcrpy"][key_added]["distances"] = connectivities
 
-    # find all connected partitions that are
-    # connected by at least one edge
-    partitions = g.community_leiden(
-        objective_function="modularity",
-        resolution_parameter=resolution,
-        n_iterations=n_iterations,
-    )
 
-    clonotype = np.array([str(x) for x in partitions.membership])
+def define_clonotypes(
+    adata,
+    *,
+    partitions: Literal["connected", "leiden"] = "leiden",
+    resolution: float = 1,
+    n_iterations: int = 5,
+    neighbors_key: str = "neighbors",
+    key_added: str = "clonotype",
+    inplace: bool = True,
+) -> Union[Tuple[np.ndarray, np.ndarray], None]:
+    """Define clonotypes based on cdr3 distance.
+    
+    Parameters
+    ----------
+    adata
+        annotated data matrix
+    partitions
+        How to find graph partitions that define a clonotype. 
+        Possible values are 'leiden', for using the "Leiden" algorithm and 
+        "connected" to find fully connected sub-graphs. 
+
+        The difference is that the Leiden algorithm further divides 
+        fully connected subgraphs into highly-connected modules. 
+    resolution
+        resolution parameter for the leiden algorithm. 
+    n_iterations
+        n_iterations parameter for the leiden algorithm. 
+    neighbors_key
+        key under which the neighboorhood graph is stored in adata
+    key_added
+        name of the columns that will be added to `adata.obs` if inplace is True. 
+        Will create the columns `{key_added}` and `{key_added}_size`. 
+    inplace
+        If true, adds the results to anndata, otherwise returns them. 
+
+    Returns
+    -------
+    clonotype
+        an array containing the clonotype id for each cell
+    clonotype_size
+        an array containing the number of cells in the respective clonotype
+        for each cell.    
+    """
+    try:
+        conn = adata.uns["sctcrpy"][neighbors_key]["connectivities"]
+    except KeyError:
+        raise ValueError(
+            "Connectivities were not found. Did you run `pp.tcr_neighbors`?"
+        )
+    g = get_igraph_from_adjacency(conn)
+
+    if partitions == "leiden":
+        part = g.community_leiden(
+            objective_function="modularity",
+            resolution_parameter=resolution,
+            n_iterations=n_iterations,
+        )
+    else:
+        part = g.clusters(mode="weak")
+
+    clonotype = np.array([str(x) for x in part.membership])
     clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
     assert len(clonotype) == len(clonotype_size) == adata.obs.shape[0]
 
     if not inplace:
-        return (adj, clonotype, clonotype_size)
+        return clonotype, clonotype_size
     else:
-        if "sctcrpy" not in adata.uns:
-            adata.uns["sctcrpy"] = dict()
-        adata.uns["sctcrpy"][key_added + "_connectivities"] = adj
         adata.obs[key_added] = clonotype
         adata.obs[key_added + "_size"] = clonotype_size
 

@@ -5,6 +5,8 @@ from sctcrpy._tools._tcr_dist import (
     _IdentityDistanceCalculator,
     _LevenshteinDistanceCalculator,
     _dist_for_chain,
+    _reduce_dists,
+    _dist_to_connectivities,
     tcr_dist,
 )
 import numpy as np
@@ -21,13 +23,13 @@ from functools import reduce
 def adata_cdr3():
     obs = pd.DataFrame(
         [
-            ["cell1", "AAA", "AHA"],
-            ["cell2", "AHA", "nan"],
-            ["cell3", "nan", "nan"],
-            ["cell4", "AAA", "AAA"],
-            ["cell5", "nan", "AAA"],
+            ["cell1", "AAA", "AHA", "KKY", "KKK"],
+            ["cell2", "AHA", "nan", "KK", "KKK"],
+            ["cell3", "nan", "nan", "nan", "nan"],
+            ["cell4", "AAA", "AAA", "LLL", "AAA"],
+            ["cell5", "nan", "AAA", "LLL", "nan"],
         ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3"],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata
@@ -210,3 +212,43 @@ def test_define_clonotypes_no_graph():
     # test inplace
     st.tl._define_clonotypes_no_graph(adata, key_added="clonotype_")
     npt.assert_equal(res, adata.obs["clonotype_"].values)
+
+
+def test_tcr_dist(adata_cdr3):
+    for metric in ["alignment", "identity", "levenshtein"]:
+        tra_dists, trb_dists = st.tl.tcr_dist(adata_cdr3, metric=metric)
+        assert len(tra_dists) == len(trb_dists) == 4
+        for tra_dist, trb_dist in zip(tra_dists, trb_dists):
+            assert (
+                tra_dist.shape == trb_dist.shape == (adata_cdr3.n_obs, adata_cdr3.n_obs)
+            )
+
+
+def test_reduce_dists():
+    A = scipy.sparse.csr_matrix(
+        [[0, 1, 3, 0], [1, 0, 0, 0], [0, 7, 0, 8], [0, 0, 0, 0]]
+    )
+    B = scipy.sparse.csr_matrix(
+        [[0, 2, 0, 0], [0, 0, 0, 0], [0, 6, 0, 9], [0, 1, 0, 0]]
+    )
+    expected_all = np.array([[0, 2, 0, 0], [0, 0, 0, 0], [0, 7, 0, 9], [0, 0, 0, 0]])
+    expected_any = np.array([[0, 1, 3, 0], [1, 0, 0, 0], [0, 6, 0, 8], [0, 1, 0, 0]])
+    A.eliminate_zeros()
+    B.eliminate_zeros()
+
+    npt.assert_equal(_reduce_dists(A, B, "TRA").toarray(), A.toarray())
+    npt.assert_equal(_reduce_dists(A, B, "TRB").toarray(), B.toarray())
+    npt.assert_equal(_reduce_dists(A, B, "all").toarray(), expected_all)
+    npt.assert_equal(_reduce_dists(A, B, "any").toarray(), expected_any)
+
+
+def test_dist_to_connectivities():
+    D = scipy.sparse.csr_matrix(
+        [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
+    )
+    C = _dist_to_connectivities(D, 10)
+    assert C.nnz == D.nnz
+    npt.assert_equal(
+        C.toarray(),
+        np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
+    )
