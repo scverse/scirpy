@@ -6,7 +6,6 @@ from sctcrpy._preprocessing._tcr_dist import (
     _LevenshteinDistanceCalculator,
     _dist_for_chain,
     _reduce_dists,
-    _reduce_chains,
     _dist_to_connectivities,
 )
 import numpy as np
@@ -176,42 +175,6 @@ def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
             ]
         ),
     )
-
-
-def test_define_clonotypes_no_graph():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "AAAA", "nan", "nan", "nan"],
-            ["cell2", "nan", "nan", "nan", "nan"],
-            ["cell3", "AAAA", "nan", "nan", "nan"],
-            ["cell4", "AAAA", "BBBB", "nan", "nan"],
-            ["cell5", "nan", "nan", "CCCC", "DDDD"],
-        ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    res = st.tl._define_clonotypes_no_graph(adata, inplace=False)
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res,
-        ["clonotype_1", np.nan, "clonotype_1", "clonotype_0", "clonotype_2"],
-    )
-
-    res_primary_only = st.tl._define_clonotypes_no_graph(
-        adata, flavor="primary_only", inplace=False
-    )
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res_primary_only,
-        ["clonotype_0", np.nan, "clonotype_0", "clonotype_0", "clonotype_1"],
-    )
-
-    # test inplace
-    st.tl._define_clonotypes_no_graph(adata, key_added="clonotype_")
-    npt.assert_equal(res, adata.obs["clonotype_"].values)
 
 
 def test_tcr_dist(adata_cdr3):
