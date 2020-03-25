@@ -7,4 +7,4 @@ from ._clip_and_count import clip_and_count, clonal_expansion
 from ._group_abundance import group_abundance
 from ._spectratype import spectratype
 
-from ._clonotypes import clonotype_network, COLORMAP_GREY
+from ._clonotypes import clonotype_network, COLORMAP_GREY, clonotype_network_igraph
