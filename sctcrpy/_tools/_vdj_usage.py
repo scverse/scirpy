@@ -1,4 +1,3 @@
-
 from anndata import AnnData
 from typing import Collection, Union, List
 import pandas as pd
@@ -54,7 +53,7 @@ def vdj_usage(
     """
 
     # Preproces the data table (remove unnecessary rows and columns)
-    size_column = 'cell_weights'
+    size_column = "cell_weights"
     if for_cells is None:
         for_cells = adata.obs.loc[
             ~_is_na(adata.obs.loc[:, target_cols]).all(axis="columns"), target_cols
