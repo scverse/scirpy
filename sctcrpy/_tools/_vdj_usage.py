@@ -1,7 +1,8 @@
 
 from anndata import AnnData
-from typing import Union, List
+from typing import Collection, Union, List
 import pandas as pd
+import numpy as np
 
 
 def vdj_usage(
