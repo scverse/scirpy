@@ -13,7 +13,8 @@ before_script:
   - |
     conda install -c conda-forge \
       flit \
-      python-igraph
+      python-igraph \ 
+      pandoc
   # -c bioconda -y \
   #   flit \
   #   pandoc \
