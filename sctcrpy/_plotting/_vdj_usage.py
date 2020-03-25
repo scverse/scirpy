@@ -1,4 +1,3 @@
-
 from .. import tl
 from anndata import AnnData
 import matplotlib.pyplot as plt
@@ -19,7 +18,7 @@ def vdj_usage(
     ],
     for_cells: Union[None, list, np.ndarray, pd.Series] = None,
     cell_weights: Union[None, str, list, np.ndarray, pd.Series] = None,
-    #size_column: str = "cell_weights",
+    # size_column: str = "cell_weights",
     fraction_base: Union[None, str] = None,
     ax: Union[plt.axes, None] = None,
     bar_clip: int = 5,
@@ -96,7 +95,7 @@ def vdj_usage(
         genes = td[target_cols[i]].tolist()
         td = td[size_column]
         sector = target_cols[i][2:7]
-        #sector = sector.replace('_', '')
+        # sector = sector.replace('_', '')
         unct = td[bar_clip + 1 :,].sum()
         if td.size > bar_clip:
             if draw_bars:
@@ -130,12 +129,21 @@ def vdj_usage(
                 bottom += y
             except:
                 pass
-    
+
     # Count occurance of individual VDJ combinations
-    td = df.loc[:,target_cols+[size_column]]
-    td["genecombination"] = td.apply(lambda x, y: '|'.join([x[e] for e in y]), y=target_cols, axis=1)
-    td = td.groupby("genecombination").agg({size_column: "sum"}).sort_values(by=size_column, ascending=False).reset_index()
-    td["genecombination"] = td.apply(lambda x: [x[size_column]] + x['genecombination'].split('|'), axis=1)
+    td = df.loc[:, target_cols + [size_column]]
+    td["genecombination"] = td.apply(
+        lambda x, y: "|".join([x[e] for e in y]), y=target_cols, axis=1
+    )
+    td = (
+        td.groupby("genecombination")
+        .agg({size_column: "sum"})
+        .sort_values(by=size_column, ascending=False)
+        .reset_index()
+    )
+    td["genecombination"] = td.apply(
+        lambda x: [x[size_column]] + x["genecombination"].split("|"), axis=1
+    )
 
     # Draw ribbons
     for r in td["genecombination"][1 : top_n + 1]:
@@ -156,7 +164,7 @@ def vdj_usage(
             gapped_ribbons(d, ax=ax, gapwidth=barwidth)
         else:
             gapped_ribbons(d, ax=ax, gapwidth=0.1)
-    
+
     # Make tick labels nicer
     ax.set_xticks(range(1, len(target_cols) + 1))
     if target_cols == [
@@ -172,6 +180,7 @@ def vdj_usage(
 
     return ax
 
+
 def gapped_ribbons(
     data: list,
     *,
@@ -179,7 +188,8 @@ def gapped_ribbons(
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
-    fun: Callable = lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
+    fun: Callable = lambda x: x[3]
+    + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
     figsize: Tuple[float, float] = (3.44, 2.58),
     figresolution: int = 300,
 ) -> plt.Axes:
