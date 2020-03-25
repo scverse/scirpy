@@ -1,3 +1,4 @@
+from .._util import _is_na
 from anndata import AnnData
 from typing import Collection, Union, List
 import pandas as pd
