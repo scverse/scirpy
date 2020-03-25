@@ -23,10 +23,12 @@ requires = [
     # pandas <1 until scanpy is fully compatible...
     'pandas<1',
     'numpy',
+    'scipy',
     'parasail',
     'scikit-learn',
     'python-levenshtein',
-    'python-igraph'
+    'python-igraph',
+    'networkx'
 ]
 
 [tool.flit.metadata.requires-extra]

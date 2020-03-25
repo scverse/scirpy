@@ -1,9 +1,11 @@
 from anndata import AnnData
 from .._compat import Literal
 from typing import Union, Tuple
-from .._util import _is_na, get_igraph_from_adjacency
+from .._util import _is_na
+from .._util._graph import get_igraph_from_adjacency
 import numpy as np
 import pandas as pd
+import networkx
 
 
 def _define_clonotypes_no_graph(
@@ -69,7 +71,7 @@ def define_clonotypes(
     partitions: Literal["connected", "leiden"] = "leiden",
     resolution: float = 1,
     n_iterations: int = 5,
-    neighbors_key: str = "neighbors",
+    neighbors_key: str = "tcr_neighbors",
     key_added: str = "clonotype",
     inplace: bool = True,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
@@ -107,7 +109,7 @@ def define_clonotypes(
         for each cell.    
     """
     try:
-        conn = adata.uns["sctcrpy"][neighbors_key]["connectivities"]
+        conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
         raise ValueError(
             "Connectivities were not found. Did you run `pp.tcr_neighbors`?"
@@ -139,7 +141,7 @@ def clonotype_network(
     *,
     layout: str = "fr",
     min_size: int = 1,
-    neighbors_key: str = "neighbors",
+    neighbors_key: str = "tcr_neighbors",
     key_clonotype_size: str = "clonotype_size",
     key_added: str = "X_clonotype_network",
     inplace: bool = False,
@@ -152,7 +154,7 @@ def clonotype_network(
         Only show clonotypes with at least `min_size` cells.
     """
     try:
-        conn = adata.uns["sctcrpy"][neighbors_key]["connectivities"]
+        conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
         raise ValueError("Connectivity data not found. Did you run `pp.tcr_neighbors`?")
 

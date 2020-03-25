@@ -2,6 +2,7 @@ get_version
 scanpy
 pandas
 numpy
+scipy
 parasail
 sphinx>=2
 sphinx_autodoc_typehints>=1.8.0
@@ -15,3 +16,4 @@ python-igraph
 pycairo
 jupyter_client
 ipykernel
+networkx
