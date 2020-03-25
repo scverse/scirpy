@@ -17,3 +17,4 @@ pycairo
 jupyter_client
 ipykernel
 networkx
+rectangle-packer
