@@ -14,14 +14,12 @@ def adata_conn():
         .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
         .set_index("cell_id")
     )
-    adata.uns["sctcrpy"] = {
-        "neighbors": {
-            "connectivities": np.array(
-                [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-            )
-        }
+    adata.uns["tcr_neighbors"] = {
+        "connectivities": np.array(
+            [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
+        )
     }
-    assert _is_symmetric(adata.uns["sctcrpy"]["neighbors"]["connectivities"])
+    assert _is_symmetric(adata.uns["tcr_neighbors"]["connectivities"])
     return adata
 
 

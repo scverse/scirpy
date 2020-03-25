@@ -87,6 +87,7 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
         rows = p.starmap(
             self._compute_row, zip(itertools.repeat(seqs), range(len(seqs)))
         )
+        p.close()
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
@@ -221,6 +222,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
                 range(len(seqs)),
             ),
         )
+        p.close()
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
@@ -292,6 +294,7 @@ def _dist_for_chain(
 
         cell_mat[i_cm_0, i_cm_1] = dist_mat[i_dm_0, i_dm_1]
         cell_mat = cell_mat.tocsr()
+        cell_mat.eliminate_zeros()
 
         # if chain1 == chain2:
         #     # TRX1:TRX2 is not supposed to be symmetric
@@ -424,7 +427,7 @@ def tcr_neighbors(
     cutoff: int = 2,
     strategy: Literal["TRA", "TRB", "all", "any"] = "any",
     chains: Literal["primary_only", "all"] = "primary_only",
-    key_added: str = "neighbors",
+    key_added: str = "tcr_neighbors",
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
@@ -483,22 +486,22 @@ def tcr_neighbors(
     # assert _is_symmetric(trb_dist)
 
     dist = _reduce_dists(tra_dist, trb_dist, strategy)
+    dist.eliminate_zeros()
     logging.debug("Finished reducing dists across chains.")
 
     connectivities = _dist_to_connectivities(dist, cutoff=cutoff)
+    connectivities.eliminate_zeros()
     logging.debug("Finished converting distances to connectivities. ")
 
     if not inplace:
         return connectivities, dist
     else:
-        if "sctcrpy" not in adata.uns:
-            adata.uns["sctcrpy"] = dict()
-        adata.uns["sctcrpy"][key_added] = dict()
-        adata.uns["sctcrpy"][key_added]["params"] = {
+        adata.uns[key_added] = dict()
+        adata.uns[key_added]["params"] = {
             "metric": metric,
             "cutoff": cutoff,
             "strategy": strategy,
             "chains": chains,
         }
-        adata.uns["sctcrpy"][key_added]["connectivities"] = connectivities
-        adata.uns["sctcrpy"][key_added]["distances"] = connectivities
+        adata.uns[key_added]["connectivities"] = connectivities
+        adata.uns[key_added]["distances"] = connectivities
