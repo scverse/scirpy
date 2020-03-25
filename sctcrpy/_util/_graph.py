@@ -1,8 +1,8 @@
 import scipy
 from scanpy import logging
 import igraph as ig
-import networkx
 import numpy as np
+from .._compat import Literal
 
 
 def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
@@ -35,47 +35,81 @@ def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = Non
     return g
 
 
-def layout_many_components(
+def layout_components(
     graph: ig.Graph,
-    component_layout_func: str = "fr",
+    component_layout: str = "fr",
+    arrange_boxes: Literal["size", "dense"] = "dense",
     pad_x: float = 1.0,
     pad_y: float = 1.0,
-):
+) -> np.ndarray:
     """
+    Compute a graph layout by layouting all connected components individually. 
+
+    Adapted from https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-graph-plot-in-python
+
     Arguments:
     ----------
     graph
         The graph to plot.
-    component_layout_func
-        Function used to layout individual components. 
+    component_layout
+        Layout function used to layout individual components.
+        Can be anything that can be passed to :meth:`igraph.Graph.layout`
+    arrange_boxes
+        How to arrange the individual components. Can be "size" 
+        to arange them by the component size or "dense" to pack them as densly
+        as possible. 
     pad_x, pad_y
         Padding between subgraphs in the x and y dimension.
 
     Returns:
     --------
-    pos : dict node : (float x, float y)
-        The layout of the graph.
+    pos 
+        n_nodes x dim array containing the layout coordinates 
 
     """
+    components = np.array(graph.decompose(mode="weak"))
+    component_sizes = np.array([component.vcount() for component in components])
+    order = np.argsort(component_sizes)
+    # need this to get components back into the right order:
+    # the output coordinates must adhere to the original vertex order.
+    rev_order = np.argsort(order)
 
-    components = _get_components_sorted_by_size(graph)
-    component_sizes = [component.vcount() for component in components]
-    bboxes = _get_component_bboxes(component_sizes, pad_x, pad_y)
+    bbox_fun = _bbox_rpack if arrange_boxes == "dense" else _bbox_sorted
+    bboxes = bbox_fun(component_sizes[order], pad_x, pad_y)
+    bboxes = [bboxes[i] for i in rev_order]
 
-    return np.vstack(
-        [
-            _layout_component(component, bbox, component_layout_func)
-            for component, bbox in zip(components, bboxes)
-        ]
-    )
-
-
-def _get_components_sorted_by_size(g):
-    subgraphs = g.decompose(mode="weak")
-    return sorted(subgraphs, key=lambda x: x.vcount())
+    component_layouts = [
+        _layout_component(component, bbox, component_layout)
+        for component, bbox in zip(components, bboxes)
+    ]
+    return np.vstack(component_layouts)
 
 
-def _get_component_bboxes(component_sizes, pad_x=1.0, pad_y=1.0):
+def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
+    """Compute bounding boxes for individual components
+    by arranging them as densly as possible. 
+
+    Depends on `rectangle-packer`. 
+    """
+    import rpack
+
+    dimensions = [_get_bbox_dimensions(n, power=0.8) for n in component_sizes]
+    # rpack only works on integers; sizes should be in descending order
+    dimensions = [
+        (int(width + pad_x), int(height + pad_y))
+        for (width, height) in dimensions[::-1]
+    ]
+    origins = rpack.pack(dimensions)
+    bboxes = [
+        (x, y, width - pad_x, height - pad_y)
+        for (x, y), (width, height) in zip(origins, dimensions)
+    ]
+    return bboxes[::-1]
+
+
+def _bbox_sorted(component_sizes, pad_x=1.0, pad_y=1.0):
+    """Compute bounding boxes for individual components
+    by arranging them by component size"""
     bboxes = []
     x, y = (0, 0)
     current_n = 1
@@ -99,13 +133,14 @@ def _get_bbox_dimensions(n, power=0.5):
 
 
 def _layout_component(component, bbox, component_layout_func):
+    """Compute layout for an individual component"""
     layout = component.layout(component_layout_func)
     rescaled_pos = _rescale_layout(np.array(layout.coords), bbox)
     return rescaled_pos
 
 
 def _rescale_layout(coords, bbox):
-
+    """Transpose the layout of a component into its bounding box"""
     min_x, min_y = np.min(coords, axis=0)
     max_x, max_y = np.max(coords, axis=0)
 
@@ -125,29 +160,3 @@ def _rescale_layout(coords, bbox):
     new_coords_y = (coords[:, 1] - min_y) / delta_y * new_delta_y + new_min_y
 
     return np.vstack([new_coords_x, new_coords_y]).T
-
-
-def test():
-    from itertools import combinations
-
-    g = ig.Graph()
-
-    # add 100 unconnected nodes
-    g.add_vertices(100)
-
-    # add 50 2-node components
-    g.add_edges([(ii, ii + 1) for ii in range(100, 200, 2)])
-
-    # add 33 3-node components
-    for ii in range(200, 300, 3):
-        g.add_edges([(ii, ii + 1), (ii, ii + 2), (ii + 1, ii + 2)])
-
-    # add a couple of larger components
-    n = 300
-    for ii in np.random.randint(4, 30, size=10):
-        g.add_edges(combinations(range(n, n + ii), 2))
-        n += ii
-
-    layout = layout_many_components(g, component_layout_func="fr")
-
-    ig.plot(g, layout)
