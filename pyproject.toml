@@ -28,7 +28,8 @@ requires = [
     'scikit-learn',
     'python-levenshtein',
     'python-igraph',
-    'networkx'
+    'networkx',
+    'rectangle-packer'
 ]
 
 [tool.flit.metadata.requires-extra]
