@@ -13,3 +13,4 @@ sphinxcontrib-bibtex
 python-levenshtein
 python-igraph
 pycairo
+jupyter_client
