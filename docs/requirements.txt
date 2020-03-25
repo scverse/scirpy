@@ -10,9 +10,8 @@ scanpydoc
 jupytext
 nbsphinx
 sphinxcontrib-bibtex
-jupyter_client
-ipykernel
-ipywidgets
 python-levenshtein
 python-igraph
 pycairo
+jupyter_client
+ipykernel
