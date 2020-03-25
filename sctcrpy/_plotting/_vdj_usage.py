@@ -2,7 +2,7 @@
 from .. import tl
 from anndata import AnnData
 import matplotlib.pyplot as plt
-from typing import Union, List
+from typing import Callable, Union, List, Tuple
 import pandas as pd
 import numpy as np
 
