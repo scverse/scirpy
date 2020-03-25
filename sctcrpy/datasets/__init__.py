@@ -12,7 +12,7 @@ HERE = Path(__file__).parent
 
 
 @contextmanager
-def _monkey_path_tqdm(neighbors_key, edges_cmap=None):
+def _monkey_path_tqdm():
     """Monkey-patch tqdm.auto to allow download without ipywidgets installed. 
     
     See also https://github.com/theislab/scanpy/pull/1130.
