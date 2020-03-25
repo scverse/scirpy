@@ -8,10 +8,12 @@ cache:
     - .cache/pip
 
 before_script:
-  - apt-get update && apt-get -y install build-essential
+  - apt-get update && apt-get -y install build-essential make
   - conda info -a
   - |
-    conda install -c conda-forge flit
+    conda install -c conda-forge \
+      flit \
+      python-igraph
   # -c bioconda -y \
   #   flit \
   #   pandoc \
