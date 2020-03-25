@@ -68,6 +68,8 @@ def vdj_usage(
     -------
     Axes object. 
     """
+    
+    size_column = "cell_weights"
 
     # Execute the tool
     df = tl.vdj_usage(
