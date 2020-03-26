@@ -14,14 +14,10 @@ before_script:
     conda install -c conda-forge \
       flit \
       python-igraph \
-      pandoc
-  # -c bioconda -y \
-  #   flit \
-  #   pandoc \
-  #   python-igraph \
-  #   leidenalg \
-  #   make \
-  #   python-levenshtein
+      pandoc \
+      python-igraph \
+      leidenalg \
+      python-levenshtein
   - FLIT_ROOT_INSTALL=1 flit install --deps develop
 
 test:
