@@ -6,10 +6,10 @@ import jupytext
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
 
-from sctcrpy import __author__, __version__
+from scirpy import __author__, __version__
 
 # General information
-project = "sctcrpy"
+project = "scirpy"
 author = __author__
 copyright = f"{datetime.now():%Y}, {author}."
 version = __version__

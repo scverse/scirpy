@@ -156,7 +156,7 @@ def clonotype_network(
     layout
         The layout algorithm to use. Can be anything supported by :meth:`igraph.layout` 
         or "components" to layout all connected components individually. See
-        :meth:`sctcrpy._util._graph.layout_componets` for more details. 
+        :meth:`scirpy._util._graph.layout_componets` for more details. 
     layout_kwargs
         Will be passed to the layout function
     neighbors_key

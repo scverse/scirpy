@@ -1,5 +1,5 @@
 import pytest
-from sctcrpy._preprocessing._tcr_dist import (
+from scirpy._preprocessing._tcr_dist import (
     _AlignmentDistanceCalculator,
     _DistanceCalculator,
     _IdentityDistanceCalculator,
@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 import numpy.testing as npt
 from anndata import AnnData
-import sctcrpy as st
+import scirpy as st
 import scipy.sparse
-from sctcrpy._util import _reduce_nonzero
+from scirpy._util import _reduce_nonzero
 from functools import reduce
 
 

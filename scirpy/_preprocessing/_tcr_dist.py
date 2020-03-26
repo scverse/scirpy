@@ -456,7 +456,7 @@ def tcr_neighbors(
         When considering all four chains, at least one of them needs
         to match. 
     key_added:
-        dict key under which the result will be stored in `adata.uns["sctcrpy"]`
+        dict key under which the result will be stored in `adata.uns["scirpy"]`
         when `inplace` is True. 
     inplace:
         If True, store the results in adata.uns. If False, returns

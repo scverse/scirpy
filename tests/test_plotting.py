@@ -2,7 +2,7 @@
 import pandas as pd
 from anndata import AnnData
 import pytest
-from sctcrpy import pl
+from scirpy import pl
 from .fixtures import (
     adata_tra,
     adata_clonotype,
