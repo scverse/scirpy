@@ -12,7 +12,7 @@ from matplotlib.colors import Colormap
 from cycler import Cycler
 import matplotlib
 
-COLORMAP_GREY = matplotlib.colors.LinearSegmentedColormap.from_list(
+COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#DDDDDD", "#000000"]
 )
 
@@ -98,7 +98,7 @@ def clonotype_network(
     palette: Union[str, Sequence[str], Cycler, None] = None,
     neighbors_key="tcr_neighbors",
     basis="clonotype_network",
-    edges_cmap: Union[Colormap, str] = COLORMAP_GREY,
+    edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
     edges_color="grey",
     edges=True,
     edges_width=0.2,
