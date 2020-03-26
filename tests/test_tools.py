@@ -213,3 +213,33 @@ def test_spectratype(adata_tra):
         orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
+
+
+def test_vdj_usage(adata_vdj):
+    # Check return formats
+    df = st.tl.vdj_usage(adata_vdj, cell_weights="sample", as_dict=False)
+    assert isinstance(df, AnnData)
+    df = st.tl.vdj_usage(adata_vdj, cell_weights="sample", as_dict=True)
+    assert isinstance(df, dict)
+
+    # Check normalization
+    size_column = "cell_weights"
+    expected_weights = [
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667,
+        0.06666666666666667
+        ]
+    df = st.tl.vdj_usage(adata_vdj, cell_weights="sample", as_dict=False)
+    npt.assert_equal(df[size_column].tolist(), expected_weights)
