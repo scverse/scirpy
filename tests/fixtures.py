@@ -169,8 +169,7 @@ def adata_tra():
 
 @pytest.fixture
 def adata_vdj():
-    obs = 
-    {
+    obs = {
         'LT1_ACGGCCATCCGAGCCA-2-24':
         {
             'TRA_1_j_gene': 'TRAJ42',
