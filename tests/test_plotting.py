@@ -40,6 +40,9 @@ def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, target_col="sample")
     assert isinstance(p, plt.Axes)
 
+def test_vdj_usage(adata_tra):
+    p = pl.vdj_usage(adata_tra, cell_weights="sample")
+    assert isinstance(p, plt.Axes)
 
 def test_clonotype_network(adata_clonotype_network):
     p = pl.clonotype_network(adata_clonotype_network)
@@ -59,6 +62,3 @@ def test_clonotype_network_igraph(adata_clonotype_network):
             ]
         ),
     )
-def test_vdj_usage(adata_tra):
-    p = pl.vdj_usage(adata_tra, cell_weights="sample")
-    assert isinstance(p, plt.Axes)
