@@ -1,4 +1,5 @@
 from . import _base as base
+from ._base import embedding
 from ._diversity import alpha_diversity
 from ._clip_and_count import clip_and_count, clonal_expansion
 

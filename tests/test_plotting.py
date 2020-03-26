@@ -43,7 +43,7 @@ def test_spectratype(adata_tra):
 
 def test_clonotype_network(adata_clonotype_network):
     p = pl.clonotype_network(adata_clonotype_network)
-    assert isinstance(p, plt.Axes)
+    assert isinstance(p[0], plt.Axes)
 
 
 def test_clonotype_network_igraph(adata_clonotype_network):
