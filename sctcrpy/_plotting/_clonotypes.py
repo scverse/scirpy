@@ -149,6 +149,7 @@ def clonotype_network(
                 palette=palette,
                 edges_color=edges_color,
                 edges_width=edges_width,
+                show=False,
                 **kwargs,
             )
 
