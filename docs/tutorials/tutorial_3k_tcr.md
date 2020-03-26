@@ -6,7 +6,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.2'
+      format_version: "1.2"
       jupytext_version: 1.4.1
 ---
 
@@ -28,14 +28,14 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 import sys
 
 sys.path.append("../..")
-import sctcrpy as st
+import scirpy as st
 import pandas as pd
 import numpy as np
 import scanpy as sc
 from matplotlib import pyplot as plt
 ```
 
-The Dataset ships with the `sctcrpy` package:
+The Dataset ships with the `scirpy` package:
 
 ```python
 adata = st.datasets.wu2020_3k()
@@ -114,14 +114,14 @@ adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 
 ## Define clonotypes
 
-Next, we need to define clonotypes. This will add a `clonotype` and `clonotype_size` columng to `obs`. 
+Next, we need to define clonotypes. This will add a `clonotype` and `clonotype_size` columng to `obs`.
 
-Clonotype definition uses a graph-based approach. We will construct a network, that connects cells with identical, or similar, CDR3 sequences. 
-All connected nodes form a clonotype. 
+Clonotype definition uses a graph-based approach. We will construct a network, that connects cells with identical, or similar, CDR3 sequences.
+All connected nodes form a clonotype.
 
-* If you want to define clonotypes by cells having **identical** sequences, set the `cutoff` to 0
-* With the `stragegy` parameter, it is possible to choose if the alpha chain, the beta chain, or both need to match. Here we set it to `all` in order to require both chains to match. 
-* With the `chains` parameter, we can specify if we want to consider only the most abundant TRA and TRB sequences (`primary_only`), or all four CDR3 sequences, if available (`all`). 
+- If you want to define clonotypes by cells having **identical** sequences, set the `cutoff` to 0
+- With the `stragegy` parameter, it is possible to choose if the alpha chain, the beta chain, or both need to match. Here we set it to `all` in order to require both chains to match.
+- With the `chains` parameter, we can specify if we want to consider only the most abundant TRA and TRB sequences (`primary_only`), or all four CDR3 sequences, if available (`all`).
 
 ```python
 st.pp.tcr_neighbors(adata, strategy="all", chains="primary_only", cutoff=0)
@@ -131,10 +131,10 @@ st.pp.tcr_neighbors(adata, strategy="all", chains="primary_only", cutoff=0)
 st.tl.define_clonotypes(adata)
 ```
 
-Let's visualize the resulting graph. 
-We first use `st.tl.clonotype_network` to compute the layout and store it in the `AnnData` object. Next, we use `st.pl.clonotype_network` to show it. 
+Let's visualize the resulting graph.
+We first use `st.tl.clonotype_network` to compute the layout and store it in the `AnnData` object. Next, we use `st.pl.clonotype_network` to show it.
 
-If we don't filter the network, the plot will be clutterted by singleton clonotypes. We, therefore, use the `min_size` option to only show clonotypes with at least two members. 
+If we don't filter the network, the plot will be clutterted by singleton clonotypes. We, therefore, use the `min_size` option to only show clonotypes with at least two members.
 
 ```python
 st.tl.clonotype_network(adata, min_size=2)
@@ -156,8 +156,8 @@ st.tl.define_clonotypes(adata)
 st.tl.clonotype_network(adata, min_size=2)
 ```
 
-When coloring by clonotype, we can see that the large, connected Hairball has been sub-divided in multiple clonotypes by 
-Graph-based clustering using the "Leiden" algorithm. 
+When coloring by clonotype, we can see that the large, connected Hairball has been sub-divided in multiple clonotypes by
+Graph-based clustering using the "Leiden" algorithm.
 
 ```python
 st.pl.clonotype_network(adata, color="clonotype", panel_size=(15, 15))

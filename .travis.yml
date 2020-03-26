@@ -11,7 +11,7 @@ install:
   - flit install --deps develop
 
 script:
-  - black --check sctcrpy
+  - black --check scirpy
   - pytest
   - mkdir -p deploy_docs && touch deploy_docs/.nojekyll
   - cd docs && make html && mv _build/html ../deploy_docs/5vLj3lcBVp2VkVEpIt3j

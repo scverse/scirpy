@@ -1,5 +1,5 @@
-from sctcrpy import read_10x_vdj, read_tracer, read_10x_vdj_csv
-from sctcrpy._util import _is_na, _is_false
+from scirpy import read_10x_vdj, read_tracer, read_10x_vdj_csv
+from scirpy._util import _is_na, _is_false
 import numpy as np
 import pytest
 
@@ -79,7 +79,7 @@ def test_read_10x():
 
 def test_read_tracer():
     with pytest.raises(IOError):
-        anndata = read_tracer("sctcrpy")
+        anndata = read_tracer("scirpy")
 
     anndata = read_tracer("tests/data/tracer")
     assert "cell1" in anndata.obs_names and "cell2" in anndata.obs_names

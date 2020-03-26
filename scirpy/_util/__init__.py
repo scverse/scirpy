@@ -101,7 +101,7 @@ def _is_false(x):
 
 
 def _add_to_uns(
-    adata: AnnData, tool: str, result: Any, *, parameters: dict = None, domain="sctcrpy"
+    adata: AnnData, tool: str, result: Any, *, parameters: dict = None, domain="scirpy"
 ) -> None:
     """Store results of a tool in `adata.uns`.
     
@@ -190,11 +190,11 @@ def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:
     The stored result. 
     """
     if parameters is None:
-        return adata.uns["sctcrpy"][tool]
+        return adata.uns["scirpy"][tool]
     else:
         Parameters = namedtuple("Parameters", sorted(parameters))
         param_tuple = Parameters(**parameters)
-        return adata.uns["sctcrpy"][tool][param_tuple]
+        return adata.uns["scirpy"][tool][param_tuple]
 
 
 def _doc_params(**kwds):
