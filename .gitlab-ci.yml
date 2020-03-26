@@ -23,7 +23,7 @@ before_script:
 test:
   script:
     - CWD=$(pwd)
-    - black --check sctcrpy
+    - black --check scirpy
     - pytest
 
 docs:

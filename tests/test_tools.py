@@ -1,12 +1,12 @@
 # pylama:ignore=W0611,W0404
 import pandas as pd
-import sctcrpy as st
+import scirpy as st
 from scanpy import AnnData
 import pytest
 import numpy.testing as npt
 import pandas.testing as pdt
 import numpy as np
-from sctcrpy._util import _get_from_uns
+from scirpy._util import _get_from_uns
 from .fixtures import adata_clonotype, adata_tra, adata_diversity
 
 

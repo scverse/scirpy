@@ -1,4 +1,4 @@
-Welcome to sctcrpy's documentation!
+Welcome to scirpy's documentation!
 =========================================
 
 .. toctree::

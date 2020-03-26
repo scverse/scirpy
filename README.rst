@@ -2,12 +2,12 @@ Single cell analysis of T cell receptor sequencing in python
 ============================================================
 |travis| |docs| |black|
 
-.. |travis| image:: https://api.travis-ci.com/grst/sctcrpy.svg?token=qqasgepMVJmJkMf3vBTL 
-    :target: https://travis-ci.com/grst/sctcrpy
+.. |travis| image:: https://api.travis-ci.com/grst/scirpy.svg?token=qqasgepMVJmJkMf3vBTL 
+    :target: https://travis-ci.com/grst/scirpy
     :alt: Build Status
 
-.. |docs| image:: https://readthedocs.org/projects/sctcrpy/badge/?version=latest
-    :target: https://sctcrpy.readthedocs.io/en/latest/?badge=latest
+.. |docs| image:: https://readthedocs.org/projects/scirpy/badge/?version=latest
+    :target: https://scirpy.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
     
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -15,4 +15,4 @@ Single cell analysis of T cell receptor sequencing in python
     :alt: The uncompromising python formatter
 
 
-* `Documentation <https://grst.github.io/sctcrpy/5vLj3lcBVp2VkVEpIt3j>`_
+* `Documentation <https://grst.github.io/scirpy/5vLj3lcBVp2VkVEpIt3j>`_

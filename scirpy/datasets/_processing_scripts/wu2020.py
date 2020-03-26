@@ -4,7 +4,7 @@ import scanpy as sc
 import sys
 
 sys.path.append("..")
-import sctcrpy as st
+import scirpy as st
 from multiprocessing import Pool
 import os
 import pandas as pd
