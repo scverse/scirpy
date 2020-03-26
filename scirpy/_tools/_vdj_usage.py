@@ -55,10 +55,9 @@ def vdj_usage(
     """
 
     # Preproces the data table (remove unnecessary rows and columns)
-
     if for_cells is None:
         for_cells = adata.obs.loc[
-            ~_is_na(adata.obs.loc[:, target_cols]).all(axis="columns"), target_cols
+            ~_is_na(adata.obs.loc[:, target_cols]).all(axis="columns"), :
         ].index.values
     observations = adata.obs.loc[for_cells, :]
 
