@@ -238,5 +238,5 @@ def test_tcr_neighbors(adata_cdr3):
         chains="all",
         key_added="nbs",
     )
-    assert adata_cdr3.uns["sctcrpy"]["nbs"]["connectivities"].shape == (5, 5)
-    assert adata_cdr3.uns["sctcrpy"]["nbs"]["distances"].shape == (5, 5)
+    assert adata_cdr3.uns["nbs"]["connectivities"].shape == (5, 5)
+    assert adata_cdr3.uns["nbs"]["distances"].shape == (5, 5)

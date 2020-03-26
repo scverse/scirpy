@@ -141,7 +141,7 @@ st.tl.clonotype_network(adata, min_size=2)
 ```
 
 ```python
-st.pl.clonotype_network(adata, color="clonotype")
+st.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
 Now, we allow a TCR-distance of 20. That's the equivalent of 4 `R`s mutating into `N`.  
@@ -160,7 +160,7 @@ When coloring by clonotype, we can see that the large, connected Hairball has be
 Graph-based clustering using the "Leiden" algorithm. 
 
 ```python
-st.pl.clonotype_network(adata, color="clonotype")
+st.pl.clonotype_network(adata, color="clonotype", panel_size=(15, 15))
 ```
 
 We can now color by sample, which gives us information about public and private TCRs
