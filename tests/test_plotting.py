@@ -3,8 +3,15 @@ import pandas as pd
 from anndata import AnnData
 import pytest
 from sctcrpy import pl
-from .fixtures import adata_tra, adata_clonotype, adata_diversity
+from .fixtures import (
+    adata_tra,
+    adata_clonotype,
+    adata_diversity,
+    adata_clonotype_network,
+)
 import matplotlib.pyplot as plt
+import numpy.testing as npt
+import numpy as np
 
 
 def test_clip_and_count(adata_tra):
@@ -32,3 +39,23 @@ def test_group_abundance(adata_clonotype):
 def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, target_col="sample")
     assert isinstance(p, plt.Axes)
+
+
+def test_clonotype_network(adata_clonotype_network):
+    p = pl.clonotype_network(adata_clonotype_network)
+    assert isinstance(p, plt.Axes)
+
+
+def test_clonotype_network_igraph(adata_clonotype_network):
+    g, lo = pl.clonotype_network_igraph(adata_clonotype_network)
+    assert g.vcount() == 3
+    npt.assert_almost_equal(
+        np.array(lo.coords),
+        np.array(
+            [
+                [2.41359095, 0.23412465],
+                [1.61680611, 0.80266963],
+                [3.06104282, 2.14395562],
+            ]
+        ),
+    )

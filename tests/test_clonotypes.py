@@ -1,27 +1,12 @@
+# pylama:ignore=W0611,W0404
 import pandas as pd
 import numpy.testing as npt
 import sctcrpy as st
 from anndata import AnnData
 import numpy as np
-import pytest
 from sctcrpy._util import _is_symmetric
+from .fixtures import adata_conn
 import random
-
-
-@pytest.fixture
-def adata_conn():
-    adata = AnnData(
-        obs=pd.DataFrame()
-        .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
-        .set_index("cell_id")
-    )
-    adata.uns["tcr_neighbors"] = {
-        "connectivities": np.array(
-            [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-        )
-    }
-    assert _is_symmetric(adata.uns["tcr_neighbors"]["connectivities"])
-    return adata
 
 
 def test_define_clonotypes_no_graph():
