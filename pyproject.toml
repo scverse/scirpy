@@ -3,10 +3,10 @@ requires = ['flit']
 build-backend = 'flit.buildapi'
 
 [tool.flit.metadata]
-module = 'sctcrpy'
+module = 'scirpy'
 author = 'Gregor Sturm'
 author-email = 'gregor.sturm@i-med.ac.at'
-home-page = 'https://github.com/grst/sctcrpy'
+home-page = 'https://github.com/grst/scirpy'
 description-file = "README.rst"
 classifiers = [
     'License :: OSI Approved :: BSD License',

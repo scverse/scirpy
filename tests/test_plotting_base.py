@@ -1,4 +1,4 @@
-from sctcrpy import pl
+from scirpy import pl
 import pytest
 import pandas as pd
 import matplotlib.pyplot as plt

@@ -1,4 +1,4 @@
-from sctcrpy._util import (
+from scirpy._util import (
     _is_na,
     _is_false,
     _is_true,
@@ -6,7 +6,7 @@ from sctcrpy._util import (
     _is_symmetric,
     _reduce_nonzero,
 )
-from sctcrpy._util._graph import layout_components
+from scirpy._util._graph import layout_components
 from itertools import combinations
 import igraph as ig
 import numpy as np

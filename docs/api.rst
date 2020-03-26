@@ -2,9 +2,9 @@ API
 ===
 
 
-.. module:: sctcrpy 
+.. module:: scirpy 
 
-.. automodule:: sctcrpy 
+.. automodule:: scirpy 
    :noindex:
 
 
@@ -23,7 +23,7 @@ Input/Output
 Datasets
 --------
 
-.. module:: sctcrpy.datasets
+.. module:: scirpy.datasets
 
 .. autosummary::
    :toctree: .
@@ -36,7 +36,7 @@ Datasets
 Preprocessing: `pp`
 -------------------
 
-.. module:: sctcrpy.pp
+.. module:: scirpy.pp
 
 .. autosummary::
    :toctree: .
@@ -49,7 +49,7 @@ Preprocessing: `pp`
 Tools: `tl`
 -----------
 
-.. module:: sctcrpy.tl
+.. module:: scirpy.tl
 
 .. autosummary::
    :toctree: .
@@ -69,7 +69,7 @@ Plotting: `pl`
 Base plotting functions: `pl.base`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. module:: sctcrpy.pl.base
+.. module:: scirpy.pl.base
 
 .. autosummary::
    :toctree: .
@@ -79,7 +79,7 @@ Base plotting functions: `pl.base`
    curve
 
 
-.. module:: sctcrpy.pl
+.. module:: scirpy.pl
 
 .. autosummary::
    :toctree: . 

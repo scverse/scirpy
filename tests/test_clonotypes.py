@@ -1,10 +1,10 @@
 # pylama:ignore=W0611,W0404
 import pandas as pd
 import numpy.testing as npt
-import sctcrpy as st
+import scirpy as st
 from anndata import AnnData
 import numpy as np
-from sctcrpy._util import _is_symmetric
+from scirpy._util import _is_symmetric
 from .fixtures import adata_conn
 import random
 
