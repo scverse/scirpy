@@ -76,6 +76,7 @@ def vdj_usage(
         for_cells=for_cells,
         cell_weights=cell_weights,
         fraction_base=fraction_base,
+        size_column = size_column,
     )
 
     if top_n is None:
