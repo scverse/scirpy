@@ -18,7 +18,7 @@ def vdj_usage(
     ],
     for_cells: Union[None, list, np.ndarray, pd.Series] = None,
     cell_weights: Union[None, str, list, np.ndarray, pd.Series] = None,
-    # size_column: str = "cell_weights",
+    size_column: str = "cell_weights",
     fraction_base: Union[None, str] = None,
     ax: Union[plt.axes, None] = None,
     bar_clip: int = 5,
@@ -68,8 +68,6 @@ def vdj_usage(
     -------
     Axes object. 
     """
-
-    size_column = "cell_weights"
 
     # Execute the tool
     df = tl.vdj_usage(

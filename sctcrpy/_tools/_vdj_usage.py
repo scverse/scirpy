@@ -17,6 +17,7 @@ def vdj_usage(
     ),
     for_cells: Union[None, list, np.ndarray, pd.Series] = None,
     cell_weights: Union[None, str, list, np.ndarray, pd.Series] = None,
+    size_column: str = "cell_weights",
     fraction_base: Union[None, str] = None,
     as_dict: bool = False,
 ) -> Union[AnnData, dict]:
@@ -54,7 +55,7 @@ def vdj_usage(
     """
 
     # Preproces the data table (remove unnecessary rows and columns)
-    size_column = "cell_weights"
+
     if for_cells is None:
         for_cells = adata.obs.loc[
             ~_is_na(adata.obs.loc[:, target_cols]).all(axis="columns"), target_cols
