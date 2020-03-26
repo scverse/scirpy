@@ -2,15 +2,14 @@ import scanpy as sc
 from anndata import AnnData
 import numpy as np
 from typing import Union, Collection, Sequence
-import matplotlib.pyplot as plt
 from contextlib import contextmanager
 import collections.abc as cabc
 import warnings
 from scanpy import settings
-from matplotlib import cycler
 from matplotlib.colors import Colormap
 from cycler import Cycler
 import matplotlib
+from . import base
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#DDDDDD", "#000000"]
@@ -32,20 +31,6 @@ def _patch_plot_edges(neighbors_key, edges_cmap=None):
         yield
     finally:
         sc.plotting._utils.plot_edges = scanpy_plot_edges
-
-
-@contextmanager
-def _no_matplotlib_warnings():
-    """Temporarily suppress matplotlib warnings"""
-    import logging
-
-    mpl_logger = logging.getLogger("matplotlib")
-    log_level = mpl_logger.level
-    mpl_logger.setLevel(logging.ERROR)
-    try:
-        yield
-    finally:
-        mpl_logger.setLevel(log_level)
 
 
 def _plot_edges(
@@ -93,14 +78,14 @@ def clonotype_network(
     adata: AnnData,
     *,
     color: Union[str, Collection[str], None] = None,
-    ax: Union[plt.Axes, Sequence[plt.Axes], None] = None,
-    legend_loc: str = "right margin",
+    panel_size=(10, 10),
+    legend_loc: str = None,
     palette: Union[str, Sequence[str], Cycler, None] = None,
     neighbors_key="tcr_neighbors",
     basis="clonotype_network",
+    edges_color: Union[str, None] = "grey",
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
-    edges_color="grey",
-    edges=True,
+    edges: bool = True,
     edges_width=0.2,
     **kwargs
 ):
@@ -110,48 +95,69 @@ def clonotype_network(
     adata 
         annotated data matrix
     color
-        color cells by this column in `obs`
-    ax
-        Plot into this matplotlib.ax object
-    kwargs
-        Additional arguments are passed to :meth:`scanpy.pl.embedding`. 
+        Keys for annotations of observations/cells or variables/genes, e.g.,
+        `'ann1'` or `['ann1', 'ann2']`.
+    panel_size
+        Size tuple (`width`, `height`) of a single panel in inches
+    legend_loc
+        Location of legend, either `'on data'`, `'right margin'` or a valid keyword
+        for the `loc` parameter of :class:`~matplotlib.legend.Legend`.
+        Defaults to "on data" when coloring by `clonotype` or "right margin" in all
+        other cases. 
+    palette
+        Colors to use for plotting categorical annotation groups.
+        The palette can be a valid :class:`~matplotlib.colors.ListedColormap` name
+        (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object. 
+        It is possible to specify a list of the same size as `color` to choose 
+        a different color map for each panel. 
+    neighbors_key
+        Key under which the tcr neighborhood matrix is stored in `adata.uns`
+    basis
+        Key under which the graph layout coordinates are stored in `adata.obsm`
+    edges_color
+        Color of the edges. Set to `None` to color by connectivity and use the 
+        color map provided by `edges_cmap`. 
+    edges_cmap  
+        Colors to use for coloring edges by connectivity
+    edges
+        Whether to show the edges or not
+    edges_width
+        width of the edges
+    kwargs  
+        Additional arguments are passed to :func:`base.embedding`. 
 
     Returns
     -------
-    If `show==False` a :class:`~matplotlib.axes.Axes` or a list of it.
-    """
-    # larger default size for figures when only one color is selected
-    if (isinstance(color, str) or color is None) and ax is None:
-        fig, ax = plt.subplots(figsize=(10, 10))
+     axes
+        A list of axes objects, containing one
+        element for each `color`, or None if `show == True`. 
 
-    # use a cycler palette for many categories
-    if isinstance(color, str) and adata.obs[color].unique().size > 40:
-        if palette is None:
-            palette = cycler(color=matplotlib.cm.Set3(range(12)))
+    See also
+    --------
+    :func:`pl.embedding` and :func:`scanpy.pl.embedding`
+    """
+    color = [color] if isinstance(color, str) or color is None else list(color)
 
     # for clonotype, use "on data" as default
-    if isinstance(color, str) and color == "clonotype":
-        if legend_loc == "right margin":
-            legend_loc = "on data"
+    if legend_loc is None:
+        legend_loc = ["on data" if c == "clonotype" else "right margin" for c in color]
 
     if isinstance(edges_cmap, str):
         edges_cmap = matplotlib.cm.get_cmap(edges_cmap)
 
     with _patch_plot_edges(neighbors_key, edges_cmap):
-        with _no_matplotlib_warnings():
-            return sc.pl.embedding(
-                adata,
-                basis="clonotype_network",
-                color=color,
-                ax=ax,
-                edges=True,
-                legend_loc=legend_loc,
-                palette=palette,
-                edges_color=edges_color,
-                edges_width=edges_width,
-                show=False,
-                **kwargs,
-            )
+        return base.embedding(
+            adata,
+            basis="clonotype_network",
+            panel_size=panel_size,
+            color=color,
+            edges=edges,
+            legend_loc=legend_loc,
+            palette=palette,
+            edges_color=edges_color,
+            edges_width=edges_width,
+            **kwargs,
+        )
 
 
 def clonotype_network_igraph(
