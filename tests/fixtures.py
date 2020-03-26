@@ -167,6 +167,150 @@ def adata_tra():
     adata = AnnData(obs=obs)
     return adata
 
+@pytest.fixture
+def adata_vdj():
+    obs = 
+    {
+        'LT1_ACGGCCATCCGAGCCA-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ42',
+            'TRA_1_v_gene': 'TRAV26-2',
+            'TRB_1_v_gene': 'TRBV7-2',
+            'TRB_1_d_gene': 'TRBD1',
+            'TRB_1_j_gene': 'TRBJ2-5',
+            'sample': 'LT1'
+            },
+        'LT1_CGCTTCACAAGGTGTG-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ45',
+            'TRA_1_v_gene': 'None',
+            'TRB_1_v_gene': 'None',
+            'TRB_1_d_gene': 'None',
+            'TRB_1_j_gene': 'TRBJ2-3',
+            'sample': 'LT1'
+        },
+        'LT1_AGGGAGTTCCCAAGAT-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ29',
+            'TRA_1_v_gene': 'TRAV12-1',
+            'TRB_1_v_gene': 'TRBV20-1',
+            'TRB_1_d_gene': 'TRBD2',
+            'TRB_1_j_gene': 'TRBJ1-1',
+            'sample': 'LT1'
+        },
+        'LT1_ATTACTCGTTGGACCC-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ4',
+            'TRA_1_v_gene': 'TRAV12-1',
+            'TRB_1_v_gene': 'TRBV7-2',
+            'TRB_1_d_gene': 'None',
+            'TRB_1_j_gene': 'TRBJ2-6',
+            'sample': 'LT1'
+        },
+        'LT1_GCAATCACAATGAATG-1-24':
+        {
+            'TRA_1_j_gene': 'TRAJ52',
+            'TRA_1_v_gene': 'TRAV8-6',
+            'TRB_1_v_gene': 'TRBV30',
+            'TRB_1_d_gene': 'TRBD1',
+            'TRB_1_j_gene': 'TRBJ2-2',
+            'sample': 'LT1'
+        },
+        'LT1_TCTCTAATCCACTGGG-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ43',
+            'TRA_1_v_gene': 'TRAV8-3',
+            'TRB_1_v_gene': 'TRBV30',
+            'TRB_1_d_gene': 'TRBD1',
+            'TRB_1_j_gene': 'TRBJ1-2',
+            'sample': 'LT1'
+        },
+        'LT1_TATTACCTCAACGGCC-2-24': 
+        {
+            'TRA_1_j_gene': 'TRAJ45',
+            'TRA_1_v_gene': 'TRAV20',
+            'TRB_1_v_gene': 'TRBV4-1',
+            'TRB_1_d_gene': 'None',
+            'TRB_1_j_gene': 'TRBJ1-3',
+            'sample': 'LT1'
+        },
+        'LT1_CGTCAGGTCGAACTGT-1-24':
+        {
+            'TRA_1_j_gene': 'TRAJ15',
+            'TRA_1_v_gene': 'TRAV17',
+            'TRB_1_v_gene': 'TRBV5-1',
+            'TRB_1_d_gene': 'TRBD1',
+            'TRB_1_j_gene': 'TRBJ1-1',
+            'sample': 'LT1'
+        },
+        'LT1_GGGAATGGTTGCGTTA-2-24':
+        {
+            'TRA_1_j_gene': 'None',
+            'TRA_1_v_gene': 'None',
+            'TRB_1_v_gene': 'TRBV30',
+            'TRB_1_d_gene': 'TRBD1',
+            'TRB_1_j_gene': 'TRBJ2-2',
+            'sample': 'LT1'
+        },
+        'LT1_AGCTCCTGTAATCGTC-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ13',
+            'TRA_1_v_gene': 'TRAV13-1',
+            'TRB_1_v_gene': 'TRBV18',
+            'TRB_1_d_gene': 'TRBD2',
+            'TRB_1_j_gene': 'TRBJ2-2',
+            'sample': 'LT1'
+        },
+        'LT1_CAGCTGGTCCGCGGTA-1-24':
+        {
+            'TRA_1_j_gene': 'TRAJ30',
+            'TRA_1_v_gene': 'TRAV21',
+            'TRB_1_v_gene': 'TRBV30',
+            'TRB_1_d_gene': 'TRBD2',
+            'TRB_1_j_gene': 'TRBJ2-1',
+            'sample': 'LT1'
+        },
+        'LT1_CCTTTCTCAGCAGTTT-1-24':
+        {
+            'TRA_1_j_gene': 'TRAJ23',
+            'TRA_1_v_gene': 'TRAV9-2',
+            'TRB_1_v_gene': 'TRBV3-1',
+            'TRB_1_d_gene': 'None',
+            'TRB_1_j_gene': 'TRBJ1-2',
+            'sample': 'LT1'
+        },
+        'LT1_GTATCTTGTATATGAG-1-24':
+        {
+            'TRA_1_j_gene': 'TRAJ40',
+            'TRA_1_v_gene': 'TRAV36DV7',
+            'TRB_1_v_gene': 'TRBV6-3',
+            'TRB_1_d_gene': 'TRBD1',
+            'TRB_1_j_gene': 'TRBJ2-5',
+            'sample': 'LT1'
+        },
+        'LT1_TGCGCAGAGGGCATGT-1-24':
+        {
+            'TRA_1_j_gene': 'TRAJ39',
+            'TRA_1_v_gene': 'TRAV12-3',
+            'TRB_1_v_gene': 'TRBV11-2',
+            'TRB_1_d_gene': 'None',
+            'TRB_1_j_gene': 'TRBJ2-7',
+            'sample': 'LT1'
+        },
+        'LT1_CAGCAGCAGCGCTCCA-2-24':
+        {
+            'TRA_1_j_gene': 'TRAJ32',
+            'TRA_1_v_gene': 'TRAV38-2DV8',
+            'TRB_1_v_gene': 'None',
+            'TRB_1_d_gene': 'None',
+            'TRB_1_j_gene': 'TRBJ2-3',
+            'sample': 'LT1'
+        }
+    }
+    obs = pd.DataFrame.from_dict(obs, orient="index")
+    adata = AnnData(obs=obs)
+    return adata
+
 
 @pytest.fixture
 def adata_clonotype():

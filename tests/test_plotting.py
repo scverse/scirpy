@@ -59,3 +59,6 @@ def test_clonotype_network_igraph(adata_clonotype_network):
             ]
         ),
     )
+def test_vdj_usage(adata_tra):
+    p = pl.vdj_usage(adata_tra, cell_weights="sample")
+    assert isinstance(p, plt.Axes)
