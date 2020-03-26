@@ -99,9 +99,9 @@ def clonotype_network(
     neighbors_key="tcr_neighbors",
     basis="clonotype_network",
     edges_cmap: Union[Colormap, str] = COLORMAP_GREY,
-    edges_color=None,
+    edges_color="grey",
     edges=True,
-    edges_width=1,
+    edges_width=0.2,
     **kwargs
 ):
     """\

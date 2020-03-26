@@ -67,22 +67,27 @@ def layout_components(
         n_nodes x dim array containing the layout coordinates 
 
     """
+    # assign the original vertex id, it will otherwise get lost by decomposition
+    for i, v in enumerate(graph.vs):
+        v["id"] = i
     components = np.array(graph.decompose(mode="weak"))
     component_sizes = np.array([component.vcount() for component in components])
     order = np.argsort(component_sizes)
-    # need this to get components back into the right order:
-    # the output coordinates must adhere to the original vertex order.
-    rev_order = np.argsort(order)
+    components = components[order]
+    component_sizes = component_sizes[order]
+    vertex_ids = [v["id"] for comp in components for v in comp.vs]
+    vertex_sorter = np.argsort(vertex_ids)
 
     bbox_fun = _bbox_rpack if arrange_boxes == "dense" else _bbox_sorted
-    bboxes = bbox_fun(component_sizes[order], pad_x, pad_y)
-    bboxes = [bboxes[i] for i in rev_order]
+    bboxes = bbox_fun(component_sizes, pad_x, pad_y)
 
     component_layouts = [
         _layout_component(component, bbox, component_layout)
         for component, bbox in zip(components, bboxes)
     ]
-    return np.vstack(component_layouts)
+    # get vertexes back into their original order
+    coords = np.vstack(component_layouts)[vertex_sorter, :]
+    return coords
 
 
 def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
