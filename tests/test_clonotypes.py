@@ -1,28 +1,12 @@
+# pylama:ignore=W0611,W0404
 import pandas as pd
 import numpy.testing as npt
 import sctcrpy as st
 from anndata import AnnData
 import numpy as np
-import pytest
 from sctcrpy._util import _is_symmetric
-
-
-@pytest.fixture
-def adata_conn():
-    adata = AnnData(
-        obs=pd.DataFrame()
-        .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
-        .set_index("cell_id")
-    )
-    adata.uns["sctcrpy"] = {
-        "neighbors": {
-            "connectivities": np.array(
-                [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-            )
-        }
-    }
-    assert _is_symmetric(adata.uns["sctcrpy"]["neighbors"]["connectivities"])
-    return adata
+from .fixtures import adata_conn
+import random
 
 
 def test_define_clonotypes_no_graph():
@@ -80,5 +64,28 @@ def test_define_clonotypes(adata_conn):
     npt.assert_equal(adata_conn.obs["ct2_size"].values, [1] * 4)
 
 
-# def test_clonotype_network():
-#     pass
+def test_clonotype_network(adata_conn):
+    st.tl.define_clonotypes(adata_conn, partitions="connected")
+    random.seed(42)
+    coords = st.tl.clonotype_network(adata_conn, min_size=1, layout="fr", inplace=False)
+    npt.assert_almost_equal(
+        coords,
+        np.array(
+            [
+                [2.41359095, 0.23412465],
+                [1.10836324, 1.63916503],
+                [1.61680611, 0.80266963],
+                [3.06104282, 2.14395562],
+            ]
+        ),
+    )
+
+    random.seed(42)
+    st.tl.clonotype_network(
+        adata_conn, min_size=2, layout="components", inplace=True, key_added="X_ctn"
+    )
+    coords = adata_conn.obsm["X_ctn"]
+    npt.assert_almost_equal(
+        coords,
+        np.array([[2.0, 0.0], [0.0, 2.0], [1.00022264, 0.99981708], [np.nan, np.nan]]),
+    )

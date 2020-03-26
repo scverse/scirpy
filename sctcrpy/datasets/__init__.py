@@ -5,14 +5,14 @@ from scanpy.readwrite import read
 from scanpy import settings
 import os
 from contextlib import contextmanager
-import tqdm
+import tqdm.auto
 from tqdm import tqdm as tqdm_
 
 HERE = Path(__file__).parent
 
 
 @contextmanager
-def _monkey_path_tqdm():
+def _monkey_patch_tqdm():
     """Monkey-patch tqdm.auto to allow download without ipywidgets installed. 
     
     See also https://github.com/theislab/scanpy/pull/1130.
@@ -42,7 +42,7 @@ def wu2020() -> AnnData:
     # TODO host it on github or similar
     url = "https://www.dropbox.com/s/m48f3uveb2lrrbq/wu2020.h5ad?dl=1"
     filename = settings.datasetdir / "wu2020.h5ad"
-    with _monkey_path_tqdm():
+    with _monkey_patch_tqdm():
         adata = read(filename, backup_url=url)
     return adata
 
@@ -63,6 +63,6 @@ def wu2020_3k() -> AnnData:
     # TODO host it on github or similar
     url = "https://www.dropbox.com/s/dcfadomspl2pl8n/wu2020_3k.h5ad?dl=1"
     filename = settings.datasetdir / "wu2020_3k.h5ad"
-    with _monkey_path_tqdm():
+    with _monkey_patch_tqdm():
         adata = read(filename, backup_url=url)
     return adata

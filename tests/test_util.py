@@ -6,6 +6,9 @@ from sctcrpy._util import (
     _is_symmetric,
     _reduce_nonzero,
 )
+from sctcrpy._util._graph import layout_components
+from itertools import combinations
+import igraph as ig
 import numpy as np
 import pandas as pd
 import numpy.testing as npt
@@ -148,3 +151,29 @@ def test_normalize_counts(group_df):
     npt.assert_equal(_normalize_counts(group_df, False), [1] * 6)
     npt.assert_equal(_normalize_counts(group_df, "sample"), [4, 2, 4, 4, 4, 2])
     npt.assert_equal(_normalize_counts(group_df, True, "sample"), [4, 2, 4, 4, 4, 2])
+
+
+def test_layout_components():
+    g = ig.Graph()
+
+    # add 100 unconnected nodes
+    g.add_vertices(100)
+
+    # add 50 2-node components
+    g.add_vertices(100)
+    g.add_edges([(ii, ii + 1) for ii in range(100, 200, 2)])
+
+    # add 33 3-node components
+    g.add_vertices(100)
+    for ii in range(200, 299, 3):
+        g.add_edges([(ii, ii + 1), (ii, ii + 2), (ii + 1, ii + 2)])
+
+    # add a couple of larger components
+    n = 300
+    for ii in np.random.randint(4, 30, size=10):
+        g.add_vertices(ii)
+        g.add_edges(combinations(range(n, n + ii), 2))
+        n += ii
+
+    layout = layout_components(g, arrange_boxes="size", component_layout="fr")
+    layout = layout_components(g, arrange_boxes="dense", component_layout="fr")

@@ -23,10 +23,13 @@ requires = [
     # pandas <1 until scanpy is fully compatible...
     'pandas<1',
     'numpy',
+    'scipy',
     'parasail',
     'scikit-learn',
     'python-levenshtein',
-    'python-igraph'
+    'python-igraph',
+    'networkx',
+    'rectangle-packer'
 ]
 
 [tool.flit.metadata.requires-extra]
@@ -46,5 +49,5 @@ doc = [
     'sphinxcontrib-bibtex',
     'pycairo',
     'jupyter_client',
-    'ipykernel'
+    'ipykernel',
 ]

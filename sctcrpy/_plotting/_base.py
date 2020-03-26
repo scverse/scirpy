@@ -1,6 +1,5 @@
 """Base plotting functions"""
-
-from typing import Union
+from typing import Union, Sequence, Tuple, Optional
 from .._compat import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -8,6 +7,10 @@ import numpy as np
 from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
 from .._util import _doc_params
 from sklearn.neighbors import KernelDensity
+from cycler import Cycler
+import itertools
+import scanpy as sc
+from matplotlib import rcParams, cycler
 
 
 _common_doc = """
@@ -196,3 +199,191 @@ def curve(
     style_axes(ax, style, style_kws)
 
     return ax
+
+
+def _add_labels(
+    ax: plt.Axes,
+    coords: np.ndarray,
+    label_data: np.ndarray,
+    legend_fontweight,
+    legend_fontsize,
+    legend_fontoutline,
+):
+    """Add legend labels on data at centroids position"""
+    categories = np.unique(label_data)
+    for ilabel, label in enumerate(categories):
+        _scatter = coords[(label_data == label) & ~np.any(np.isnan(coords), axis=1), :]
+        if _scatter.shape[0]:
+            x_pos, y_pos = np.median(_scatter, axis=0)
+
+            ax.text(
+                x_pos,
+                y_pos,
+                label,
+                weight=legend_fontweight,
+                verticalalignment="center",
+                horizontalalignment="center",
+                fontsize=legend_fontsize,
+                path_effects=legend_fontoutline,
+            )
+
+
+def embedding(
+    adata,
+    basis,
+    *,
+    color: Union[str, Sequence[str], None] = None,
+    panel_size: Tuple[float] = (4, 4),
+    palette: Union[str, Cycler, Sequence[str], Sequence[Cycler], None] = None,
+    legend_loc: str = "right margin",
+    ax: Optional[Union[plt.Axes, Sequence[plt.Axes]]] = None,
+    ncols: int = 3,
+    show: Optional[bool] = False,
+    hspace: float = 0.25,
+    wspace: float = None,
+    **kwargs,
+) -> Union[None, Sequence[plt.Axes]]:
+    """A customized wrapper to the :meth:`sc.pl.embedding` function. 
+
+    The differences to the scanpy embedding function are:
+        * allows to specify a `panel_size`
+        * Allows to specify a different `basis`, `legend_loc` and `palette` 
+          for each panel. The number of panels is defined by the `color` parameter. 
+        * Use a patched version for adding "on data" labels. The original
+          raises a flood of warnings when coords are `nan`. 
+        * For columns with many categories, cycles through colors 
+          instead of reverting to grey
+        * allows to specify axes, even if multiple colors are set. 
+
+    Parameters
+    ----------
+    adata
+        annotated data matrix
+    basis
+        embedding to plot. 
+        Get the coordinates from the "X_{basis}" key in `adata.obsm`. 
+        This can be a list of the same length as `color` to specify 
+        different bases for each panel. 
+    color
+        Keys for annotations of observations/cells or variables/genes, e.g.,
+        `'ann1'` or `['ann1', 'ann2']`.
+    panel_size
+        Size tuple (`width`, `height`) of a single panel in inches
+    palette
+        Colors to use for plotting categorical annotation groups.
+        The palette can be a valid :class:`~matplotlib.colors.ListedColormap` name
+        (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object. 
+        It is possible to specify a list of the same size as `color` to choose 
+        a different color map for each panel. 
+    legend_loc
+        Location of legend, either `'on data'`, `'right margin'` or a valid keyword
+        for the `loc` parameter of :class:`~matplotlib.legend.Legend`.
+    ax
+        A matplotlib axes object or a list with the same length as `color` thereof. 
+    ncols
+        Number of columns for multi-panel plots
+    show
+        If True, show the firgure. If false, return a list of Axes objects
+    wspace
+        Adjust the width of the space between multiple panels.
+    hspace
+        Adjust the height of the space between multiple panels.
+    kwargs
+        Arguments to pass to :func:`scanpy.pl.embedding`. 
+
+    Returns
+    -------
+    axes
+        A list of axes objects, containing one
+        element for each `color`, or None if `show == True`. 
+    
+    See also
+    --------
+    :meth:`scanpy.pl.embedding`
+    """
+    adata._sanitize()
+
+    def _make_iterable(var, singleton_types=(str,)):
+        return (
+            itertools.repeat(var)
+            if isinstance(var, singleton_types) or var is None
+            else list(var)
+        )
+
+    color = [color] if isinstance(color, str) or color is None else list(color)
+    basis = _make_iterable(basis)
+    legend_loc = _make_iterable(legend_loc)
+    palette = _make_iterable(palette, (str, Cycler))
+
+    # set-up grid, if no axes are provided
+    if ax is None:
+        n_panels = len(color)
+        nrows = int(np.ceil(float(n_panels) / ncols))
+        hspace = (
+            rcParams.get("figure.subplot.hspace", 0.0) if hspace is None else hspace
+        )
+        wspace = (
+            rcParams.get("figure.subplot.wspace", 0.0) if wspace is None else wspace
+        )
+        # Don't ask about +/- 1 but appears to be most faithful to the panel size
+        fig_width = panel_size[0] * ncols + hspace * (ncols + 1)
+        fig_height = panel_size[1] * nrows + wspace * (nrows - 1)
+        fig, axs = plt.subplots(
+            nrows=nrows,
+            ncols=ncols,
+            figsize=(fig_width, fig_height),
+            gridspec_kw={"wspace": wspace, "hspace": hspace},
+            squeeze=False,
+        )
+        axs = axs.flatten()
+    else:
+        axs = [ax] if not isinstance(ax, Sequence) else list(ax)
+        fig = axs[0].get_figure()
+
+    # use the scanpy plotting api to fill individual components
+    for ax, tmp_color, tmp_basis, tmp_legend_loc, tmp_palette in zip(
+        axs, color, basis, legend_loc, palette
+    ):
+        # cycle colors for categories with many values instead of
+        # coloring them in grey
+        if tmp_palette is None and tmp_color is not None:
+            if str(adata.obs[tmp_color].dtype) == "category":
+                if adata.obs[tmp_color].unique().size > len(sc.pl.palettes.default_102):
+                    tmp_palette = cycler(color=sc.pl.palettes.default_102)
+
+        add_labels = tmp_legend_loc == "on data"
+        tmp_legend_loc = None if add_labels else tmp_legend_loc
+
+        sc.pl.embedding(
+            adata,
+            tmp_basis,
+            ax=ax,
+            show=False,
+            color=tmp_color,
+            legend_loc=tmp_legend_loc,
+            palette=tmp_palette,
+            **kwargs,
+        )
+
+        # manually add labels for "on data", as missing entries in `obsm` will cause
+        # a flood of matplotlib warnings.
+        # TODO: this could eventually be fixed upstream in scanpy
+        if add_labels:
+            _add_labels(
+                ax,
+                adata.obsm["X_" + tmp_basis],
+                adata.obs[tmp_color].values,
+                legend_fontweight=kwargs.get("legend_fontweight", "bold"),
+                legend_fontsize=kwargs.get("legend_fontsize", None),
+                legend_fontoutline=kwargs.get("legend_fontoutline", None),
+            ),
+
+    # hide unused panels in grid
+    for ax in axs[len(color) :]:
+        ax.axis("off")
+
+    if show:
+        fig.show()
+    else:
+        # only return axes that actually contain a plot.
+        return axs[: len(color)]

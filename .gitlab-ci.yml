@@ -8,14 +8,15 @@ cache:
     - .cache/pip
 
 before_script:
+  - apt-get update && apt-get -y install build-essential make
   - conda info -a
   - |
-    conda install -c conda-forge -c bioconda -y \
+    conda install -c conda-forge \
       flit \
+      python-igraph \
       pandoc \
       python-igraph \
       leidenalg \
-      make \
       python-levenshtein
   - FLIT_ROOT_INSTALL=1 flit install --deps develop
 

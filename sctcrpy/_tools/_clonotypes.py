@@ -1,9 +1,11 @@
 from anndata import AnnData
 from .._compat import Literal
 from typing import Union, Tuple
-from .._util import _is_na, get_igraph_from_adjacency
+from .._util import _is_na
+from .._util._graph import get_igraph_from_adjacency, layout_components
 import numpy as np
 import pandas as pd
+import networkx
 
 
 def _define_clonotypes_no_graph(
@@ -69,7 +71,7 @@ def define_clonotypes(
     partitions: Literal["connected", "leiden"] = "leiden",
     resolution: float = 1,
     n_iterations: int = 5,
-    neighbors_key: str = "neighbors",
+    neighbors_key: str = "tcr_neighbors",
     key_added: str = "clonotype",
     inplace: bool = True,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
@@ -107,7 +109,7 @@ def define_clonotypes(
         for each cell.    
     """
     try:
-        conn = adata.uns["sctcrpy"][neighbors_key]["connectivities"]
+        conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
         raise ValueError(
             "Connectivities were not found. Did you run `pp.tcr_neighbors`?"
@@ -137,22 +139,42 @@ def define_clonotypes(
 def clonotype_network(
     adata,
     *,
-    layout: str = "fr",
     min_size: int = 1,
-    neighbors_key: str = "neighbors",
+    layout: str = "fr",
+    layout_kwargs: Union[dict, None] = None,
+    neighbors_key: str = "tcr_neighbors",
     key_clonotype_size: str = "clonotype_size",
     key_added: str = "X_clonotype_network",
-    inplace: bool = False,
-):
+    inplace: bool = True,
+) -> Union[None, np.ndarray]:
     """Build the clonotype network for plotting
     
     Parameters
     ----------
     min_size
         Only show clonotypes with at least `min_size` cells.
+    layout
+        The layout algorithm to use. Can be anything supported by :meth:`igraph.layout` 
+        or "components" to layout all connected components individually. See
+        :meth:`sctcrpy._util._graph.layout_componets` for more details. 
+    layout_kwargs
+        Will be passed to the layout function
+    neighbors_key
+        Key under which the neighborhood graph is stored in `adata.uns`. 
+    key_clonotype_size
+        Key under which the clonotype size information is stored in `adata.obs`
+    key_added
+        Key under which the layout coordinates will be stored in `adata.obsm`. 
+    inplace
+        If true, store the coordinates in `adata.obsm`, otherwise return them. 
+
+    Returns
+    -------
+    Depending on the value of `inplace` returns either nothing or the computed
+    coordinates. 
     """
     try:
-        conn = adata.uns["sctcrpy"][neighbors_key]["connectivities"]
+        conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
         raise ValueError("Connectivity data not found. Did you run `pp.tcr_neighbors`?")
 
@@ -169,9 +191,18 @@ def clonotype_network(
     subgraph_idx = np.where(clonotype_size >= min_size)[0]
     if len(subgraph_idx) == 0:
         raise ValueError("No subgraphs with size >= {} found.".format(min_size))
-
     graph = graph.subgraph(subgraph_idx)
-    layout_ = graph.layout(layout)
+
+    layout_kwargs = dict() if layout_kwargs is None else layout_kwargs
+    if layout == "components":
+        coords = layout_components(graph, **layout_kwargs)
+    else:
+        coords = graph.layout(layout, **layout_kwargs).coords
+
     coordinates = np.full((adata.n_obs, 2), fill_value=np.nan)
-    coordinates[subgraph_idx, :] = layout_.coords
-    adata.obsm[key_added] = coordinates
+    coordinates[subgraph_idx, :] = coords
+
+    if inplace:
+        adata.obsm[key_added] = coordinates
+    else:
+        return coordinates
