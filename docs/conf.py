@@ -16,6 +16,15 @@ version = __version__
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
+# add custom stylesheet
+# https://stackoverflow.com/a/43186995/2340703
+html_static_path = ["_static"]
+
+
+def setup(app):
+    app.add_stylesheet("custom.css")
+
+
 nitpicky = True  # Warn about broken links
 nitpick_ignore = [
     ("py:data", "typing.Optional"),
@@ -52,7 +61,12 @@ todo_include_todos = False
 nbsphinx_custom_formats = {
     ".md": lambda s: jupytext.reads(s, ".md"),
 }
-nbsphinx_execute = "always"
+# nbsphinx_execute = "always"
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg'}",
+    "--InlineBackend.rc={'figure.dpi': 96}",
+]
+nbsphinx_timeout = 300
 
 # styling
 html_theme = "sphinx_rtd_theme"
