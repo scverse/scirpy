@@ -3,7 +3,7 @@
 import scanpy as sc
 import sys
 
-sys.path.append("..")
+sys.path.append("../../..")
 import scirpy as st
 from multiprocessing import Pool
 import os
@@ -11,12 +11,14 @@ import pandas as pd
 from glob import glob
 
 # + language="bash"
-# wget "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file"
-# wget "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file&file=GSE139555%5Fall%5Fmetadata%2Etxt%2Egz"
+# mkdir -p data
+# cd data
+# wget -O GSE139555_raw.tar "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file"
+# wget -O GSE139555_tcell_metadata.txt.gz "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file&file=GSE139555%5Ftcell%5Fmetadata%2Etxt%2Egz"
 # tar xvf GSE139555_raw.tar
 
 # + language="bash"
-# cd GSM4143662
+# cd data
 # for f in *.matrix.mtx.gz; do
 #   dirname=${f/\.matrix\.mtx\.gz/}
 #   mkdir $dirname
@@ -29,17 +31,21 @@ from glob import glob
 # done
 # -
 
-mtx_paths = glob("GSM4143662/GSM*")
+mtx_paths = glob("data/GSM*")
 
 mtx_paths
 
-metadata = pd.read_csv(
-    "GSM4143662/GSE139555_all_metadata.txt.gz", sep="\t", index_col=0
+metadata_all = pd.read_csv(
+    "data/GSE139555_tcell_metadata.txt.gz", sep="\t", index_col=0
 )
 
-metadata = metadata[["ident", "patient", "sample", "source", "clonotype"]]
+umap = metadata_all[["UMAP_1", "UMAP_2"]]
 
-metadata = metadata.rename(columns={"clonotype": "clonotype_orig"})
+metadata = metadata_all[["ident", "patient", "sample", "source", "clonotype"]]
+
+metadata = metadata.rename(
+    columns={"clonotype": "clonotype_orig", "ident": "cluster_orig"}
+)
 
 metadata
 
@@ -47,6 +53,7 @@ metadata
 def _load_adata(path):
     sample_id = path.split("-")[-1].upper()
     obs = metadata.loc[metadata["sample"] == sample_id, :]
+    umap_coords = umap.loc[metadata["sample"] == sample_id, :].values
     adata = sc.read_10x_mtx(path)
     adata_tcr = st.read_10x_vdj_csv(
         os.path.join(path, "filtered_contig_annotations.csv.gz")
@@ -57,7 +64,11 @@ def _load_adata(path):
     adata_tcr.obs_names = [
         "{}_{}".format(sample_id, barcode) for barcode in adata_tcr.obs_names
     ]
-    adata.obs = adata.obs.join(obs, how="left")
+    # subset to T cells only
+    adata = adata[obs.index, :].copy()
+    adata.obs = adata.obs.join(obs, how="inner")
+    assert adata.shape[0] == umap_coords.shape[0]
+    adata.obsm["X_umap_orig"] = umap_coords
     st.pp.merge_with_tcr(adata, adata_tcr)
     return adata
 
@@ -68,6 +79,11 @@ adatas = p.map(_load_adata, mtx_paths)
 
 adata = adatas[0].concatenate(adatas[1:])
 
+# inverse umap X -coordinate
+adata.obsm["X_umap_orig"][:, 0] = (
+    np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
+)
+
 import numpy as np
 
 np.sum(adata.obs["has_tcr"])
@@ -75,3 +91,5 @@ np.sum(adata.obs["has_tcr"])
 adata.write_h5ad("wu2020.h5ad", compression="lzf")
 
 adata.obs
+
+sc.pl.embedding(adata, "umap_orig", color="cluster_orig", legend_loc="on data")
