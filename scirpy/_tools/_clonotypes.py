@@ -193,7 +193,8 @@ def clonotype_network(
         raise ValueError("No subgraphs with size >= {} found.".format(min_size))
     graph = graph.subgraph(subgraph_idx)
 
-    layout_kwargs = dict() if layout_kwargs is None else layout_kwargs
+    default_layout_kwargs = {"weights": "weight"} if layout == "fr" else dict()
+    layout_kwargs = default_layout_kwargs if layout_kwargs is None else layout_kwargs
     if layout == "components":
         coords = layout_components(graph, **layout_kwargs)
     else:
