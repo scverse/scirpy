@@ -217,7 +217,7 @@ def test_spectratype(adata_tra):
 
 def test_vdj_usage(adata_vdj):
     # Check return formats
-    df = st.tl.vdj_usage(adata_vdj, fraction="sample", as_dict=False)
+    df = st.tl.vdj_usage(adata_vdj, fraction="sample")
     assert isinstance(df, pd.DataFrame)
 
     # Check normalization
@@ -239,5 +239,5 @@ def test_vdj_usage(adata_vdj):
         0.06666666666666667,
         0.06666666666666667
         ]
-    df = st.tl.vdj_usage(adata_vdj, cell_weights="sample", as_dict=False)
+    df = st.tl.vdj_usage(adata_vdj, cell_weights="sample")
     npt.assert_equal(df[size_column].tolist(), expected_weights)
