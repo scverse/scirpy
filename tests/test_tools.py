@@ -240,7 +240,4 @@ def test_vdj_usage(adata_vdj):
         0.06666666666666667,
         0.06666666666666667
         ]
-    print(df)
-    print(df["cell_weights"])
-    print(df.loc["cell_weights"])
     npt.assert_equal(df["cell_weights"].tolist(), expected_weights)
