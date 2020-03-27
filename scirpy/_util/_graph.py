@@ -23,6 +23,9 @@ def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = Non
     weights = adj[sources, targets].astype("float")
     g.add_edges(list(zip(sources, targets)))
 
+    if isinstance(weights, np.matrix):
+        weights = weights.A1
+
     g.es["weight"] = weights
     if edge_type is not None:
         g.es["type"] = edge_type
