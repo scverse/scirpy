@@ -66,6 +66,7 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.figure_formats={'svg'}",
     "--InlineBackend.rc={'figure.dpi': 96}",
 ]
+nbsphinx_timeout = 300
 
 # styling
 html_theme = "sphinx_rtd_theme"
