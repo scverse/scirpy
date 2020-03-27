@@ -63,10 +63,7 @@ def vdj_usage(
 
     # Execute the tool
     df = tl.vdj_usage(
-        adata,
-        target_cols=target_cols,
-        fraction=fraction,
-        cell_weights=cell_weights
+        adata, target_cols=target_cols, fraction=fraction, cell_weights=cell_weights
     )
 
     if top_n is None:

@@ -48,7 +48,7 @@ def vdj_usage(
     else:
         if isinstance(fraction, (bool, str)):
             fraction = _normalize_counts(adata.obs, fraction=fraction)
-    
+
     observations = adata.obs.loc[:, target_cols]
     observations[size_column] = fraction
 
