@@ -218,7 +218,6 @@ def test_spectratype(adata_tra):
 def test_vdj_usage(adata_vdj):
 
     df = st.tl.vdj_usage(adata_vdj, fraction="sample")
-    print(df)
     
     # Check return formats
     assert isinstance(df, pd.DataFrame)
@@ -241,4 +240,7 @@ def test_vdj_usage(adata_vdj):
         0.06666666666666667,
         0.06666666666666667
         ]
+    print(df)
+    print(df["cell_weights"])
+    print(df.loc["cell_weights"])
     npt.assert_equal(df["cell_weights"].tolist(), expected_weights)
