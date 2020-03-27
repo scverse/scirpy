@@ -160,7 +160,7 @@ def _normalize_counts(
         raise ValueError("No colname specified in either `normalize` or `default_col")
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
-    return obs.groupby(normalize_col)[normalize_col].transform("count").values
+    return 1 / obs.groupby(normalize_col)[normalize_col].transform("count").values
 
 
 def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:

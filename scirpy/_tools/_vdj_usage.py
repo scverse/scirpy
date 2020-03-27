@@ -44,10 +44,10 @@ def vdj_usage(
     """
 
     if fraction is None:
-        fraction = 1 / _normalize_counts(adata.obs, normalize=False)
+        fraction = _normalize_counts(adata.obs, normalize=False)
     else:
         if isinstance(fraction, (bool, str)):
-            fraction = 1 / _normalize_counts(adata.obs, normalize=fraction)
+            fraction = _normalize_counts(adata.obs, normalize=fraction)
 
     observations = adata.obs.loc[:, target_cols]
     observations[size_column] = fraction
