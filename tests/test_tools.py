@@ -218,6 +218,7 @@ def test_spectratype(adata_tra):
 def test_vdj_usage(adata_vdj):
 
     df = st.tl.vdj_usage(adata_vdj, fraction="sample")
+    print(df)
     
     # Check return formats
     assert isinstance(df, pd.DataFrame)
