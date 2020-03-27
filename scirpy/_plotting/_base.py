@@ -10,7 +10,7 @@ from sklearn.neighbors import KernelDensity
 from cycler import Cycler
 import itertools
 import scanpy as sc
-from matplotlib import rcParams, cycler
+from matplotlib import rcParams, cycler, patheffects
 
 
 _common_doc = """
@@ -216,6 +216,15 @@ def _add_labels(
         if _scatter.shape[0]:
             x_pos, y_pos = np.median(_scatter, axis=0)
 
+            if legend_fontoutline is not None:
+                path_effect = [
+                    patheffects.withStroke(
+                        linewidth=legend_fontoutline, foreground="w",
+                    )
+                ]
+            else:
+                path_effect = None
+
             ax.text(
                 x_pos,
                 y_pos,
@@ -224,7 +233,7 @@ def _add_labels(
                 verticalalignment="center",
                 horizontalalignment="center",
                 fontsize=legend_fontsize,
-                path_effects=legend_fontoutline,
+                path_effects=path_effect,
             )
 
 

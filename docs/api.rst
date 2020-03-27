@@ -7,6 +7,7 @@ API
 .. automodule:: scirpy 
    :noindex:
 
+.. _api-io:
 
 Input/Output
 ------------
