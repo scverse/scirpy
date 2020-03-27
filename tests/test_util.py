@@ -149,8 +149,8 @@ def test_normalize_counts(group_df):
         _normalize_counts(group_df, True, None)
 
     npt.assert_equal(_normalize_counts(group_df, False), [1] * 6)
-    npt.assert_equal(_normalize_counts(group_df, "sample"), [4, 2, 4, 4, 4, 2])
-    npt.assert_equal(_normalize_counts(group_df, True, "sample"), [4, 2, 4, 4, 4, 2])
+    npt.assert_equal(_normalize_counts(group_df, "sample"), [.25, .5, .25, .25, .25, .5])
+    npt.assert_equal(_normalize_counts(group_df, True, "sample"), [.25, .5, .25, .25, .25, .5])
 
 
 def test_layout_components():
