@@ -1,4 +1,6 @@
 _build
 scirpy.*.rst
 tutorials/*-Copy*
+tutorials/data
+tutorials/*.ipynb
 __latexindent*
