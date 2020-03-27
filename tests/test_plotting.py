@@ -7,6 +7,7 @@ from .fixtures import (
     adata_tra,
     adata_clonotype,
     adata_diversity,
+    adata_vdj,
     adata_clonotype_network,
 )
 import matplotlib.pyplot as plt
