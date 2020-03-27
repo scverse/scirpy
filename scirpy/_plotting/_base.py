@@ -319,6 +319,7 @@ def embedding(
     if ax is None:
         n_panels = len(color)
         nrows = int(np.ceil(float(n_panels) / ncols))
+        ncols = np.min((n_panels, ncols))
         hspace = (
             rcParams.get("figure.subplot.hspace", 0.0) if hspace is None else hspace
         )
