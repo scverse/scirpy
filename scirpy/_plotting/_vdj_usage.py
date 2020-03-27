@@ -62,7 +62,7 @@ def vdj_usage(
     """
 
     # Execute the tool
-    df = tl.vdj_usage(adata, target_cols=target_cols, fraction=fraction)
+    df = tl.vdj_usage(adata, target_cols=target_cols, fraction=fraction, size_column=size_column)
 
     if top_n is None:
         top_n = df.shape[0]
