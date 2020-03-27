@@ -16,10 +16,8 @@ def vdj_usage(
         "TRB_1_d_gene",
         "TRB_1_j_gene",
     ],
-    for_cells: Union[None, list, np.ndarray, pd.Series] = None,
-    cell_weights: Union[None, str, list, np.ndarray, pd.Series] = None,
+    fraction: Union[None, str, list, np.ndarray, pd.Series] = None,
     size_column: str = "cell_weights",
-    fraction_base: Union[None, str] = None,
     ax: Union[plt.axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
@@ -37,20 +35,14 @@ def vdj_usage(
         AnnData object to work on.
     target_cols
         Columns containing gene segment information. Overwrite default only if you know what you are doing!         
-    for_cells
-        A whitelist of cells that should be included in the analysis. If not specified,
-        all cells in  `adata` will be used that have at least a primary alpha or beta chain.
-    cell_weights
-        The size factor for each cell. By default, each cell count as 1, but due to normalization
-        to different sample sizes for example, it is possible that one cell in a small sample
-        is weighted more than a cell in a large sample.
+    fraction
+        Either the name of a categorical column that should be used as the base for computing fractions,
+        or an iterable specifying a size factor for each cell. By default, each cell count as 1,
+        but due to normalization to different sample sizes for example, it is possible that one cell
+        in a small sample is weighted more than a cell in a large sample.
     size_column
         The name of the column that will be used for storing cell weights. This value is used internally
         and should be matched with the column name used by the tool function. Best left untouched.
-    fraction_base
-        As an alternative to supplying ready-made cell weights, this feature can also be calculated
-        on the fly if a grouping column name is supplied. The parameter `cell_weights` takes piority
-        over `fraction_base`. If both is `None`, each cell will have a weight of 1.
     ax
         Custom axis if needed.
     bar_clip
@@ -73,10 +65,8 @@ def vdj_usage(
     df = tl.vdj_usage(
         adata,
         target_cols=target_cols,
-        for_cells=for_cells,
-        cell_weights=cell_weights,
-        fraction_base=fraction_base,
-        size_column=size_column,
+        fraction=fraction,
+        cell_weights=cell_weights
     )
 
     if top_n is None:
