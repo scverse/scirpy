@@ -53,6 +53,10 @@ nbsphinx_custom_formats = {
     ".md": lambda s: jupytext.reads(s, ".md"),
 }
 nbsphinx_execute = "always"
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg'}",
+    "--InlineBackend.rc={'figure.dpi': 96}",
+]
 
 # styling
 html_theme = "sphinx_rtd_theme"
