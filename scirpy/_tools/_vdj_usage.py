@@ -1,4 +1,4 @@
-from .._util import _is_na
+from .._util import _normalize_counts
 from anndata import AnnData
 from typing import Collection, Union, List
 import pandas as pd
@@ -15,7 +15,7 @@ def vdj_usage(
         "TRB_1_d_gene",
         "TRB_1_j_gene",
     ),
-    fraction: Union[None, str, list, np.ndarray, pd.Series] = None,
+    fraction: Union[None, bool, str, list, np.ndarray, pd.Series] = None,
     size_column: str = "cell_weights",
 ) -> pd.DataFrame:
     """Gives a summary of the most abundant VDJ combinations in a given subset of cells. 
@@ -43,32 +43,13 @@ def vdj_usage(
     Depending on the value of `as_dict`, either returns a data frame  or a dictionary. 
     """
 
-    # Check how cells should be weighted
-    observations = adata.obs.copy()
-    makefractions = False
-    if cell_weights is None:
-        if fraction is None:
-            observations[size_column] = 1
-        else:
-            makefractions = True
+    if fraction is None:
+        fraction = _normalize_counts(adata.obs, fraction=False)
     else:
-        if isinstance(fraction, str):
-            makefractions = True
-            fraction_base = fraction
-        else:
-            if len(fraction) == observations.shape[0]:
-                observations[size_column] = fraction
-            else:
-                raise ValueError(
-                    "Although `fraction` appears to be an iterable, its length is not identical to the number of cells."
-                )
-
-    # Calculate fractions if necessary
-    if makefractions:
-        group_sizes = observations.loc[:, fraction_base].value_counts().to_dict()
-        observations[size_column] = (
-            observations[fraction_base].map(group_sizes).astype("int32")
-        )
-        observations[size_column] = 1 / observations[size_column]
+        if isinstance(fraction, (bool, str)):
+            fraction = _normalize_counts(adata.obs, fraction=fraction)
+    
+    observations = adata.obs.loc[:, target_cols]
+    observations[size_column] = fraction
 
     return observations
