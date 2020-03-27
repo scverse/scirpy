@@ -425,7 +425,7 @@ def tcr_neighbors(
     *,
     metric: Literal["identity", "alignment", "levenshtein"] = "alignment",
     cutoff: int = 2,
-    strategy: Literal["TRA", "TRB", "all", "any"] = "any",
+    strategy: Literal["TRA", "TRB", "all", "any"] = "all",
     chains: Literal["primary_only", "all"] = "primary_only",
     key_added: str = "tcr_neighbors",
     inplace: bool = True,
