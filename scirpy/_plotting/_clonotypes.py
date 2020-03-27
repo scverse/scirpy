@@ -83,10 +83,10 @@ def clonotype_network(
     palette: Union[str, Sequence[str], Cycler, None] = None,
     neighbors_key="tcr_neighbors",
     basis="clonotype_network",
-    edges_color: Union[str, None] = "grey",
+    edges_color: Union[str, None] = None,
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
     edges: bool = True,
-    edges_width=0.2,
+    edges_width=0.4,
     **kwargs
 ):
     """\
