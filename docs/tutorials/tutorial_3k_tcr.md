@@ -374,5 +374,5 @@ ir.pl.spectratype(
 ```
 
 ```python
-st.pl.vdj_usage(adata)
+ir.pl.vdj_usage(adata)
 ```
