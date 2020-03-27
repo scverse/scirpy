@@ -7,7 +7,7 @@ import numpy.testing as npt
 import pandas.testing as pdt
 import numpy as np
 from scirpy._util import _get_from_uns
-from .fixtures import adata_clonotype, adata_tra, adata_diversity
+from .fixtures import adata_clonotype, adata_tra, adata_vdj, adata_diversity
 
 
 def test_chain_pairing():
