@@ -22,6 +22,7 @@ def vdj_usage(
     top_n: Union[None, int] = 10,
     barwidth: float = 0.4,
     draw_bars: bool = True,
+    full_combination: bool = True,
     fig_kws: Union[dict, None] = None,
 ) -> plt.Axes:
     """Creates a ribbon plot of the most abundant VDJ combinations in a
@@ -55,6 +56,10 @@ def vdj_usage(
         Width of bars.
     draw_bars
         If `False`, only ribbons are drawn and no bars.
+    full_combination
+        If set to `False`, the bands represent the frequency of a binary gene segment combination
+        of the two connectec loci (e.g. combination of TRBD and TRBJ genes). By default each
+        band represents an individual combination of all five loci.
     fig_kws
         Dictionary of keyword args that will be passed to the matplotlib 
         figure (e.g. `figsize`)
@@ -91,7 +96,7 @@ def vdj_usage(
         )
         genes = td[target_cols[i]].tolist()
         td = td["cell_weights"]
-        sector = target_cols[i][2:7]
+        sector = target_cols[i][2:7].replace('_', '')
         # sector = sector.replace('_', '')
         unct = td[bar_clip + 1 :,].sum()
         if td.size > bar_clip:
@@ -129,18 +134,23 @@ def vdj_usage(
 
     # Count occurance of individual VDJ combinations
     td = df.loc[:, target_cols + ["cell_weights"]]
-    td["genecombination"] = td.apply(
-        lambda x, y: "|".join([x[e] for e in y]), y=target_cols, axis=1
-    )
-    td = (
-        td.groupby("genecombination")
-        .agg({"cell_weights": "sum"})
-        .sort_values(by="cell_weights", ascending=False)
-        .reset_index()
-    )
-    td["genecombination"] = td.apply(
-        lambda x: [x["cell_weights"]] + x["genecombination"].split("|"), axis=1
-    )
+
+    if full_combination:
+        td["genecombination"] = td.apply(
+            lambda x, y: "|".join([x[e] for e in y]), y=target_cols, axis=1
+        )
+        td = (
+            td.groupby("genecombination")
+            .agg({"cell_weights": "sum"})
+            .sort_values(by="cell_weights", ascending=False)
+            .reset_index()
+        )
+        td["genecombination"] = td.apply(
+            lambda x: [x["cell_weights"]] + x["genecombination"].split("|"), axis=1
+        )
+    else:
+        for locus in range(1, len(target_cols)):
+            print(target_cols[locus-1:locus])
 
     # Draw ribbons
     for r in td["genecombination"][1 : top_n + 1]:
@@ -148,7 +158,7 @@ def vdj_usage(
         ht = r[0]
         for i in range(len(r) - 1):
             g = r[i + 1]
-            sector = target_cols[i][2:7]
+            sector = target_cols[i][2:7].replace('_', '')
             if g == "None":
                 g = "No_" + sector
             if g not in gene_tops:
