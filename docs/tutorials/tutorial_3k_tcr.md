@@ -376,3 +376,7 @@ ir.pl.spectratype(
 ```python
 ir.pl.vdj_usage(adata)
 ```
+
+```python
+ir.pl.vdj_usage(adata, full_combination=False)
+```
