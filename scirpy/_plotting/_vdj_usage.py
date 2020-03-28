@@ -132,12 +132,20 @@ def vdj_usage(
             except:
                 pass
 
-    # Count occurance of individual VDJ combinations
-    td = df.loc[:, target_cols + ["cell_weights"]]
-
+    # Create a case for full combinations or just the neighbours
     if full_combination:
+        draw_mat = [target_cols]
+    else:
+        draw_mat = []
+        for lc in range(1, len(target_cols)):
+            draw_mat.append(target_cols[lc - 1 : lc])
+
+    init_n = 0
+    for target_pair in draw_mat:
+        # Count occurance of individual VDJ combinations
+        td = df.loc[:, target_cols + ["cell_weights"]]
         td["genecombination"] = td.apply(
-            lambda x, y: "|".join([x[e] for e in y]), y=target_cols, axis=1
+            lambda x, y: "|".join([x[e] for e in y]), y=target_pair, axis=1
         )
         td = (
             td.groupby("genecombination")
@@ -148,29 +156,26 @@ def vdj_usage(
         td["genecombination"] = td.apply(
             lambda x: [x["cell_weights"]] + x["genecombination"].split("|"), axis=1
         )
-    else:
-        for locus in range(1, len(target_cols)):
-            print(target_cols[locus - 1 : locus])
 
-    # Draw ribbons
-    for r in td["genecombination"][1 : top_n + 1]:
-        d = []
-        ht = r[0]
-        for i in range(len(r) - 1):
-            g = r[i + 1]
-            sector = target_cols[i][2:7].replace("_", "")
-            if g == "None":
-                g = "No_" + sector
-            if g not in gene_tops:
-                g = "other_" + sector
-            t = gene_tops[g]
-            d.append([t - ht, t])
-            t = t - ht
-            gene_tops[g] = t
-        if draw_bars:
-            gapped_ribbons(d, ax=ax, gapwidth=barwidth)
-        else:
-            gapped_ribbons(d, ax=ax, gapwidth=0.1)
+        # Draw ribbons
+        for r in td["genecombination"][1 : top_n + 1]:
+            d = []
+            ht = r[0]
+            for i in range(len(r) - 1):
+                g = r[i + 1]
+                sector = pair_cols[i][2:7].replace("_", "")
+                if g == "None":
+                    g = "No_" + sector
+                if g not in gene_tops:
+                    g = "other_" + sector
+                t = gene_tops[g]
+                d.append([t - ht, t])
+                t = t - ht
+                gene_tops[g] = t
+            if draw_bars:
+                gapped_ribbons(d, ax=ax, gapwidth=barwidth)
+            else:
+                gapped_ribbons(d, ax=ax, gapwidth=0.1)
 
     # Make tick labels nicer
     ax.set_xticks(range(1, len(target_cols) + 1))
