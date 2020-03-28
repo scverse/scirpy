@@ -143,7 +143,7 @@ def vdj_usage(
     init_n = 0
     for target_pair in draw_mat:
         # Count occurance of individual VDJ combinations
-        td = df.loc[:, target_cols + ["cell_weights"]]
+        td = df.loc[:, target_pair + ["cell_weights"]]
         td["genecombination"] = td.apply(
             lambda x, y: "|".join([x[e] for e in y]), y=target_pair, axis=1
         )
@@ -163,7 +163,7 @@ def vdj_usage(
             ht = r[0]
             for i in range(len(r) - 1):
                 g = r[i + 1]
-                sector = pair_cols[i][2:7].replace("_", "")
+                sector = target_pair[i][2:7].replace("_", "")
                 if g == "None":
                     g = "No_" + sector
                 if g not in gene_tops:
