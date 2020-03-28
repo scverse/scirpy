@@ -96,7 +96,7 @@ def vdj_usage(
         )
         genes = td[target_cols[i]].tolist()
         td = td["cell_weights"]
-        sector = target_cols[i][2:7].replace('_', '')
+        sector = target_cols[i][2:7].replace("_", "")
         # sector = sector.replace('_', '')
         unct = td[bar_clip + 1 :,].sum()
         if td.size > bar_clip:
@@ -150,7 +150,7 @@ def vdj_usage(
         )
     else:
         for locus in range(1, len(target_cols)):
-            print(target_cols[locus-1:locus])
+            print(target_cols[locus - 1 : locus])
 
     # Draw ribbons
     for r in td["genecombination"][1 : top_n + 1]:
@@ -158,7 +158,7 @@ def vdj_usage(
         ht = r[0]
         for i in range(len(r) - 1):
             g = r[i + 1]
-            sector = target_cols[i][2:7].replace('_', '')
+            sector = target_cols[i][2:7].replace("_", "")
             if g == "None":
                 g = "No_" + sector
             if g not in gene_tops:
