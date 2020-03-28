@@ -1,10 +1,9 @@
-from .. import tl
 from anndata import AnnData
 import matplotlib.pyplot as plt
-from typing import Callable, Union, List, Tuple
-import pandas as pd
+from typing import Callable, Union, Tuple, Sequence
 import numpy as np
 from .._util import _normalize_counts
+from ._styling import _init_ax
 
 
 def vdj_usage(
@@ -17,14 +16,16 @@ def vdj_usage(
         "TRB_1_d_gene",
         "TRB_1_j_gene",
     ],
-    fraction: Union[None, str, list, np.ndarray, pd.Series] = None,
+    fraction: Union[None, str, Sequence[float]] = None,
     ax: Union[plt.axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
     barwidth: float = 0.4,
     draw_bars: bool = True,
+    fig_kws: Union[dict, None] = None,
 ) -> plt.Axes:
-    """Creates a ribbon plot of the most abundant VDJ combinations in a given subset of cells. 
+    """Creates a ribbon plot of the most abundant VDJ combinations in a
+    given subset of cells. 
 
     Currently works with primary alpha and beta chains only.
     Does not search for precomputed results in `adata`.
@@ -34,11 +35,13 @@ def vdj_usage(
     adata
         AnnData object to work on.
     target_cols
-        Columns containing gene segment information. Overwrite default only if you know what you are doing!         
+        Columns containing gene segment information.
+        Overwrite default only if you know what you are doing!         
     fraction
-        Either the name of a categorical column that should be used as the base for computing fractions,
-        or an iterable specifying a size factor for each cell. By default, each cell count as 1,
-        but due to normalization to different sample sizes for example, it is possible that one cell
+        Either the name of a categorical column that should be used as the base
+        for computing fractions, or an iterable specifying a size factor for each cell.
+        By default, each cell count as 1, but due to normalization to different
+        sample sizes for example, it is possible that one cell
         in a small sample is weighted more than a cell in a large sample.
     ax
         Custom axis if needed.
@@ -52,18 +55,30 @@ def vdj_usage(
         Width of bars.
     draw_bars
         If `False`, only ribbons are drawn and no bars.
+    fig_kws
+        Dictionary of keyword args that will be passed to the matplotlib 
+        figure (e.g. `figsize`)
 
     Returns
     -------
     Axes object. 
     """
 
-    df = adata.obs.assign(cell_weights=_normalize_counts(adata.obs, fraction))
+    df = adata.obs.assign(
+        cell_weights=_normalize_counts(adata.obs, fraction)
+        if isinstance(fraction, (bool, str)) or fraction is None
+        else fraction
+    )
+
+    # init figure
+    default_figargs = {"figsize": (7, 4)}
+    if fig_kws is not None:
+        default_figargs.update(fig_kws)
+    if ax is None:
+        ax = _init_ax(default_figargs)
 
     if top_n is None:
         top_n = df.shape[0]
-    if ax is None:
-        fig, ax = plt.subplots()
 
     # Draw a stacked bar for every gene loci and save positions on the bar
     gene_tops = dict()
