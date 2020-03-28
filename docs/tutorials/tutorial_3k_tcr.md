@@ -6,18 +6,19 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.2'
+      format_version: "1.2"
       jupytext_version: 1.4.1
 ---
 
 # Analysis of 3k T cells from cancer
 
-
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 In this tutorial, we re-analize single-cell TCR/RNA-seq data from Wu et al (:cite:`Wu2020`)
 generated on the 10x Genomics VDJ platform. The original dataset consists of >140k T cells
-from 14 treatment-naive patients across four different types of cancer. 
+from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
+
 <!-- #endraw -->
 
 ```python
@@ -34,7 +35,9 @@ from matplotlib import pyplot as plt
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 The dataset ships with the `scirpy` package. We can conveniently load it from the `dataset` module:
+
 <!-- #endraw -->
 
 ```python
@@ -42,7 +45,9 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 `adata` is a regular :class:`~anndata.AnnData` object:
+
 <!-- #endraw -->
 
 ```python
@@ -56,17 +61,20 @@ adata.obs
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 .. note:: **Importing data**
 
-  `scirpy` supports importing TCR data from Cellranger or `TraCeR <https://github.com/Teichlab/tracer>`_.
-  See :ref:`api-io` for more details. 
+`scirpy` supports importing TCR data from Cellranger or `TraCeR <https://github.com/Teichlab/tracer>`\_.
+See :ref:`api-io` for more details.
 
-  This particular dataset has been imported using :func:`scirpy.read_10x_vdj_csv` and merged 
-  with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure 
-  is described in :func:`scirpy.datasets.wu2020`.
+This particular dataset has been imported using :func:`scirpy.read_10x_vdj_csv` and merged
+with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
+is described in :func:`scirpy.datasets.wu2020`.
+
 <!-- #endraw -->
 
 ## Preprocess Transcriptomics data
+
 Transcriptomics data needs to be filtered and preprocessed as with any other single-cell dataset.
 We recommend following the [scanpy tutorial](https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html)
 and the best practice paper by [Luecken et al.](https://www.embopress.org/doi/10.15252/msb.20188746)
@@ -81,9 +89,9 @@ sc.pp.normalize_per_cell(adata, counts_per_cell_after=1000)
 sc.pp.log1p(adata)
 ```
 
-For the *Wu2020* dataset, the authors already provide clusters and UMAP coordinates. 
-Instead of performing clustering and cluster annotation ourselves, we will just use 
-provided data. 
+For the _Wu2020_ dataset, the authors already provide clusters and UMAP coordinates.
+Instead of performing clustering and cluster annotation ourselves, we will just use
+provided data.
 
 ```python
 adata.obsm["X_umap"] = adata.obsm["X_umap_orig"]
@@ -111,11 +119,11 @@ mapping = {
 adata.obs["cluster"] = [mapping[x] for x in adata.obs["cluster_orig"]]
 ```
 
-Let's inspect the UMAP plots. The first three panels show the UMAP plot colored by sample, patient and cluster. 
-We don't observe any clustering of samples or patients that could hint at batch effects. 
+Let's inspect the UMAP plots. The first three panels show the UMAP plot colored by sample, patient and cluster.
+We don't observe any clustering of samples or patients that could hint at batch effects.
 
-The lower three panels show the UMAP colored by the T cell markers *CD8*, *CD4*, and *FOXP3*.
-We can confirm that the markers correspond to their respective cluster labels. 
+The lower three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
+We can confirm that the markers correspond to their respective cluster labels.
 
 ```python
 sc.pl.umap(adata, color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"], ncols=2, wspace=.5)
@@ -124,18 +132,19 @@ sc.pl.umap(adata, color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"]
 ## TCR Quality Control
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-While most T cell receptors have exactely one pair of α and β chains, it has been reported that up to one third of 
-the receptors can be *Dual TCRs* posessing a second pair of receptors, one originating from each Allele (:cite:`Schuldt2019`). 
+
+While most T cell receptors have exactely one pair of α and β chains, it has been reported that up to one third of
+the receptors can be _Dual TCRs_ posessing a second pair of receptors, one originating from each Allele (:cite:`Schuldt2019`).
 
 Using the :func:`scirpy.tl.chain_pairing` function, we can add a summary
-about the T cell receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`. 
+about the T cell receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
 
 .. note:: **chain pairing**
 
-  * *Orphan chain* refers to cells that have a single alpha or beta receptor chain, respectively. 
-  * *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain. 
-  * *Multichain* refers to cells with more than two receptor pairs detected. These cells are likely doublets. 
-<!-- #endraw -->
+- _Orphan chain_ refers to cells that have a single alpha or beta receptor chain, respectively.
+- _Extra chain_ refers to cells that have a full alpha/beta receptor pair, and an additional chain.
+- _Multichain_ refers to cells with more than two receptor pairs detected. These cells are likely doublets.
+  <!-- #endraw -->
 
 ```python
 ir.tl.chain_pairing(adata)
@@ -155,7 +164,7 @@ print("Fraction of cells with more than one pair of TCRs: {:.2f}".format(
 ))
 ```
 
-Next, we visualize the *Multichain* cells on the UMAP plot and exclude them from downstream analysis:
+Next, we visualize the _Multichain_ cells on the UMAP plot and exclude them from downstream analysis:
 
 ```python
 sc.pl.umap(adata, color="multi_chain")
@@ -167,61 +176,61 @@ adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 
 ## Define clonotypes
 
-
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-In this section, we will define and visualize clonotypes. 
 
-*Scirpy* implements a network-based approach for clonotype definition. The steps to 
-create and visualize the clonotype-network are anologous to the construction of a 
+In this section, we will define and visualize clonotypes.
+
+_Scirpy_ implements a network-based approach for clonotype definition. The steps to
+create and visualize the clonotype-network are anologous to the construction of a
 neighborhood graph we already know from transcriptomics data:
 
 .. list-table:: Analysis steps on transcriptomics data
-   :widths: 40 60
-   :header-rows: 1
+:widths: 40 60
+:header-rows: 1
 
-   * - scanpy function 
-     - objective
-   * - :func:`scanpy.pp.neighbors`
-     - Compute a nearest-neighbor graph based on gene expression.
-   * - :func:`scanpy.tl.leiden`
-     - Cluster cells by the similarity of their transcriptional profiles.
-   * - :func:`scanpy.tl.umap`
-     - Compute positions of cells in UMAP embedding.
-   * - :func:`scanpy.pl.umap`
-     - Plot UMAP colored by different parameters.
-     
- 
+- - scanpy function
+  - objective
+- - :func:`scanpy.pp.neighbors`
+  - Compute a nearest-neighbor graph based on gene expression.
+- - :func:`scanpy.tl.leiden`
+  - Cluster cells by the similarity of their transcriptional profiles.
+- - :func:`scanpy.tl.umap`
+  - Compute positions of cells in UMAP embedding.
+- - :func:`scanpy.pl.umap`
+  - Plot UMAP colored by different parameters.
+
 .. list-table:: Analysis steps on TCR data
-   :widths: 40 60
-   :header-rows: 1
+:widths: 40 60
+:header-rows: 1
 
-   * - scirpy function 
-     - objective
-   * - :func:`scirpy.pp.tcr_neighbors`
-     - Compute a neighborhood graph of CDR3-sequences.
-   * - :func:`scirpy.tl.define_clonotypes`
-     - Cluster cells by the similarity of their CDR3-sequences.
-   * - :func:`scirpy.tl.clonotype_network`
-     - Compute positions of cells in clonotype network.
-   * - :func:`scirpy.pl.clonotype_network`
-     - Plot clonotype network colored by different parameters. 
-
+- - scirpy function
+  - objective
+- - :func:`scirpy.pp.tcr_neighbors`
+  - Compute a neighborhood graph of CDR3-sequences.
+- - :func:`scirpy.tl.define_clonotypes`
+  - Cluster cells by the similarity of their CDR3-sequences.
+- - :func:`scirpy.tl.clonotype_network`
+  - Compute positions of cells in clonotype network.
+- - :func:`scirpy.pl.clonotype_network`
+  - Plot clonotype network colored by different parameters.
 
 <!-- #endraw -->
 
 ### Compute CDR3 neighborhood graph
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-:func:`scirpy.pp.tcr_neighbors` computes pairwise sequence alignments of all CDR3 sequences and 
-derives a distance from the alignment score. This approach was originally proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`). 
+
+:func:`scirpy.pp.tcr_neighbors` computes pairwise sequence alignments of all CDR3 sequences and
+derives a distance from the alignment score. This approach was originally proposed as _TCRdist_ by Dash et al. (:cite:`TCRdist`).
 
 The function requires to specify a `cutoff` parameter. All cells with a distance between their
-CDR3 sequences lower than `cutoff` will be connected in the network. In the first example, 
-we set the cutoff to `0`, to define clontypes as cells with **identical** CDR3 sequences. 
+CDR3 sequences lower than `cutoff` will be connected in the network. In the first example,
+we set the cutoff to `0`, to define clontypes as cells with **identical** CDR3 sequences.
 
 Then, the function :func:`scirpy.tl.define_clonotypes` will detect connected modules
 in the graph and annotate them as clonotypes. This will add a `clonotype` and
 `clonotype_size` column to `adata.obs`.
+
 <!-- #endraw -->
 
 ```python
@@ -230,9 +239,11 @@ ir.tl.define_clonotypes(adata)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-To visualize  the network we first call :func:`scirpy.tl.clonotype_network` to compute the layout. 
+
+To visualize the network we first call :func:`scirpy.tl.clonotype_network` to compute the layout.
 We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend setting the
-`min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network. 
+`min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
+
 <!-- #endraw -->
 
 ```python
@@ -240,12 +251,12 @@ ir.tl.clonotype_network(adata, min_size=2)
 ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
-Let's re-compute the network with a `cutoff` of `20`. 
-That's the equivalent of 4 `R`s mutating into `N` (using the BLOSUM62 distance matrix). 
+Let's re-compute the network with a `cutoff` of `20`.
+That's the equivalent of 4 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
 
-Additionally, we set `chains` to `all`. This results in the distances not being only 
+Additionally, we set `chains` to `all`. This results in the distances not being only
 computed between the most abundant pair of T-cell receptors, but instead, will
-take the minimal distance between any pair of T-cell receptors. 
+take the minimal distance between any pair of T-cell receptors.
 
 ```python
 ir.pp.tcr_neighbors(adata, cutoff=20, chains="all")
@@ -257,17 +268,17 @@ ir.tl.clonotype_network(adata, min_size=3)
 ```
 
 When coloring by clonotype, we can see that the large, connected Hairball has been sub-divided in multiple clonotypes by
-Graph-based clustering using the *Leiden-algorithm*. Also, the edges are now colored according to the distance
-between nodes. The darker an edge, the lower the alignment-distance. 
+Graph-based clustering using the _Leiden-algorithm_. Also, the edges are now colored according to the distance
+between nodes. The darker an edge, the lower the alignment-distance.
 
 ```python
 ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=2)
 ```
 
-Now we show the same graph, colored by sample. 
-We observe that for instance clonotypes 292 and 279 are *private*, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 16 is *public*, i.e. 
-it is shared across tissues and/or patients. 
+Now we show the same graph, colored by sample.
+We observe that for instance clonotypes 292 and 279 are _private_, i.e. they contain cells from
+a single sample only. On the other hand, for instance clonotype 16 is _public_, i.e.
+it is shared across tissues and/or patients.
 
 ```python
 ir.pl.clonotype_network(adata, color="sample")
@@ -363,13 +374,9 @@ ir.pl.spectratype(
 ```
 
 ```python
-
+ir.pl.vdj_usage(adata)
 ```
 
 ```python
-
-```
-
-```python
-
+ir.pl.vdj_usage(adata, full_combination=False)
 ```

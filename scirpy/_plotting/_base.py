@@ -54,6 +54,7 @@ def bar(
     -------
     Axes object 
     """
+
     if ax is None:
         ax = _init_ax(fig_kws)
     ax = data.plot.bar(ax=ax, stacked=stacked)

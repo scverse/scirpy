@@ -7,6 +7,7 @@ from .fixtures import (
     adata_tra,
     adata_clonotype,
     adata_diversity,
+    adata_vdj,
     adata_clonotype_network,
 )
 import matplotlib.pyplot as plt
@@ -40,6 +41,9 @@ def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, target_col="sample")
     assert isinstance(p, plt.Axes)
 
+def test_vdj_usage(adata_vdj):
+    p = pl.vdj_usage(adata_vdj, fraction="sample")
+    assert isinstance(p, plt.Axes)
 
 def test_clonotype_network(adata_clonotype_network):
     p = pl.clonotype_network(adata_clonotype_network)
