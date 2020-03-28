@@ -18,7 +18,7 @@ def _group_abundance(
 
     # normalize to fractions
     scale_vector = _normalize_counts(tcr_obs, normalize=fraction, default_col=groupby)
-    tcr_obs = tcr_obs.assign(count=1, weight=1 / scale_vector)
+    tcr_obs = tcr_obs.assign(count=1, weight=scale_vector)
 
     # Calculate distribution of lengths in each group. Use sum instead of count
     # to reflect weights

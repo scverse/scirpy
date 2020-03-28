@@ -62,6 +62,7 @@ Tools: `tl`
    alpha_diversity
    group_abundance
    spectratype
+   vdj_usage
 
 
 Plotting: `pl`
@@ -90,6 +91,7 @@ Base plotting functions: `pl.base`
    clonal_expansion
    group_abundance
    spectratype
+   vdj_usage
    clonotype_network
 
    
