@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from typing import Callable, Union, List, Tuple
 import pandas as pd
 import numpy as np
+from .._util import _normalize_counts
 
 
 def vdj_usage(
@@ -17,7 +18,6 @@ def vdj_usage(
         "TRB_1_j_gene",
     ],
     fraction: Union[None, str, list, np.ndarray, pd.Series] = None,
-    size_column: str = "cell_weights",
     ax: Union[plt.axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
@@ -40,9 +40,6 @@ def vdj_usage(
         or an iterable specifying a size factor for each cell. By default, each cell count as 1,
         but due to normalization to different sample sizes for example, it is possible that one cell
         in a small sample is weighted more than a cell in a large sample.
-    size_column
-        The name of the column that will be used for storing cell weights. This value is used internally
-        and should be matched with the column name used by the tool function. Best left untouched.
     ax
         Custom axis if needed.
     bar_clip
@@ -61,10 +58,7 @@ def vdj_usage(
     Axes object. 
     """
 
-    # Execute the tool
-    df = tl.vdj_usage(
-        adata, target_cols=target_cols, fraction=fraction, size_column=size_column
-    )
+    df = adata.obs.assign(cell_weights=_normalize_counts(adata.obs, fraction))
 
     if top_n is None:
         top_n = df.shape[0]
@@ -76,12 +70,12 @@ def vdj_usage(
     for i in range(len(target_cols)):
         td = (
             df.groupby(target_cols[i])
-            .agg({size_column: "sum"})
-            .sort_values(by=size_column, ascending=False)
+            .agg({"cell_weights": "sum"})
+            .sort_values(by="cell_weights", ascending=False)
             .reset_index()
         )
         genes = td[target_cols[i]].tolist()
-        td = td[size_column]
+        td = td["cell_weights"]
         sector = target_cols[i][2:7]
         # sector = sector.replace('_', '')
         unct = td[bar_clip + 1 :,].sum()
@@ -119,18 +113,18 @@ def vdj_usage(
                 pass
 
     # Count occurance of individual VDJ combinations
-    td = df.loc[:, target_cols + [size_column]]
+    td = df.loc[:, target_cols + ["cell_weights"]]
     td["genecombination"] = td.apply(
         lambda x, y: "|".join([x[e] for e in y]), y=target_cols, axis=1
     )
     td = (
         td.groupby("genecombination")
-        .agg({size_column: "sum"})
-        .sort_values(by=size_column, ascending=False)
+        .agg({"cell_weights": "sum"})
+        .sort_values(by="cell_weights", ascending=False)
         .reset_index()
     )
     td["genecombination"] = td.apply(
-        lambda x: [x[size_column]] + x["genecombination"].split("|"), axis=1
+        lambda x: [x["cell_weights"]] + x["genecombination"].split("|"), axis=1
     )
 
     # Draw ribbons

@@ -3,7 +3,6 @@ from ._clip_and_count import clip_and_count
 from ._diversity import alpha_diversity
 from ._group_abundance import group_abundance
 from ._spectratype import spectratype
-from ._vdj_usage import vdj_usage
 from ._clonotypes import (
     define_clonotypes,
     clonotype_network,
