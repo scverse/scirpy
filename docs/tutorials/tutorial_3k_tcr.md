@@ -6,8 +6,8 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: "1.2"
-      jupytext_version: 1.4.1
+      format_version: '1.2'
+      jupytext_version: 1.3.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -378,5 +378,17 @@ ir.pl.vdj_usage(adata)
 ```
 
 ```python
-ir.pl.vdj_usage(adata, full_combination=False)
+ir.pl.vdj_usage(adata, top_n=None, draw_bars=False)
+```
+
+```python
+ir.pl.vdj_usage(adata, full_combination=False, top_n=None)
+```
+
+```python
+ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
+```
+
+```python
+
 ```
