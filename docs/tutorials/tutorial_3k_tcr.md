@@ -390,5 +390,23 @@ ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 ```
 
 ```python
+sc.pl.dendrogram(adata, 'sample')
+```
+
+```python
+adata.obs.head()
+```
+
+```python
+sc.tl.dendrogram(adata, groupby='patient')
+markers = ['C1QA', 'PSAP', 'CD79A', 'CD79B', 'CST3', 'LYZ']
+sc.pl.dotplot(adata, markers, groupby='patient', dendrogram=True)
+```
+
+```python
+adata.var_names
+```
+
+```python
 
 ```
