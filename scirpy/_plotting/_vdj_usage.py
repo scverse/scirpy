@@ -75,7 +75,7 @@ def vdj_usage(
         else fraction
     )
 
-    # init figure
+    # Init figure
     default_figargs = {"figsize": (7, 4)}
     if fig_kws is not None:
         default_figargs.update(fig_kws)
@@ -84,9 +84,10 @@ def vdj_usage(
 
     if top_n is None:
         top_n = df.shape[0]
+    bar_text_clip = bar_clip + 1
+    gene_tops, gene_colors = dict(), dict()
 
     # Draw a stacked bar for every gene loci and save positions on the bar
-    gene_tops = dict()
     for i in range(len(target_cols)):
         td = (
             df.groupby(target_cols[i])
@@ -97,16 +98,19 @@ def vdj_usage(
         genes = td[target_cols[i]].tolist()
         td = td["cell_weights"]
         sector = target_cols[i][2:7].replace("_", "")
-        # sector = sector.replace('_', '')
-        unct = td[bar_clip + 1 :,].sum()
-        if td.size > bar_clip:
-            if draw_bars:
-                ax.bar(i + 1, unct, width=barwidth, color="grey", edgecolor="black")
-            gene_tops["other_" + sector] = unct
-            bottom = unct
+        if full_combination:
+            unct = td[bar_clip + 1 :,].sum()
+            if td.size > bar_clip:
+                if draw_bars:
+                    ax.bar(i + 1, unct, width=barwidth, color="grey", edgecolor="black")
+                gene_tops["other_" + sector] = unct
+                bottom = unct
+            else:
+                gene_tops["other_" + sector] = 0
+                bottom = 0
         else:
-            gene_tops["other_" + sector] = 0
             bottom = 0
+            bar_clip = td.shape[0]
         for j in range(bar_clip + 1):
             try:
                 y = td[bar_clip - j]
@@ -114,20 +118,26 @@ def vdj_usage(
                 if gene == "None":
                     gene = "No_" + sector
                 gene_tops[gene] = bottom + y
+                if full_combination:
+                    bcolor = "lightgrey"
+                else:
+                    bcolor = None
                 if draw_bars:
-                    ax.bar(
+                    barcoll = ax.bar(
                         i + 1,
                         y,
                         width=barwidth,
                         bottom=bottom,
-                        color="lightgrey",
+                        color=bcolor,
                         edgecolor="black",
                     )
-                    ax.text(
-                        1 + i - barwidth / 2 + 0.05,
-                        bottom + 0.05,
-                        gene.replace("TRA", "").replace("TRB", ""),
-                    )
+                    gene_colors[gene] = barcoll.patches[-1].get_facecolor()
+                    if (bar_clip - bar_text_clip) < j:
+                        ax.text(
+                            1 + i - barwidth / 2 + 0.05,
+                            bottom + 0.05,
+                            gene.replace("TRA", "").replace("TRB", ""),
+                        )
                 bottom += y
             except:
                 pass
@@ -138,10 +148,12 @@ def vdj_usage(
     else:
         draw_mat = []
         for lc in range(1, len(target_cols)):
-            draw_mat.append(target_cols[lc - 1 : lc])
+            draw_mat.append(target_cols[lc - 1 : lc + 1])
 
     init_n = 0
     for target_pair in draw_mat:
+        gene_tops_c = gene_tops.copy()
+        init_n += 1
         # Count occurance of individual VDJ combinations
         td = df.loc[:, target_pair + ["cell_weights"]]
         td["genecombination"] = td.apply(
@@ -158,24 +170,38 @@ def vdj_usage(
         )
 
         # Draw ribbons
-        for r in td["genecombination"][1 : top_n + 1]:
+        for r in td["genecombination"][0 : top_n + 1]:
             d = []
             ht = r[0]
+            ribcol = None
             for i in range(len(r) - 1):
                 g = r[i + 1]
                 sector = target_pair[i][2:7].replace("_", "")
                 if g == "None":
                     g = "No_" + sector
-                if g not in gene_tops:
+                if g not in gene_tops_c:
                     g = "other_" + sector
-                t = gene_tops[g]
+                if full_combination:
+                    pass
+                else:
+                    if ribcol is None:
+                        ribcol = gene_colors[g]
+                t = gene_tops_c[g]
                 d.append([t - ht, t])
                 t = t - ht
-                gene_tops[g] = t
+                gene_tops_c[g] = t
             if draw_bars:
-                gapped_ribbons(d, ax=ax, gapwidth=barwidth)
+                gapped_ribbons(
+                    d,
+                    ax=ax,
+                    gapwidth=barwidth,
+                    xstart=init_n + (barwidth / 2),
+                    ribcol=ribcol,
+                )
             else:
-                gapped_ribbons(d, ax=ax, gapwidth=0.1)
+                gapped_ribbons(
+                    d, ax=ax, gapwidth=0.1, xstart=init_n + 0.05, ribcol=ribcol
+                )
 
     # Make tick labels nicer
     ax.set_xticks(range(1, len(target_cols) + 1))
@@ -200,6 +226,7 @@ def gapped_ribbons(
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
+    ribcol: Union[str, Tuple, None] = None,
     fun: Callable = lambda x: x[3]
     + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
     figsize: Tuple[float, float] = (3.44, 2.58),
@@ -220,6 +247,8 @@ def gapped_ribbons(
         Frequency of bars. Normally a bar would be drawn at every integer x position, hence default is 1.
     gapwidth
         At every bar position, there will be a gap. The width of this gap is identical to bar widths, but could also be set to 0 if we need continous ribbons.
+    ribcol
+        Face color of the ribbon.
     fun
         A function defining the curve of each ribbon segment from breakpoint to breakpoint. By default, it is a sigmoid with 6 parameters:
             range between x position of bars,
@@ -262,6 +291,9 @@ def gapped_ribbons(
         x += np.linspace(xmin + xw, xstart + i * gapfreq, 10).tolist()
         y1 += np.zeros(10).tolist()
         y2 += np.zeros(10).tolist()
-    ax.fill_between(x, y1, y2, alpha=0.6)
+    if ribcol is None:
+        ax.fill_between(x, y1, y2, alpha=0.6)
+    else:
+        ax.fill_between(x, y1, y2, color=ribcol, alpha=0.6)
 
     return ax
