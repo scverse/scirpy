@@ -104,9 +104,17 @@ def test_clip_and_count_convergence(adata_tra):
 
 def test_alpha_diversity(adata_diversity):
     res = st.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_"
+        adata_diversity, groupby="group", target_col="clonotype_", inplace=False
     )
     assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 2.0}}
+
+    st.tl.alpha_diversity(
+        adata_diversity, groupby="group", target_col="clonotype_", inplace=True
+    )
+    npt.assert_equal(
+        adata_diversity.obs["alpha_diversity_clonotype_"].values,
+        np.array([0.0] * 4 + [2.0] * 4),
+    )
 
 
 def test_group_abundance():
