@@ -67,13 +67,24 @@ def _is_symmetric(M) -> bool:
         return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
 
 
+@np.vectorize
 def _is_na(x):
     """Check if an object or string is NaN. 
     The function is vectorized over numpy arrays or pandas Series 
-    but also works for single values. """
-    return pd.isnull(x) | (x == "NaN") | (x == "nan") | (x == "None") | (x == "N/A")
+    but also works for single values.
+    
+    Pandas Series are converted to numpy arrays. 
+    """
+    return (
+        pd.isnull(x)
+        | (x == np.array("NaN"))
+        | (x == np.array("nan"))
+        | (x == np.array("None"))
+        | (x == np.array("N/A"))
+    )
 
 
+@np.vectorize
 def _is_true(x):
     """Evaluates true for bool(x) unless _is_false(x) evaluates true. 
     I.e. strings like "false" evaluate as False. 
@@ -85,6 +96,7 @@ def _is_true(x):
     return ~_is_false(x) & ~_is_na(x)
 
 
+@np.vectorize
 def _is_false(x):
     """Evaluates false for bool(False) and str("false")/str("False"). 
     The function is vectorized over numpy arrays or pandas Series. 
