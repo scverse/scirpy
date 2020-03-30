@@ -9,6 +9,7 @@ from multiprocessing import Pool
 import os
 import pandas as pd
 from glob import glob
+import numpy as np
 
 # + language="bash"
 # mkdir -p data
@@ -74,8 +75,8 @@ def _load_adata(path):
 
 
 p = Pool()
-
 adatas = p.map(_load_adata, mtx_paths)
+p.close()
 
 adata = adatas[0].concatenate(adatas[1:])
 
@@ -83,8 +84,6 @@ adata = adatas[0].concatenate(adatas[1:])
 adata.obsm["X_umap_orig"][:, 0] = (
     np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 )
-
-import numpy as np
 
 np.sum(adata.obs["has_tcr"])
 
