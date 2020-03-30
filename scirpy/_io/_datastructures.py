@@ -5,6 +5,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from .._compat import Literal
+from .._util import _is_na
 
 
 class TcrChain:
@@ -57,8 +58,8 @@ class TcrChain:
             raise ValueError("Invalid chain type: {}".format(chain_type))
 
         self.chain_type = chain_type
-        self.cdr3 = cdr3.upper() if cdr3 is not None else None
-        self.cdr3_nt = cdr3_nt.upper() if cdr3_nt is not None else None
+        self.cdr3 = cdr3.upper() if not _is_na(cdr3) else None
+        self.cdr3_nt = cdr3_nt.upper() if not _is_na(cdr3_nt) else None
         self.expr = expr
         self.expr_raw = expr_raw
         self.is_productive = is_productive
