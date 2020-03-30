@@ -402,7 +402,7 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-ir.pl.vdj_usage(adata)
+ir.pl.vdj_usage(adata, full_combination=False)
 ```
 
 ### Spectratype plots
