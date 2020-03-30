@@ -43,8 +43,8 @@ def _style_axes(
     ylab: str = "",
     title_loc: Literal["center", "left", "right"] = "center",
     title_pad: float = None,
-    title_fontsize: int = 12,
-    label_fontsize: int = 10,
+    title_fontsize: int = 10,
+    label_fontsize: int = 8,
     tick_fontsize: int = 8,
     fraction: bool = True,
 ) -> None:
