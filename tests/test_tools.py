@@ -85,9 +85,14 @@ def test_clip_and_count_clonotypes(adata_clonotype):
 
 def test_clonal_expansion(adata_clonotype):
     res = st.tl.clonal_expansion(
-        adata_clonotype, groupby="group", clip_at=2, inplace=False
+        adata_clonotype, expanded_in="group", clip_at=2, inplace=False
     )
     npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
+
+    res = st.tl.clonal_expansion(adata_clonotype, clip_at=2, inplace=False)
+    npt.assert_equal(
+        res, np.array([">= 2"] * 3 + ["1"] + [">= 2"] + ["1"] * 2 + [">= 2"] * 2)
+    )
 
 
 def test_alpha_diversity(adata_diversity):
