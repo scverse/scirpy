@@ -29,7 +29,7 @@ def alpha_diversity(
     **kwargs
         Additional parameters passed to :meth:`pl.base.bar`
     """
-    diversity = tl.alpha_diversity(adata, groupby, target_col=target_col)
+    diversity = tl.alpha_diversity(adata, groupby, target_col=target_col, inplace=False)
     default_style_kws = {
         "title": "Alpha diversity of {} by {}".format(target_col, groupby),
         "ylab": "Shannon entropy",

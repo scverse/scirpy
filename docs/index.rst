@@ -6,7 +6,7 @@ Welcome to scirpy's documentation!
    :caption: Contents:
 
    introduction
-   features
+   tcr-biology 
    tutorials
    api
    bibliography

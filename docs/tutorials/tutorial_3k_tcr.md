@@ -6,19 +6,17 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: "1.2"
+      format_version: '1.2'
       jupytext_version: 1.4.1
 ---
 
 # Analysis of 3k T cells from cancer
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 In this tutorial, we re-analize single-cell TCR/RNA-seq data from Wu et al (:cite:`Wu2020`)
-generated on the 10x Genomics VDJ platform. The original dataset consists of >140k T cells
+generated on the 10x Genomics platform. The original dataset consists of >140k T cells
 from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
-
 <!-- #endraw -->
 
 ```python
@@ -34,10 +32,12 @@ import scanpy as sc
 from matplotlib import pyplot as plt
 ```
 
+```python
+sc.logging.print_versions()
+```
+
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 The dataset ships with the `scirpy` package. We can conveniently load it from the `dataset` module:
-
 <!-- #endraw -->
 
 ```python
@@ -45,31 +45,46 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 `adata` is a regular :class:`~anndata.AnnData` object:
-
 <!-- #endraw -->
 
 ```python
 adata.shape
 ```
 
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+.. note:: **T cell receptors**
+  
+  For more information about our T-cell receptor model, see :ref:`tcr-model`. 
+<!-- #endraw -->
+
+
 It just has additional TCR-related columns in `obs`:
+
+ * `has_tcr`: `True` for all cells with a T-cell receptor
+ * `TRA_1_<attr>`/`TRA_2_<attr>`: columns related to the primary and secondary TCR-alpha chain
+ * `TRB_1_<attr>`/`TRB_2_<attr>`: columns related to the primary and secondary TCR-beta chain
+
+The list of attributes available are:
+
+ * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
+ * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
+ * `junction_ins`: The number of nucleotides inserted in the `VD`/`DJ`/`VJ` junctions. 
 
 ```python
 adata.obs
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 .. note:: **Importing data**
 
-`scirpy` supports importing TCR data from Cellranger or `TraCeR <https://github.com/Teichlab/tracer>`\_.
-See :ref:`api-io` for more details.
+    `scirpy` supports importing TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
+    or `TraCeR <https://github.com/Teichlab/tracer>`_. (SMARTseq2). 
+    See :ref:`api-io` for more details.
 
-This particular dataset has been imported using :func:`scirpy.read_10x_vdj_csv` and merged
-with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
-is described in :func:`scirpy.datasets.wu2020`.
+    This particular dataset has been imported using :func:`scirpy.read_10x_vdj_csv` and merged
+    with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
+    is described in :func:`scirpy.datasets.wu2020`.
 
 <!-- #endraw -->
 
@@ -132,19 +147,18 @@ sc.pl.umap(adata, color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"]
 ## TCR Quality Control
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
-While most T cell receptors have exactely one pair of α and β chains, it has been reported that up to one third of
-the receptors can be _Dual TCRs_ posessing a second pair of receptors, one originating from each Allele (:cite:`Schuldt2019`).
+While most of T cell receptors have exactly one pair of α and β chains, up to one third of 
+T cells can have *dual TCRs*, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
 Using the :func:`scirpy.tl.chain_pairing` function, we can add a summary
 about the T cell receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
 
 .. note:: **chain pairing**
 
-- _Orphan chain_ refers to cells that have a single alpha or beta receptor chain, respectively.
-- _Extra chain_ refers to cells that have a full alpha/beta receptor pair, and an additional chain.
-- _Multichain_ refers to cells with more than two receptor pairs detected. These cells are likely doublets.
-  <!-- #endraw -->
+    - *Orphan chain* refers to cells that have either a single alpha or beta receptor chain.
+    - *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain.
+    - *Multichain* refers to cells with more than two receptor pairs detected. These cells are likely doublets.
+<!-- #endraw -->
 
 ```python
 ir.tl.chain_pairing(adata)
@@ -156,7 +170,7 @@ ir.pl.group_abundance(
 )
 ```
 
-Indeed, in our case, ~20% of cells have more than a one pair of T-cell receptors:
+Indeed, in this dataset, ~20% of cells have more than a one pair of T-cell receptors:
 
 ```python
 print("Fraction of cells with more than one pair of TCRs: {:.2f}".format(
@@ -180,48 +194,45 @@ adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 
 In this section, we will define and visualize clonotypes.
 
-_Scirpy_ implements a network-based approach for clonotype definition. The steps to
-create and visualize the clonotype-network are anologous to the construction of a
-neighborhood graph we already know from transcriptomics data:
+*Scirpy* implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with *scanpy*.
 
 .. list-table:: Analysis steps on transcriptomics data
-:widths: 40 60
-:header-rows: 1
+    :widths: 40 60
+    :header-rows: 1
 
-- - scanpy function
-  - objective
-- - :func:`scanpy.pp.neighbors`
-  - Compute a nearest-neighbor graph based on gene expression.
-- - :func:`scanpy.tl.leiden`
-  - Cluster cells by the similarity of their transcriptional profiles.
-- - :func:`scanpy.tl.umap`
-  - Compute positions of cells in UMAP embedding.
-- - :func:`scanpy.pl.umap`
-  - Plot UMAP colored by different parameters.
+    * - scanpy function
+      - objective
+    * - :func:`scanpy.pp.neighbors`
+      - Compute a nearest-neighbor graph based on gene expression.
+    * - :func:`scanpy.tl.leiden`
+      - Cluster cells by the similarity of their transcriptional profiles.
+    * - :func:`scanpy.tl.umap`
+      - Compute positions of cells in UMAP embedding.
+    * - :func:`scanpy.pl.umap`
+      - Plot UMAP colored by different parameters.
 
 .. list-table:: Analysis steps on TCR data
-:widths: 40 60
-:header-rows: 1
+    :widths: 40 60
+    :header-rows: 1
 
-- - scirpy function
-  - objective
-- - :func:`scirpy.pp.tcr_neighbors`
-  - Compute a neighborhood graph of CDR3-sequences.
-- - :func:`scirpy.tl.define_clonotypes`
-  - Cluster cells by the similarity of their CDR3-sequences.
-- - :func:`scirpy.tl.clonotype_network`
-  - Compute positions of cells in clonotype network.
-- - :func:`scirpy.pl.clonotype_network`
-  - Plot clonotype network colored by different parameters.
+    - - scirpy function
+      - objective
+    - - :func:`scirpy.pp.tcr_neighbors`
+      - Compute a neighborhood graph of CDR3-sequences.
+    - - :func:`scirpy.tl.define_clonotypes`
+      - Cluster cells by the similarity of their CDR3-sequences.
+    - - :func:`scirpy.tl.clonotype_network`
+      - Compute positions of cells in clonotype network.
+    - - :func:`scirpy.pl.clonotype_network`
+      - Plot clonotype network colored by different parameters.
 
 <!-- #endraw -->
 
 ### Compute CDR3 neighborhood graph
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
-:func:`scirpy.pp.tcr_neighbors` computes pairwise sequence alignments of all CDR3 sequences and
-derives a distance from the alignment score. This approach was originally proposed as _TCRdist_ by Dash et al. (:cite:`TCRdist`).
+:func:`scirpy.pp.tcr_neighbors` computes the pairwise sequence alignment of all CDR3 sequences and
+derives a distance from the alignment score. This approach was originally proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
 
 The function requires to specify a `cutoff` parameter. All cells with a distance between their
 CDR3 sequences lower than `cutoff` will be connected in the network. In the first example,
@@ -230,7 +241,6 @@ we set the cutoff to `0`, to define clontypes as cells with **identical** CDR3 s
 Then, the function :func:`scirpy.tl.define_clonotypes` will detect connected modules
 in the graph and annotate them as clonotypes. This will add a `clonotype` and
 `clonotype_size` column to `adata.obs`.
-
 <!-- #endraw -->
 
 ```python
@@ -251,15 +261,19 @@ ir.tl.clonotype_network(adata, min_size=2)
 ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
-Let's re-compute the network with a `cutoff` of `20`.
-That's the equivalent of 4 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
+Let's re-compute the network with a `cutoff` of `15`.
+That's the equivalent of 3 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
 
 Additionally, we set `chains` to `all`. This results in the distances not being only
 computed between the most abundant pair of T-cell receptors, but instead, will
 take the minimal distance between any pair of T-cell receptors.
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=20, chains="all")
+sc.settings.verbosity = 4
+```
+
+```python
+ir.pp.tcr_neighbors(adata, cutoff=15, chains="all")
 ir.tl.define_clonotypes(adata)
 ```
 
@@ -284,17 +298,36 @@ it is shared across tissues and/or patients.
 ir.pl.clonotype_network(adata, color="sample")
 ```
 
-Next, visualize the clonal expansion by cell-type cluster
+## Clonotype analysis
+
+Let's visualize the number of expanded clonotypes (i.e. clonotypes consisting
+of more than one cell) by cell-type: 
+
+```python
+ir.tl.clip_and_count(adata, groupby="cluster", target_col="clonotype")
+```
+
+```python
+sc.pl.umap(adata, color=["clonotype_clipped_count", "cluster"])
+```
+
+```python
+ir.pl.clip_and_count(adata, groupby="cluster", target_col="clonotype", fraction=True)
+```
 
 ```python
 ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, fraction=False)
 ```
 
-Normalized to the cluster size
+Normalized to the cluster size:
 
 ```python
 ir.pl.clonal_expansion(adata, "cluster")
 ```
+
+Expectedly, the CD8+ effector T cells have the largest fraction of expanded clonotypes. 
+
+Consistent with this observation, they have the lowest alpha diversity: 
 
 ```python
 ir.pl.alpha_diversity(adata, groupby="cluster")
@@ -304,7 +337,13 @@ ir.pl.alpha_diversity(adata, groupby="cluster")
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction=False
+    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="patient"
+)
+```
+
+```python
+ir.pl.group_abundance(
+    adata, groupby="clonotype", target_col="patient", max_cols=10, fraction="patient"
 )
 ```
 

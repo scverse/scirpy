@@ -59,6 +59,7 @@ Tools: `tl`
    clonotype_network
    chain_pairing
    clip_and_count
+   clonal_expansion
    alpha_diversity
    group_abundance
    spectratype

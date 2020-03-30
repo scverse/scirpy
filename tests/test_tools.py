@@ -56,24 +56,25 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     adata = adata_clonotype
 
     res = st.tl.clip_and_count(
-        adata, groupby="group", target_col="clonotype", clip_at=2, fraction=False
+        adata, groupby="group", target_col="clonotype", clip_at=2, inplace=False
     )
-    assert res.to_dict(orient="index") == {
-        "A": {"1": 0, ">= 2": 1},
-        "B": {"1": 3, ">= 2": 1},
-    }
+    npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
 
-    res_frac = st.tl.clip_and_count(
-        adata, groupby="group", target_col="clonotype", clip_at=2, fraction=True
-    )
-    assert res_frac.to_dict(orient="index") == {
-        "A": {"1": 0, ">= 2": 1.0},
-        "B": {"1": 0.75, ">= 2": 0.25},
-    }
+    # check without group
+    res = st.tl.clip_and_count(adata, target_col="clonotype", clip_at=5, inplace=False)
+    npt.assert_equal(res, np.array(["4"] * 3 + ["1"] + ["4"] + ["1"] * 2 + ["2"] * 2))
 
     # check if target_col works
     adata.obs["new_col"] = adata.obs["clonotype"]
     adata.obs.drop("clonotype", axis="columns", inplace=True)
+
+    st.tl.clip_and_count(
+        adata, groupby="group", target_col="new_col", clip_at=2,
+    )
+    npt.assert_equal(
+        adata.obs["new_col_clipped_count"],
+        np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2),
+    )
 
     # check if it raises value error if target_col does not exist
     with pytest.raises(ValueError):
@@ -82,31 +83,26 @@ def test_clip_and_count_clonotypes(adata_clonotype):
         )
 
 
-def test_clip_and_count_convergence(adata_tra):
-    # Check counts
-    res = st.tl.clip_and_count(
-        adata_tra, target_col="TRA_1_cdr3", groupby="sample", fraction=False,
+def test_clonal_expansion(adata_clonotype):
+    res = st.tl.clonal_expansion(
+        adata_clonotype, groupby="group", clip_at=2, inplace=False
     )
-    assert res.to_dict(orient="index") == {
-        1: {"1": 1, "2": 2, ">= 3": 0},
-        3: {"1": 3, "2": 1, ">= 3": 0},
-        5: {"1": 2, "2": 1, ">= 3": 0},
-    }
-
-    # Check fractions
-    res = st.tl.clip_and_count(adata_tra, target_col="TRA_1_cdr3", groupby="sample")
-    assert res.to_dict(orient="index") == {
-        1: {"1": 0.3333333333333333, "2": 0.6666666666666666, ">= 3": 0.0},
-        3: {"1": 0.75, "2": 0.25, ">= 3": 0.0},
-        5: {"1": 0.6666666666666666, "2": 0.3333333333333333, ">= 3": 0.0},
-    }
+    npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
 
 
 def test_alpha_diversity(adata_diversity):
     res = st.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_"
+        adata_diversity, groupby="group", target_col="clonotype_", inplace=False
     )
     assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 2.0}}
+
+    st.tl.alpha_diversity(
+        adata_diversity, groupby="group", target_col="clonotype_", inplace=True
+    )
+    npt.assert_equal(
+        adata_diversity.obs["alpha_diversity_clonotype_"].values,
+        np.array([0.0] * 4 + [2.0] * 4),
+    )
 
 
 def test_group_abundance():
