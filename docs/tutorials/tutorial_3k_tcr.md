@@ -290,7 +290,7 @@ ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=2)
 ```
 
 Now we show the same graph, colored by sample.
-We observe that for instance clonotypes 292 and 279 are _private_, i.e. they contain cells from
+We observe that for instance clonotypes 292 and 313 are _private_, i.e. they contain cells from
 a single sample only. On the other hand, for instance clonotype 16 is _public_, i.e.
 it is shared across tissues and/or patients.
 
@@ -337,11 +337,30 @@ ax = ir.pl.alpha_diversity(adata, groupby="cluster")
 
 ### Clonotype abundance
 
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+The function :func:`scirpy.pl.group_abundance` allows us to create bar charts for
+arbitrary categorial from `obs`. Here, we use it to show the distribution of the 
+ten largest clonotypes across the cell-type clusters.
+<!-- #endraw -->
+
+```python
+ir.pl.group_abundance(
+    adata, groupby="clonotype", target_col="cluster", max_cols=10
+)
+```
+
+When cell-types are considered, it might be benefitial to normalize the counts
+to the sample size: 
+
 ```python
 ir.pl.group_abundance(
     adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="sample"
 )
 ```
+
+Coloring the bars by patient gives us information about public and private clonotypes: 
+While clonotype `16`, Clonotypes `297` and `313` are specific for a single patient. 
+This is consistent with the observation we made earlier on the clonotype network. 
 
 ```python
 ir.pl.group_abundance(
@@ -349,50 +368,51 @@ ir.pl.group_abundance(
 )
 ```
 
-Perhaps an even more straightforward question would be comparing clonotype composition of samples
-
-
-If cell types are considered, it is still probably better to normalize to cell numbers in a sample.
-
-```python
-ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="patient", max_cols=10, fraction="patient"
-)
-```
-
 ## Gene usage
 
-Group abundance plots can also give some information on VDJ usage
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+:func:`scirpy.tl.group_abundance` can also give us some information on VDJ usage. 
+We can choose any of the `{TRA,TRB}_{1,2]_{v,d,j}_gene` columns to make a stacked bar plot. 
+We use `max_col` to limit the plot to the 10 most abundant V-genes. 
+<!-- #endraw -->
 
 ```python
 ir.pl.group_abundance(
     adata,
     groupby="TRB_1_v_gene",
     target_col="cluster",
-    fraction="sample",
+    fraction=True,
     max_cols=10,
-    fig_kws={"dpi": 170},
 )
 ```
 
+We can pre-select groups by filtering `adata`:
+
 ```python
-vdj_usage = ir.tl.group_abundance(
-    adata, groupby="cluster", target_col="TRB_1_v_gene", fraction=True
+ir.pl.group_abundance(
+    adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:],
+    groupby="cluster",
+    target_col="TRB_1_v_gene",
+    fraction=True,
 )
 ```
 
-```python
-vdj_usage = vdj_usage.loc[:, ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]]
-```
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+The exact combinations of VDJ genes can be visualized as a Sankey-plot using :func:`scirpy.pl.vdj_usage`. 
+<!-- #endraw -->
 
 ```python
-ir.pl.base.bar(vdj_usage)
+ir.pl.vdj_usage(adata)
 ```
 
 ### Spectratype plots
 
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+:func:`~scirpy.pl.spectratype` plots give us information about the length distribution of CDR3 regions. 
+<!-- #endraw -->
+
 ```python
-ir.pl.spectratype(adata, target_col="cluster",     fig_kws={"dpi": 170},)
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120})
 ```
 
 ```python
@@ -410,9 +430,13 @@ ir.pl.spectratype(
 ```
 
 ```python
-ir.pl.vdj_usage(adata)
+
 ```
 
 ```python
 ir.pl.vdj_usage(adata, full_combination=False)
+```
+
+```python
+
 ```
