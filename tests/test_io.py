@@ -22,7 +22,6 @@ def test_read_10x_csv():
     assert cell1.name == "AAACCTGAGTACGCCC-1"
     assert cell1["TRB_1_cdr3"] == "CASSLGPSTDTQYF"
     assert cell1["TRB_1_cdr3_nt"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
-    assert cell1["TRB_1_cdr3_len"] == len("CASSLGPSTDTQYF")
     assert _is_na(cell1["TRB_1_junction_ins"])
     assert cell1["TRB_1_expr"] == 55
     assert cell1["TRB_1_v_gene"] == "TRBV7-2"
@@ -53,7 +52,6 @@ def test_read_10x():
     assert (
         cell1["TRB_1_cdr3_nt"] == "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT"
     )
-    assert cell1["TRB_1_cdr3_len"] == len("CASSPPSQGLSTGELFF")
     assert cell1["TRB_1_junction_ins"] == 4 + 7
     assert cell1["TRB_1_expr"] == 1
     assert cell1["TRB_1_v_gene"] == "TRBV18"
@@ -61,11 +59,7 @@ def test_read_10x():
     assert cell1["TRB_1_j_gene"] == "TRBJ2-2"
     assert cell1["TRB_1_c_gene"] == "TRBC2"
     assert _is_false(cell1["multi_chain"])
-    assert np.all(
-        _is_na(
-            cell1[["TRA_1_cdr3", "TRB_2_cdr3", "TRA_1_cdr3_len", "TRA_1_junction_ins"]]
-        )
-    )
+    assert np.all(_is_na(cell1[["TRA_1_cdr3", "TRB_2_cdr3", "TRA_1_junction_ins"]]))
 
     assert cell2.name == "AAACCTGAGTACGCCC-1"
     assert cell2["TRA_1_cdr3"] == "CAMRVGGSQGNLIF"
@@ -90,13 +84,9 @@ def test_read_tracer():
 
     assert cell1.name == "cell1"
     assert cell1["TRA_1_cdr3"] == "AESTGTSGTYKYI"
-    assert cell1["TRA_1_cdr3_len"] == len("AESTGTSGTYKYI")
     assert cell1["TRB_1_cdr3"] == "ASSYSVSRSGELF"
-    assert cell1["TRB_1_cdr3_len"] == len("ASSYSVSRSGELF")
 
     assert cell2.name == "cell2"
     assert cell2["TRA_1_cdr3"] == "ALSEAEGGSEKLV"
-    assert cell2["TRA_1_cdr3_len"] == len("ALSEAEGGSEKLV")
     assert cell2["TRB_1_cdr3"] == "ASSYNRGPGGTQY"
-    assert cell2["TRB_1_cdr3_len"] == len("ASSYNRGPGGTQY")
     assert cell2["TRB_1_j_gene"] == "TRBJ2-5"

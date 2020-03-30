@@ -77,7 +77,7 @@ def clonal_expansion(
     adata: AnnData,
     target_col: str = "clonotype",
     *,
-    groupby: Union[str, None] = None,
+    expanded_in: Union[str, None] = None,
     clip_at: int = 3,
     key_added: str = "clonal_expansion",
     **kwargs,
@@ -90,9 +90,11 @@ def clonal_expansion(
         Annoated data matrix
     target_col
         Column containing the clontype annoataion
-    groupby
+    expanded_in
         Calculate clonal expansion within groups. Usually makes sense to set
-        this to the column containing sample annotation. 
+        this to the column containing sample annotation. If set to None, 
+        a clonotype counts as expanded if there's any cell of the same clonotype
+        across the entire dataset. 
     clip_at:
         All clonotypes with more than `clip_at` clones will be summarized into 
         a single category
@@ -104,7 +106,7 @@ def clonal_expansion(
     return clip_and_count(
         adata,
         target_col,
-        groupby=groupby,
+        groupby=expanded_in,
         clip_at=clip_at,
         key_added=key_added,
         **kwargs,
