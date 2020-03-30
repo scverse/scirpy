@@ -5,7 +5,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from .._compat import Literal
-from .._util import _is_na
+from .._util import _is_na, _is_true
 
 
 class TcrChain:
@@ -62,7 +62,7 @@ class TcrChain:
         self.cdr3_nt = cdr3_nt.upper() if not _is_na(cdr3_nt) else None
         self.expr = expr
         self.expr_raw = expr_raw
-        self.is_productive = is_productive
+        self.is_productive = _is_true(is_productive)
         self.v_gene = v_gene
         self.d_gene = d_gene
         self.j_gene = j_gene
@@ -71,10 +71,6 @@ class TcrChain:
 
     def __repr__(self):
         return "TcrChain object: " + str(self.__dict__)
-
-    @property
-    def cdr3_len(self):
-        return len(self.cdr3) if self.cdr3 is not None else None
 
 
 class TcrCell:
