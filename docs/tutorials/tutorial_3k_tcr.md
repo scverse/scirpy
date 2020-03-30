@@ -345,23 +345,18 @@ ir.pl.group_abundance(
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="patient", max_cols=10, fraction="patient"
+    adata, groupby="clonotype", target_col="patient", max_cols=10
 )
 ```
 
 Perhaps an even more straightforward question would be comparing clonotype composition of samples
 
-```python
-ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="sample", max_cols=10, stacked=False
-)
-```
 
 If cell types are considered, it is still probably better to normalize to cell numbers in a sample.
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", fraction="sample", max_cols=10
+    adata, groupby="clonotype", target_col="patient", max_cols=10, fraction="patient"
 )
 ```
 
