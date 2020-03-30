@@ -40,8 +40,15 @@ def alpha_diversity(
     """
     # Could rely on skbio.math if more variants are required.
     def _shannon_entropy(freq):
+        """Normalized shannon entropy according to 
+        https://math.stackexchange.com/a/945172
+        """
         np.testing.assert_almost_equal(np.sum(freq), 1)
-        return -np.sum(freq * np.log2(freq))
+        if len(freq) == 1:
+            # the formula below is not defined for n==1
+            return 0
+        else:
+            return -np.sum((freq * np.log(freq)) / np.log(len(freq)))
 
     tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clono_counts = (
@@ -49,7 +56,7 @@ def alpha_diversity(
     )
 
     diversity = dict()
-    for k in tcr_obs[groupby].unique():
+    for k in sorted(tcr_obs[groupby].unique()):
         tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)

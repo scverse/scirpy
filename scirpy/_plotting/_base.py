@@ -58,6 +58,14 @@ def bar(
     if ax is None:
         ax = _init_ax(fig_kws)
     ax = data.plot.bar(ax=ax, stacked=stacked)
+
+    # Remove excess x label
+    if style_kws is not None:
+        if "xlab" in style_kws:
+            if "ylab" in style_kws:
+                if style_kws["xlab"] == style_kws["ylab"]:
+                    style_kws["xlab"] = ""
+
     style_axes(ax, style, style_kws)
     return ax
 

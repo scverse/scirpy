@@ -15,6 +15,8 @@ import numpy.testing as npt
 import pytest
 import scipy.sparse
 
+import warnings
+
 
 def test_reduce_nonzero():
     A = np.array([[0, 0, 3], [1, 2, 5], [7, 0, 0]])
@@ -63,6 +65,7 @@ def test_is_symmatric():
 
 
 def test_is_na():
+    warnings.filterwarnings("error")
     assert _is_na(None)
     assert _is_na(np.nan)
     assert _is_na("nan")
@@ -71,12 +74,18 @@ def test_is_na():
     assert not _is_na(dict())
     array_test = np.array(["None", "nan", None, np.nan, "foobar"])
     array_expect = np.array([True, True, True, True, False])
+    array_test_bool = np.array([True, False, True])
+    array_expect_bool = np.array([False, False, False])
 
     npt.assert_equal(_is_na(array_test), array_expect)
-    npt.assert_equal(_is_na(pd.Series(array_test)).values, array_expect)
+    npt.assert_equal(_is_na(pd.Series(array_test)), array_expect)
+
+    npt.assert_equal(_is_na(array_test_bool), array_expect_bool)
+    npt.assert_equal(_is_na(pd.Series(array_test_bool)), array_expect_bool)
 
 
 def test_is_false():
+    warnings.filterwarnings("error")
     assert _is_false(False)
     assert _is_false(0)
     assert _is_false("")
@@ -98,14 +107,19 @@ def test_is_false():
     array_expect = np.array(
         [True, True, True, False, False, True, False, False, False, False]
     )
+    array_test_bool = np.array([True, False, True])
+    array_expect_bool = np.array([False, True, False])
 
     npt.assert_equal(_is_false(array_test), array_expect)
     npt.assert_equal(_is_false(array_test_str), array_expect)
-    npt.assert_equal(_is_false(pd.Series(array_test).values), array_expect)
-    npt.assert_equal(_is_false(pd.Series(array_test_str).values), array_expect)
+    npt.assert_equal(_is_false(pd.Series(array_test)), array_expect)
+    npt.assert_equal(_is_false(pd.Series(array_test_str)), array_expect)
+    npt.assert_equal(_is_false(array_test_bool), array_expect_bool)
+    npt.assert_equal(_is_false(pd.Series(array_test_bool)), array_expect_bool)
 
 
 def test_is_true():
+    warnings.filterwarnings("error")
     assert not _is_true(False)
     assert not _is_true(0)
     assert not _is_true("")
@@ -129,11 +143,15 @@ def test_is_true():
     array_expect = np.array(
         [False, False, False, True, True, False, True, True, False, False]
     )
+    array_test_bool = np.array([True, False, True])
+    array_expect_bool = np.array([True, False, True])
 
     npt.assert_equal(_is_true(array_test), array_expect)
     npt.assert_equal(_is_true(array_test_str), array_expect)
-    npt.assert_equal(_is_true(pd.Series(array_test).values), array_expect)
-    npt.assert_equal(_is_true(pd.Series(array_test_str).values), array_expect)
+    npt.assert_equal(_is_true(pd.Series(array_test)), array_expect)
+    npt.assert_equal(_is_true(pd.Series(array_test_str)), array_expect)
+    npt.assert_equal(_is_true(array_test_bool), array_expect_bool)
+    npt.assert_equal(_is_true(pd.Series(array_test_bool)), array_expect_bool)
 
 
 @pytest.fixture
@@ -149,8 +167,12 @@ def test_normalize_counts(group_df):
         _normalize_counts(group_df, True, None)
 
     npt.assert_equal(_normalize_counts(group_df, False), [1] * 6)
-    npt.assert_equal(_normalize_counts(group_df, "sample"), [.25, .5, .25, .25, .25, .5])
-    npt.assert_equal(_normalize_counts(group_df, True, "sample"), [.25, .5, .25, .25, .25, .5])
+    npt.assert_equal(
+        _normalize_counts(group_df, "sample"), [0.25, 0.5, 0.25, 0.25, 0.25, 0.5]
+    )
+    npt.assert_equal(
+        _normalize_counts(group_df, True, "sample"), [0.25, 0.5, 0.25, 0.25, 0.25, 0.5]
+    )
 
 
 def test_layout_components():

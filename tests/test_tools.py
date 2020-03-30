@@ -85,23 +85,28 @@ def test_clip_and_count_clonotypes(adata_clonotype):
 
 def test_clonal_expansion(adata_clonotype):
     res = st.tl.clonal_expansion(
-        adata_clonotype, groupby="group", clip_at=2, inplace=False
+        adata_clonotype, expanded_in="group", clip_at=2, inplace=False
     )
     npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
+
+    res = st.tl.clonal_expansion(adata_clonotype, clip_at=2, inplace=False)
+    npt.assert_equal(
+        res, np.array([">= 2"] * 3 + ["1"] + [">= 2"] + ["1"] * 2 + [">= 2"] * 2)
+    )
 
 
 def test_alpha_diversity(adata_diversity):
     res = st.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=False
     )
-    assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 2.0}}
+    assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 1.0}}
 
     st.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=True
     )
     npt.assert_equal(
         adata_diversity.obs["alpha_diversity_clonotype_"].values,
-        np.array([0.0] * 4 + [2.0] * 4),
+        np.array([0.0] * 4 + [1.0] * 4),
     )
 
 
@@ -150,10 +155,10 @@ def test_group_abundance():
 def test_spectratype(adata_tra):
     # Check numbers
     res1 = st.tl.spectratype(
-        adata_tra, groupby="TRA_1_cdr3_len", target_col="sample", fraction=False,
+        adata_tra, groupby="TRA_1_cdr3", target_col="sample", fraction=False,
     )
     res2 = st.tl.spectratype(
-        adata_tra, groupby=("TRA_1_cdr3_len",), target_col="sample", fraction=False,
+        adata_tra, groupby=("TRA_1_cdr3",), target_col="sample", fraction=False,
     )
     expected_count = pd.DataFrame.from_dict(
         {
@@ -183,7 +188,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = st.tl.spectratype(
-        adata_tra, groupby="TRA_1_cdr3_len", target_col="sample", fraction="sample"
+        adata_tra, groupby="TRA_1_cdr3", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {

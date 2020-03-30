@@ -88,7 +88,6 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
 
     for key in [
         "cdr3",
-        "cdr3_len",
         "junction_ins",
         "expr",
         "v_gene",
@@ -112,11 +111,15 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     if _is_na(res_dict["TRA_1_cdr3"]):
         assert _is_na(
             res_dict["TRA_2_cdr3"]
-        ), "There can't be a secondary chain if there is no primary one"
+        ), "There can't be a secondary chain if there is no primary one: {}".format(
+            res_dict
+        )
     if _is_na(res_dict["TRB_1_cdr3"]):
         assert _is_na(
             res_dict["TRB_2_cdr3"]
-        ), "There can't be a secondary chain if there is no primary one"
+        ), "There can't be a secondary chain if there is no primary one: {}".format(
+            res_dict
+        )
 
     return res_dict
 
