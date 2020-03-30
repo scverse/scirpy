@@ -19,10 +19,10 @@ import numpy as np
 
 def test_clip_and_count(adata_tra, adata_clonotype):
     res_fraction = irplt._clip_and_count._prepare_df(
-        adata_clonotype, "group", "clonotype", 2, True
+        adata_clonotype, "group", "clonotype", 2, True, "group"
     )
     res_counts = irplt._clip_and_count._prepare_df(
-        adata_clonotype, "group", "clonotype", 2, False
+        adata_clonotype, "group", "clonotype", 2, False, "group"
     )
     pdt.assert_frame_equal(
         res_fraction,
@@ -47,6 +47,28 @@ def test_clip_and_count(adata_tra, adata_clonotype):
 
 
 def test_clonal_expansion(adata_clonotype):
+    # test the `expanded_in` parameter.
+    res = irplt._clip_and_count._prepare_df(
+        adata_clonotype, "group", "clonotype", 2, True, groupby_count=None
+    )
+    pdt.assert_frame_equal(
+        res,
+        pd.DataFrame.from_dict(
+            {"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}
+        ).set_index("group"),
+        check_names=False,
+    )
+    res = irplt._clip_and_count._prepare_df(
+        adata_clonotype, "group", "clonotype", 2, True, groupby_count="group"
+    )
+    pdt.assert_frame_equal(
+        res,
+        pd.DataFrame.from_dict(
+            {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
+        ).set_index("group"),
+        check_names=False,
+    )
+
     p = pl.clonal_expansion(adata_clonotype, groupby="group")
     assert isinstance(p, plt.Axes)
 
