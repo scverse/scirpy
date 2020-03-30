@@ -170,7 +170,7 @@ ir.pl.group_abundance(
 )
 ```
 
-Indeed, in this dataset, ~20% of cells have more than a one pair of T-cell receptors:
+Indeed, in this dataset, ~7% of cells have more than a one pair of productive T-cell receptors:
 
 ```python
 print("Fraction of cells with more than one pair of TCRs: {:.2f}".format(
@@ -274,24 +274,22 @@ sc.settings.verbosity = 4
 
 ```python
 ir.pp.tcr_neighbors(adata, cutoff=15, chains="all")
-ir.tl.define_clonotypes(adata)
+ir.tl.define_clonotypes(adata, partitions="connected")
 ```
 
 ```python
 ir.tl.clonotype_network(adata, min_size=3)
 ```
 
-When coloring by clonotype, we can see that the large, connected Hairball has been sub-divided in multiple clonotypes by
-Graph-based clustering using the _Leiden-algorithm_. Also, the edges are now colored according to the distance
-between nodes. The darker an edge, the lower the alignment-distance.
+Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more. 
 
 ```python
 ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=2)
 ```
 
 Now we show the same graph, colored by sample.
-We observe that for instance clonotypes 292 and 313 are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 16 is _public_, i.e.
+We observe that for instance clonotypes 247 and 293 are _private_, i.e. they contain cells from
+a single sample only. On the other hand, for instance clonotype 106 is _public_, i.e.
 it is shared across tissues and/or patients.
 
 ```python
@@ -364,7 +362,7 @@ This is consistent with the observation we made earlier on the clonotype network
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="patient", max_cols=10
+    adata, groupby="clonotype", target_col="sample", max_cols=10
 )
 ```
 
@@ -402,7 +400,7 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-ir.pl.vdj_usage(adata, full_combination=False)
+ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 ```
 
 ### Spectratype plots
@@ -416,25 +414,17 @@ ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120})
 ```
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", fraction="sample", viztype="line")
-```
-
-```python
 ir.pl.spectratype(adata, target_col="cluster", fraction=False, viztype="line")
 ```
 
 ```python
 ir.pl.spectratype(
-    adata, groupby="TRB_1_cdr3_len", target_col="TRB_1_v_gene", fraction="sample", fig_kws={'dpi': 150}
+    adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:], 
+    groupby="TRB_1_cdr3",
+    target_col="TRB_1_v_gene",
+    fraction="sample",
+    fig_kws={'dpi': 150}
 )
-```
-
-```python
-
-```
-
-```python
-ir.pl.vdj_usage(adata, full_combination=False)
 ```
 
 ```python
