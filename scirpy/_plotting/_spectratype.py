@@ -9,7 +9,7 @@ from typing import Union, List, Collection, Callable
 
 def spectratype(
     adata: Union[dict, AnnData],
-    groupby: Union[str, Collection[str]] = ["TRA_1_cdr3_len"],
+    groupby: Union[str, Collection[str]] = ["TRA_1_cdr3"],
     *,
     target_col: str,
     combine_fun: Callable = np.sum,

@@ -3,11 +3,12 @@ from typing import Callable, Union, Collection
 import numpy as np
 import pandas as pd
 from ._group_abundance import _group_abundance
+from .._util import _is_na
 
 
 def spectratype(
     adata: AnnData,
-    groupby: Union[str, Collection[str]] = "TRA_1_cdr3_len",
+    groupby: Union[str, Collection[str]] = "TRA_1_cdr3",
     *,
     target_col: str,
     combine_fun: Callable = np.sum,
@@ -22,7 +23,7 @@ def spectratype(
     adata
         AnnData object to work on.
     groupby
-        Column(s) containing CDR3 lengths.        
+        Column(s) containing CDR3 sequences.        
     target_col
         Color by this column from `obs`. E.g. sample or diagnosis 
     combine_fun
@@ -49,8 +50,12 @@ def spectratype(
         groupby = list(set(groupby))
 
     # combine (potentially) multiple length columns into one
-    tcr_obs = adata.obs.copy()
-    tcr_obs["lengths"] = tcr_obs.loc[:, groupby].apply(combine_fun, axis=1)
+    tcr_obs = adata.obs.loc[
+        ~np.any(_is_na(adata.obs[groupby].values), axis=1), :
+    ].copy()
+    tcr_obs["lengths"] = (
+        tcr_obs.loc[:, groupby].applymap(len).apply(combine_fun, axis=1)
+    )
 
     cdr3_lengths = _group_abundance(
         tcr_obs, groupby="lengths", target_col=target_col, fraction=fraction
