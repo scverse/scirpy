@@ -54,7 +54,7 @@ def _group_abundance(
 def group_abundance(
     adata: AnnData,
     groupby: str,
-    target_col: str,
+    target_col: str = "has_tcr",
     *,
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:

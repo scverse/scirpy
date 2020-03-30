@@ -3,10 +3,16 @@ from .._util import _is_na
 from anndata import AnnData
 from typing import Dict
 import pandas as pd
+from typing import Union
 
 
 def alpha_diversity(
-    adata: AnnData, groupby: str, *, target_col: str = "clonotype", inplace: bool = True
+    adata: AnnData,
+    groupby: str,
+    *,
+    target_col: str = "clonotype",
+    inplace: bool = True,
+    key_added: Union[None, str] = None
 ) -> Dict:
     """Computes the alpha diversity of clonotypes within a group. 
 
@@ -20,10 +26,17 @@ def alpha_diversity(
         Column of `obs` by which the grouping will be performed. 
     target_col
         Column on which to compute the alpha diversity
+    inplace
+        If True, add a column to `obs`. Otherwise return a DataFrame
+        with the alpha diversities. 
+    key_added
+        Key under which the alpha diversity will be stored if inplace is True. 
+        Defaults to `alpha_diversity_{target_col}`. 
 
     Returns
     -------
-    DataFrame with the alpha diversity for each group. 
+    Depending on the value of inplace returns a DataFrame with the alpha diversity
+    for each group or adds a column to `adata.obs`. 
     """
     # Could rely on skbio.math if more variants are required.
     def _shannon_entropy(freq):
@@ -41,4 +54,8 @@ def alpha_diversity(
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)
 
-    return pd.DataFrame().from_dict(diversity, orient="index")
+    if inplace:
+        key_added = "alpha_diversity_" + target_col if key_added is None else key_added
+        adata.obs[key_added] = adata.obs[groupby].map(diversity)
+    else:
+        return pd.DataFrame().from_dict(diversity, orient="index")

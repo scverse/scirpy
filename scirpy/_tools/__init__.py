@@ -1,5 +1,5 @@
 from ._chain_pairing import chain_pairing
-from ._clip_and_count import clip_and_count
+from ._clip_and_count import clip_and_count, clonal_expansion
 from ._diversity import alpha_diversity
 from ._group_abundance import group_abundance
 from ._spectratype import spectratype
