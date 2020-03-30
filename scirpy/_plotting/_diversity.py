@@ -2,6 +2,7 @@ from anndata import AnnData
 from .._compat import Literal
 from . import base
 from .. import tl
+import numpy as np
 
 
 def alpha_diversity(
@@ -32,8 +33,10 @@ def alpha_diversity(
     diversity = tl.alpha_diversity(adata, groupby, target_col=target_col, inplace=False)
     default_style_kws = {
         "title": "Alpha diversity of {} by {}".format(target_col, groupby),
-        "ylab": "Shannon entropy",
+        "ylab": "norm. Shannon entropy",
     }
     if "style_kws" in kwargs:
         default_style_kws.update(kwargs["style_kws"])
-    return base.bar(diversity, style_kws=default_style_kws, **kwargs)
+    ax = base.bar(diversity, style_kws=default_style_kws, **kwargs)
+    ax.set_ylim(np.min(diversity.values) - 0.05, 1.0)
+    return ax
