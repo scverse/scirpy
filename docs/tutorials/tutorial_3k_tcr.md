@@ -147,7 +147,7 @@ sc.pl.umap(adata, color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"]
 ## TCR Quality Control
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-WWhile most of T cell receptors have exactly one pair of α and β chains, up to one third of 
+While most of T cell receptors have exactly one pair of α and β chains, up to one third of 
 T cells can have *dual TCRs*, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
 Using the :func:`scirpy.tl.chain_pairing` function, we can add a summary
@@ -261,15 +261,19 @@ ir.tl.clonotype_network(adata, min_size=2)
 ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
-Let's re-compute the network with a `cutoff` of `20`.
-That's the equivalent of 4 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
+Let's re-compute the network with a `cutoff` of `15`.
+That's the equivalent of 3 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
 
 Additionally, we set `chains` to `all`. This results in the distances not being only
 computed between the most abundant pair of T-cell receptors, but instead, will
 take the minimal distance between any pair of T-cell receptors.
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=20, chains="all")
+sc.settings.verbosity = 4
+```
+
+```python
+ir.pp.tcr_neighbors(adata, cutoff=15, chains="all")
 ir.tl.define_clonotypes(adata)
 ```
 
@@ -294,17 +298,36 @@ it is shared across tissues and/or patients.
 ir.pl.clonotype_network(adata, color="sample")
 ```
 
-Next, visualize the clonal expansion by cell-type cluster
+## Clonotype analysis
+
+Let's visualize the number of expanded clonotypes (i.e. clonotypes consisting
+of more than one cell) by cell-type: 
+
+```python
+ir.tl.clip_and_count(adata, groupby="cluster", target_col="clonotype")
+```
+
+```python
+sc.pl.umap(adata, color=["clonotype_clipped_count", "cluster"])
+```
+
+```python
+ir.pl.clip_and_count(adata, groupby="cluster", target_col="clonotype", fraction=True)
+```
 
 ```python
 ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, fraction=False)
 ```
 
-Normalized to the cluster size
+Normalized to the cluster size:
 
 ```python
 ir.pl.clonal_expansion(adata, "cluster")
 ```
+
+Expectedly, the CD8+ effector T cells have the largest fraction of expanded clonotypes. 
+
+Consistent with this observation, they have the lowest alpha diversity: 
 
 ```python
 ir.pl.alpha_diversity(adata, groupby="cluster")
@@ -314,7 +337,13 @@ ir.pl.alpha_diversity(adata, groupby="cluster")
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction=False
+    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="patient"
+)
+```
+
+```python
+ir.pl.group_abundance(
+    adata, groupby="clonotype", target_col="patient", max_cols=10, fraction="patient"
 )
 ```
 
