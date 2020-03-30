@@ -300,26 +300,28 @@ ir.pl.clonotype_network(adata, color="sample")
 
 ## Clonotype analysis
 
+### Clonal expansion
+
 Let's visualize the number of expanded clonotypes (i.e. clonotypes consisting
-of more than one cell) by cell-type: 
+of more than one cell) by cell-type. The first option is to add a column with the *clonal expansion*
+to `adata.obs` and plot it on the UMAP plot. 
 
 ```python
-ir.tl.clip_and_count(adata, groupby="cluster", target_col="clonotype")
+ir.tl.clonal_expansion(adata)
 ```
 
 ```python
-sc.pl.umap(adata, color=["clonotype_clipped_count", "cluster"])
+sc.pl.umap(adata, color=["clonal_expansion", "clonotype_size"])
 ```
 
-```python
-ir.pl.clip_and_count(adata, groupby="cluster", target_col="clonotype", fraction=True)
-```
+The second option is to show the number of expanded clonotypes per category
+in a stacked bar plot: 
 
 ```python
 ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, fraction=False)
 ```
 
-Normalized to the cluster size:
+The same plot, normalized to cluster size: 
 
 ```python
 ir.pl.clonal_expansion(adata, "cluster")
@@ -327,17 +329,17 @@ ir.pl.clonal_expansion(adata, "cluster")
 
 Expectedly, the CD8+ effector T cells have the largest fraction of expanded clonotypes. 
 
-Consistent with this observation, they have the lowest alpha diversity: 
+Consistent with this observation, they have the lowest alpha diversity of clonotypes: 
 
 ```python
-ir.pl.alpha_diversity(adata, groupby="cluster")
+ax = ir.pl.alpha_diversity(adata, groupby="cluster")
 ```
 
 ### Clonotype abundance
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="patient"
+    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="sample"
 )
 ```
 
