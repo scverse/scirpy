@@ -49,7 +49,7 @@ def alpha_diversity(
     )
 
     diversity = dict()
-    for k in tcr_obs[groupby].unique():
+    for k in sorted(tcr_obs[groupby].unique()):
         tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)
