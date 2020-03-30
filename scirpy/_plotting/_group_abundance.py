@@ -63,11 +63,11 @@ def group_abundance(
     if fraction:
         fraction_base = target_col if fraction is True else fraction
         title = "Fraction of " + target_col + " in each " + groupby
-        xlab = "Fraction of cells in " + fraction_base
+        xlab = groupby
         ylab = "Fraction of cells in " + fraction_base
     else:
         title = "Number of cells in " + groupby + " by " + target_col
-        xlab = "Number of cells"
+        xlab = groupby
         ylab = "Number of cells"
 
     default_style_kws = {"title": title, "xlab": xlab, "ylab": ylab}
