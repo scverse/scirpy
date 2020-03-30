@@ -12,7 +12,7 @@ from . import base
 def group_abundance(
     adata: Union[dict, AnnData],
     groupby: str,
-    target_col: str,
+    target_col: str = "has_tcr",
     *,
     fraction: Union[None, str, bool] = None,
     max_cols: Union[None, int] = None,
@@ -30,6 +30,8 @@ def group_abundance(
         Group by this column from `obs`. Samples or diagnosis for example.
     target_col
         Column on which to compute the abundance. 
+        Defaults to `has_tcr` which computes the number of all cells
+        that have a T-cell receptor. 
     fraction
         If True, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column 
