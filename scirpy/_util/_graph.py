@@ -3,6 +3,7 @@ from scanpy import logging
 import igraph as ig
 import numpy as np
 from .._compat import Literal
+import sys
 
 
 def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
@@ -46,7 +47,7 @@ def layout_components(
     pad_y: float = 1.0,
 ) -> np.ndarray:
     """
-    Compute a graph layout by layouting all connected components individually. 
+    Compute a graph layout by layouting all connected components individually.
 
     Adapted from https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-graph-plot-in-python
 
@@ -58,16 +59,16 @@ def layout_components(
         Layout function used to layout individual components.
         Can be anything that can be passed to :meth:`igraph.Graph.layout`
     arrange_boxes
-        How to arrange the individual components. Can be "size" 
+        How to arrange the individual components. Can be "size"
         to arange them by the component size or "dense" to pack them as densly
-        as possible. 
+        as possible.
     pad_x, pad_y
         Padding between subgraphs in the x and y dimension.
 
     Returns:
     --------
-    pos 
-        n_nodes x dim array containing the layout coordinates 
+    pos
+        n_nodes x dim array containing the layout coordinates
 
     """
     # assign the original vertex id, it will otherwise get lost by decomposition
@@ -95,11 +96,18 @@ def layout_components(
 
 def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
     """Compute bounding boxes for individual components
-    by arranging them as densly as possible. 
+    by arranging them as densly as possible.
 
-    Depends on `rectangle-packer`. 
+    Depends on `rectangle-packer`.
     """
-    import rpack
+    try:
+        import rpack
+    except ImportError:
+        raise ImportError(
+            "Using the 'components layout' requires the installation of "
+            "the `rectangle-packer`. You can install it with "
+            "`pip install rectangle-packer`."
+        )
 
     dimensions = [_get_bbox_dimensions(n, power=0.8) for n in component_sizes]
     # rpack only works on integers; sizes should be in descending order
