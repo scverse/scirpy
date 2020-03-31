@@ -52,13 +52,6 @@ adata = ir.datasets.wu2020_3k()
 adata.shape
 ```
 
-<!-- #raw raw_mimetype="text/restructuredtext" -->
-.. note:: **T cell receptors**
-  
-  For more information about our T-cell receptor model, see :ref:`tcr-model`. 
-<!-- #endraw -->
-
-
 It just has additional TCR-related columns in `obs`:
 
  * `has_tcr`: `True` for all cells with a T-cell receptor
@@ -70,6 +63,13 @@ The list of attributes available are:
  * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
  * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
  * `junction_ins`: The number of nucleotides inserted in the `VD`/`DJ`/`VJ` junctions. 
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+.. note:: **T cell receptors**
+  
+  For more information about our T-cell receptor model, see :ref:`tcr-model`. 
+<!-- #endraw -->
+
 
 ```python
 adata.obs
@@ -237,6 +237,7 @@ derives a distance from the alignment score. This approach was originally propos
 The function requires to specify a `cutoff` parameter. All cells with a distance between their
 CDR3 sequences lower than `cutoff` will be connected in the network. In the first example,
 we set the cutoff to `0`, to define clontypes as cells with **identical** CDR3 sequences.
+When the cutoff is `0` no alignment will be performed.
 
 Then, the function :func:`scirpy.tl.define_clonotypes` will detect connected modules
 in the graph and annotate them as clonotypes. This will add a `clonotype` and
@@ -284,7 +285,7 @@ ir.tl.clonotype_network(adata, min_size=3)
 Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more. 
 
 ```python
-ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=2)
+ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=3)
 ```
 
 Now we show the same graph, colored by sample.
@@ -312,7 +313,7 @@ ir.tl.clonal_expansion(adata)
 sc.pl.umap(adata, color=["clonal_expansion", "clonotype_size"])
 ```
 
-The second option is to show the number of expanded clonotypes per category
+The second option is to show the number of cells belonging to an expanded clonotype per category
 in a stacked bar plot: 
 
 ```python
@@ -357,12 +358,22 @@ ir.pl.group_abundance(
 ```
 
 Coloring the bars by patient gives us information about public and private clonotypes: 
-While clonotype `16`, Clonotypes `297` and `313` are specific for a single patient. 
+While most clonotypes are private, i.e. specific to a certain tissue, 
+some of them are public, i.e. they are shared across different tissues. 
+
+```python
+ax = ir.pl.group_abundance(
+    adata, groupby="clonotype", target_col="sample", max_cols=10
+)
+ax.legend(loc=(1.1, 0.01), ncol=4, fontsize="x-small") 
+```
+
+However, none of them is shared across patients.  
 This is consistent with the observation we made earlier on the clonotype network. 
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="sample", max_cols=10
+    adata, groupby="clonotype", target_col="patient", max_cols=10
 )
 ```
 
@@ -370,7 +381,7 @@ ir.pl.group_abundance(
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 :func:`scirpy.tl.group_abundance` can also give us some information on VDJ usage. 
-We can choose any of the `{TRA,TRB}_{1,2]_{v,d,j}_gene` columns to make a stacked bar plot. 
+We can choose any of the `{TRA,TRB}_{1,2]_{v,d,j,c}_gene` columns to make a stacked bar plot. 
 We use `max_col` to limit the plot to the 10 most abundant V-genes. 
 <!-- #endraw -->
 
@@ -380,7 +391,7 @@ ir.pl.group_abundance(
     groupby="TRB_1_v_gene",
     target_col="cluster",
     fraction=True,
-    max_cols=10,
+    max_cols=10
 )
 ```
 
@@ -388,7 +399,9 @@ We can pre-select groups by filtering `adata`:
 
 ```python
 ir.pl.group_abundance(
-    adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:],
+    adata[adata.obs["TRB_1_v_gene"].isin(
+        ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
+    ),:],
     groupby="cluster",
     target_col="TRB_1_v_gene",
     fraction=True,
@@ -413,9 +426,13 @@ ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120})
 ```
 
+The same as line chart, normalized to cluster size: 
+
 ```python
-ir.pl.spectratype(adata, target_col="cluster", fraction=False, viztype="line")
+ir.pl.spectratype(adata, target_col="cluster", fraction="cluster", viztype="line")
 ```
+
+Again, to pre-select specific genes, we can simply filter the `adata` object before plotting. 
 
 ```python
 ir.pl.spectratype(
