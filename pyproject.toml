@@ -29,10 +29,12 @@ requires = [
     'python-levenshtein',
     'python-igraph',
     'networkx',
-    'rectangle-packer'
 ]
 
 [tool.flit.metadata.requires-extra]
+optional = [
+    'rectangle-packer'
+]
 test = [
     'pytest',
     'black'
