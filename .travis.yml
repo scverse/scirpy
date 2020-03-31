@@ -8,7 +8,7 @@ python:
 install:
   - sudo apt-get install -y pandoc libcairo2-dev
   - pip install flit
-  - flit install --deps develop
+  - flit install --deps all
 
 script:
   - black --check scirpy
