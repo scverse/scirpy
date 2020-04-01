@@ -58,19 +58,6 @@ def test_identity_dist():
     )
 
 
-def test_chain_dist_identity(adata_cdr3):
-    identity = _IdentityDistanceCalculator()
-    cell_mats = _dist_for_chain(adata_cdr3, "TRA", identity)
-    tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2 = cell_mats
-
-    npt.assert_equal(
-        tra1_tra1.toarray(),
-        np.array(
-            [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
-        ),
-    )
-
-
 def test_levenshtein_compute_row():
     levenshtein1 = _LevenshteinDistanceCalculator(1)
     seqs = np.array(["A", "AAA", "AA"])
@@ -87,11 +74,11 @@ def test_levensthein_dist():
     levenshtein1 = _LevenshteinDistanceCalculator(1, n_jobs=1)
     npt.assert_almost_equal(
         levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])).toarray(),
-        np.array([[1, 2, 3, 3], [2, 1, 2, 2], [3, 2, 1, 2], [3, 2, 2, 1]]),
+        np.array([[1, 2, 3, 3], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),
     )
     npt.assert_almost_equal(
         levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])).toarray(),
-        np.array([[1, 2, 0, 0], [2, 1, 2, 2], [0, 2, 1, 2], [0, 2, 2, 1]]),
+        np.array([[1, 2, 0, 0], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),
     )
 
 
@@ -118,11 +105,11 @@ def test_alignment_dist():
 
     res = aligner.calc_dist_mat(seqs)
     npt.assert_almost_equal(
-        res.toarray(), np.array([[1, 7, 25], [7, 1, 19], [25, 19, 1]])
+        res.toarray(), np.array([[1, 7, 25], [0, 1, 19], [0, 0, 1]])
     )
 
     res = aligner10.calc_dist_mat(seqs)
-    npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [7, 1, 0], [0, 0, 1]]))
+    npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]]))
 
 
 def test_seq_to_cell_idx():
@@ -130,6 +117,18 @@ def test_seq_to_cell_idx():
     cdr_seqs = np.array(["AAA", "CCC", "ABA", "CCC", np.nan, "AA", "AA"])
     result = _seq_to_cell_idx(unique_seqs, cdr_seqs)
     assert result == {0: [0], 1: [2], 2: [1, 3], 3: [], 4: [5, 6]}
+
+
+def test_chain_dist_identity(adata_cdr3):
+    identity = _IdentityDistanceCalculator()
+    cell_mat = _dist_for_chain(adata_cdr3, "TRA", identity, merge_chains="primary_only")
+
+    npt.assert_equal(
+        tra1_tra1.toarray(),
+        np.array(
+            [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
+        ),
+    )
 
 
 def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
