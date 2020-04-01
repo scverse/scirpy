@@ -245,7 +245,7 @@ in the graph and annotate them as clonotypes. This will add a `clonotype` and
 <!-- #endraw -->
 
 ```python
-ir.pp.tcr_neighbors(adata, strategy="all", chains="primary_only", cutoff=0)
+ir.pp.tcr_neighbors(adata, strategy="all", merge_chains="primary_only", cutoff=0)
 ir.tl.define_clonotypes(adata)
 ```
 
@@ -274,7 +274,7 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=15, chains="all")
+ir.pp.tcr_neighbors(adata, cutoff=15, merge_chains="all")
 ir.tl.define_clonotypes(adata, partitions="connected")
 ```
 
