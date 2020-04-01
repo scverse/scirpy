@@ -295,7 +295,7 @@ def _dist_for_chain(
         or all. When `all` the distance is reduced to the minimal distance of 
         all receptors. 
     """
-    chain_inds = ["1"] if merge_chains == "primary_only" else ["1", "2"]
+    chain_inds = [1] if merge_chains == "primary_only" else [1, 2]
     chains = ["{}_{}".format(chain, i) for i in chain_inds]
     cdr_seqs = {k: adata.obs["{}_cdr3".format(k)].values for k in chains}
     unique_seqs = np.hstack(list(cdr_seqs.values()))
@@ -306,26 +306,49 @@ def _dist_for_chain(
     dist_mat = distance_calculator.calc_dist_mat(unique_seqs)
     logging.info("Finished computing {} pairwise distances.".format(chain))
 
-    # compute cell x cell distance matrix from seq x seq matrix
-    def _seq_to_cell(dist_mat, seq_to_cell, merge_chains):
-        """Build coordinates for cell x cell distance matrix"""
-        if merge_chains == "primary_only":
-            k = chain + "_1"
-            for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
-                for cell_row in seq_to_cell[k][row]:
-                    for cell_col in seq_to_cell[k][col]:
-                        # build the full matrix from triagular one:
-                        yield value, cell_row, cell_col
-                        yield value, cell_col, cell_row
-        elif merge_chains == "all":
-            raise NotImplementedError()
-        else:
-            raise ValueError("Unknown value for `merge_chains`")
+    # # compute cell x cell distance matrix from seq x seq matrix
+    # def _seq_to_cell(dist_mat, seq_to_cell, merge_chains):
+    #     """Build coordinates for cell x cell distance matrix"""
+    #     if merge_chains == "primary_only":
+    #         k = chain + "_1"
+    #         for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
+    #             for cell_row, cell_col in itertools.product(
+    #                 seq_to_cell[k][row], seq_to_cell[k][col]
+    #             ):
+    #                 yield value, cell_row, cell_col
+    #                 # build full matrix from triangular one. Only emit single
+    #                 # value for diagonal.
+    #                 if row != col:
+    #                     yield value, cell_col, cell_row
 
-    values, rows, cols = zip(*_seq_to_cell(dist_mat, seq_to_cell, merge_chains))
-    dist_mat = coo_matrix((values, (rows, cols)))
+    def _seq_to_cell_merge(dist_mat, seq_to_cell):
+        coord_dict = dict()
+
+        def _add_to_dict(d, cell_row, cell_col, value):
+            try:
+                d[(cell_row, cell_col)] = min(d[(cell_row, cell_col)], value)
+            except KeyError:
+                d[(cell_row, cell_col)] = value
+
+        for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
+            for c1, c2 in itertools.product(chains, repeat=2):
+                for cell_row, cell_col in itertools.product(
+                    seq_to_cell[c1][row], seq_to_cell[c2][col]
+                ):
+                    _add_to_dict(coord_dict, cell_row, cell_col, value)
+                    # build full matrix from triangular one. Only emit single
+                    # value for diagonal.
+                    if row != col:
+                        _add_to_dict(coord_dict, cell_col, cell_row, value)
+
+        return coord_dict
+
+    coord_dict = _seq_to_cell_merge(dist_mat, seq_to_cell)
+    coords, values = zip(*coord_dict.items())
+    rows, cols = zip(*coords)
+    dist_mat = coo_matrix((values, (rows, cols)), shape=(adata.n_obs, adata.n_obs))
     dist_mat.eliminate_zeros()
-    return dist_mat.to_csr()
+    return dist_mat.tocsr()
 
 
 def tcr_dist(
