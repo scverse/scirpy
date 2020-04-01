@@ -3,9 +3,11 @@ from anndata import AnnData
 from typing import Union
 import pandas as pd
 import numpy as np
+from scanpy import logging
 
 
-def _decide_chain_cat(x: pd.Series) -> str:
+@np.vectorize
+def _decide_chain_cat(x: pd) -> np.ndarray:
     """Helper function of `chain_pairing`. Associates categories to  a cell based 
     on how many TRA and TRB chains they have.
 
@@ -19,30 +21,6 @@ def _decide_chain_cat(x: pd.Series) -> str:
     The category the cell belongs to. 
     
     """
-    if _is_true(x["has_tcr"]):
-        if not _is_true(x["multi_chain"]):
-            if not _is_na(x["TRA_1_cdr3"]):
-                if not _is_na(x["TRB_1_cdr3"]):
-                    if not _is_na(x["TRA_2_cdr3"]):
-                        if not _is_na(x["TRB_2_cdr3"]):
-                            return "Two full chains"
-                        else:
-                            return "Extra alpha"
-                    else:
-                        if not _is_na(x["TRB_2_cdr3"]):
-                            return "Extra beta"
-                        else:
-                            return "Single pair"
-                else:
-                    return "Orphan alpha"
-            else:
-                if not _is_na(x["TRB_1_cdr3"]):
-                    return "Orphan beta"
-        else:
-            return "Multichain"
-    else:
-        return "No TCR"
-    assert False, "Chain not characterized"
 
 
 def chain_pairing(
@@ -66,24 +44,42 @@ def chain_pairing(
     or adds a `chain_pairing` column to `adata`. 
     
     """
+    x = adata.obs
+    string_length = len("Two full chains")
+    results = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
 
-    cp_col = (
-        adata.obs.loc[
-            :,
-            [
-                "has_tcr",
-                "multi_chain",
-                "TRA_1_cdr3",
-                "TRA_2_cdr3",
-                "TRB_1_cdr3",
-                "TRB_2_cdr3",
-            ],
-        ]
-        .apply(_decide_chain_cat, axis=1)
-        .values
-    )
+    logging.debug("Done initalizing")
+
+    mask_has_tcr = _is_true(x["has_tcr"].values)
+    mask_multichain = mask_has_tcr & _is_true(x["multi_chain"].values)
+
+    logging.debug("Done with masks part 1")
+
+    mask_has_tra1 = ~_is_na(x["TRA_1_cdr3"].values)
+    mask_has_trb1 = ~_is_na(x["TRB_1_cdr3"].values)
+    mask_has_tra2 = ~_is_na(x["TRA_2_cdr3"].values)
+    mask_has_trb2 = ~_is_na(x["TRB_2_cdr3"].values)
+
+    logging.debug("Done with masks part 2")
+
+    for m in [mask_has_tra1, mask_has_trb1, mask_has_tra2, mask_has_trb2]:
+        # no cell can have a cdr3 sequence but no TCR
+        assert np.setdiff1d(np.where(m)[0], np.where(mask_has_tcr)[0]).size == 0
+
+    results[~mask_has_tcr] = "No TCR"
+    results[mask_has_tra1] = "Orphan alpha"
+    results[mask_has_trb1] = "Orphan beta"
+    results[mask_has_tra1 & mask_has_trb1] = "Single pair"
+    results[mask_has_tra1 & mask_has_trb1 & mask_has_tra2] = "Extra alpha"
+    results[mask_has_tra1 & mask_has_trb1 & mask_has_trb2] = "Extra beta"
+    results[
+        mask_has_tra1 & mask_has_trb1 & mask_has_tra2 & mask_has_trb2
+    ] = "Two full chains"
+    results[mask_multichain] = "Multichain"
+
+    assert "" not in results, "One or more chains are not characterized"
 
     if inplace:
-        adata.obs[key_added] = cp_col
+        adata.obs[key_added] = results
     else:
-        return cp_col
+        return results

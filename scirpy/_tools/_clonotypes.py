@@ -5,7 +5,7 @@ from .._util import _is_na
 from .._util._graph import get_igraph_from_adjacency, layout_components
 import numpy as np
 import pandas as pd
-import networkx
+import random
 
 
 def _define_clonotypes_no_graph(
@@ -146,6 +146,7 @@ def clonotype_network(
     key_clonotype_size: str = "clonotype_size",
     key_added: str = "X_clonotype_network",
     inplace: bool = True,
+    random_state=42,
 ) -> Union[None, np.ndarray]:
     """Build the clonotype network for plotting
     
@@ -167,12 +168,15 @@ def clonotype_network(
         Key under which the layout coordinates will be stored in `adata.obsm`. 
     inplace
         If true, store the coordinates in `adata.obsm`, otherwise return them. 
+    random_state
+        Random seed set before computing the layout. 
 
     Returns
     -------
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates. 
     """
+    random.seed(random_state)
     try:
         conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
