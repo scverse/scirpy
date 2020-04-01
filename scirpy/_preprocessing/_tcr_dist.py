@@ -306,44 +306,25 @@ def _dist_for_chain(
     dist_mat = distance_calculator.calc_dist_mat(unique_seqs)
     logging.info("Finished computing {} pairwise distances.".format(chain))
 
-    # # compute cell x cell distance matrix from seq x seq matrix
-    # def _seq_to_cell(dist_mat, seq_to_cell, merge_chains):
-    #     """Build coordinates for cell x cell distance matrix"""
-    #     if merge_chains == "primary_only":
-    #         k = chain + "_1"
-    #         for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
-    #             for cell_row, cell_col in itertools.product(
-    #                 seq_to_cell[k][row], seq_to_cell[k][col]
-    #             ):
-    #                 yield value, cell_row, cell_col
-    #                 # build full matrix from triangular one. Only emit single
-    #                 # value for diagonal.
-    #                 if row != col:
-    #                     yield value, cell_col, cell_row
+    def _add_to_dict(d, cell_row, cell_col, value):
+        try:
+            d[(cell_row, cell_col)] = min(d[(cell_row, cell_col)], value)
+        except KeyError:
+            d[(cell_row, cell_col)] = value
 
-    def _seq_to_cell_merge(dist_mat, seq_to_cell):
-        coord_dict = dict()
+    # Build sparse matrix as coordinate dictionary
+    coord_dict = dict()
+    for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
+        for c1, c2 in itertools.product(chains, repeat=2):
+            for cell_row, cell_col in itertools.product(
+                seq_to_cell[c1][row], seq_to_cell[c2][col]
+            ):
+                _add_to_dict(coord_dict, cell_row, cell_col, value)
+                # build full matrix from triangular one. Only emit single
+                # value for diagonal.
+                if row != col:
+                    _add_to_dict(coord_dict, cell_col, cell_row, value)
 
-        def _add_to_dict(d, cell_row, cell_col, value):
-            try:
-                d[(cell_row, cell_col)] = min(d[(cell_row, cell_col)], value)
-            except KeyError:
-                d[(cell_row, cell_col)] = value
-
-        for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
-            for c1, c2 in itertools.product(chains, repeat=2):
-                for cell_row, cell_col in itertools.product(
-                    seq_to_cell[c1][row], seq_to_cell[c2][col]
-                ):
-                    _add_to_dict(coord_dict, cell_row, cell_col, value)
-                    # build full matrix from triangular one. Only emit single
-                    # value for diagonal.
-                    if row != col:
-                        _add_to_dict(coord_dict, cell_col, cell_row, value)
-
-        return coord_dict
-
-    coord_dict = _seq_to_cell_merge(dist_mat, seq_to_cell)
     coords, values = zip(*coord_dict.items())
     rows, cols = zip(*coords)
     dist_mat = coo_matrix((values, (rows, cols)), shape=(adata.n_obs, adata.n_obs))
@@ -370,13 +351,17 @@ def tcr_dist(
         `levenshtein` is the Levenshtein edit distance between two strings. 
     cutoff
         Only store distances < cutoff in the sparse distance matrix
+    merge_chains:
+        Use only primary chains ("TRA_1", "TRB_1") or all four chains? 
+        When considering all four chains, at least one of them needs
+        to match.  
     j_jobs
         Number of CPUs to use for alignment and levenshtein distance. 
         Default: use all CPUS. 
 
     Returns
     -------
-    tra_dists, trb_dists
+    tra_dist, trb_dist
 
     """
     if metric == "alignment":
@@ -388,10 +373,10 @@ def tcr_dist(
     else:
         raise ValueError("Invalid distance metric.")
 
-    tra_dists = _dist_for_chain(adata, "TRA", dist_calc)
-    trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
+    tra_dist = _dist_for_chain(adata, "TRA", dist_calc, merge_chains=merge_chains)
+    trb_dist = _dist_for_chain(adata, "TRB", dist_calc, merge_chains=merge_chains)
 
-    return tra_dists, trb_dists
+    return tra_dist, trb_dist
 
 
 def _reduce_dists(
