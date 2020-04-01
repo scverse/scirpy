@@ -117,7 +117,13 @@ def test_dist_for_chain_identity(adata_cdr3):
     npt.assert_equal(
         cell_mat_all.toarray(),
         np.array(
-            [[1, 0, 0, 1, 1], [1, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 1], [0] * 5,]
+            [
+                [1, 1, 0, 1, 1],
+                [1, 1, 0, 0, 0],
+                [0] * 5,
+                [1, 0, 0, 1, 1],
+                [1, 0, 0, 1, 1],
+            ]
         ),
     )
 
@@ -158,9 +164,10 @@ def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_tcr_dist(adata_cdr3):
     for metric in ["alignment", "identity", "levenshtein"]:
-        tra_dists, trb_dists = st.pp.tcr_dist(adata_cdr3, metric=metric)
-        assert len(tra_dists) == len(trb_dists) == 4
-        for tra_dist, trb_dist in zip(tra_dists, trb_dists):
+        for merge_chains in ["primary_only", "all"]:
+            tra_dist, trb_dist = st.pp.tcr_dist(
+                adata_cdr3, metric=metric, merge_chains=merge_chains
+            )
             assert (
                 tra_dist.shape == trb_dist.shape == (adata_cdr3.n_obs, adata_cdr3.n_obs)
             )
@@ -214,7 +221,7 @@ def test_tcr_neighbors(adata_cdr3):
         metric="levenshtein",
         cutoff=3,
         strategy="TRA",
-        chains="all",
+        merge_chains="all",
         key_added="nbs",
     )
     assert adata_cdr3.uns["nbs"]["connectivities"].shape == (5, 5)
