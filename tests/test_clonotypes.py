@@ -66,7 +66,6 @@ def test_define_clonotypes(adata_conn):
 
 def test_clonotype_network(adata_conn):
     st.tl.define_clonotypes(adata_conn, partitions="connected")
-    random.seed(42)
     coords = st.tl.clonotype_network(adata_conn, min_size=1, layout="fr", inplace=False)
     npt.assert_almost_equal(
         coords,
@@ -80,7 +79,6 @@ def test_clonotype_network(adata_conn):
         ),
     )
 
-    random.seed(42)
     st.tl.clonotype_network(
         adata_conn, min_size=2, layout="components", inplace=True, key_added="X_ctn"
     )
