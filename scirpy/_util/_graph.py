@@ -116,8 +116,14 @@ def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
         for (width, height) in dimensions[::-1]
     ]
     origins = rpack.pack(dimensions)
+    outer_dimensions = rpack.enclosing_size(dimensions, origins)
+    aspect_ratio = outer_dimensions[0] / outer_dimensions[1]
+    if aspect_ratio > 1:
+        scale_width, scale_height = 1, aspect_ratio
+    else:
+        scale_width, scale_height = aspect_ratio, 1
     bboxes = [
-        (x, y, width - pad_x, height - pad_y)
+        (x, y, width * scale_width - pad_x, height * scale_height - pad_y,)
         for (x, y), (width, height) in zip(origins, dimensions)
     ]
     return bboxes[::-1]
