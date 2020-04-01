@@ -38,8 +38,9 @@ class _DistanceCalculator(abc.ABC):
         self.n_jobs = n_jobs
 
     @abc.abstractmethod
-    def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
-        """Calculate a symmetric, pairwise distance matrix of all sequences in `seq`.
+    def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
+        """Calculate the upper diagnoal, pairwise distance matrix of all 
+        sequences in `seq`.
 
          * Only returns distances <= cutoff
          * Distances are non-negative values.
@@ -60,7 +61,7 @@ class _IdentityDistanceCalculator(_DistanceCalculator):
         The `cutoff` argument is ignored. """
         super().__init__(cutoff, n_jobs)
 
-    def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
+    def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
         """The offsetted matrix is the identity matrix."""
         return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="coo")
 
@@ -94,18 +95,8 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
-        # score_mat = score_mat.tolil()
         assert score_mat.shape[0] == score_mat.shape[1]
 
-        # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
-        # i_lower = np.tril_indices(score_mat.shape[0], -1)
-        # score_mat[i_lower] = score_mat.T[i_lower]
-
-        # score_mat = score_mat.tocsr()
-
-        # assert _is_symmetric(score_mat), "Matrix not symmetric"
-
-        # return the COO Mat
         return score_mat
 
 
@@ -189,7 +180,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         row = np.zeros(len(col), dtype="int")
         return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
 
-    def calc_dist_mat(self, seqs: Collection) -> np.ndarray:
+    def calc_dist_mat(self, seqs: Collection) -> coo_matrix:
         """Calculate the distances between amino acid sequences based on
         of all-against-all pairwise sequence alignments.
 
@@ -200,7 +191,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         Returns
         -------
-        Symmetric, square matrix of normalized alignment distances. 
+        Upper diagonal distance matrix of normalized alignment distances. 
         """
         # first, calculate self-alignments. We need them as refererence values
         # to turn scores into dists
@@ -232,20 +223,8 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
-        # score_mat = score_mat.tolil()
         assert score_mat.shape[0] == score_mat.shape[1]
 
-        # mirror matrix at diagonal (https://stackoverflow.com/a/42209263/2340703)
-        # i_lower = np.tril_indices(score_mat.shape[0], -1)
-        # score_mat[i_lower] = score_mat.T[i_lower]
-
-        # logging.debug("Finished computation")
-        # score_mat = score_mat.tocsr()
-        # logging.debug("Finished converting to CSR")
-        # assert _is_symmetric(score_mat), "Matrix not symmetric"
-        # logging.debug("Finished asserting. ")
-
-        # now directly return the COO matrix
         return score_mat
 
 
@@ -297,8 +276,9 @@ def _dist_for_chain(
     distance_calculator: _DistanceCalculator,
     merge_chains=Literal["primary_only", "all"],
 ) -> List[np.ndarray]:
-    """Compute distances for all combinations of 
-    (TRx1,TRx1), (TRx1,TRx2), (TRx2, TRx1), (TRx2, TRx2). 
+    """Computes the cell x cell distance matrix for either TRA or TRB chains. 
+
+    The option merge_chains specifies how primary/secondary chain are handled. 
     
     Parameters
     ----------
@@ -328,6 +308,7 @@ def _dist_for_chain(
 
     # compute cell x cell distance matrix from seq x seq matrix
     def _seq_to_cell(dist_mat, seq_to_cell, merge_chains):
+        """Build coordinates for cell x cell distance matrix"""
         if merge_chains == "primary_only":
             k = chain + "_1"
             for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
@@ -342,38 +323,9 @@ def _dist_for_chain(
             raise ValueError("Unknown value for `merge_chains`")
 
     values, rows, cols = zip(*_seq_to_cell(dist_mat, seq_to_cell, merge_chains))
-    return coo_matrix((values, (rows, cols)))
-
-    # cell_mats = list()
-    # for chain1, chain2 in [(1, 1), (1, 2), (2, 2)]:
-    #     chain1, chain2 = "{}_{}".format(chain, chain1), "{}_{}".format(chain, chain2)
-    #     cell_mat = lil_matrix((adata.n_obs, adata.n_obs))
-    #     logging.debug("Finished building lil mat")
-
-    #     # 2d indices in the cell matrix
-    #     # This is several orders of magnitudes faster than using nested for loops.
-    #     i_cm_0, i_cm_1 = np.meshgrid(cells_with_chain[chain1], cells_with_chain[chain2])
-    #     # 2d indices of the sequences in the distance matrix
-    #     i_dm_0, i_dm_1 = np.meshgrid(seq_inds[chain1], seq_inds[chain2])
-    #     logging.debug("Finished building indices")
-
-    #     cell_mat[i_cm_0, i_cm_1] = dist_mat[i_dm_0, i_dm_1]
-    #     logging.debug("Finished assigning")
-
-    #     cell_mat = cell_mat.tocsr()
-    #     logging.debug("Finished converting to CSR")
-
-    #     cell_mat.eliminate_zeros()
-
-    #     # if chain1 == chain2:
-    #     #     # TRX1:TRX2 is not supposed to be symmetric
-    #     #     assert _is_symmetric(cell_mat), "matrix not symmetric"
-
-    #     cell_mats.append(cell_mat)
-    #     if chain1 != chain2:
-    #         cell_mats.append(cell_mat.T)
-
-    # return cell_mats
+    dist_mat = coo_matrix((values, (rows, cols)))
+    dist_mat.eliminate_zeros()
+    return dist_mat.to_csr()
 
 
 def tcr_dist(
@@ -381,6 +333,7 @@ def tcr_dist(
     *,
     metric: Literal["alignment", "identity", "levenshtein"] = "alignment",
     cutoff: float = 2,
+    merge_chains: Literal["primary_only", "all"] = "primary_only",
     n_jobs: Union[int, None] = None,
 ) -> Tuple[csr_matrix, csr_matrix]:
     """Computes the distances between CDR3 sequences 
@@ -416,23 +369,6 @@ def tcr_dist(
     trb_dists = _dist_for_chain(adata, "TRB", dist_calc)
 
     return tra_dists, trb_dists
-
-
-def _reduce_chains(
-    dists: csr_matrix, mode: Literal["primary_only", "all"]
-) -> csr_matrix:
-    """Combine distances between primary and secondary cdr3 chains. 
-
-    Possible modes are
-     * "primary only": use only the primary chain
-     * "all": use the minimal distance between any of the primary and secondary chains. 
-     """
-    if mode == "primary_only":
-        return dists[0]
-    elif mode == "all":
-        return reduce(_reduce_nonzero, dists)
-    else:
-        raise ValueError("Unknown value for `mode`")
 
 
 def _reduce_dists(
@@ -495,7 +431,7 @@ def tcr_neighbors(
     metric: Literal["identity", "alignment", "levenshtein"] = "alignment",
     cutoff: int = 2,
     strategy: Literal["TRA", "TRB", "all", "any"] = "all",
-    chains: Literal["primary_only", "all"] = "primary_only",
+    merge_chains: Literal["primary_only", "all"] = "primary_only",
     key_added: str = "tcr_neighbors",
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
@@ -520,7 +456,7 @@ def tcr_neighbors(
         "TRB" - only consider TRB sequences
         "all" - both TRA and TRB need to match
         "any" - either TRA or TRB need to match
-    chains:
+    merge_chains:
         Use only primary chains ("TRA_1", "TRB_1") or all four chains? 
         When considering all four chains, at least one of them needs
         to match. 
@@ -543,18 +479,9 @@ def tcr_neighbors(
     """
     if cutoff == 0:
         metric = "identity"
-    tra_dists, trb_dists = tcr_dist(
-        adata, metric=metric, n_jobs=n_jobs, cutoff=cutoff, merge_chains=chains
+    tra_dist, trb_dist = tcr_dist(
+        adata, metric=metric, n_jobs=n_jobs, cutoff=cutoff, merge_chains=merge_chains
     )
-
-    # tra_dist, trb_dist = (
-    #     _reduce_chains(tra_dists, chains),
-    #     _reduce_chains(trb_dists, chains),
-    # )
-    logging.debug("Finished reducing dists per chain. ")
-
-    # assert _is_symmetric(tra_dist)
-    # assert _is_symmetric(trb_dist)
 
     dist = _reduce_dists(tra_dist, trb_dist, strategy)
     dist.eliminate_zeros()
@@ -572,7 +499,7 @@ def tcr_neighbors(
             "metric": metric,
             "cutoff": cutoff,
             "strategy": strategy,
-            "chains": chains,
+            "merge_chains": merge_chains,
         }
         adata.uns[key_added]["connectivities"] = connectivities
         adata.uns[key_added]["distances"] = connectivities
