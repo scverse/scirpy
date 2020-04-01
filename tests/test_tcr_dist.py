@@ -7,6 +7,7 @@ from scirpy._preprocessing._tcr_dist import (
     _dist_for_chain,
     _reduce_dists,
     _dist_to_connectivities,
+    _seq_to_cell_idx,
 )
 import numpy as np
 import pandas as pd
@@ -122,6 +123,13 @@ def test_alignment_dist():
 
     res = aligner10.calc_dist_mat(seqs)
     npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [7, 1, 0], [0, 0, 1]]))
+
+
+def test_seq_to_cell_idx():
+    unique_seqs = np.array(["AAA", "ABA", "CCC", "XXX", "AA"])
+    cdr_seqs = np.array(["AAA", "CCC", "ABA", "CCC", np.nan, "AA", "AA"])
+    result = _seq_to_cell_idx(unique_seqs, cdr_seqs)
+    assert result == {0: [0], 1: [2], 2: [1, 3], 3: [], 4: [5, 6]}
 
 
 def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
