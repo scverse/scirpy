@@ -10,29 +10,12 @@ from scirpy._preprocessing._tcr_dist import (
     _seq_to_cell_idx,
 )
 import numpy as np
-import pandas as pd
 import numpy.testing as npt
-from anndata import AnnData
 import scirpy as st
 import scipy.sparse
 from scirpy._util import _reduce_nonzero
 from functools import reduce
-
-
-@pytest.fixture
-def adata_cdr3():
-    obs = pd.DataFrame(
-        [
-            ["cell1", "AAA", "AHA", "KKY", "KKK"],
-            ["cell2", "AHA", "nan", "KK", "KKK"],
-            ["cell3", "nan", "nan", "nan", "nan"],
-            ["cell4", "AAA", "AAA", "LLL", "AAA"],
-            ["cell5", "nan", "AAA", "LLL", "nan"],
-        ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-    return adata
+from .fixtures import adata_cdr3
 
 
 @pytest.fixture
@@ -45,7 +28,7 @@ def adata_cdr3_mock_distance_calculator():
             """Don't calculate distances, but return the
             hard-coded distance matrix needed for the test"""
             npt.assert_equal(seqs, ["AAA", "AHA"])
-            return scipy.sparse.csr_matrix(np.array([[1, 4], [4, 1]]))
+            return scipy.sparse.coo_matrix(np.array([[1, 4], [0, 1]]))
 
     return MockDistanceCalculator()
 
@@ -119,59 +102,48 @@ def test_seq_to_cell_idx():
     assert result == {0: [0], 1: [2], 2: [1, 3], 3: [], 4: [5, 6]}
 
 
-def test_chain_dist_identity(adata_cdr3):
+def test_dist_for_chain_identity(adata_cdr3):
     identity = _IdentityDistanceCalculator()
-    cell_mat = _dist_for_chain(adata_cdr3, "TRA", identity, merge_chains="primary_only")
 
+    cell_mat = _dist_for_chain(adata_cdr3, "TRA", identity, merge_chains="primary_only")
     npt.assert_equal(
-        tra1_tra1.toarray(),
+        cell_mat.toarray(),
         np.array(
             [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
         ),
     )
 
+    cell_mat_all = _dist_for_chain(adata_cdr3, "TRA", identity, merge_chains="all")
+    npt.assert_equal(
+        cell_mat_all.toarray(),
+        np.array(
+            [[1, 0, 0, 1, 1], [1, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 1], [0] * 5,]
+        ),
+    )
+
 
 def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    """The _dist_for_chain function returns four matrices for 
-    all combinations of tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2. 
-    Tests if these matrices are correct. """
-    cell_mats = _dist_for_chain(adata_cdr3, "TRA", adata_cdr3_mock_distance_calculator)
-    tra1_tra1, tra1_tra2, tra2_tra1, tra2_tra2 = cell_mats
-
-    assert tra1_tra1.nnz == 9
+    cell_mat = _dist_for_chain(
+        adata_cdr3,
+        "TRA",
+        adata_cdr3_mock_distance_calculator,
+        merge_chains="primary_only",
+    )
+    print(cell_mat.toarray())
+    assert cell_mat.nnz == 9
     npt.assert_equal(
-        tra1_tra1.toarray(),
+        cell_mat.toarray(),
         np.array(
             [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
         ),
     )
 
-    assert tra1_tra2.nnz == 9
-    npt.assert_equal(
-        tra1_tra2.toarray(),
-        np.array(
-            [[4, 0, 0, 1, 1], [1, 0, 0, 4, 4], [0] * 5, [4, 0, 0, 1, 1], [0] * 5,]
-        ),
+    cell_mat_all = _dist_for_chain(
+        adata_cdr3, "TRA", adata_cdr3_mock_distance_calculator, merge_chains="all"
     )
-
-    assert tra2_tra1.nnz == 9
+    assert cell_mat_all.nnz == 16
     npt.assert_equal(
-        tra2_tra1.toarray(),
-        np.array(
-            [[4, 1, 0, 4, 0], [0] * 5, [0] * 5, [1, 4, 0, 1, 0], [1, 4, 0, 1, 0],]
-        ),
-    )
-
-    assert tra2_tra2.nnz == 9
-    npt.assert_equal(
-        tra2_tra2.toarray(),
-        np.array(
-            [[1, 0, 0, 4, 4], [0] * 5, [0] * 5, [4, 0, 0, 1, 1], [4, 0, 0, 1, 1],]
-        ),
-    )
-
-    npt.assert_equal(
-        reduce(_reduce_nonzero, cell_mats).toarray(),
+        cell_mat_all.toarray(),
         np.array(
             [
                 [1, 1, 0, 1, 1],
