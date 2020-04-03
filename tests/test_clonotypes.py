@@ -65,6 +65,10 @@ def test_define_clonotypes(adata_conn):
     npt.assert_equal(adata_conn.obs["ct2_size"].values, [1] * 4)
 
 
+def test_clonotypes_end_to_end(adata_cdr3):
+    assert False
+
+
 def test_clonotype_network(adata_conn):
     st.tl.define_clonotypes(adata_conn, partitions="connected")
     random.seed(42)
