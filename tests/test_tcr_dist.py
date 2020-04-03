@@ -275,14 +275,14 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dual_tcr="primary_only",
     )
     tn.compute_distances()
-    print(tn.dist.toarray)
+    print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
             [
-                [1, 14, 0, 0, 0],
-                [14, 1, 0, 0, 0],
-                [0] * 5,
+                [1, 13, 0, 0, 0],
+                [13, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 0],
                 [0, 0, 0, 0, 1],
             ]
@@ -298,16 +298,16 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dual_tcr="primary_only",
     )
     tn.compute_distances()
-    print(tn.dist.toarray)
+    print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
             [
-                [1, 14, 0, 0, 0],
-                [14, 1, 0, 0, 0],
-                [0] * 5,
-                [0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 1],
+                [1, 4, 0, 1, 0],
+                [4, 1, 0, 4, 0],
+                [0, 0, 0, 0, 0],
+                [1, 4, 0, 1, 1],
+                [0, 0, 0, 1, 1],
             ]
         ),
     )
@@ -321,16 +321,16 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dual_tcr="all",
     )
     tn.compute_distances()
-    print(tn.dist.toarray)
+    print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
             [
-                [1, 14, 0, 0, 0],
-                [14, 1, 0, 0, 0],
-                [0] * 5,
-                [0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 1],
+                [1, 10, 0, 4, 0],
+                [10, 1, 0, 0, 4],
+                [0, 0, 0, 0, 0],
+                [4, 0, 0, 1, 0],
+                [0, 4, 0, 0, 1],
             ]
         ),
     )
@@ -344,14 +344,60 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dual_tcr="any",
     )
     tn.compute_distances()
-    print(tn.dist.toarray)
+    print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
             [
-                [1, 14, 0, 0, 0],
-                [14, 1, 0, 0, 0],
-                [0] * 5,
+                [1, 1, 0, 1, 1],
+                [1, 1, 0, 4, 4],
+                [0, 0, 0, 0, 0],
+                [1, 4, 0, 1, 1],
+                [1, 4, 0, 1, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="all",
+        dual_tcr="any",
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray())
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 1, 0, 0, 0],
+                [1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1],
+                [0, 0, 0, 1, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="all",
+        dual_tcr="all",
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray())
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 0],
                 [0, 0, 0, 0, 1],
             ]
