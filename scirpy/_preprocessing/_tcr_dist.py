@@ -310,7 +310,6 @@ class TcrNeighbors:
 
         arm_dict = {}
         for arm in receptor_arms:
-            chains = [f"{arm}_{i}" for i in chain_inds]
             cdr_seqs = {
                 k: self.adata.obs[f"{arm}_{k}_cdr3{sequence}"].values
                 for k in chain_inds
@@ -325,7 +324,6 @@ class TcrNeighbors:
             # )
             arm_dict[arm] = {
                 "chain_inds": chain_inds,
-                "chains": chains,
                 "unique_seqs": unique_seqs,
                 "seq_to_cell": seq_to_cell,
                 # "chains_per_cell": chains_per_cell,
@@ -418,6 +416,7 @@ class TcrNeighbors:
                     tmp_dict2 = tmp_dict[arm]
                     try:
                         if (c1, c2) in tmp_dict2:
+                            # can be in arbitrary order apprarently
                             assert (c2, c1) not in tmp_dict2
                             tmp_dict2[(c2, c1)] = value
                         tmp_dict2[(c1, c2)] = value
