@@ -4,7 +4,6 @@ from scirpy._preprocessing._tcr_dist import (
     _DistanceCalculator,
     _IdentityDistanceCalculator,
     _LevenshteinDistanceCalculator,
-    _dist_for_chain,
     _reduce_dists,
     _dist_to_connectivities,
     _seq_to_cell_idx,
@@ -95,6 +94,15 @@ def test_alignment_dist():
     npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]]))
 
 
+def test_tcr_dist(adata_cdr3):
+    for metric in ["alignment", "identity", "levenshtein"]:
+        unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
+        tra_dist, trb_dist = st.pp.tcr_dist(
+            unique_seqs, metric=metric, cutoff=8, n_jobs=2
+        )
+        assert tra_dist.shape == trb_dist.shape == (adata_cdr3.n_obs, adata_cdr3.n_obs)
+
+
 def test_seq_to_cell_idx():
     unique_seqs = np.array(["AAA", "ABA", "CCC", "XXX", "AA"])
     cdr_seqs = np.array(["AAA", "CCC", "ABA", "CCC", np.nan, "AA", "AA"])
@@ -102,75 +110,73 @@ def test_seq_to_cell_idx():
     assert result == {0: [0], 1: [2], 2: [1, 3], 3: [], 4: [5, 6]}
 
 
-def test_dist_for_chain_identity(adata_cdr3):
-    identity = _IdentityDistanceCalculator()
+# def test_dist_for_chain_identity(adata_cdr3):
+#     identity = _IdentityDistanceCalculator()
 
-    cell_mat = _dist_for_chain(adata_cdr3, "TRA", identity, merge_chains="primary_only")
-    npt.assert_equal(
-        cell_mat.toarray(),
-        np.array(
-            [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
-        ),
-    )
+#     cell_mat = _dist_for_chain(
+#         adata_cdr3, "TRA", identity, merge_chains="primary_only", sequence="aa"
+#     )
+#     npt.assert_equal(
+#         cell_mat.toarray(),
+#         np.array(
+#             [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
+#         ),
+#     )
 
-    cell_mat_all = _dist_for_chain(adata_cdr3, "TRA", identity, merge_chains="all")
-    npt.assert_equal(
-        cell_mat_all.toarray(),
-        np.array(
-            [
-                [1, 1, 0, 1, 1],
-                [1, 1, 0, 0, 0],
-                [0] * 5,
-                [1, 0, 0, 1, 1],
-                [1, 0, 0, 1, 1],
-            ]
-        ),
-    )
-
-
-def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    cell_mat = _dist_for_chain(
-        adata_cdr3,
-        "TRA",
-        adata_cdr3_mock_distance_calculator,
-        merge_chains="primary_only",
-    )
-    print(cell_mat.toarray())
-    assert cell_mat.nnz == 9
-    npt.assert_equal(
-        cell_mat.toarray(),
-        np.array(
-            [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
-        ),
-    )
-
-    cell_mat_all = _dist_for_chain(
-        adata_cdr3, "TRA", adata_cdr3_mock_distance_calculator, merge_chains="all"
-    )
-    assert cell_mat_all.nnz == 16
-    npt.assert_equal(
-        cell_mat_all.toarray(),
-        np.array(
-            [
-                [1, 1, 0, 1, 1],
-                [1, 1, 0, 4, 4],
-                [0] * 5,
-                [1, 4, 0, 1, 1],
-                [1, 4, 0, 1, 1],
-            ]
-        ),
-    )
+#     cell_mat_all = _dist_for_chain(
+#         adata_cdr3, "TRA", identity, merge_chains="any", sequence="aa"
+#     )
+#     npt.assert_equal(
+#         cell_mat_all.toarray(),
+#         np.array(
+#             [
+#                 [1, 1, 0, 1, 1],
+#                 [1, 1, 0, 0, 0],
+#                 [0] * 5,
+#                 [1, 0, 0, 1, 1],
+#                 [1, 0, 0, 1, 1],
+#             ]
+#         ),
+#     )
 
 
-def test_tcr_dist(adata_cdr3):
-    for metric in ["alignment", "identity", "levenshtein"]:
-        for merge_chains in ["primary_only", "all"]:
-            tra_dist, trb_dist = st.pp.tcr_dist(
-                adata_cdr3, metric=metric, merge_chains=merge_chains
-            )
-            assert (
-                tra_dist.shape == trb_dist.shape == (adata_cdr3.n_obs, adata_cdr3.n_obs)
-            )
+# def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
+#     cell_mat = _dist_for_chain(
+#         adata_cdr3,
+#         "TRA",
+#         adata_cdr3_mock_distance_calculator,
+#         merge_chains="primary_only",
+#         sequence="aa",
+#     )
+#     print(cell_mat.toarray())
+#     assert cell_mat.nnz == 9
+#     npt.assert_equal(
+#         cell_mat.toarray(),
+#         np.array(
+#             [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
+#         ),
+#     )
+
+#     cell_mat_all = _dist_for_chain(
+#         adata_cdr3,
+#         "TRA",
+#         adata_cdr3_mock_distance_calculator,
+#         merge_chains="any",
+#         sequence="aa",
+#     )
+#     assert cell_mat_all.nnz == 16
+#     npt.assert_equal(
+#         cell_mat_all.toarray(),
+#         np.array(
+#             [
+#                 [1, 1, 0, 1, 1],
+#                 [1, 1, 0, 4, 4],
+#                 [0] * 5,
+#                 [1, 4, 0, 1, 1],
+#                 [1, 4, 0, 1, 1],
+#             ]
+#         ),
+#     )
 
 
 def test_reduce_dists():
