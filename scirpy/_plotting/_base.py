@@ -220,9 +220,15 @@ def _add_labels(
 ):
     """Add legend labels on data at centroids position"""
     categories = np.unique(label_data)
-    for ilabel, label in enumerate(categories):
-        _scatter = coords[(label_data == label) & ~np.any(np.isnan(coords), axis=1), :]
-        if _scatter.shape[0]:
+    nan_mask = ~np.any(np.isnan(coords), axis=1)
+    label_idx = {label: list() for label in categories}
+    for i, label in enumerate(label_data):
+        if nan_mask[i]:
+            label_idx[label].append(i)
+
+    for label, idx in label_idx.items():
+        if len(idx):
+            _scatter = coords[idx, :]
             x_pos, y_pos = np.median(_scatter, axis=0)
 
             if legend_fontoutline is not None:
