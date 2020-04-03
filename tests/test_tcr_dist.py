@@ -126,9 +126,9 @@ def test_build_index_dict(adata_cdr3):
         tn.index_dict,
         {
             "TRA": {
-                "chains": ["TRA_1"],
+                "chain_inds": [1],
                 "unique_seqs": ["GCGAUGGCG", "GCGGCGGCG", "GCUGCUGCU"],
-                "seq_to_cell": {"TRA_1": {0: [1], 1: [0], 2: [3]}},
+                "seq_to_cell": {1: {0: [1], 1: [0], 2: [3]}},
             }
         },
     )
@@ -143,19 +143,16 @@ def test_build_index_dict(adata_cdr3):
         tn.index_dict,
         {
             "TRA": {
-                "chains": ["TRA_1", "TRA_2"],
+                "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "AHA"],
-                "seq_to_cell": {
-                    "TRA_1": {0: [0, 3], 1: [1]},
-                    "TRA_2": {0: [3, 4], 1: [0]},
-                },
+                "seq_to_cell": {1: {0: [0, 3], 1: [1]}, 2: {0: [3, 4], 1: [0]},},
             },
             "TRB": {
-                "chains": ["TRB_1", "TRB_2"],
+                "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
                 "seq_to_cell": {
-                    "TRB_1": {0: [], 1: [1], 2: [], 3: [0], 4: [3, 4]},
-                    "TRB_2": {0: [3], 1: [], 2: [0, 1], 3: [], 4: []},
+                    1: {0: [], 1: [1], 2: [], 3: [0], 4: [3, 4]},
+                    2: {0: [3], 1: [], 2: [0, 1], 3: [], 4: []},
                 },
             },
         },
