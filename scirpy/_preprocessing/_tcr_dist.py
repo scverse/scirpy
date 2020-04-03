@@ -319,14 +319,19 @@ class TcrNeighbors:
             seq_to_cell = {
                 k: self._seq_to_cell_idx(unique_seqs, cdr_seqs[k]) for k in chain_inds
             }
-            # chains_per_cell = np.sum(
-            #     ~_is_na(self.adata.obs.loc[:, [f"{c}_cdr3" for c in chains]]), axis=1
-            # )
+            chains_per_cell = np.sum(
+                ~_is_na(
+                    self.adata.obs.loc[
+                        :, [f"{arm}_{k}_cdr3{sequence}" for k in chain_inds]
+                    ]
+                ),
+                axis=1,
+            )
             arm_dict[arm] = {
                 "chain_inds": chain_inds,
                 "unique_seqs": unique_seqs,
                 "seq_to_cell": seq_to_cell,
-                # "chains_per_cell": chains_per_cell,
+                "chains_per_cell": chains_per_cell,
             }
 
         self.index_dict = arm_dict
@@ -439,14 +444,19 @@ class TcrNeighbors:
                         seq_to_cell[c1][row], seq_to_cell[c2][col]
                     ):
                         _add_to_dict(coord_dict, c1, c2, cell_row, cell_col, value)
+                        # TODO it's now likely more efficient to mirror the coord dict
+                        # after its creation
                         if row != col:
                             _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
 
         coord_dict = {
-            coords: reduce_arms(
-                reduce_dual(value_dict) for value_dict in entry.values()
+            (cell_row, cell_col): reduce_arms(
+                [reduce_dual(value_dict) for value_dict in entry.values()],
+                self.index_dict,
+                cell_row,
+                cell_col,
             )
-            for coords, entry in coord_dict.items()
+            for (cell_row, cell_col), entry in coord_dict.items()
         }
         return coord_dict
 
@@ -471,20 +481,79 @@ class TcrNeighbors:
             logging.info("Finished computing {} pairwise distances.".format(arm))
 
         def _reduce_dual_all(d):
+            # TODO: also need to check here the number of chains...
             if len(d) == 1:
+                # exactely one chain for both cells -> return that value
                 return next(iter(d.values()))
             elif len(d) == 4:
                 # -1 because both distances are offseted by 1
                 return min(d[(1, 2)] + d[(2, 1)], d[(1, 1)] + d[(2, 2)]) - 1
             elif len(d) == 2:
+                # TODO this is wrong: Threr could be a rare case
+                # where *exactely* 2 matches 1 and 1 matches 2 - no other
+                # edges available.
+                # one of both cells only has one chain -> no edge
                 return 0
             else:
                 raise AssertionError("Can only be of length 1, 2 or 4. ")
 
-        reduce_dual = (
-            _reduce_dual_all if self.dual_tcr == "all" else lambda x: min(x.values())
+        def _reduce_arm_all(lst, index_dict, cell_row, cell_col):
+            if len(lst) == 1:
+                # need to make sure there's only one chain, if yes, return value
+                if (
+                    (
+                        index_dict["TRA"]["chains_per_cell"][cell_row]
+                        == index_dict["TRA"]["chains_per_cell"][cell_col]
+                        == 1
+                    )
+                    and (
+                        index_dict["TRB"]["chains_per_cell"][cell_row]
+                        == index_dict["TRB"]["chains_per_cell"][cell_col]
+                        == 0
+                    )
+                    or (
+                        index_dict["TRA"]["chains_per_cell"][cell_row]
+                        == index_dict["TRA"]["chains_per_cell"][cell_col]
+                        == 0
+                    )
+                    and (
+                        index_dict["TRB"]["chains_per_cell"][cell_row]
+                        == index_dict["TRB"]["chains_per_cell"][cell_col]
+                        == 1
+                    )
+                ):
+                    return lst[0]
+                # otherwise, there are two chains, but only one < dist. In that case
+                # we don't want an edge
+                else:
+                    return 0
+            elif len(lst) == 2:
+                # -1 because both distances are offseted by 1
+                return sum(lst) - 1
+            else:
+                raise AssertionError("Can only have two receptor arms max. ")
+
+        def _reduce_arms_any(lst, *args):
+            """Reduce arms when *any* of the sequences needs to match. 
+            This is the simpler case. This also works with only one entry"""
+            lst = [x for x in lst if x != 0]
+            if len(lst) == 0:
+                return 0
+            else:
+                return min(lst)
+
+        def _reduce_dual_any(d, *args):
+            lst = [x for x in d.values() if x != 0]
+            if len(lst) == 0:
+                return 0
+            else:
+                return min(lst)
+
+        reduce_dual = _reduce_dual_all if self.dual_tcr == "all" else _reduce_dual_any
+
+        reduce_arms = (
+            _reduce_arm_all if self.receptor_arms == "all" else _reduce_arms_any
         )
-        reduce_arms = sum if self.receptor_arms == "all" else min
         coord_dict = self._cell_dist_mat_reduce(reduce_arms, reduce_dual)
 
         coords, values = zip(*coord_dict.items())
