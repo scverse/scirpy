@@ -232,12 +232,16 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 def tcr_dist(
     unique_seqs,
     *,
-    metric: Literal["alignment", "identity", "levenshtein"] = "alignment",
+    metric: Union[
+        Literal["alignment", "identity", "levenshtein"], _DistanceCalculator
+    ] = "identity",
     cutoff: float = 2,
     n_jobs: Union[int, None] = None,
 ):
     """calculate the sequence x sequence distance matrix"""
-    if metric == "alignment":
+    if isinstance(metric, _DistanceCalculator):
+        dist_calc = metric
+    elif metric == "alignment":
         dist_calc = _AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     elif metric == "identity":
         dist_calc = _IdentityDistanceCalculator(cutoff=cutoff)
@@ -307,20 +311,24 @@ class TcrNeighbors:
         arm_dict = {}
         for arm in receptor_arms:
             chains = [f"{arm}_{i}" for i in chain_inds]
-            cdr_seqs = {k: self.adata.obs[f"{k}_cdr3{sequence}"].values for k in chains}
+            cdr_seqs = {
+                k: self.adata.obs[f"{arm}_{k}_cdr3{sequence}"].values
+                for k in chain_inds
+            }
             unique_seqs = np.hstack(list(cdr_seqs.values()))
             unique_seqs = np.unique(unique_seqs[~_is_na(unique_seqs)]).astype(str)
             seq_to_cell = {
-                k: self._seq_to_cell_idx(unique_seqs, cdr_seqs[k]) for k in chains
+                k: self._seq_to_cell_idx(unique_seqs, cdr_seqs[k]) for k in chain_inds
             }
-            chains_per_cell = np.sum(
-                ~_is_na(self.adata.obs.loc[:, [f"{c}_cdr3" for c in chains]]), axis=1
-            )
+            # chains_per_cell = np.sum(
+            #     ~_is_na(self.adata.obs.loc[:, [f"{c}_cdr3" for c in chains]]), axis=1
+            # )
             arm_dict[arm] = {
+                "chain_inds": chain_inds,
                 "chains": chains,
                 "unique_seqs": unique_seqs,
                 "seq_to_cell": seq_to_cell,
-                "chains_per_cell": chains_per_cell,
+                # "chains_per_cell": chains_per_cell,
             }
 
         self.index_dict = arm_dict
@@ -329,12 +337,14 @@ class TcrNeighbors:
         self,
         adata: AnnData,
         *,
-        metric: Literal["alignment", "identity", "levenshtein"] = "alignment",
-        cutoff: float = 2,
+        metric: Literal["alignment", "identity", "levenshtein"] = "identity",
+        cutoff: float = 0,
         receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
         dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
     ):
+        if metric == "identity" and cutoff != 0:
+            raise ValueError("Identity metric only works with cutoff = 0")
         if sequence == "nt" and metric == "alignment":
             raise ValueError(
                 "Using nucleotide sequences with alignment metric is not supported. "
@@ -400,34 +410,42 @@ class TcrNeighbors:
             into one. 
         """
         coord_dict = dict()
+
+        def _add_to_dict(d, c1, c2, cell_row, cell_col, value):
+            try:
+                tmp_dict = d[(cell_row, cell_col)]
+                try:
+                    tmp_dict2 = tmp_dict[arm]
+                    try:
+                        if (c1, c2) in tmp_dict2:
+                            assert (c2, c1) not in tmp_dict2
+                            tmp_dict2[(c2, c1)] = value
+                        tmp_dict2[(c1, c2)] = value
+                    except KeyError:
+                        tmp_dict2 = {(c1, c2): value}
+                except KeyError:
+                    tmp_dict[arm] = {(c1, c2): value}
+            except KeyError:
+                d[(cell_row, cell_col)] = {arm: {(c1, c2): value}}
+
         for arm, arm_info in self.index_dict.items():
-            dist_mat, seq_to_cell, chains = (
+            dist_mat, seq_to_cell, chain_inds = (
                 arm_info["dist_mat"],
                 arm_info["seq_to_cell"],
-                arm_info["chains"],
+                arm_info["chain_inds"],
             )
             for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
-                for c1, c2 in itertools.product(chains, repeat=2):
+                for c1, c2 in itertools.product(chain_inds, repeat=2):
                     for cell_row, cell_col in itertools.product(
                         seq_to_cell[c1][row], seq_to_cell[c2][col]
                     ):
-                        coord_dict[(cell_row, cell_col)] = (
-                            coord_dict.get((cell_row, cell_col), dict())
-                            .get(arm, [])
-                            .append(value)
-                        )
-                        # build full matrix from triangular one. Only emit single
-                        # value for diagonal.
+                        _add_to_dict(coord_dict, c1, c2, cell_row, cell_col, value)
                         if row != col:
-                            coord_dict[(cell_row, cell_col)] = (
-                                coord_dict.get((cell_row, cell_col), dict())
-                                .get(arm, [])
-                                .append(value)
-                            )
+                            _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
 
         coord_dict = {
             coords: reduce_arms(
-                reduce_dual(value_list) for value_list in entry.values()
+                reduce_dual(value_dict) for value_dict in entry.values()
             )
             for coords, entry in coord_dict.items()
         }
@@ -453,7 +471,20 @@ class TcrNeighbors:
             )
             logging.info("Finished computing {} pairwise distances.".format(arm))
 
-        reduce_dual = sum if self.dual_tcr == "all" else min
+        def _reduce_dual_all(d):
+            if len(d) == 1:
+                return next(iter(d.values()))
+            elif len(d) == 4:
+                # -1 because both distances are offseted by 1
+                return min(d[(1, 2)] + d[(2, 1)], d[(1, 1)] + d[(2, 2)]) - 1
+            elif len(d) == 2:
+                return 0
+            else:
+                raise AssertionError("Can only be of length 1, 2 or 4. ")
+
+        reduce_dual = (
+            _reduce_dual_all if self.dual_tcr == "all" else lambda x: min(x.values())
+        )
         reduce_arms = sum if self.receptor_arms == "all" else min
         coord_dict = self._cell_dist_mat_reduce(reduce_arms, reduce_dual)
 
@@ -485,7 +516,7 @@ class TcrNeighbors:
 
         # structure of the matrix stayes the same, we can safely change the data only
         connectivities.data = (self.cutoff - d) / self.cutoff
-        connectivities.elminate_zeros()
+        connectivities.eliminate_zeros()
         return connectivities
 
 

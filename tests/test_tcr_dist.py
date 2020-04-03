@@ -4,17 +4,14 @@ from scirpy._preprocessing._tcr_dist import (
     _DistanceCalculator,
     _IdentityDistanceCalculator,
     _LevenshteinDistanceCalculator,
-    _reduce_dists,
-    _dist_to_connectivities,
-    _seq_to_cell_idx,
+    TcrNeighbors,
 )
 import numpy as np
 import numpy.testing as npt
 import scirpy as st
 import scipy.sparse
-from scirpy._util import _reduce_nonzero
-from functools import reduce
 from .fixtures import adata_cdr3
+from anndata import AnnData
 
 
 @pytest.fixture
@@ -26,8 +23,20 @@ def adata_cdr3_mock_distance_calculator():
         def calc_dist_mat(self, seqs):
             """Don't calculate distances, but return the
             hard-coded distance matrix needed for the test"""
-            npt.assert_equal(seqs, ["AAA", "AHA"])
-            return scipy.sparse.coo_matrix(np.array([[1, 4], [0, 1]]))
+            mat_seqs = np.array(["AAA", "AHA", "KK", "KKK", "KKY", "LLL"])
+            mask = np.isin(mat_seqs, seqs)
+            return scipy.sparse.coo_matrix(
+                np.array(
+                    [
+                        [1, 4, 0, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0],
+                        [0, 0, 1, 10, 10, 0],
+                        [0, 0, 0, 1, 5, 0],
+                        [0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 0, 0, 1],
+                    ]
+                )[mask, :][:, mask]
+            )
 
     return MockDistanceCalculator()
 
@@ -97,124 +106,283 @@ def test_alignment_dist():
 def test_tcr_dist(adata_cdr3):
     for metric in ["alignment", "identity", "levenshtein"]:
         unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
-        tra_dist, trb_dist = st.pp.tcr_dist(
-            unique_seqs, metric=metric, cutoff=8, n_jobs=2
-        )
-        assert tra_dist.shape == trb_dist.shape == (adata_cdr3.n_obs, adata_cdr3.n_obs)
+        dist_mat = st.pp.tcr_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
+        assert dist_mat.shape == (5, 5)
 
 
 def test_seq_to_cell_idx():
     unique_seqs = np.array(["AAA", "ABA", "CCC", "XXX", "AA"])
     cdr_seqs = np.array(["AAA", "CCC", "ABA", "CCC", np.nan, "AA", "AA"])
-    result = _seq_to_cell_idx(unique_seqs, cdr_seqs)
+    result = TcrNeighbors._seq_to_cell_idx(unique_seqs, cdr_seqs)
     assert result == {0: [0], 1: [2], 2: [1, 3], 3: [], 4: [5, 6]}
 
 
-# def test_dist_for_chain_identity(adata_cdr3):
-#     identity = _IdentityDistanceCalculator()
-
-#     cell_mat = _dist_for_chain(
-#         adata_cdr3, "TRA", identity, merge_chains="primary_only", sequence="aa"
-#     )
-#     npt.assert_equal(
-#         cell_mat.toarray(),
-#         np.array(
-#             [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
-#         ),
-#     )
-
-#     cell_mat_all = _dist_for_chain(
-#         adata_cdr3, "TRA", identity, merge_chains="any", sequence="aa"
-#     )
-#     npt.assert_equal(
-#         cell_mat_all.toarray(),
-#         np.array(
-#             [
-#                 [1, 1, 0, 1, 1],
-#                 [1, 1, 0, 0, 0],
-#                 [0] * 5,
-#                 [1, 0, 0, 1, 1],
-#                 [1, 0, 0, 1, 1],
-#             ]
-#         ),
-#     )
-
-
-# def test_dist_for_chain(adata_cdr3, adata_cdr3_mock_distance_calculator):
-#     cell_mat = _dist_for_chain(
-#         adata_cdr3,
-#         "TRA",
-#         adata_cdr3_mock_distance_calculator,
-#         merge_chains="primary_only",
-#         sequence="aa",
-#     )
-#     print(cell_mat.toarray())
-#     assert cell_mat.nnz == 9
-#     npt.assert_equal(
-#         cell_mat.toarray(),
-#         np.array(
-#             [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
-#         ),
-#     )
-
-#     cell_mat_all = _dist_for_chain(
-#         adata_cdr3,
-#         "TRA",
-#         adata_cdr3_mock_distance_calculator,
-#         merge_chains="any",
-#         sequence="aa",
-#     )
-#     assert cell_mat_all.nnz == 16
-#     npt.assert_equal(
-#         cell_mat_all.toarray(),
-#         np.array(
-#             [
-#                 [1, 1, 0, 1, 1],
-#                 [1, 1, 0, 4, 4],
-#                 [0] * 5,
-#                 [1, 4, 0, 1, 1],
-#                 [1, 4, 0, 1, 1],
-#             ]
-#         ),
-#     )
-
-
-def test_reduce_dists():
-    A = scipy.sparse.csr_matrix(
-        [[0, 1, 3, 0], [1, 0, 0, 0], [0, 7, 0, 8], [0, 0, 0, 0]]
+def test_build_index_dict(adata_cdr3):
+    tn = TcrNeighbors(
+        adata_cdr3, receptor_arms="TRA", dual_tcr="primary_only", sequence="nt"
     )
-    B = scipy.sparse.csr_matrix(
-        [[0, 2, 0, 0], [0, 0, 0, 0], [0, 6, 0, 9], [0, 1, 0, 0]]
+    tn._build_index_dict()
+    npt.assert_equal(
+        tn.index_dict,
+        {
+            "TRA": {
+                "chains": ["TRA_1"],
+                "unique_seqs": ["GCGAUGGCG", "GCGGCGGCG", "GCUGCUGCU"],
+                "seq_to_cell": {"TRA_1": {0: [1], 1: [0], 2: [3]}},
+            }
+        },
     )
-    expected_all = np.array([[0, 2, 0, 0], [0, 0, 0, 0], [0, 7, 0, 9], [0, 0, 0, 0]])
-    expected_any = np.array([[0, 1, 3, 0], [1, 0, 0, 0], [0, 6, 0, 8], [0, 1, 0, 0]])
-    A.eliminate_zeros()
-    B.eliminate_zeros()
 
-    npt.assert_equal(_reduce_dists(A, B, "TRA").toarray(), A.toarray())
-    npt.assert_equal(_reduce_dists(A, B, "TRB").toarray(), B.toarray())
-    npt.assert_equal(_reduce_dists(A, B, "all").toarray(), expected_all)
-    npt.assert_equal(_reduce_dists(A, B, "any").toarray(), expected_any)
+    tn = TcrNeighbors(adata_cdr3, receptor_arms="all", dual_tcr="all", sequence="aa")
+    tn._build_index_dict()
+    tn2 = TcrNeighbors(adata_cdr3, receptor_arms="any", dual_tcr="any", sequence="aa")
+    tn2._build_index_dict()
+    npt.assert_equal(tn.index_dict, tn2.index_dict)
+    print(tn.index_dict)
+    npt.assert_equal(
+        tn.index_dict,
+        {
+            "TRA": {
+                "chains": ["TRA_1", "TRA_2"],
+                "unique_seqs": ["AAA", "AHA"],
+                "seq_to_cell": {
+                    "TRA_1": {0: [0, 3], 1: [1]},
+                    "TRA_2": {0: [3, 4], 1: [0]},
+                },
+            },
+            "TRB": {
+                "chains": ["TRB_1", "TRB_2"],
+                "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
+                "seq_to_cell": {
+                    "TRB_1": {0: [], 1: [1], 2: [], 3: [0], 4: [3, 4]},
+                    "TRB_2": {0: [3], 1: [], 2: [0, 1], 3: [], 4: []},
+                },
+            },
+        },
+    )
 
 
-def test_dist_to_connectivities():
-    D = scipy.sparse.csr_matrix(
+def test_compute_distances1(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    # test single chain with identity distance
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric="identity",
+        cutoff=0,
+        receptor_arms="TRA",
+        dual_tcr="primary_only",
+        sequence="aa",
+    )
+    tn.compute_distances()
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
+        ),
+    )
+
+
+def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    # test single receptor arm with multiple chains and identity distance
+    tn = TcrNeighbors(
+        adata_cdr3, metric="identity", cutoff=0, receptor_arms="TRA", dual_tcr="any",
+    )
+    tn.compute_distances()
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 1, 0, 1, 1],
+                [1, 1, 0, 0, 0],
+                [0] * 5,
+                [1, 0, 0, 1, 1],
+                [1, 0, 0, 1, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    # test single chain with custom distance
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="TRA",
+        dual_tcr="primary_only",
+    )
+    tn.compute_distances()
+    assert tn.dist.nnz == 9
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
+        ),
+    )
+
+
+def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    # test single receptor arm with multiple chains and custom distance
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="TRA",
+        dual_tcr="any",
+    )
+    tn.compute_distances()
+
+    assert tn.dist.nnz == 16
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 1, 0, 1, 1],
+                [1, 1, 0, 4, 4],
+                [0] * 5,
+                [1, 4, 0, 1, 1],
+                [1, 4, 0, 1, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    # test single receptor arm with multiple chains and custom distance
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="TRA",
+        dual_tcr="all",
+    )
+    tn.compute_distances()
+
+    print(tn.dist.toarray())
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 0, 0, 4, 0],
+                [0, 1, 0, 0, 4],
+                [0, 0, 0, 0, 0],
+                [4, 0, 0, 1, 0],
+                [0, 4, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    # test both receptor arms, primary chain only
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="all",
+        dual_tcr="primary_only",
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray)
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 14, 0, 0, 0],
+                [14, 1, 0, 0, 0],
+                [0] * 5,
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="any",
+        dual_tcr="primary_only",
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray)
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 14, 0, 0, 0],
+                [14, 1, 0, 0, 0],
+                [0] * 5,
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="any",
+        dual_tcr="all",
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray)
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 14, 0, 0, 0],
+                [14, 1, 0, 0, 0],
+                [0] * 5,
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="any",
+        dual_tcr="any",
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray)
+    npt.assert_equal(
+        tn.dist.toarray(),
+        np.array(
+            [
+                [1, 14, 0, 0, 0],
+                [14, 1, 0, 0, 0],
+                [0] * 5,
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_dist_to_connectivities(adata_cdr3):
+    # empty anndata, just need the object
+    tn = TcrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
+    tn._dist_mat = scipy.sparse.csr_matrix(
         [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
     )
-    C = _dist_to_connectivities(D, 10)
-    assert C.nnz == D.nnz
+    C = tn.connectivities
+    assert C.nnz == tn._dist_mat.nnz
     npt.assert_equal(
         C.toarray(),
         np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
     )
 
-    D = scipy.sparse.csr_matrix(
+    tn2 = TcrNeighbors(adata_cdr3, metric="identity", cutoff=0)
+    tn2._dist_mat = scipy.sparse.csr_matrix(
         [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
     )
-    C = _dist_to_connectivities(D, 0)
-    assert C.nnz == D.nnz
+    C = tn2.connectivities
+    assert C.nnz == tn2._dist_mat.nnz
     npt.assert_equal(
-        C.toarray(), D.toarray(),
+        C.toarray(), tn2._dist_mat.toarray(),
     )
 
 

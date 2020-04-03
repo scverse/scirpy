@@ -9,13 +9,20 @@ from scirpy._util import _is_symmetric
 def adata_cdr3():
     obs = pd.DataFrame(
         [
-            ["cell1", "AAA", "AHA", "KKY", "KKK"],
-            ["cell2", "AHA", "nan", "KK", "KKK"],
-            ["cell3", "nan", "nan", "nan", "nan"],
-            ["cell4", "AAA", "AAA", "LLL", "AAA"],
-            ["cell5", "nan", "AAA", "LLL", "nan"],
+            ["cell1", "AAA", "AHA", "KKY", "KKK", "GCGGCGGCG"],
+            ["cell2", "AHA", "nan", "KK", "KKK", "GCGAUGGCG"],
+            ["cell3", "nan", "nan", "nan", "nan", "nan"],
+            ["cell4", "AAA", "AAA", "LLL", "AAA", "GCUGCUGCU"],
+            ["cell5", "nan", "AAA", "LLL", "nan", "nan"],
         ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+        columns=[
+            "cell_id",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+            "TRA_1_cdr3_nt",
+        ],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata
