@@ -437,8 +437,8 @@ def test_tcr_neighbors(adata_cdr3):
         adata_cdr3,
         metric="levenshtein",
         cutoff=3,
-        strategy="TRA",
-        merge_chains="all",
+        receptor_arms="TRA",
+        dual_tcr="all",
         key_added="nbs",
     )
     assert adata_cdr3.uns["nbs"]["connectivities"].shape == (5, 5)
