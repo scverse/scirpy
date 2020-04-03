@@ -198,4 +198,5 @@ def test_layout_components():
         n += ii
 
     layout = layout_components(g, arrange_boxes="size", component_layout="fr")
-    layout = layout_components(g, arrange_boxes="dense", component_layout="fr")
+    layout = layout_components(g, arrange_boxes="rpack", component_layout="fr")
+    layout = layout_components(g, arrange_boxes="squarify", component_layout="fr")
