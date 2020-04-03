@@ -7,6 +7,7 @@ import numpy as np
 from scirpy._util import _is_symmetric
 from .fixtures import adata_conn
 import random
+import pytest
 
 
 def test_define_clonotypes_no_graph():
@@ -91,3 +92,6 @@ def test_clonotype_network(adata_conn):
             [[98.0, 1.0], [1.0, 98.0], [49.5107979, 49.4911286], [np.nan, np.nan]]
         ),
     )
+
+    with pytest.raises(ValueError):
+        st.tl.clonotype_network(adata_conn[[1, 3], :])

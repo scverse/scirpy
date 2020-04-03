@@ -189,6 +189,12 @@ def clonotype_network(
             "Clonotype size information not found. Did you run `tl.define_clonotypes`?"
         )
 
+    if not adata.n_obs == conn.shape[0] == conn.shape[0]:
+        raise ValueError(
+            "Dimensions of connectivity matrix and AnnData do not match. Maybe you "
+            "need to re-run `pp.tcr_neighbors?"
+        )
+
     graph = get_igraph_from_adjacency(conn)
 
     # remove singletons/small subgraphs
