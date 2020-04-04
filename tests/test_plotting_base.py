@@ -27,6 +27,11 @@ def test_barh(test_df):
     p = pl.base.barh(test_df)
     assert isinstance(p, plt.Axes)
 
+def test_ol_scatter(test_df):
+    test_df.columns = ['x', 'y', 'z']
+    p = pl.base.ol_scatter(test_df)
+    assert isinstance(p, plt.Axes)
+
 
 def test_curve(test_df):
     # with default options
