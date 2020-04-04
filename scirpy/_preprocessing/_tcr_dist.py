@@ -535,6 +535,8 @@ class TcrNeighbors:
                         if row != col:
                             _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
 
+        logging.debug("Finished constructing coord-dictionary")
+
         yield from self._reduce_coord_dict(coord_dict)
 
     def compute_distances(
@@ -562,6 +564,7 @@ class TcrNeighbors:
         dist_mat = coo_matrix(
             (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
         )
+        logging.info("Finished constructing cell x cell distance matrix. ")
         dist_mat.eliminate_zeros()
         self._dist_mat = dist_mat.tocsr()
 
