@@ -67,7 +67,23 @@ def repertoire_overlap(
 
     if pair_to_plot is None:
         linkage = adata.uns['repertoire_overlap']['linkage']
-        clust_colors = ['red']*len(df.index.values)
+
+        if heatmap_cats is not None:
+            clust_colors, leg_colors = [], [] 
+            for lbl in heatmap_cats:
+                labels = adata.obs.groupby([groupby, lbl]).agg('size').reset_index()
+                label_levels = labels[lbl].unique()
+                label_pal = sns.cubehelix_palette(label_levels.size, light=.7, dark=.3, reverse=True, start=2.5, rot=-2)
+                colordict = dict(zip(label_levels, label_pal))
+                for e in label_levels:
+                    leg_colors.append((lbl+': '+e, colordict[e]))
+                labels[lbl] = labels[lbl].astype(str)
+                labels[lbl] = labels.loc[:,lbl].map(colordict)
+                clust_colors.append(labels[lbl])
+                labels = labels.loc[:,[groupby, lbl]].set_index(groupby)
+                colordict = labels.to_dict()
+                colordict = colordict[lbl]
+
         if dendro_only:
             ax = _init_ax()
             sc_hierarchy.dendrogram(linkage, labels=df.index, ax=ax)
@@ -75,15 +91,30 @@ def repertoire_overlap(
             ax.spines['right'].set_visible(False)
             ax.spines['bottom'].set_visible(False)
             ax.spines['left'].set_visible(False)
+            if heatmap_cats is not None:
+                for lbl in ax.get_xticklabels():
+                    lbl.set_color(colordict[lbl.get_text()])
             ax.get_yaxis().set_ticks([])
         else:
-            scaling_factor = 0.9 # This is a subjective value to ease color bar scaling
             distM = adata.uns['repertoire_overlap']['distance']
             distM = sc_distance.squareform(distM)
+            np.fill_diagonal(distM, 1)
+            scaling_factor = distM.min()
             np.fill_diagonal(distM, scaling_factor)
             distM = pd.DataFrame(distM, index=df.index, columns=df.index)
-            ax = sns.clustermap(1-distM, row_colors=clust_colors, row_linkage=linkage, col_linkage=linkage)
-    
+            dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
+            distM = distM.iloc[dd['leaves'],:]
+            if heatmap_cats is None:
+                ax = sns.clustermap(1-distM, col_linkage=linkage, row_cluster=False)
+            else:
+                ax = sns.clustermap(1-distM, col_linkage=linkage, row_cluster=False, row_colors=clust_colors)
+                lax = ax.ax_row_dendrogram
+                for e, c in leg_colors:
+                    lax.bar(0, 0, color=c, label=e, linewidth=0)
+                lax.legend(loc='lower left')
+            b, t = ax.ax_row_dendrogram.get_ylim()
+            l, r = ax.ax_row_dendrogram.get_xlim()
+            ax.ax_row_dendrogram.text(l, 0.9*t, '1-distance ('+overlap_measure+')')
     else:
         invalid_pair_warning = 'Cannot find this pair in the data table. Did you supply two valid '+groupby+' names? Current indices are: '+';'.join(df.index.values)
         try:
