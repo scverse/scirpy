@@ -17,7 +17,7 @@ def repertoire_overlap(
     groupby: str,
     *,
     target_col: str = "clonotype",
-    pair_to_plot: Union[None, Tuple] = None,
+    pair_to_plot: Union[None, Sequence[str]] = None,
     heatmap_cats: Union[None, Tuple] = None,
     dendro_only: bool = False,
     overlap_measure: str = "jaccard",
