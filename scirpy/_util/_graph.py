@@ -42,7 +42,7 @@ def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = Non
 def layout_components(
     graph: ig.Graph,
     component_layout: str = "fr",
-    arrange_boxes: Literal["size", "dense"] = "dense",
+    arrange_boxes: Literal["size", "rpack", "squarify"] = "squarify",
     pad_x: float = 1.0,
     pad_y: float = 1.0,
 ) -> np.ndarray:
@@ -60,8 +60,8 @@ def layout_components(
         Can be anything that can be passed to :meth:`igraph.Graph.layout`
     arrange_boxes
         How to arrange the individual components. Can be "size"
-        to arange them by the component size or "dense" to pack them as densly
-        as possible.
+        to arange them by the component size, or "rpack" to pack them as densly
+        as possible, or "squarify" to arrange them using a treemap algorithm. 
     pad_x, pad_y
         Padding between subgraphs in the x and y dimension.
 
@@ -82,7 +82,9 @@ def layout_components(
     vertex_ids = [v["id"] for comp in components for v in comp.vs]
     vertex_sorter = np.argsort(vertex_ids)
 
-    bbox_fun = _bbox_rpack if arrange_boxes == "dense" else _bbox_sorted
+    bbox_fun = {"rpack": _bbox_rpack, "size": _bbox_sorted, "squarify": _bbox_squarify}[
+        arrange_boxes
+    ]
     bboxes = bbox_fun(component_sizes, pad_x, pad_y)
 
     component_layouts = [
@@ -127,6 +129,40 @@ def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
         for (x, y), (width, height) in zip(origins, dimensions)
     ]
     return bboxes[::-1]
+
+
+def _bbox_squarify(component_sizes, pad_x=10, pad_y=10):
+    """Arrange bounding boxes using the `squarify` implementation for treemaps"""
+    try:
+        import squarify
+    except ImportError:
+        raise ImportError(
+            "Using the 'components layout' requires the installation"
+            "of the `squarify` package. You can install it with "
+            "`pip install squarify`"
+        )
+    order = np.argsort(-component_sizes)
+    undo_order = np.argsort(order)
+    component_sizes = component_sizes[order]
+    component_sizes = squarify.normalize_sizes(component_sizes, 100, 100)
+    rects = squarify.padded_squarify(component_sizes, 0, 0, 100, 100)
+
+    bboxes = []
+    for r in rects:
+        width = r["dx"]
+        height = r["dy"]
+        offset_x = r["x"]
+        offset_y = r["y"]
+        delta = abs(width - height)
+        if width > height:
+            width = height
+            offset_x += delta / 2
+        else:
+            height = width
+            offset_y += delta / 2
+        bboxes.append((offset_x, offset_y, width - pad_x, height - pad_y))
+
+    return [bboxes[i] for i in undo_order]
 
 
 def _bbox_sorted(component_sizes, pad_x=1.0, pad_y=1.0):

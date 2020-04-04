@@ -9,13 +9,41 @@ from scirpy._util import _is_symmetric
 def adata_cdr3():
     obs = pd.DataFrame(
         [
-            ["cell1", "AAA", "AHA", "KKY", "KKK"],
-            ["cell2", "AHA", "nan", "KK", "KKK"],
-            ["cell3", "nan", "nan", "nan", "nan"],
-            ["cell4", "AAA", "AAA", "LLL", "AAA"],
-            ["cell5", "nan", "AAA", "LLL", "nan"],
+            ["cell1", "AAA", "AHA", "KKY", "KKK", "GCGGCGGCG"],
+            ["cell2", "AHA", "nan", "KK", "KKK", "GCGAUGGCG"],
+            ["cell3", "nan", "nan", "nan", "nan", "nan"],
+            ["cell4", "AAA", "AAA", "LLL", "AAA", "GCUGCUGCU"],
+            ["cell5", "nan", "AAA", "LLL", "nan", "nan"],
         ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+        columns=[
+            "cell_id",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+            "TRA_1_cdr3_nt",
+        ],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+    return adata
+
+
+@pytest.fixture
+def adata_define_clonotypes():
+    obs = pd.DataFrame(
+        [
+            ["cell1", "AAA", "AHA", "KKY", "KKK"],
+            ["cell2", "AAA", "AHA", "KKY", "KKK"],
+            ["cell3", "BBB", "AHA", "KKY", "KKK"],
+            ["cell4", "BBB", "AHA", "BBB", "KKK"],
+            ["cell5", "AAA", "nan", "KKY", "KKK"],
+            ["cell6", "AAA", "nan", "KKY", "CCC"],
+            ["cell7", "AAA", "AHA", "ZZZ", "nan"],
+            ["cell8", "AAA", "nan", "nan", "KKK"],
+            ["cell9", "nan", "nan", "nan", "KKK"],
+            ["cell10", "nan", "nan", "nan", "nan"],
+        ],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3",],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata

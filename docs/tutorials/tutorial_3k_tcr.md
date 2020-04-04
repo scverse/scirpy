@@ -245,7 +245,7 @@ in the graph and annotate them as clonotypes. This will add a `clonotype` and
 <!-- #endraw -->
 
 ```python
-ir.pp.tcr_neighbors(adata, strategy="all", merge_chains="primary_only", cutoff=0)
+ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only", cutoff=0)
 ir.tl.define_clonotypes(adata)
 ```
 
@@ -274,7 +274,7 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=15, merge_chains="all")
+ir.pp.tcr_neighbors(adata, cutoff=15, receptor_arms="all")
 ir.tl.define_clonotypes(adata, partitions="connected")
 ```
 
@@ -317,7 +317,7 @@ The second option is to show the number of cells belonging to an expanded clonot
 in a stacked bar plot: 
 
 ```python
-ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, fraction=False)
+ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, normalize=False)
 ```
 
 The same plot, normalized to cluster size: 
@@ -442,8 +442,4 @@ ir.pl.spectratype(
     fraction="sample",
     fig_kws={'dpi': 150}
 )
-```
-
-```python
-
 ```
