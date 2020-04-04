@@ -68,7 +68,7 @@ def _define_clonotypes_no_graph(
 def define_clonotypes(
     adata,
     *,
-    partitions: Literal["connected", "leiden"] = "leiden",
+    partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
     neighbors_key: str = "tcr_neighbors",

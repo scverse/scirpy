@@ -29,6 +29,27 @@ def adata_cdr3():
 
 
 @pytest.fixture
+def adata_define_clonotypes():
+    obs = pd.DataFrame(
+        [
+            ["cell1", "AAA", "AHA", "KKY", "KKK"],
+            ["cell2", "AAA", "AHA", "KKY", "KKK"],
+            ["cell3", "BBB", "AHA", "KKY", "KKK"],
+            ["cell4", "BBB", "AHA", "BBB", "KKK"],
+            ["cell5", "AAA", "nan", "KKY", "KKK"],
+            ["cell6", "AAA", "nan", "KKY", "CCC"],
+            ["cell7", "AAA", "AHA", "ZZZ", "nan"],
+            ["cell8", "AAA", "nan", "nan", "KKK"],
+            ["cell9", "nan", "nan", "nan", "KKK"],
+            ["cell10", "nan", "nan", "nan", "nan"],
+        ],
+        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3",],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+    return adata
+
+
+@pytest.fixture
 def adata_conn():
     """Adata with connectivities computed"""
     adata = AnnData(
