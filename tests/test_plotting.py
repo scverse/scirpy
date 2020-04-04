@@ -42,7 +42,7 @@ def test_spectratype(adata_tra):
     assert isinstance(p, plt.Axes)
 
 def test_repertoire_overlap(adata_tra):
-    p = pl.repertoire_overlap(adata_tra, groupby="sample")
+    p = pl.repertoire_overlap(adata_tra, groupby="sample", dendro_only=True)
     assert isinstance(p, plt.Axes)
 
 def test_vdj_usage(adata_vdj):
