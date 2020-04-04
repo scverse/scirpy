@@ -88,6 +88,6 @@ def repertoire_overlap(
         }
 
         return
-    
+
     else:
-        return df
+        return df, distM, linkage
