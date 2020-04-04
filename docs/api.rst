@@ -58,8 +58,8 @@ Tools: `tl`
    define_clonotypes
    clonotype_network
    chain_pairing
-   clip_and_count
    clonal_expansion
+   summarize_clonal_expansion
    alpha_diversity
    group_abundance
    spectratype
@@ -88,7 +88,6 @@ Base plotting functions: `pl.base`
    :toctree: . 
 
    alpha_diversity
-   clip_and_count
    clonal_expansion
    group_abundance
    spectratype

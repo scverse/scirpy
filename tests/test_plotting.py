@@ -22,7 +22,7 @@ def test_clonal_expansion(adata_clonotype):
     assert isinstance(p, plt.Axes)
 
     p = pl.clonal_expansion(
-        adata_clonotype, groupby="group", show_nonexpanded=True, viztype="barh"
+        adata_clonotype, groupby="group", show_nonexpanded=False, viztype="barh"
     )
     assert isinstance(p, plt.Axes)
 

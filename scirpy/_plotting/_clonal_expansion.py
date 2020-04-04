@@ -63,6 +63,6 @@ def clonal_expansion(
         clip_at=clip_at,
     )
     if not show_nonexpanded:
-        plot_df = plot_df.loc[plot_df.index != "1", :]
+        plot_df.drop("1", axis="columns", inplace=True)
 
     return {"bar": base.bar, "barh": base.barh}[viztype](plot_df, **kwargs)
