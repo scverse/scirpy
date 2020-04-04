@@ -33,7 +33,7 @@ def repertoire_overlap(
     adata
         AnnData object to work on.
     groupby
-        Column with group labels (e.g. samples, tussue source, diagnosis, etc).        
+        Column with group labels (e.g. samples, tissue source, diagnosis, etc).        
     target_col
         Category that overlaps among groups (`clonotype` by default, but can
         in principle be any group or cluster)
