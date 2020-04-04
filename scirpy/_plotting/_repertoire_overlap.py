@@ -149,7 +149,7 @@ def repertoire_overlap(
             o_df = df.loc[list(pair_to_plot), :].T
             valid_pairs = True
         except KeyError:
-            print("One of the pair names not found in the database.")
+            pass
         if valid_pairs:
             if o_df.shape[1] == 2:
                 o_df = o_df.loc[(o_df.sum(axis=1) != 0), :]
