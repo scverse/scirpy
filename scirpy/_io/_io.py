@@ -79,7 +79,9 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
             key=lambda x: x.expr,
             reverse=True,
         )
-        res_dict["multi_chain"] = len(tmp_chains) > 2
+        res_dict["multi_chain"] = res_dict.get("multi_chain", False) | (
+            len(tmp_chains) > 2
+        )
         # slice to max two chains
         tmp_chains = tmp_chains[:2]
         # add None if less than two chains
