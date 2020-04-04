@@ -92,11 +92,11 @@ ir.pl.repertoire_overlap(adata, 'sample')
 ```
 
 ```python
-ir.pl.repertoire_overlap(adata, 'sample', dendro_only=True)
+ir.pl.repertoire_overlap(adata, 'sample', heatmap_cats=['patient', 'source'])
 ```
 
 ```python
-plt.scatter(range(10), range(10), s=[np.sqrt(1000*x) for x in range(10)])
+ir.pl.repertoire_overlap(adata, 'sample', dendro_only=True, heatmap_cats=['source'])
 ```
 
 ```python
