@@ -364,27 +364,43 @@ class TcrNeighbors:
         self._dist_mat = None
         logging.debug("Finished initalizing TcrNeighbors object. ")
 
-    def _reduce_dual_all(self, d, cell_row, cell_col):
+    def _reduce_dual_all(self, d, chain, cell_row, cell_col):
         """Reduce dual TCRs into a single value when 'all' sequences
         need to match. This requires additional checking effort for the number
         of chains in the given cell, since we can't make the distinction between
         no chain and dist > cutoff based on the distances (both would contain a
         0 in the distance matrix)."""
+        chain_count = (
+            self.index_dict[chain]["chains_per_cell"][cell_row],
+            self.index_dict[chain]["chains_per_cell"][cell_col],
+        )
         # TODO: also need to check here the number of chains...
-        if len(d) == 1:
+        if len(d) == 1 and chain_count == (1, 1):
             # exactely one chain for both cells -> return that value
             return next(iter(d.values()))
-        elif len(d) == 4:
-            # -1 because both distances are offseted by 1
-            return min(d[(1, 2)] + d[(2, 1)], d[(1, 1)] + d[(2, 2)]) - 1
-        elif len(d) == 2:
-            # TODO this is wrong: Threr could be a rare case
-            # where *exactely* 2 matches 1 and 1 matches 2 - no other
-            # edges available.
-            # one of both cells only has one chain -> no edge
-            return 0
+        elif chain_count == (2, 2):
+            # two options: either (1 matches 2 and 2 matches 1)
+            # or (1 matches 1 and 2 matches 2).
+            try:
+                d1 = d[(1, 2)] + d[(2, 1)] - 1
+            except KeyError:
+                d1 = None
+            try:
+                d2 = d[(1, 1)] + d[(2, 2)] - 1
+            except KeyError:
+                d2 = None
+
+            if d1 is not None and d2 is not None:
+                return min(d1, d2)
+            elif d1 is not None:
+                return d1
+            elif d2 is not None:
+                return d2
+            else:
+                return 0
+
         else:
-            raise AssertionError("Can only be of length 1, 2 or 4. ")
+            return 0
 
     def _reduce_arms_all(self, values, cell_row, cell_col):
         """Reduce multiple receptor arms into a single value when 'all' sequences
@@ -392,7 +408,14 @@ class TcrNeighbors:
         of chains in the given cell, since we can't make the distinction between
         no chain and dist > cutoff based on the distances (both would contain a
         0 in the distance matrix)."""
-        arm1 = next(values)
+        values = (x for x in values if x != 0)
+
+        try:
+            arm1 = next(values)
+        except StopIteration:
+            # no value > 0
+            return 0
+
         try:
             arm2 = next(values)
             # two receptor arms -> easy
@@ -400,15 +423,17 @@ class TcrNeighbors:
             return arm1 + arm2 - 1
         except StopIteration:
             # only one arm
-            n_chains = (
+            tra_chains = (
                 self.index_dict["TRA"]["chains_per_cell"][cell_row],
                 self.index_dict["TRA"]["chains_per_cell"][cell_col],
+            )
+            trb_chains = (
                 self.index_dict["TRB"]["chains_per_cell"][cell_row],
                 self.index_dict["TRB"]["chains_per_cell"][cell_col],
             )
-            # Either exactely on chain for TRA or
+            # Either exactely one chain for TRA or
             # exactely on e chain for TRB for both cells.
-            if n_chains == (1, 1, 0, 0) or n_chains == (0, 0, 1, 1):
+            if tra_chains == (0, 0) or trb_chains == (0, 0):
                 return arm1
             else:
                 return 0
@@ -447,7 +472,10 @@ class TcrNeighbors:
             else self._reduce_arms_any
         )
         for (cell_row, cell_col), entry in coord_dict.items():
-            reduced_dual = (reduce_dual(value_dict) for value_dict in entry.values())
+            reduced_dual = (
+                reduce_dual(value_dict, chain, cell_row, cell_col)
+                for chain, value_dict in entry.items()
+            )
             reduced = reduce_arms(reduced_dual, cell_row, cell_col,)
             yield (cell_row, cell_col), reduced
 
