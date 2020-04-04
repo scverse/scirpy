@@ -23,7 +23,7 @@ def repertoire_overlap(
     overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
-    **kwargs
+    **kwargs,
 ) -> plt.Axes:
     """Visualizes overlap betwen a pair of samples on a scatter plot or
     all samples on a heatmap or draws a dendrogram of samples only.
@@ -133,21 +133,20 @@ def repertoire_overlap(
                 lax.legend(loc="lower left")
             b, t = ax.ax_row_dendrogram.get_ylim()
             l, r = ax.ax_row_dendrogram.get_xlim()
-            ax.ax_row_dendrogram.text(
-                l, 0.9 * t, f"1-distance ({overlap_measure})"
-            )
+            ax.ax_row_dendrogram.text(l, 0.9 * t, f"1-distance ({overlap_measure})")
     else:
         invalid_pair_warning = (
-            "Cannot find this pair in the data table. Did you supply two valid "
+            "Did you supply two valid "
             + groupby
             + " names? Current indices are: "
             + ";".join(df.index.values)
         )
+        valid_pairs = False
         try:
             o_df = df.loc[list(pair_to_plot), :].T
             valid_pairs = True
-        except:
-            valid_pairs = False
+        except KeyError:
+            print("One of the pair names not found in the database.")
         if valid_pairs:
             if o_df.shape[1] == 2:
                 o_df = o_df.loc[(o_df.sum(axis=1) != 0), :]
@@ -171,8 +170,11 @@ def repertoire_overlap(
                 kwargs["style_kws"] = default_style_kws
                 ax = ol_scatter(o_df, **kwargs)
             else:
-                print(invalid_pair_warning)
+                raise TypeError(
+                    "Wrong number of members. A pair is exactly two items! "
+                    + invalid_pair_warning
+                )
         else:
-            print(invalid_pair_warning)
+            raise TypeError(invalid_pair_warning)
 
     return ax

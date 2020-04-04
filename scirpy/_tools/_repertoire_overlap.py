@@ -14,6 +14,8 @@ def repertoire_overlap(
     overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
+    added_key: str = "repertoire_overlap",
+    inplace: bool = True,
 ) -> pd.DataFrame:
     """Compute distance between cell groups based on clonotype overlap.
 
@@ -72,11 +74,14 @@ def repertoire_overlap(
     distM = sc_distance.pdist(pr_df, overlap_measure)
     linkage = sc_hierarchy.linkage(distM)
 
+    if inplace:
+        return df
+
     # Store calculated data
-    adata.uns["repertoire_overlap"] = {
+    adata.uns[added_key] = {
         "weighted": df,
         "distance": distM,
         "linkage": linkage,
     }
 
-    return df
+    return
