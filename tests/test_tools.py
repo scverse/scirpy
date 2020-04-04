@@ -276,3 +276,61 @@ def test_spectratype(adata_tra):
         orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
+
+
+def repertoire_overlap(adata_tra):
+    res = st.tl.repertoire_overlap(zadata, 'sample')
+    expected_frac = pd.DataFrame.from_dict(
+        {
+            1: {
+                'clonotype_157': 0.0,
+                'clonotype_158': 0.0,
+                'clonotype_284': 0.0,
+                'clonotype_330': 0.0,
+                'clonotype_425': 0.0,
+                'clonotype_430': 0.0,
+                'clonotype_458': 0.0,
+                'clonotype_459': 1.0,
+                'clonotype_460': 0.0,
+                'clonotype_592': 0.0,
+                'clonotype_738': 1.0,
+                'clonotype_739': 1.0,
+                'clonotype_986': 1.0,
+                'clonotype_987': 1.0
+            },
+            3: {
+                'clonotype_157': 0.0,
+                'clonotype_158': 0.0,
+                'clonotype_284': 0.0,
+                'clonotype_330': 1.0,
+                'clonotype_425': 1.0,
+                'clonotype_430': 1.0,
+                'clonotype_458': 1.0,
+                'clonotype_459': 0.0,
+                'clonotype_460': 1.0,
+                'clonotype_592': 0.0,
+                'clonotype_738': 0.0,
+                'clonotype_739': 0.0,
+                'clonotype_986': 0.0,
+                'clonotype_987': 0.0
+                },
+            5: {
+                'clonotype_157': 1.0,
+                'clonotype_158': 1.0,
+                'clonotype_284': 1.0,
+                'clonotype_330': 0.0,
+                'clonotype_425': 0.0,
+                'clonotype_430': 0.0,
+                'clonotype_458': 0.0,
+                'clonotype_459': 0.0,
+                'clonotype_460': 0.0,
+                'clonotype_592': 1.0,
+                'clonotype_738': 0.0,
+                'clonotype_739': 0.0,
+                'clonotype_986': 0.0,
+                'clonotype_987': 0.0
+                }
+            },
+        orient="index",
+    )
+    npt.assert_equal(res.values, expected_frac.values)

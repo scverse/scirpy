@@ -16,11 +16,11 @@ def repertoire_overlap(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = 'clonotype',
+    target_col: str = "clonotype",
     pair_to_plot: Union[None, Tuple] = None,
     heatmap_cats: Union[None, Tuple] = None,
     dendro_only: bool = False,
-    overlap_measure: str = 'jaccard',
+    overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
     **kwargs
@@ -60,63 +60,89 @@ def repertoire_overlap(
     -------
     Axes object
     """
-    
-    if 'repertoire_overlap' not in adata.uns:
-        tl.repertoire_overlap(adata, groupby=groupby, target_col=target_col, overlap_measure=overlap_measure, overlap_threshold=overlap_threshold, fraction=fraction)
-    df = adata.uns['repertoire_overlap']['weighted']
+
+    if "repertoire_overlap" not in adata.uns:
+        tl.repertoire_overlap(
+            adata,
+            groupby=groupby,
+            target_col=target_col,
+            overlap_measure=overlap_measure,
+            overlap_threshold=overlap_threshold,
+            fraction=fraction,
+        )
+    df = adata.uns["repertoire_overlap"]["weighted"]
 
     if pair_to_plot is None:
-        linkage = adata.uns['repertoire_overlap']['linkage']
+        linkage = adata.uns["repertoire_overlap"]["linkage"]
 
         if heatmap_cats is not None:
-            clust_colors, leg_colors = [], [] 
+            clust_colors, leg_colors = [], []
             for lbl in heatmap_cats:
-                labels = adata.obs.groupby([groupby, lbl]).agg('size').reset_index()
+                labels = adata.obs.groupby([groupby, lbl]).agg("size").reset_index()
                 label_levels = labels[lbl].unique()
-                label_pal = sns.cubehelix_palette(label_levels.size, light=.7, dark=.3, reverse=True, start=2.5, rot=-2)
+                label_pal = sns.cubehelix_palette(
+                    label_levels.size,
+                    light=0.7,
+                    dark=0.3,
+                    reverse=True,
+                    start=2.5,
+                    rot=-2,
+                )
                 colordict = dict(zip(label_levels, label_pal))
                 for e in label_levels:
-                    leg_colors.append((lbl+': '+e, colordict[e]))
+                    leg_colors.append((lbl + ": " + e, colordict[e]))
                 labels[lbl] = labels[lbl].astype(str)
-                labels[lbl] = labels.loc[:,lbl].map(colordict)
+                labels[lbl] = labels.loc[:, lbl].map(colordict)
                 clust_colors.append(labels[lbl])
-                labels = labels.loc[:,[groupby, lbl]].set_index(groupby)
+                labels = labels.loc[:, [groupby, lbl]].set_index(groupby)
                 colordict = labels.to_dict()
                 colordict = colordict[lbl]
 
         if dendro_only:
             ax = _init_ax()
             sc_hierarchy.dendrogram(linkage, labels=df.index, ax=ax)
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['bottom'].set_visible(False)
-            ax.spines['left'].set_visible(False)
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["bottom"].set_visible(False)
+            ax.spines["left"].set_visible(False)
             if heatmap_cats is not None:
                 for lbl in ax.get_xticklabels():
                     lbl.set_color(colordict[lbl.get_text()])
             ax.get_yaxis().set_ticks([])
         else:
-            distM = adata.uns['repertoire_overlap']['distance']
+            distM = adata.uns["repertoire_overlap"]["distance"]
             distM = sc_distance.squareform(distM)
             np.fill_diagonal(distM, 1)
             scaling_factor = distM.min()
             np.fill_diagonal(distM, scaling_factor)
             distM = pd.DataFrame(distM, index=df.index, columns=df.index)
             dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
-            distM = distM.iloc[dd['leaves'],:]
+            distM = distM.iloc[dd["leaves"], :]
             if heatmap_cats is None:
-                ax = sns.clustermap(1-distM, col_linkage=linkage, row_cluster=False)
+                ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
             else:
-                ax = sns.clustermap(1-distM, col_linkage=linkage, row_cluster=False, row_colors=clust_colors)
+                ax = sns.clustermap(
+                    1 - distM,
+                    col_linkage=linkage,
+                    row_cluster=False,
+                    row_colors=clust_colors,
+                )
                 lax = ax.ax_row_dendrogram
                 for e, c in leg_colors:
                     lax.bar(0, 0, color=c, label=e, linewidth=0)
-                lax.legend(loc='lower left')
+                lax.legend(loc="lower left")
             b, t = ax.ax_row_dendrogram.get_ylim()
             l, r = ax.ax_row_dendrogram.get_xlim()
-            ax.ax_row_dendrogram.text(l, 0.9*t, '1-distance ('+overlap_measure+')')
+            ax.ax_row_dendrogram.text(
+                l, 0.9 * t, "1-distance (" + overlap_measure + ")"
+            )
     else:
-        invalid_pair_warning = 'Cannot find this pair in the data table. Did you supply two valid '+groupby+' names? Current indices are: '+';'.join(df.index.values)
+        invalid_pair_warning = (
+            "Cannot find this pair in the data table. Did you supply two valid "
+            + groupby
+            + " names? Current indices are: "
+            + ";".join(df.index.values)
+        )
         try:
             o_df = df.loc[list(pair_to_plot), :].T
             valid_pairs = True
@@ -125,17 +151,21 @@ def repertoire_overlap(
         if valid_pairs:
             if o_df.shape[1] == 2:
                 o_df = o_df.loc[(o_df.sum(axis=1) != 0), :]
-                o_df = o_df.groupby(pair_to_plot).agg('size')
+                o_df = o_df.groupby(pair_to_plot).agg("size")
                 o_df = o_df.reset_index()
-                o_df.columns = ('x', 'y', 'z')
-                o_df['z'] -= o_df['z'].min()
-                o_df['z'] /= o_df['z'].max()
-                o_df['z'] += 0.05
-                o_df['z'] *= 1000
+                o_df.columns = ("x", "y", "z")
+                o_df["z"] -= o_df["z"].min()
+                o_df["z"] /= o_df["z"].max()
+                o_df["z"] += 0.05
+                o_df["z"] *= 1000
 
                 # Create text for default labels
                 p_a, p_b = pair_to_plot
-                default_style_kws = {"title": 'Repertoire overlap between '+p_a+'and'+p_b, "xlab": 'Conotype size in '+p_a, "ylab": 'Conotype size in '+p_b}
+                default_style_kws = {
+                    "title": "Repertoire overlap between " + p_a + "and" + p_b,
+                    "xlab": "Conotype size in " + p_a,
+                    "ylab": "Conotype size in " + p_b,
+                }
                 if "style_kws" in kwargs:
                     default_style_kws.update(kwargs["style_kws"])
                 kwargs["style_kws"] = default_style_kws
