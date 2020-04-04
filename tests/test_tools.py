@@ -279,8 +279,8 @@ def test_spectratype(adata_tra):
 
 
 def repertoire_overlap(adata_tra):
-    res = st.tl.repertoire_overlap(zadata, 'sample')
-    expected_frac = pd.DataFrame.from_dict(
+    res = st.tl.repertoire_overlap(adata, 'sample')
+    expected_cnt = pd.DataFrame.from_dict(
         {
             1: {
                 'clonotype_157': 0.0,
@@ -333,4 +333,4 @@ def repertoire_overlap(adata_tra):
             },
         orient="index",
     )
-    npt.assert_equal(res.values, expected_frac.values)
+    npt.assert_equal(res.values, expected_cnt.values)
