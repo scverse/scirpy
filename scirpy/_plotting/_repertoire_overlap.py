@@ -173,7 +173,7 @@ def repertoire_overlap(
                 kwargs["style_kws"] = default_style_kws
                 ax = ol_scatter(o_df, **kwargs)
             else:
-                raise TypeError(
+                raise ValueError(
                     "Wrong number of members. A pair is exactly two items! "
                     + invalid_pair_warning
                 )
