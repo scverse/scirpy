@@ -243,6 +243,8 @@ def ol_scatter(
     ax.scatter(data["x"], data["y"], s=data["z"], alpha=0.3)
     ax.set_xlim(0, axlim)
     ax.set_ylim(0, axlim)
+    if style_kws is None:
+        style_kws = dict()
     style_kws["change_xticks"] = False
     style_axes(ax, style, style_kws)
     return ax
