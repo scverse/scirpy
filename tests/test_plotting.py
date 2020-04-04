@@ -41,12 +41,9 @@ def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, target_col="sample")
     assert isinstance(p, plt.Axes)
 
-def repertoire_overlap(adata_tra):
+def test_repertoire_overlap(adata_tra):
     p = pl.repertoire_overlap(adata_tra, groupby="sample")
     assert isinstance(p, plt.Axes)
-
-    repertoire_overlap
-
 
 def test_vdj_usage(adata_vdj):
     p = pl.vdj_usage(adata_vdj, fraction="sample")
