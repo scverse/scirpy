@@ -255,6 +255,36 @@ def tcr_dist(
 
 
 class TcrNeighbors:
+    def __init__(
+        self,
+        adata: AnnData,
+        *,
+        metric: Literal["alignment", "identity", "levenshtein"] = "identity",
+        cutoff: float = 0,
+        receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
+        dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
+        sequence: Literal["aa", "nt"] = "aa",
+    ):
+        """Class to compute Neighborhood graphs of CDR3 sequences. 
+
+        For documentation of the parameters, see :func:`tcr_neighbors`. 
+        """
+        if metric == "identity" and cutoff != 0:
+            raise ValueError("Identity metric only works with cutoff = 0")
+        if sequence == "nt" and metric == "alignment":
+            raise ValueError(
+                "Using nucleotide sequences with alignment metric is not supported. "
+            )
+        self.adata = adata
+        self.metric = metric
+        self.cutoff = cutoff
+        self.receptor_arms = receptor_arms
+        self.dual_tcr = dual_tcr
+        self.sequence = sequence
+        self._build_index_dict()
+        self._dist_mat = None
+        logging.debug("Finished initalizing TcrNeighbors object. ")
+
     @staticmethod
     def _seq_to_cell_idx(
         unique_seqs: np.ndarray, cdr_seqs: np.ndarray
@@ -265,7 +295,7 @@ class TcrNeighbors:
         Maps cell_idx -> [list, of, seq_idx]. 
         Useful to build a cell x cell matrix from a seq x seq matrix. 
 
-        Computes magic lookup indexes in linear time
+        Computes magic lookup indexes in linear time. 
 
         Parameters
         ----------
@@ -298,8 +328,13 @@ class TcrNeighbors:
         return seq_to_cell
 
     def _build_index_dict(self):
-        """Build nexted dictionary containing all combinations of
-        receptor_arms x primary/secondary_chain"""
+        """Build nested dictionary for each receptor arm (TRA, TRB) containing all 
+        combinations of receptor_arms x primary/secondary_chain
+        
+        If the merge mode for either `receptor_arm` or `dual_tcr` is `all`, 
+        includes a lookup table that contains the number of CDR3 sequences for
+        each cell. 
+        """
         receptor_arms = (
             ["TRA", "TRB"]
             if self.receptor_arms not in ["TRA", "TRB"]
@@ -338,32 +373,6 @@ class TcrNeighbors:
 
         self.index_dict = arm_dict
 
-    def __init__(
-        self,
-        adata: AnnData,
-        *,
-        metric: Literal["alignment", "identity", "levenshtein"] = "identity",
-        cutoff: float = 0,
-        receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
-        dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
-        sequence: Literal["aa", "nt"] = "aa",
-    ):
-        if metric == "identity" and cutoff != 0:
-            raise ValueError("Identity metric only works with cutoff = 0")
-        if sequence == "nt" and metric == "alignment":
-            raise ValueError(
-                "Using nucleotide sequences with alignment metric is not supported. "
-            )
-        self.adata = adata
-        self.metric = metric
-        self.cutoff = cutoff
-        self.receptor_arms = receptor_arms
-        self.dual_tcr = dual_tcr
-        self.sequence = sequence
-        self._build_index_dict()
-        self._dist_mat = None
-        logging.debug("Finished initalizing TcrNeighbors object. ")
-
     def _reduce_dual_all(self, d, chain, cell_row, cell_col):
         """Reduce dual TCRs into a single value when 'all' sequences
         need to match. This requires additional checking effort for the number
@@ -374,7 +383,6 @@ class TcrNeighbors:
             self.index_dict[chain]["chains_per_cell"][cell_row],
             self.index_dict[chain]["chains_per_cell"][cell_col],
         )
-        # TODO: also need to check here the number of chains...
         if len(d) == 1 and chain_count == (1, 1):
             # exactely one chain for both cells -> return that value
             return next(iter(d.values()))
@@ -382,6 +390,7 @@ class TcrNeighbors:
             # two options: either (1 matches 2 and 2 matches 1)
             # or (1 matches 1 and 2 matches 2).
             try:
+                # minus 1, because both dists are offseted by 1.
                 d1 = d[(1, 2)] + d[(2, 1)] - 1
             except KeyError:
                 d1 = None
@@ -441,7 +450,8 @@ class TcrNeighbors:
     @staticmethod
     def _reduce_arms_any(lst, *args):
         """Reduce arms when *any* of the sequences needs to match. 
-        This is the simpler case. This also works with only one entry"""
+        This is the simpler case. This also works with only one entry
+        (e.g. arms = "TRA") """
         # need to exclude 0 values, since the dist mat is offseted by 1.
         try:
             return min(x for x in lst if x != 0)
@@ -454,6 +464,7 @@ class TcrNeighbors:
         """Reduce dual tcrs to a single value when *any* of the sequences needs 
         to match (by minimum). This also works with only one entry (i.e. 'primary only')
         """
+        # need to exclude 0 values, since the dist mat is offseted by 1.
         try:
             return min(x for x in d.values() if x != 0)
         except ValueError:
@@ -487,6 +498,7 @@ class TcrNeighbors:
         coord_dict = dict()
 
         def _add_to_dict(d, c1, c2, cell_row, cell_col, value):
+            """Add a value to the nested coord dict"""
             try:
                 tmp_dict = d[(cell_row, cell_col)]
                 try:
@@ -555,6 +567,8 @@ class TcrNeighbors:
 
     @property
     def dist(self):
+        """The computed distance matrix. 
+        Requires to invoke `compute_distances() first. """
         return self._dist_mat
 
     @property
