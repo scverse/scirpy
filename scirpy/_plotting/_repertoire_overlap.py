@@ -178,6 +178,6 @@ def repertoire_overlap(
                     + invalid_pair_warning
                 )
         else:
-            raise TypeError(invalid_pair_warning)
+            raise ValueError(invalid_pair_warning)
 
     return ax
