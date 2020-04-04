@@ -76,7 +76,7 @@ adata.obs.head()
 ```
 
 ```python
-df = ir.tl.repertoire_overlap(adata, 'sample')
+df, dst, lk = ir.tl.repertoire_overlap(adata, 'sample', inplace=False)
 ```
 
 ```python
