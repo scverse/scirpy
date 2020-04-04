@@ -135,12 +135,33 @@ def test_build_index_dict(adata_cdr3):
 
     tn = TcrNeighbors(adata_cdr3, receptor_arms="all", dual_tcr="all", sequence="aa")
     tn._build_index_dict()
-    tn2 = TcrNeighbors(adata_cdr3, receptor_arms="any", dual_tcr="any", sequence="aa")
-    tn2._build_index_dict()
-    npt.assert_equal(tn.index_dict, tn2.index_dict)
     print(tn.index_dict)
     npt.assert_equal(
         tn.index_dict,
+        {
+            "TRA": {
+                "chain_inds": [1, 2],
+                "unique_seqs": ["AAA", "AHA"],
+                "seq_to_cell": {1: {0: [0, 3], 1: [1]}, 2: {0: [3, 4], 1: [0]},},
+                "chains_per_cell": np.array([2, 1, 0, 2, 1]),
+            },
+            "TRB": {
+                "chain_inds": [1, 2],
+                "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
+                "seq_to_cell": {
+                    1: {0: [], 1: [1], 2: [], 3: [0], 4: [3, 4]},
+                    2: {0: [3], 1: [], 2: [0, 1], 3: [], 4: []},
+                },
+                "chains_per_cell": np.array([2, 2, 0, 2, 1]),
+            },
+        },
+    )
+
+    tn2 = TcrNeighbors(adata_cdr3, receptor_arms="any", dual_tcr="any", sequence="aa")
+    tn2._build_index_dict()
+    print(tn2.index_dict)
+    npt.assert_equal(
+        tn2.index_dict,
         {
             "TRA": {
                 "chain_inds": [1, 2],

@@ -105,7 +105,7 @@ def test_clonotypes_end_to_end4(adata_define_clonotypes):
     )
     clonotypes, _ = st.tl.define_clonotypes(adata_define_clonotypes, inplace=False)
     print(clonotypes)
-    expected = [0, 0, 1, 1, 0, 2, 0, 3, 3, 4]
+    expected = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     npt.assert_equal(clonotypes, [str(x) for x in expected])
 
 
@@ -125,7 +125,7 @@ def test_clonotypes_end_to_end6(adata_define_clonotypes):
     )
     clonotypes, _ = st.tl.define_clonotypes(adata_define_clonotypes, inplace=False)
     print(clonotypes)
-    expected = [0, 0, 0, 1, 0, 0, 0, 2, 3, 4]
+    expected = [0, 0, 0, 1, 0, 0, 2, 3, 4, 5]
     npt.assert_equal(clonotypes, [str(x) for x in expected])
 
 
