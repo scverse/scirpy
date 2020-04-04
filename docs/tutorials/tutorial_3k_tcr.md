@@ -317,7 +317,7 @@ The second option is to show the number of cells belonging to an expanded clonot
 in a stacked bar plot: 
 
 ```python
-ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, fraction=False)
+ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, normalize=False)
 ```
 
 The same plot, normalized to cluster size: 
@@ -442,8 +442,4 @@ ir.pl.spectratype(
     fraction="sample",
     fig_kws={'dpi': 150}
 )
-```
-
-```python
-
 ```
