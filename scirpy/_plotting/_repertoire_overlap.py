@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
-from typing import Union, Tuple
+from typing import Union, Sequence
 from .._util import _is_na
 from .. import tl
 from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
@@ -134,7 +134,7 @@ def repertoire_overlap(
             b, t = ax.ax_row_dendrogram.get_ylim()
             l, r = ax.ax_row_dendrogram.get_xlim()
             ax.ax_row_dendrogram.text(
-                l, 0.9 * t, "1-distance (" + overlap_measure + ")"
+                l, 0.9 * t, f"1-distance ({overlap_measure})"
             )
     else:
         invalid_pair_warning = (
