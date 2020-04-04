@@ -64,6 +64,7 @@ Tools: `tl`
    group_abundance
    spectratype
    vdj_usage
+   repertoire_overlap
 
 
 Plotting: `pl`
@@ -92,6 +93,7 @@ Base plotting functions: `pl.base`
    group_abundance
    spectratype
    vdj_usage
+   repertoire_overlap
    clonotype_network
 
    

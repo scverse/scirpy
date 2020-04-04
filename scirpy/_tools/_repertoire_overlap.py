@@ -10,8 +10,8 @@ def repertoire_overlap(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = 'clonotype',
-    overlap_measure: str = 'jaccard',
+    target_col: str = "clonotype",
+    overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:
@@ -48,7 +48,7 @@ def repertoire_overlap(
     # Remove NA rows
     na_mask = _is_na(adata.obs[groupby]) | _is_na(adata.obs[target_col])
     df = adata.obs.loc[~na_mask, :]
-    
+
     # Normalize to fractions
     df = df.assign(
         cell_weights=_normalize_counts(adata.obs, fraction)
@@ -57,21 +57,26 @@ def repertoire_overlap(
     )
 
     # Create a weighted matrix of clonotypes
-    df = df.groupby([target_col, groupby]).agg({'cell_weights': 'sum'}).reset_index()
-    df = df.pivot(index=groupby, columns=target_col, values='cell_weights')
+    df = df.groupby([target_col, groupby]).agg({"cell_weights": "sum"}).reset_index()
+    df = df.pivot(index=groupby, columns=target_col, values="cell_weights")
     df = df.fillna(0)
 
     # Create a table of clonotype presence
-    if overlap_threshold is None: # Consider a fuction that finds an optimal threshold...
+    if (
+        overlap_threshold is None
+    ):  # Consider a fuction that finds an optimal threshold...
         overlap_threshold = 0
     pr_df = df.applymap(lambda x: 1 if x > overlap_threshold else 0)
-
 
     # Compute distances and linkage
     distM = sc_distance.pdist(pr_df, overlap_measure)
     linkage = sc_hierarchy.linkage(distM)
 
     # Store calculated data
-    adata.uns['repertoire_overlap'] = {'weighted': df, 'distance': distM, 'linkage': linkage}
+    adata.uns["repertoire_overlap"] = {
+        "weighted": df,
+        "distance": distM,
+        "linkage": linkage,
+    }
 
     return df
