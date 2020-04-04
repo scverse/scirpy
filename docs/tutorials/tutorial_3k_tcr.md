@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.1
+      jupytext_version: 1.3.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -442,4 +442,8 @@ ir.pl.spectratype(
     fraction="sample",
     fig_kws={'dpi': 150}
 )
+```
+
+```python
+adata.obs.head()
 ```
