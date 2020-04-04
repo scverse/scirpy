@@ -55,20 +55,22 @@ def test_chain_pairing():
 def test_clip_and_count_clonotypes(adata_clonotype):
     adata = adata_clonotype
 
-    res = st.tl.clip_and_count(
+    res = st._tools._clonal_expansion._clip_and_count(
         adata, groupby="group", target_col="clonotype", clip_at=2, inplace=False
     )
     npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
 
     # check without group
-    res = st.tl.clip_and_count(adata, target_col="clonotype", clip_at=5, inplace=False)
+    res = st._tools._clonal_expansion._clip_and_count(
+        adata, target_col="clonotype", clip_at=5, inplace=False
+    )
     npt.assert_equal(res, np.array(["4"] * 3 + ["1"] + ["4"] + ["1"] * 2 + ["2"] * 2))
 
     # check if target_col works
     adata.obs["new_col"] = adata.obs["clonotype"]
     adata.obs.drop("clonotype", axis="columns", inplace=True)
 
-    st.tl.clip_and_count(
+    st._tools._clonal_expansion._clip_and_count(
         adata, groupby="group", target_col="new_col", clip_at=2,
     )
     npt.assert_equal(
@@ -78,7 +80,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
 
     # check if it raises value error if target_col does not exist
     with pytest.raises(ValueError):
-        st.tl.clip_and_count(
+        st._tools._clonal_expansion._clip_and_count(
             adata, groupby="group", target_col="clonotype", clip_at=2, fraction=False,
         )
 
@@ -92,6 +94,66 @@ def test_clonal_expansion(adata_clonotype):
     res = st.tl.clonal_expansion(adata_clonotype, clip_at=2, inplace=False)
     npt.assert_equal(
         res, np.array([">= 2"] * 3 + ["1"] + [">= 2"] + ["1"] * 2 + [">= 2"] * 2)
+    )
+
+
+def test_clonal_expansion_summary(adata_clonotype):
+    res = st.tl.summarize_clonal_expansion(
+        adata_clonotype, "group", target_col="clonotype", clip_at=2, normalize=True
+    )
+    pdt.assert_frame_equal(
+        res,
+        pd.DataFrame.from_dict(
+            {"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}
+        ).set_index("group"),
+        check_names=False,
+    )
+
+    # test the `expanded_in` parameter.
+    res = st.tl.summarize_clonal_expansion(
+        adata_clonotype,
+        "group",
+        target_col="clonotype",
+        clip_at=2,
+        normalize=True,
+        expanded_in="group",
+    )
+    pdt.assert_frame_equal(
+        res,
+        pd.DataFrame.from_dict(
+            {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
+        ).set_index("group"),
+        check_names=False,
+    )
+
+    # test the `summarize_by` parameter.
+    res = st.tl.summarize_clonal_expansion(
+        adata_clonotype,
+        "group",
+        target_col="clonotype",
+        clip_at=2,
+        normalize=True,
+        summarize_by="clonotype",
+    )
+    pdt.assert_frame_equal(
+        res,
+        pd.DataFrame.from_dict(
+            {"group": ["A", "B"], "1": [0, 2 / 4], ">= 2": [1.0, 2 / 4]}
+        ).set_index("group"),
+        check_names=False,
+    )
+
+    res_counts = st.tl.summarize_clonal_expansion(
+        adata_clonotype, "group", target_col="clonotype", clip_at=2, normalize=False
+    )
+    print(res_counts)
+    pdt.assert_frame_equal(
+        res_counts,
+        pd.DataFrame.from_dict(
+            {"group": ["A", "B"], "1": [0, 2], ">= 2": [3, 3]}
+        ).set_index("group"),
+        check_names=False,
+        check_dtype=False,
     )
 
 

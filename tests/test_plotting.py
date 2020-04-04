@@ -17,59 +17,13 @@ import pandas.testing as pdt
 import numpy as np
 
 
-def test_clip_and_count(adata_tra, adata_clonotype):
-    res_fraction = irplt._clip_and_count._prepare_df(
-        adata_clonotype, "group", "clonotype", 2, True, "group"
-    )
-    res_counts = irplt._clip_and_count._prepare_df(
-        adata_clonotype, "group", "clonotype", 2, False, "group"
-    )
-    pdt.assert_frame_equal(
-        res_fraction,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
-        ).set_index("group"),
-        check_names=False,
-    )
-    pdt.assert_frame_equal(
-        res_counts,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 3], ">= 2": [3, 2]}
-        ).set_index("group"),
-        check_names=False,
-        check_dtype=False,
-    )
-
-    p = pl.clip_and_count(
-        adata_tra, target_col="TRA_1_cdr3", groupby="sample", fraction=False
-    )
+def test_clonal_expansion(adata_clonotype):
+    p = pl.clonal_expansion(adata_clonotype, groupby="group")
     assert isinstance(p, plt.Axes)
 
-
-def test_clonal_expansion(adata_clonotype):
-    # test the `expanded_in` parameter.
-    res = irplt._clip_and_count._prepare_df(
-        adata_clonotype, "group", "clonotype", 2, True, groupby_count=None
+    p = pl.clonal_expansion(
+        adata_clonotype, groupby="group", show_nonexpanded=True, viztype="barh"
     )
-    pdt.assert_frame_equal(
-        res,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}
-        ).set_index("group"),
-        check_names=False,
-    )
-    res = irplt._clip_and_count._prepare_df(
-        adata_clonotype, "group", "clonotype", 2, True, groupby_count="group"
-    )
-    pdt.assert_frame_equal(
-        res,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
-        ).set_index("group"),
-        check_names=False,
-    )
-
-    p = pl.clonal_expansion(adata_clonotype, groupby="group")
     assert isinstance(p, plt.Axes)
 
 
