@@ -364,39 +364,7 @@ class TcrNeighbors:
         self._dist_mat = None
         logging.debug("Finished initalizing TcrNeighbors object. ")
 
-    # def _build_cell_dist_mat_min(self):
-    #     """Compute the distance matrix in-place by reducing everything
-    #     instantly by `min`. This is potentially faster than _cell_dist_mat_reduce"""
-    #     coord_dict = dict()
-    #     for arm, arm_info in self.index_dict.items():
-    #         dist_mat, seq_to_cell, chains = (
-    #             arm_info["dist_mat"],
-    #             arm_info["seq_to_cell"],
-    #             arm_info["chains"],
-    #         )
-    #         for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
-    #             for c1, c2 in itertools.product(chains, repeat=2):
-    #                 for cell_row, cell_col in itertools.product(
-    #                     seq_to_cell[c1][row], seq_to_cell[c2][col]
-    #                 ):
-    #                     try:
-    #                         coord_dict[(cell_row, cell_col)] = min(
-    #                             coord_dict[(cell_row, cell_col)], value
-    #                         )
-    #                     except KeyError:
-    #                         coord_dict[(cell_row, cell_col)] = value
-    #                     # build full matrix from triangular one. Only emit single
-    #                     # value for diagonal.
-    #                     if row != col:
-    #                         try:
-    #                             coord_dict[(cell_col, cell_row)] = min(
-    #                                 coord_dict[(cell_col, cell_row)], value
-    #                             )
-    #                         except KeyError:
-    #                             coord_dict[(cell_col, cell_row)] = value
-    # return coord_dict
-
-    def _reduce_dual_all(self, d):
+    def _reduce_dual_all(self, d, cell_row, cell_col):
         """Reduce dual TCRs into a single value when 'all' sequences
         need to match. This requires additional checking effort for the number
         of chains in the given cell, since we can't make the distinction between
@@ -418,47 +386,32 @@ class TcrNeighbors:
         else:
             raise AssertionError("Can only be of length 1, 2 or 4. ")
 
-    def _reduce_arm_all(self, lst, cell_row, cell_col):
+    def _reduce_arms_all(self, values, cell_row, cell_col):
         """Reduce multiple receptor arms into a single value when 'all' sequences
         need to match. This requires additional checking effort for teh number 
         of chains in the given cell, since we can't make the distinction between
         no chain and dist > cutoff based on the distances (both would contain a
         0 in the distance matrix)."""
-        index_dict = self.index_dict
-        if len(lst) == 1:
-            # need to make sure there's only one chain, if yes, return value
-            if (
-                (
-                    index_dict["TRA"]["chains_per_cell"][cell_row]
-                    == index_dict["TRA"]["chains_per_cell"][cell_col]
-                    == 1
-                )
-                and (
-                    index_dict["TRB"]["chains_per_cell"][cell_row]
-                    == index_dict["TRB"]["chains_per_cell"][cell_col]
-                    == 0
-                )
-                or (
-                    index_dict["TRA"]["chains_per_cell"][cell_row]
-                    == index_dict["TRA"]["chains_per_cell"][cell_col]
-                    == 0
-                )
-                and (
-                    index_dict["TRB"]["chains_per_cell"][cell_row]
-                    == index_dict["TRB"]["chains_per_cell"][cell_col]
-                    == 1
-                )
-            ):
-                return lst[0]
-            # otherwise, there are two chains, but only one < dist. In that case
-            # we don't want an edge
+        arm1 = next(values)
+        try:
+            arm2 = next(values)
+            # two receptor arms -> easy
+            # -1 because both distances are offseted by 1
+            return arm1 + arm2 - 1
+        except StopIteration:
+            # only one arm
+            n_chains = (
+                self.index_dict["TRA"]["chains_per_cell"][cell_row],
+                self.index_dict["TRA"]["chains_per_cell"][cell_col],
+                self.index_dict["TRB"]["chains_per_cell"][cell_row],
+                self.index_dict["TRB"]["chains_per_cell"][cell_col],
+            )
+            # Either exactely on chain for TRA or
+            # exactely on e chain for TRB for both cells.
+            if n_chains == (1, 1, 0, 0) or n_chains == (0, 0, 1, 1):
+                return arm1
             else:
                 return 0
-        elif len(lst) == 2:
-            # -1 because both distances are offseted by 1
-            return sum(lst) - 1
-        else:
-            raise AssertionError("Can only have two receptor arms max. ")
 
     @staticmethod
     def _reduce_arms_any(lst, *args):
@@ -482,12 +435,9 @@ class TcrNeighbors:
             # no values in generator
             return 0
 
-    def _cell_dist_mat_reduce(self):
-        """Compute the distance matrix by using custom reduction functions. 
-        More flexible than `_build_cell_dist_mat_min`, but requires more memory.
-        Reduce dual is called before reduce arms. 
-        """
-        coord_dict = dict()
+    def _reduce_coord_dict(self, coord_dict):
+        """Applies reduction functions to the coord dict.
+        Yield (coords, value) pairs. """
         reduce_dual = (
             self._reduce_dual_all if self.dual_tcr == "all" else self._reduce_dual_any
         )
@@ -496,6 +446,17 @@ class TcrNeighbors:
             if self.receptor_arms == "all"
             else self._reduce_arms_any
         )
+        for (cell_row, cell_col), entry in coord_dict.items():
+            reduced_dual = (reduce_dual(value_dict) for value_dict in entry.values())
+            reduced = reduce_arms(reduced_dual, cell_row, cell_col,)
+            yield (cell_row, cell_col), reduced
+
+    def _cell_dist_mat_reduce(self):
+        """Compute the distance matrix by using custom reduction functions. 
+        More flexible than `_build_cell_dist_mat_min`, but requires more memory.
+        Reduce dual is called before reduce arms. 
+        """
+        coord_dict = dict()
 
         def _add_to_dict(d, c1, c2, cell_row, cell_col, value):
             try:
@@ -526,21 +487,15 @@ class TcrNeighbors:
                     for cell_row, cell_col in itertools.product(
                         seq_to_cell[c1][row], seq_to_cell[c2][col]
                     ):
+                        # fill upper diagonal. Important: these are dist-mat row,cols
+                        # not cell-mat row cols. This is required, because the
+                        # itertools.product returns all combinations for the diagonal
+                        # but not for the other values.
                         _add_to_dict(coord_dict, c1, c2, cell_row, cell_col, value)
-                        # TODO it's now likely more efficient to mirror the coord dict
-                        # after its creation
                         if row != col:
                             _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
 
-        coord_dict = {
-            (cell_row, cell_col): reduce_arms(
-                [reduce_dual(value_dict) for value_dict in entry.values()],
-                cell_row,
-                cell_col,
-            )
-            for (cell_row, cell_col), entry in coord_dict.items()
-        }
-        return coord_dict
+        yield from self._reduce_coord_dict(coord_dict)
 
     def compute_distances(
         self, n_jobs: Union[int, None] = None,
@@ -562,9 +517,7 @@ class TcrNeighbors:
             )
             logging.info("Finished computing {} pairwise distances.".format(arm))
 
-        coord_dict = self._cell_dist_mat_reduce()
-
-        coords, values = zip(*coord_dict.items())
+        coords, values = zip(*self._cell_dist_mat_reduce())
         rows, cols = zip(*coords)
         dist_mat = coo_matrix(
             (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
