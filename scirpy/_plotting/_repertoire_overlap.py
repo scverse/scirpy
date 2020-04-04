@@ -23,6 +23,7 @@ def repertoire_overlap(
     overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
+    added_key: str = "repertoire_overlap",
     **kwargs,
 ) -> plt.Axes:
     """Visualizes overlap betwen a pair of samples on a scatter plot or
@@ -53,6 +54,8 @@ def repertoire_overlap(
         name can be provided according to that the values will be normalized or an iterable
         providing cell weights directly. Setting it to `False` or `None` assigns equal weight
         to all cells.
+    added_key
+        If the tools has already been run, the results are added to `uns` under this key.
     **kwargs
         Additional arguments passed to the base plotting function.  
     
@@ -61,7 +64,7 @@ def repertoire_overlap(
     Axes object
     """
 
-    if "repertoire_overlap" not in adata.uns:
+    if added_key not in adata.uns:
         tl.repertoire_overlap(
             adata,
             groupby=groupby,
@@ -70,10 +73,10 @@ def repertoire_overlap(
             overlap_threshold=overlap_threshold,
             fraction=fraction,
         )
-    df = adata.uns["repertoire_overlap"]["weighted"]
+    df = adata.uns[added_key]["weighted"]
 
     if pair_to_plot is None:
-        linkage = adata.uns["repertoire_overlap"]["linkage"]
+        linkage = adata.uns[added_key]["linkage"]
 
         if heatmap_cats is not None:
             clust_colors, leg_colors = [], []
@@ -110,7 +113,7 @@ def repertoire_overlap(
                     lbl.set_color(colordict[lbl.get_text()])
             ax.get_yaxis().set_ticks([])
         else:
-            distM = adata.uns["repertoire_overlap"]["distance"]
+            distM = adata.uns[added_key]["distance"]
             distM = sc_distance.squareform(distM)
             np.fill_diagonal(distM, 1)
             scaling_factor = distM.min()
