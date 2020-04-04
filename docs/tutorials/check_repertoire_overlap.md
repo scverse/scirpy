@@ -84,10 +84,6 @@ df.head()
 ```
 
 ```python
-adata.uns['repertoire_overlap'].keys()
-```
-
-```python
 ir.pl.repertoire_overlap(adata, 'sample')
 ```
 
