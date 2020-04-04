@@ -33,7 +33,8 @@ requires = [
 
 [tool.flit.metadata.requires-extra]
 optional = [
-    'rectangle-packer'
+    'rectangle-packer',
+    'squarify'
 ]
 test = [
     'pytest',

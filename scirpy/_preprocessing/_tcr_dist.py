@@ -2,7 +2,7 @@ import parasail
 from .._util._multiprocessing import EnhancedPool as Pool
 import itertools
 from anndata import AnnData
-from typing import Union, Collection, List, Tuple, Dict
+from typing import Union, Collection, List, Tuple, Dict, Callable
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
@@ -14,6 +14,7 @@ import scipy.spatial
 import scipy.sparse
 from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
 from functools import reduce
+from collections import Counter
 
 
 class _DistanceCalculator(abc.ABC):
@@ -228,143 +229,19 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         return score_mat
 
 
-def _seq_to_cell_idx(
-    unique_seqs: np.ndarray, cdr_seqs: np.ndarray
-) -> Dict[int, List[int]]:
-    """
-    Compute sequence to cell index for a single chain (e.g. `TRA_1`). 
-
-    Maps cell_idx -> [list, of, seq_idx]. 
-    Useful to build a cell x cell matrix from a seq x seq matrix. 
-
-    Computes magic lookup indexes in linear time
-
-    Parameters
-    ----------
-    unique_seqs
-        Pool of all unique cdr3 sequences (length = #unique cdr3 sequences)
-    cdr_seqs
-        CDR3 sequences for the current chain (length = #cells)
-
-    Returns
-    -------
-    Sequence2Cell mapping    
-    """
-    # 1) reverse mapping of amino acid sequence to index in sequence-distance matrix
-    seq_to_index = {seq: i for i, seq in enumerate(unique_seqs)}
-
-    # 2) indices of cells in adata that have a CDR3 sequence.
-    cells_with_chain = np.where(~_is_na(cdr_seqs))[0]
-
-    # 3) indices of the corresponding sequences in the distance matrix.
-    seq_inds = {
-        chain_id: seq_to_index[cdr_seqs[chain_id]] for chain_id in cells_with_chain
-    }
-
-    # 4) list of cell-indices in the cell distance matrix for each sequence
-    seq_to_cell = {seq_id: list() for seq_id in seq_to_index.values()}
-    for cell_id in cells_with_chain:
-        seq_id = seq_inds[cell_id]
-        seq_to_cell[seq_id].append(cell_id)
-
-    return seq_to_cell
-
-
-def _dist_for_chain(
-    adata,
-    chain: Literal["TRA", "TRB"],
-    distance_calculator: _DistanceCalculator,
-    merge_chains=Literal["primary_only", "all"],
-) -> List[np.ndarray]:
-    """Computes the cell x cell distance matrix for either TRA or TRB chains. 
-
-    The option merge_chains specifies how primary/secondary chain are handled. 
-    
-    Parameters
-    ----------
-    adata
-        Annotated data matrix
-    chain
-        Chain to work on. Can be "TRA" or "TRB". Will include both 
-        primary (TRA_1_cdr3) and secondary (TRA_2_cdr3) chains. 
-    distance_calculator
-        Class implementing a calc_dist_mat(seqs) function 
-        that computes pariwise distances between all cdr3 sequences.
-    merge_chains
-        Whether to consider only the most abundant pair of TCR sequences, 
-        or all. When `all` the distance is reduced to the minimal distance of 
-        all receptors. 
-    """
-    chain_inds = [1] if merge_chains == "primary_only" else [1, 2]
-    chains = ["{}_{}".format(chain, i) for i in chain_inds]
-    cdr_seqs = {k: adata.obs["{}_cdr3".format(k)].values for k in chains}
-    unique_seqs = np.hstack(list(cdr_seqs.values()))
-    unique_seqs = np.unique(unique_seqs[~_is_na(unique_seqs)]).astype(str)
-    seq_to_cell = {k: _seq_to_cell_idx(unique_seqs, cdr_seqs[k]) for k in chains}
-    logging.debug("Finished computing indices")
-
-    dist_mat = distance_calculator.calc_dist_mat(unique_seqs)
-    logging.info("Finished computing {} pairwise distances.".format(chain))
-
-    def _add_to_dict(d, cell_row, cell_col, value):
-        try:
-            d[(cell_row, cell_col)] = min(d[(cell_row, cell_col)], value)
-        except KeyError:
-            d[(cell_row, cell_col)] = value
-
-    # Build sparse matrix as coordinate dictionary
-    coord_dict = dict()
-    for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
-        for c1, c2 in itertools.product(chains, repeat=2):
-            for cell_row, cell_col in itertools.product(
-                seq_to_cell[c1][row], seq_to_cell[c2][col]
-            ):
-                _add_to_dict(coord_dict, cell_row, cell_col, value)
-                # build full matrix from triangular one. Only emit single
-                # value for diagonal.
-                if row != col:
-                    _add_to_dict(coord_dict, cell_col, cell_row, value)
-
-    coords, values = zip(*coord_dict.items())
-    rows, cols = zip(*coords)
-    dist_mat = coo_matrix((values, (rows, cols)), shape=(adata.n_obs, adata.n_obs))
-    dist_mat.eliminate_zeros()
-    return dist_mat.tocsr()
-
-
 def tcr_dist(
-    adata: AnnData,
+    unique_seqs,
     *,
-    metric: Literal["alignment", "identity", "levenshtein"] = "alignment",
+    metric: Union[
+        Literal["alignment", "identity", "levenshtein"], _DistanceCalculator
+    ] = "identity",
     cutoff: float = 2,
-    merge_chains: Literal["primary_only", "all"] = "primary_only",
     n_jobs: Union[int, None] = None,
-) -> Tuple[csr_matrix, csr_matrix]:
-    """Computes the distances between CDR3 sequences 
-
-    Parameters
-    ----------
-    metric
-        Distance metric to use. `alignment` will calculate an alignment distance
-        based on normalized BLOSUM62 scores. 
-        `identity` results in `0` for an identical sequence, `1` for different sequence. 
-        `levenshtein` is the Levenshtein edit distance between two strings. 
-    cutoff
-        Only store distances < cutoff in the sparse distance matrix
-    merge_chains:
-        Use only primary chains ("TRA_1", "TRB_1") or all four chains? 
-        When considering all four chains, at least one of them needs
-        to match.  
-    j_jobs
-        Number of CPUs to use for alignment and levenshtein distance. 
-        Default: use all CPUS. 
-
-    Returns
-    -------
-    tra_dist, trb_dist
-
-    """
-    if metric == "alignment":
+):
+    """calculate the sequence x sequence distance matrix"""
+    if isinstance(metric, _DistanceCalculator):
+        dist_calc = metric
+    elif metric == "alignment":
         dist_calc = _AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     elif metric == "identity":
         dist_calc = _IdentityDistanceCalculator(cutoff=cutoff)
@@ -373,64 +250,348 @@ def tcr_dist(
     else:
         raise ValueError("Invalid distance metric.")
 
-    tra_dist = _dist_for_chain(adata, "TRA", dist_calc, merge_chains=merge_chains)
-    trb_dist = _dist_for_chain(adata, "TRB", dist_calc, merge_chains=merge_chains)
-
-    return tra_dist, trb_dist
+    dist_mat = dist_calc.calc_dist_mat(unique_seqs)
+    return dist_mat
 
 
-def _reduce_dists(
-    tra_dist, trb_dist, mode: Literal["TRA", "TRB", "all", "any"]
-) -> csr_matrix:
-    """Combine TRA and TRB distances into a single distance matrix based on `mode`. 
+class TcrNeighbors:
+    def __init__(
+        self,
+        adata: AnnData,
+        *,
+        metric: Literal["alignment", "identity", "levenshtein"] = "identity",
+        cutoff: float = 0,
+        receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
+        dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
+        sequence: Literal["aa", "nt"] = "aa",
+    ):
+        """Class to compute Neighborhood graphs of CDR3 sequences. 
 
-    modes: 
-     * "TRA": use only the TRA distance
-     * "TRB": use only the TRB distance 
-     * "any": Either TRA or TRB needs to have a distance < cutoff. The 
-        resulting distance will be the minimum distance of either TRA or TRB. 
-     * "all": Both TRA and TRB need to have a distance < cutoff. The 
-        resulting distance will be the maximum distance of either TRA or TRB. 
-    """
-    if mode == "TRA":
-        return tra_dist
-    elif mode == "TRB":
-        return trb_dist
-    elif mode == "any":
-        return _reduce_nonzero(tra_dist, trb_dist)
-    elif mode == "all":
-        # multiply == logical and for boolean (sparse) matrices
-        return tra_dist.maximum(trb_dist).multiply(tra_dist > 0).multiply(trb_dist > 0)
-    else:
-        raise ValueError("Unknown mode. ")
+        For documentation of the parameters, see :func:`tcr_neighbors`. 
+        """
+        if metric == "identity" and cutoff != 0:
+            raise ValueError("Identity metric only works with cutoff = 0")
+        if sequence == "nt" and metric == "alignment":
+            raise ValueError(
+                "Using nucleotide sequences with alignment metric is not supported. "
+            )
+        self.adata = adata
+        self.metric = metric
+        self.cutoff = cutoff
+        self.receptor_arms = receptor_arms
+        self.dual_tcr = dual_tcr
+        self.sequence = sequence
+        self._build_index_dict()
+        self._dist_mat = None
+        logging.debug("Finished initalizing TcrNeighbors object. ")
 
+    @staticmethod
+    def _seq_to_cell_idx(
+        unique_seqs: np.ndarray, cdr_seqs: np.ndarray
+    ) -> Dict[int, List[int]]:
+        """
+        Compute sequence to cell index for a single chain (e.g. `TRA_1`). 
 
-def _dist_to_connectivities(dist, cutoff):
-    """Convert a (sparse) distance matrix to a weighted adjacency matrix. 
+        Maps cell_idx -> [list, of, seq_idx]. 
+        Useful to build a cell x cell matrix from a seq x seq matrix. 
 
-    Parameters
-    ----------
-    dist
-        distance matrix. already contains `0` entries for edges 
-        that are not connected. 
-    cutoff
-        cutoff that was used to filter the distance matrix. 
-        Will be used to normalize the distances and refers
-        to the maximum possible value in dist. 
-    """
-    assert isinstance(dist, csr_matrix)
+        Computes magic lookup indexes in linear time. 
 
-    if cutoff == 0:
-        return dist
+        Parameters
+        ----------
+        unique_seqs
+            Pool of all unique cdr3 sequences (length = #unique cdr3 sequences)
+        cdr_seqs
+            CDR3 sequences for the current chain (length = #cells)
 
-    connectivities = dist.copy()
+        Returns
+        -------
+        Sequence2Cell mapping    
+        """
+        # 1) reverse mapping of amino acid sequence to index in sequence-distance matrix
+        seq_to_index = {seq: i for i, seq in enumerate(unique_seqs)}
 
-    # actual distances
-    d = connectivities.data - 1
+        # 2) indices of cells in adata that have a CDR3 sequence.
+        cells_with_chain = np.where(~_is_na(cdr_seqs))[0]
 
-    # structure of the matrix stayes the same, we can safely change the data only
-    connectivities.data = (cutoff - d) / cutoff
-    return connectivities
+        # 3) indices of the corresponding sequences in the distance matrix.
+        seq_inds = {
+            chain_id: seq_to_index[cdr_seqs[chain_id]] for chain_id in cells_with_chain
+        }
+
+        # 4) list of cell-indices in the cell distance matrix for each sequence
+        seq_to_cell = {seq_id: list() for seq_id in seq_to_index.values()}
+        for cell_id in cells_with_chain:
+            seq_id = seq_inds[cell_id]
+            seq_to_cell[seq_id].append(cell_id)
+
+        return seq_to_cell
+
+    def _build_index_dict(self):
+        """Build nested dictionary for each receptor arm (TRA, TRB) containing all 
+        combinations of receptor_arms x primary/secondary_chain
+        
+        If the merge mode for either `receptor_arm` or `dual_tcr` is `all`, 
+        includes a lookup table that contains the number of CDR3 sequences for
+        each cell. 
+        """
+        receptor_arms = (
+            ["TRA", "TRB"]
+            if self.receptor_arms not in ["TRA", "TRB"]
+            else [self.receptor_arms]
+        )
+        chain_inds = [1] if self.dual_tcr == "primary_only" else [1, 2]
+        sequence = "" if self.sequence == "aa" else "_nt"
+
+        arm_dict = {}
+        for arm in receptor_arms:
+            cdr_seqs = {
+                k: self.adata.obs[f"{arm}_{k}_cdr3{sequence}"].values
+                for k in chain_inds
+            }
+            unique_seqs = np.hstack(list(cdr_seqs.values()))
+            unique_seqs = np.unique(unique_seqs[~_is_na(unique_seqs)]).astype(str)
+            seq_to_cell = {
+                k: self._seq_to_cell_idx(unique_seqs, cdr_seqs[k]) for k in chain_inds
+            }
+            arm_dict[arm] = {
+                "chain_inds": chain_inds,
+                "unique_seqs": unique_seqs,
+                "seq_to_cell": seq_to_cell,
+            }
+
+            # need the count of chains per cell for the `all` strategies.
+            if self.receptor_arms == "all" or self.dual_tcr == "all":
+                arm_dict[arm]["chains_per_cell"] = np.sum(
+                    ~_is_na(
+                        self.adata.obs.loc[
+                            :, [f"{arm}_{k}_cdr3{sequence}" for k in chain_inds]
+                        ]
+                    ),
+                    axis=1,
+                )
+
+        self.index_dict = arm_dict
+
+    def _reduce_dual_all(self, d, chain, cell_row, cell_col):
+        """Reduce dual TCRs into a single value when 'all' sequences
+        need to match. This requires additional checking effort for the number
+        of chains in the given cell, since we can't make the distinction between
+        no chain and dist > cutoff based on the distances (both would contain a
+        0 in the distance matrix)."""
+        chain_count = (
+            self.index_dict[chain]["chains_per_cell"][cell_row],
+            self.index_dict[chain]["chains_per_cell"][cell_col],
+        )
+        if len(d) == 1 and chain_count == (1, 1):
+            # exactely one chain for both cells -> return that value
+            return next(iter(d.values()))
+        elif chain_count == (2, 2):
+            # two options: either (1 matches 2 and 2 matches 1)
+            # or (1 matches 1 and 2 matches 2).
+            try:
+                # minus 1, because both dists are offseted by 1.
+                d1 = d[(1, 2)] + d[(2, 1)] - 1
+            except KeyError:
+                d1 = None
+            try:
+                d2 = d[(1, 1)] + d[(2, 2)] - 1
+            except KeyError:
+                d2 = None
+
+            if d1 is not None and d2 is not None:
+                return min(d1, d2)
+            elif d1 is not None:
+                return d1
+            elif d2 is not None:
+                return d2
+            else:
+                return 0
+
+        else:
+            return 0
+
+    def _reduce_arms_all(self, values, cell_row, cell_col):
+        """Reduce multiple receptor arms into a single value when 'all' sequences
+        need to match. This requires additional checking effort for teh number 
+        of chains in the given cell, since we can't make the distinction between
+        no chain and dist > cutoff based on the distances (both would contain a
+        0 in the distance matrix)."""
+        values = (x for x in values if x != 0)
+
+        try:
+            arm1 = next(values)
+        except StopIteration:
+            # no value > 0
+            return 0
+
+        try:
+            arm2 = next(values)
+            # two receptor arms -> easy
+            # -1 because both distances are offseted by 1
+            return arm1 + arm2 - 1
+        except StopIteration:
+            # only one arm
+            tra_chains = (
+                self.index_dict["TRA"]["chains_per_cell"][cell_row],
+                self.index_dict["TRA"]["chains_per_cell"][cell_col],
+            )
+            trb_chains = (
+                self.index_dict["TRB"]["chains_per_cell"][cell_row],
+                self.index_dict["TRB"]["chains_per_cell"][cell_col],
+            )
+            # Either exactely one chain for TRA or
+            # exactely on e chain for TRB for both cells.
+            if tra_chains == (0, 0) or trb_chains == (0, 0):
+                return arm1
+            else:
+                return 0
+
+    @staticmethod
+    def _reduce_arms_any(lst, *args):
+        """Reduce arms when *any* of the sequences needs to match. 
+        This is the simpler case. This also works with only one entry
+        (e.g. arms = "TRA") """
+        # need to exclude 0 values, since the dist mat is offseted by 1.
+        try:
+            return min(x for x in lst if x != 0)
+        except ValueError:
+            # no values in generator
+            return 0
+
+    @staticmethod
+    def _reduce_dual_any(d, *args):
+        """Reduce dual tcrs to a single value when *any* of the sequences needs 
+        to match (by minimum). This also works with only one entry (i.e. 'primary only')
+        """
+        # need to exclude 0 values, since the dist mat is offseted by 1.
+        try:
+            return min(x for x in d.values() if x != 0)
+        except ValueError:
+            # no values in generator
+            return 0
+
+    def _reduce_coord_dict(self, coord_dict):
+        """Applies reduction functions to the coord dict.
+        Yield (coords, value) pairs. """
+        reduce_dual = (
+            self._reduce_dual_all if self.dual_tcr == "all" else self._reduce_dual_any
+        )
+        reduce_arms = (
+            self._reduce_arms_all
+            if self.receptor_arms == "all"
+            else self._reduce_arms_any
+        )
+        for (cell_row, cell_col), entry in coord_dict.items():
+            reduced_dual = (
+                reduce_dual(value_dict, chain, cell_row, cell_col)
+                for chain, value_dict in entry.items()
+            )
+            reduced = reduce_arms(reduced_dual, cell_row, cell_col,)
+            yield (cell_row, cell_col), reduced
+
+    def _cell_dist_mat_reduce(self):
+        """Compute the distance matrix by using custom reduction functions. 
+        More flexible than `_build_cell_dist_mat_min`, but requires more memory.
+        Reduce dual is called before reduce arms. 
+        """
+        coord_dict = dict()
+
+        def _add_to_dict(d, c1, c2, cell_row, cell_col, value):
+            """Add a value to the nested coord dict"""
+            try:
+                tmp_dict = d[(cell_row, cell_col)]
+                try:
+                    tmp_dict2 = tmp_dict[arm]
+                    try:
+                        if (c1, c2) in tmp_dict2:
+                            # can be in arbitrary order apprarently
+                            assert (c2, c1) not in tmp_dict2
+                            tmp_dict2[(c2, c1)] = value
+                        tmp_dict2[(c1, c2)] = value
+                    except KeyError:
+                        tmp_dict2 = {(c1, c2): value}
+                except KeyError:
+                    tmp_dict[arm] = {(c1, c2): value}
+            except KeyError:
+                d[(cell_row, cell_col)] = {arm: {(c1, c2): value}}
+
+        for arm, arm_info in self.index_dict.items():
+            dist_mat, seq_to_cell, chain_inds = (
+                arm_info["dist_mat"],
+                arm_info["seq_to_cell"],
+                arm_info["chain_inds"],
+            )
+            for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
+                for c1, c2 in itertools.product(chain_inds, repeat=2):
+                    for cell_row, cell_col in itertools.product(
+                        seq_to_cell[c1][row], seq_to_cell[c2][col]
+                    ):
+                        # fill upper diagonal. Important: these are dist-mat row,cols
+                        # not cell-mat row cols. This is required, because the
+                        # itertools.product returns all combinations for the diagonal
+                        # but not for the other values.
+                        _add_to_dict(coord_dict, c1, c2, cell_row, cell_col, value)
+                        if row != col:
+                            _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
+
+        logging.debug("Finished constructing coord-dictionary")
+
+        yield from self._reduce_coord_dict(coord_dict)
+
+    def compute_distances(
+        self, n_jobs: Union[int, None] = None,
+    ):
+        """Computes the distances between CDR3 sequences 
+
+        Parameters
+        ----------
+        j_jobs
+            Number of CPUs to use for alignment and levenshtein distance. 
+            Default: use all CPUS. 
+        """
+        for arm, arm_dict in self.index_dict.items():
+            arm_dict["dist_mat"] = tcr_dist(
+                arm_dict["unique_seqs"],
+                metric=self.metric,
+                cutoff=self.cutoff,
+                n_jobs=n_jobs,
+            )
+            logging.info("Finished computing {} pairwise distances.".format(arm))
+
+        coords, values = zip(*self._cell_dist_mat_reduce())
+        rows, cols = zip(*coords)
+        dist_mat = coo_matrix(
+            (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
+        )
+        logging.info("Finished constructing cell x cell distance matrix. ")
+        dist_mat.eliminate_zeros()
+        self._dist_mat = dist_mat.tocsr()
+
+    @property
+    def dist(self):
+        """The computed distance matrix. 
+        Requires to invoke `compute_distances() first. """
+        return self._dist_mat
+
+    @property
+    def connectivities(self):
+        """Get the weighted adjacecency matrix derived from the distance matrix. 
+
+        The cutoff will be used to normalize the distances. 
+        """
+        if self.cutoff == 0:
+            return self._dist_mat
+
+        connectivities = self._dist_mat.copy()
+
+        # actual distances
+        d = connectivities.data - 1
+
+        # structure of the matrix stayes the same, we can safely change the data only
+        connectivities.data = (self.cutoff - d) / self.cutoff
+        connectivities.eliminate_zeros()
+        return connectivities
 
 
 def tcr_neighbors(
@@ -438,9 +599,10 @@ def tcr_neighbors(
     *,
     metric: Literal["identity", "alignment", "levenshtein"] = "alignment",
     cutoff: int = 2,
-    strategy: Literal["TRA", "TRB", "all", "any"] = "all",
-    merge_chains: Literal["primary_only", "all"] = "primary_only",
+    receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
+    dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
     key_added: str = "tcr_neighbors",
+    sequence: Literal["aa", "nt"] = "aa",
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
@@ -449,6 +611,8 @@ def tcr_neighbors(
 
     Parameters
     ----------
+    adata
+        annotated data matrix
     metric
         "identity" = Calculate 0/1 distance based on sequence identity. Equals a 
             cutoff of 0. 
@@ -459,18 +623,22 @@ def tcr_neighbors(
         Two cells with a distance <= the cutoff will be connected. 
         If cutoff = 0, the CDR3 sequences need to be identical. In this 
         case, no alignment is performed. 
-    strategy:
+    receptor_arms:
         "TRA" - only consider TRA sequences
         "TRB" - only consider TRB sequences
         "all" - both TRA and TRB need to match
         "any" - either TRA or TRB need to match
-    merge_chains:
-        Use only primary chains ("TRA_1", "TRB_1") or all four chains? 
-        When considering all four chains, at least one of them needs
-        to match. 
+    dual_tcr:
+        "primary_only" - only consider most abundant pair of TRA/TRB chains
+        "any" - consider both pairs of TRA/TRB sequences. Distance must be below
+        cutoff for any of the chains. 
+        "all" - consider both pairs of TRA/TRB sequences. Distance must be below
+        cutoff for all of the chains. 
     key_added:
         dict key under which the result will be stored in `adata.uns["scirpy"]`
-        when `inplace` is True. 
+        when `inplace` is True.
+    sequence:
+        Use amino acid (aa) or nulceotide (nt) sequences to define clonotype? 
     inplace:
         If True, store the results in adata.uns. If False, returns
         the results. 
@@ -487,27 +655,26 @@ def tcr_neighbors(
     """
     if cutoff == 0:
         metric = "identity"
-    tra_dist, trb_dist = tcr_dist(
-        adata, metric=metric, n_jobs=n_jobs, cutoff=cutoff, merge_chains=merge_chains
+    ad = TcrNeighbors(
+        adata,
+        metric=metric,
+        cutoff=cutoff,
+        receptor_arms=receptor_arms,
+        dual_tcr=dual_tcr,
+        sequence=sequence,
     )
-
-    dist = _reduce_dists(tra_dist, trb_dist, strategy)
-    dist.eliminate_zeros()
-    logging.debug("Finished reducing dists across chains.")
-
-    connectivities = _dist_to_connectivities(dist, cutoff=cutoff)
-    connectivities.eliminate_zeros()
+    ad.compute_distances(n_jobs)
     logging.debug("Finished converting distances to connectivities. ")
 
     if not inplace:
-        return connectivities, dist
+        return ad.connectivities, ad.dist
     else:
         adata.uns[key_added] = dict()
         adata.uns[key_added]["params"] = {
             "metric": metric,
             "cutoff": cutoff,
-            "strategy": strategy,
-            "merge_chains": merge_chains,
+            "dual_tcr": dual_tcr,
+            "receptor_arms": receptor_arms,
         }
-        adata.uns[key_added]["connectivities"] = connectivities
-        adata.uns[key_added]["distances"] = connectivities
+        adata.uns[key_added]["connectivities"] = ad.connectivities
+        adata.uns[key_added]["distances"] = ad.dist

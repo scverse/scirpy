@@ -68,7 +68,7 @@ def _define_clonotypes_no_graph(
 def define_clonotypes(
     adata,
     *,
-    partitions: Literal["connected", "leiden"] = "leiden",
+    partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
     neighbors_key: str = "tcr_neighbors",
@@ -187,6 +187,12 @@ def clonotype_network(
     except KeyError:
         raise ValueError(
             "Clonotype size information not found. Did you run `tl.define_clonotypes`?"
+        )
+
+    if not adata.n_obs == conn.shape[0] == conn.shape[0]:
+        raise ValueError(
+            "Dimensions of connectivity matrix and AnnData do not match. Maybe you "
+            "need to re-run `pp.tcr_neighbors?"
         )
 
     graph = get_igraph_from_adjacency(conn)
