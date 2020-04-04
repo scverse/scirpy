@@ -210,6 +210,46 @@ def curve(
     return ax
 
 
+@_doc_params(common_doc=_common_doc)
+def ol_scatter(
+    data: pd.DataFrame,
+    *,
+    ax: Union[plt.Axes, None] = None,
+    style_kws: Union[dict, None] = None,
+    style: Union[Literal["default"], None] = "default",
+    fig_kws: Union[dict, None] = None,
+) -> plt.Axes:
+    """Scatterplot where dot size is proportional to group size.
+    Draws bars without stdev. 
+
+    Parameters
+    ----------
+    data
+        Data to plot in wide-format (i.e. each row becomes a bar)
+    ax
+        Plot into this axes object
+    {common_doc}
+    
+    Returns
+    -------
+    Axes object 
+    """
+
+    if ax is None:
+        ax = _init_ax(fig_kws)
+    axlim = data["x"].max() + 1
+    if data["y"].max() > axlim:
+        axlim = data["y"].max() + 1
+    ax.scatter(data["x"], data["y"], s=data["z"], alpha=0.3)
+    ax.set_xlim(0, axlim)
+    ax.set_ylim(0, axlim)
+    if style_kws is None:
+        style_kws = dict()
+    style_kws["change_xticks"] = False
+    style_axes(ax, style, style_kws)
+    return ax
+
+
 def _add_labels(
     ax: plt.Axes,
     coords: np.ndarray,

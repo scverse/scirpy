@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.1
+      jupytext_version: 1.3.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -442,4 +442,34 @@ ir.pl.spectratype(
     fraction="sample",
     fig_kws={'dpi': 150}
 )
+```
+
+```python
+adata.obs.head()
+```
+
+### Repertoire overlaps
+
+```python
+df, dst, lk = ir.tl.repertoire_overlap(adata, 'sample', inplace=False)
+```
+
+```python
+df.head()
+```
+
+```python
+ir.pl.repertoire_overlap(adata, 'sample')
+```
+
+```python
+ir.pl.repertoire_overlap(adata, 'sample', heatmap_cats=['patient', 'source'])
+```
+
+```python
+ir.pl.repertoire_overlap(adata, 'sample', dendro_only=True, heatmap_cats=['source'])
+```
+
+```python
+ir.pl.repertoire_overlap(adata, 'sample', pair_to_plot=('LN2', 'LT2'))
 ```

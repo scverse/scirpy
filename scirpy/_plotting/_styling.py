@@ -46,6 +46,7 @@ def _style_axes(
     title_fontsize: int = 10,
     label_fontsize: int = 8,
     tick_fontsize: int = 8,
+    change_xticks: bool = True,
     fraction: bool = True,
 ) -> None:
     """Style an axes object. 
@@ -88,11 +89,12 @@ def _style_axes(
         title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
     )
     ax.set_xlabel(xlab, fontsize=label_fontsize)
-    ax.set_xticklabels(
-        ax.get_xticklabels(), fontsize=tick_fontsize, rotation=30, ha="right"
-    )
-    xax = ax.get_xaxis()
-    xax.set_tick_params(length=0)
+    if change_xticks:
+        ax.set_xticklabels(
+            ax.get_xticklabels(), fontsize=tick_fontsize, rotation=30, ha="right"
+        )
+        xax = ax.get_xaxis()
+        xax.set_tick_params(length=0)
     ax.set_ylabel(ylab, fontsize=label_fontsize)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
