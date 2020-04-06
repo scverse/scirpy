@@ -72,7 +72,7 @@ def repertoire_overlap(
             overlap_measure=overlap_measure,
             overlap_threshold=overlap_threshold,
             fraction=fraction,
-            added_key=added_key
+            added_key=added_key,
         )
     df = adata.uns[added_key]["weighted"]
 

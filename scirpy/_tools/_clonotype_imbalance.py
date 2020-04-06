@@ -81,7 +81,7 @@ def clonotype_imbalance(
                 groupby=replicate_col,
                 target_col=target_col,
                 fraction=fraction,
-                added_key=added_key
+                added_key=added_key,
             )
         clonotype_presence = adata.uns[overlap_key]["weighted"]
 
@@ -93,14 +93,14 @@ def clonotype_imbalance(
     else:
         group_cols.append(additional_hue)
         hues = adata.obs[additional_hue].unique()
-    df = adata.obs.groupby(group_cols).agg('size').reset_index()
+    df = adata.obs.groupby(group_cols).agg("size").reset_index()
 
     for hue in hues:
         if hue is None:
             tdf = df
         else:
             tdf = df.loc[df[additional_hue] == hue, :]
-        cases = tdf.loc[df[groupby] == case_label,:]
+        cases = tdf.loc[df[groupby] == case_label, :]
         ncase = cases[0]
         cases = cases[replicate_col]
         if control_label is None:
@@ -114,44 +114,61 @@ def clonotype_imbalance(
     #  Compare groups with Fischer's test
     clt_freq, clt_stats = [], []
     if control_label is None:
-        control_label = 'Background'
+        control_label = "Background"
     for hue, cases, controls, ncase, ncontrol in case_control_groups:
         if hue is None:
-            hue = 'All'
-        tdf1 = clonotype_presence.loc[cases, ]
-        tdf2 = clonotype_presence.loc[controls, ]
-        suspects = set(tdf1.loc[:, tdf1.sum() > 0].columns.values.tolist() + tdf2.loc[:, tdf2.sum() > 0].columns.values.tolist())
+            hue = "All"
+        tdf1 = clonotype_presence.loc[
+            cases,
+        ]
+        tdf2 = clonotype_presence.loc[
+            controls,
+        ]
+        suspects = set(
+            tdf1.loc[:, tdf1.sum() > 0].columns.values.tolist()
+            + tdf2.loc[:, tdf2.sum() > 0].columns.values.tolist()
+        )
         for suspect in suspects:
             case_sizes = tdf1[suspect]
             control_sizes = tdf2[suspect]
-            rel_case_sizes = case_sizes/np.array(ncase)
-            rel_control_sizes = control_sizes/np.array(ncontrol)
-            np.mean((case_sizes+0.0001)/np.array(ncase))
-            case_mean_freq = np.mean((case_sizes+0.0001)/np.array(ncase))
+            rel_case_sizes = case_sizes / np.array(ncase)
+            rel_control_sizes = control_sizes / np.array(ncontrol)
+            np.mean((case_sizes + 0.0001) / np.array(ncase))
+            case_mean_freq = np.mean((case_sizes + 0.0001) / np.array(ncase))
             case_presence = case_sizes.sum()
             case_absence = ncase.sum() - case_presence
-            control_mean_freq = np.mean((control_sizes+0.0001)/np.array(ncontrol))
+            control_mean_freq = np.mean((control_sizes + 0.0001) / np.array(ncontrol))
             control_presence = control_sizes.sum()
             control_absence = ncontrol.sum() - control_presence
-            oddsratio, p = fisher_exact([[case_presence, control_presence], [case_absence, control_absence]])
-            logfoldchange = np.log2(case_mean_freq/control_mean_freq)
+            oddsratio, p = fisher_exact(
+                [[case_presence, control_presence], [case_absence, control_absence]]
+            )
+            logfoldchange = np.log2(case_mean_freq / control_mean_freq)
             clt_stats.append([suspect, p, -np.log10(p), logfoldchange])
             for e in rel_case_sizes.index.values:
                 clt_freq.append((suspect, hue, case_label, e, rel_case_sizes[e]))
             for e in rel_control_sizes.index.values:
                 clt_freq.append((suspect, hue, control_label, e, rel_control_sizes[e]))
-    
+
     # Convert records to data frames
-    clt_freq = pd.DataFrame.from_records(clt_freq, columns=[target_col, additional_hue, groupby, replicate_col, 'Normalized abundance'])
-    clt_stats = pd.DataFrame.from_records(clt_stats, columns=[target_col, 'pValue', 'logpValue', 'logFC'])
+    clt_freq = pd.DataFrame.from_records(
+        clt_freq,
+        columns=[
+            target_col,
+            additional_hue,
+            groupby,
+            replicate_col,
+            "Normalized abundance",
+        ],
+    )
+    clt_stats = pd.DataFrame.from_records(
+        clt_stats, columns=[target_col, "pValue", "logpValue", "logFC"]
+    )
 
     if inplace:
 
         # Store calculated data
-        adata.uns[added_key] = {
-            "abundance": clt_freq,
-            "pvalues": clt_stats
-        }
+        adata.uns[added_key] = {"abundance": clt_freq, "pvalues": clt_stats}
 
         return
 
