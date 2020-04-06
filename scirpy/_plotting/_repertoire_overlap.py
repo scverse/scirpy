@@ -12,7 +12,7 @@ from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
 from ._base import ol_scatter
 
 
-def clonotype_imbalance(
+def repertoire_overlap(
     adata: AnnData,
     groupby: str,
     *,
