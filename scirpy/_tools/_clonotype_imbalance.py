@@ -1,16 +1,17 @@
 from anndata import AnnData
-from typing import Union, Sequence
+from typing import Union, Tuple
 from scipy.stats import fisher_exact
 import pandas as pd
 import numpy as np
 from .._util import _is_na, _normalize_counts
+from ._repertoire_overlap import repertoire_overlap
 
 
 def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,
     groupby: str,
-    case_label: str
+    case_label: str,
     *,
     control_label: Union[None, str] = None,
     target_col: str = "clonotype",
@@ -19,7 +20,7 @@ def clonotype_imbalance(
     inplace: bool = True,
     overlap_key: Union[None, str] = None,
     added_key: str = "clonotype_imbalance",
-) -> Union[None, Sequence[pd.DataFrame, pd.DataFrame]]:
+) -> Union[None, Tuple[pd.DataFrame, pd.DataFrame]]:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
 
     Uses Fischer's exact test to rank clonotypes.
@@ -65,28 +66,28 @@ def clonotype_imbalance(
     """
 
     # Retrieve clonotype presence matrix
-    if added_key is None:
-        clonotype_presence, dM, lM = tl.repertoire_overlap(
+    if overlap_key is None:
+        clonotype_presence, dM, lM = repertoire_overlap(
             adata,
             groupby=replicate_col,
             target_col=target_col,
             fraction=fraction,
-            inplace=True,
+            inplace=False,
         )
     else:
-        if added_key not in adata.uns:
-            tl.repertoire_overlap(
+        if overlap_key not in adata.uns:
+            repertoire_overlap(
                 adata,
                 groupby=replicate_col,
                 target_col=target_col,
                 fraction=fraction,
                 added_key=added_key
             )
-        clonotype_presence = adata.uns[added_key]["weighted"]
+        clonotype_presence = adata.uns[overlap_key]["weighted"]
 
     # Create a series of case-control groups for comparison
     case_control_groups = []
-    group_cols = [groupby replicate_col]
+    group_cols = [groupby, replicate_col]
     if additional_hue is None:
         hues = [None]
     else:
@@ -99,7 +100,7 @@ def clonotype_imbalance(
             tdf = df
         else:
             tdf = df.loc[df[additional_hue] == hue, :]
-        cases = tdf.loc[df[groupby] == target_label,:]
+        cases = tdf.loc[df[groupby] == case_label,:]
         ncase = cases[0]
         cases = cases[replicate_col]
         if control_label is None:

@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from anndata import AnnData
 import numpy as np
 import pandas as pd
@@ -12,7 +13,7 @@ def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,
     groupby: str,
-    case_label: str
+    case_label: str,
     *,
     control_label: Union[None, str] = None,
     target_col: str = "clonotype",
@@ -22,9 +23,10 @@ def clonotype_imbalance(
     inplace: bool = True,
     plot_type: Literal["volcano", "box", "bar", "strip"] = "box",
     added_key: str = "clonotype_imbalance",
-    xlab: str = 'logFoldChange',
-    ylab: str = '-log10 p-value',
-    title: str = 'Volcano plot'
+    xlab: str = 'log2FoldChange',
+    ylab: str = '-log10(p-value)',
+    title: str = 'Volcano plot',
+    **kwargs
 ) -> plt.Axes:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
 
@@ -86,9 +88,9 @@ def clonotype_imbalance(
         )
     
     df = adata.uns[added_key]["pvalues"]
-    
+
     if plot_type == 'volcano':
-        df = df.loc[:, 'logpValue', 'logFC']
+        df = df.loc[:, ['logFC', 'logpValue']]
         default_style_kws = {"title": title, "xlab": xlab, "ylab": ylab}
         if "style_kws" in kwargs:
             default_style_kws.update(kwargs["style_kws"])
@@ -97,10 +99,10 @@ def clonotype_imbalance(
     
     else:
         df = df.sort_values(by='pValue')
-        df = head(df, n=top_n)
+        df = df.head(n=top_n)
 
         tclt_df = adata.uns[added_key]["abundance"]
-        tclt_df = tclt_df.loc[tclt_df[target_col].isin(df.index.values),:]
+        tclt_df = tclt_df.loc[tclt_df[target_col].isin(df[target_col]),:]
         
         if additional_hue is None:
             tclt_df = tclt_df.pivot_table(index=[groupby, replicate_col], columns=target_col, values='Normalized abundance', fill_value=0).reset_index()
@@ -111,10 +113,10 @@ def clonotype_imbalance(
                 if plot_type == 'bar':
                     ax = sns.barplot(x=target_col, y='Normalized abundance', hue=groupby, data=tclt_df)
                 else:
-                    ax = sns.stripplot(x=target_col, y='Normalized abundance', hue=groupby, data=tclt_df)
+                    ax = sns.stripplot(x=target_col, y='Normalized abundance', hue=groupby, data=tclt_df, dodge=True, alpha=0.7)
 
         else:
             tclt_df = tclt_df.pivot_table(index=[additional_hue, groupby, replicate_col], columns=target_col, values='Normalized abundance', fill_value=0).reset_index()
             tclt_df = pd.melt(tclt_df, id_vars=[additional_hue, groupby, replicate_col], value_name='Normalized abundance')
-            ax = sns.catplot(x=target_col, y='Normalized abundance', hue=groupby, kind=plot_type, col=additional_hue, data=tclt_df)
+            ax = sns.catplot(x=target_col, y='Normalized abundance', hue=groupby, kind=plot_type, col=additional_hue, data=tclt_df, dodge=True)
         return ax

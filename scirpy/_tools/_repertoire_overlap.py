@@ -1,5 +1,5 @@
 from anndata import AnnData
-from typing import Union, Sequence
+from typing import Union, Tuple
 from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
 import pandas as pd
@@ -17,7 +17,7 @@ def repertoire_overlap(
     fraction: Union[None, str, bool] = None,
     inplace: bool = True,
     added_key: str = "repertoire_overlap",
-) -> Union[None, Sequence[pd.DataFrame, np.ndarray, np.ndarray]]:
+) -> Union[None, Tuple[pd.DataFrame, np.ndarray, np.ndarray]]:
     """Compute distance between cell groups based on clonotype overlap.
 
     Adds parwise overlaps, distance matrix and linkage to `uns`

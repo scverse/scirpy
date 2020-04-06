@@ -453,7 +453,41 @@ adata.obs['diagnosis'] = adata.obs['patient'].apply(lambda x: x[:-1])
 ```
 
 ```python
-ir.tl.clonotype_imbalance(replicate_col = 'sample', groupby='source', case_label='Tumor', additional_hue = 'diagnosis')
+# Calculate statistics with Fischer's test
+
+freq, stat = ir.tl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', inplace=False)
+```
+
+```python
+freq.head()
+```
+
+```python
+stat.head()
+```
+
+```python
+# Plot a Volcano diagram of p-values and the fold difference between the two groups
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='volcano')
+```
+
+```python
+# Show the difference for top clonotypes
+
+ax = ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis')
+```
+
+```python
+# Change plot type
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='strip')
+```
+
+```python
+# Do not make distinction amoung tumor sites
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', plot_type='strip')
 ```
 
 ```python
