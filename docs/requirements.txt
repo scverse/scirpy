@@ -4,7 +4,7 @@ pandas
 numpy
 scipy
 parasail
-sphinx>=2
+sphinx>=2,<=3
 sphinx_autodoc_typehints>=1.8.0
 sphinx_rtd_theme>=0.4
 scanpydoc
