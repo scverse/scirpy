@@ -16,7 +16,7 @@ def group_abundance(
     *,
     fraction: Union[None, str, bool] = None,
     max_cols: Union[None, int] = None,
-    **kwargs
+    **kwargs,
 ) -> plt.Axes:
     """Plots how many cells belong to each clonotype. 
 
@@ -58,6 +58,15 @@ def group_abundance(
         )
     if max_cols is not None and max_cols > 0:
         abundance = abundance.iloc[:max_cols, :]
+
+    color_key = f"{target_col}_colors"
+    if color_key in adata.uns and "color" not in kwargs:
+        cat_index = {
+            cat: i for i, cat in enumerate(adata.obs[target_col].cat.categories)
+        }
+        kwargs["color"] = [
+            adata.uns[color_key][cat_index[cat]] for cat in abundance.columns
+        ]
 
     # Create text for default labels
     if fraction:

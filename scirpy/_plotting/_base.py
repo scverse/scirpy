@@ -36,6 +36,7 @@ def bar(
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
+    **kwargs,
 ) -> plt.Axes:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws bars without stdev. 
@@ -57,7 +58,7 @@ def bar(
 
     if ax is None:
         ax = _init_ax(fig_kws)
-    ax = data.plot.bar(ax=ax, stacked=stacked)
+    ax = data.plot.bar(ax=ax, stacked=stacked, **kwargs)
 
     # Remove excess x label
     if style_kws is not None:
@@ -107,6 +108,7 @@ def barh(
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
+    **kwargs,
 ) -> plt.Axes:
     """Basic plotting function built on top of bar plot in Pandas.
     Draws a horizontal bar plot. 
@@ -125,7 +127,7 @@ def barh(
     """
     if ax is None:
         ax = _init_ax(fig_kws)
-    ax = data.plot.barh(ax=ax)
+    ax = data.plot.barh(ax=ax, **kwargs)
     style_axes(ax, style, style_kws)
     return ax
 
