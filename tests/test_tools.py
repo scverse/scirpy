@@ -279,7 +279,7 @@ def test_spectratype(adata_tra):
 
 
 def test_repertoire_overlap(adata_tra):
-    res = st.tl.repertoire_overlap(adata_tra, 'sample')
+    res, d, l = st.tl.repertoire_overlap(adata_tra, 'sample', inplace=False)
     expected_cnt = pd.DataFrame.from_dict(
         {
             1: {

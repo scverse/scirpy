@@ -489,7 +489,3 @@ ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_
 
 ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', plot_type='strip')
 ```
-
-```python
-
-```
