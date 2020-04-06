@@ -278,7 +278,7 @@ def test_spectratype(adata_tra):
     npt.assert_equal(res.values, expected_frac.values)
 
 
-def repertoire_overlap(adata_tra):
+def test_repertoire_overlap(adata_tra):
     res = st.tl.repertoire_overlap(adata, 'sample')
     expected_cnt = pd.DataFrame.from_dict(
         {
@@ -334,3 +334,79 @@ def repertoire_overlap(adata_tra):
         orient="index",
     )
     npt.assert_equal(res.values, expected_cnt.values)
+
+def test_clonotype_imbalance(adata_tra):
+    freq, stat = st.tl.clonotype_imbalance(adata, replicate_col='sample', groupby='chain_pairing', case_label='Single pair', inplace=False)
+    expected_freq = pd.DataFrame.from_dict(
+        {
+            'clonotype': {
+                0: 'clonotype_986',
+                1: 'clonotype_986',
+                2: 'clonotype_986',
+                3: 'clonotype_986',
+                4: 'clonotype_986'
+                },
+            None: {
+                0: 'All',
+                1: 'All',
+                2: 'All',
+                3: 'All',
+                4: 'All'
+                },
+            'chain_pairing': {
+                0: 'Single pair',
+                1: 'Single pair',
+                2: 'Single pair',
+                3: 'Background',
+                4: 'Background'
+                },
+            'sample': {
+                0: 1,
+                1: 3, 
+                2: 5,
+                3: 1,
+                4: 3
+                },
+            'Normalized abundance': {
+                0: 0.3333333333333333,
+                1: 0.0,
+                2: 0.0,
+                3: 1.0,
+                4: 0.0
+                }
+            }
+    )
+    npt.assert_equal(freq.head().values, expected_freq.values)
+    expected_stat = pd.DataFrame.from_dict(
+        {
+            'clonotype': {
+                0: 'clonotype_986',
+                1: 'clonotype_284',
+                2: 'clonotype_460',
+                3: 'clonotype_425',
+                4: 'clonotype_459'
+                },
+            'pValue': {
+                0: 1.0,
+                1: 1.0,
+                2: 1.0,
+                3: 1.0,
+                4: 1.0
+                },
+            'logpValue': {
+                0: -0.0,
+                1: -0.0,
+                2: -0.0,
+                3: -0.0,
+                4: -0.0
+                },
+            'logFC': {
+                0: -1.5847822246839733,
+                1: -1.0000120192034734,
+                2: -0.5851067245544845,
+                3: -0.5851067245544845,
+                4: -1.5847822246839733
+                }
+            }
+    )
+    npt.assert_equal(stat.values.head(), expected_stat.values)
