@@ -279,7 +279,7 @@ def test_spectratype(adata_tra):
 
 
 def test_repertoire_overlap(adata_tra):
-    res = st.tl.repertoire_overlap(adata, 'sample')
+    res = st.tl.repertoire_overlap(adata_tra, 'sample')
     expected_cnt = pd.DataFrame.from_dict(
         {
             1: {
@@ -336,7 +336,7 @@ def test_repertoire_overlap(adata_tra):
     npt.assert_equal(res.values, expected_cnt.values)
 
 def test_clonotype_imbalance(adata_tra):
-    freq, stat = st.tl.clonotype_imbalance(adata, replicate_col='sample', groupby='chain_pairing', case_label='Single pair', inplace=False)
+    freq, stat = st.tl.clonotype_imbalance(adata_tra, replicate_col='sample', groupby='chain_pairing', case_label='Single pair', inplace=False)
     expected_freq = pd.DataFrame.from_dict(
         {
             'clonotype': {
