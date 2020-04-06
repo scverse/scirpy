@@ -409,4 +409,4 @@ def test_clonotype_imbalance(adata_tra):
                 }
             }
     )
-    npt.assert_equal(stat.values.head(), expected_stat.values)
+    npt.assert_equal(stat.head().values, expected_stat.values)
