@@ -1,8 +1,9 @@
 from anndata import AnnData
-from typing import Union
+from typing import Union, Sequence
 from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
 import pandas as pd
+import numpy as np
 from .._util import _is_na, _normalize_counts
 
 
@@ -16,7 +17,7 @@ def repertoire_overlap(
     fraction: Union[None, str, bool] = None,
     inplace: bool = True,
     added_key: str = "repertoire_overlap",
-) -> pd.DataFrame:
+) -> Union[None, Sequence[pd.DataFrame, np.ndarray, np.ndarray]]:
     """Compute distance between cell groups based on clonotype overlap.
 
     Adds parwise overlaps, distance matrix and linkage to `uns`
@@ -48,7 +49,7 @@ def repertoire_overlap(
 
     Returns
     -------
-    A DataFrame used by the pairwise scatterplot (but also adds a distance matrix and linkage to `uns`). 
+    A DataFrame used by the pairwise scatterplot, distance matrix and linkage. 
     """
 
     # Remove NA rows
