@@ -44,17 +44,18 @@ def _group_abundance(
     # By default, the most abundant group should be the first on the plot,
     # therefore we need their order
     if isinstance(sort, str) and sort == "alphabetical":
-        ranked_groups = sorted(result_df.columns)
+        ranked_target = sorted(result_df.index)
     elif isinstance(sort, str) and sort == "count":
-        ranked_groups = (
-            result_df_count.apply(np.sum, axis=0)
+        ranked_target = (
+            result_df_count.apply(np.sum, axis=1)
             .sort_values(ascending=False)
             .index.values
         )
     else:
-        ranked_groups = sort
-    ranked_target = (
-        result_df_count.apply(np.sum, axis=1).sort_values(ascending=False).index.values
+        ranked_target = sort
+
+    ranked_groups = (
+        result_df_count.apply(np.sum, axis=0).sort_values(ascending=False).index.values
     )
     result_df = result_df.loc[ranked_target, ranked_groups]
 
