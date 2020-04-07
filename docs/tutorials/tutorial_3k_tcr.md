@@ -423,10 +423,34 @@ ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 <!-- #endraw -->
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120})
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="line")
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="curve", shade=False)
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="curve")
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="curve", kde_norm=False)
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="curve", curve_layout='stacked', shade=True, kde_norm=False)
 ```
 
 The same as line chart, normalized to cluster size: 
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="curve", curve_layout='shifted', kde_norm=False)
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120}, viztype="curve", curve_layout='shifted', order=['CD8_Trm', 'CD8_Tem', 'CD8_Teff', 'CD4_Treg', 'CD4_IL6ST', 'CD4_RPL32', 'CD4_FOSS', 'CD4_Trm', 'CD4_TCF7', 'other'])
+```
 
 ```python
 ir.pl.spectratype(adata, target_col="cluster", fraction="cluster", viztype="line")

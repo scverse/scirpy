@@ -47,6 +47,7 @@ def _style_axes(
     label_fontsize: int = 8,
     tick_fontsize: int = 8,
     change_xticks: bool = True,
+    add_legend: bool = True,
     fraction: bool = True,
 ) -> None:
     """Style an axes object. 
@@ -73,6 +74,10 @@ def _style_axes(
         Font size of the axis labels.   
     tick_fontsize
         Font size of the axis tick labels. 
+    change_xticks
+        REmoves ticks from x axis. 
+    add_legend
+        Font size of the axis tick labels. 
     fraction
         Style as though the plot shows fractions
     
@@ -98,12 +103,13 @@ def _style_axes(
     ax.set_ylabel(ylab, fontsize=label_fontsize)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.legend(
-        title=legend_title,
-        loc="upper left",
-        bbox_to_anchor=(1.2, 1),
-        title_fontsize=label_fontsize,
-        fontsize=tick_fontsize,
-        frameon=False,
-    )
-    ax.set_position([0.1, 0.3, 0.6, 0.55])
+    if add_legend:
+        ax.legend(
+            title=legend_title,
+            loc="upper left",
+            bbox_to_anchor=(1.2, 1),
+            title_fontsize=label_fontsize,
+            fontsize=tick_fontsize,
+            frameon=False,
+        )
+        ax.set_position([0.1, 0.3, 0.6, 0.55])

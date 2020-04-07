@@ -97,6 +97,9 @@ def line(
     if ax is None:
         ax = _init_ax(fig_kws)
     ax = data.plot.line(ax=ax)
+    if style_kws is None:
+        style_kws = dict()
+    style_kws["change_xticks"] = False
     style_axes(ax, style, style_kws)
     return ax
 
@@ -134,26 +137,32 @@ def barh(
 
 @_doc_params(common_doc=_common_doc)
 def curve(
-    data: pd.DataFrame,
+    data: dict,
     *,
     ax: Union[plt.Axes, None] = None,
     curve_layout: Literal["overlay", "stacked", "shifetd"] = "overlay",
-    shade: bool = False,
+    shade: bool = True,
+    kde_norm: bool = True,
+    order: Union[list, None] = None,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
 ) -> plt.Axes:
-    """Basic plotting function built on top of bar plot in Pandas.
-    Draws bars without stdev. 
+    """Basic plotting function primarily for the spectratype 
+    to show length distributions 
 
     Parameters
     ----------
     data
-        Counts or pseudo-counts for KDE.
+        Weighted counts for KDE.
     ax
         Custom axis if needed.
     curve_layout
-        if the KDE-based curves should be stacked or shifted vetrically.  
+        if the KDE-based curves should be stacked or shifted vetrically. 
+    kde_norm
+        KDE curves are by default normalized to a sum of 1. Set to False in order to keep normalized cell weights.  
+    order
+        Specifies the order of groups.  
     shade
         If True, draw a shade between curves
     {common_doc}
@@ -164,33 +173,35 @@ def curve(
     """
     ax = _init_ax(fig_kws)
 
-    xmax = np.nanmax(data.values)
+    xmax = 0
+    for k, v in data.items():
+        mx = np.amax(v)
+        if mx > xmax:
+            xmax = mx
     x = np.arange(0, xmax, 0.1)
-    fy = 0
+    fy, _i = 0, 0
+    yticks = []
 
     outline = curve_layout != "stacked"
 
-    # # We need to convert the contingency tables back for the KDE in seaborn,
-    # # using pseudo-counts in case of fractions
-    # if fraction:
-    #     ftr = 1000 / np.max(data.values)
-    # countable, counted = [], []
-    # for cn in data.columns:
-    #     counts = np.round(data[cn] * ftr)
-    #     if counts.sum() > 0:
-    #         countable.append(np.repeat(data.index.values, counts))
-    #         counted.append(cn)
-    # # countable, counted = countable[:top_n], counted[:top_n]
+    if order is None:
+        order = list(data.keys())
 
     # Draw a curve for every series
-    for i, (label, col) in enumerate(data.iteritems()):
-        X = col.values.reshape(-1, 1)
-        # kde = KernelDensity(kernel="epanechnikov", bandwidth=3).fit(X)
+    for i in range(len(order)):
+        label = order[i]
+        col = data[label]
+        sx = col.sum()
+        X = col.reshape(-1, 1)
         kde = KernelDensity(kernel="gaussian", bandwidth=0.6).fit(X)
         y = np.exp(kde.score_samples(x.reshape(-1, 1)))
+        if not kde_norm:
+            y *= sx
         if curve_layout == "shifted":
-            y = y + i
-            fy = i
+            y = y + _i
+            fy = _i + 0
+            _i = y.max()
+            yticks.append(fy)
         else:
             if curve_layout == "stacked":
                 if i < 1:
@@ -207,6 +218,17 @@ def curve(
         else:
             ax.plot(x, y, label=label)
 
+    if style_kws is None:
+        style_kws = dict()
+    style_kws["change_xticks"] = False
+    if curve_layout == "shifted":
+        style_kws["add_legend"] = False
+        style_kws["ylab"] = ""
+        ax.set_yticklabels(order)
+        ax.set_yticks(yticks)
+        ax.spines["left"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.get_yaxis().set_tick_params(length=0)
     style_axes(ax, style, style_kws)
 
     return ax
