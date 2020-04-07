@@ -3,6 +3,8 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from .._util import _is_na, _normalize_counts
+from typing import Sequence
+from .._compat import Literal
 
 
 def _group_abundance(

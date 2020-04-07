@@ -1,12 +1,9 @@
 import matplotlib.pyplot as plt
 from .._compat import Literal
 from anndata import AnnData
-import pandas as pd
-from .._util import _is_na
 from .. import tl
 from . import _base as base
-from typing import Union, List
-from . import base
+from typing import Union, List, Sequence
 
 
 def group_abundance(
