@@ -15,7 +15,7 @@ def spectratype(
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
-    **kwargs
+    **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
     """Show the distribution of CDR3 region lengths. 
 
@@ -75,6 +75,13 @@ def spectratype(
         ylab = "Fraction of cells in " + fraction_base
     else:
         ylab = "Number of cells"
+
+    color_key = f"{target_col}_colors"
+    if color_key in adata.uns and "color" not in kwargs:
+        cat_index = {
+            cat: i for i, cat in enumerate(adata.obs[target_col].cat.categories)
+        }
+        kwargs["color"] = [adata.uns[color_key][cat_index[cat]] for cat in data.columns]
 
     default_style_kws = {"title": title, "xlab": xlab, "ylab": ylab}
     if "style_kws" in kwargs:
