@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.1
+      jupytext_version: 1.3.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -343,31 +343,9 @@ ten largest clonotypes across the cell-type clusters.
 <!-- #endraw -->
 
 ```python
-sc.pl.umap(adata, color="cluster")
-```
-
-```python
-adata.uns["cluster_colors"]
-```
-
-```python
-ir.tl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster"
-)
-```
-
-```python
 ir.pl.group_abundance(
     adata, groupby="clonotype", target_col="cluster", max_cols=10
 )
-```
-
-```python
-
-```
-
-```python
-[adata.uns["cluster_colors"][cat] for cat in adata.obs["cluster"].cat.categories.values]
 ```
 
 When cell-types are considered, it might be benefitial to normalize the counts
