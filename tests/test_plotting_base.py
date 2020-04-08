@@ -44,12 +44,12 @@ def test_ol_scatter(test_df):
 
 def test_curve(test_dict):
     # with default options
-    p = pl.base.curve(test_df)
+    p = pl.base.curve(test_dict)
     assert isinstance(p, plt.Axes)
 
     # test curve layouts
     for cl in ["overlay", "stacked", "shifted"]:
-        pl.base.curve(test_df, curve_layout=cl)
+        pl.base.curve(test_dict, curve_layout=cl)
 
     # with shade
-    pl.base.curve(test_df, shade=True)
+    pl.base.curve(test_dict, shade=True)
