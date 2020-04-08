@@ -42,7 +42,7 @@ def test_ol_scatter(test_df):
     assert isinstance(p, plt.Axes)
 
 
-def test_curve(test_df):
+def test_curve(test_dict):
     # with default options
     p = pl.base.curve(test_df)
     assert isinstance(p, plt.Axes)
