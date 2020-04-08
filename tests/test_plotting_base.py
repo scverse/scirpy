@@ -1,6 +1,7 @@
 from scirpy import pl
 import pytest
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -10,6 +11,14 @@ def test_df():
         {"ct1": {"A": 3.0, "B": 1.0, "C": 4}, "ct2": {"A": 0.0, "B": 1.0, "C": 2.5},},
         orient="index",
     )
+
+@pytest.fixture
+def test_dict():
+    return {
+        "ct1": np.array([2, 3, 4, 5, 2, 3, 4, 5, 6, 2, 3, 4, 5, 6, 7]),
+        "ct2": np.array([4, 5, 6, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 2, 3, 4, 5, 3]),
+        "ct3": np.array([2, 3, 4 5, 6, 2, 3, 4, 5, 6, 7])
+    }
 
 
 def test_bar(test_df):
