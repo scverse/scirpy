@@ -79,6 +79,7 @@ def line(
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
+    **kwargs,
 ) -> plt.Axes:
     """Basic plotting function built on top of line plot in Pandas.
 
@@ -96,7 +97,7 @@ def line(
     """
     if ax is None:
         ax = _init_ax(fig_kws)
-    ax = data.plot.line(ax=ax)
+    ax = data.plot.line(ax=ax, **kwargs)
     style_axes(ax, style, style_kws)
     return ax
 
