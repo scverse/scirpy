@@ -427,7 +427,7 @@ p = ir.pl.spectratype(adata, target_col="sample")
 ```
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster" viztype="line", fig_kws={"dpi": 120})
+ir.pl.spectratype(adata, target_col="cluster", viztype="line", fig_kws={"dpi": 120})
 ```
 
 ```python
