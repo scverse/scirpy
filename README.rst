@@ -30,6 +30,10 @@ Please refer to the `documentation <https://icbi-lab.github.io/scirpy>`_. In par
 - `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_.
   
 In the documentation, you can also learn more about our `T-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
+
+Case-study
+~~~~~~~~~~
+The case study from our preprint is available `here <https://grst.github.io/scirpy-paper/wu2020.html>`_. 
     
 Installation
 ^^^^^^^^^^^^
