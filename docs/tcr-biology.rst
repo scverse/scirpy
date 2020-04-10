@@ -1,14 +1,61 @@
 .. _tcr-model:
 
-Our T-cell receptor model
+T-cell receptor model
 =========================
 
-.. warning:: 
-    This section is under construction. 
+What is a clonotype?
+^^^^^^^^^^^^^^^^^^^^
 
-A clonotype designates a collection of T or B cells that bear the same adaptive immune receptors, and thus can be regarded as descendants of a common antecedent cell, recognizing the same epitope. Applying this definition to single-cell TCR sequencing datasets would mean that cells sharing identical sequences of both alpha and beta TCRs make up a clonotype. Contrary to what would be expected based on the previously described mechanism of allelic exclusion, single-cell sequencing datasets feature a considerable number of cells with more than one adaptive immune receptor sequences.
-Since their existence violates current canon (Brady et al. 2010), most TCR analysis tools ignore cells with more than one sequence (Fischer et al. ; Zhang et al. 2018) or take the sequence with the highest expression level as the only valid choice (Afik et al. 2017). While in some cases these cells might indeed represent artifacts (e.g. doublets of a CD8+ and a CD4+ T cell engaged in an immunological synapse), there is an increasing amount of evidence in support of a dual TCR population (Schuldt and Binstadt 2019; Ji et al. 2010). Given their abundance in empirical data, we are convinced that instead of ignorance, an analysis tool should at least offer the choice of including this elusive cell type.
-Scirpy attempts to address this problem by introducing a T cell model (similar to the one suggested by clonotype networks in TraCeR (Stubbington et al. 2016)), where T cells are allowed to have a primary and a secondary pair of alpha and beta chains. The primary pair consists of the alpha chain with the highest read count and the beta chain with the highest read count. Likewise, the secondary pair is the pair of chains with the second-highest expression level. If more than two variants of a chain are recovered for the same cell, those are ignored based on the assumption that each cell has only two copies of the chromosome set. These cells are also flagged as 'multichain' cells and can later be discarded from downstream analysis. The user can also choose if secondary TCRs shall be included in the analysis or not.
-Another decision when implementing a clonotype definition is whether it should be based on the nucleotide or amino acid sequence. Although nucleotide sequence reflects common origin, epitope reactivity is determined by the amino acid sequence. This has made the amino acid sequence of the CDR3 region a common choice for clonotype definition by existing tools already and Scirpy conforms to this consensus. Given both the nucleotide and amino acid sequences of the CDR3 regions, it also possible to analyse the probability of convergent evolution of TCR sequences toward a given amino acid sequence as a result of selection pressure by epitopes.
-Clonotypes, as well as individual cells can be grouped together based on shared CDR3 amino acid sequences (despite differences at the DNA level), shared primary or secondary chain pairs, or (as carried out by TraCeR (Stubbington et al. 2016)), based on shared alpha or shared beta chains. The biological relevance of such networks would be the clustering of cells that recognize the same epitope. Inspired by recent papers stating the similar TCR sequences also share epitope targets (Glanville et al. 2017; Dash et al. 2017; Fischer et al. ), we aimed at implementing a more general approach, where different layers of TCR sequence similarity can be integrated into a global, epitope-focused cell similarity network. The possibility of linking similar clonotypes together also provides an opportunity to correct for information loss due to sequencing depth, possibly resulting in recovering of only an alpha or a beta chain for some cells.
-Clonotype clustering in scirpy is largely based on pairwise sequence alignment of CDR3 regions by Parasail (Daily 2016)...
+A clonotype designates a collection of T or B cells that bear the same adaptive
+immune receptors, and thus recognize the same epitopes. Generally, these cells are 
+also descendants of a common, antecedent cell and belong to the same cell clone.
+In single-cell RNA-sequencing (scRNA-seq) data, T cells sharing identical
+complementarity-determining regions 3 (CDR3) sequences of both α and β TCR chains 
+make up a clonotype.
+
+
+Dual TCRs
+^^^^^^^^^
+
+Contrary to what would be expected based on the previously described mechanism of
+allelic exclusion (:cite:`Brady2010-gh`), scRNA-seq datasets can feature a considerable
+number of cells with more than one TCR α and β pair. Since cells with more than one 
+productive CDR3 sequence for each chain did not fit into our understanding of 
+T cell biology, most TCR analysis tools ignore these cells (:cite:`Fischer2019`, 
+:cite:`Zhang2018-ip`), or select the CDR3 sequence with the highest expression level
+(:cite:`Afik2017-sg`). While in some cases these double-TCR cells might represent 
+artifacts (e.g. doublets of a CD8+ and a CD4+ T cell engaged in an immunological 
+synapse), there is an increasing amount of evidence in support of a bone fide
+dual-TCR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`).
+
+Scirpy allows investigating the composition and phenotypes of both single- and dual-TCR 
+T cells by leveraging a T cell model similar to the one proposed in 
+:cite:`Stubbington2016-kh`, where T cells are allowed to have a primary and a secondary 
+pair of α- and β chains. For each cell, the primary pair consists of the α- and β-chain 
+with the highest read count. Likewise, the secondary pair is the pair of α/β-chains with
+the second highest expression level. Based on the assumption that each cell has only two
+copies of the underlying chromosome set, if more than two variants of a chain are 
+recovered for the same cell, the excess TCR chains are ignored by Scirpy and the 
+corresponding cells flagged as “multichain”. This filtering strategy leaves the choice 
+of discarding or including multichain cells in downstream analyses.
+
+
+Clonotype definition
+^^^^^^^^^^^^^^^^^^^^
+
+Scirpy implements a network-based clonotype definition that enables clustering cells
+into clonotypes based on the following options:
+
+ - identical CDR3 nucleotide sequences;
+ - identical CDR3 amino acid sequences;
+ - similar CDR3 amino acid sequences based on pairwise sequence alignment.
+
+The latter approach is inspired by studies showing that similar TCR sequences also 
+share epitope targets (:cite:`Fischer2019`, :cite:`Glanville2017-ay`, :cite:`TCRdist`).
+Based on these approaches, Scirpy constructs a global, epitope-focused cell similarity
+network. While convergence of the nucleotide-based clonotype definition to the amino 
+acid based one hints at selection pressure, sequence alignment based networks offer
+the opportunity to identify cells that might recognize the same epitopes.
+
+
+
