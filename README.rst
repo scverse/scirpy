@@ -24,7 +24,7 @@ provides various modules for data import, analysis and visualization.
 
 Getting started
 ^^^^^^^^^^^^^^^
-Please refer to the `Documentation <https://icbi-lab.github.io/scirpy>`_. In particular, the
+Please refer to the `documentation <https://icbi-lab.github.io/scirpy>`_. In particular, the
 
 - `Tutorial <https://icbi-lab.github.io/scirpy/tutorials/tutorial_3k_tcr.html>`_, and the 
 - `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_.
