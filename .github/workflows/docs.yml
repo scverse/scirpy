@@ -28,7 +28,7 @@ jobs:
         run: |
           cd docs && make html
       - name: Deploy to gh-pages
-        if: contains(github.ref, "master")
+        if: github.ref == 'refs/heads/master'
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
