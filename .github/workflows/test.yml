@@ -13,6 +13,12 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
 
     steps:
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
@@ -32,6 +38,12 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
@@ -40,10 +52,10 @@ jobs:
         run: |
           python -m pip install flit
           FLIT_ROOT_INSTALL=1 flit install --deps develop
-      - uses: ammaraskar/sphinx-action@master
-        with:
-          docs-folder: "docs/"
-          - name: Commit docs to gh-pages
+      - name: run sphinx
+        run: |
+          cd docs && make html
+      - name: Commit docs to gh-pages
           run: |
             git clone https://github.com/grst/scirpy.git --branch gh-pages --single-branch gh-pages
             cp -r docs/_build/html/* gh-pages/
