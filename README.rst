@@ -70,7 +70,7 @@ See the `release section <https://github.com/grst/scirpy/releases>`_.
 
 Contact
 ^^^^^^^
-Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues)>`_. 
+Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues>`_. 
 
 Citation
 ^^^^^^^^
