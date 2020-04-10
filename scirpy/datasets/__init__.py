@@ -40,7 +40,7 @@ def wu2020() -> AnnData:
     """
     # os.makedirs(settings.datasetdir, exist_ok=True)
     # TODO host it on github or similar
-    url = "https://github.com/grst/scirpy/releases/download/v0.1/wu2020.h5ad"
+    url = "https://github.com/icbi-lab/scirpy/releases/download/v0.1/wu2020.h5ad"
     filename = settings.datasetdir / "wu2020.h5ad"
     with _monkey_patch_tqdm():
         adata = read(filename, backup_url=url)
@@ -61,7 +61,7 @@ def wu2020_3k() -> AnnData:
     """
     # os.makedirs(settings.datasetdir, exist_ok=True)
     # TODO host it on github or similar
-    url = "https://github.com/grst/scirpy/releases/download/v0.1/wu2020_3k.h5ad"
+    url = "https://github.com/icbi-lab/scirpy/releases/download/v0.1/wu2020_3k.h5ad"
     filename = settings.datasetdir / "wu2020_3k.h5ad"
     with _monkey_patch_tqdm():
         adata = read(filename, backup_url=url)
