@@ -18,9 +18,14 @@ Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing 
     :target: https://github.com/psf/black
     :alt: The uncompromising python formatter
     
-Scirpy is a scalable python-toolkit to analyse single-cell T-cell receptor sequencing (scTCR-seq) data. It 
-seamlessly integrates with the popular `scanpy <https://scanpy.readthedocs.io/en/stable/index.html>`_ library and
-provides various modules for data import, analysis and visualization. 
+Scirpy is a scalable python-toolkit to analyse  T cell receptor (TCR) repertoires from
+single-cell RNA sequencing (scRNA-seq) data. It seamlessly integrates with the popular
+`scanpy <https://scanpy.readthedocs.io/en/stable/index.html>`_ library and
+provides various modules for data import, analysis and visualization.
+
+.. image:: img/workflow.png
+    :align: center
+    :alt: The scirpy workflow 
 
 Getting started
 ^^^^^^^^^^^^^^^
@@ -30,6 +35,10 @@ Please refer to the `documentation <https://icbi-lab.github.io/scirpy>`_. In par
 - `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_.
   
 In the documentation, you can also learn more about our `T-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
+
+Case-study
+~~~~~~~~~~
+The case study from our preprint is available `here <https://grst.github.io/scirpy-paper/wu2020.html>`_. 
     
 Installation
 ^^^^^^^^^^^^
@@ -61,7 +70,7 @@ See the `release section <https://github.com/grst/scirpy/releases>`_.
 
 Contact
 ^^^^^^^
-Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues)>`_. 
+Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues>`_. 
 
 Citation
 ^^^^^^^^
