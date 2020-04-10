@@ -26,24 +26,24 @@ Getting started
 ^^^^^^^^^^^^^^^
 Please refer to the `Documentation <https://icbi-lab.github.io/scirpy>`_. In particular, the
 
-  * `Tutorial <https://icbi-lab.github.io/scirpy/tutorials/tutorial_3k_tcr.html>`_ and the 
-  * `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_
+- `Tutorial <https://icbi-lab.github.io/scirpy/tutorials/tutorial_3k_tcr.html>`_, and the 
+- `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_.
   
 In the documentation, you can also learn more about our `T-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
     
 Installation
 ^^^^^^^^^^^^
 You need to have Python 3.6 or newer installed on your system. If you don't have 
-python installed, we recommend installing `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_. 
+Python installed, we recommend installing `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_. 
 
-Install the latest release of `scirpy` from `PyPI <https://pypi.org/project/scirpy/>`_. 
+Install the latest release of `scirpy` from `PyPI <https://pypi.org/project/scirpy/>`_: 
 
 .. code-block::
 
     pip install scirpy
 
 
-Alternatively, install the latest development version
+Alternatively, install the latest development version:
 
 .. code-block::
 
