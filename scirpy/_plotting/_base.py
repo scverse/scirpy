@@ -172,7 +172,8 @@ def curve(
     -------
     List of axes.
     """
-    ax = _init_ax(fig_kws)
+    if ax is None:
+        ax = _init_ax(fig_kws)
 
     xmax = 0
     for k, v in data.items():
