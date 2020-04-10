@@ -16,7 +16,7 @@ def spectratype(
     fraction: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
     kde_kws: Union[dict, None] = None,
-    **kwargs
+    **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
     """Show the distribution of CDR3 region lengths. 
 
