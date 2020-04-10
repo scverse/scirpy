@@ -1,5 +1,5 @@
-Scirpy: A Scanpy plugin 
-============================================================
+Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data
+====================================================================================
 |tests| |docs| |pypi| |black|
 
 .. |tests| image:: https://github.com/grst/scirpy/workflows/tests/badge.svg
@@ -18,7 +18,18 @@ Scirpy: A Scanpy plugin
     :target: https://github.com/psf/black
     :alt: The uncompromising python formatter
     
-Scirpy is a scalable python-toolkit to analyse
+Scirpy is a scalable python-toolkit to analyse single-cell T-cell receptor sequencing (scTCR-seq) data. It 
+seamlessly integrates with the popular `scanpy <https://scanpy.readthedocs.io/en/stable/index.html>`_ library and
+provides various modules for data import, analysis and visualization. 
+
+Getting started
+^^^^^^^^^^^^^^^
+Please refer to the `Documentation <https://icbi-lab.github.io/scirpy>`_. In particular, the
+
+  * `Tutorial <https://icbi-lab.github.io/scirpy/tutorials/tutorial_3k_tcr.html>`_ and the 
+  * `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_
+  
+In the documentation, you can also learn more about our `T-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
     
 Installation
 ^^^^^^^^^^^^
@@ -43,6 +54,10 @@ Alternatively, install the latest development version
 
 
 Bioconda coming soon. 
+
+Release notes
+^^^^^^^^^^^^^
+See the `release section <https://github.com/grst/scirpy/releases>`_. 
 
 Contact
 ^^^^^^^
