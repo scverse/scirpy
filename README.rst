@@ -1,6 +1,6 @@
 Scirpy: A Scanpy plugin 
 ============================================================
-|tests| |docs| |black|
+|tests| |docs| |pypi| |black|
 
 .. |tests| image:: https://github.com/grst/scirpy/workflows/tests/badge.svg
     :target: https://github.com/icbi-lab/scirpy/actions?query=workflow%3Atests
@@ -22,25 +22,31 @@ Scirpy is a scalable python-toolkit to analyse
     
 Installation
 ^^^^^^^^^^^^
-Install the latest release of `scirpy` from [PyPI](https://pypi.org/project/scirpy/):
+You need to have Python 3.6 or newer installed on your system. If you don't have 
+python installed, we recommend installing `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_. 
 
-```
-pip install scirpy
-```
+Install the latest release of `scirpy` from `PyPI <https://pypi.org/project/scirpy/>`_. 
+
+.. code-block::
+
+    pip install scirpy
+
 
 Alternatively, install the latest development version
-```
-git clone git@github.com:icbi-lab/scirpy.git
-cd scirpy
-pip install flit
-flit install
-```
+
+.. code-block::
+
+    git clone git@github.com:icbi-lab/scirpy.git
+    cd scirpy
+    pip install flit
+    flit install
+
 
 Bioconda coming soon. 
 
 Contact
 ^^^^^^^
-Please use the [issue tracker](https://github.com/icbi-lab/scirpy/issues). 
+Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues)>`_. 
 
 Citation
 ^^^^^^^^
