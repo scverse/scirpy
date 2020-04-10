@@ -50,6 +50,7 @@ jobs:
           python-version: "3.7"
       - name: Install dependencies
         run: |
+          sudo apt-get install pandoc
           python -m pip install flit
           FLIT_ROOT_INSTALL=1 flit install --deps develop
       - name: run sphinx
