@@ -63,25 +63,11 @@ Tools: `tl`
    alpha_diversity
    group_abundance
    spectratype
-   vdj_usage
    repertoire_overlap
 
 
 Plotting: `pl`
 --------------
-
-Base plotting functions: `pl.base`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. module:: scirpy.pl.base
-
-.. autosummary::
-   :toctree: .
-   bar
-   line
-   barh
-   curve
-
 
 .. module:: scirpy.pl
 
@@ -97,3 +83,15 @@ Base plotting functions: `pl.base`
    clonotype_network
 
    
+Base plotting functions: `pl.base`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. module:: scirpy.pl.base
+
+.. autosummary::
+   :toctree: .
+
+   bar
+   line
+   barh
+   curve
