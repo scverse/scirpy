@@ -15,6 +15,7 @@ def spectratype(
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
+    kde_kws: Union[dict, None] = None,
     **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
     """Show the distribution of CDR3 region lengths. 
@@ -37,7 +38,10 @@ def spectratype(
         rather than reporting abosolute numbers. Alternatively, a column 
         name can be provided according to that the values will be normalized.  
     viztype
-        Type of plot to produce
+        Type of plot to produce 
+    kde_kws
+        Parameters to be passed on to the curve plotting routine, like, style,
+        shading and order of categories. 
     **kwargs
         Additional parameters passed to the base plotting function
 
@@ -55,18 +59,6 @@ def spectratype(
         fraction=fraction,
     )
 
-    # # We need to convert the contingency tables back for the KDE in seaborn,
-    # # using pseudo-counts in case of fractions
-    # if fraction:
-    #     ftr = 1000 / np.max(data.values)
-    # countable, counted = [], []
-    # for cn in data.columns:
-    #     counts = np.round(data[cn] * ftr)
-    #     if counts.sum() > 0:
-    #         countable.append(np.repeat(plottable.index.values, counts))
-    #         counted.append(cn)
-    # # countable, counted = countable[:top_n], counted[:top_n]
-
     groupby_text = groupby if isinstance(groupby, str) else "|".join(groupby)
     title = "Spectratype of " + groupby_text + " by " + target_col
     xlab = groupby_text + " length"
@@ -82,6 +74,24 @@ def spectratype(
             cat: i for i, cat in enumerate(adata.obs[target_col].cat.categories)
         }
         kwargs["color"] = [adata.uns[color_key][cat_index[cat]] for cat in data.columns]
+
+    # For KDE curves, we need to convert the contingency tables back
+    if viztype == "curve":
+        if fraction:
+            data = (
+                10 * data
+            ) / data.min()  # Scales up data so that even fraction become an integer count
+        countable = {}
+        for cn in data.columns:
+            counts = data[cn].round()
+            if counts.sum() > 0:
+                countable[cn] = np.repeat(data.index.values, counts)
+            else:
+                countable[cn] = np.zeros(10)
+        data = countable
+
+    if kde_kws is not None:
+        kwargs.update(kde_kws)
 
     default_style_kws = {"title": title, "xlab": xlab, "ylab": ylab}
     if "style_kws" in kwargs:
