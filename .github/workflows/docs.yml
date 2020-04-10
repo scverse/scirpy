@@ -1,0 +1,37 @@
+name: docs
+
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
+      - name: Install dependencies
+        run: |
+          sudo apt-get install pandoc
+          python -m pip install flit
+          FLIT_ROOT_INSTALL=1 flit install --deps develop
+      - name: run sphinx
+        run: |
+          cd docs && make html
+      - name: Deploy to gh-pages
+        if: github.ref == 'refs/heads/master'
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          BRANCH: gh-pages # The branch the action should deploy to.
+          FOLDER: docs/_build/html # The folder the action should deploy.
+          CLEAN: true

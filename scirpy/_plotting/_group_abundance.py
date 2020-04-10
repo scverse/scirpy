@@ -1,12 +1,9 @@
 import matplotlib.pyplot as plt
 from .._compat import Literal
 from anndata import AnnData
-import pandas as pd
-from .._util import _is_na
 from .. import tl
 from . import _base as base
-from typing import Union, List
-from . import base
+from typing import Union, List, Sequence
 
 
 def group_abundance(
@@ -16,6 +13,7 @@ def group_abundance(
     *,
     fraction: Union[None, str, bool] = None,
     max_cols: Union[None, int] = None,
+    sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
     **kwargs,
 ) -> plt.Axes:
     """Plots how many cells belong to each clonotype. 
@@ -40,6 +38,13 @@ def group_abundance(
         Only plot the first `max_cols` columns. Will raise a 
         `ValueError` if attempting to plot more than 100 columsn. 
         Set to `0` to disable. 
+    sort
+        How to arrange the dataframe columns. 
+        Default is by the category count ("count"). 
+        Other options are "alphabetical" or to provide a list of column names.
+        By providing an explicit list, the DataFrame can also be subsetted to
+        specific categories. Sorting (and subsetting) occurs before `max_cols` 
+        is applied. 
     **kwargs
         Additional arguments passed to the base plotting function.  
     
@@ -47,9 +52,8 @@ def group_abundance(
     -------
     Axes object
     """
-
     abundance = tl.group_abundance(
-        adata, groupby, target_col=target_col, fraction=fraction
+        adata, groupby, target_col=target_col, fraction=fraction, sort=sort
     )
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(
