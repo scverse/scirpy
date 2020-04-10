@@ -1,15 +1,9 @@
-Welcome to scirpy's documentation!
-=========================================
+.. include:: ../README.rst
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :hidden:
 
-   introduction
-   tcr-biology 
    tutorials
    api
+   tcr-biology 
    bibliography
-
-
-
