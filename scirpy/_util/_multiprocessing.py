@@ -15,7 +15,11 @@ class EnhancedPool(mpp.Pool):
             raise ValueError("Chunksize must be 1+, not {0:n}".format(chunksize))
 
         task_batches = mpp.Pool._get_tasks(func, iterable, chunksize)
-        result = mpp.IMapIterator(self._cache)
+        try:
+            result = mpp.IMapIterator(self._cache)
+        except AttributeError:
+            # python >=3.8 should pass `pool` instead of `cache`
+            result = mpp.IMapIterator(self)
         self._taskqueue.put(
             (
                 self._guarded_task_generation(
