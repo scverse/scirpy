@@ -1,18 +1,16 @@
 Single cell analysis of T cell receptor sequencing in python
 ============================================================
-|travis| |docs| |black|
+|tests| |docs| |black|
 
-.. |travis| image:: https://api.travis-ci.com/grst/scirpy.svg?token=qqasgepMVJmJkMf3vBTL 
-    :target: https://travis-ci.com/grst/scirpy
+.. |tests| image:: https://github.com/grst/scirpy/workflows/tests/badge.svg
+    :target: https://github.com/icbi-lab/scirpy/actions?query=workflow%3Atests
     :alt: Build Status
 
-.. |docs| image:: https://readthedocs.org/projects/scirpy/badge/?version=latest
-    :target: https://scirpy.readthedocs.io/en/latest/?badge=latest
+.. |docs| image::  https://github.com/grst/scirpy/workflows/docs/badge.svg
+    :target: https://icbi-lab.github.io/scirpy
     :alt: Documentation Status
     
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
     :alt: The uncompromising python formatter
 
-
-* `Documentation <https://grst.github.io/scirpy/5vLj3lcBVp2VkVEpIt3j>`_
