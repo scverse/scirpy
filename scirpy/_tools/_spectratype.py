@@ -49,10 +49,12 @@ def spectratype(
     else:
         groupby = list(set(groupby))
 
-    # combine (potentially) multiple length columns into one
+    # Remove NAs
     tcr_obs = adata.obs.loc[
         ~np.any(_is_na(adata.obs[groupby].values), axis=1), :
     ].copy()
+
+    # Combine (potentially) multiple length columns into one
     tcr_obs["lengths"] = (
         tcr_obs.loc[:, groupby].applymap(len).apply(combine_fun, axis=1)
     )
@@ -61,7 +63,7 @@ def spectratype(
         tcr_obs, groupby="lengths", target_col=target_col, fraction=fraction
     )
 
-    # should include all lengths, not just the abundant ones
+    # Should include all lengths, not just the abundant ones
     cdr3_lengths = cdr3_lengths.reindex(
         range(int(tcr_obs["lengths"].max()) + 1)
     ).fillna(value=0.0)

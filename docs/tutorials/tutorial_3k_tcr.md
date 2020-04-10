@@ -423,13 +423,41 @@ ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 <!-- #endraw -->
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", fig_kws={"dpi": 120})
+p = ir.pl.spectratype(adata, target_col="sample")
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="line", fig_kws={"dpi": 120})
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'shade': False})
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120})
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'shade': False, 'kde_norm': False})
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'shade': True, 'curve_layout': 'stacked', 'kde_norm': False})
 ```
 
 The same as line chart, normalized to cluster size: 
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", fraction="cluster", viztype="line")
+ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'curve_layout': 'shifted', 'kde_norm': False, 'kde_norm': False})
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'curve_layout': 'shifted', 'order': ['CD8_Trm', 'CD8_Tem', 'CD8_Teff', 'CD4_Treg', 'CD4_IL6ST', 'CD4_RPL32', 'CD4_FOSS', 'CD4_Trm', 'CD4_TCF7', 'other'], 'kde_norm': False})
+```
+
+```python
+ir.pl.spectratype(adata, target_col="cluster", viztype="line", fraction="cluster", fig_kws={"dpi": 120})
 ```
 
 Again, to pre-select specific genes, we can simply filter the `adata` object before plotting. 
