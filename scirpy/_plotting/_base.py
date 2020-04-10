@@ -148,6 +148,7 @@ def curve(
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
+    **kwargs,
 ) -> plt.Axes:
     """Basic plotting function primarily for the spectratype 
     to show length distributions 
