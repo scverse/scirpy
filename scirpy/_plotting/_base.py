@@ -144,6 +144,7 @@ def curve(
     shade: bool = True,
     kde_norm: bool = True,
     order: Union[list, None] = None,
+    kernel_kws: Union[dict, None] = None,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
@@ -160,7 +161,9 @@ def curve(
     curve_layout
         if the KDE-based curves should be stacked or shifted vetrically. 
     kde_norm
-        KDE curves are by default normalized to a sum of 1. Set to False in order to keep normalized cell weights.  
+        KDE curves are by default normalized to a sum of 1. Set to False in order to keep normalized cell weights. 
+    kernel_kws
+        Parameters that should be passed to `KernelDensity` function of sklearn.  
     order
         Specifies the order of groups.  
     shade
@@ -188,13 +191,20 @@ def curve(
     if order is None:
         order = list(data.keys())
 
+    if kernel_kws is None:
+        kernel_kws = dict()
+    if "kernel" not in kernel_kws:
+        kernel_kws["kernel"] = "gaussian"
+    if "kernel" not in kernel_kws:
+        kernel_kws["bandwidth"] = 0.6
+
     # Draw a curve for every series
     for i in range(len(order)):
         label = order[i]
         col = data[label]
         sx = col.sum()
         X = col.reshape(-1, 1)
-        kde = KernelDensity(kernel="gaussian", bandwidth=0.6).fit(X)
+        kde = KernelDensity(**kernel_kws).fit(X)
         y = np.exp(kde.score_samples(x.reshape(-1, 1)))
         if not kde_norm:
             y *= sx
@@ -222,6 +232,8 @@ def curve(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
+    if kde_norm:
+        style_kws["ylab"] = "Probability"
     if curve_layout == "shifted":
         style_kws["add_legend"] = False
         style_kws["ylab"] = ""

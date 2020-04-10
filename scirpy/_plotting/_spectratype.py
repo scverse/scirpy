@@ -15,8 +15,7 @@ def spectratype(
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
-    kde_norm: bool = True,
-    order: Union[list, None] = None,
+    kde_kws: Union[dict, None] = None,
     **kwargs
 ) -> Union[List[plt.Axes], AnnData]:
     """Show the distribution of CDR3 region lengths. 
@@ -40,10 +39,9 @@ def spectratype(
         name can be provided according to that the values will be normalized.  
     viztype
         Type of plot to produce 
-    kde_norm
-        KDE curves are by default normalized to a sum of 1. Set to False in order to keep normalized cell weights. 
-    order
-        Specifies the order of groups on a shifted spectratype graph. 
+    kde_kws
+        Parameters to be passed on to the curve plotting routine, like, style,
+        shading and order of categories. 
     **kwargs
         Additional parameters passed to the base plotting function
 
@@ -72,8 +70,6 @@ def spectratype(
 
     # For KDE curves, we need to convert the contingency tables back
     if viztype == "curve":
-        if kde_norm:
-            ylab = "Fraction"  # This is not the normalization fraction, but the fraction in the distribution curve
         if fraction:
             data = (
                 10 * data
@@ -86,8 +82,9 @@ def spectratype(
             else:
                 countable[cn] = np.zeros(10)
         data = countable
-        kwargs["kde_norm"] = kde_norm
-        kwargs["order"] = order
+
+    if kde_kws is not None:
+        kwargs.update(kde_kws)
 
     default_style_kws = {"title": title, "xlab": xlab, "ylab": ylab}
     if "style_kws" in kwargs:
