@@ -197,7 +197,7 @@ def curve(
         kernel_kws = dict()
     if "kernel" not in kernel_kws:
         kernel_kws["kernel"] = "gaussian"
-    if "kernel" not in kernel_kws:
+    if "bandwidth" not in kernel_kws:
         kernel_kws["bandwidth"] = 0.6
 
     # Draw a curve for every series
