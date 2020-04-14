@@ -1,4 +1,4 @@
-from scirpy import read_10x_vdj, read_tracer, read_10x_vdj_csv
+from scirpy import read_10x_vdj, read_tracer
 from scirpy._util import _is_na, _is_false
 import numpy as np
 import pytest
@@ -10,7 +10,7 @@ def test_read_10x_example():
     Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
     under CC-BY-4.0
     """
-    anndata = read_10x_vdj_csv(
+    anndata = read_10x_vdj(
         "tests/data/10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz"
     )
 
@@ -20,7 +20,7 @@ def test_read_10x_example():
 
 
 def test_read_10x_csv():
-    anndata = read_10x_vdj_csv("tests/data/10x/filtered_contig_annotations.csv")
+    anndata = read_10x_vdj("tests/data/10x/filtered_contig_annotations.csv")
     obs = anndata.obs
     assert obs.shape[0] == 4
     cell1 = obs.iloc[1, :]

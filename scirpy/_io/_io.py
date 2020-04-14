@@ -74,9 +74,11 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     res_dict["cell_id"] = tcr_obj.cell_id
     chain_dict = dict()
     for c in ["TRA", "TRB"]:
+        # sorting subordinately by raw and cdr3 ensures consistency
+        # between load from json and load from csv.
         tmp_chains = sorted(
             [x for x in tcr_obj.chains if x.chain_type == c and x.is_productive],
-            key=lambda x: x.expr,
+            key=lambda x: (x.expr, x.expr_raw, x.cdr3),
             reverse=True,
         )
         res_dict["multi_chain"] = res_dict.get("multi_chain", False) | (
@@ -126,23 +128,8 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     return res_dict
 
 
-@_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
-    """Read TCR data from a 10x genomics sample.
-
-    {doc_working_model}
-    
-    Parameters
-    ----------
-    path
-        Path to all_contig_annotations.json
-    filtered
-        Only keep filtered contig annotations (= is_cell and high_confidence)
-
-    Returns
-    -------
-    AnnData object with TCR data in `obs` for each cell.  
-    """
+def _read_10x_vdj_json(path: str, filtered: bool = True) -> AnnData:
+    """Read TCR data from a 10x genomics `all_contig_annotations.json` file"""
     with open(path, "r") as f:
         cells = json.load(f)
 
@@ -230,29 +217,8 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
     return _tcr_objs_to_anndata(tcr_objs.values())
 
 
-@_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
-    """Read TCR data from a 10x genomics `_contig_annotations.csv` file
-
-    If the `all_contig_annotations.json` file is available it is perferable! 
-    For instance, the `csv` file does not contain information about
-    junctions. 
-
-    {doc_working_model}
-
-    Parameters
-    ----------
-    path
-        Path to filterd_contig_annotations.csv or all_contig_annotationgs.csv
-    filtered
-        Only keep filtered contig annotations (= is_cell and high_confidence)
-        If using `filtered_contig_annotations.csv` already, this option
-        is futile. 
-
-    Returns
-    -------
-    AnnData object with TCR data in `obs` for each cell. 
-    """
+def _read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
+    """Read TCR data from a 10x genomics `_contig_annotations.csv` file """
     df = pd.read_csv(path)
 
     tcr_objs = {}
@@ -281,6 +247,35 @@ def read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
         tcr_objs[barcode] = tcr_obj
 
     return _tcr_objs_to_anndata(tcr_objs.values())
+
+
+@_doc_params(doc_working_model=doc_working_model)
+def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
+    """Read TCR data from 10x Genomics cell-ranger output. 
+
+    Supports `all_contig_annotations.json` and `{{all,filtered}}_contig_annotations.csv`. 
+    If the json file is available, it is preferable as it additionally 
+    contains information about VDJ-junction insertions. 
+
+    {doc_working_model}
+
+    Parameters
+    ----------
+    path
+        Path to filterd_contig_annotations.csv or all_contig_annotationgs.csv
+    filtered
+        Only keep filtered contig annotations (= is_cell and high_confidence)
+        If using `filtered_contig_annotations.csv` already, this option
+        is futile. 
+
+    Returns
+    -------
+    AnnData object with TCR data in `obs` for each cell.  
+    """
+    if path.endswith("json"):
+        return _read_10x_vdj_json(path, filtered)
+    else:
+        return _read_10x_vdj_csv(path, filtered)
 
 
 @_doc_params(doc_working_model=doc_working_model)
