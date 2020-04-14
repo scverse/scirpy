@@ -17,7 +17,6 @@ Input/Output
 
    read_h5ad
    read_10x_vdj
-   read_10x_vdj_csv
    read_tracer
 
 
