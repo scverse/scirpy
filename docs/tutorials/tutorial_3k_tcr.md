@@ -7,13 +7,13 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.3.2
+      jupytext_version: 1.4.1
 ---
 
 # Analysis of 3k T cells from cancer
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-In this tutorial, we re-analize single-cell TCR/RNA-seq data from Wu et al (:cite:`Wu2020`)
+In this tutorial, we re-analize single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
 generated on the 10x Genomics platform. The original dataset consists of >140k T cells
 from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
@@ -24,7 +24,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %autoreload 2
 import sys
 
-sys.path.append("../..")
+sys.path.append("../..") 
 import scirpy as ir
 import pandas as pd
 import numpy as np
@@ -79,7 +79,7 @@ adata.obs
 .. note:: **Importing data**
 
     `scirpy` supports importing TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
-    or `TraCeR <https://github.com/Teichlab/tracer>`_. (SMARTseq2). 
+    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2). 
     See :ref:`api-io` for more details.
 
     This particular dataset has been imported using :func:`scirpy.read_10x_vdj_csv` and merged
@@ -170,7 +170,7 @@ ir.pl.group_abundance(
 )
 ```
 
-Indeed, in this dataset, ~7% of cells have more than a one pair of productive T-cell receptors:
+Indeed, in this dataset, ~6% of cells have more than a one pair of productive T-cell receptors:
 
 ```python
 print("Fraction of cells with more than one pair of TCRs: {:.2f}".format(
@@ -262,73 +262,87 @@ ir.tl.clonotype_network(adata, min_size=2)
 ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
-Let's re-compute the network with a `cutoff` of `15`.
-That's the equivalent of 3 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
-
-Additionally, we set `chains` to `all`. This results in the distances not being only
-computed between the most abundant pair of T-cell receptors, but instead, will
-take the minimal distance between any pair of T-cell receptors.
+Let's re-compute the network with a `cutoff` of `10`.
+That's the equivalent of 2 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
 
 ```python
 sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=15, receptor_arms="all")
+ir.pp.tcr_neighbors(adata, cutoff=10, receptor_arms="all", dual_tcr="all")
 ir.tl.define_clonotypes(adata, partitions="connected")
 ```
 
 ```python
-ir.tl.clonotype_network(adata, min_size=3)
+ir.tl.clonotype_network(adata, min_size=4)
 ```
 
 Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more. 
 
 ```python
-ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=3)
+ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=3, size=80)
 ```
 
-Now we show the same graph, colored by sample.
-We observe that for instance clonotypes 247 and 293 are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 106 is _public_, i.e.
-it is shared across tissues and/or patients.
+Now we show the same graph, colored by patient.
+We observe that for instance clonotypes 277 and 211 (center) are _private_, i.e. they contain cells from
+a single sample only. On the other hand, for instance clonotype 333 (bottom left) is _public_, i.e.
+it is shared across patients _Lung3_ and _Lung1_. 
 
 ```python
-ir.pl.clonotype_network(adata, color="sample")
+ir.pl.clonotype_network(adata, color="patient", size=80)
+```
+
+We can now extract information (e.g. CDR3-sequences) from a specific clonotype by subsetting `AnnData`. 
+Clonotype `333` does not have a detected alpha chain. 
+
+```python
+adata.obs.loc[adata.obs["clonotype"] == "333", ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"]]
 ```
 
 ## Clonotype analysis
 
 ### Clonal expansion
 
+<!-- #raw raw_mimetype="text/restructuredtext" -->
 Let's visualize the number of expanded clonotypes (i.e. clonotypes consisting
-of more than one cell) by cell-type. The first option is to add a column with the *clonal expansion*
-to `adata.obs` and plot it on the UMAP plot. 
+of more than one cell) by cell-type. The first option is to add a column with the :func:`scirpy.tl.clonal_expansion` 
+to `adata.obs` and overlay it on the UMAP plot. 
+<!-- #endraw -->
 
 ```python
 ir.tl.clonal_expansion(adata)
 ```
 
+`clonal_expansion` refers to expansion categories, i.e singleton clonotypes, clonotypes with 2 cells and more than 2 cells. 
+The `clonotype_size` refers to the absolute number of cells in a clonotype. 
+
 ```python
 sc.pl.umap(adata, color=["clonal_expansion", "clonotype_size"])
 ```
 
+<!-- #raw raw_mimetype="text/restructuredtext" -->
 The second option is to show the number of cells belonging to an expanded clonotype per category
-in a stacked bar plot: 
+in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting function. 
+<!-- #endraw -->
 
 ```python
 ir.pl.clonal_expansion(adata, groupby="cluster", clip_at=4, normalize=False)
 ```
 
-The same plot, normalized to cluster size: 
+The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection
+for a certain, reactive T-cell clone. It, therefore, makes sense that CD8+ effector T-cells 
+have the largest fraction of expanded clonotypes. 
 
 ```python
 ir.pl.clonal_expansion(adata, "cluster")
 ```
 
+<!-- #raw raw_mimetype="text/restructuredtext" -->
 Expectedly, the CD8+ effector T cells have the largest fraction of expanded clonotypes. 
 
-Consistent with this observation, they have the lowest alpha diversity of clonotypes: 
+Consistent with this observation, they have the lowest :func:`scirpy.pl.alpha_diversity` of clonotypes.  
+<!-- #endraw -->
 
 ```python
 ax = ir.pl.alpha_diversity(adata, groupby="cluster")
@@ -348,8 +362,8 @@ ir.pl.group_abundance(
 )
 ```
 
-When cell-types are considered, it might be benefitial to normalize the counts
-to the sample size: 
+It might be beneficial to normalize the counts
+to the number of cells per sample to mitigate biases due to different sample sizes: 
 
 ```python
 ir.pl.group_abundance(
@@ -358,22 +372,20 @@ ir.pl.group_abundance(
 ```
 
 Coloring the bars by patient gives us information about public and private clonotypes: 
-While most clonotypes are private, i.e. specific to a certain tissue, 
-some of them are public, i.e. they are shared across different tissues. 
+Some clonotypes are *private*, i.e. specific to a certain tissue, 
+others are *public*, i.e. they are shared across different tissues. 
 
 ```python
 ax = ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="sample", max_cols=10
+    adata, groupby="clonotype", target_col="source", max_cols=15, fig_kws={"dpi": 100}
 )
-ax.legend(loc=(1.1, 0.01), ncol=4, fontsize="x-small") 
 ```
 
-However, none of them is shared across patients.  
-This is consistent with the observation we made earlier on the clonotype network. 
+However, clonotypes that are shared between *patients* are rare: 
 
 ```python
-ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="patient", max_cols=10
+ax = ir.pl.group_abundance(
+    adata, groupby="clonotype", target_col="patient", max_cols=15, fig_kws={"dpi": 100}
 )
 ```
 
@@ -381,7 +393,7 @@ ir.pl.group_abundance(
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 :func:`scirpy.tl.group_abundance` can also give us some information on VDJ usage. 
-We can choose any of the `{TRA,TRB}_{1,2]_{v,d,j,c}_gene` columns to make a stacked bar plot. 
+We can choose any of the `{TRA,TRB}_{1,2}_{v,d,j,c}_gene` columns to make a stacked bar plot. 
 We use `max_col` to limit the plot to the 10 most abundant V-genes. 
 <!-- #endraw -->
 
@@ -416,6 +428,12 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 ```
 
+We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes: 
+
+```python
+ir.pl.vdj_usage(adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]), :], top_n=None)
+```
+
 ### Spectratype plots
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -423,44 +441,22 @@ ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 <!-- #endraw -->
 
 ```python
-p = ir.pl.spectratype(adata, target_col="sample")
+ir.pl.spectratype(adata, target_col="cluster", viztype="bar", fig_kws={"dpi": 120})
 ```
+
+The same chart visualized as "ridge"-plot: 
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="line", fig_kws={"dpi": 120})
+ir.pl.spectratype(
+    adata,
+    target_col="cluster",
+    viztype="curve",
+    fig_kws={"dpi": 120},
+    kde_kws={'curve_layout': 'shifted', 'kde_norm': False, 'kde_norm': False}
+)
 ```
 
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'shade': False})
-```
-
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120})
-```
-
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'shade': False, 'kde_norm': False})
-```
-
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'shade': True, 'curve_layout': 'stacked', 'kde_norm': False})
-```
-
-The same as line chart, normalized to cluster size: 
-
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'curve_layout': 'shifted', 'kde_norm': False, 'kde_norm': False})
-```
-
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="curve", fig_kws={"dpi": 120}, kde_kws={'curve_layout': 'shifted', 'order': ['CD8_Trm', 'CD8_Tem', 'CD8_Teff', 'CD4_Treg', 'CD4_IL6ST', 'CD4_RPL32', 'CD4_FOSS', 'CD4_Trm', 'CD4_TCF7', 'other'], 'kde_norm': False})
-```
-
-```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="line", fraction="cluster", fig_kws={"dpi": 120})
-```
-
-Again, to pre-select specific genes, we can simply filter the `adata` object before plotting. 
+A spectratype-plot by gene usage. To pre-select specific genes, we can simply filter the `adata` object before plotting. 
 
 ```python
 ir.pl.spectratype(
@@ -468,13 +464,12 @@ ir.pl.spectratype(
     groupby="TRB_1_cdr3",
     target_col="TRB_1_v_gene",
     fraction="sample",
-    fig_kws={'dpi': 150}
+    fig_kws={'dpi': 120}
 )
 ```
 
-```python
-adata.obs.head()
-```
+## Experimental plots
+
 
 ### Repertoire overlaps
 
