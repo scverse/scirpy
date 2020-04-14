@@ -4,8 +4,15 @@ import numpy as np
 import pytest
 
 
-# def test_read_10x_example():
-#     anndata = read_10x_vdj("tutorial/example_data/10x/all_contig_annotations.json")
+def test_read_10x_example():
+    """Test that a full 10x CSV table can be imported without errors.
+
+    Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
+    under CC-BY-4.0
+    """
+    anndata = read_10x_vdj_csv(
+        "tests/data/10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz"
+    )
 
 
 # def test_read_tracer_example():
