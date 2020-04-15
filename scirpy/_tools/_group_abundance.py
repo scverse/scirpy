@@ -26,7 +26,8 @@ def _group_abundance(
     # Calculate distribution of lengths in each group. Use sum instead of count
     # to reflect weights
     group_counts = (
-        tcr_obs.groupby([groupby, target_col])["count", "weight"]
+        tcr_obs.loc[:, [groupby, target_col, "count", "weight"]]
+        .groupby([groupby, target_col], observed=True)
         .sum()
         .reset_index()
         .rename(columns={"weight": "weighted_count"})
