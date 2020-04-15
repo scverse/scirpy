@@ -19,9 +19,9 @@ classifiers = [
 requires-python = '>= 3.6'
 requires = [
     'get_version',
-    'scanpy',
-    # pandas <1 until scanpy is fully compatible...
-    'pandas<1',
+    'anndata>=0.7.1',
+    'scanpy>=1.4.5.post3',
+    'pandas>=0.21',
     'numpy',
     'scipy',
     'parasail',
