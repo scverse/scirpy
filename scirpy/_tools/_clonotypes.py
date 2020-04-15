@@ -49,7 +49,7 @@ def _define_clonotypes_no_graph(
     clonotype_col = np.array(
         [
             "clonotype_{}".format(x)
-            for x in adata.obs.groupby(groupby_cols[flavor]).ngroup()
+            for x in adata.obs.groupby(groupby_cols[flavor], observed=True).ngroup()
         ]
     )
     clonotype_col[

@@ -494,5 +494,9 @@ ir.pl.repertoire_overlap(adata, 'sample', dendro_only=True, heatmap_cats=['sourc
 ```
 
 ```python
-ir.pl.repertoire_overlap(adata, 'sample', pair_to_plot=('LN2', 'LT2'))
+ir.pl.repertoire_overlap(adata, 'sample', pair_to_plot=['LN2', 'LT2'])
+```
+
+```python
+
 ```
