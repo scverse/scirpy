@@ -81,7 +81,11 @@ def repertoire_overlap(
         if heatmap_cats is not None:
             clust_colors, leg_colors = [], []
             for lbl in heatmap_cats:
-                labels = adata.obs.groupby([groupby, lbl]).agg("size").reset_index()
+                labels = (
+                    adata.obs.groupby([groupby, lbl], observed=True)
+                    .agg("size")
+                    .reset_index()
+                )
                 label_levels = labels[lbl].unique()
                 label_pal = sns.cubehelix_palette(
                     label_levels.size,
@@ -153,7 +157,7 @@ def repertoire_overlap(
         if valid_pairs:
             if o_df.shape[1] == 2:
                 o_df = o_df.loc[(o_df.sum(axis=1) != 0), :]
-                o_df = o_df.groupby(pair_to_plot).agg("size")
+                o_df = o_df.groupby(pair_to_plot, observed=True).agg("size")
                 o_df = o_df.reset_index()
                 o_df.columns = ("x", "y", "z")
                 o_df["z"] -= o_df["z"].min()
