@@ -52,7 +52,9 @@ def alpha_diversity(
 
     tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clono_counts = (
-        tcr_obs.groupby([groupby, target_col]).size().reset_index(name="count")
+        tcr_obs.groupby([groupby, target_col], observed=True)
+        .size()
+        .reset_index(name="count")
     )
 
     diversity = dict()

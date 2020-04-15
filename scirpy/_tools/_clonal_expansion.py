@@ -26,7 +26,7 @@ def _clip_and_count(
     groupby = [groupby] if isinstance(groupby, str) else groupby
     groupby_cols = [target_col] if groupby is None else groupby + [target_col]
     clonotype_counts = (
-        adata.obs.groupby(groupby_cols)
+        adata.obs.groupby(groupby_cols, observed=True)
         .size()
         .reset_index(name="tmp_count")
         .assign(
