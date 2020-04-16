@@ -1,6 +1,6 @@
 Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data
 ====================================================================================
-|tests| |docs| |pypi| |black|
+|tests| |docs| |pypi| |bioconda| |black|
 
 .. |tests| image:: https://github.com/grst/scirpy/workflows/tests/badge.svg
     :target: https://github.com/icbi-lab/scirpy/actions?query=workflow%3Atests
@@ -13,6 +13,10 @@ Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing 
 .. |pypi| image:: https://img.shields.io/pypi/v/scirpy?logo=PyPI
     :target: https://pypi.org/project/scirpy/
     :alt: PyPI
+    
+.. |bioconda| image:: https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat
+     :target: http://bioconda.github.io/recipes/scirpy/README.html
+     :alt: Bioconda
     
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
@@ -50,6 +54,13 @@ Install the latest release of `scirpy` from `PyPI <https://pypi.org/project/scir
 .. code-block::
 
     pip install scirpy
+    
+
+Or, get it from `Bioconda <http://bioconda.github.io/recipes/scirpy/README.html>`_:
+
+.. code-block::
+
+    conda install -c conda-forge -c bioconda scirpy
 
 
 Alternatively, install the latest development version:
@@ -74,4 +85,5 @@ Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues>`_.
 
 Citation
 ^^^^^^^^
-> Sturm, G. Tamas, GS, ..., Finotello, F. (2020). Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data. BioRxiv. doi:`10.1101/2020.04.10.035865 <https://doi.org/10.1101/2020.04.10.035865>`_
+
+    Sturm, G. Tamas, GS, ..., Finotello, F. (2020). Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data. BioRxiv. doi:`10.1101/2020.04.10.035865 <https://doi.org/10.1101/2020.04.10.035865>`_
