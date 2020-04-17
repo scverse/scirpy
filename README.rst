@@ -2,11 +2,11 @@ Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing 
 ====================================================================================
 |tests| |docs| |pypi| |bioconda| |black|
 
-.. |tests| image:: https://github.com/grst/scirpy/workflows/tests/badge.svg
+.. |tests| image:: https://github.com/icbi-lab/scirpy/workflows/tests/badge.svg
     :target: https://github.com/icbi-lab/scirpy/actions?query=workflow%3Atests
     :alt: Build Status
 
-.. |docs| image::  https://github.com/grst/scirpy/workflows/docs/badge.svg
+.. |docs| image::  https://github.com/icbi-lab/scirpy/workflows/docs/badge.svg
     :target: https://icbi-lab.github.io/scirpy
     :alt: Documentation Status
     
@@ -42,7 +42,7 @@ In the documentation, you can also learn more about our `T-cell receptor model <
 
 Case-study
 ~~~~~~~~~~
-The case study from our preprint is available `here <https://grst.github.io/scirpy-paper/wu2020.html>`_. 
+The case study from our preprint is available `here <https://icbi-lab.github.io/scirpy-paper/wu2020.html>`_. 
     
 Installation
 ^^^^^^^^^^^^
@@ -77,7 +77,7 @@ Bioconda coming soon.
 
 Release notes
 ^^^^^^^^^^^^^
-See the `release section <https://github.com/grst/scirpy/releases>`_. 
+See the `release section <https://github.com/icbi-lab/scirpy/releases>`_. 
 
 Contact
 ^^^^^^^
