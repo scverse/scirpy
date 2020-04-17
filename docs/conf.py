@@ -7,6 +7,7 @@ import warnings
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE / "extensions"))
 
 from scirpy import __author__, __version__
 
@@ -33,11 +34,11 @@ def setup(app):
 
 nitpicky = True  # Warn about broken links
 nitpick_ignore = [
-    ("py:data", "typing.Optional"),
-    ("py:class", "typing.Collection"),
-    ("py:class", "typing.List"),
-    ("py:class", "str"),
-    ("py:class", "dict"),
+    # ("py:data", "typing.Optional"),
+    # ("py:class", "typing.Collection"),
+    # ("py:class", "typing.List"),
+    # ("py:class", "str"),
+    # ("py:class", "dict"),
 ]
 needs_sphinx = "2.0"  # Nicer param docs
 
@@ -46,11 +47,13 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinxcontrib.bibtex",
     "scanpydoc",
     "nbsphinx",
+    *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 
 autosummary_generate = True
@@ -79,7 +82,7 @@ html_theme = "sphinx_rtd_theme"
 pygments_style = "sphinx"
 html_context = dict(
     display_github=True,  # Integrate GitHub
-    github_user="grst",  # Username
+    github_user="icbi-lab",  # Username
     github_repo=project,  # Repo name
     github_version="master",  # Version
     conf_py_path="/docs/",  # Path in the checkout to the docs root
@@ -89,6 +92,7 @@ intersphinx_mapping = dict(
     scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
     anndata=("https://anndata.readthedocs.io/en/stable/", None),
     h5py=("http://docs.h5py.org/en/stable/", None),
+    cycler=("https://matplotlib.org/cycler/", None),
     ipython=("https://ipython.readthedocs.io/en/stable/", None),
     leidenalg=("https://leidenalg.readthedocs.io/en/latest/", None),
     matplotlib=("https://matplotlib.org/", None),
@@ -98,4 +102,5 @@ intersphinx_mapping = dict(
     scipy=("https://docs.scipy.org/doc/scipy/reference/", None),
     seaborn=("https://seaborn.pydata.org/", None),
     sklearn=("https://scikit-learn.org/stable/", None),
+    networkx=("https://networkx.github.io/documentation/networkx-1.10/", None),
 )
