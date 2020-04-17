@@ -13,14 +13,14 @@ import scanpy as sc
 from matplotlib import rcParams, cycler, patheffects
 
 
-_common_doc = """
+_common_doc = """\
     style
         Style to apply to the axes. Currently supported are `None` (disable styling)
         and default (default style). 
     style_kws
-        Parameters passed to :meth:`_plotting._styling._style_axes`
+        Parameters passed to :func:`scirpy._plotting._styling._style_axes`
     fig_kws
-        Parameters passed to the :meth:`matplotlib.pyplot.figure` call 
+        Parameters passed to the :func:`matplotlib.pyplot.figure` call 
         if no `ax` is specified. Defaults to `{}` if None. 
 """.format(
     str(DEFAULT_FIG_KWS)
@@ -53,7 +53,8 @@ def bar(
     
     Returns
     -------
-    Axes object 
+    ax
+        Axes object 
     """
 
     if ax is None:
