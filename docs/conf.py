@@ -2,11 +2,17 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import jupytext
+from sphinx.deprecation import RemovedInSphinx40Warning
+import warnings
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
 
 from scirpy import __author__, __version__
+
+# ignore Future warnings (which are caused by dependencies)
+warnings.filterwarnings("ignore", category=RemovedInSphinx40Warning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # General information
 project = "scirpy"
@@ -22,7 +28,7 @@ html_static_path = ["_static"]
 
 
 def setup(app):
-    app.add_stylesheet("custom.css")
+    app.add_css_file("custom.css")
 
 
 nitpicky = True  # Warn about broken links
