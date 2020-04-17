@@ -91,6 +91,8 @@ def clonotype_network(
 ):
     """\
     Plot the clonotype network
+
+    Parameters
     ----------
     adata 
         annotated data matrix

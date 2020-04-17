@@ -614,10 +614,10 @@ def tcr_neighbors(
     adata
         annotated data matrix
     metric
-        "identity" = Calculate 0/1 distance based on sequence identity. Equals a 
-            cutoff of 0. 
+        "identity" - Calculate 0/1 distance based on sequence identity. Equals a 
+        cutoff of 0. 
         "alignment" - Calculate distance using pairwise sequence alignment 
-            and BLOSUM62 matrix
+        and BLOSUM62 matrix
         "levenshtein" - Levenshtein edit distance
     cutoff
         Two cells with a distance <= the cutoff will be connected. 
