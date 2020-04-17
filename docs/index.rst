@@ -5,5 +5,6 @@
 
    tutorials
    api
-   tcr-biology 
+   tcr-biology
+   glossary
    bibliography
