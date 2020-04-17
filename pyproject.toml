@@ -45,6 +45,7 @@ doc = [
     'sphinx_autodoc_typehints>=1.8.0',
     'sphinx_rtd_theme>=0.4',
     'scanpydoc>=0.4.5',
+    'typing_extensions; python_version < "3.8"',  # for `Literal`
     # for tutorial
     'leidenalg',
     'nbsphinx>=0.6.0',
