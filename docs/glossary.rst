@@ -38,7 +38,8 @@ Glossary
         T cells by leveraging a T cell model similar to the one proposed in 
         :cite:`Stubbington2016-kh`, where T cells are allowed to have a primary and a secondary 
         pair of α- and β chains. For each cell, the primary pair consists of the α- and β-chain 
-        with the highest read count. Likewise, the secondary pair is the pair of α/β-chains with
+        with the highest read count (or :term:`UMI` count, if available). 
+        Likewise, the secondary pair is the pair of α/β-chains with
         the second highest expression level. Based on the assumption that each cell has only two
         copies of the underlying chromosome set, if more than two variants of a chain are 
         recovered for the same cell, the excess TCR chains are ignored by Scirpy and the 
@@ -46,4 +47,6 @@ Glossary
         of discarding or including multichain cells in downstream analyses.
 
     Multichain
+
+    UMI
 
