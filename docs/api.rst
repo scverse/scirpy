@@ -1,16 +1,12 @@
 API
 ===
 
-
-.. module:: scirpy 
-
-.. automodule:: scirpy 
-   :noindex:
-
 .. _api-io:
 
 Input/Output
 ------------
+
+.. module:: scirpy
 
 .. autosummary::
    :toctree: .
@@ -20,8 +16,8 @@ Input/Output
    read_tracer
 
 
-Datasets
---------
+Datasets: `datasets`
+--------------------
 
 .. module:: scirpy.datasets
 
