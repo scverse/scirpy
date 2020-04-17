@@ -7,4 +7,4 @@
    api
    tcr-biology
    glossary
-   bibliography
+   zzz_bibliography
