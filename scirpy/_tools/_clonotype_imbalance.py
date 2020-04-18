@@ -148,7 +148,7 @@ def clonotype_imbalance(
             for e in rel_case_sizes.index.values:
                 clt_freq.append((suspect, hue, case_label, e, rel_case_sizes[e]))
             for e in rel_control_sizes.index.values:
-                clt_freq.append((suspect, hue, control_label, e, rel_control_sizes[e]))
+                clt_freq.append((suspect, hue, control_label, e, 1))#rel_control_sizes[e]))
 
     # Convert records to data frames
     clt_freq = pd.DataFrame.from_records(
