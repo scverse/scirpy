@@ -140,6 +140,10 @@ def clonotype_imbalance(
             control_mean_freq = np.mean((control_sizes + 0.0001) / np.array(ncontrol))
             control_presence = control_sizes.sum()
             control_absence = ncontrol.sum() - control_presence
+            if control_absence <= 0:
+                control_absence = 0.0
+            if case_absence <= 0:
+                case_absence = 0.0
             oddsratio, p = fisher_exact(
                 [[case_presence, control_presence], [case_absence, control_absence]]
             )
