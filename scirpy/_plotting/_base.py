@@ -380,6 +380,8 @@ def volcano(
         axlim = data["x"].max() + 0.1 * (data["x"].max())
     else:
         axlim = -1 * (data["x"].min() - 0.1 * (data["x"].min()))
+    if np.isinf(axlim) or np.isnan(axlim):
+        axlim = 5
     ax.set_xlim(-axlim, axlim)
     ax.set_ylim(0, data["y"].max() + 0.1 * (data["y"].max()))
     if style_kws is None:
