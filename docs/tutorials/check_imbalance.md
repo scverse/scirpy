@@ -473,6 +473,12 @@ ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_
 ```
 
 ```python
+# Calculate statistics with Fischer's test
+
+f1, s1 = ir.tl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', inplace=False)
+```
+
+```python
 # Show the difference for top clonotypes
 
 ax = ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis')

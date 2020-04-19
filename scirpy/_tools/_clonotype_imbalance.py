@@ -93,7 +93,7 @@ def clonotype_imbalance(
     else:
         group_cols.append(additional_hue)
         hues = adata.obs[additional_hue].unique()
-    df = adata.obs.groupby(group_cols).agg("size").reset_index()
+    df = adata.obs.groupby(group_cols, observed=True).agg("size").reset_index()
 
     for hue in hues:
         if hue is None:
@@ -112,6 +112,8 @@ def clonotype_imbalance(
         case_control_groups.append([hue, cases, controls, ncase, ncontrol])
 
     #  Compare groups with Fischer's test
+    case_control_groups = case_control_groups[:1]
+
     clt_freq, clt_stats = [], []
     if control_label is None:
         control_label = "Background"
@@ -133,26 +135,21 @@ def clonotype_imbalance(
             control_sizes = tdf2[suspect]
             rel_case_sizes = case_sizes / np.array(ncase)
             rel_control_sizes = control_sizes / np.array(ncontrol)
-            np.mean((case_sizes + 0.0001) / np.array(ncase))
             case_mean_freq = np.mean((case_sizes + 0.0001) / np.array(ncase))
             case_presence = case_sizes.sum()
             case_absence = ncase.sum() - case_presence
             control_mean_freq = np.mean((control_sizes + 0.0001) / np.array(ncontrol))
             control_presence = control_sizes.sum()
             control_absence = ncontrol.sum() - control_presence
-            if control_absence <= 0:
-                control_absence = 0.0
-            if case_absence <= 0:
-                case_absence = 0.0
             oddsratio, p = fisher_exact(
                 [[case_presence, control_presence], [case_absence, control_absence]]
             )
             logfoldchange = np.log2(case_mean_freq / control_mean_freq)
             clt_stats.append([suspect, p, -np.log10(p), logfoldchange])
             for e in rel_case_sizes.index.values:
-                clt_freq.append((suspect, hue, case_label, e, rel_case_sizes[e]))
+                clt_freq.append((suspect, hue, case_label, e, rel_case_sizes.loc[e]))
             for e in rel_control_sizes.index.values:
-                clt_freq.append((suspect, hue, control_label, e, rel_control_sizes[e]))
+                clt_freq.append((suspect, hue, control_label, e, rel_control_sizes.loc[e]))
 
     # Convert records to data frames
     clt_freq = pd.DataFrame.from_records(
@@ -168,12 +165,12 @@ def clonotype_imbalance(
     clt_stats = pd.DataFrame.from_records(
         clt_stats, columns=[target_col, "pValue", "logpValue", "logFC"]
     )
+    clt_stats = clt_stats.sort_values(by="pValue")
 
     if inplace:
 
         # Store calculated data
         adata.uns[added_key] = {"abundance": clt_freq, "pvalues": clt_stats}
-
         return
 
     else:
