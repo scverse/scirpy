@@ -73,8 +73,6 @@ Alternatively, install the latest development version:
     flit install
 
 
-Bioconda coming soon. 
-
 Release notes
 ^^^^^^^^^^^^^
 See the `release section <https://github.com/icbi-lab/scirpy/releases>`_. 
