@@ -325,65 +325,11 @@ def volcano(
     else:
         data.columns = ["x", "y", "z"]
         ax.scatter(data["x"], data["y"], c=data["z"], s=5, alpha=0.3)
-
-    if data["x"].max() > abs(data["x"].min()):
-        axlim = data["x"].max() + 0.1 * (data["x"].max())
-    else:
-        axlim = -1 * (data["x"].min() - 0.1 * (data["x"].min()))
-    ax.set_xlim(-axlim, axlim)
-    ax.set_ylim(0, data["y"].max() + 0.1 * (data["y"].max()))
-    if style_kws is None:
-        style_kws = dict()
-    style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
-    return ax
-
-
-@_doc_params(common_doc=_common_doc)
-def volcano(
-    data: pd.DataFrame,
-    *,
-    ax: Union[plt.Axes, None] = None,
-    style_kws: Union[dict, None] = None,
-    style: Union[Literal["default"], None] = "default",
-    fig_kws: Union[dict, None] = None,
-) -> plt.Axes:
-    """Scatterplot where dot size is proportional to group size.
-    Draws bars without stdev. 
-
-    Parameters
-    ----------
-    data
-        Dataframe with three columns: log-fold-change, log10 p-value and optionally colors.
-    ax
-        Plot into this axes object
-    {common_doc}
-    
-    Returns
-    -------
-    Axes object 
-    """
-
-    if ax is None:
-        ax = _init_ax(fig_kws)
-
-    if data.shape[1] > 3:
-        data = data.iloc[:, [0, 1, 2]]
-    if data.shape[1] == 2:
-        data.columns = ["x", "y"]
-        ax.scatter(data["x"], data["y"], s=5, alpha=0.3)
-    else:
-        data.columns = ["x", "y", "z"]
-        ax.scatter(data["x"], data["y"], c=data["z"], s=5, alpha=0.3)
-
-    if data["x"].max() > abs(data["x"].min()):
-        axlim = data["x"].max() + 0.1 * (data["x"].max())
-    else:
-        axlim = -1 * (data["x"].min() - 0.1 * (data["x"].min()))
+    axlim = 1.1 * max(data["x"].max(), abs(data["x"].min()))
     if np.isinf(axlim) or np.isnan(axlim):
         axlim = 5
     ax.set_xlim(-axlim, axlim)
-    ax.set_ylim(0, data["y"].max() + 0.1 * (data["y"].max()))
+    ax.set_ylim(0, 1.1 * (data["y"].max()))
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False

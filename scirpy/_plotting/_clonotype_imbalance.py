@@ -26,6 +26,7 @@ def clonotype_imbalance(
     xlab: str = "log2FoldChange",
     ylab: str = "-log10(p-value)",
     title: str = "Volcano plot",
+    fig_kws: Union[None, dict] = None,
     **kwargs
 ) -> plt.Axes:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
@@ -66,6 +67,8 @@ def clonotype_imbalance(
         Whether results should be added to `uns` or returned directly.
     added_key
         If the tools has already been run, the results are added to `uns` under this key.
+    fig_kws
+        Keywords that will be passed on to seaborn. Controls transparency and dodge by default.
     **kwargs
         Additional arguments passed to the base plotting function.  
     
@@ -98,6 +101,8 @@ def clonotype_imbalance(
         return volcano(df, **kwargs)
 
     else:
+        if fig_kws is None:
+            fig_kws = {"alpha": 0.7, "dodge": True}
         df = df.sort_values(by="pValue")
         df = df.head(n=top_n)
 
@@ -116,27 +121,20 @@ def clonotype_imbalance(
                 id_vars=[groupby, replicate_col],
                 value_name="Normalized abundance",
             )
+            tclt_kws = {
+                "x": target_col,
+                "y": "Normalized abundance",
+                "hue": groupby,
+                "data": tclt_df,
+            }
             if plot_type == "box":
-                ax = sns.boxplot(
-                    x=target_col, y="Normalized abundance", hue=groupby, data=tclt_df
-                )
+                ax = sns.boxplot(**tclt_kws)
             else:
                 if plot_type == "bar":
-                    ax = sns.barplot(
-                        x=target_col,
-                        y="Normalized abundance",
-                        hue=groupby,
-                        data=tclt_df,
-                    )
+                    ax = sns.barplot(**tclt_kws)
                 else:
-                    ax = sns.stripplot(
-                        x=target_col,
-                        y="Normalized abundance",
-                        hue=groupby,
-                        data=tclt_df,
-                        dodge=True,
-                        alpha=0.7,
-                    )
+                    tclt_kws.update(fig_kws)
+                    ax = sns.stripplot(**tclt_kws)
 
         else:
             tclt_df = tclt_df.pivot_table(
@@ -150,13 +148,16 @@ def clonotype_imbalance(
                 id_vars=[additional_hue, groupby, replicate_col],
                 value_name="Normalized abundance",
             )
-            ax = sns.catplot(
-                x=target_col,
-                y="Normalized abundance",
-                hue=groupby,
-                kind=plot_type,
-                col=additional_hue,
-                data=tclt_df,
-                dodge=True,
-            )
+            tclt_kws = {
+                "x": target_col,
+                "y": "Normalized abundance",
+                "hue": groupby,
+                "data": tclt_df,
+            }
+            fig_kws["kind"] = plot_type
+            fig_kws["col"] = additional_hue
+            tclt_kws.update(fig_kws)
+            if plot_type in ["box", "bar"]:
+                tclt_kws.pop("alpha")
+            ax = sns.catplot(**tclt_kws)
         return ax
