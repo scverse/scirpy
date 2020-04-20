@@ -465,6 +465,8 @@ def test_clonotype_imbalance(adata_tra):
         'Normalized abundance': 0.0}},
         orient='index'
     )
+    print(freq)
+    print(expected_freq)
     pdt.assert_frame_equal(freq, expected_freq, check_names=False, check_dtype=False)
     expected_stat = pd.DataFrame.from_dict(
         {0: {'clonotype': 'clonotype_986',
