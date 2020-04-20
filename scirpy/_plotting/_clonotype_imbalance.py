@@ -98,20 +98,17 @@ def clonotype_imbalance(
         return volcano(df, **kwargs)
 
     else:
-        if "sns_kws" in kwargs:
-            sns_kws = kwargs["sns_kws"]
-        else:
-            sns_kws = dict()
-        if "alpha" not in sns_kws:
-            if "alpha" in kwargs:
-                sns_kws["alpha"] = kwargs["alpha"]
-            else:
-                sns_kws["alpha"] = 0.7
-        if "dodge" not in sns_kws:
-            if "dodge" in kwargs:
-                sns_kws["dodge"] = kwargs["dodge"]
-            else:
-                sns_kws["dodge"] = True
+        if "alpha" not in kwargs:
+            kwargs["alpha"] = 0.7
+        if "dodge" not in kwargs:
+            kwargs["dodge"] = True
+
+        tclt_kws = {
+            "x": target_col,
+            "y": "Normalized abundance",
+            "hue": groupby,
+        }
+
         df = df.sort_values(by="pValue")
         df = df.head(n=top_n)
 
@@ -125,24 +122,18 @@ def clonotype_imbalance(
                 values="Normalized abundance",
                 fill_value=0,
             ).reset_index()
-            tclt_df = pd.melt(
+            tclt_kws["data"] = pd.melt(
                 tclt_df,
                 id_vars=[groupby, replicate_col],
                 value_name="Normalized abundance",
             )
-            tclt_kws = {
-                "x": target_col,
-                "y": "Normalized abundance",
-                "hue": groupby,
-                "data": tclt_df,
-            }
             if plot_type == "box":
                 ax = sns.boxplot(**tclt_kws)
             else:
                 if plot_type == "bar":
                     ax = sns.barplot(**tclt_kws)
                 else:
-                    tclt_kws.update(sns_kws)
+                    tclt_kws.update(kwargs)
                     ax = sns.stripplot(**tclt_kws)
 
         else:
@@ -152,20 +143,14 @@ def clonotype_imbalance(
                 values="Normalized abundance",
                 fill_value=0,
             ).reset_index()
-            tclt_df = pd.melt(
+            tclt_kws["data"] = pd.melt(
                 tclt_df,
                 id_vars=[additional_hue, groupby, replicate_col],
                 value_name="Normalized abundance",
             )
-            tclt_kws = {
-                "x": target_col,
-                "y": "Normalized abundance",
-                "hue": groupby,
-                "data": tclt_df,
-            }
-            sns_kws["kind"] = plot_type
-            sns_kws["col"] = additional_hue
-            tclt_kws.update(sns_kws)
+            kwargs["kind"] = plot_type
+            kwargs["col"] = additional_hue
+            tclt_kws.update(kwargs)
             if plot_type in ["box", "bar"]:
                 tclt_kws.pop("alpha")
             ax = sns.catplot(**tclt_kws)
