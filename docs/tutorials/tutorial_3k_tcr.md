@@ -649,7 +649,8 @@ freq, stat = ir.tl.clonotype_imbalance(zadata[zadata.obs.index.isin(['AAGGTTCCAC
 ```
 
 ```python
-freq = freq.sort_values(by=['clonotype', 'chain_pairing'])
+freq = freq.sort_values(by=['clonotype', 'chain_pairing', 'sample'])
+freq = freq.reset_index().iloc[:,1:6]
 freq
 ```
 
@@ -663,6 +664,12 @@ freq.to_dict(orient='index')
 
 ```python
 stat.to_dict(orient='index')
+```
+
+```python
+stat = stat.sort_values(by='clonotype')
+stat = stat.reset_index().iloc[:,1:5]
+stat
 ```
 
 ```python
