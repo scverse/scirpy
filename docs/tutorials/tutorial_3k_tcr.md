@@ -498,5 +498,17 @@ ir.pl.repertoire_overlap(adata, 'sample', pair_to_plot=['LN2', 'LT2'])
 ```
 
 ```python
+# Show clonotypes that are the most imbalance between Tumor and Control samples based on Fischer's test
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='strip')
+```
+
+```python
+# Plot a Volcano diagram of p-values and the fold difference between the two groups
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='volcano')
+```
+
+```python
 
 ```
