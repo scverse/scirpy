@@ -653,6 +653,10 @@ freq
 ```
 
 ```python
+freq['clonotype'].tolist()
+```
+
+```python
 freq.to_dict(orient='index')
 ```
 
