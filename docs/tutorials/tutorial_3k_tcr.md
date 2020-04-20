@@ -657,7 +657,7 @@ freq.to_dict(orient='index')
 ```
 
 ```python
-stat
+stat.to_dict(orient='index')
 ```
 
 ```python

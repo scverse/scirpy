@@ -336,7 +336,7 @@ def test_repertoire_overlap(adata_tra):
     npt.assert_equal(res.values, expected_cnt.values)
 
 def test_clonotype_imbalance(adata_tra):
-    freq, stat = ir.tl.clonotype_imbalance(adata_tra[adata_tra.obs.index.isin(['AAGGTTCCACCCAGTG-1', 'ACTATCTAGGGCTTCC-1', 'CAGTAACAGGCATGTG-1', 'CCTTACGGTCATCCCT-1','AAACCTGAGATAGCAT-1'])], replicate_col='sample', groupby='chain_pairing', case_label='Single pair', inplace=False)
+    freq, stat = st.tl.clonotype_imbalance(adata_tra[adata_tra.obs.index.isin(['AAGGTTCCACCCAGTG-1', 'ACTATCTAGGGCTTCC-1', 'CAGTAACAGGCATGTG-1', 'CCTTACGGTCATCCCT-1','AAACCTGAGATAGCAT-1'])], replicate_col='sample', groupby='chain_pairing', case_label='Single pair', inplace=False)
     expected_freq = pd.DataFrame.from_dict(
         {0: {'clonotype': 'clonotype_986',
         None: 'All',
