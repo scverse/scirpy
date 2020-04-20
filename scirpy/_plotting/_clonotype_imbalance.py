@@ -26,7 +26,6 @@ def clonotype_imbalance(
     xlab: str = "log2FoldChange",
     ylab: str = "-log10(p-value)",
     title: str = "Volcano plot",
-    fig_kws: Union[None, dict] = None,
     **kwargs
 ) -> plt.Axes:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
@@ -67,8 +66,6 @@ def clonotype_imbalance(
         Whether results should be added to `uns` or returned directly.
     added_key
         If the tools has already been run, the results are added to `uns` under this key.
-    fig_kws
-        Keywords that will be passed on to seaborn. Controls transparency and dodge by default.
     **kwargs
         Additional arguments passed to the base plotting function.  
     
@@ -101,8 +98,20 @@ def clonotype_imbalance(
         return volcano(df, **kwargs)
 
     else:
-        if fig_kws is None:
-            fig_kws = {"alpha": 0.7, "dodge": True}
+        if "sns_kws" in kwargs:
+            sns_kws = kwargs["sns_kws"]
+        else:
+            sns_kws = dict()
+        if "alpha" not in sns_kws:
+            if "alpha" in kwargs:
+                sns_kws["alpha"] = kwargs["alpha"]
+            else:
+                sns_kws["alpha"] = 0.7
+        if "dodge" not in sns_kws:
+            if "dodge" in kwargs:
+                sns_kws["dodge"] = kwargs["dodge"]
+            else:
+                sns_kws["dodge"] = True
         df = df.sort_values(by="pValue")
         df = df.head(n=top_n)
 
@@ -133,7 +142,7 @@ def clonotype_imbalance(
                 if plot_type == "bar":
                     ax = sns.barplot(**tclt_kws)
                 else:
-                    tclt_kws.update(fig_kws)
+                    tclt_kws.update(sns_kws)
                     ax = sns.stripplot(**tclt_kws)
 
         else:
@@ -154,9 +163,9 @@ def clonotype_imbalance(
                 "hue": groupby,
                 "data": tclt_df,
             }
-            fig_kws["kind"] = plot_type
-            fig_kws["col"] = additional_hue
-            tclt_kws.update(fig_kws)
+            sns_kws["kind"] = plot_type
+            sns_kws["col"] = additional_hue
+            tclt_kws.update(sns_kws)
             if plot_type in ["box", "bar"]:
                 tclt_kws.pop("alpha")
             ax = sns.catplot(**tclt_kws)

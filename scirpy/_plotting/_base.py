@@ -323,8 +323,8 @@ def volcano(
         data.columns = ["x", "y"]
         ax.scatter(data["x"], data["y"], s=5, alpha=0.3)
     else:
-        data.columns = ["x", "y", "z"]
-        ax.scatter(data["x"], data["y"], c=data["z"], s=5, alpha=0.3)
+        data.columns = ["x", "y", "color"]
+        ax.scatter(data["x"], data["y"], c=data["color"], s=5, alpha=0.3)
     axlim = 1.1 * max(data["x"].max(), abs(data["x"].min()))
     if np.isinf(axlim) or np.isnan(axlim):
         axlim = 5

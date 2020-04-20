@@ -79,10 +79,12 @@ def clonotype_imbalance(
             inplace=False,
         )
     else:
-        if overlap_key not in adata.uns:
-            raise ValueError()
-        else:
+        try:
             clonotype_presence = adata.uns[overlap_key]["weighted"]
+        except KeyError:
+            raise KeyError(
+                "Clonotype imbalance calculation depends on repertoire overlap, but the key you specified does not belong to a previous run of that tool."
+            )
 
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
