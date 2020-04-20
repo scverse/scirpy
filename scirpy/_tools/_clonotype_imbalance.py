@@ -286,7 +286,9 @@ def _extend_clt_freq(
     """
 
     for e in rel_case_sizes.index.values:
-        clt_freq.append((suspect, hue, case_label, e, rel_case_sizes.loc[e]))
+        clt_freq.append((suspect, hue, case_label, e, rel_case_sizes.loc[e].mean()))
     for e in rel_control_sizes.index.values:
-        clt_freq.append((suspect, hue, control_label, e, rel_control_sizes.loc[e]))
+        clt_freq.append(
+            (suspect, hue, control_label, e, rel_control_sizes.loc[e].mean())
+        )
     return clt_freq
