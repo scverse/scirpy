@@ -465,7 +465,7 @@ def test_clonotype_imbalance(adata_tra):
         'Normalized abundance': 0.0}},
         orient='index'
     )
-    npt.assert_equal(freq['Normalized abundance'], expected_freqfreq['Normalized abundance'])
+    npt.assert_equal(freq['Normalized abundance'], expected_freq['Normalized abundance'])
     expected_stat = pd.DataFrame.from_dict(
         {0: {'clonotype': 'clonotype_986',
         'pValue': 1.0,
