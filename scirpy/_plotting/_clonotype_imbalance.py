@@ -134,7 +134,7 @@ def clonotype_imbalance(
                 tclt_df,
                 id_vars=[groupby, replicate_col],
                 value_name="Normalized abundance",
-            )
+            )  # Melt is undoing pivot, but after pivot, we also get the zero freqs
             if plot_type == "box":
                 ax = sns.boxplot(**tclt_kws)
             else:
