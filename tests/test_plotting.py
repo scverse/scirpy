@@ -41,13 +41,22 @@ def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, target_col="sample")
     assert isinstance(p, plt.Axes)
 
+
 def test_repertoire_overlap(adata_tra):
     p = pl.repertoire_overlap(adata_tra, groupby="sample", dendro_only=True)
     assert isinstance(p, plt.Axes)
 
+
 def test_clonotype_imbalance(adata_tra):
-    p = pl.clonotype_imbalance(adata_tra, replicate_col='sample', groupby='chain_pairing', case_label='Single pair', plot_type='volcano')
+    p = pl.clonotype_imbalance(
+        adata_tra,
+        replicate_col="sample",
+        groupby="chain_pairing",
+        case_label="Single pair",
+        plot_type="volcano",
+    )
     assert isinstance(p, plt.Axes)
+
 
 def test_vdj_usage(adata_vdj):
     p = pl.vdj_usage(adata_vdj, fraction="sample")
@@ -57,7 +66,6 @@ def test_vdj_usage(adata_vdj):
 def test_clonotype_network(adata_clonotype_network):
     p = pl.clonotype_network(adata_clonotype_network)
     assert isinstance(p[0], plt.Axes)
-
 
 
 def test_clonotype_network_igraph(adata_clonotype_network):
