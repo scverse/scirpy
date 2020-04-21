@@ -78,6 +78,7 @@ Plotting: `pl`
    repertoire_overlap
    clonotype_imbalance
    clonotype_network
+   embedding
 
    
 Base plotting functions: `pl.base`

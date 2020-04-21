@@ -18,7 +18,7 @@ _common_doc = """\
         Style to apply to the axes. Currently supported are `None` (disable styling)
         and default (default style). 
     style_kws
-        Parameters passed to :func:`scirpy._plotting._styling._style_axes`
+        Parameters passed to :func:`scirpy._plotting._styling.style_axes`
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call 
         if no `ax` is specified. Defaults to `{}` if None. 
