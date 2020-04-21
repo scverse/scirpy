@@ -1,5 +1,5 @@
 from anndata import AnnData
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Sequence
 from scipy.stats import fisher_exact
 import numpy as np
 import pandas as pd
@@ -215,42 +215,47 @@ def _create_case_control_groups(
 
 
 def _calculate_imbalance(
-    case_sizes: Union[List, np.ndarray, pd.Series],
-    control_sizes: Union[List, np.ndarray, pd.Series],
-    ncase: Union[List, np.ndarray, pd.Series],
-    ncontrol: Union[List, np.ndarray, pd.Series],
+    case_sizes: Union[np.ndarray, pd.Series],
+    control_sizes: Union[np.ndarray, pd.Series],
+    ncase: Sequence,
+    ncontrol: Sequence,
 ) -> Tuple[float, float, np.ndarray, np.ndarray]:
-    """Calculate statistics for the probability of an imbalance in the contingency table among two groups. 
+    """Calculate statistics for the probability of an imbalance in the contingency table
+    among two groups. 
     
     Parameters
     ----------
     case_sizes
-        An iterable of sizes (conts or normalized counts) in a given group for each replicates. 
+        An iterable of sizes (conts or normalized counts) in a given group for
+        each replicates. 
     control_sizes
-        An iterable of sizes (conts or normalized counts) in the control group for each replicates.
+        An iterable of sizes (conts or normalized counts) in the control group for
+        each replicates.
     ncase
-        Total size (all counts or sum of normalized counts) of a given group for each replicates. 
+        Total size (all counts or sum of normalized counts) of a given group for
+        each replicates. 
     ncontrol
-        Total size (all counts or sum of normalized counts) of the control group for each replicates.
+        Total size (all counts or sum of normalized counts) of the control group
+        for each replicates.
 
     Returns
     -------
-    The p-value of a Fischers exact test and a logFoldChange of the case frequency compared to the control frequency
-    and the relative sizes for case and control groups. 
+    The p-value of a Fischers exact test and a logFoldChange of the case frequency
+    compared to the control frequency and the relative sizes for case and control groups. 
     """
 
     rel_case_sizes = case_sizes / np.array(ncase)
     rel_control_sizes = control_sizes / np.array(ncontrol)
-    case_mean_freq = np.mean((case_sizes + 0.0001) / np.array(ncase))
+    case_mean_freq = np.mean((case_sizes) / np.array(ncase))
     case_presence = case_sizes.sum()
     case_absence = ncase.sum() - case_presence
-    control_mean_freq = np.mean((control_sizes + 0.0001) / np.array(ncontrol))
+    control_mean_freq = np.mean((control_sizes) / np.array(ncontrol))
     control_presence = control_sizes.sum()
     control_absence = ncontrol.sum() - control_presence
     oddsratio, p = fisher_exact(
         [[case_presence, control_presence], [case_absence, control_absence]]
     )
-    logfoldchange = np.log2(case_mean_freq / control_mean_freq)
+    logfoldchange = np.log2(case_mean_freq + 0.0001 / control_mean_freq + 0.0001)
     return p, logfoldchange, rel_case_sizes, rel_control_sizes
 
 

@@ -33,7 +33,8 @@ def clonotype_imbalance(
 
     Uses Fischer's exact test to rank clonotypes.
     Depends on execution of clonotype_overlap.
-    Adds two dataframes (pval and logFC for clonotypes; abundance of clonotypes per sample) to `uns`
+    Adds two dataframes (pval and logFC for clonotypes;
+    abundance of clonotypes per sample) to `uns`
     
     Parameters
     ----------
@@ -62,7 +63,8 @@ def clonotype_imbalance(
         providing cell weights directly. Setting it to `False` or `None` assigns equal weight
         to all cells.
     plot_type
-        Whether a volcano plot of statistics or a box/bar/strip plot of frequencies should be shown.
+        Whether a volcano plot of statistics or a box/bar/strip plot of frequencies
+        should be shown.
     inplace
         Whether results should be added to `uns` or returned directly.
     key_added
@@ -76,9 +78,9 @@ def clonotype_imbalance(
     """
 
     if key_added not in adata.uns:
-        scanpy.logging.warning(f"Clonotype imbalance not found. Running `ir.tl.clonotype_imbalance`"
-        " and storing under {key_added}")
-        
+        scanpy.logging.warning(f"Clonotype imbalance not found."
+        " Running `ir.tl.clonotype_imbalance` and storing under {key_added}")
+
         tl.clonotype_imbalance(
             adata,
             replicate_col=replicate_col,
