@@ -126,7 +126,7 @@ def clonotype_network(
     edges_width
         width of the edges
     kwargs  
-        Additional arguments are passed to :func:`base.embedding`. 
+        Additional arguments are passed to :func:`scirpy.base.embedding`. 
 
     Returns
     -------
@@ -136,7 +136,7 @@ def clonotype_network(
 
     See also
     --------
-    :func:`pl.embedding` and :func:`scanpy.pl.embedding`
+    :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
     color = [color] if isinstance(color, str) or color is None else list(color)
 
