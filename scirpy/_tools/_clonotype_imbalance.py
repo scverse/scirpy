@@ -69,7 +69,8 @@ def clonotype_imbalance(
     # Retrieve clonotype presence matrix
     if overlap_key is None:
         sc.logging.warning(
-            "Clonotype imbalance calculation depends on repertoire overlap. We could not detect any previous runs of repertoire_overlap, so the tool is running now..."
+            "Clonotype imbalance calculation depends on repertoire overlap. We could not detect any"
+            " previous runs of repertoire_overlap, so the tool is running now..."
         )
         clonotype_presence, dM, lM = repertoire_overlap(
             adata,
@@ -83,7 +84,8 @@ def clonotype_imbalance(
             clonotype_presence = adata.uns[overlap_key]["weighted"]
         except KeyError:
             raise KeyError(
-                "Clonotype imbalance calculation depends on repertoire overlap, but the key you specified does not belong to a previous run of that tool."
+                "Clonotype imbalance calculation depends on repertoire overlap, but the key"
+                " you specified does not belong to a previous run of that tool."
             )
 
     # Create a series of case-control groups for comparison
@@ -282,7 +284,8 @@ def _extend_clt_freq(
 
     Returns
     -------
-    The extended list, where each item is a tuple of the tested clonotype, hue label, group label, replicate name, group size (frequency). 
+    The extended list, where each item is a tuple of the tested clonotype, hue label,
+    group label, replicate name, group size (frequency). 
     """
 
     for e in rel_case_sizes.index.values:

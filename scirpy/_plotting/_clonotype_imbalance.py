@@ -3,6 +3,7 @@ from anndata import AnnData
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import scanpy as sc
 from typing import Union
 from .._compat import Literal
 from .. import tl
@@ -75,6 +76,9 @@ def clonotype_imbalance(
     """
 
     if key_added not in adata.uns:
+        scanpy.logging.warning(f"Clonotype imbalance not found. Running `ir.tl.clonotype_imbalance`"
+        " and storing under {key_added}")
+        
         tl.clonotype_imbalance(
             adata,
             replicate_col=replicate_col,
