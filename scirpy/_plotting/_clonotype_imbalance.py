@@ -27,7 +27,7 @@ def clonotype_imbalance(
     xlab: str = "log2FoldChange",
     ylab: str = "-log10(p-value)",
     title: str = "Volcano plot",
-    **kwargs
+    **kwargs,
 ) -> plt.Axes:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
 
@@ -78,8 +78,10 @@ def clonotype_imbalance(
     """
 
     if key_added not in adata.uns:
-        scanpy.logging.warning(f"Clonotype imbalance not found."
-        " Running `ir.tl.clonotype_imbalance` and storing under {key_added}")
+        sc.logging.warning(
+            f"Clonotype imbalance not found."
+            " Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
+        )
 
         tl.clonotype_imbalance(
             adata,

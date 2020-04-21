@@ -255,7 +255,7 @@ def _calculate_imbalance(
     oddsratio, p = fisher_exact(
         [[case_presence, control_presence], [case_absence, control_absence]]
     )
-    logfoldchange = np.log2(case_mean_freq + 0.0001 / control_mean_freq + 0.0001)
+    logfoldchange = np.log2((case_mean_freq + 0.0001) / (control_mean_freq + 0.0001))
     return p, logfoldchange, rel_case_sizes, rel_control_sizes
 
 
