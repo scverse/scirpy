@@ -20,7 +20,7 @@ def clonotype_imbalance(
     fraction: Union[None, str, bool] = None,
     inplace: bool = True,
     overlap_key: Union[None, str] = None,
-    added_key: str = "clonotype_imbalance",
+    key_added: str = "clonotype_imbalance",
 ) -> Union[None, Tuple[pd.DataFrame, pd.DataFrame]]:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
 
@@ -57,7 +57,7 @@ def clonotype_imbalance(
     overlap_key
         Under what key should the repertoire overlap results be looked up in `uns`.
         By default it is None to ensure that the overlap tool is executed with the right parameters.
-    added_key
+    key_added
         Results will be added to `uns` under this key.
 
 
@@ -142,7 +142,7 @@ def clonotype_imbalance(
     if inplace:
 
         # Store calculated data
-        adata.uns[added_key] = {"abundance": clt_freq, "pvalues": clt_stats}
+        adata.uns[key_added] = {"abundance": clt_freq, "pvalues": clt_stats}
         return
 
     else:

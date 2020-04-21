@@ -22,7 +22,7 @@ def clonotype_imbalance(
     fraction: Union[None, str, bool] = None,
     inplace: bool = True,
     plot_type: Literal["volcano", "box", "bar", "strip"] = "box",
-    added_key: str = "clonotype_imbalance",
+    key_added: str = "clonotype_imbalance",
     xlab: str = "log2FoldChange",
     ylab: str = "-log10(p-value)",
     title: str = "Volcano plot",
@@ -64,7 +64,7 @@ def clonotype_imbalance(
         Whether a volcano plot of statistics or a box/bar/strip plot of frequencies should be shown.
     inplace
         Whether results should be added to `uns` or returned directly.
-    added_key
+    key_added
         If the tools has already been run, the results are added to `uns` under this key.
     **kwargs
         Additional arguments passed to the base plotting function.  
@@ -74,7 +74,7 @@ def clonotype_imbalance(
     Axes object
     """
 
-    if added_key not in adata.uns:
+    if key_added not in adata.uns:
         tl.clonotype_imbalance(
             adata,
             replicate_col=replicate_col,
@@ -84,10 +84,10 @@ def clonotype_imbalance(
             target_col=target_col,
             additional_hue=additional_hue,
             fraction=fraction,
-            added_key=added_key,
+            key_added=key_added,
         )
 
-    df = adata.uns[added_key]["pvalues"]
+    df = adata.uns[key_added]["pvalues"]
 
     if plot_type == "volcano":
         df = df.loc[:, ["logFC", "logpValue"]]
@@ -112,7 +112,7 @@ def clonotype_imbalance(
         df = df.sort_values(by="pValue")
         df = df.head(n=top_n)
 
-        tclt_df = adata.uns[added_key]["abundance"]
+        tclt_df = adata.uns[key_added]["abundance"]
         tclt_df = tclt_df.loc[tclt_df[target_col].isin(df[target_col]), :]
 
         if additional_hue is None:
