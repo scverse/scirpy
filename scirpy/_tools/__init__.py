@@ -4,6 +4,7 @@ from ._diversity import alpha_diversity
 from ._group_abundance import group_abundance
 from ._spectratype import spectratype
 from ._repertoire_overlap import repertoire_overlap
+from ._clonotype_imbalance import clonotype_imbalance
 from ._clonotypes import (
     define_clonotypes,
     clonotype_network,

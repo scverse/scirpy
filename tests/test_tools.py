@@ -278,59 +278,300 @@ def test_spectratype(adata_tra):
     npt.assert_equal(res.values, expected_frac.values)
 
 
-def repertoire_overlap(adata_tra):
-    res = st.tl.repertoire_overlap(adata, 'sample')
+def test_repertoire_overlap(adata_tra):
+    res, d, l = st.tl.repertoire_overlap(adata_tra, "sample", inplace=False)
     expected_cnt = pd.DataFrame.from_dict(
         {
             1: {
-                'clonotype_157': 0.0,
-                'clonotype_158': 0.0,
-                'clonotype_284': 0.0,
-                'clonotype_330': 0.0,
-                'clonotype_425': 0.0,
-                'clonotype_430': 0.0,
-                'clonotype_458': 0.0,
-                'clonotype_459': 1.0,
-                'clonotype_460': 0.0,
-                'clonotype_592': 0.0,
-                'clonotype_738': 1.0,
-                'clonotype_739': 1.0,
-                'clonotype_986': 1.0,
-                'clonotype_987': 1.0
+                "clonotype_157": 0.0,
+                "clonotype_158": 0.0,
+                "clonotype_284": 0.0,
+                "clonotype_330": 0.0,
+                "clonotype_425": 0.0,
+                "clonotype_430": 0.0,
+                "clonotype_458": 0.0,
+                "clonotype_459": 1.0,
+                "clonotype_460": 0.0,
+                "clonotype_592": 0.0,
+                "clonotype_738": 1.0,
+                "clonotype_739": 1.0,
+                "clonotype_986": 1.0,
+                "clonotype_987": 1.0,
             },
             3: {
-                'clonotype_157': 0.0,
-                'clonotype_158': 0.0,
-                'clonotype_284': 0.0,
-                'clonotype_330': 1.0,
-                'clonotype_425': 1.0,
-                'clonotype_430': 1.0,
-                'clonotype_458': 1.0,
-                'clonotype_459': 0.0,
-                'clonotype_460': 1.0,
-                'clonotype_592': 0.0,
-                'clonotype_738': 0.0,
-                'clonotype_739': 0.0,
-                'clonotype_986': 0.0,
-                'clonotype_987': 0.0
-                },
-            5: {
-                'clonotype_157': 1.0,
-                'clonotype_158': 1.0,
-                'clonotype_284': 1.0,
-                'clonotype_330': 0.0,
-                'clonotype_425': 0.0,
-                'clonotype_430': 0.0,
-                'clonotype_458': 0.0,
-                'clonotype_459': 0.0,
-                'clonotype_460': 0.0,
-                'clonotype_592': 1.0,
-                'clonotype_738': 0.0,
-                'clonotype_739': 0.0,
-                'clonotype_986': 0.0,
-                'clonotype_987': 0.0
-                }
+                "clonotype_157": 0.0,
+                "clonotype_158": 0.0,
+                "clonotype_284": 0.0,
+                "clonotype_330": 1.0,
+                "clonotype_425": 1.0,
+                "clonotype_430": 1.0,
+                "clonotype_458": 1.0,
+                "clonotype_459": 0.0,
+                "clonotype_460": 1.0,
+                "clonotype_592": 0.0,
+                "clonotype_738": 0.0,
+                "clonotype_739": 0.0,
+                "clonotype_986": 0.0,
+                "clonotype_987": 0.0,
             },
+            5: {
+                "clonotype_157": 1.0,
+                "clonotype_158": 1.0,
+                "clonotype_284": 1.0,
+                "clonotype_330": 0.0,
+                "clonotype_425": 0.0,
+                "clonotype_430": 0.0,
+                "clonotype_458": 0.0,
+                "clonotype_459": 0.0,
+                "clonotype_460": 0.0,
+                "clonotype_592": 1.0,
+                "clonotype_738": 0.0,
+                "clonotype_739": 0.0,
+                "clonotype_986": 0.0,
+                "clonotype_987": 0.0,
+            },
+        },
         orient="index",
     )
     npt.assert_equal(res.values, expected_cnt.values)
+
+
+def test_clonotype_imbalance(adata_tra):
+    freq, stat = st.tl.clonotype_imbalance(
+        adata_tra[
+            adata_tra.obs.index.isin(
+                [
+                    "AAGGTTCCACCCAGTG-1",
+                    "ACTATCTAGGGCTTCC-1",
+                    "CAGTAACAGGCATGTG-1",
+                    "CCTTACGGTCATCCCT-1",
+                    "AAACCTGAGATAGCAT-1",
+                ]
+            )
+        ],
+        replicate_col="sample",
+        groupby="chain_pairing",
+        case_label="Single pair",
+        inplace=False,
+    )
+    expected_freq = pd.DataFrame.from_dict(
+        {
+            0: {
+                "clonotype": "clonotype_330",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 0.0,
+            },
+            1: {
+                "clonotype": "clonotype_330",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 0.0,
+            },
+            2: {
+                "clonotype": "clonotype_330",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 3,
+                "Normalized abundance": 1.0,
+            },
+            3: {
+                "clonotype": "clonotype_330",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 1,
+                "Normalized abundance": 0.0,
+            },
+            4: {
+                "clonotype": "clonotype_330",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 3,
+                "Normalized abundance": 1.0,
+            },
+            5: {
+                "clonotype": "clonotype_458",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 0.0,
+            },
+            6: {
+                "clonotype": "clonotype_458",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 0.0,
+            },
+            7: {
+                "clonotype": "clonotype_458",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 3,
+                "Normalized abundance": 1.0,
+            },
+            8: {
+                "clonotype": "clonotype_458",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 1,
+                "Normalized abundance": 0.0,
+            },
+            9: {
+                "clonotype": "clonotype_458",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 3,
+                "Normalized abundance": 1.0,
+            },
+            10: {
+                "clonotype": "clonotype_739",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            11: {
+                "clonotype": "clonotype_739",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            12: {
+                "clonotype": "clonotype_739",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 3,
+                "Normalized abundance": 0.0,
+            },
+            13: {
+                "clonotype": "clonotype_739",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            14: {
+                "clonotype": "clonotype_739",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 3,
+                "Normalized abundance": 0.0,
+            },
+            15: {
+                "clonotype": "clonotype_986",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            16: {
+                "clonotype": "clonotype_986",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            17: {
+                "clonotype": "clonotype_986",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 3,
+                "Normalized abundance": 0.0,
+            },
+            18: {
+                "clonotype": "clonotype_986",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            19: {
+                "clonotype": "clonotype_986",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 3,
+                "Normalized abundance": 0.0,
+            },
+            20: {
+                "clonotype": "clonotype_987",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            21: {
+                "clonotype": "clonotype_987",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            22: {
+                "clonotype": "clonotype_987",
+                None: "All",
+                "chain_pairing": "Background",
+                "sample": 3,
+                "Normalized abundance": 0.0,
+            },
+            23: {
+                "clonotype": "clonotype_987",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 1,
+                "Normalized abundance": 1.0,
+            },
+            24: {
+                "clonotype": "clonotype_987",
+                None: "All",
+                "chain_pairing": "Single pair",
+                "sample": 3,
+                "Normalized abundance": 0.0,
+            },
+        },
+        orient="index",
+    )
+    freq = freq.sort_values(by=["clonotype", "chain_pairing", "sample"])
+    freq = freq.reset_index().iloc[:, 1:6]
+    pdt.assert_frame_equal(freq, expected_freq, check_names=False, check_dtype=False)
+    expected_stat = pd.DataFrame.from_dict(
+        {
+            0: {
+                "clonotype": "clonotype_330",
+                "pValue": 1.0,
+                "logpValue": -0.0,
+                "logFC": 0.5848182672753087,
+            },
+            1: {
+                "clonotype": "clonotype_458",
+                "pValue": 1.0,
+                "logpValue": -0.0,
+                "logFC": 0.5848182672753087,
+            },
+            2: {
+                "clonotype": "clonotype_739",
+                "pValue": 1.0,
+                "logpValue": -0.0,
+                "logFC": -0.4149653771481574,
+            },
+            3: {
+                "clonotype": "clonotype_986",
+                "pValue": 1.0,
+                "logpValue": -0.0,
+                "logFC": -0.4149653771481574,
+            },
+            4: {
+                "clonotype": "clonotype_987",
+                "pValue": 1.0,
+                "logpValue": -0.0,
+                "logFC": -0.4149653771481574,
+            },
+        },
+        orient="index",
+    )
+    stat = stat.sort_values(by="clonotype")
+    stat = stat.reset_index().iloc[:, 1:5]
+    pdt.assert_frame_equal(stat, expected_stat, check_names=False, check_dtype=False)

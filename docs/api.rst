@@ -63,6 +63,7 @@ Tools: `tl`
    group_abundance
    spectratype
    repertoire_overlap
+   clonotype_imbalance
 
 
 Plotting: `pl`
@@ -79,6 +80,7 @@ Plotting: `pl`
    spectratype
    vdj_usage
    repertoire_overlap
+   clonotype_imbalance
    clonotype_network
 
    

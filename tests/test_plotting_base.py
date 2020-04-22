@@ -12,12 +12,13 @@ def test_df():
         orient="index",
     )
 
+
 @pytest.fixture
 def test_dict():
     return {
         "ct1": np.array([2, 3, 4, 5, 2, 3, 4, 5, 6, 2, 3, 4, 5, 6, 7]),
         "ct2": np.array([4, 5, 6, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 2, 3, 4, 5, 3]),
-        "ct3": np.array([2, 3, 4, 5, 6, 2, 3, 4, 5, 6, 7])
+        "ct3": np.array([2, 3, 4, 5, 6, 2, 3, 4, 5, 6, 7]),
     }
 
 
@@ -36,8 +37,9 @@ def test_barh(test_df):
     p = pl.base.barh(test_df)
     assert isinstance(p, plt.Axes)
 
+
 def test_ol_scatter(test_df):
-    test_df.columns = ['x', 'y', 'z']
+    test_df.columns = ["x", "y", "z"]
     p = pl.base.ol_scatter(test_df)
     assert isinstance(p, plt.Axes)
 
