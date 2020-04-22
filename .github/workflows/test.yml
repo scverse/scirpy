@@ -31,7 +31,7 @@ jobs:
           FLIT_ROOT_INSTALL=1 flit install --deps all
       - name: Check black formatting
         run: |
-          black --check scirpy
+          black --check scirpy tests
       - name: Test with pytest
         run: |
           pytest

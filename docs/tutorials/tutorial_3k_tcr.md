@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.1
+      jupytext_version: 1.3.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -498,5 +498,19 @@ ir.pl.repertoire_overlap(adata, 'sample', pair_to_plot=['LN2', 'LT2'])
 ```
 
 ```python
+# Create a column in obs that gives us the site of the tumor
 
+adata.obs['site'] = adata.obs['patient'].str.slice(stop=-1)
+```
+
+```python
+# Show clonotypes that are the most imbalance between Tumor and Control samples based on Fischer's test
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='site', plot_type='strip')
+```
+
+```python
+# Plot a Volcano diagram of p-values and the fold difference between the two groups
+
+ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='volcano')
 ```
