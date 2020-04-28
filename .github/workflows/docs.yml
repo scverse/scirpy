@@ -5,6 +5,8 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  release:
+    types: [created]
 
 
 jobs:
@@ -18,6 +20,22 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      - name: Get target folder for page deploy from github ref
+        run: |
+          # get rid of "refs/"
+          tmp_target_dir=$(echo $github_ref | sed "s/^refs\///")
+          echo $tmp_target_dir
+          # get rid of "merge" at the end of ref for PRs
+          if [[ $tmp_target_dir = pull/* ]]
+          then
+            tmp_target_dir=$(echo $tmp_target_dir | sed "s/\/merge$//")
+          fi
+          # when on master, we want to deploy to the root dir (-> ".")
+          target_dir=$(echo $tmp_target_dir | sed "s/heads\/master/./")
+          echo $target_dir
+          echo "::set-env name=target_dir::$target_dir"
+        env:
+          github_ref: ${{ github.ref }}
       - uses: actions/setup-python@v1
         with:
           python-version: "3.7"
@@ -28,12 +46,13 @@ jobs:
           FLIT_ROOT_INSTALL=1 flit install --deps develop
       - name: run sphinx
         run: |
-          cd docs && make html
+          cd docs && make html   
       - name: Deploy to gh-pages
-        if: github.ref == 'refs/heads/master'
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           BRANCH: gh-pages # The branch the action should deploy to.
           FOLDER: docs/_build/html # The folder the action should deploy.
+          TARGET_FOLDER: ${{ env.target_dir }}
           CLEAN: true
+          CLEAN_EXCLUDE: '["heads", "pull", "tags"]'
