@@ -155,9 +155,9 @@ def clonotype_network(
     min_size
         Only show clonotypes with at least `min_size` cells.
     layout
-        The layout algorithm to use. Can be anything supported by :meth:`igraph.layout` 
+        The layout algorithm to use. Can be anything supported by :func:`igraph.layout` 
         or "components" to layout all connected components individually. See
-        :meth:`scirpy._util._graph.layout_componets` for more details. 
+        :func:`scirpy._util._graph.layout_componets` for more details. 
     layout_kwargs
         Will be passed to the layout function
     neighbors_key

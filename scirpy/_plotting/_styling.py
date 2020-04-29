@@ -1,6 +1,5 @@
 from .._compat import Literal
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 from typing import Union
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
@@ -19,7 +18,7 @@ def style_axes(
         Style to apply to the axes. Currently supported are `None` (disable styling)
         and default (default style). 
     style_kws
-        Parameters passed to :meth:`_plotting._styling._style_axes`
+        Parameters passed to :func:`_plotting._styling._style_axes`
     """
     if style is not None:
         style_kws = dict() if style_kws is None else style_kws

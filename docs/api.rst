@@ -84,7 +84,7 @@ Plotting: `pl`
 Base plotting functions: `pl.base`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. module:: scirpy.pl.base
+.. module:: scirpy.pl._base
 
 .. autosummary::
    :toctree: .

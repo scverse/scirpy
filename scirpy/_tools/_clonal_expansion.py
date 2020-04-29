@@ -78,7 +78,6 @@ def clonal_expansion(
         a single category
     key_added
         Key under which the results will be added to `obs`. 
-        Additional arguments passed to :func:`scirpy.tl.clip_and_count`.
     inplace
         If True, adds a column to `obs`. Otherwise returns an array 
         with the clipped counts. 
