@@ -1,6 +1,6 @@
 from anndata import AnnData
 from typing import Dict
-from .._util import _is_na, _normalize_counts
+from ..util import _is_na, _normalize_counts
 import numpy as np
 import pandas as pd
 from typing import Union

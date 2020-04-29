@@ -3,7 +3,7 @@ from typing import Callable, Union, Collection
 import numpy as np
 import pandas as pd
 from ._group_abundance import _group_abundance
-from .._util import _is_na
+from ..util import _is_na
 
 
 def spectratype(

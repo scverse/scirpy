@@ -185,10 +185,10 @@ def clonotype_network_igraph(
         corresponding igraph Layout object. 
     """
     import igraph as ig
-    from .._util._graph import get_igraph_from_adjacency
+    from ..util.graph import _get_igraph_from_adjacency
 
     conn = adata.uns[neighbors_key]["connectivities"]
     idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
-    g = get_igraph_from_adjacency(conn).subgraph(idx)
+    g = _get_igraph_from_adjacency(conn).subgraph(idx)
     layout = ig.Layout(coords=adata.obsm["X_" + basis][idx, :].tolist())
     return g, layout

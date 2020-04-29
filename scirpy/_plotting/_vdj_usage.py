@@ -2,8 +2,8 @@ from anndata import AnnData
 import matplotlib.pyplot as plt
 from typing import Callable, Union, Tuple, Sequence
 import numpy as np
-from .._util import _normalize_counts
-from ._styling import _init_ax
+from ..util import _normalize_counts
+from .styling import _init_ax
 
 
 def vdj_usage(

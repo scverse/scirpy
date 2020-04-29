@@ -9,7 +9,7 @@ import pickle
 import os.path
 from . import tracerlib
 import sys
-from .._util import _doc_params, _is_na, _is_true
+from ..util import _doc_params, _is_na, _is_true
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory

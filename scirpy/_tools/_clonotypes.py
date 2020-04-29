@@ -1,8 +1,8 @@
 from anndata import AnnData
 from .._compat import Literal
 from typing import Union, Tuple
-from .._util import _is_na
-from .._util._graph import get_igraph_from_adjacency, layout_components
+from ..util import _is_na
+from ..util.graph import _get_igraph_from_adjacency, layout_components
 import numpy as np
 import pandas as pd
 import random
@@ -114,7 +114,7 @@ def define_clonotypes(
         raise ValueError(
             "Connectivities were not found. Did you run `pp.tcr_neighbors`?"
         )
-    g = get_igraph_from_adjacency(conn)
+    g = _get_igraph_from_adjacency(conn)
 
     if partitions == "leiden":
         part = g.community_leiden(
@@ -155,9 +155,9 @@ def clonotype_network(
     min_size
         Only show clonotypes with at least `min_size` cells.
     layout
-        The layout algorithm to use. Can be anything supported by :func:`igraph.layout` 
-        or "components" to layout all connected components individually. See
-        :func:`scirpy._util._graph.layout_componets` for more details. 
+        The layout algorithm to use. Can be anything supported by 
+        `igraph.Graph.layout`  or "components" to layout all connected components 
+        individually. See :func:`scirpy.util.graph.layout_components` for more details. 
     layout_kwargs
         Will be passed to the layout function
     neighbors_key
@@ -195,7 +195,7 @@ def clonotype_network(
             "need to re-run `pp.tcr_neighbors?"
         )
 
-    graph = get_igraph_from_adjacency(conn)
+    graph = _get_igraph_from_adjacency(conn)
 
     # remove singletons/small subgraphs
     subgraph_idx = np.where(clonotype_size >= min_size)[0]
