@@ -5,7 +5,7 @@ Glossary
 .. glossary::
     TCR
         T-cell receptor. A TCR consists of one α and one β chain
-        (or, alternatively, one γ and one δ chain). Each chain consiste of a 
+        (or, alternatively, one γ and one δ chain). Each chain consists of a 
         constant and a variable region. The variable region is responsible for antigen
         recognition, mediated by :term:`CDR` regions. 
 
@@ -49,8 +49,8 @@ Glossary
         A clonotype that occurs in multiple tissues of the same patient.
 
     Epitope
-        The part of an antigen that is recognized by the :term:`TCR` or other
-        parts of the immune system. 
+        The part of an antigen that is recognized by the :term:`TCR`
+        (or B-cell receptor, or antibody). 
 
     CDR3
         Complementary-determining region 3. See :term:`CDR`. 
