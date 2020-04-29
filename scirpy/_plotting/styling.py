@@ -1,7 +1,6 @@
 from .._compat import Literal
 import matplotlib.pyplot as plt
 from typing import Union
-from ..util.graph import layout_components
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
@@ -9,7 +8,7 @@ DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 def apply_style_to_axes(
     ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
 ) -> None:
-    """Apply a predefined style to an axis object. 
+    """Apply a predefined style to an axis object.
 
     Parameters
     ----------
