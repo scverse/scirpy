@@ -15,7 +15,7 @@ def alpha_diversity(
 ) -> None:
     """Plot the alpha diversity per group. 
 
-    Calls :meth:`tl.alpha_diversity` on-the-fly. 
+    Calls :meth:`scirpy.tl.alpha_diversity` on-the-fly. 
 
     Parameters
     ----------
@@ -28,7 +28,7 @@ def alpha_diversity(
     vistype
         Visualization type. Currently only 'bar' is supported. 
     **kwargs
-        Additional parameters passed to :meth:`pl.base.bar`
+        Additional parameters passed to :func:`scirpy.pl.base.bar`
     """
     diversity = tl.alpha_diversity(adata, groupby, target_col=target_col, inplace=False)
     default_style_kws = {

@@ -51,7 +51,7 @@ def clonal_expansion(
     viztype
         bar for bars, barh for horizontal bars.
     **kwargs
-        Additional arguments passed to :meth:`base.bar`
+        Additional arguments passed to :func:`scirpy.pl.base.bar`
     """
     plot_df = tl.summarize_clonal_expansion(
         adata,

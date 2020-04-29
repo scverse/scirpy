@@ -1,6 +1,6 @@
 from anndata import AnnData
 from typing import Dict
-from .._util import _is_na, _normalize_counts
+from ..util import _is_na, _normalize_counts
 import numpy as np
 import pandas as pd
 from typing import Union
@@ -78,7 +78,6 @@ def clonal_expansion(
         a single category
     key_added
         Key under which the results will be added to `obs`. 
-        Additional arguments passed to :func:`scirpy.tl.clip_and_count`.
     inplace
         If True, adds a column to `obs`. Otherwise returns an array 
         with the clipped counts. 

@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
 from anndata import AnnData
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import scanpy as sc
 from typing import Union
 from .._compat import Literal
 from .. import tl
-from ._base import volcano
+from .base import volcano
 
 
 def clonotype_imbalance(

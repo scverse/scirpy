@@ -5,7 +5,7 @@ import pandas as pd
 from .. import tl
 from . import _base as base
 from typing import Union, List, Collection
-from .._util import _doc_params
+from ..util import _doc_params
 
 
 @_doc_params(common_doc=base._common_doc)

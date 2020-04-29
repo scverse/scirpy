@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from .._compat import Literal
 from anndata import AnnData
 from .. import tl
-from . import _base as base
+from . import base
 from typing import Union, List, Sequence
 
 
