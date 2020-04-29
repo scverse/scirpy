@@ -126,7 +126,7 @@ def clonotype_network(
     edges_width
         width of the edges
     kwargs  
-        Additional arguments are passed to :func:`scirpy.base.embedding`. 
+        Additional arguments are passed to :func:`scirpy.pl.embedding`. 
 
     Returns
     -------

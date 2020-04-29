@@ -10,6 +10,7 @@ from sklearn.neighbors import KernelDensity
 from cycler import Cycler
 import itertools
 import scanpy as sc
+from anndata import AnnData
 from matplotlib import rcParams, cycler, patheffects
 
 
@@ -381,8 +382,8 @@ def _add_labels(
 
 
 def embedding(
-    adata,
-    basis,
+    adata: AnnData,
+    basis: str,
     *,
     color: Union[str, Sequence[str], None] = None,
     panel_size: Tuple[float] = (4, 4),
@@ -395,7 +396,7 @@ def embedding(
     wspace: float = None,
     **kwargs,
 ) -> Union[None, Sequence[plt.Axes]]:
-    """A customized wrapper to the :meth:`sc.pl.embedding` function. 
+    """A customized wrapper to the :func:`scanpy.pl.embedding` function. 
 
     The differences to the scanpy embedding function are:
         * allows to specify a `panel_size`
@@ -451,7 +452,7 @@ def embedding(
     
     See also
     --------
-    :meth:`scanpy.pl.embedding`
+    :func:`scanpy.pl.embedding`
     """
     adata._sanitize()
 

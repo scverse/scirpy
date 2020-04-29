@@ -104,3 +104,7 @@ intersphinx_mapping = dict(
     sklearn=("https://scikit-learn.org/stable/", None),
     networkx=("https://networkx.github.io/documentation/networkx-1.10/", None),
 )
+
+# Fix 'reference target not found' errors
+# See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
+qualname_overrides = {}

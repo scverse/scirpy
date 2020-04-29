@@ -17,7 +17,7 @@ def vdj_usage(
         "TRB_1_j_gene",
     ],
     fraction: Union[None, str, Sequence[float]] = None,
-    ax: Union[plt.axes, None] = None,
+    ax: Union[plt.Axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
     barwidth: float = 0.4,
