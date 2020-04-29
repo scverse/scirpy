@@ -4,8 +4,8 @@ from .._compat import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
-from .._util import _doc_params
+from .styling import apply_style_to_axes, DEFAULT_FIG_KWS, _init_ax
+from ..util import _doc_params
 from sklearn.neighbors import KernelDensity
 from cycler import Cycler
 import itertools
@@ -19,7 +19,7 @@ _common_doc = """\
         Style to apply to the axes. Currently supported are `None` (disable styling)
         and default (default style). 
     style_kws
-        Parameters passed to :func:`scirpy._plotting._styling.style_axes`
+        Parameters passed to :func:`scirpy.pl.styling.style_axes`
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call 
         if no `ax` is specified. Defaults to `{}` if None. 
@@ -69,7 +69,7 @@ def bar(
                 if style_kws["xlab"] == style_kws["ylab"]:
                     style_kws["xlab"] = ""
 
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -103,7 +103,7 @@ def line(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -134,7 +134,7 @@ def barh(
     if ax is None:
         ax = _init_ax(fig_kws)
     ax = data.plot.barh(ax=ax, **kwargs)
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -246,7 +246,7 @@ def curve(
         ax.spines["left"].set_visible(False)
         ax.spines["right"].set_visible(False)
         ax.get_yaxis().set_tick_params(length=0)
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
 
     return ax
 
@@ -287,7 +287,7 @@ def ol_scatter(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -335,7 +335,7 @@ def volcano(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 

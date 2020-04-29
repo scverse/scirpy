@@ -1,4 +1,4 @@
-from .._util import _is_na, _is_true
+from ..util import _is_na, _is_true
 from anndata import AnnData
 from typing import Union
 import pandas as pd

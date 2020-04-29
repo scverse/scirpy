@@ -4,7 +4,7 @@ from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
 import pandas as pd
 import numpy as np
-from .._util import _is_na, _normalize_counts
+from ..util import _is_na, _normalize_counts
 
 
 def repertoire_overlap(

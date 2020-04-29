@@ -34,6 +34,7 @@ def setup(app):
 
 nitpicky = True  # Warn about broken links
 nitpick_ignore = [
+    ("py:class", "igraph.Graph")
     # ("py:data", "typing.Optional"),
     # ("py:class", "typing.Collection"),
     # ("py:class", "typing.List"),

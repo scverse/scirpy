@@ -1,29 +1,30 @@
 from .._compat import Literal
 import matplotlib.pyplot as plt
 from typing import Union
+from ..util.graph import layout_components
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
 
-def style_axes(
+def apply_style_to_axes(
     ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
 ) -> None:
-    """Apply a style to an axis object. 
+    """Apply a predefined style to an axis object. 
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     ax
         Axes object
     style
         Style to apply to the axes. Currently supported are `None` (disable styling)
         and default (default style). 
     style_kws
-        Parameters passed to :func:`_plotting._styling._style_axes`
+        Parameters passed to :func:`scirpy.pl.styling.style_axes`
     """
     if style is not None:
         style_kws = dict() if style_kws is None else style_kws
         if style == "default":
-            return _style_axes(ax, **style_kws)
+            return style_axes(ax, **style_kws)
         else:
             raise ValueError("Unknown style: {}".format(style))
 
@@ -34,7 +35,7 @@ def _init_ax(fig_kws: Union[dict, None] = None) -> plt.Axes:
     return ax
 
 
-def _style_axes(
+def style_axes(
     ax: plt.Axes,
     title: str = "",
     legend_title: str = "",

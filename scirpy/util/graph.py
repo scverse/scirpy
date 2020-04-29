@@ -6,7 +6,7 @@ from .._compat import Literal
 import sys
 
 
-def get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
+def _get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
     """Get igraph graph from adjacency matrix.
     Better than Graph.Adjacency for sparse matrices
 
@@ -51,22 +51,24 @@ def layout_components(
 
     Adapted from https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-graph-plot-in-python
 
-    Arguments:
+    Parameters
     ----------
     graph
         The graph to plot.
     component_layout
         Layout function used to layout individual components.
-        Can be anything that can be passed to :meth:`igraph.Graph.layout`
+        Can be anything that can be passed to `igraph.Graph.layout`
     arrange_boxes
         How to arrange the individual components. Can be "size"
         to arange them by the component size, or "rpack" to pack them as densly
         as possible, or "squarify" to arrange them using a treemap algorithm. 
-    pad_x, pad_y
-        Padding between subgraphs in the x and y dimension.
+    pad_x
+        Padding between subgraphs in the x dimension.
+    pad_y
+        Padding between subgraphs in the y dimension.
 
-    Returns:
-    --------
+    Returns
+    -------
     pos
         n_nodes x dim array containing the layout coordinates
 

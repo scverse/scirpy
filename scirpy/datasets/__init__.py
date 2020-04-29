@@ -1,6 +1,6 @@
 from anndata import AnnData
 from pathlib import Path
-from .._util import _doc_params, _read_to_str
+from ..util import _doc_params, _read_to_str
 from scanpy.readwrite import read
 from scanpy import settings
 import os

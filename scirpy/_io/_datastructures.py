@@ -5,7 +5,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from .._compat import Literal
-from .._util import _is_na, _is_true
+from ..util import _is_na, _is_true
 
 
 class TcrChain:

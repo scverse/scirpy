@@ -4,7 +4,7 @@ import numpy.testing as npt
 import scirpy as st
 from anndata import AnnData
 import numpy as np
-from scirpy._util import _is_symmetric
+from scirpy.util import _is_symmetric
 from .fixtures import adata_conn, adata_define_clonotypes
 import random
 import pytest

@@ -28,7 +28,7 @@ def alpha_diversity(
     vistype
         Visualization type. Currently only 'bar' is supported. 
     **kwargs
-        Additional parameters passed to :func:`scirpy._plotting._base.bar`
+        Additional parameters passed to :func:`scirpy.pl.base.bar`
     """
     diversity = tl.alpha_diversity(adata, groupby, target_col=target_col, inplace=False)
     default_style_kws = {

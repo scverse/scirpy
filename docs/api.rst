@@ -84,7 +84,7 @@ Plotting: `pl`
 Base plotting functions: `pl.base`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. module:: scirpy.pl._base
+.. module:: scirpy.pl.base
 
 .. autosummary::
    :toctree: .
@@ -93,3 +93,26 @@ Base plotting functions: `pl.base`
    line
    barh
    curve
+
+
+Plot styling: `pl.styling`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. module:: scirpy.pl.styling
+
+.. autosummary::
+   :toctree: . 
+
+   apply_style_to_axes
+   style_axes
+
+
+Utility functions: `util`
+-------------------------
+
+.. module:: scirpy.util
+
+.. autosummary::
+   :toctree: . 
+
+   graph.layout_components
