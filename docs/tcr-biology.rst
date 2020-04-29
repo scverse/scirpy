@@ -7,11 +7,12 @@ What is a clonotype?
 ^^^^^^^^^^^^^^^^^^^^
 
 A clonotype designates a collection of T or B cells that bear the same adaptive
-immune receptors, and thus recognize the same epitopes. Generally, these cells are 
+immune receptors, and thus recognize the same :term:`epitopes<Epitope>`.
+Generally, these cells are 
 also descendants of a common, antecedent cell and belong to the same cell clone.
 In single-cell RNA-sequencing (scRNA-seq) data, T cells sharing identical
-complementarity-determining regions 3 (CDR3) sequences of both α and β TCR chains 
-make up a clonotype.
+complementarity-determining regions 3 (:term:`CDR3`) sequences of both α and β 
+:term:`TCR` chains make up a clonotype.
 
 
 Dual TCRs
@@ -36,7 +37,7 @@ with the highest read count. Likewise, the secondary pair is the pair of α/β-c
 the second highest expression level. Based on the assumption that each cell has only two
 copies of the underlying chromosome set, if more than two variants of a chain are 
 recovered for the same cell, the excess TCR chains are ignored by Scirpy and the 
-corresponding cells flagged as “multichain”. This filtering strategy leaves the choice 
+corresponding cells flagged as :term:`Multichain-cell`. This filtering strategy leaves the choice 
 of discarding or including multichain cells in downstream analyses.
 
 
@@ -46,7 +47,7 @@ Clonotype definition
 Scirpy implements a network-based clonotype definition that enables clustering cells
 into clonotypes based on the following options:
 
- - identical CDR3 nucleotide sequences;
+ - identical :term:`CDR3` nucleotide sequences;
  - identical CDR3 amino acid sequences;
  - similar CDR3 amino acid sequences based on pairwise sequence alignment.
 
