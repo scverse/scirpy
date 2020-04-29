@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from anndata import AnnData
 import numpy as np
-from scirpy._util import _is_symmetric
+from scirpy.util import _is_symmetric
 
 
 @pytest.fixture

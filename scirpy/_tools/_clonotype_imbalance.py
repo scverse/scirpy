@@ -4,7 +4,7 @@ from scipy.stats import fisher_exact
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from .._util import _is_na, _normalize_counts
+from ..util import _normalize_counts
 from ._repertoire_overlap import repertoire_overlap
 
 

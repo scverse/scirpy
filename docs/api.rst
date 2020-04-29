@@ -1,16 +1,12 @@
 API
 ===
 
-
-.. module:: scirpy 
-
-.. automodule:: scirpy 
-   :noindex:
-
 .. _api-io:
 
 Input/Output
 ------------
+
+.. module:: scirpy
 
 .. autosummary::
    :toctree: .
@@ -20,8 +16,8 @@ Input/Output
    read_tracer
 
 
-Datasets
---------
+Datasets: `datasets`
+--------------------
 
 .. module:: scirpy.datasets
 
@@ -82,6 +78,7 @@ Plotting: `pl`
    repertoire_overlap
    clonotype_imbalance
    clonotype_network
+   embedding
 
    
 Base plotting functions: `pl.base`
@@ -96,3 +93,26 @@ Base plotting functions: `pl.base`
    line
    barh
    curve
+
+
+Plot styling: `pl.styling`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. module:: scirpy.pl.styling
+
+.. autosummary::
+   :toctree: . 
+
+   apply_style_to_axes
+   style_axes
+
+
+Utility functions: `util`
+-------------------------
+
+.. module:: scirpy.util
+
+.. autosummary::
+   :toctree: . 
+
+   graph.layout_components

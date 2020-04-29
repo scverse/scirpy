@@ -2,8 +2,8 @@ from anndata import AnnData
 import matplotlib.pyplot as plt
 from typing import Callable, Union, Tuple, Sequence
 import numpy as np
-from .._util import _normalize_counts
-from ._styling import _init_ax
+from ..util import _normalize_counts
+from .styling import _init_ax
 
 
 def vdj_usage(
@@ -17,7 +17,7 @@ def vdj_usage(
         "TRB_1_j_gene",
     ],
     fraction: Union[None, str, Sequence[float]] = None,
-    ax: Union[plt.axes, None] = None,
+    ax: Union[plt.Axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
     barwidth: float = 0.4,

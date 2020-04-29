@@ -91,6 +91,8 @@ def clonotype_network(
 ):
     """\
     Plot the clonotype network
+
+    Parameters
     ----------
     adata 
         annotated data matrix
@@ -124,7 +126,7 @@ def clonotype_network(
     edges_width
         width of the edges
     kwargs  
-        Additional arguments are passed to :func:`base.embedding`. 
+        Additional arguments are passed to :func:`scirpy.pl.embedding`. 
 
     Returns
     -------
@@ -134,7 +136,7 @@ def clonotype_network(
 
     See also
     --------
-    :func:`pl.embedding` and :func:`scanpy.pl.embedding`
+    :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
     color = [color] if isinstance(color, str) or color is None else list(color)
 
@@ -183,10 +185,10 @@ def clonotype_network_igraph(
         corresponding igraph Layout object. 
     """
     import igraph as ig
-    from .._util._graph import get_igraph_from_adjacency
+    from ..util.graph import _get_igraph_from_adjacency
 
     conn = adata.uns[neighbors_key]["connectivities"]
     idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
-    g = get_igraph_from_adjacency(conn).subgraph(idx)
+    g = _get_igraph_from_adjacency(conn).subgraph(idx)
     layout = ig.Layout(coords=adata.obsm["X_" + basis][idx, :].tolist())
     return g, layout

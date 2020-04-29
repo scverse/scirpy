@@ -6,10 +6,9 @@ import seaborn as sns
 from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
 from typing import Union, Sequence
-from .._util import _is_na
 from .. import tl
-from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
-from ._base import ol_scatter
+from .styling import _init_ax
+from .base import ol_scatter
 
 
 def repertoire_overlap(

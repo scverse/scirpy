@@ -82,7 +82,7 @@ adata.obs
     or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2). 
     See :ref:`api-io` for more details.
 
-    This particular dataset has been imported using :func:`scirpy.read_10x_vdj_csv` and merged
+    This particular dataset has been imported using :func:`scirpy.read_10x_vdj` and merged
     with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
     is described in :func:`scirpy.datasets.wu2020`.
 

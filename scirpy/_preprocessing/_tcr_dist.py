@@ -1,5 +1,5 @@
 import parasail
-from .._util._multiprocessing import EnhancedPool as Pool
+from ..util._multiprocessing import EnhancedPool as Pool
 import itertools
 from anndata import AnnData
 from typing import Union, Collection, List, Tuple, Dict, Callable
@@ -7,7 +7,7 @@ from .._compat import Literal
 import numpy as np
 from scanpy import logging
 import numpy.testing as npt
-from .._util import _is_na, _is_symmetric, _reduce_nonzero
+from ..util import _is_na, _is_symmetric, _reduce_nonzero
 import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
@@ -614,10 +614,10 @@ def tcr_neighbors(
     adata
         annotated data matrix
     metric
-        "identity" = Calculate 0/1 distance based on sequence identity. Equals a 
-            cutoff of 0. 
+        "identity" - Calculate 0/1 distance based on sequence identity. Equals a 
+        cutoff of 0. 
         "alignment" - Calculate distance using pairwise sequence alignment 
-            and BLOSUM62 matrix
+        and BLOSUM62 matrix
         "levenshtein" - Levenshtein edit distance
     cutoff
         Two cells with a distance <= the cutoff will be connected. 

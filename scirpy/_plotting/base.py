@@ -4,23 +4,24 @@ from .._compat import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from ._styling import style_axes, DEFAULT_FIG_KWS, _init_ax
-from .._util import _doc_params
+from .styling import apply_style_to_axes, DEFAULT_FIG_KWS, _init_ax
+from ..util import _doc_params
 from sklearn.neighbors import KernelDensity
 from cycler import Cycler
 import itertools
 import scanpy as sc
+from anndata import AnnData
 from matplotlib import rcParams, cycler, patheffects
 
 
-_common_doc = """
+_common_doc = """\
     style
         Style to apply to the axes. Currently supported are `None` (disable styling)
         and default (default style). 
     style_kws
-        Parameters passed to :meth:`_plotting._styling._style_axes`
+        Parameters passed to :func:`scirpy.pl.styling.style_axes`
     fig_kws
-        Parameters passed to the :meth:`matplotlib.pyplot.figure` call 
+        Parameters passed to the :func:`matplotlib.pyplot.figure` call 
         if no `ax` is specified. Defaults to `{}` if None. 
 """.format(
     str(DEFAULT_FIG_KWS)
@@ -53,7 +54,8 @@ def bar(
     
     Returns
     -------
-    Axes object 
+    ax
+        Axes object 
     """
 
     if ax is None:
@@ -67,7 +69,7 @@ def bar(
                 if style_kws["xlab"] == style_kws["ylab"]:
                     style_kws["xlab"] = ""
 
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -101,7 +103,7 @@ def line(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -132,7 +134,7 @@ def barh(
     if ax is None:
         ax = _init_ax(fig_kws)
     ax = data.plot.barh(ax=ax, **kwargs)
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -244,7 +246,7 @@ def curve(
         ax.spines["left"].set_visible(False)
         ax.spines["right"].set_visible(False)
         ax.get_yaxis().set_tick_params(length=0)
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
 
     return ax
 
@@ -285,7 +287,7 @@ def ol_scatter(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -333,7 +335,7 @@ def volcano(
     if style_kws is None:
         style_kws = dict()
     style_kws["change_xticks"] = False
-    style_axes(ax, style, style_kws)
+    apply_style_to_axes(ax, style, style_kws)
     return ax
 
 
@@ -380,8 +382,8 @@ def _add_labels(
 
 
 def embedding(
-    adata,
-    basis,
+    adata: AnnData,
+    basis: str,
     *,
     color: Union[str, Sequence[str], None] = None,
     panel_size: Tuple[float] = (4, 4),
@@ -394,7 +396,7 @@ def embedding(
     wspace: float = None,
     **kwargs,
 ) -> Union[None, Sequence[plt.Axes]]:
-    """A customized wrapper to the :meth:`sc.pl.embedding` function. 
+    """A customized wrapper to the :func:`scanpy.pl.embedding` function. 
 
     The differences to the scanpy embedding function are:
         * allows to specify a `panel_size`
@@ -450,7 +452,7 @@ def embedding(
     
     See also
     --------
-    :meth:`scanpy.pl.embedding`
+    :func:`scanpy.pl.embedding`
     """
     adata._sanitize()
 

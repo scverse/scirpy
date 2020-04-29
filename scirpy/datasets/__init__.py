@@ -1,12 +1,13 @@
 from anndata import AnnData
 from pathlib import Path
-from .._util import _doc_params, _read_to_str
+from ..util import _doc_params, _read_to_str
 from scanpy.readwrite import read
 from scanpy import settings
 import os
 from contextlib import contextmanager
 import tqdm.auto
 from tqdm import tqdm as tqdm_
+from textwrap import indent
 
 HERE = Path(__file__).parent
 
@@ -25,18 +26,20 @@ def _monkey_patch_tqdm():
         tqdm.auto.tqdm = tqdm_auto
 
 
-@_doc_params(processing_code=_read_to_str(HERE / "_processing_scripts/wu2020.py"))
+@_doc_params(
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020.py"), "   ")
+)
 def wu2020() -> AnnData:
-    """
+    """\
     Return the dataset from [Wu2020]_ as AnnData object. 
 
     200k cells, of which 100k have TCRs.
 
     This is how the dataset was processed:
-    
-    ```python
+
+    .. code-block:: python 
+
     {processing_code}
-    ```
     """
     # os.makedirs(settings.datasetdir, exist_ok=True)
     # TODO host it on github or similar
@@ -47,17 +50,21 @@ def wu2020() -> AnnData:
     return adata
 
 
-@_doc_params(processing_code=_read_to_str(HERE / "_processing_scripts/wu2020_3k.py"))
+@_doc_params(
+    processing_code=indent(
+        _read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), "   "
+    )
+)
 def wu2020_3k() -> AnnData:
-    """
+    """\
     Return the dataset from :cite:`Wu2020` as AnnData object, downsampled 
     to 3000 TCR-containing cells. 
 
     This is how the dataset was processed:
 
-    ```python
+    .. code-block:: python
+
     {processing_code}
-    ```
     """
     # os.makedirs(settings.datasetdir, exist_ok=True)
     # TODO host it on github or similar

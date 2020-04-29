@@ -1,5 +1,5 @@
 import numpy as np
-from .._util import _is_na
+from ..util import _is_na
 from anndata import AnnData
 from typing import Dict
 import pandas as pd
