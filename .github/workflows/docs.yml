@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Fetch all tags s.t. get_version can retrieve the correct version.
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - uses: actions/cache@v1
         with:
           path: ~/.cache/pip
