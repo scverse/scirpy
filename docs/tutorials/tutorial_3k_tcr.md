@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.3.2
+      jupytext_version: 1.4.1
 ---
 
 # Analysis of 3k T cells from cancer
@@ -24,7 +24,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %autoreload 2
 import sys
 
-sys.path.append("../..") 
+sys.path.insert(0, "../..") 
 import scirpy as ir
 import pandas as pd
 import numpy as np
@@ -461,7 +461,7 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 ```python
 ir.pl.spectratype(
     adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:], 
-    groupby="TRB_1_cdr3",
+    cdr3_col="TRB_1_cdr3",
     color="TRB_1_v_gene",
     fraction="sample",
     fig_kws={'dpi': 120}
@@ -513,4 +513,8 @@ ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_
 # Plot a Volcano diagram of p-values and the fold difference between the two groups
 
 ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='volcano')
+```
+
+```python
+
 ```

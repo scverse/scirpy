@@ -9,14 +9,14 @@ from .styling import _init_ax
 def vdj_usage(
     adata: AnnData,
     *,
-    target_cols: list = [
+    vdj_cols: list = [
         "TRA_1_j_gene",
         "TRA_1_v_gene",
         "TRB_1_v_gene",
         "TRB_1_d_gene",
         "TRB_1_j_gene",
     ],
-    fraction: Union[None, str, Sequence[float]] = None,
+    normalize_to: Union[None, str, Sequence[float]] = None,
     ax: Union[plt.Axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
@@ -25,24 +25,22 @@ def vdj_usage(
     full_combination: bool = True,
     fig_kws: Union[dict, None] = None,
 ) -> plt.Axes:
-    """Creates a ribbon plot of the most abundant VDJ combinations in a
-    given subset of cells. 
+    """Creates a ribbon plot of the most abundant VDJ combinations.
 
     Currently works with primary alpha and beta chains only.
-    Does not search for precomputed results in `adata`.
     
     Parameters
     ----------
     adata
         AnnData object to work on.
-    target_cols
+    vdj_cols
         Columns containing gene segment information.
         Overwrite default only if you know what you are doing!         
-    fraction
+    normalize_to
         Either the name of a categorical column that should be used as the base
         for computing fractions, or an iterable specifying a size factor for each cell.
-        By default, each cell count as 1, but due to normalization to different
-        sample sizes for example, it is possible that one cell
+        By default, each cell count as 1, but due to normalization to different, for
+        instance, sample sizes, it is possible that one cell
         in a small sample is weighted more than a cell in a large sample.
     ax
         Custom axis if needed.
@@ -57,9 +55,9 @@ def vdj_usage(
     draw_bars
         If `False`, only ribbons are drawn and no bars.
     full_combination
-        If set to `False`, the bands represent the frequency of a binary gene segment combination
-        of the two connectec loci (e.g. combination of TRBD and TRBJ genes). By default each
-        band represents an individual combination of all five loci.
+        If set to `False`, the bands represent the frequency of a binary gene segment 
+        combination of the two connectec loci (e.g. combination of TRBD and TRBJ genes). 
+        By default each band represents an individual combination of all five loci.
     fig_kws
         Dictionary of keyword args that will be passed to the matplotlib 
         figure (e.g. `figsize`)
@@ -70,9 +68,9 @@ def vdj_usage(
     """
 
     df = adata.obs.assign(
-        cell_weights=_normalize_counts(adata.obs, fraction)
-        if isinstance(fraction, (bool, str)) or fraction is None
-        else fraction
+        cell_weights=_normalize_counts(adata.obs, normalize_to)
+        if isinstance(normalize_to, (bool, str)) or normalize_to is None
+        else normalize_to
     )
 
     # Init figure
@@ -88,16 +86,16 @@ def vdj_usage(
     gene_tops, gene_colors = dict(), dict()
 
     # Draw a stacked bar for every gene loci and save positions on the bar
-    for i in range(len(target_cols)):
+    for i in range(len(vdj_cols)):
         td = (
-            df.groupby(target_cols[i])
+            df.groupby(vdj_cols[i])
             .agg({"cell_weights": "sum"})
             .sort_values(by="cell_weights", ascending=False)
             .reset_index()
         )
-        genes = td[target_cols[i]].tolist()
+        genes = td[vdj_cols[i]].tolist()
         td = td["cell_weights"]
-        sector = target_cols[i][2:7].replace("_", "")
+        sector = vdj_cols[i][2:7].replace("_", "")
         if full_combination:
             unct = td[bar_clip + 1 :,].sum()
             if td.size > bar_clip:
@@ -144,11 +142,11 @@ def vdj_usage(
 
     # Create a case for full combinations or just the neighbours
     if full_combination:
-        draw_mat = [target_cols]
+        draw_mat = [vdj_cols]
     else:
         draw_mat = []
-        for lc in range(1, len(target_cols)):
-            draw_mat.append(target_cols[lc - 1 : lc + 1])
+        for lc in range(1, len(vdj_cols)):
+            draw_mat.append(vdj_cols[lc - 1 : lc + 1])
 
     init_n = 0
     for target_pair in draw_mat:
@@ -204,8 +202,8 @@ def vdj_usage(
                 )
 
     # Make tick labels nicer
-    ax.set_xticks(range(1, len(target_cols) + 1))
-    if target_cols == [
+    ax.set_xticks(range(1, len(vdj_cols) + 1))
+    if vdj_cols == [
         "TRA_1_j_gene",
         "TRA_1_v_gene",
         "TRB_1_v_gene",
@@ -214,7 +212,7 @@ def vdj_usage(
     ]:
         ax.set_xticklabels(["TRAJ", "TRAV", "TRBV", "TRBD", "TRBJ"])
     else:
-        ax.set_xticklabels(target_cols)
+        ax.set_xticklabels(vdj_cols)
 
     return ax
 
