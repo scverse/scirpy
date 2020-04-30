@@ -59,7 +59,7 @@ def test_clonotype_imbalance(adata_tra):
 
 
 def test_vdj_usage(adata_vdj):
-    p = pl.vdj_usage(adata_vdj, fraction="sample")
+    p = pl.vdj_usage(adata_vdj, normalize_to="sample")
     assert isinstance(p, plt.Axes)
 
 
