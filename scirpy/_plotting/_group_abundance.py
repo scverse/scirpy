@@ -11,7 +11,7 @@ def group_abundance(
     groupby: str,
     target_col: str = "has_tcr",
     *,
-    fraction: Union[None, str, bool] = None,
+    normalize: Union[None, str, bool] = None,
     max_cols: Union[None, int] = None,
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
     **kwargs,
@@ -33,7 +33,7 @@ def group_abundance(
         Column on which to compute the abundance. 
         Defaults to `has_tcr` which computes the number of all cells
         that have a T-cell receptor. 
-    fraction
+    normalize
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, the name
         of a column containing a categorical variable can be provided, 
@@ -57,7 +57,7 @@ def group_abundance(
     Axes object
     """
     abundance = tl.group_abundance(
-        adata, groupby, target_col=target_col, fraction=fraction, sort=sort
+        adata, groupby, target_col=target_col, fraction=normalize, sort=sort
     )
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(
@@ -77,8 +77,8 @@ def group_abundance(
         ]
 
     # Create text for default labels
-    if fraction:
-        fraction_base = target_col if fraction is True else fraction
+    if normalize:
+        fraction_base = target_col if normalize is True else normalize
         title = "Fraction of " + target_col + " in each " + groupby
         xlab = groupby
         ylab = "Fraction of cells in " + fraction_base
