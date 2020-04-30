@@ -441,7 +441,7 @@ ir.pl.vdj_usage(adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]),
 <!-- #endraw -->
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="bar", fig_kws={"dpi": 120})
+ir.pl.spectratype(adata, color="cluster", viztype="bar", fig_kws={"dpi": 120})
 ```
 
 The same chart visualized as "ridge"-plot: 
@@ -449,7 +449,7 @@ The same chart visualized as "ridge"-plot:
 ```python
 ir.pl.spectratype(
     adata,
-    target_col="cluster",
+    color="cluster",
     viztype="curve",
     fig_kws={"dpi": 120},
     kde_kws={'curve_layout': 'shifted', 'kde_norm': False, 'kde_norm': False}
@@ -462,7 +462,7 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 ir.pl.spectratype(
     adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:], 
     groupby="TRB_1_cdr3",
-    target_col="TRB_1_v_gene",
+    color="TRB_1_v_gene",
     fraction="sample",
     fig_kws={'dpi': 120}
 )
