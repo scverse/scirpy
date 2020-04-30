@@ -86,16 +86,16 @@ def vdj_usage(
     gene_tops, gene_colors = dict(), dict()
 
     # Draw a stacked bar for every gene loci and save positions on the bar
-    for i in range(len(vdj_cols)):
+    for i, col in enumerate(vdj_cols):
         td = (
-            df.groupby(vdj_cols[i])
+            df.groupby(col)
             .agg({"cell_weights": "sum"})
             .sort_values(by="cell_weights", ascending=False)
             .reset_index()
         )
-        genes = td[vdj_cols[i]].tolist()
+        genes = td[col].tolist()
         td = td["cell_weights"]
-        sector = vdj_cols[i][2:7].replace("_", "")
+        sector = col[2:7].replace("_", "")
         if full_combination:
             unct = td[bar_clip + 1 :,].sum()
             if td.size > bar_clip:
