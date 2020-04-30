@@ -3,7 +3,7 @@ from .._compat import Literal
 from anndata import AnnData
 from .. import tl
 from . import base
-from typing import Union, List, Sequence
+from typing import Union, Sequence
 
 
 def group_abundance(
@@ -16,7 +16,10 @@ def group_abundance(
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
     **kwargs,
 ) -> plt.Axes:
-    """Plots how many cells belong to each clonotype. 
+    """Plots the number of cells per group, split up by a categorical variable. 
+
+    Generates a stacked bar chart with one bar per group. Stacks 
+    are colored according to the categorical variable specified in `target_col`. 
 
     Ignores NaN values. 
     
@@ -25,19 +28,20 @@ def group_abundance(
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. Samples or diagnosis for example.
+        Group by this column from `obs`. For instance, "sample" or "diagnosis". 
     target_col
         Column on which to compute the abundance. 
         Defaults to `has_tcr` which computes the number of all cells
         that have a T-cell receptor. 
     fraction
-        If True, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
-        name can be provided according to that the values will be normalized. 
+        If `True`, compute fractions of abundances relative to the `groupby` column
+        rather than reporting abosolute numbers. Alternatively, the name
+        of a column containing a categorical variable can be provided, 
+        according to which the values will be normalized. 
     max_cols: 
-        Only plot the first `max_cols` columns. Will raise a 
-        `ValueError` if attempting to plot more than 100 columsn. 
-        Set to `0` to disable. 
+        Only plot the first `max_cols` columns. If set to `None` (the default)
+        the function will raise a `ValueError` if attempting to plot more 
+        than 100 columns. Set to `0` to disable. 
     sort
         How to arrange the dataframe columns. 
         Default is by the category count ("count"). 
@@ -46,7 +50,7 @@ def group_abundance(
         specific categories. Sorting (and subsetting) occurs before `max_cols` 
         is applied. 
     **kwargs
-        Additional arguments passed to the base plotting function.  
+        Additional arguments passed to :func:`scirpy.pl.base.bar`.  
     
     Returns
     -------
