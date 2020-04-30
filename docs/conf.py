@@ -23,24 +23,8 @@ version = __version__
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
-# add custom stylesheet
-# https://stackoverflow.com/a/43186995/2340703
-html_static_path = ["_static"]
-
-
-def setup(app):
-    app.add_css_file("custom.css")
-
 
 nitpicky = True  # Warn about broken links
-nitpick_ignore = [
-    ("py:class", "igraph.Graph")
-    # ("py:data", "typing.Optional"),
-    # ("py:class", "typing.Collection"),
-    # ("py:class", "typing.List"),
-    # ("py:class", "str"),
-    # ("py:class", "dict"),
-]
 needs_sphinx = "2.0"  # Nicer param docs
 
 
@@ -57,6 +41,9 @@ extensions = [
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 
+
+# -- auto-generate APIdoc --------------------------------------------------------------
+
 autosummary_generate = True
 autodoc_member_order = "bysource"
 default_role = "literal"
@@ -66,28 +53,6 @@ napoleon_include_init_with_doc = False
 napoleon_use_rtype = True  # having a separate entry generally helps readability
 napoleon_use_param = True
 todo_include_todos = False
-
-# Enable jupytext notebooks
-nbsphinx_custom_formats = {
-    ".md": lambda s: jupytext.reads(s, ".md"),
-}
-# nbsphinx_execute = "always"
-nbsphinx_execute_arguments = [
-    "--InlineBackend.figure_formats={'svg'}",
-    "--InlineBackend.rc={'figure.dpi': 96}",
-]
-nbsphinx_timeout = 300
-
-# styling
-html_theme = "sphinx_rtd_theme"
-pygments_style = "sphinx"
-html_context = dict(
-    display_github=True,  # Integrate GitHub
-    github_user="icbi-lab",  # Username
-    github_repo=project,  # Repo name
-    github_version="master",  # Version
-    conf_py_path="/docs/",  # Path in the checkout to the docs root
-)
 
 intersphinx_mapping = dict(
     scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
@@ -106,6 +71,46 @@ intersphinx_mapping = dict(
     networkx=("https://networkx.github.io/documentation/networkx-1.10/", None),
 )
 
-# Fix 'reference target not found' errors
+
+# -- nbsphinx Tutorials ----------------------------------------------------------------
+
+# Enable jupytext notebooks
+nbsphinx_custom_formats = {
+    ".md": lambda s: jupytext.reads(s, ".md"),
+}
+# nbsphinx_execute = "always"
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg'}",
+    "--InlineBackend.rc={'figure.dpi': 96}",
+]
+nbsphinx_timeout = 300
+
+
+# -- HTML styling ----------------------------------------------------------------------
+
+html_theme = "sphinx_rtd_theme"
+# add custom stylesheet
+# https://stackoverflow.com/a/43186995/2340703
+html_static_path = ["_static"]
+pygments_style = "sphinx"
+html_context = dict(
+    display_github=True,  # Integrate GitHub
+    github_user="icbi-lab",  # Username
+    github_repo=project,  # Repo name
+    github_version="master",  # Version
+    conf_py_path="/docs/",  # Path in the checkout to the docs root
+)
+html_logo = "img/scirpy_logo_bright.png"
+html_theme_options = dict(navigation_depth=4, logo_only=True)
+
+
+def setup(app):
+    app.add_css_file("custom.css")
+
+
+# -- Supress 'reference target not found' errors ---------------------------------------
+
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
 qualname_overrides = {}
+
+nitpick_ignore = [("py:class", "igraph.Graph")]
