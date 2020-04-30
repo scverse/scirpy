@@ -15,14 +15,14 @@ from matplotlib import rcParams, cycler, patheffects
 
 
 _common_doc = """\
-    style
-        Style to apply to the axes. Currently supported are `None` (disable styling)
-        and default (default style). 
-    style_kws
-        Parameters passed to :func:`scirpy.pl.styling.style_axes`
-    fig_kws
-        Parameters passed to the :func:`matplotlib.pyplot.figure` call 
-        if no `ax` is specified. Defaults to `{}` if None. 
+style
+    Style to apply to the axes. Currently supported are `None` (disable styling)
+    and default (default style). 
+style_kws
+    Parameters passed to :func:`scirpy.pl.styling.style_axes`
+fig_kws
+    Parameters passed to the :func:`matplotlib.pyplot.figure` call 
+    if no `ax` is specified. Defaults to `{}` if None. 
 """.format(
     str(DEFAULT_FIG_KWS)
 )
@@ -39,7 +39,9 @@ def bar(
     fig_kws: Union[dict, None] = None,
     **kwargs,
 ) -> plt.Axes:
-    """Basic plotting function built on top of bar plot in Pandas.
+    """\
+    Basic plotting function built on top of bar plot in Pandas.
+
     Draws bars without stdev. 
 
     Parameters
@@ -54,8 +56,7 @@ def bar(
     
     Returns
     -------
-    ax
-        Axes object 
+    Axes object 
     """
 
     if ax is None:
@@ -83,7 +84,8 @@ def line(
     fig_kws: Union[dict, None] = None,
     **kwargs,
 ) -> plt.Axes:
-    """Basic plotting function built on top of line plot in Pandas.
+    """\
+    Basic plotting function built on top of line plot in Pandas.
 
     Parameters
     ----------
@@ -107,6 +109,7 @@ def line(
     return ax
 
 
+@_doc_params(common_doc=_common_doc)
 def barh(
     data: pd.DataFrame,
     *,
@@ -116,7 +119,9 @@ def barh(
     fig_kws: Union[dict, None] = None,
     **kwargs,
 ) -> plt.Axes:
-    """Basic plotting function built on top of bar plot in Pandas.
+    """\
+    Basic plotting function built on top of bar plot in Pandas.
+
     Draws a horizontal bar plot. 
 
     Parameters
@@ -153,8 +158,11 @@ def curve(
     fig_kws: Union[dict, None] = None,
     **kwargs,
 ) -> plt.Axes:
-    """Basic plotting function primarily for the spectratype 
-    to show length distributions 
+    """\
+    Basic plotting function for drawing KDE-smoothed curves. 
+
+    Primarily designed for the :func:`scirpy.pl.spectratype` plotting
+    function. 
 
     Parameters
     ----------
@@ -176,7 +184,7 @@ def curve(
     
     Returns
     -------
-    List of axes.
+    Axes object. 
     """
     if ax is None:
         ax = _init_ax(fig_kws)
@@ -260,7 +268,9 @@ def ol_scatter(
     style: Union[Literal["default"], None] = "default",
     fig_kws: Union[dict, None] = None,
 ) -> plt.Axes:
-    """Scatterplot where dot size is proportional to group size.
+    """\
+    Scatterplot where dot size is proportional to group size.
+
     Draws bars without stdev. 
 
     Parameters
@@ -300,7 +310,9 @@ def volcano(
     style: Union[Literal["default"], None] = "default",
     fig_kws: Union[dict, None] = None,
 ) -> plt.Axes:
-    """Scatterplot where dot size is proportional to group size.
+    """\
+    Volcano plot (special case of scatter plot)
+
     Draws bars without stdev. 
 
     Parameters

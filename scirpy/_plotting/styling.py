@@ -16,9 +16,10 @@ def apply_style_to_axes(
         Axes object
     style
         Style to apply to the axes. Currently supported are `None` (disable styling)
-        and default (default style). 
+        and `'default'` (default style). 
     style_kws
-        Parameters passed to :func:`scirpy.pl.styling.style_axes`
+        Parameters passed to :func:`scirpy.pl.styling.style_axes` which 
+        override the defaults provided by the style. 
     """
     if style is not None:
         style_kws = dict() if style_kws is None else style_kws
@@ -47,14 +48,13 @@ def style_axes(
     tick_fontsize: int = 8,
     change_xticks: bool = True,
     add_legend: bool = True,
-    fraction: bool = True,
 ) -> None:
     """Style an axes object. 
     
     Parameters
     ----------
     ax
-        Axis object to style
+        Axis object to style.
     title
         Figure title.
     legend_title
@@ -77,9 +77,6 @@ def style_axes(
         REmoves ticks from x axis. 
     add_legend
         Font size of the axis tick labels. 
-    fraction
-        Style as though the plot shows fractions
-    
     """
     ax.set_title(
         title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
