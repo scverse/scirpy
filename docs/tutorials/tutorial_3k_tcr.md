@@ -463,7 +463,7 @@ ir.pl.spectratype(
     adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:], 
     cdr3_col="TRB_1_cdr3",
     color="TRB_1_v_gene",
-    fraction="sample",
+    normalize="sample",
     fig_kws={'dpi': 120}
 )
 ```

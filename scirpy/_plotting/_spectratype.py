@@ -13,7 +13,7 @@ def spectratype(
     *,
     color: str,
     combine_fun: Callable = np.sum,
-    fraction: Union[None, str, bool] = None,
+    normalize: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
     kde_kws: Union[dict, None] = None,
     **kwargs,
@@ -34,8 +34,8 @@ def spectratype(
         A function definining how the `cdr3_col` columns should be merged,
         in case multiple ones were specified. 
         (e.g. sum, mean, median, etc).  
-    fraction
-        If True, compute fractions of abundances relative to the `groupby` column
+    normalize
+        If True, compute fractions of abundances relative to the `cdr3_col` column
         rather than reporting abosolute numbers. Alternatively, the name of a column 
         containing a categorical variable can be provided according to which
         the values will be normalized.  
@@ -51,14 +51,14 @@ def spectratype(
     """
 
     data = tl.spectratype(
-        adata, cdr3_col, target_col=color, combine_fun=combine_fun, fraction=fraction,
+        adata, cdr3_col, target_col=color, combine_fun=combine_fun, fraction=normalize,
     )
 
     groupby_text = cdr3_col if isinstance(cdr3_col, str) else "|".join(cdr3_col)
     title = "Spectratype of " + groupby_text + " by " + color
     xlab = groupby_text + " length"
-    if fraction:
-        fraction_base = color if fraction is True else fraction
+    if normalize:
+        fraction_base = color if normalize is True else normalize
         ylab = "Fraction of cells in " + fraction_base
     else:
         ylab = "Number of cells"
@@ -70,7 +70,7 @@ def spectratype(
 
     # For KDE curves, we need to convert the contingency tables back
     if viztype == "curve":
-        if fraction:
+        if normalize:
             data = (
                 10 * data
             ) / data.min()  # Scales up data so that even fraction become an integer count
