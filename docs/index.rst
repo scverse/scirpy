@@ -4,6 +4,7 @@
    :hidden:
 
    tutorials
+   usage-principles
    api
    tcr-biology
    glossary
