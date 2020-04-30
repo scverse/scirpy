@@ -116,4 +116,5 @@ qualname_overrides = {}
 nitpick_ignore = [
     ("py:class", "igraph.Graph"),
     ("py:class", "igraph.Layout"),
+    ("py:class", "igraph.layout.Layout"),
 ]
