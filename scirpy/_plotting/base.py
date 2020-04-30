@@ -386,7 +386,7 @@ def embedding(
     basis: str,
     *,
     color: Union[str, Sequence[str], None] = None,
-    panel_size: Tuple[float] = (4, 4),
+    panel_size: Tuple[float, float] = (4, 4),
     palette: Union[str, Cycler, Sequence[str], Sequence[Cycler], None] = None,
     legend_loc: str = "right margin",
     ax: Optional[Union[plt.Axes, Sequence[plt.Axes]]] = None,
@@ -441,7 +441,7 @@ def embedding(
         Adjust the width of the space between multiple panels.
     hspace
         Adjust the height of the space between multiple panels.
-    kwargs
+    **kwargs
         Arguments to pass to :func:`scanpy.pl.embedding`. 
 
     Returns

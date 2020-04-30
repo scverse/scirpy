@@ -78,6 +78,7 @@ Plotting: `pl`
    repertoire_overlap
    clonotype_imbalance
    clonotype_network
+   clonotype_network_igraph
    embedding
 
    

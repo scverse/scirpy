@@ -113,4 +113,7 @@ def setup(app):
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
 qualname_overrides = {}
 
-nitpick_ignore = [("py:class", "igraph.Graph")]
+nitpick_ignore = [
+    ("py:class", "igraph.Graph"),
+    ("py:class", "igraph.Layout"),
+]
