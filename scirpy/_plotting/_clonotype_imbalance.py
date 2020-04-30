@@ -34,6 +34,9 @@ def clonotype_imbalance(
     Depends on execution of clonotype_overlap.
     Adds two dataframes (pval and logFC for clonotypes;
     abundance of clonotypes per sample) to `uns`
+
+    .. warning:: 
+        This is an experimental function that will likely change in the future. 
     
     Parameters
     ----------

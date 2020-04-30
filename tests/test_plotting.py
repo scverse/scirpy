@@ -38,7 +38,7 @@ def test_group_abundance(adata_clonotype):
 
 
 def test_spectratype(adata_tra):
-    p = pl.spectratype(adata_tra, target_col="sample")
+    p = pl.spectratype(adata_tra, color="sample")
     assert isinstance(p, plt.Axes)
 
 

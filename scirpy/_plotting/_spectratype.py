@@ -9,9 +9,9 @@ from typing import Union, List, Collection, Callable
 
 def spectratype(
     adata: Union[dict, AnnData],
-    groupby: Union[str, Collection[str]] = ["TRA_1_cdr3"],
+    cdr3_col: Union[str, Collection[str]] = ["TRA_1_cdr3"],
     *,
-    target_col: str,
+    color: str,
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
@@ -26,22 +26,21 @@ def spectratype(
     ----------
     adata
         AnnData object to work on.
-    groupby
+    cdr3_col 
         Column(s) containing CDR3 lengths.        
-    target_col
+    color
         Color by this column from `obs`. E.g. sample or diagnosis 
     combine_fun
-        A function definining how the groupby columns should be merged 
+        A function definining how the `cdr3_col` columns should be merged,
+        in case multiple ones were specified. 
         (e.g. sum, mean, median, etc).  
     fraction
         If True, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
-        name can be provided according to that the values will be normalized.  
+        rather than reporting abosolute numbers. Alternatively, the name of a column 
+        containing a categorical variable can be provided according to which
+        the values will be normalized.  
     viztype
-        Type of plot to produce 
-    kde_kws
-        Parameters to be passed on to the curve plotting routine, like, style,
-        shading and order of categories. 
+        Type of plot to produce.
     **kwargs
         Additional parameters passed to the base plotting function
 
@@ -52,27 +51,21 @@ def spectratype(
     """
 
     data = tl.spectratype(
-        adata,
-        groupby,
-        target_col=target_col,
-        combine_fun=combine_fun,
-        fraction=fraction,
+        adata, cdr3_col, target_col=color, combine_fun=combine_fun, fraction=fraction,
     )
 
-    groupby_text = groupby if isinstance(groupby, str) else "|".join(groupby)
-    title = "Spectratype of " + groupby_text + " by " + target_col
+    groupby_text = cdr3_col if isinstance(cdr3_col, str) else "|".join(cdr3_col)
+    title = "Spectratype of " + groupby_text + " by " + color
     xlab = groupby_text + " length"
     if fraction:
-        fraction_base = target_col if fraction is True else fraction
+        fraction_base = color if fraction is True else fraction
         ylab = "Fraction of cells in " + fraction_base
     else:
         ylab = "Number of cells"
 
-    color_key = f"{target_col}_colors"
+    color_key = f"{color}_colors"
     if color_key in adata.uns and "color" not in kwargs:
-        cat_index = {
-            cat: i for i, cat in enumerate(adata.obs[target_col].cat.categories)
-        }
+        cat_index = {cat: i for i, cat in enumerate(adata.obs[color].cat.categories)}
         kwargs["color"] = [adata.uns[color_key][cat_index[cat]] for cat in data.columns]
 
     # For KDE curves, we need to convert the contingency tables back
@@ -89,9 +82,6 @@ def spectratype(
             else:
                 countable[cn] = np.zeros(10)
         data = countable
-
-    if kde_kws is not None:
-        kwargs.update(kde_kws)
 
     default_style_kws = {"title": title, "xlab": xlab, "ylab": ylab}
     if "style_kws" in kwargs:
