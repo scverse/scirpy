@@ -367,7 +367,7 @@ to the number of cells per sample to mitigate biases due to different sample siz
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="sample"
+    adata, groupby="clonotype", target_col="cluster", max_cols=10, normalize="sample"
 )
 ```
 
@@ -402,7 +402,7 @@ ir.pl.group_abundance(
     adata,
     groupby="TRB_1_v_gene",
     target_col="cluster",
-    fraction=True,
+    normalize=True,
     max_cols=10
 )
 ```
@@ -416,7 +416,7 @@ ir.pl.group_abundance(
     ),:],
     groupby="cluster",
     target_col="TRB_1_v_gene",
-    fraction=True,
+    normalize=True,
 )
 ```
 
