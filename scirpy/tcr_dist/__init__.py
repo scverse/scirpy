@@ -2,36 +2,40 @@ import parasail
 from ..util._multiprocessing import EnhancedPool as Pool
 import itertools
 from anndata import AnnData
-from typing import Union, Collection, List, Tuple, Dict, Callable
+from typing import Union, Collection, List, Tuple, Dict
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
-import numpy.testing as npt
-from ..util import _is_na, _is_symmetric, _reduce_nonzero
+from ..util import _is_na
 import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
 import scipy.sparse
-from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
-from functools import reduce
-from collections import Counter
+from scipy.sparse import coo_matrix, csr_matrix
+from ..util import _doc_params
 
 _doc_metrics = """\
 
 """
 
+_doc_params_distance_calculator = """\
+cutoff
+    Will eleminate distances > cutoff to make efficient 
+    use of sparse matrices. 
+n_jobs
+    Number of jobs to use for the pairwise distance calculation. 
+    If None, use all jobs. 
+"""
 
+
+@_doc_params(params=_doc_params_distance_calculator)
 class DistanceCalculator(abc.ABC):
-    """Abstract base class for a CDR3-sequence distance calculator.
+    """\
+    Abstract base class for a CDR3-sequence distance calculator.
     
     Parameters
     ----------
-    cutoff
-        Will eleminate distances > cutoff to make efficient 
-        use of sparse matrices. 
-    n_jobs
-        Number of jobs to use for the pairwise distance calculation. 
-        If None, use all jobs. 
+    {params}
     
     """
 
@@ -56,8 +60,8 @@ class DistanceCalculator(abc.ABC):
          * Only returns distances <= cutoff. 
          * Distances are non-negative values.
          * The resulting matrix is offsetted by 1 to allow efficient use
-           of sparse matrices ($d' = d+1$).
-           I.e. a `distance > cutoff` is represented as `0`, a `distance == 0` 
+           of sparse matrices :math:`d' = d+1`.
+           That means, a `distance > cutoff` is represented as `0`, a `distance == 0` 
            is represented as `1`, a `distance == 1` is represented as `2` and so on. 
 
         Parameters
@@ -67,33 +71,53 @@ class DistanceCalculator(abc.ABC):
 
         Returns
         -------
-        Sparse 
+        Sparse, upper triangular distance matrix. 
         """
         pass
 
 
+@_doc_params(params=_doc_params_distance_calculator)
 class IdentityDistanceCalculator(DistanceCalculator):
-    """Calculate the Identity-distance between CDR3 sequences. 
+    """\
+    Calculates the Identity-distance between CDR3 sequences. 
 
     The identity distance is defined as 
         * `0`, if sequences are identical
         * `1`, if sequences are not identical.
+
+    For this DistanceCalculator, per definition, the cutoff = 0. 
+    The `cutoff` argument is ignored. 
+
+    Parameters
+    ----------
+    {params}
     """
 
     def __init__(self, cutoff: float = 0, n_jobs: Union[int, None] = None):
-        """Initializes the IdentityDistanceCalculator. 
-        
-        For this DistanceCalculator, per definition, the cutoff = 0. 
-        The `cutoff` argument is ignored. """
         super().__init__(cutoff, n_jobs)
 
     def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
-        """The offsetted matrix is the identity matrix."""
+        """In this case, the offseted distance matrix is the identity matrix. 
+        
+        More details: :meth:`DistanceCalculator.calc_dist_mat`"""
         return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="coo")
 
 
+@_doc_params(params=_doc_params_distance_calculator)
 class LevenshteinDistanceCalculator(DistanceCalculator):
-    """Calculates the Levenshtein (i.e. edit-distance) between sequences. """
+    """\
+    Calculates the Levenshtein edit-distance between sequences. 
+    
+    The edit distance is the total number of deletion, addition and modification 
+    events. 
+
+    This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
+    to calculate the distances. 
+
+    Parameters
+    ----------
+    {params}
+    """
 
     def _compute_row(self, seqs: np.ndarray, i_row: int) -> coo_matrix:
         """Compute a row of the upper diagnomal distance matrix"""
@@ -110,6 +134,9 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
         return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, seqs.size))
 
     def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
+        """Calculate the distance matrix. 
+
+        See :meth:`DistanceCalculator.calc_dist_mat`. """
         p = Pool(self.n_jobs)
         rows = p.starmap_progress(
             self._compute_row,
@@ -129,10 +156,25 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
 class AlignmentDistanceCalculator(DistanceCalculator):
     """Calculates distance between sequences based on pairwise sequence alignment. 
 
-    The distance between two sequences is defined as $S_{1,2}^{max} - S_{1,2}$ 
-    where $S_{1,2} $ is the alignment score of sequences 1 and 2 and $S_{1,2}^{max}$ 
-    is the max. achievable alignment score of sequences 1 and 2 defined as 
-    $\\min(S_{1,1}, S_{2,2})$. 
+    The distance between two sequences is defined as :math:`S_{1,2}^{max} - S_{1,2}` 
+    where :math:`S_{1,2}` is the alignment score of sequences 1 and 2 and 
+    :math:`S_{1,2}^{max}` is the max. achievable alignment score of sequences 1 and 2
+    defined as :math:`\\min(S_{1,1}, S_{2,2})`. 
+
+    The use of alignment-based distances is heavily inspired by :cite:`TCRdist`. 
+
+    High-performance sequence alignments are calculated leverating 
+    the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).  
+
+    Parameters
+    ----------
+    {params}
+    subst_mat
+        Name of parasail substitution matrix
+    gap_open
+        Gap open penalty
+    gap_extend
+        Gap extend penatly
     """
 
     def __init__(
@@ -144,23 +186,6 @@ class AlignmentDistanceCalculator(DistanceCalculator):
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        """Class to generate pairwise alignment distances
-        
-        High-performance sequence alignment through parasail library [Daily2016]_
-
-        Parameters
-        ----------
-        cutoff
-            see `_DistanceCalculator`
-        n_jobs
-            see `_DistanceCalculator`
-        subst_mat
-            Name of parasail substitution matrix
-        gap_open
-            Gap open penalty
-        gap_extend
-            Gap extend penatly
-        """
         super().__init__(cutoff, n_jobs)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
@@ -210,14 +235,7 @@ class AlignmentDistanceCalculator(DistanceCalculator):
         """Calculate the distances between amino acid sequences based on
         of all-against-all pairwise sequence alignments.
 
-        Parameters
-        ----------
-        seqs
-            Array of amino acid sequences
-
-        Returns
-        -------
-        Upper diagonal distance matrix of normalized alignment distances. 
+        See :meth:`DistanceCalculator.calc_dist_mat` for more details. 
         """
         # first, calculate self-alignments. We need them as refererence values
         # to turn scores into dists
