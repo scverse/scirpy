@@ -38,7 +38,6 @@ Preprocessing: `pp`
    :toctree: .
 
    merge_with_tcr
-   tcr_dist
    tcr_neighbors
 
 
@@ -117,3 +116,21 @@ Utility functions: `util`
    :toctree: . 
 
    graph.layout_components
+
+
+TCR distance metrics: `tcr_dist`
+-----------------------------------
+
+.. module:: scirpy.tcr_dist
+
+.. autosummary::
+   :toctree: .
+
+   tcr_dist
+   DistanceCalculator
+   IdentityDistanceCalculator
+   LevenshteinDistanceCalculator
+   AlignmentDistanceCalculator
+..   DistanceCalculator.calc_dist_mat
+
+

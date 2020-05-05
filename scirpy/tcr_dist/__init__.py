@@ -21,20 +21,24 @@ _doc_metrics = """\
 """
 
 
-class _DistanceCalculator(abc.ABC):
+class DistanceCalculator(abc.ABC):
+    """Abstract base class for a CDR3-sequence distance calculator.
+    
+    Parameters
+    ----------
+    cutoff
+        Will eleminate distances > cutoff to make efficient 
+        use of sparse matrices. 
+    n_jobs
+        Number of jobs to use for the pairwise distance calculation. 
+        If None, use all jobs. 
+    
+    """
+
+    #: The sparse matrix dtype. Defaults to uint8, constraining the max distance to 255.
     DTYPE = "uint8"
 
     def __init__(self, cutoff: float, n_jobs: Union[int, None] = None):
-        """
-        Parameters
-        ----------
-        cutoff:
-            Will eleminate distances > cutoff to make efficient 
-            use of sparse matrices. 
-        n_jobs
-            Number of jobs to use for the pairwise distance calculation. 
-            If None, use all jobs. 
-        """
         if cutoff > 255:
             raise ValueError(
                 "Using a cutoff > 255 is not possible due to the `uint8` dtype used"
@@ -44,25 +48,42 @@ class _DistanceCalculator(abc.ABC):
 
     @abc.abstractmethod
     def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
-        """Calculate the upper diagnoal, pairwise distance matrix of all 
-        sequences in `seq`.
+        """Calculate pairwise distance matrix of all sequences in `seqs`.
+        
+        Only calculates the upper triangle (including the diagonal, which in most cases,
+        should be `1` as explained below). 
 
-         * Only returns distances <= cutoff
+         * Only returns distances <= cutoff. 
          * Distances are non-negative values.
          * The resulting matrix is offsetted by 1 to allow efficient use
            of sparse matrices ($d' = d+1$).
-           I.e. 0 -> d > cutoff; 1 -> d == 0; 2 -> d == 1; ...
+           I.e. a `distance > cutoff` is represented as `0`, a `distance == 0` 
+           is represented as `1`, a `distance == 1` is represented as `2` and so on. 
+
+        Parameters
+        ----------
+        seqs
+            array containing CDR3 sequences. Should not contain duplicates. 
+
+        Returns
+        -------
+        Sparse 
         """
         pass
 
 
-class _IdentityDistanceCalculator(_DistanceCalculator):
-    """Calculate the distance between TCR based on the identity 
-    of sequences. I.e. 0 = sequence identical, 1 = sequences not identical
+class IdentityDistanceCalculator(DistanceCalculator):
+    """Calculate the Identity-distance between CDR3 sequences. 
+
+    The identity distance is defined as 
+        * `0`, if sequences are identical
+        * `1`, if sequences are not identical.
     """
 
     def __init__(self, cutoff: float = 0, n_jobs: Union[int, None] = None):
-        """For this DistanceCalculator, per definition, the cutoff = 0. 
+        """Initializes the IdentityDistanceCalculator. 
+        
+        For this DistanceCalculator, per definition, the cutoff = 0. 
         The `cutoff` argument is ignored. """
         super().__init__(cutoff, n_jobs)
 
@@ -71,7 +92,7 @@ class _IdentityDistanceCalculator(_DistanceCalculator):
         return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="coo")
 
 
-class _LevenshteinDistanceCalculator(_DistanceCalculator):
+class LevenshteinDistanceCalculator(DistanceCalculator):
     """Calculates the Levenshtein (i.e. edit-distance) between sequences. """
 
     def _compute_row(self, seqs: np.ndarray, i_row: int) -> coo_matrix:
@@ -105,7 +126,7 @@ class _LevenshteinDistanceCalculator(_DistanceCalculator):
         return score_mat
 
 
-class _AlignmentDistanceCalculator(_DistanceCalculator):
+class AlignmentDistanceCalculator(DistanceCalculator):
     """Calculates distance between sequences based on pairwise sequence alignment. 
 
     The distance between two sequences is defined as $S_{1,2}^{max} - S_{1,2}$ 
@@ -237,7 +258,7 @@ def tcr_dist(
     unique_seqs: np.ndarray,
     *,
     metric: Union[
-        Literal["alignment", "identity", "levenshtein"], _DistanceCalculator
+        Literal["alignment", "identity", "levenshtein"], DistanceCalculator
     ] = "identity",
     cutoff: float = 2,
     n_jobs: Union[int, None] = None,
@@ -254,14 +275,14 @@ def tcr_dist(
 
 
     """
-    if isinstance(metric, _DistanceCalculator):
+    if isinstance(metric, DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
-        dist_calc = _AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
+        dist_calc = AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     elif metric == "identity":
-        dist_calc = _IdentityDistanceCalculator(cutoff=cutoff)
+        dist_calc = IdentityDistanceCalculator(cutoff=cutoff)
     elif metric == "levenshtein":
-        dist_calc = _LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
+        dist_calc = LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     else:
         raise ValueError("Invalid distance metric.")
 
@@ -561,7 +582,7 @@ class TcrNeighbors:
 
         Parameters
         ----------
-        j_jobs
+        n_jobs
             Number of CPUs to use for alignment and levenshtein distance. 
             Default: use all CPUS. 
         """
@@ -613,7 +634,7 @@ def tcr_neighbors(
     adata: AnnData,
     *,
     metric: Literal["identity", "alignment", "levenshtein"] = "alignment",
-    cutoff: int = 2,
+    cutoff: int = 10,
     receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
     dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
     key_added: str = "tcr_neighbors",
@@ -643,12 +664,14 @@ def tcr_neighbors(
          * `"TRB"` - only consider TRB sequences
          * `"all"` - both TRA and TRB need to match
          * `"any"` - either TRA or TRB need to match
+
     dual_tcr:
          * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
          * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
         cutoff for any of the chains. 
          * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
         cutoff for all of the chains. 
+
         See also :term:`Dual TCR`
     key_added:
         dict key under which the result will be stored in `adata.uns["scirpy"]`
