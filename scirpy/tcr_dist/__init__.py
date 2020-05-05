@@ -18,13 +18,13 @@ _doc_metrics = """\
 metric
     You can choose one of the following metrics: 
       * `identity` -- 1 for identical sequences, 0 otherwise. 
-        See :class:`IdentityDistanceCalculator`. 
+        See :class:`~scirpy.tcr_dist.IdentityDistanceCalculator`. 
       * `levenshtein` -- Levenshtein edit distance.
-        See :class:`LevenshteinDistanceCalculator`. 
+        See :class:`~scirpy.tcr_dist.LevenshteinDistanceCalculator`. 
       * `alignment` -- Distance based on pairwise sequence alignments using the 
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences. 
-        See :class:`AlignmentDistanceCalculator`. 
-      * any instance of :class:`DistanceCalculator`. 
+        See :class:`~scirpy.tcr_dist.AlignmentDistanceCalculator`. 
+      * any instance of :class:`~scirpy.tcr_dist.DistanceCalculator`. 
 """
 
 _doc_cutoff = """\
@@ -60,7 +60,7 @@ Calculates the upper triangle, including the diagonal.
 @_doc_params(params=_doc_params_distance_calculator)
 class DistanceCalculator(abc.ABC):
     """\
-    Abstract base class for a CDR3-sequence distance calculator.
+    Abstract base class for a :term:`CDR3`-sequence distance calculator.
     
     Parameters
     ----------
@@ -102,7 +102,7 @@ class DistanceCalculator(abc.ABC):
 @_doc_params(params=_doc_params_distance_calculator)
 class IdentityDistanceCalculator(DistanceCalculator):
     """\
-    Calculates the Identity-distance between CDR3 sequences. 
+    Calculates the Identity-distance between :term:`CDR3` sequences. 
 
     The identity distance is defined as 
         * `0`, if sequences are identical
@@ -364,7 +364,9 @@ class TcrNeighbors:
         self,
         adata: AnnData,
         *,
-        metric: Literal["alignment", "identity", "levenshtein"] = "identity",
+        metric: Union[
+            Literal["alignment", "identity", "levenshtein"], DistanceCalculator
+        ] = "identity",
         cutoff: float = 0,
         receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
         dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
@@ -699,10 +701,13 @@ class TcrNeighbors:
         return connectivities
 
 
+@_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=_doc_dist_mat)
 def tcr_neighbors(
     adata: AnnData,
     *,
-    metric: Literal["identity", "alignment", "levenshtein"] = "alignment",
+    metric: Union[
+        Literal["identity", "alignment", "levenshtein"], DistanceCalculator
+    ] = "alignment",
     cutoff: int = 10,
     receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
     dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
@@ -711,23 +716,23 @@ def tcr_neighbors(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
-    """Construct a cell x cell neighborhood graph based on :term:`CDR3` sequence
-    similarity. 
+    """\
+    Construct a neighborhood graph based on :term:`CDR3` sequence similarity. 
+
+    All cells with a CDR3 distance `< cutoff` receive an edge in the graph. 
+    Edges are weighted by the distance. 
 
     Parameters
     ----------
     adata
         annotated data matrix
-    metric
-        "identity" - Calculate 0/1 distance based on sequence identity. Equals a 
-        cutoff of 0. 
-        "alignment" - Calculate distance using pairwise sequence alignment 
-        and BLOSUM62 matrix
-        "levenshtein" - Levenshtein edit distance
-    cutoff
+    {metric}
+    {cutoff}
+
         Two cells with a distance <= the cutoff will be connected. 
         If cutoff = 0, the CDR3 sequences need to be identical. In this 
         case, no alignment is performed. 
+
     receptor_arms:
          * `"TRA"` - only consider TRA sequences
          * `"TRB"` - only consider TRB sequences
@@ -737,18 +742,19 @@ def tcr_neighbors(
     dual_tcr:
          * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
          * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
-        cutoff for any of the chains. 
+           cutoff for any of the chains. 
          * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
-        cutoff for all of the chains. 
+           cutoff for all of the chains. 
 
         See also :term:`Dual TCR`
+        
     key_added:
-        dict key under which the result will be stored in `adata.uns["scirpy"]`
+        dict key under which the result will be stored in `adata.uns`
         when `inplace` is True.
     sequence:
-        Use amino acid (aa) or nulceotide (nt) sequences to define clonotype? 
+        Use amino acid (`aa`) or nulceotide (`nt`) sequences?
     inplace:
-        If True, store the results in adata.uns. If False, returns
+        If `True`, store the results in `adata.uns`. Otherwise return
         the results. 
     n_jobs:
         Number of cores to use for alignment and levenshtein distance. 
