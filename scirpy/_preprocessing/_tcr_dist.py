@@ -16,6 +16,10 @@ from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
 from functools import reduce
 from collections import Counter
 
+_doc_metrics = """\
+
+"""
+
 
 class _DistanceCalculator(abc.ABC):
     DTYPE = "uint8"
@@ -117,7 +121,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
         *,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
-        gap_extend: int = 1,
+        gap_extend: int = 11,
     ):
         """Class to generate pairwise alignment distances
         
@@ -230,7 +234,7 @@ class _AlignmentDistanceCalculator(_DistanceCalculator):
 
 
 def tcr_dist(
-    unique_seqs,
+    unique_seqs: np.ndarray,
     *,
     metric: Union[
         Literal["alignment", "identity", "levenshtein"], _DistanceCalculator
@@ -238,7 +242,18 @@ def tcr_dist(
     cutoff: float = 2,
     n_jobs: Union[int, None] = None,
 ):
-    """calculate the sequence x sequence distance matrix"""
+    """Calculate a sequence x sequence distance matrix.
+    
+    Parameters
+    ----------
+    unique_seqs
+        Numpy array of nucleotide or amino acid sequences. 
+        Must not contain duplicates. 
+        Note that not all distance metrics support nucleotide sequences. 
+    metric
+
+
+    """
     if isinstance(metric, _DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
@@ -606,7 +621,7 @@ def tcr_neighbors(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
-    """Construct a cell x cell neighborhood graph based on CDR3 sequence
+    """Construct a cell x cell neighborhood graph based on :term:`CDR3` sequence
     similarity. 
 
     Parameters
@@ -624,16 +639,17 @@ def tcr_neighbors(
         If cutoff = 0, the CDR3 sequences need to be identical. In this 
         case, no alignment is performed. 
     receptor_arms:
-        "TRA" - only consider TRA sequences
-        "TRB" - only consider TRB sequences
-        "all" - both TRA and TRB need to match
-        "any" - either TRA or TRB need to match
+         * `"TRA"` - only consider TRA sequences
+         * `"TRB"` - only consider TRB sequences
+         * `"all"` - both TRA and TRB need to match
+         * `"any"` - either TRA or TRB need to match
     dual_tcr:
-        "primary_only" - only consider most abundant pair of TRA/TRB chains
-        "any" - consider both pairs of TRA/TRB sequences. Distance must be below
+         * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
+         * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
         cutoff for any of the chains. 
-        "all" - consider both pairs of TRA/TRB sequences. Distance must be below
+         * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
         cutoff for all of the chains. 
+        See also :term:`Dual TCR`
     key_added:
         dict key under which the result will be stored in `adata.uns["scirpy"]`
         when `inplace` is True.
