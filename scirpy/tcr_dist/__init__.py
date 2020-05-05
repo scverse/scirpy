@@ -15,7 +15,23 @@ from scipy.sparse import coo_matrix, csr_matrix
 from ..util import _doc_params
 
 _doc_metrics = """\
+metric
+    You can choose one of the following metrics: 
+      * `identity` -- 1 for identical sequences, 0 otherwise. 
+        See :class:`IdentityDistanceCalculator`. 
+      * `levenshtein` -- Levenshtein edit distance.
+        See :class:`LevenshteinDistanceCalculator`. 
+      * `alignment` -- Distance based on pairwise sequence alignments using the 
+        BLOSUM62 matrix. This option is incompatible with nucleotide sequences. 
+        See :class:`AlignmentDistanceCalculator`. 
+      * any instance of :class:`DistanceCalculator`. 
+"""
 
+_doc_cutoff = """\
+cutoff
+    All distances `> cutoff` will be replaced by `0` and eliminated from the sparse
+    matrix. A sensible cutoff depends on the distance metric, you can find 
+    information in the corresponding docs. 
 """
 
 _doc_params_distance_calculator = """\
@@ -25,6 +41,19 @@ cutoff
 n_jobs
     Number of jobs to use for the pairwise distance calculation. 
     If None, use all jobs. 
+"""
+
+_doc_dist_mat = """\
+Calculates the upper triangle, including the diagonal. 
+
+.. important::
+    * Distances are offset by 1 to allow efficient use of sparse matrices 
+      (:math:`d' = d+1`). 
+    * That means, a `distance > cutoff` is represented as `0`, a `distance == 0` 
+      is represented as `1`, a `distance == 1` is represented as `2` and so on. 
+    * Only returns distances `<= cutoff`. Larger distances are eliminated 
+      from the sparse matrix. 
+    * Distances are non-negative. 
 """
 
 
@@ -50,20 +79,14 @@ class DistanceCalculator(abc.ABC):
         self.cutoff = cutoff
         self.n_jobs = n_jobs
 
+    @_doc_params(dist_mat=_doc_dist_mat)
     @abc.abstractmethod
     def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
-        """Calculate pairwise distance matrix of all sequences in `seqs`.
+        """\
+        Calculate pairwise distance matrix of all sequences in `seqs`.
         
-        Only calculates the upper triangle (including the diagonal, which in most cases,
-        should be `1` as explained below). 
-
-         * Only returns distances <= cutoff. 
-         * Distances are non-negative values.
-         * The resulting matrix is offsetted by 1 to allow efficient use
-           of sparse matrices :math:`d' = d+1`.
-           That means, a `distance > cutoff` is represented as `0`, a `distance == 0` 
-           is represented as `1`, a `distance == 1` is represented as `2` and so on. 
-
+        {dist_mat}
+       
         Parameters
         ----------
         seqs
@@ -85,8 +108,9 @@ class IdentityDistanceCalculator(DistanceCalculator):
         * `0`, if sequences are identical
         * `1`, if sequences are not identical.
 
-    For this DistanceCalculator, per definition, the cutoff = 0. 
-    The `cutoff` argument is ignored. 
+    Choosing a cutoff:
+        For this DistanceCalculator, per definition, the cutoff = 0. 
+        The `cutoff` argument is ignored. 
 
     Parameters
     ----------
@@ -113,6 +137,11 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
 
     This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
     to calculate the distances. 
+
+    Choosing a cutoff:
+        Each modification stands for a deletion, addition or modification event. 
+        While lacking empirical data, it seems unlikely that CDR3 sequences with more
+        than two modifications still recognize the same antigen. 
 
     Parameters
     ----------
@@ -153,18 +182,33 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
         return score_mat
 
 
+@_doc_params(params=_doc_params_distance_calculator)
 class AlignmentDistanceCalculator(DistanceCalculator):
-    """Calculates distance between sequences based on pairwise sequence alignment. 
+    """\
+    Calculates distance between sequences based on pairwise sequence alignment. 
 
-    The distance between two sequences is defined as :math:`S_{1,2}^{max} - S_{1,2}` 
-    where :math:`S_{1,2}` is the alignment score of sequences 1 and 2 and 
-    :math:`S_{1,2}^{max}` is the max. achievable alignment score of sequences 1 and 2
-    defined as :math:`\\min(S_{1,1}, S_{2,2})`. 
+    The distance between two sequences is defined as :math:`S_{{1,2}}^{{max}} - S_{{1,2}}`, 
+    where :math:`S_{{1,2}}` is the alignment score of sequences 1 and 2 and 
+    :math:`S_{{1,2}}^{{max}}` is the max. achievable alignment score of sequences 1 and 2. 
+    :math:`S_{{1,2}}^{{max}}` is defined as :math:`\\min(S_{{1,1}}, S_{{2,2}})`. 
 
     The use of alignment-based distances is heavily inspired by :cite:`TCRdist`. 
 
-    High-performance sequence alignments are calculated leverating 
+    High-performance sequence alignments are calculated leveraging 
     the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).  
+
+    Choosing a cutoff:
+        Alignment distances need to be viewed in the light of the substitution matrix. 
+        The alignment distance is the difference between the actual alignment 
+        score and the max. achievable alignment score. For instance, a mutation 
+        from *Leucine* (`L`) to *Isoleucine* (`I`) results in a BLOSUM62 score of `2`. 
+        An `L` aligned with `L` achieves a score of `4`. The distance is, therefore, `2`.
+
+        On the other hand, a single *Tryptophane* (`W`) mutating into, e.g.
+        *Proline* (`P`) already results in a distance of `15`. 
+
+        We are still lacking empirical data up to which distance a CDR3 sequence still 
+        is likely to recognize the same antigen, but reasonable cutoffs are `<15`. 
 
     Parameters
     ----------
@@ -272,16 +316,20 @@ class AlignmentDistanceCalculator(DistanceCalculator):
         return score_mat
 
 
+@_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=_doc_dist_mat)
 def tcr_dist(
     unique_seqs: np.ndarray,
     *,
     metric: Union[
         Literal["alignment", "identity", "levenshtein"], DistanceCalculator
     ] = "identity",
-    cutoff: float = 2,
+    cutoff: float = 10,
     n_jobs: Union[int, None] = None,
 ):
-    """Calculate a sequence x sequence distance matrix.
+    """\
+    Calculate a sequence x sequence distance matrix.
+
+    {dist_mat}
     
     Parameters
     ----------
@@ -289,9 +337,12 @@ def tcr_dist(
         Numpy array of nucleotide or amino acid sequences. 
         Must not contain duplicates. 
         Note that not all distance metrics support nucleotide sequences. 
-    metric
+    {metric}
+    {cutoff}
 
-
+    Returns
+    -------
+    Upper triangular distance matrix. 
     """
     if isinstance(metric, DistanceCalculator):
         dist_calc = metric
