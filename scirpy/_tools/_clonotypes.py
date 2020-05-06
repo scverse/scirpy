@@ -75,30 +75,32 @@ def define_clonotypes(
     key_added: str = "clonotype",
     inplace: bool = True,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    """Define clonotypes based on cdr3 distance.
+    """Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` distance.
+
+    Requires running :func:`scirpy.pp.tcr_neighbors` first. 
     
     Parameters
     ----------
     adata
-        annotated data matrix
+        Annotated data matrix.
     partitions
         How to find graph partitions that define a clonotype. 
-        Possible values are 'leiden', for using the "Leiden" algorithm and 
-        "connected" to find fully connected sub-graphs. 
+        Possible values are `leiden`, for using the "Leiden" algorithm and 
+        `connected` to find fully connected sub-graphs. 
 
         The difference is that the Leiden algorithm further divides 
         fully connected subgraphs into highly-connected modules. 
     resolution
-        resolution parameter for the leiden algorithm. 
+        `resolution` parameter for the leiden algorithm. 
     n_iterations
-        n_iterations parameter for the leiden algorithm. 
+        `n_iterations` parameter for the leiden algorithm. 
     neighbors_key
-        key under which the neighboorhood graph is stored in adata
+        Key under which the neighboorhood graph is stored in `adata.uns`.
     key_added
-        name of the columns that will be added to `adata.obs` if inplace is True. 
+        Name of the columns that will be added to `adata.obs` if inplace is `True`. 
         Will create the columns `{key_added}` and `{key_added}_size`. 
     inplace
-        If true, adds the results to anndata, otherwise returns them. 
+        If `True`, adds the results to anndata, otherwise returns them. 
 
     Returns
     -------
@@ -140,7 +142,7 @@ def clonotype_network(
     adata,
     *,
     min_size: int = 1,
-    layout: str = "fr",
+    layout: str = "components",
     layout_kwargs: Union[dict, None] = None,
     neighbors_key: str = "tcr_neighbors",
     key_clonotype_size: str = "clonotype_size",
@@ -148,7 +150,15 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
 ) -> Union[None, np.ndarray]:
-    """Build the clonotype network for plotting
+    """Layouts the clonotype network for plotting. 
+
+    Other than with transcriptomics data, this network usually consists 
+    of many disconnected components, each of them representing cells 
+    of the same clonotype. 
+
+    Singleton clonotypes can be filtered out with the `min_size` parameter. 
+
+    Stores coordinates of the clonotype network in `adata.obsm`. 
     
     Parameters
     ----------
@@ -167,7 +177,7 @@ def clonotype_network(
     key_added
         Key under which the layout coordinates will be stored in `adata.obsm`. 
     inplace
-        If true, store the coordinates in `adata.obsm`, otherwise return them. 
+        If `True`, store the coordinates in `adata.obsm`, otherwise return them. 
     random_state
         Random seed set before computing the layout. 
 

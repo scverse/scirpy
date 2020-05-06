@@ -1,32 +1,14 @@
 from ..util import _is_na, _is_true
 from anndata import AnnData
 from typing import Union
-import pandas as pd
 import numpy as np
 from scanpy import logging
-
-
-@np.vectorize
-def _decide_chain_cat(x: pd) -> np.ndarray:
-    """Helper function of `chain_pairing`. Associates categories to  a cell based 
-    on how many TRA and TRB chains they have.
-
-    Parameters
-    ----------
-    x
-        A Series contaning immune receptor chain information of a single cell.
-
-    Returns
-    -------
-    The category the cell belongs to. 
-    
-    """
 
 
 def chain_pairing(
     adata: AnnData, *, inplace: bool = True, key_added: str = "chain_pairing"
 ) -> Union[None, np.ndarray]:
-    """Associate categories to cells based on how many TRA and TRB chains they have.
+    """Categorize cells based on how many TRA and TRB chains they have.
 
     Parameters
     ----------
