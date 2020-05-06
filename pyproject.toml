@@ -54,4 +54,5 @@ doc = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
+    'squarify'
 ]
