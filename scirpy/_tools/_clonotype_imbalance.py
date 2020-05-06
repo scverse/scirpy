@@ -27,6 +27,10 @@ def clonotype_imbalance(
     Uses Fischer's exact test to rank clonotypes.
     Depends on execution of :func:`scirpy.tl.repertoire_overlap`.
     Adds two dataframes (abundance of clonotypes per sample; pval and logFC for clonotypes) to `uns`
+
+    .. warning::
+        
+        This is an experimental function and will likely change in the future. 
     
     Parameters
     ----------

@@ -3,7 +3,6 @@ from pathlib import Path
 from ..util import _doc_params, _read_to_str
 from scanpy.readwrite import read
 from scanpy import settings
-import os
 from contextlib import contextmanager
 import tqdm.auto
 from tqdm import tqdm as tqdm_

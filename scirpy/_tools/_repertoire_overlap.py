@@ -20,7 +20,11 @@ def repertoire_overlap(
 ) -> Union[None, Tuple[pd.DataFrame, np.ndarray, np.ndarray]]:
     """Compute distance between cell groups based on clonotype overlap.
 
-    Adds parwise overlaps, distance matrix and linkage to `uns`
+    Adds parwise overlaps, distance matrix and linkage to `uns`.
+
+    .. warning::
+
+        This function is experimental and is likely to change in the future. 
     
     Parameters
     ----------

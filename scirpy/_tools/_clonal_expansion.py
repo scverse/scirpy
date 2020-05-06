@@ -1,10 +1,9 @@
 from anndata import AnnData
-from typing import Dict
 from ..util import _is_na, _normalize_counts
 import numpy as np
-import pandas as pd
 from typing import Union
 from .._compat import Literal
+import pandas as pd
 
 
 def _clip_and_count(
@@ -58,7 +57,7 @@ def clonal_expansion(
     key_added: str = "clonal_expansion",
     inplace: bool = True,
 ) -> Union[None, np.ndarray]:
-    """Adds a column to obs which clonotypes are expanded. 
+    """Adds a column to `obs` recording which clonotypes are expanded. 
     
     Counts NaN values like any other value in `target_col`. 
 
@@ -105,11 +104,11 @@ def summarize_clonal_expansion(
     summarize_by: Literal["cell", "clonotype"] = "cell",
     normalize: Union[bool] = False,
     **kwargs,
-):
+) -> pd.DataFrame:
     """
     Summarizes clonal expansion by a grouping variable. 
 
-    Removes all entries with `NaN` in `target_col` prior to plotting. 
+    Removes all entries with `NaN` in `target_col` prior to summarization. 
 
     Parameters
     ----------
@@ -124,13 +123,13 @@ def summarize_clonal_expansion(
         or "clonotype" to count clonotypes. The former leads to a over-representation
         of expanded clonotypes but better represents the fraction of expanded cells. 
     normalize
-        If False, plot absolute cell counts. If True, scale each group to 1. 
+        If `False`, plot absolute cell counts. If `True`, scale each group to 1. 
     **kwargs
         Additional arguments passed to :func:`clonal_expansion`. 
     
     Returns
     -------
-    pd.DataFrame 
+    A DataFrame with one row for each unique value in `groupby`. 
     """
     if summarize_by not in ["clonotype", "cell"]:
         raise ValueError("Invalue value for `summarize_by`. ")
