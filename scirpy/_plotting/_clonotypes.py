@@ -192,7 +192,7 @@ def clonotype_network(
     with _patch_plot_edges(neighbors_key, edges_cmap):
         return base.embedding(
             adata,
-            basis="clonotype_network",
+            basis=basis,
             panel_size=panel_size,
             color=color,
             legend_loc=legend_loc,
