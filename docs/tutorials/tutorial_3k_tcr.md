@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.3.2
+      jupytext_version: 1.4.1
 ---
 
 # Analysis of 3k T cells from cancer
@@ -24,7 +24,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %autoreload 2
 import sys
 
-sys.path.append("../..") 
+sys.path.insert(0, "../..") 
 import scirpy as ir
 import pandas as pd
 import numpy as np
@@ -367,7 +367,7 @@ to the number of cells per sample to mitigate biases due to different sample siz
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10, fraction="sample"
+    adata, groupby="clonotype", target_col="cluster", max_cols=10, normalize="sample"
 )
 ```
 
@@ -402,7 +402,7 @@ ir.pl.group_abundance(
     adata,
     groupby="TRB_1_v_gene",
     target_col="cluster",
-    fraction=True,
+    normalize=True,
     max_cols=10
 )
 ```
@@ -416,7 +416,7 @@ ir.pl.group_abundance(
     ),:],
     groupby="cluster",
     target_col="TRB_1_v_gene",
-    fraction=True,
+    normalize=True,
 )
 ```
 
@@ -441,7 +441,7 @@ ir.pl.vdj_usage(adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]),
 <!-- #endraw -->
 
 ```python
-ir.pl.spectratype(adata, target_col="cluster", viztype="bar", fig_kws={"dpi": 120})
+ir.pl.spectratype(adata, color="cluster", viztype="bar", fig_kws={"dpi": 120})
 ```
 
 The same chart visualized as "ridge"-plot: 
@@ -449,7 +449,7 @@ The same chart visualized as "ridge"-plot:
 ```python
 ir.pl.spectratype(
     adata,
-    target_col="cluster",
+    color="cluster",
     viztype="curve",
     fig_kws={"dpi": 120},
     kde_kws={'curve_layout': 'shifted', 'kde_norm': False, 'kde_norm': False}
@@ -461,9 +461,9 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 ```python
 ir.pl.spectratype(
     adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:], 
-    groupby="TRB_1_cdr3",
-    target_col="TRB_1_v_gene",
-    fraction="sample",
+    cdr3_col="TRB_1_cdr3",
+    color="TRB_1_v_gene",
+    normalize="sample",
     fig_kws={'dpi': 120}
 )
 ```
@@ -513,4 +513,8 @@ ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_
 # Plot a Volcano diagram of p-values and the fold difference between the two groups
 
 ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='volcano')
+```
+
+```python
+
 ```

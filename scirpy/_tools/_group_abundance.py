@@ -71,8 +71,7 @@ def group_abundance(
     fraction: Union[None, str, bool] = None,
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
 ) -> pd.DataFrame:
-    """Creates summary statsitics on how many
-    cells belong to a certain category within a certain group. 
+    """Summarizes the number/fraction of cells of a certain category by a certain group. 
 
     Ignores NaN values. 
     
@@ -84,9 +83,10 @@ def group_abundance(
         Group by this column from `obs`. E.g, sample, or group. 
     target_col
         Caregorical variable from `obs` according to which the abundance/fractions
-        will be computed.        
+        will be computed. This defaults to "has_tcr", simply counting 
+        the number of cells with a detected :term:`TCR` by group.        
     fraction
-        If True, compute fractions of abundances relative to the `groupby` column
+        If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column 
         name can be provided according to that the values will be normalized. 
     sort
@@ -98,7 +98,7 @@ def group_abundance(
 
     Returns
     -------
-    Returns a data frame with the number of cells per group 
+    Returns a data frame with the number (or fraction) of cells per group. 
     """
     if target_col not in adata.obs.columns:
         raise ValueError("`target_col` not found in obs`")

@@ -13,14 +13,21 @@ def merge_with_tcr(
     validate: str = "one_to_one",
     **kwargs
 ) -> None:
-    """Integrate the TCR AnnData into an existing AnnData object with transcriptomics data.  
+    """Merge TCR data with transcriptomics data into a single :class:`~anndata.AnnData` 
+    object. 
 
-    Will keep all objects from `adata_tx` and integrate `obs` from adata_tcr
-    into `adata_tx`. Everything other than `.obs` from adata_tcr will be lost. 
+    :ref:`Reading in TCR data<importing-data>` results in an :class:`~anndata.AnnData`
+    object with TCR information stored in `obs`. Use this function to merge
+    it with another :class:`~anndata.AnnData` which contains transcriptomics data. 
 
-    `.obs` will be merged using `pandas.merge`. Additional kwargs are passed to 
-    `pandas.merge`. 
-    
+    Will keep all objects (e.g. `neighbors`, `umap`) from `adata` and integrate 
+    `obs` from `adata_tcr` into `adata`. 
+    Everything other than `.obs` from `adata_tcr` will be discarded. 
+
+    This function uses :func:`pandas.merge` to join the two `.obs` data frames. 
+
+    Modifies `adata` inplace. 
+
     Parameters
     ----------
     adata
@@ -28,7 +35,15 @@ def merge_with_tcr(
     adata_tcr
         AnnData with the TCR data
     on
-        Columns to join on. Default: The index and "batch", if it exists in both `obs`. 
+        Columns to join on. Default: The index and "batch", if it exists in both `obs`.
+    left_index
+        See :func:`pandas.merge`. 
+    right_index
+        See :func:`pandas.merge`.  
+    validate
+        See :func:`pandas.merge`. 
+    **kwargs
+        Additional kwargs are passed to :func:`pandas.merge`. 
     """
     if on is None:
         if ("batch" in adata.obs.columns) and ("batch" in adata_tcr.obs.columns):

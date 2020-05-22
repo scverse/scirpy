@@ -38,7 +38,7 @@ def test_group_abundance(adata_clonotype):
 
 
 def test_spectratype(adata_tra):
-    p = pl.spectratype(adata_tra, target_col="sample")
+    p = pl.spectratype(adata_tra, color="sample")
     assert isinstance(p, plt.Axes)
 
 
@@ -59,7 +59,7 @@ def test_clonotype_imbalance(adata_tra):
 
 
 def test_vdj_usage(adata_vdj):
-    p = pl.vdj_usage(adata_vdj, fraction="sample")
+    p = pl.vdj_usage(adata_vdj, normalize_to="sample")
     assert isinstance(p, plt.Axes)
 
 

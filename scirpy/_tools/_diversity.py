@@ -1,7 +1,6 @@
 import numpy as np
 from ..util import _is_na
 from anndata import AnnData
-from typing import Dict
 import pandas as pd
 from typing import Union
 
@@ -13,8 +12,12 @@ def alpha_diversity(
     target_col: str = "clonotype",
     inplace: bool = True,
     key_added: Union[None, str] = None
-) -> Dict:
-    """Computes the alpha diversity of clonotypes within a group. 
+) -> pd.DataFrame:
+    """Computes the alpha diversity of clonotypes within a group.
+
+    Uses the `Shannon Entropy <https://mathworld.wolfram.com/Entropy.html>`__ as 
+    diversity measure. The Entrotpy gets 
+    `normalized to group size <https://math.stackexchange.com/a/945172>`__. 
 
     Ignores NaN values. 
 
@@ -27,10 +30,10 @@ def alpha_diversity(
     target_col
         Column on which to compute the alpha diversity
     inplace
-        If True, add a column to `obs`. Otherwise return a DataFrame
+        If `True`, add a column to `obs`. Otherwise return a DataFrame
         with the alpha diversities. 
     key_added
-        Key under which the alpha diversity will be stored if inplace is True. 
+        Key under which the alpha diversity will be stored if inplace is `True`. 
         Defaults to `alpha_diversity_{target_col}`. 
 
     Returns

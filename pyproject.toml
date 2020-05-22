@@ -19,8 +19,8 @@ classifiers = [
 requires-python = '>= 3.6'
 requires = [
     'get_version',
-    'anndata>=0.7.1',
-    'scanpy>=1.4.5.post3',
+    'anndata>=0.7.3',
+    'scanpy>=1.5.1',
     'pandas>=0.21',
     'numpy',
     'scipy',
@@ -54,4 +54,5 @@ doc = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
+    'squarify'
 ]

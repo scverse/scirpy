@@ -27,6 +27,9 @@ def repertoire_overlap(
 ) -> plt.Axes:
     """Visualizes overlap betwen a pair of samples on a scatter plot or
     all samples on a heatmap or draws a dendrogram of samples only.
+
+    .. warning:: 
+        This is an experimental function that will likely change in the future. 
     
     Parameters
     ----------
