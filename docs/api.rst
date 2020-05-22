@@ -8,7 +8,7 @@ Import scirpy together with scanpy as
    import scanpy as sc   
    import scirpy as ir
 
-For consistencly, the scirpy API tries to follow the `scanpy API <https://scanpy.readthedocs.io/en/stable/api/index.html>`__
+For consistency, the scirpy API tries to follow the `scanpy API <https://scanpy.readthedocs.io/en/stable/api/index.html>`__
 as closely as possible. 
 
 .. _api-io:
