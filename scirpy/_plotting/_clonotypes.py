@@ -25,9 +25,7 @@ def _patch_plot_edges(neighbors_key, edges_cmap=None):
     scanpy_plot_edges = sc.plotting._utils.plot_edges
 
     def plot_edges(*args, **kwargs):
-        return _plot_edges(
-            *args, neighbors_key=neighbors_key, edges_cmap=edges_cmap, **kwargs
-        )
+        return _plot_edges(*args, edges_cmap=edges_cmap, **kwargs)
 
     sc.plotting._utils.plot_edges = plot_edges
     try:
@@ -37,7 +35,7 @@ def _patch_plot_edges(neighbors_key, edges_cmap=None):
 
 
 def _plot_edges(
-    axs, adata, basis, edges_width, edges_color, edges_cmap=None, neighbors_key=None
+    axs, adata, basis, edges_width, edges_color, neighbors_key, edges_cmap=None
 ):
     """Add edges from a scatterplot. 
 
@@ -189,7 +187,7 @@ def clonotype_network(
     if size is None:
         size = 24000 / n_displayed_cells
 
-    with _patch_plot_edges(neighbors_key, edges_cmap):
+    with _patch_plot_edges(edges_cmap):
         return base.embedding(
             adata,
             basis=basis,
@@ -201,6 +199,7 @@ def clonotype_network(
             edges_width=edges_width,
             edges=edges,
             size=size,
+            neighbors_key=neighbors_key,
             **kwargs,
         )
 
