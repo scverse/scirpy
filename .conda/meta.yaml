@@ -1,20 +1,17 @@
 {% set name = "scirpy" %}
-{% set version = "0.1.2" %}
+{% set version = "develop" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  sha256: 7ed4038b634abce0b035ecd6dc47b695c68a8234d3635d4a234ac54ca5af6f32 
-  folder: "{{ name }}-{{ version }}"
+  path: ".."
 
 build:
   number: 0
   noarch: python
   script:
-    - cd "{{ name }}-{{ version }}"
     - "{{ PYTHON }} -m pip install . --ignore-installed --no-deps -vv"
 
 requirements:
