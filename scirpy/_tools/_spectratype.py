@@ -14,7 +14,7 @@ def spectratype(
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:
-    """Show the distribution of CDR3 region lengths. 
+    """Summarizes the distribution of :term:`CDR3` region lengths. 
 
     Ignores NaN values. 
     

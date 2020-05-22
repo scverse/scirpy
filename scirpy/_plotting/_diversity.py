@@ -3,6 +3,7 @@ from .._compat import Literal
 from . import base
 from .. import tl
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def alpha_diversity(
@@ -12,15 +13,15 @@ def alpha_diversity(
     target_col: str = "clonotype",
     vistype: Literal["bar"] = "bar",
     **kwargs
-) -> None:
+) -> plt.Axes:
     """Plot the alpha diversity per group. 
 
-    Calls :meth:`scirpy.tl.alpha_diversity` on-the-fly. 
+    Calls :func:`scirpy.tl.alpha_diversity`. 
 
     Parameters
     ----------
     adata
-        Annotated data matrix. Will execute `tl.alpha_diversity` on-the-fly.
+        Annotated data matrix. Will execute :func:`scirpy.tl.alpha_diversity` on-the-fly.
     groupby
         Column of `obs` by which the grouping will be performed
     target_col

@@ -21,6 +21,7 @@ author = __author__
 copyright = f"{datetime.now():%Y}, {author}."
 version = __version__
 
+templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 
@@ -52,6 +53,8 @@ napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_use_rtype = True  # having a separate entry generally helps readability
 napoleon_use_param = True
+napoleon_use_ivar = True
+napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
 
 intersphinx_mapping = dict(
@@ -111,6 +114,10 @@ def setup(app):
 # -- Supress 'reference target not found' errors ---------------------------------------
 
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
-qualname_overrides = {}
+qualname_overrides = {"scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix"}
 
-nitpick_ignore = [("py:class", "igraph.Graph")]
+nitpick_ignore = [
+    ("py:class", "igraph.Graph"),
+    ("py:class", "igraph.Layout"),
+    ("py:class", "igraph.layout.Layout"),
+]
