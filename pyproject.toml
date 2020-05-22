@@ -29,12 +29,13 @@ requires = [
     'python-levenshtein',
     'python-igraph',
     'networkx',
+    'squarify',
+    'tqdm>=4.29.1' # See https://github.com/icbi-lab/scirpy/issues/128#issuecomment-632646608
 ]
 
 [tool.flit.metadata.requires-extra]
 optional = [
     'rectangle-packer',
-    'squarify'
 ]
 test = [
     'pytest',
@@ -54,5 +55,4 @@ doc = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
-    'squarify'
 ]
