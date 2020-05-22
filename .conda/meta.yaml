@@ -50,25 +50,17 @@ requirements:
 test:
   requires:
     - pytest
-    - sphinx>=3.0.1
-    - sphinx-autodoc-typehints>=1.8.0
-    - sphinx_rtd_theme>=0.4
     - leidenalg
-    - nbsphinx >= 0.6.0
     - jupytext
-    - sphinxcontrib-bibtex>=1.0.0
     - pycairo
     - jupyter_client
     - ipykernel
     - squarify
-    - pip:
-       - scanpydoc>=0.4.5
-       - 'typing_extensions; python_version < "3.8"',  # for `Literal`
   imports:
     - scirpy
   commands:
     - pytest
-    - cd docs && make html SPHINXOPTS="-W --keep-going"
+    - cd docs && jupytext --execute tutorials/tutorial_3k_tcr.md
 
 about:
   home: https://icbi-lab.github.io/scirpy
