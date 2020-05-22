@@ -29,12 +29,12 @@ requires = [
     'python-levenshtein',
     'python-igraph',
     'networkx',
+    'squarify'
 ]
 
 [tool.flit.metadata.requires-extra]
 optional = [
     'rectangle-packer',
-    'squarify'
 ]
 test = [
     'pytest',
@@ -54,5 +54,4 @@ doc = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
-    'squarify'
 ]
