@@ -32,6 +32,7 @@ requirements:
     - python-igraph
     - networkx
     - squarify
+    - tqdm>=4.29.1
   run:
     - python >=3.6
     - get_version
@@ -46,8 +47,12 @@ requirements:
     - python-igraph
     - networkx
     - squarify
+    - tqdm>=4.29.1
 
 test:
+  source_files:
+    - tests
+    - docs
   requires:
     - pytest
     - leidenalg
@@ -55,7 +60,7 @@ test:
     - pycairo
     - jupyter_client
     - ipykernel
-    - squarify
+    - nbconvert
   imports:
     - scirpy
   commands:

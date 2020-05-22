@@ -197,6 +197,12 @@ def test_layout_components():
         g.add_edges(combinations(range(n, n + ii), 2))
         n += ii
 
-    layout = layout_components(g, arrange_boxes="size", component_layout="fr")
-    layout = layout_components(g, arrange_boxes="rpack", component_layout="fr")
-    layout = layout_components(g, arrange_boxes="squarify", component_layout="fr")
+    layout_components(g, arrange_boxes="size", component_layout="fr")
+    try:
+        layout_components(g, arrange_boxes="rpack", component_layout="fr")
+    except ImportError:
+        warnings.warn(
+            "The 'rpack' layout-test was skipped because rectangle "
+            "packer is not installed. "
+        )
+    layout_components(g, arrange_boxes="squarify", component_layout="fr")
