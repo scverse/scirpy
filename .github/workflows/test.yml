@@ -23,7 +23,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Install cairo
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'macos-latest'
         run: |
           brew install cairo
       - name: Set up Python ${{ matrix.python-version }}
