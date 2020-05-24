@@ -29,7 +29,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install flit
-          FLIT_ROOT_INSTALL=1 flit install --deps all
+          flit install --deps all
+        env:
+          FLIT_ROOT_INSTALL: 1
       - name: Check black formatting
         run: |
           black --check scirpy tests
