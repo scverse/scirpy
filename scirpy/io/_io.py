@@ -7,13 +7,13 @@ import numpy as np
 from glob import iglob
 import pickle
 import os.path
-from . import tracerlib
+from . import _tracerlib
 import sys
 from ..util import _doc_params, _is_na, _is_true
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
-sys.modules["tracerlib"] = tracerlib
+sys.modules["tracerlib"] = _tracerlib
 
 doc_working_model = """\
 Currently, reading data into *Scirpy* has the following limitations: 
@@ -36,8 +36,26 @@ def _sanitize_anndata(adata: AnnData) -> None:
     adata._sanitize()
 
 
-def _tcr_objs_to_anndata(tcr_objs: Collection) -> AnnData:
-    """Convert a list of TcrCells to an AnnData object"""
+@_doc_params(doc_working_model=doc_working_model)
+def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
+    """\
+    Convert a collection of :class:`TcrCell` objects to an :class:`AnnData`. 
+
+    This is useful for converting arbitrary data formats into 
+    the scirpy :ref:`data-structure`. 
+    
+    {doc_working_model}
+
+    Parameters
+    ----------
+    tcr_objs
+
+
+    Returns
+    -------
+    :class:`AnnData` object with TCR information in `obs`. 
+
+    """
     tcr_df = pd.DataFrame.from_records(
         (_process_tcr_cell(x) for x in tcr_objs), index="cell_id"
     )
@@ -48,7 +66,8 @@ def _tcr_objs_to_anndata(tcr_objs: Collection) -> AnnData:
 
 @_doc_params(doc_working_model=doc_working_model)
 def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
-    """Process a TcrCell object into a dictionary according
+    """\
+    Process a TcrCell object into a dictionary according
     to wour working model of TCRs. 
 
     {doc_working_model}
@@ -207,7 +226,7 @@ def _read_10x_vdj_json(path: str, filtered: bool = True) -> AnnData:
             )
         )
 
-    return _tcr_objs_to_anndata(tcr_objs.values())
+    return from_tcr_objs(tcr_objs.values())
 
 
 def _read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
@@ -239,7 +258,7 @@ def _read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
 
         tcr_objs[barcode] = tcr_obj
 
-    return _tcr_objs_to_anndata(tcr_objs.values())
+    return from_tcr_objs(tcr_objs.values())
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -380,4 +399,4 @@ def read_tracer(path: str) -> AnnData:
             "<CELL>/filtered_TCR_seqs/*.pkl"
         )
 
-    return _tcr_objs_to_anndata(tcr_objs.values())
+    return from_tcr_objs(tcr_objs.values())

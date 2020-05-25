@@ -13,13 +13,13 @@ as closely as possible.
 
 .. _api-io:
 
-Input/Output
-------------
+Input/Output: `io`
+------------------
 
 The following functions allow to import :term:`V(D)J` information from various
 formats. See also :ref:`importing-data`. 
 
-.. module:: scirpy
+.. module:: scirpy.io
 
 .. autosummary::
    :toctree: .
@@ -27,6 +27,17 @@ formats. See also :ref:`importing-data`.
    read_h5ad
    read_10x_vdj
    read_tracer
+
+To convert own formats into the scirpy :ref:`data-structure`, we recommend building
+a list of :class:`~scirpy.io.TcrCell` objects first, and then converting them into
+:class:`~anndata.AnnData` objects using :func:`~scirpy.io.from_tcr_objs`. 
+
+.. autosummary::
+   :toctree: . 
+
+   TcrCell
+   TcrChain
+   from_tcr_objs
 
 
 Preprocessing: `pp`
