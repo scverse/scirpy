@@ -26,16 +26,15 @@ jobs:
       - name: Install macOS system dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cairo pkg-config
-      - name: Install Windows system dependencies
-        if: matrix.os == 'windows-latest'
-        run: |
-          Invoke-WebRequest -Uri http://ftp.gnome.org/pub/GNOME/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip -OutFile C:\gtk_win64.zip
-          Expand-Archive -LiteralPath 'C:\gtk_win64.zip' -DestinationPath C:\GTK          
+          brew install cairo pkg-config        
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install pycairo for windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          pip install https://download.lfd.uci.edu/pythonlibs/s2jqpv5t/pycairo-1.19.1-cp39-cp39-win_amd64.whl       
       - name: Install dependencies
         run: |
           python -m pip install flit
