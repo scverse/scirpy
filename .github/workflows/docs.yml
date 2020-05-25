@@ -31,7 +31,12 @@ jobs:
       - name: Install macOS system dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cairo pkg-config       
+          brew install cairo pkg-config pandoc    
+          
+      - name: Install Ubuntu system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install pandoc 
            
       - uses: actions/setup-python@v1
         with:
@@ -50,9 +55,10 @@ jobs:
           
       - name: Install dependencies
         run: |
-          sudo apt-get install pandoc
           python -m pip install flit
-          FLIT_ROOT_INSTALL=1 flit install --deps develop
+          flit install --deps develop
+        env:
+          FLIT_ROOT_INSTALL: 1
           
       - name: run sphinx
         run: |
