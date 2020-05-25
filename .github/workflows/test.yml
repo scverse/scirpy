@@ -34,7 +34,7 @@ jobs:
       - name: Install pycairo for windows
         if: matrix.os == 'windows-latest'
         run: |
-          $pkg = switch ("3.7")
+          $pkg = switch ("${{ matrix.python-version }}")
           {
               "3.6" {"https://download.lfd.uci.edu/pythonlibs/s2jqpv5t/pycairo-1.19.1-cp36-cp36m-win_amd64.whl"}
               "3.7" {"https://download.lfd.uci.edu/pythonlibs/s2jqpv5t/pycairo-1.19.1-cp37-cp37m-win_amd64.whl"}
