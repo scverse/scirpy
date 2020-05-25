@@ -17,7 +17,7 @@ Input/Output: `io`
 ------------------
 
 The following functions allow to import :term:`V(D)J` information from various
-formats. See also :ref:`importing-data`. 
+formats. 
 
 .. module:: scirpy.io
 
@@ -30,7 +30,8 @@ formats. See also :ref:`importing-data`.
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
 a list of :class:`~scirpy.io.TcrCell` objects first, and then converting them into
-:class:`~anndata.AnnData` objects using :func:`~scirpy.io.from_tcr_objs`. 
+an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_tcr_objs`. 
+For more details, check the :ref:`Data loading tutorial <importing-data>`. 
 
 .. autosummary::
    :toctree: . 

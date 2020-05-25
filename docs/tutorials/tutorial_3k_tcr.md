@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.1
+      jupytext_version: 1.5.0.rc1
 ---
 
 # Analysis of 3k T cells from cancer
@@ -52,17 +52,7 @@ adata = ir.datasets.wu2020_3k()
 adata.shape
 ```
 
-It just has additional TCR-related columns in `obs`:
 
- * `has_tcr`: `True` for all cells with a T-cell receptor
- * `TRA_1_<attr>`/`TRA_2_<attr>`: columns related to the primary and secondary TCR-alpha chain
- * `TRB_1_<attr>`/`TRB_2_<attr>`: columns related to the primary and secondary TCR-beta chain
-
-The list of attributes available are:
-
- * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
- * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
- * `junction_ins`: The number of nucleotides inserted in the `VD`/`DJ`/`VJ` junctions. 
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **T cell receptors**

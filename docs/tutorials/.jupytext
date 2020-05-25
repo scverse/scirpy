@@ -1,0 +1,2 @@
+# Always pair ipynb notebooks to md files
+default_jupytext_formats = "ipynb,md"
