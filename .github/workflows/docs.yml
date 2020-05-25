@@ -41,9 +41,11 @@ jobs:
       - name: Install Windows system dependencies
         if: matrix.os == 'windows-latest'
         run: |
-          $pandoc_url="https://github.com/jgm/pandoc/releases/download/2.9.2.1/pandoc-2.9.2.1-windows-x86_64.msi"
-          Invoke-WebRequest -Uri $pandoc_url -OutFile "C:\pandoc.msi"
-          MSIEXEC /a "C:\pandoc.msi" /qn
+          $pandoc_url="https://github.com/jgm/pandoc/releases/download/2.9.2.1/pandoc-2.9.2.1-windows-x86_64.zip"
+          Invoke-WebRequest -Uri $pandoc_url -OutFile "C:\pandoc.zip"
+          Expand-Archive -LiteralPath "C:\pandoc.zip" -DestinationPath "C:\pandoc"
+          Copy-Item -Path "C:\pandoc\pandoc-2.9.2.1\pandoc*.exe" -Destination "C:\Windows\system32"
+          pandoc -v
            
       - uses: actions/setup-python@v1
         with:
