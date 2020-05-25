@@ -22,7 +22,7 @@ Scirpy is an extension to `Scanpy <https://scanpy.readthedocs.io>`_ and adheres 
  * The :class:`~anndata.AnnData` instance is modified inplace, unless the functions
    is called with the keyword argument `inplace=False`. 
 
-We decided to handle a few minor points differenlty than Scanpy:
+We decided to handle a few minor points differenlty to Scanpy:
 
  * Plotting functions with inexpensive computations (e.g. :func:`scirpy.pl.clonal_expansion`)
    call the corresponding tool (:func:`scirpy.tl.clonal_expansion`) on-the-fly and
@@ -31,17 +31,24 @@ We decided to handle a few minor points differenlty than Scanpy:
    or a list of such. 
 
 
-.. _importing-data:
-
-Reading in data
----------------
-
-TODO
-
-
 .. _data-structure:
 
 Data structure
 --------------
 
-TODO
+For instructions how to load data into scirpy, see :ref:`importing-data`.
+
+
+
+
+It just has additional TCR-related columns in `obs`:
+
+ * `has_tcr`: `True` for all cells with a T-cell receptor
+ * `TRA_1_<attr>`/`TRA_2_<attr>`: columns related to the primary and secondary TCR-alpha chain
+ * `TRB_1_<attr>`/`TRB_2_<attr>`: columns related to the primary and secondary TCR-beta chain
+
+The list of attributes available are:
+
+ * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
+ * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
+ * `junction_ins`: The number of nucleotides inserted in the `VD`/`DJ`/`VJ` junctions. 
