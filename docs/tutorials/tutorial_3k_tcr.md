@@ -45,21 +45,17 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-`adata` is a regular :class:`~anndata.AnnData` object:
-<!-- #endraw -->
+`adata` is a regular :class:`~anndata.AnnData` object with additional, TCR-specific columns in `obs`. 
+For more information, check the page about Scirpy's :ref:`data structure <data-structure>`. 
 
-```python
-adata.shape
-```
-
-
-
-<!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **T cell receptors**
   
   For more information about our T-cell receptor model, see :ref:`tcr-model`. 
 <!-- #endraw -->
 
+```python
+adata.shape
+```
 
 ```python
 adata.obs
@@ -68,11 +64,11 @@ adata.obs
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **Importing data**
 
-    `scirpy` supports importing TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
-    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2). 
-    See :ref:`api-io` for more details.
+    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
+    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) and provides helper functions to import other data types. We provide a :ref:`dedicated
+    tutorial on data loading <importing-data>` with more details. 
 
-    This particular dataset has been imported using :func:`scirpy.read_10x_vdj` and merged
+    This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
     with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
     is described in :func:`scirpy.datasets.wu2020`.
 

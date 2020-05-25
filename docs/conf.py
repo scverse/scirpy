@@ -116,7 +116,11 @@ def setup(app):
 # -- Supress 'reference target not found' errors ---------------------------------------
 
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
-qualname_overrides = {"scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix"}
+qualname_overrides = {
+    "scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix",
+    "scirpy.io._datastructures.TcrCell": "scirpy.io.TcrCell",
+    "scirpy.io._datastructures.TcrChain": "scirpy.io.TcrChain",
+}
 
 nitpick_ignore = [
     ("py:class", "igraph.Graph"),

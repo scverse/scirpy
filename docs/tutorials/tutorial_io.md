@@ -24,11 +24,11 @@ Loading TCR data with scirpy
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-.. _importing-custom-formats
+.. _importing-custom-formats:
 
 Creating AnnData objects from custom data
 -----------------------------------------
 
-If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`__
+If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`_
 for a `read_XXX` function. 
 <!-- #endraw -->
