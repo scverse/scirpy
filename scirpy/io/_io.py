@@ -1,6 +1,6 @@
 import pandas as pd
 import json
-from scanpy import AnnData
+from anndata import AnnData
 from ._datastructures import TcrCell, TcrChain
 from typing import Collection
 import numpy as np
@@ -39,7 +39,7 @@ def _sanitize_anndata(adata: AnnData) -> None:
 @_doc_params(doc_working_model=doc_working_model)
 def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
     """\
-    Convert a collection of :class:`TcrCell` objects to an :class:`AnnData`. 
+    Convert a collection of :class:`TcrCell` objects to an :class:`~anndata.AnnData`. 
 
     This is useful for converting arbitrary data formats into 
     the scirpy :ref:`data-structure`. 
@@ -53,7 +53,7 @@ def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
 
     Returns
     -------
-    :class:`AnnData` object with TCR information in `obs`. 
+    :class:`~anndata.AnnData` object with TCR information in `obs`. 
 
     """
     tcr_df = pd.DataFrame.from_records(
@@ -376,7 +376,7 @@ def read_tracer(path: str) -> AnnData:
         cell_name = summary_file.split(os.sep)[-3]
         tcr_obj = TcrCell(cell_name)
         try:
-            with open(summary_file, "rb") as f:
+            with open(summary_file, "r") as f:
                 tracer_obj = pickle.load(f)
                 chains = tracer_obj.recombinants["TCR"]
                 if "A" in chains and chains["A"] is not None:
