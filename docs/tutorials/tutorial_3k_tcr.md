@@ -24,7 +24,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %autoreload 2
 import sys
 
-sys.path.insert(0, "../..") 
+# sys.path.insert(0, "../..") 
 import scirpy as ir
 import pandas as pd
 import numpy as np
@@ -242,6 +242,10 @@ We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend
 `min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
 
 <!-- #endraw -->
+
+```python
+adata.shape, adata.obs["clonotype"].unique().size, np.sum(adata.obs["clonotype_size"] >= 2)
+```
 
 ```python
 ir.tl.clonotype_network(adata, min_size=2)

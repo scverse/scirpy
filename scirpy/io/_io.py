@@ -376,7 +376,7 @@ def read_tracer(path: str) -> AnnData:
         cell_name = summary_file.split(os.sep)[-3]
         tcr_obj = TcrCell(cell_name)
         try:
-            with open(summary_file, "r") as f:
+            with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
                 chains = tracer_obj.recombinants["TCR"]
                 if "A" in chains and chains["A"] is not None:
