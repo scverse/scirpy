@@ -24,7 +24,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %autoreload 2
 import sys
 
-# sys.path.insert(0, "../..") 
+sys.path.insert(0, "../..") 
 import scirpy as ir
 import pandas as pd
 import numpy as np
@@ -65,8 +65,7 @@ adata.obs
 .. note:: **Importing data**
 
     `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
-    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) and provides helper functions to import other data types. We provide a :ref:`dedicated
-    tutorial on data loading <importing-data>` with more details. 
+    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details. 
 
     This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
     with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
@@ -242,10 +241,6 @@ We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend
 `min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
 
 <!-- #endraw -->
-
-```python
-adata.shape, adata.obs["clonotype"].unique().size, np.sum(adata.obs["clonotype_size"] >= 2)
-```
 
 ```python
 ir.tl.clonotype_network(adata, min_size=2)
