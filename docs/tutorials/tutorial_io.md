@@ -21,6 +21,8 @@ sys.path.insert(0, "../..")
 import scirpy as ir
 import scanpy as sc
 from glob import glob
+import pandas as pd
+import tarfile
 import anndata
 
 # suppress "storing XXX as categorical" warnings. 
@@ -113,7 +115,49 @@ to extract TCR sequences from data generated with Smart-seq2 or other full-lengt
 
 The :func:`scirpy.io.read_tracer` function obtains its TCR information from the `.pkl` file
 in the `filtered_TCR_seqs` folder TraCeR generates for each cell. 
+
+For this example, we load data from `GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`_ (:cite:`Chung2017`). 
+The raw data has been processed using the `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf core. 
 <!-- #endraw -->
+
+```python
+# extract data
+with tarfile.open("example_data/chung-park-2017/chung-park-2017.tar.bz2", 'r:bz2') as tar:
+    tar.extractall("example_data/chung-park-2017")
+```
+
+```python
+tmp_expr = pd.read_csv("example_data/chung-park-2017/resultCOUNT.txt", sep="\t")
+```
+
+```python
+adata = sc.AnnData(tmp_expr.set_index("Geneid").T)
+```
+
+```python
+adata.shape
+```
+
+```python
+sc.pp.filter_genes(adata, min_cells=20, inplace=True)
+```
+
+```python
+adata.to_df().T.astype('int').to_csv("example_data/chung-park-2017/counts.tsv", sep="\t")
+```
+
+```python
+adata.shape
+```
+
+```python
+sc.pp.log1p(adata)
+sc.pp.pca(adata, svd_solver='arpack')
+```
+
+```python
+adata.var["highly_variable"]
+```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 Combining multiple samples
