@@ -13,7 +13,7 @@ jupyter:
 # Analysis of 3k T cells from cancer
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-In this tutorial, we re-analize single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
+In this tutorial, we re-analyze single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
 generated on the 10x Genomics platform. The original dataset consists of >140k T cells
 from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
@@ -37,7 +37,7 @@ sc.logging.print_versions()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-The dataset ships with the `scirpy` package. We can conveniently load it from the `dataset` module:
+The dataset ships with the `scirpy` package. We can conveniently load it from the :mod:`~scirpy.datasets` module:
 <!-- #endraw -->
 
 ```python
