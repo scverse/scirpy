@@ -122,41 +122,32 @@ The raw data has been processed using the `Smart-seq2 pipeline <https://github.c
 
 ```python
 # extract data
-with tarfile.open("example_data/chung-park-2017/chung-park-2017.tar.bz2", 'r:bz2') as tar:
+with tarfile.open("example_data/chung-park-2017.tar.bz2", 'r:bz2') as tar:
     tar.extractall("example_data/chung-park-2017")
 ```
 
 ```python
-tmp_expr = pd.read_csv("example_data/chung-park-2017/resultCOUNT.txt", sep="\t")
-```
-
-```python
-adata = sc.AnnData(tmp_expr.set_index("Geneid").T)
-```
-
-```python
+# Load transcriptomics data from count matrix
+tmp_expr = pd.read_csv("example_data/chung-park-2017/counts.tsv", sep="\t")
+# anndata needs genes in columns and samples in rows
+tmp_expr = tmp_expr.set_index("Geneid").T
+adata = sc.AnnData(tmp_expr)
 adata.shape
 ```
 
 ```python
-sc.pp.filter_genes(adata, min_cells=20, inplace=True)
+# Load TCR data and merge it with transcriptomics data
+adata_tcr = ir.io.read_tracer("example_data/chung-park-2017/tracer/")
+ir.pp.merge_with_tcr(adata, adata_tcr)
 ```
 
 ```python
-adata.to_df().T.astype('int').to_csv("example_data/chung-park-2017/counts.tsv", sep="\t")
-```
-
-```python
-adata.shape
-```
-
-```python
+sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=3000)
 sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver='arpack')
-```
-
-```python
-adata.var["highly_variable"]
+sc.pp.pca(adata, svd_solver="arpack")
+sc.pp.neighbors(adata)
+sc.tl.umap(adata)
+sc.pl.umap(adata, color=["has_tcr", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
