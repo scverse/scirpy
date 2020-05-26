@@ -33,7 +33,7 @@ livehtml: | clean
 	-b html $(SOURCEDIR) $(BUILDDIR)/html
 
 clean: 
-	rm -fv scirpy.*.rst
+	rm -rf generated
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
