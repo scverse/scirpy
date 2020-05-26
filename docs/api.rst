@@ -22,7 +22,7 @@ formats.
 .. module:: scirpy.io
 
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated 
 
    read_h5ad
    read_10x_vdj
@@ -34,7 +34,7 @@ an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_tcr_objs`.
 For more details, check the :ref:`Data loading tutorial <importing-data>`. 
 
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    TcrCell
    TcrChain
@@ -47,7 +47,7 @@ Preprocessing: `pp`
 .. module:: scirpy.pp
 
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    merge_with_tcr
    tcr_neighbors
@@ -64,21 +64,21 @@ which usually can be visualized by a corresponding plotting function.
 Generic
 ^^^^^^^
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    group_abundance
 
 Quality control
 ^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    chain_pairing
 
 Define and visualize clonotypes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    define_clonotypes
    clonotype_network
@@ -86,7 +86,7 @@ Define and visualize clonotypes
 Analyse clonal diversity
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    clonal_expansion
    summarize_clonal_expansion
@@ -97,7 +97,7 @@ Analyse clonal diversity
 V(D)J gene usage
 ^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    spectratype
 
@@ -111,7 +111,7 @@ Plotting: `pl`
 Generic
 ^^^^^^^
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    embedding
 
@@ -124,7 +124,7 @@ when calling the plotting function or need to be precomputed and stored in
 :class:`~anndata.AnnData` previously. 
 
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    alpha_diversity
    clonal_expansion
@@ -144,7 +144,7 @@ Base plotting functions: `pl.base`
 .. module:: scirpy.pl.base
 
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    bar
    line
@@ -158,7 +158,7 @@ Plot styling: `pl.styling`
 .. module:: scirpy.pl.styling
 
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    apply_style_to_axes
    style_axes
@@ -170,7 +170,7 @@ Datasets: `datasets`
 .. module:: scirpy.datasets
 
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    wu2020
    wu2020_3k
@@ -183,7 +183,7 @@ Utility functions: `util`
 .. module:: scirpy.util
 
 .. autosummary::
-   :toctree: . 
+   :toctree: ./generated 
 
    graph.layout_components
 
@@ -194,7 +194,7 @@ TCR distance metrics: `tcr_dist`
 .. module:: scirpy.tcr_dist
 
 .. autosummary::
-   :toctree: .
+   :toctree: ./generated
 
    tcr_dist
    DistanceCalculator

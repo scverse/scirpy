@@ -45,7 +45,7 @@ an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
 AnnData and how Scirpy makes use of it, check out the :ref:`data-structure` section. 
 
 The example data used in this notebook are available from the
-`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data`__. 
+`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__. 
 
 
 Loading data from *10x Genomics CellRanger* or *TraCeR*
@@ -55,9 +55,10 @@ We provide convenience functions to load data from *CellRanger* or *TraCeR* with
 supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively. 
 
 .. module:: scirpy.io
+   :noindex:
 
 .. autosummary::
-   :toctree: .
+   :toctree: ../generated
 
    read_10x_vdj
    read_tracer
@@ -65,7 +66,7 @@ supporting both data generated on the *10x* and *Smart-seq2* sequencing platform
 Read 10x data
 ^^^^^^^^^^^^^
 
-With :func:`~scirpy.io.read_10x_vjd` we can load `filtered_contig_annotations.csv` or `contig_annotations.json` files as they are produced by *CellRanger*. 
+With :func:`~scirpy.io.read_10x_vdj` we can load `filtered_contig_annotations.csv` or `contig_annotations.json` files as they are produced by *CellRanger*. 
 Here, we demonstrate how to load paired single cell transcriptomics and TCR sequencing data from COVID19 patients 
 from `GSE145926 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145926>`_ (:cite:`Liao2020`). 
 <!-- #endraw -->
@@ -170,9 +171,10 @@ We provide a generic data structure for cells with TCRs, which can then be conve
 an :class:`~anndata.AnnData` object. 
 
 .. module:: scirpy.io
+   :noindex:
 
 .. autosummary::
-   :toctree: .
+   :toctree: ../generated
 
    TcrCell
    TcrChain
