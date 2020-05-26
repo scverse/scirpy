@@ -17,7 +17,7 @@ class TcrChain:
         Currently supported: ["TRA", "TRB", "other"]        
     cdr3 
         Amino acid sequence of the CDR3 region 
-    cd3_nt 
+    cdr3_nt 
         Nucleotide sequence fo the CDR3 region 
     expr 
         Normalized read count for the CDR3 region. 

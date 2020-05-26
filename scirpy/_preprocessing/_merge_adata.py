@@ -1,5 +1,6 @@
 from typing import Union, List
 from anndata import AnnData
+from ..io._io import _sanitize_anndata
 
 
 def merge_with_tcr(
@@ -58,3 +59,5 @@ def merge_with_tcr(
         validate=validate,
         **kwargs
     )
+
+    _sanitize_anndata(adata)
