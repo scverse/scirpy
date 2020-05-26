@@ -4,9 +4,16 @@ Adapted from scanpy (c) Philipp Angerer
 """
 from pathlib import Path
 from typing import List, Any
+import re
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import Options
+
+
+def _strip_roles(text: str):
+    """Remove all roles in the format :foo:`bar` from a text"""
+    regex = re.compile(r":.*:`(.*)`")
+    return regex.sub(r"\1", text)
 
 
 def insert_function_images(
@@ -24,8 +31,9 @@ def insert_function_images(
     # Currently, the only way out I can see would be to use raw html.
     # Sphinx doesn't handle copying images then, why we put them in the `_static` dir.
     # This, ultimately, is a hack and a cleaner solution would be welcome.
+    function_description = _strip_roles(lines[0])
     lines[0:0] = [
-        f""":raw:html:`{lines[0]}<br />`<img src="{app.config.api_rel_dir}/{path.name}" style="width: 300px" />`""",
+        f""":raw:html:`{function_description}<br />`<img src="{app.config.api_rel_dir}/{path.name}" style="width: 300px" />`""",
         "",
     ]
 
