@@ -33,6 +33,10 @@ def _sanitize_anndata(adata: AnnData) -> None:
     assert (
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
+
+    # This should always be a categorical with True / False
+    has_tcr_mask = _is_true(adata.obs["has_tcr"])
+    adata.obs["has_tcr"] = ["True" if x else "False" for x in has_tcr_mask]
     adata._sanitize()
 
 
@@ -124,6 +128,7 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     res_dict["has_tcr"] = not (
         _is_na(res_dict["TRA_1_cdr3"]) and _is_na(res_dict["TRB_1_cdr3"])
     )
+
     if _is_na(res_dict["TRA_1_cdr3"]):
         assert _is_na(
             res_dict["TRA_2_cdr3"]
