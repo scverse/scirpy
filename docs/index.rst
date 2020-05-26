@@ -5,7 +5,7 @@
 
    tutorials
    usage-principles
-   api
+   api/index
    tcr-biology
    glossary
    zzz_bibliography
