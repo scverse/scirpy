@@ -120,3 +120,10 @@ Glossary
         label each RNA with a unique barcode prior to PCR-amplification to mitigate
         PCR bias. With these protocols, UMI-counts replace the read-counts 
         generally used with RNA-seq.
+
+    productive chain
+        Productive chains are TCR chains with a :term:`CDR3` sequence that produces
+        a functional peptide. Scirpy relies on the preprocessing tools (e.g. 
+        CellRanger or TraCeR) for flagging non-productive chains. 
+        Typically chains are flagged as non-productive if they contain
+        a stop codon or are not within the reading frame. 
