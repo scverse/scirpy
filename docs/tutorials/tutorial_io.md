@@ -6,7 +6,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: "1.2"
+      format_version: '1.2'
       jupytext_version: 1.5.0.rc1
 ---
 
@@ -33,8 +33,7 @@ anndata.logging.anndata_logger.setLevel("ERROR")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
-.. \_importing-data:
+.. _importing-data:
 
 # Loading TCR data with scirpy
 
