@@ -7,13 +7,13 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.1
+      jupytext_version: 1.5.0.rc1
 ---
 
 # Analysis of 3k T cells from cancer
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-In this tutorial, we re-analize single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
+In this tutorial, we re-analyze single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
 generated on the 10x Genomics platform. The original dataset consists of >140k T cells
 from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
@@ -37,7 +37,7 @@ sc.logging.print_versions()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-The dataset ships with the `scirpy` package. We can conveniently load it from the `dataset` module:
+The dataset ships with the `scirpy` package. We can conveniently load it from the :mod:`~scirpy.datasets` module:
 <!-- #endraw -->
 
 ```python
@@ -45,31 +45,17 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-`adata` is a regular :class:`~anndata.AnnData` object:
-<!-- #endraw -->
+`adata` is a regular :class:`~anndata.AnnData` object with additional, TCR-specific columns in `obs`. 
+For more information, check the page about Scirpy's :ref:`data structure <data-structure>`. 
 
-```python
-adata.shape
-```
-
-It just has additional TCR-related columns in `obs`:
-
- * `has_tcr`: `True` for all cells with a T-cell receptor
- * `TRA_1_<attr>`/`TRA_2_<attr>`: columns related to the primary and secondary TCR-alpha chain
- * `TRB_1_<attr>`/`TRB_2_<attr>`: columns related to the primary and secondary TCR-beta chain
-
-The list of attributes available are:
-
- * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
- * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
- * `junction_ins`: The number of nucleotides inserted in the `VD`/`DJ`/`VJ` junctions. 
-
-<!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **T cell receptors**
   
   For more information about our T-cell receptor model, see :ref:`tcr-model`. 
 <!-- #endraw -->
 
+```python
+adata.shape
+```
 
 ```python
 adata.obs
@@ -78,11 +64,10 @@ adata.obs
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **Importing data**
 
-    `scirpy` supports importing TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
-    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2). 
-    See :ref:`api-io` for more details.
+    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
+    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details. 
 
-    This particular dataset has been imported using :func:`scirpy.read_10x_vdj` and merged
+    This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
     with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
     is described in :func:`scirpy.datasets.wu2020`.
 

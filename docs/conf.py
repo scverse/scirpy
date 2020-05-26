@@ -24,7 +24,7 @@ version = __version__
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 api_dir = HERE / "_static" / "api"
-api_rel_dir = "../_static/api"
+api_rel_dir = "_static/api"
 
 
 nitpicky = True  # Warn about broken links
@@ -116,7 +116,11 @@ def setup(app):
 # -- Supress 'reference target not found' errors ---------------------------------------
 
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
-qualname_overrides = {"scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix"}
+qualname_overrides = {
+    "scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix",
+    "scirpy.io._datastructures.TcrCell": "scirpy.io.TcrCell",
+    "scirpy.io._datastructures.TcrChain": "scirpy.io.TcrChain",
+}
 
 nitpick_ignore = [
     ("py:class", "igraph.Graph"),

@@ -1,4 +1,4 @@
-from scirpy import read_10x_vdj, read_tracer
+from scirpy.io import read_10x_vdj, read_tracer
 from scirpy.util import _is_na, _is_false
 import numpy as np
 import pytest
