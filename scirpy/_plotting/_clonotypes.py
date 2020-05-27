@@ -12,6 +12,7 @@ import matplotlib
 from . import base
 import matplotlib.pyplot as plt
 import igraph as ig
+from ..util import _NeighborsView
 
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
@@ -48,9 +49,10 @@ def _plot_edges(
 
     if neighbors_key is None:
         neighbors_key = "neighbors"
-    if neighbors_key not in adata.uns:
+    try:
+        neighbors = _NeighborsView(adata, neighbors_key)
+    except KeyError:
         raise ValueError("`edges=True` requires `pp.neighbors` to be run before.")
-    neighbors = adata.uns[neighbors_key]
     idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
     g = nx.Graph(neighbors["connectivities"]).subgraph(idx)
 
@@ -132,7 +134,7 @@ def clonotype_network(
         It is possible to specify a list of the same size as `color` to choose 
         a different color map for each panel. 
     neighbors_key
-        Key under which the tcr neighborhood matrix is stored in `adata.uns`
+        Key under which the tcr neighborhood matrix is stored in `adata.obsp`
     basis
         Key under which the graph layout coordinates are stored in `adata.obsm`
     edges_color
@@ -218,7 +220,7 @@ def clonotype_network_igraph(
     adata
         Annotated data matrix.
     neighbors_key
-        Key in `adata.uns` where tcr neighborhood information is located.
+        Key in `adata.obsp` where tcr neighborhood information is located.
     basis
         Key in `adata.obsm` where the network layout is stored. 
     
@@ -231,7 +233,8 @@ def clonotype_network_igraph(
     """
     from ..util.graph import _get_igraph_from_adjacency
 
-    conn = adata.uns[neighbors_key]["connectivities"]
+    neighbors = _NeighborsView(adata, neighbors_key)
+    conn = neighbors["connectivities"]
     idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
     g = _get_igraph_from_adjacency(conn).subgraph(idx)
     layout = ig.Layout(coords=adata.obsm["X_" + basis][idx, :].tolist())

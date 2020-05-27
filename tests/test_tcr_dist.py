@@ -12,6 +12,7 @@ import scirpy as st
 import scipy.sparse
 from .fixtures import adata_cdr3
 from anndata import AnnData
+from scirpy.util import _NeighborsView
 
 
 @pytest.fixture
@@ -462,5 +463,6 @@ def test_tcr_neighbors(adata_cdr3):
         dual_tcr="all",
         key_added="nbs",
     )
-    assert adata_cdr3.uns["nbs"]["connectivities"].shape == (5, 5)
-    assert adata_cdr3.uns["nbs"]["distances"].shape == (5, 5)
+    neighbors = _NeighborsView(adata_cdr3, "nbs")
+    assert neighbors["connectivities"].shape == (5, 5)
+    assert neighbors["distances"].shape == (5, 5)

@@ -157,5 +157,8 @@ def test_clonotype_network(adata_conn):
         ),
     )
 
-    with pytest.raises(ValueError):
-        st.tl.clonotype_network(adata_conn[[1, 3], :])
+    # This should now (thanks to `obsp`) also work on subsetted adata
+    coords = st.tl.clonotype_network(adata_conn[[1, 3], :], inplace=False, layout="fr")
+    npt.assert_almost_equal(
+        coords, np.array([[9.90807137, 2.12126556], [8.67058481, 2.80618413]])
+    )

@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from anndata import AnnData
 import numpy as np
-from scirpy.util import _is_symmetric
+from scirpy.util import _is_symmetric, _NeighborsView
 
 
 @pytest.fixture
@@ -53,16 +53,20 @@ def adata_define_clonotypes():
 def adata_conn():
     """Adata with connectivities computed"""
     adata = AnnData(
+        X=np.identity(4),
         obs=pd.DataFrame()
         .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
-        .set_index("cell_id")
+        .set_index("cell_id"),
     )
-    adata.uns["tcr_neighbors"] = {
-        "connectivities": np.array(
+    neighbors = _NeighborsView.add_neighbors(
+        adata,
+        "tcr_neighbors",
+        dict(),
+        connectivities=np.array(
             [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-        )
-    }
-    assert _is_symmetric(adata.uns["tcr_neighbors"]["connectivities"])
+        ),
+    )
+    assert _is_symmetric(neighbors["connectivities"])
     return adata
 
 
@@ -70,15 +74,19 @@ def adata_conn():
 def adata_clonotype_network():
     """Adata with clonotype network computed"""
     adata = AnnData(
+        X=np.identity(4),
         obs=pd.DataFrame()
         .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
-        .set_index("cell_id")
+        .set_index("cell_id"),
     )
-    adata.uns["tcr_neighbors"] = {
-        "connectivities": np.array(
+    neighbors = _NeighborsView.add_neighbors(
+        adata,
+        "tcr_neighbors",
+        dict(),
+        connectivities=np.array(
             [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-        )
-    }
+        ),
+    )
     adata.obsm["X_clonotype_network"] = np.array(
         [
             [2.41359095, 0.23412465],
@@ -87,7 +95,7 @@ def adata_clonotype_network():
             [3.06104282, 2.14395562],
         ]
     )
-    assert _is_symmetric(adata.uns["tcr_neighbors"]["connectivities"])
+    assert _is_symmetric(neighbors["connectivities"])
     return adata
 
 

@@ -236,3 +236,98 @@ def _read_to_str(path):
     """Read a file into a string"""
     with open(path, "r") as f:
         return f.read()
+
+
+class _NeighborsView:
+    """Convenience class for accessing neighbors graph representations.
+    Allows to access neighbors distances, connectivities and settings
+    dictionary in a uniform manner.
+
+    Adapted from scanpy. 
+
+    Parameters
+    ----------
+    adata
+        AnnData object.
+    key
+        This defines where to look for neighbors dictionary,
+        connectivities, distances.
+        neigh = NeighborsView(adata, key)
+        neigh['distances']
+        neigh['connectivities']
+        neigh['params']
+        'connectivities' in neigh
+        'params' in neigh
+        is the same as
+        adata.obsp[adata.uns[key]['distances_key']]
+        adata.obsp[adata.uns[key]['connectivities_key']]
+        adata.uns[key]['params']
+        adata.uns[key]['connectivities_key'] in adata.obsp
+        'params' in adata.uns[key]
+    """
+
+    @staticmethod
+    def add_neighbors(adata, key, params, *, connectivities=None, distances=None):
+        """Add a neighbor entry to adata (to `uns` and `obsp`)"""
+        if connectivities is None and distances is None:
+            raise ValueError(
+                "Need to specify at least one of connectivities and distances. "
+            )
+
+        neighbors_dict = {"key": key, "params": params}
+        if connectivities is not None:
+            ckey = f"{key}_connectivities"
+            neighbors_dict["connectivities_key"] = ckey
+            adata.obsp[ckey] = connectivities
+        if distances is not None:
+            dkey = f"{key}_distances"
+            neighbors_dict["distances_key"] = dkey
+            adata.obsp[dkey] = distances
+        adata.uns[key] = neighbors_dict
+
+        return _NeighborsView(adata, key)
+
+    def __init__(self, adata, key=None):
+        self._connectivities = None
+        self._distances = None
+
+        if key not in adata.uns:
+            raise KeyError(f'No "{key}" in .uns')
+        self._neighbors_dict = adata.uns[key]
+        try:
+            self._conns_key = self._neighbors_dict["connectivities_key"]
+            self._connectivities = adata.obsp[self._conns_key]
+        except KeyError:
+            pass
+
+        try:
+            self._dists_key = self._neighbors_dict["distances_key"]
+            self._distances = adata.obsp[self._dists_key]
+        except KeyError:
+            pass
+
+    def __getitem__(self, key):
+        if key == "distances":
+            if "distances" not in self:
+                raise KeyError(
+                    "No 'distances_key' in adata.uns[key] or the"
+                    "distances key not in .obsp"
+                )
+            return self._distances
+        elif key == "connectivities":
+            if "connectivities" not in self:
+                raise KeyError(
+                    "No 'connectivities_key' in adata.uns[key] or the"
+                    "connectivities key not in .obsp"
+                )
+            return self._connectivities
+        else:
+            return self._neighbors_dict[key]
+
+    def __contains__(self, key):
+        if key == "distances":
+            return self._distances is not None
+        elif key == "connectivities":
+            return self._connectivities is not None
+        else:
+            return key in self._neighbors_dict

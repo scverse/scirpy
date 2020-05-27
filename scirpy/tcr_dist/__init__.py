@@ -6,7 +6,7 @@ from typing import Union, Collection, List, Tuple, Dict
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
-from ..util import _is_na
+from ..util import _is_na, _NeighborsView
 import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
@@ -754,7 +754,7 @@ def tcr_neighbors(
     sequence:
         Use amino acid (`aa`) or nulceotide (`nt`) sequences?
     inplace:
-        If `True`, store the results in `adata.uns`. Otherwise return
+        If `True`, store the results in `adata.uns` and `adata.obsp`. Otherwise return
         the results. 
     n_jobs:
         Number of cores to use for alignment and levenshtein distance. 
@@ -783,12 +783,17 @@ def tcr_neighbors(
     if not inplace:
         return ad.connectivities, ad.dist
     else:
-        adata.uns[key_added] = dict()
-        adata.uns[key_added]["params"] = {
+        params = {
             "metric": metric,
             "cutoff": cutoff,
             "dual_tcr": dual_tcr,
             "receptor_arms": receptor_arms,
+            "sequence": sequence,
         }
-        adata.uns[key_added]["connectivities"] = ad.connectivities
-        adata.uns[key_added]["distances"] = ad.dist
+        _NeighborsView.add_neighbors(
+            adata,
+            key_added,
+            params,
+            connectivities=ad.connectivities,
+            distances=ad.dist,
+        )

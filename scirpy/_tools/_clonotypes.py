@@ -1,7 +1,7 @@
 from anndata import AnnData
 from .._compat import Literal
 from typing import Union, Tuple
-from ..util import _is_na
+from ..util import _is_na, _NeighborsView
 from ..util.graph import _get_igraph_from_adjacency, layout_components
 import numpy as np
 import pandas as pd
@@ -111,7 +111,7 @@ def define_clonotypes(
         for each cell.    
     """
     try:
-        conn = adata.uns[neighbors_key]["connectivities"]
+        conn = _NeighborsView(adata, neighbors_key)["connectivities"]
     except KeyError:
         raise ValueError(
             "Connectivities were not found. Did you run `pp.tcr_neighbors`?"
@@ -171,7 +171,7 @@ def clonotype_network(
     layout_kwargs
         Will be passed to the layout function
     neighbors_key
-        Key under which the neighborhood graph is stored in `adata.uns`. 
+        Key under which the neighborhood graph is stored in `adata.obsp`. 
     key_clonotype_size
         Key under which the clonotype size information is stored in `adata.obs`
     key_added
@@ -188,7 +188,8 @@ def clonotype_network(
     """
     random.seed(random_state)
     try:
-        conn = adata.uns[neighbors_key]["connectivities"]
+        neighbors = _NeighborsView(adata, neighbors_key)
+        conn = neighbors["connectivities"]
     except KeyError:
         raise ValueError("Connectivity data not found. Did you run `pp.tcr_neighbors`?")
 

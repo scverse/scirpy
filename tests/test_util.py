@@ -5,6 +5,7 @@ from scirpy.util import (
     _normalize_counts,
     _is_symmetric,
     _reduce_nonzero,
+    _NeighborsView,
 )
 from scirpy.util.graph import layout_components
 from itertools import combinations
@@ -14,6 +15,7 @@ import pandas as pd
 import numpy.testing as npt
 import pytest
 import scipy.sparse
+from anndata import AnnData
 
 import warnings
 
@@ -206,3 +208,39 @@ def test_layout_components():
             "packer is not installed. "
         )
     layout_components(g, arrange_boxes="squarify", component_layout="fr")
+
+
+@pytest.mark.parametrize("connectivities", [None, np.array([[1, 2], [3, 4]])])
+@pytest.mark.parametrize("distances", [None, np.array([[10, 20], [40, 50]])])
+def test_neighbors_view(connectivities, distances):
+    adata = AnnData(X=np.array([[0, 1], [1, 0]]))
+    params = {"p1": "test"}
+
+    if connectivities is None and distances is None:
+        with pytest.raises(ValueError):
+            _NeighborsView.add_neighbors(adata, "neigh", params)
+    else:
+        nv = _NeighborsView.add_neighbors(
+            adata, "neigh", params, distances=distances, connectivities=connectivities
+        )
+
+        nv2 = _NeighborsView(adata, "neigh")
+
+        assert nv2["params"] == params == nv["params"]
+        if connectivities is None:
+            with pytest.raises(KeyError):
+                nv["connectivities"]
+            with pytest.raises(KeyError):
+                nv2["connectivities"]
+        else:
+            npt.assert_equal(connectivities, nv2["connectivities"])
+            npt.assert_equal(connectivities, nv["connectivities"])
+
+        if distances is None:
+            with pytest.raises(KeyError):
+                nv["distances"]
+            with pytest.raises(KeyError):
+                nv2["distances"]
+        else:
+            npt.assert_equal(distances, nv2["distances"])
+            npt.assert_equal(distances, nv["distances"])
