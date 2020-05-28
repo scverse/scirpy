@@ -376,6 +376,7 @@ class TcrNeighbors:
 
         For documentation of the parameters, see :func:`tcr_neighbors`. 
         """
+        start = logging.debug("Started initalizing TcrNeighbors object. ")
         if metric == "identity" and cutoff != 0:
             raise ValueError("Identity metric only works with cutoff = 0")
         if sequence == "nt" and metric == "alignment":
@@ -390,7 +391,7 @@ class TcrNeighbors:
         self.sequence = sequence
         self._build_index_dict()
         self._dist_mat = None
-        logging.debug("Finished initalizing TcrNeighbors object. ")
+        logging.debug("Finished initalizing TcrNeighbors object. ", time=start)
 
     @staticmethod
     def _seq_to_cell_idx(
@@ -642,8 +643,6 @@ class TcrNeighbors:
                         if row != col:
                             _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
 
-        logging.debug("Finished constructing coord-dictionary")
-
         yield from self._reduce_coord_dict(coord_dict)
 
     def compute_distances(
@@ -658,20 +657,26 @@ class TcrNeighbors:
             Default: use all CPUS. 
         """
         for arm, arm_dict in self.index_dict.items():
+            start = logging.debug(f"Finished computiong {arm} pairwise distances.")
+
             arm_dict["dist_mat"] = tcr_dist(
                 arm_dict["unique_seqs"],
                 metric=self.metric,
                 cutoff=self.cutoff,
                 n_jobs=n_jobs,
             )
-            logging.info("Finished computing {} pairwise distances.".format(arm))
+            logging.info(f"Finished computing {arm} pairwise distances.", time=start)
 
+        start = logging.debug("Started comstructing coord-dictionary")
         coords, values = zip(*self._cell_dist_mat_reduce())
+        logging.debug("Finished constructing coord-dictionary", time=start)
+
+        start = logging.debug("Started constructing cell x cell distance matrix.")
         rows, cols = zip(*coords)
         dist_mat = coo_matrix(
             (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
         )
-        logging.info("Finished constructing cell x cell distance matrix. ")
+        logging.info("Finished constructing cell x cell distance matrix. ", time=start)
         dist_mat.eliminate_zeros()
         self._dist_mat = dist_mat.tocsr()
 
@@ -690,6 +695,8 @@ class TcrNeighbors:
         if self.cutoff == 0:
             return self._dist_mat
 
+        start = logging.debug("Started converting distances to connectivities. ")
+
         connectivities = self._dist_mat.copy()
 
         # actual distances
@@ -698,6 +705,7 @@ class TcrNeighbors:
         # structure of the matrix stayes the same, we can safely change the data only
         connectivities.data = (self.cutoff - d) / self.cutoff
         connectivities.eliminate_zeros()
+        logging.debug("Finished converting distances to connectivities. ", time=start)
         return connectivities
 
 
@@ -778,7 +786,6 @@ def tcr_neighbors(
         sequence=sequence,
     )
     ad.compute_distances(n_jobs)
-    logging.debug("Finished converting distances to connectivities. ")
 
     if not inplace:
         return ad.connectivities, ad.dist
