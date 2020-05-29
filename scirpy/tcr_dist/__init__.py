@@ -13,6 +13,7 @@ import scipy.spatial
 import scipy.sparse
 from scipy.sparse import coo_matrix, csr_matrix
 from ..util import _doc_params
+from tqdm import tqdm
 
 _doc_metrics = """\
 metric
@@ -376,7 +377,7 @@ class TcrNeighbors:
 
         For documentation of the parameters, see :func:`tcr_neighbors`. 
         """
-        start = logging.debug("Started initalizing TcrNeighbors object. ")
+        start = logging.info("Initializing TcrNeighbors object...")
         if metric == "identity" and cutoff != 0:
             raise ValueError("Identity metric only works with cutoff = 0")
         if sequence == "nt" and metric == "alignment":
@@ -391,7 +392,7 @@ class TcrNeighbors:
         self.sequence = sequence
         self._build_index_dict()
         self._dist_mat = None
-        logging.debug("Finished initalizing TcrNeighbors object. ", time=start)
+        logging.info("Finished initalizing TcrNeighbors object. ", time=start)
 
     @staticmethod
     def _seq_to_cell_idx(
@@ -582,6 +583,7 @@ class TcrNeighbors:
     def _reduce_coord_dict(self, coord_dict):
         """Applies reduction functions to the coord dict.
         Yield (coords, value) pairs. """
+        start = logging.info("Constructing cell x cell distance matrix...")
         reduce_dual = (
             self._reduce_dual_all if self.dual_tcr == "all" else self._reduce_dual_any
         )
@@ -590,13 +592,16 @@ class TcrNeighbors:
             if self.receptor_arms == "all"
             else self._reduce_arms_any
         )
-        for (cell_row, cell_col), entry in coord_dict.items():
+        for (cell_row, cell_col), entry in tqdm(
+            coord_dict.items(), total=len(coord_dict)
+        ):
             reduced_dual = (
                 reduce_dual(value_dict, chain, cell_row, cell_col)
                 for chain, value_dict in entry.items()
             )
             reduced = reduce_arms(reduced_dual, cell_row, cell_col,)
             yield (cell_row, cell_col), reduced
+        logging.info("Finished constructing cell x cell distance matrix. ", time=start)
 
     def _cell_dist_mat_reduce(self):
         """Compute the distance matrix by using custom reduction functions. 
@@ -630,7 +635,10 @@ class TcrNeighbors:
                 arm_info["seq_to_cell"],
                 arm_info["chain_inds"],
             )
-            for row, col, value in zip(dist_mat.row, dist_mat.col, dist_mat.data):
+            start = logging.info(f"Started comstructing {arm} coord-dictionary...")
+            for row, col, value in tqdm(
+                zip(dist_mat.row, dist_mat.col, dist_mat.data), total=dist_mat.nnz
+            ):
                 for c1, c2 in itertools.product(chain_inds, repeat=2):
                     for cell_row, cell_col in itertools.product(
                         seq_to_cell[c1][row], seq_to_cell[c2][col]
@@ -642,6 +650,8 @@ class TcrNeighbors:
                         _add_to_dict(coord_dict, c1, c2, cell_row, cell_col, value)
                         if row != col:
                             _add_to_dict(coord_dict, c1, c2, cell_col, cell_row, value)
+
+            logging.info(f"Finished constructing {arm} coord-dictionary", time=start)
 
         yield from self._reduce_coord_dict(coord_dict)
 
@@ -657,7 +667,7 @@ class TcrNeighbors:
             Default: use all CPUS. 
         """
         for arm, arm_dict in self.index_dict.items():
-            start = logging.debug(f"Finished computiong {arm} pairwise distances.")
+            start = logging.info(f"Computing {arm} pairwise distances...")
 
             arm_dict["dist_mat"] = tcr_dist(
                 arm_dict["unique_seqs"],
@@ -667,16 +677,12 @@ class TcrNeighbors:
             )
             logging.info(f"Finished computing {arm} pairwise distances.", time=start)
 
-        start = logging.debug("Started comstructing coord-dictionary")
         coords, values = zip(*self._cell_dist_mat_reduce())
-        logging.debug("Finished constructing coord-dictionary", time=start)
 
-        start = logging.debug("Started constructing cell x cell distance matrix.")
         rows, cols = zip(*coords)
         dist_mat = coo_matrix(
             (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
         )
-        logging.info("Finished constructing cell x cell distance matrix. ", time=start)
         dist_mat.eliminate_zeros()
         self._dist_mat = dist_mat.tocsr()
 
