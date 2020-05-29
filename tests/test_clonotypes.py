@@ -5,7 +5,7 @@ import scirpy as st
 from anndata import AnnData
 import numpy as np
 from scirpy.util import _is_symmetric
-from .fixtures import adata_conn, adata_define_clonotypes
+from .fixtures import adata_conn, adata_define_clonotypes, adata_clonotype_network
 import random
 import pytest
 
