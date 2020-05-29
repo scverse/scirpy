@@ -11,7 +11,6 @@ from cycler import Cycler
 import matplotlib
 from . import base
 import matplotlib.pyplot as plt
-import igraph as ig
 
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
@@ -202,37 +201,3 @@ def clonotype_network(
             neighbors_key=neighbors_key,
             **kwargs,
         )
-
-
-def clonotype_network_igraph(
-    adata, neighbors_key="tcr_neighbors", basis="clonotype_network"
-) -> Tuple[ig.Graph, ig.Layout]:
-    """
-    Get an `igraph` object representing the clonotype network.
-
-    Requires running :func:`scirpy.tl.clonotype_network` before, to 
-    compute the layout. 
-
-    Parameters
-    ----------
-    adata
-        Annotated data matrix.
-    neighbors_key
-        Key in `adata.uns` where tcr neighborhood information is located.
-    basis
-        Key in `adata.obsm` where the network layout is stored. 
-    
-    Returns
-    -------
-    graph
-        igraph object
-    layout 
-        corresponding igraph Layout object. 
-    """
-    from ..util.graph import _get_igraph_from_adjacency
-
-    conn = adata.uns[neighbors_key]["connectivities"]
-    idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
-    g = _get_igraph_from_adjacency(conn).subgraph(idx)
-    layout = ig.Layout(coords=adata.obsm["X_" + basis][idx, :].tolist())
-    return g, layout
