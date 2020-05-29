@@ -5,7 +5,7 @@ import scirpy as st
 from anndata import AnnData
 import numpy as np
 from scirpy.util import _is_symmetric
-from .fixtures import adata_conn, adata_define_clonotypes
+from .fixtures import adata_conn, adata_define_clonotypes, adata_clonotype_network
 import random
 import pytest
 
@@ -159,3 +159,18 @@ def test_clonotype_network(adata_conn):
 
     with pytest.raises(ValueError):
         st.tl.clonotype_network(adata_conn[[1, 3], :])
+
+
+def test_clonotype_network_igraph(adata_clonotype_network):
+    g, lo = st.tl.clonotype_network_igraph(adata_clonotype_network)
+    assert g.vcount() == 3
+    npt.assert_almost_equal(
+        np.array(lo.coords),
+        np.array(
+            [
+                [2.41359095, 0.23412465],
+                [1.61680611, 0.80266963],
+                [3.06104282, 2.14395562],
+            ]
+        ),
+    )
