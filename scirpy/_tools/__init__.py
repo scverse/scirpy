@@ -9,4 +9,5 @@ from ._clonotypes import (
     define_clonotypes,
     clonotype_network,
     _define_clonotypes_no_graph,
+    clonotype_network_igraph,
 )

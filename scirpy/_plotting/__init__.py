@@ -10,4 +10,4 @@ from ._vdj_usage import vdj_usage
 from ._repertoire_overlap import repertoire_overlap
 from ._clonotype_imbalance import clonotype_imbalance
 
-from ._clonotypes import clonotype_network, COLORMAP_EDGES, clonotype_network_igraph
+from ._clonotypes import clonotype_network, COLORMAP_EDGES

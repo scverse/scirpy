@@ -82,6 +82,7 @@ Define and visualize clonotypes
 
    define_clonotypes
    clonotype_network
+   clonotype_network_igraph
    
 Analyse clonal diversity
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -134,7 +135,6 @@ when calling the plotting function or need to be precomputed and stored in
    repertoire_overlap
    clonotype_imbalance
    clonotype_network
-   clonotype_network_igraph
 
 
    
