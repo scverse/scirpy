@@ -221,7 +221,7 @@ derives a distance from the alignment score. This approach was originally propos
 
 The function requires to specify a `cutoff` parameter. All cells with a distance between their
 CDR3 sequences lower than `cutoff` will be connected in the network. In the first example,
-we set the cutoff to `0`, to define clontypes as cells with **identical** CDR3 sequences.
+we set the cutoff to `0`, to define clonotypes as cells with **identical** CDR3 sequences.
 When the cutoff is `0` no alignment will be performed.
 
 Then, the function :func:`scirpy.tl.define_clonotypes` will detect connected modules
