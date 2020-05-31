@@ -61,8 +61,8 @@ class TcrChain:
         self.chain_type = chain_type
         self.cdr3 = cdr3.upper() if not _is_na(cdr3) else None
         self.cdr3_nt = cdr3_nt.upper() if not _is_na(cdr3_nt) else None
-        self.expr = expr
-        self.expr_raw = expr_raw
+        self.expr = float(expr)
+        self.expr_raw = float(expr_raw) if expr_raw is not None else None
         self.is_productive = _is_true(is_productive)
         self.v_gene = v_gene
         self.d_gene = d_gene
