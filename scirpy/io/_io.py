@@ -413,7 +413,15 @@ def read_airr(path: Union[str, Sequence[str]]) -> AnnData:
     """\
     Read AIRR-compliant data. 
 
-    Reads data organized in the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ 
+    Reads data organized in the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
+    
+    The following columns are required:
+     * `cell_id`
+     * `productive`
+     * `locus`
+     * `consensus_count`
+     * at least one of `junction_aa` or `junction`. 
+
 
     {doc_working_model}
     
@@ -456,12 +464,12 @@ def read_airr(path: Union[str, Sequence[str]]) -> AnnData:
                 TcrChain(
                     is_productive=row["productive"],
                     chain_type=row["locus"],
-                    v_gene=row["v_call"],
-                    d_gene=row["d_call"],
-                    j_gene=row["j_call"],
-                    c_gene=row["c_call"],
-                    cdr3=row["junction_aa"],
-                    cdr3_nt=row["junction"],
+                    v_gene=row["v_call"] if "v_call" in row else None,
+                    d_gene=row["d_call"] if "d_call" in row else None,
+                    j_gene=row["j_call"] if "j_call" in row else None,
+                    c_gene=row["c_call"] if "c_call" in row else None,
+                    cdr3=row["junction_aa"] if "junction_aa" in row else None,
+                    cdr3_nt=row["junction"] if "junction" in row else None,
                     expr=expr,
                     expr_raw=expr_raw,
                 )
