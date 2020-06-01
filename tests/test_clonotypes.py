@@ -49,8 +49,22 @@ def test_define_clonotypes_no_graph():
 @pytest.mark.parametrize(
     "same_v_gene,ct_expected,ct_size_expected",
     [
-        (True, ["0_v1", "0_v1", "0_v2", "1_v1"], [2, 2, 1, 1]),
         (False, ["0", "0", "0", "1"], [3, 3, 3, 1]),
+        (
+            "primary_only",
+            ["0_av1_bv1", "0_av1_bv1", "0_av2_bv2", "1_av1_bv1"],
+            [2, 2, 1, 1],
+        ),
+        (
+            "all",
+            [
+                "0_av1_bv1_a2v1_b2v1",
+                "0_av1_bv1_a2v2_b2v2",
+                "0_av2_bv2_a2v2_b2v2",
+                "1_av1_bv1_a2v1_b2v1",
+            ],
+            [1, 1, 1, 1],
+        ),
     ],
 )
 def test_define_clonotypes(adata_conn, same_v_gene, ct_expected, ct_size_expected):

@@ -56,7 +56,10 @@ def adata_conn():
         obs=pd.DataFrame()
         .assign(
             cell_id=["cell1", "cell2", "cell3", "cell4"],
-            v_gene=["v1", "v1", "v2", "v1"],
+            TRA_1_v_gene=["av1", "av1", "av2", "av1"],
+            TRB_1_v_gene=["bv1", "bv1", "bv2", "bv1"],
+            TRA_2_v_gene=["a2v1", "a2v2", "a2v2", "a2v1"],
+            TRB_2_v_gene=["b2v1", "b2v2", "b2v2", "b2v1"],
         )
         .set_index("cell_id")
     )
