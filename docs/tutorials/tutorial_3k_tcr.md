@@ -24,7 +24,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %autoreload 2
 import sys
 
-sys.path.insert(0, "../..") 
+sys.path.insert(0, "../..")
 import scirpy as ir
 import pandas as pd
 import numpy as np
@@ -126,7 +126,12 @@ The lower three panels show the UMAP colored by the T cell markers _CD8_, _CD4_,
 We can confirm that the markers correspond to their respective cluster labels.
 
 ```python
-sc.pl.umap(adata, color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"], ncols=2, wspace=.5)
+sc.pl.umap(
+    adata,
+    color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"],
+    ncols=2,
+    wspace=0.5,
+)
 ```
 
 ## TCR Quality Control
@@ -158,9 +163,16 @@ ir.pl.group_abundance(
 Indeed, in this dataset, ~6% of cells have more than a one pair of productive T-cell receptors:
 
 ```python
-print("Fraction of cells with more than one pair of TCRs: {:.2f}".format(
-    np.sum(adata.obs["chain_pairing"].isin(["Extra beta", "Extra alpha", "Two full chains"])) / adata.n_obs
-))
+print(
+    "Fraction of cells with more than one pair of TCRs: {:.2f}".format(
+        np.sum(
+            adata.obs["chain_pairing"].isin(
+                ["Extra beta", "Extra alpha", "Two full chains"]
+            )
+        )
+        / adata.n_obs
+    )
+)
 ```
 
 Next, we visualize the _Multichain_ cells on the UMAP plot and exclude them from downstream analysis:
@@ -248,7 +260,7 @@ ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
 Let's re-compute the network with a `cutoff` of `10`.
-That's the equivalent of 2 `R`s mutating into `N` (using the BLOSUM62 distance matrix).
+That's the equivalent of 2 `R`s mutating into `N` (using the BLOSUM62 distance matrix, see :cite:`TCRdist`).
 
 ```python
 sc.settings.verbosity = 4
@@ -266,23 +278,56 @@ ir.tl.clonotype_network(adata, min_size=4)
 Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more. 
 
 ```python
-ir.pl.clonotype_network(adata, color="clonotype", legend_fontoutline=3, size=80)
+ir.pl.clonotype_network(
+    adata, color="clonotype", legend_fontoutline=3, size=80, panel_size=(6, 6)
+)
 ```
 
 Now we show the same graph, colored by patient.
-We observe that for instance clonotypes 277 and 211 (center) are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 333 (bottom left) is _public_, i.e.
+We observe that for instance clonotypes 211 and 106 (left-center) are _private_, i.e. they contain cells from
+a single sample only. On the other hand, for instance clonotype 1248 (bottom left) is _public_, i.e.
 it is shared across patients _Lung3_ and _Lung1_. 
 
 ```python
-ir.pl.clonotype_network(adata, color="patient", size=80)
+ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
 ```
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype by subsetting `AnnData`. 
-Clonotype `333` does not have a detected alpha chain. 
+For instance, we can find out that clonotype `1248` does not have a detected alpha chain. 
 
 ```python
-adata.obs.loc[adata.obs["clonotype"] == "333", ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"]]
+adata.obs.loc[
+    adata.obs["clonotype"] == "1248",
+    ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+]
+```
+
+### Including the V-gene in clonotype definition
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+Using the paramter `use_v_gene` in :func:`~scirpy.tl.define_clonotypes`, we can enforce
+clonotypes to have the same :term:`V-gene <V(D)J>`, and, therefore, the same :term:`CDR1 and 2 <CDR>`
+regions. Let's look for clonotypes with different V genes:
+<!-- #endraw -->
+
+```python
+ir.tl.define_clonotypes(adata, same_v_gene="primary_only", key_added="clonotype_same_v")
+```
+
+```python
+# find clonotypes with more than one `clonotype_same_v`
+ct_different_v = adata.obs.groupby("clonotype").apply(
+    lambda x: x["clonotype_same_v"].unique().size > 1
+)
+ct_different_v = ct_different_v[ct_different_v].index.values
+ct_different_v
+```
+
+```python
+# Display the first 5 clonotypes with different v genes
+adata.obs.loc[
+    adata.obs["clonotype"].isin(ct_different_v[:5]), ["clonotype", "clonotype_same_v", "TRA_1_v_gene", "TRB_1_v_gene"]
+].sort_values("clonotype").drop_duplicates().reset_index(drop=True)
 ```
 
 ## Clonotype analysis
@@ -342,9 +387,7 @@ ten largest clonotypes across the cell-type clusters.
 <!-- #endraw -->
 
 ```python
-ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10
-)
+ir.pl.group_abundance(adata, groupby="clonotype", target_col="cluster", max_cols=10)
 ```
 
 It might be beneficial to normalize the counts
@@ -384,11 +427,7 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 
 ```python
 ir.pl.group_abundance(
-    adata,
-    groupby="TRB_1_v_gene",
-    target_col="cluster",
-    normalize=True,
-    max_cols=10
+    adata, groupby="TRB_1_v_gene", target_col="cluster", normalize=True, max_cols=10
 )
 ```
 
@@ -396,9 +435,12 @@ We can pre-select groups by filtering `adata`:
 
 ```python
 ir.pl.group_abundance(
-    adata[adata.obs["TRB_1_v_gene"].isin(
-        ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
-    ),:],
+    adata[
+        adata.obs["TRB_1_v_gene"].isin(
+            ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
+        ),
+        :,
+    ],
     groupby="cluster",
     target_col="TRB_1_v_gene",
     normalize=True,
@@ -416,7 +458,9 @@ ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes: 
 
 ```python
-ir.pl.vdj_usage(adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]), :], top_n=None)
+ir.pl.vdj_usage(
+    adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]), :], top_n=None
+)
 ```
 
 ### Spectratype plots
@@ -437,7 +481,7 @@ ir.pl.spectratype(
     color="cluster",
     viztype="curve",
     fig_kws={"dpi": 120},
-    kde_kws={'curve_layout': 'shifted', 'kde_norm': False, 'kde_norm': False}
+    kde_kws={"curve_layout": "shifted", "kde_norm": False, "kde_norm": False},
 )
 ```
 
@@ -445,11 +489,16 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 
 ```python
 ir.pl.spectratype(
-    adata[adata.obs["TRB_1_v_gene"].isin(["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]),:], 
+    adata[
+        adata.obs["TRB_1_v_gene"].isin(
+            ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
+        ),
+        :,
+    ],
     cdr3_col="TRB_1_cdr3",
     color="TRB_1_v_gene",
     normalize="sample",
-    fig_kws={'dpi': 120}
+    fig_kws={"dpi": 120},
 )
 ```
 
@@ -459,7 +508,7 @@ ir.pl.spectratype(
 ### Repertoire overlaps
 
 ```python
-df, dst, lk = ir.tl.repertoire_overlap(adata, 'sample', inplace=False)
+df, dst, lk = ir.tl.repertoire_overlap(adata, "sample", inplace=False)
 ```
 
 ```python
@@ -467,37 +516,51 @@ df.head()
 ```
 
 ```python
-ir.pl.repertoire_overlap(adata, 'sample')
+ir.pl.repertoire_overlap(adata, "sample")
 ```
 
 ```python
-ir.pl.repertoire_overlap(adata, 'sample', heatmap_cats=['patient', 'source'])
+ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 ```
 
 ```python
-ir.pl.repertoire_overlap(adata, 'sample', dendro_only=True, heatmap_cats=['source'])
+ir.pl.repertoire_overlap(adata, "sample", dendro_only=True, heatmap_cats=["source"])
 ```
 
 ```python
-ir.pl.repertoire_overlap(adata, 'sample', pair_to_plot=['LN2', 'LT2'])
+ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"])
 ```
 
 ```python
 # Create a column in obs that gives us the site of the tumor
 
-adata.obs['site'] = adata.obs['patient'].str.slice(stop=-1)
+adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
 ```
 
 ```python
 # Show clonotypes that are the most imbalance between Tumor and Control samples based on Fischer's test
 
-ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='site', plot_type='strip')
+ir.pl.clonotype_imbalance(
+    adata,
+    replicate_col="sample",
+    groupby="source",
+    case_label="Tumor",
+    additional_hue="site",
+    plot_type="strip",
+)
 ```
 
 ```python
 # Plot a Volcano diagram of p-values and the fold difference between the two groups
 
-ir.pl.clonotype_imbalance(adata, replicate_col='sample', groupby='source', case_label='Tumor', additional_hue='diagnosis', plot_type='volcano')
+ir.pl.clonotype_imbalance(
+    adata,
+    replicate_col="sample",
+    groupby="source",
+    case_label="Tumor",
+    additional_hue="diagnosis",
+    plot_type="volcano",
+)
 ```
 
 ```python
