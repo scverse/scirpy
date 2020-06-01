@@ -46,24 +46,53 @@ def test_define_clonotypes_no_graph():
     npt.assert_equal(res, adata.obs["clonotype_"].values)
 
 
-def test_define_clonotypes(adata_conn):
-    ct_expected = ["0", "0", "0", "1"]
-    ct_size_expected = [3, 3, 3, 1]
-
+@pytest.mark.parametrize(
+    "same_v_gene,ct_expected,ct_size_expected",
+    [
+        (False, ["0", "0", "0", "1"], [3, 3, 3, 1]),
+        (
+            "primary_only",
+            ["0_av1_bv1", "0_av1_bv1", "0_av2_bv2", "1_av1_bv1"],
+            [2, 2, 1, 1],
+        ),
+        (
+            "all",
+            [
+                "0_av1_bv1_a2v1_b2v1",
+                "0_av1_bv1_a2v2_b2v2",
+                "0_av2_bv2_a2v2_b2v2",
+                "1_av1_bv1_a2v1_b2v1",
+            ],
+            [1, 1, 1, 1],
+        ),
+    ],
+)
+def test_define_clonotypes(adata_conn, same_v_gene, ct_expected, ct_size_expected):
     clonotype, clonotype_size = st.tl.define_clonotypes(
-        adata_conn, inplace=False, partitions="connected"
+        adata_conn, same_v_gene=same_v_gene, inplace=False, partitions="connected"
     )
     npt.assert_equal(clonotype, ct_expected)
     npt.assert_equal(clonotype_size, ct_size_expected)
 
     st.tl.define_clonotypes(
-        adata_conn, key_added="ct", partitions="leiden", resolution=0.5, n_iterations=10
+        adata_conn,
+        same_v_gene=same_v_gene,
+        key_added="ct",
+        partitions="leiden",
+        resolution=0.5,
+        n_iterations=10,
     )
     npt.assert_equal(adata_conn.obs["ct"].values, ct_expected)
     npt.assert_equal(adata_conn.obs["ct_size"].values, ct_size_expected)
 
+    # Test with higher leiden resolution
     st.tl.define_clonotypes(
-        adata_conn, key_added="ct2", partitions="leiden", resolution=2, n_iterations=10
+        adata_conn,
+        same_v_gene=False,
+        key_added="ct2",
+        partitions="leiden",
+        resolution=2,
+        n_iterations=10,
     )
     npt.assert_equal(adata_conn.obs["ct2"].values, ["0", "1", "2", "3"])
     npt.assert_equal(adata_conn.obs["ct2_size"].values, [1] * 4)
