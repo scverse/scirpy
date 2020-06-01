@@ -69,7 +69,7 @@ def _define_clonotypes_no_graph(
 def define_clonotypes(
     adata,
     *,
-    same_v_gene: bool = False,
+    same_v_gene: Union[bool, Literal["primary_only", "all"]] = False,
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
@@ -86,10 +86,18 @@ def define_clonotypes(
     adata
         Annotated data matrix.
     same_v_gene
-        Enforces clonotypes to have the same :term:`V-gene<V(D)J>`. This is useful
+        Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
         as the CDR1 and CDR2 regions are fully encoded in this gene. 
-        See :term:`CDR` for more details. Genes with no V-gene 
-        detected will be treated like a separate "gene". 
+        See :term:`CDR` for more details.
+        
+        Possible values are 
+         * `False` - Ignore V-gene during clonotype definition
+         * `"primary_only"` - Only the V-genes of the primary pair of alpha
+           and beta chains needs to match
+         * `"all"` - All V-genes of all sequences need to match. 
+
+        Chains with no detected V-gene will be treated like a separate "gene" with 
+        the name "None".  
     partitions
         How to find graph partitions that define a clonotype. 
         Possible values are `leiden`, for using the "Leiden" algorithm and 
@@ -134,12 +142,35 @@ def define_clonotypes(
     else:
         part = g.clusters(mode="weak")
 
-    if same_v_gene:
+    if same_v_gene is False:
+        clonotype = np.array([str(x) for x in part.membership])
+    elif same_v_gene == "primary_only":
         clonotype = np.array(
-            [f"{x}_{v_gene}" for x, v_gene in zip(part.membership, adata.obs["v_gene"])]
+            [
+                f"{x}_{tra1_v_gene}_{trb1_v_gene}"
+                for x, tra1_v_gene, trb1_v_gene in zip(
+                    part.membership,
+                    adata.obs["TRA_1_v_gene"],
+                    adata.obs["TRB_1_v_gene"],
+                )
+            ]
+        )
+    elif same_v_gene == "all":
+        clonotype = np.array(
+            [
+                f"{x}_{tra1_v_gene}_{trb1_v_gene}_{tra2_v_gene}_{trb2_v_gene}"
+                for x, tra1_v_gene, trb1_v_gene, tra2_v_gene, trb2_v_gene in zip(
+                    part.membership,
+                    adata.obs["TRA_1_v_gene"],
+                    adata.obs["TRB_1_v_gene"],
+                    adata.obs["TRA_2_v_gene"],
+                    adata.obs["TRB_2_v_gene"],
+                )
+            ]
         )
     else:
-        clonotype = np.array([str(x) for x in part.membership])
+        raise ValueError("Invalud value for `same_v_gene`.")
+
     clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
     assert len(clonotype) == len(clonotype_size) == adata.obs.shape[0]
 
