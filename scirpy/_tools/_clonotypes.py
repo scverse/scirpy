@@ -69,6 +69,7 @@ def _define_clonotypes_no_graph(
 def define_clonotypes(
     adata,
     *,
+    same_v_gene: bool = False,
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
@@ -84,6 +85,11 @@ def define_clonotypes(
     ----------
     adata
         Annotated data matrix.
+    same_v_gene
+        Enforces clonotypes to have the same :term:`V-gene<V(D)J>`. This is useful
+        as the CDR1 and CDR2 regions are fully encoded in this gene. 
+        See :term:`CDR` for more details. Genes with no V-gene 
+        detected will be treated like a separate "gene". 
     partitions
         How to find graph partitions that define a clonotype. 
         Possible values are `leiden`, for using the "Leiden" algorithm and 
@@ -128,7 +134,12 @@ def define_clonotypes(
     else:
         part = g.clusters(mode="weak")
 
-    clonotype = np.array([str(x) for x in part.membership])
+    if same_v_gene:
+        clonotype = np.array(
+            [f"{x}_{v_gene}" for x, v_gene in zip(part.membership, adata.obs["v_gene"])]
+        )
+    else:
+        clonotype = np.array([str(x) for x in part.membership])
     clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
     assert len(clonotype) == len(clonotype_size) == adata.obs.shape[0]
 
