@@ -45,11 +45,13 @@ The example data used in this notebook are available from the
 `Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__. 
 
 
-Loading data from *10x Genomics CellRanger* or *TraCeR*
--------------------------------------------------------
+Loading data from *10x Genomics CellRanger*, *TraCeR* or AIRR-compliant tools
+-----------------------------------------------------------------------------
 
 We provide convenience functions to load data from *CellRanger* or *TraCeR* with a single function call,
 supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively. 
+Moreover, we support importing data in the community-standard
+`AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. 
 
 .. module:: scirpy.io
    :noindex:
@@ -59,6 +61,7 @@ supporting both data generated on the *10x* and *Smart-seq2* sequencing platform
 
    read_10x_vdj
    read_tracer
+   read_airr
    
 Read 10x data
 ^^^^^^^^^^^^^
@@ -155,6 +158,42 @@ sc.pp.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
 sc.pl.umap(adata, color=["has_tcr", "CD3E"])
+```
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+Read an AIRR-compliant rearrangement table
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We generated example data using `immuneSIM <https://immunesim.readthedocs.io/en/latest/>`__ (:cite:`Weber2020`). 
+The data consists of 100 cells and does not include transcriptomics data. 
+
+The rearrangement tables are often organized into separate tables per chain. Therefore, :func:`scirpy.io.read_airr` supports
+specifiying multiple `tsv` files at once. This would have the same effect as concatenating them before
+the import. 
+<!-- #endraw -->
+
+```python
+adata = ir.io.read_airr(["example_data/immunesim_airr/immunesim_tra.tsv", "example_data/immunesim_airr/immunesim_trb.tsv"])
+```
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+The dataset does not come with transcriptomics data. We can, therefore, not 
+show the UMAP plot highlighting cells with TCRs, but we can still use scirpy 
+to analyse it. Below, we visualize the clonotype network
+connecting cells with similar :term:`CDR3` sequences.
+
+**Note:** The cutoff of 25 was chosen for demonstration purposes on this small sample dataset. Usually a smaller cutoff 
+is more approriate. 
+<!-- #endraw -->
+
+```python
+ir.pp.tcr_neighbors(adata, metric="alignment", cutoff=25, receptor_arms="any", dual_tcr="primary_only")
+```
+
+```python
+ir.tl.define_clonotypes(adata)
+ir.tl.clonotype_network(adata, layout="fr")
+ir.pl.clonotype_network(adata, color="clonotype", panel_size=(4, 4))
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
