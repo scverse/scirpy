@@ -33,6 +33,7 @@ requirements:
     - networkx
     - squarify
     - tqdm>=4.29.1
+    - airr>=1.2
   run:
     - python >=3.6
     - get_version
@@ -48,6 +49,7 @@ requirements:
     - networkx
     - squarify
     - tqdm>=4.29.1
+    - airr>=1.2
 
 test:
   source_files:
