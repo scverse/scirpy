@@ -2,13 +2,14 @@ import pandas as pd
 import json
 from anndata import AnnData
 from ._datastructures import TcrCell, TcrChain
-from typing import Collection
+from typing import Collection, Sequence, Union
 import numpy as np
 from glob import iglob
 import pickle
 import os.path
 from . import _tracerlib
 import sys
+import airr
 from ..util import _doc_params, _is_na, _is_true
 
 # patch sys.modules to enable pickle import.
@@ -403,5 +404,75 @@ def read_tracer(path: str) -> AnnData:
             "using a TraCeR output folder that looks like "
             "<CELL>/filtered_TCR_seqs/*.pkl"
         )
+
+    return from_tcr_objs(tcr_objs.values())
+
+
+@_doc_params(doc_working_model=doc_working_model)
+def read_airr(path: Union[str, Sequence[str]]) -> AnnData:
+    """\
+    Read AIRR-compliant data. 
+
+    Reads data organized in the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
+    
+    The following columns are required:
+     * `cell_id`
+     * `productive`
+     * `locus`
+     * `consensus_count`
+     * at least one of `junction_aa` or `junction`. 
+
+
+    {doc_working_model}
+    
+    Parameters
+    ----------
+    path
+        Path to the AIRR rearrangement tsv file. If different
+        chains are split up into multiple files, these can be specified
+        as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`. 
+
+    Returns
+    -------
+    AnnData object with TCR data in `obs` for each cell. For more details see
+    :ref:`data-structure`.    
+    """
+    tcr_objs = {}
+
+    if isinstance(path, str):
+        path = [path]
+
+    for tmp_path in path:
+        reader = airr.read_rearrangement(tmp_path)
+        for row in reader:
+            cell_id = row["cell_id"]
+            try:
+                tmp_cell = tcr_objs[cell_id]
+            except KeyError:
+                tmp_cell = TcrCell(cell_id=cell_id)
+                tcr_objs[cell_id] = tmp_cell
+
+            try:
+                # this is not an official field
+                expr = row["umi_count"]
+                expr_raw = row["consensus_count"]
+            except KeyError:
+                expr = row["consensus_count"]
+                expr_raw = None
+
+            tmp_cell.add_chain(
+                TcrChain(
+                    is_productive=row["productive"],
+                    chain_type=row["locus"],
+                    v_gene=row["v_call"] if "v_call" in row else None,
+                    d_gene=row["d_call"] if "d_call" in row else None,
+                    j_gene=row["j_call"] if "j_call" in row else None,
+                    c_gene=row["c_call"] if "c_call" in row else None,
+                    cdr3=row["junction_aa"] if "junction_aa" in row else None,
+                    cdr3_nt=row["junction"] if "junction" in row else None,
+                    expr=expr,
+                    expr_raw=expr_raw,
+                )
+            )
 
     return from_tcr_objs(tcr_objs.values())

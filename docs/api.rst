@@ -27,6 +27,7 @@ formats.
    read_h5ad
    read_10x_vdj
    read_tracer
+   read_airr
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
 a list of :class:`~scirpy.io.TcrCell` objects first, and then converting them into
