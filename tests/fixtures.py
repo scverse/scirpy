@@ -54,7 +54,10 @@ def adata_conn():
     """Adata with connectivities computed"""
     adata = AnnData(
         obs=pd.DataFrame()
-        .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
+        .assign(
+            cell_id=["cell1", "cell2", "cell3", "cell4"],
+            v_gene=["v1", "v1", "v2", "v1"],
+        )
         .set_index("cell_id")
     )
     adata.uns["tcr_neighbors"] = {
