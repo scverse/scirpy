@@ -163,7 +163,7 @@ def repertoire_overlap(
                 # Create text for default labels
                 p_a, p_b = pair_to_plot
                 default_style_kws = {
-                    "title": "Repertoire overlap between " + p_a + "and" + p_b,
+                    "title": "Repertoire overlap between " + p_a + " and " + p_b,
                     "xlab": "Clonotype size in " + p_a,
                     "ylab": "Clonotype size in " + p_b,
                 }
