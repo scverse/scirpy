@@ -556,12 +556,6 @@ The distance matrix can be shown as a heatmap, while samples are reordered based
 ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 ```
 
-If only the dendrogram of samples are needed, the leafs can be colored according to a chosen category.
-
-```python
-ir.pl.repertoire_overlap(adata, "sample", dendro_only=True, heatmap_cats=["source"])
-```
-
 A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the size of the number of clonotypes at a given coordinate.
 
 ```python
