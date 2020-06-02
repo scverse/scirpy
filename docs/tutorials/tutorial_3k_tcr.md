@@ -515,8 +515,9 @@ ir.pl.spectratype(
     adata,
     color="cluster",
     viztype="curve",
+    curve_layout="shifted",
     fig_kws={"dpi": 120},
-    kde_kws={"curve_layout": "shifted", "kde_norm": False, "kde_norm": False},
+    kde_kws={"kde_norm": False},
 )
 ```
 
@@ -556,7 +557,7 @@ The distance matrix can be shown as a heatmap, while samples are reordered based
 ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 ```
 
-A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the size of the number of clonotypes at a given coordinate.
+A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
 
 ```python
 ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"dpi": 120})
