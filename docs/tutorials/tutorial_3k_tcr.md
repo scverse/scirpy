@@ -542,29 +542,35 @@ ir.pl.spectratype(
 
 ### Repertoire overlaps
 
-```python
-df, dst, lk = ir.tl.repertoire_overlap(adata, "sample", inplace=False)
-```
+Overlaps in the adaptive immune receptor repertoire of samples or sample groups can pinpoint important clonotype groups, as well as to provide a measure of similarity between samples.  
+Running Scirpy's `repertoire_overlap` tool creates a matrix featuring the abundance of clonotypes in each sample. Additionally, it also computes a (Jaccard) distance matrix of samples as well as the linkage of hierarchical clustering.
 
 ```python
+df, dst, lk = ir.tl.repertoire_overlap(adata, "sample", inplace=False)
 df.head()
 ```
 
-```python
-ir.pl.repertoire_overlap(adata, "sample")
-```
+The distance matrix can be shown as a heatmap, while samples are reordered based on the linkage computed previously.
 
 ```python
 ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 ```
 
+If only the dendrogram of samples are needed, the leafs can be colored according to a chosen category.
+
 ```python
 ir.pl.repertoire_overlap(adata, "sample", dendro_only=True, heatmap_cats=["source"])
 ```
 
+A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the size of the number of clonotypes at a given coordinate.
+
 ```python
-ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"])
+ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"dpi": 120})
 ```
+
+### Discovering clonotypes preferentially occuring in a group
+
+Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers `clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
 
 ```python
 # Create a column in obs that gives us the site of the tumor
@@ -573,7 +579,7 @@ adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
 ```
 
 ```python
-# Show clonotypes that are the most imbalance between Tumor and Control samples based on Fischer's test
+# Show clonotypes that are most imbalanced between Tumor and Control samples based on Fisher's test
 
 ir.pl.clonotype_imbalance(
     adata,
@@ -585,6 +591,8 @@ ir.pl.clonotype_imbalance(
 )
 ```
 
+To get an idea how the above, top-ranked clonotypes compare to the bulk of all clonotypes, a Volcano plot is genereated, showing the -`g10 p-value` of the Fisher's test as a function of `log2(fold-change)` of the normalized proportion of a given clonotype in the test group compared to the control group. To avoid zero division, `0.01*(global minimum proportion)` was added to every normalized clonotype proportions.
+
 ```python
 # Plot a Volcano diagram of p-values and the fold difference between the two groups
 
@@ -595,9 +603,6 @@ ir.pl.clonotype_imbalance(
     case_label="Tumor",
     additional_hue="diagnosis",
     plot_type="volcano",
+    fig_kws={"dpi": 120},
 )
-```
-
-```python
-
 ```
