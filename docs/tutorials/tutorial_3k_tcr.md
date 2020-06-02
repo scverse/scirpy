@@ -543,7 +543,7 @@ ir.pl.spectratype(
 
 ### Repertoire overlaps
 
-Overlaps in the adaptive immune receptor repertoire of samples or sample groups can pinpoint important clonotype groups, as well as to provide a measure of similarity between samples.  
+Overlaps in the adaptive immune receptor repertoire of samples or sample groups enables to pinpoint important clonotype groups, as well as to provide a measure of similarity between samples.  
 Running Scirpy's `repertoire_overlap` tool creates a matrix featuring the abundance of clonotypes in each sample. Additionally, it also computes a (Jaccard) distance matrix of samples as well as the linkage of hierarchical clustering.
 
 ```python
@@ -586,7 +586,7 @@ ir.pl.clonotype_imbalance(
 )
 ```
 
-To get an idea how the above, top-ranked clonotypes compare to the bulk of all clonotypes, a Volcano plot is genereated, showing the -`g10 p-value` of the Fisher's test as a function of `log2(fold-change)` of the normalized proportion of a given clonotype in the test group compared to the control group. To avoid zero division, `0.01*(global minimum proportion)` was added to every normalized clonotype proportions.
+To get an idea how the above, top-ranked clonotypes compare to the bulk of all clonotypes, a Volcano plot is genereated, showing the `-log10 p-value` of the Fisher's test as a function of `log2(fold-change)` of the normalized proportion of a given clonotype in the test group compared to the control group. To avoid zero division, `0.01*(global minimum proportion)` was added to every normalized clonotype proportions.
 
 ```python
 # Plot a Volcano diagram of p-values and the fold difference between the two groups
