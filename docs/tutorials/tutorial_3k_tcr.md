@@ -51,9 +51,7 @@ adata = ir.datasets.wu2020_3k()
 `adata` is a regular :class:`~anndata.AnnData` object with additional, TCR-specific columns in `obs`. 
 For more information, check the page about Scirpy's :ref:`data structure <data-structure>`. 
 
-.. note:: **T cell receptors**
-  
-  For more information about our T-cell receptor model, see :ref:`tcr-model`. 
+.. note:: For more information about our T-cell receptor model, see :ref:`tcr-model`. 
 <!-- #endraw -->
 
 ```python
