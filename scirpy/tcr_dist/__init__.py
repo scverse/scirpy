@@ -350,7 +350,7 @@ def tcr_dist(
     """
     if cutoff == 0 or metric == "identity":
         metric = "identity"
-        cutof = 0
+        cutoff = 0
     if isinstance(metric, DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
