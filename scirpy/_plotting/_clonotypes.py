@@ -93,7 +93,6 @@ def clonotype_network(
     panel_size: Tuple[float, float] = (10, 10),
     legend_loc: str = None,
     palette: Union[str, Sequence[str], Cycler, None] = None,
-    neighbors_key: str = "tcr_neighbors",
     basis: str = "clonotype_network",
     edges_color: Union[str, None] = None,
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
@@ -130,8 +129,6 @@ def clonotype_network(
         (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object. 
         It is possible to specify a list of the same size as `color` to choose 
         a different color map for each panel. 
-    neighbors_key
-        Key under which the tcr neighborhood matrix is stored in `adata.uns`
     basis
         Key under which the graph layout coordinates are stored in `adata.obsm`
     edges_color
@@ -161,11 +158,17 @@ def clonotype_network(
     --------
     :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
+    try:
+        neighbors_key = adata.uns[basis]["neighbors_key"]
+    except KeyError:
+        raise KeyError(
+            f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
+        )
     color = [color] if isinstance(color, str) or color is None else list(color)
 
     if f"X_{basis}" not in adata.obsm_keys():
         raise KeyError(
-            f"{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
+            f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
         )
 
     # for clonotype, use "on data" as default

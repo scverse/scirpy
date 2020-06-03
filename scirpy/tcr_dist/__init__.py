@@ -20,6 +20,7 @@ metric
     You can choose one of the following metrics: 
       * `identity` -- 1 for identical sequences, 0 otherwise. 
         See :class:`~scirpy.tcr_dist.IdentityDistanceCalculator`. 
+        This metric implies a cutoff of 0. 
       * `levenshtein` -- Levenshtein edit distance.
         See :class:`~scirpy.tcr_dist.LevenshteinDistanceCalculator`. 
       * `alignment` -- Distance based on pairwise sequence alignments using the 
@@ -341,10 +342,15 @@ def tcr_dist(
     {metric}
     {cutoff}
 
+        A cutoff of 0 implies the `identity` metric. 
+
     Returns
     -------
     Upper triangular distance matrix. 
     """
+    if cutoff == 0 or metric == "identity":
+        metric = "identity"
+        cutoff = 0
     if isinstance(metric, DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
@@ -368,7 +374,7 @@ class TcrNeighbors:
         metric: Union[
             Literal["alignment", "identity", "levenshtein"], DistanceCalculator
         ] = "identity",
-        cutoff: float = 0,
+        cutoff: float = 10,
         receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
         dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
@@ -379,7 +385,9 @@ class TcrNeighbors:
         """
         start = logging.info("Initializing TcrNeighbors object...")
         if metric == "identity" and cutoff != 0:
-            raise ValueError("Identity metric only works with cutoff = 0")
+            raise ValueError("Identity metric only works with cutoff == 0")
+        if metric != "identity" and cutoff == 0:
+            logging.warn(f"Running with {metric} metric, but cutoff == 0. ")
         if sequence == "nt" and metric == "alignment":
             raise ValueError(
                 "Using nucleotide sequences with alignment metric is not supported. "
@@ -721,12 +729,12 @@ def tcr_neighbors(
     *,
     metric: Union[
         Literal["identity", "alignment", "levenshtein"], DistanceCalculator
-    ] = "alignment",
+    ] = "identity",
     cutoff: int = 10,
     receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
     dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
-    key_added: str = "tcr_neighbors",
-    sequence: Literal["aa", "nt"] = "aa",
+    key_added: Union[str, None] = None,
+    sequence: Literal["aa", "nt"] = "nt",
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
@@ -744,8 +752,7 @@ def tcr_neighbors(
     {cutoff}
 
         Two cells with a distance <= the cutoff will be connected. 
-        If cutoff = 0, the CDR3 sequences need to be identical. In this 
-        case, no alignment is performed. 
+        A cutoff of 0 implies the use of the `identity` metric. 
 
     receptor_arms:
          * `"TRA"` - only consider TRA sequences
@@ -764,7 +771,10 @@ def tcr_neighbors(
         
     key_added:
         dict key under which the result will be stored in `adata.uns`
-        when `inplace` is True.
+        when `inplace` is True. Defaults to `tcr_neighbors_{{sequence}}_{{metric}}`. 
+
+        If metric is an instance of :class:`scirpy.tcr_dist.DistanceCalculator`, 
+        `{{metric}}` defaults to `"custom"`. 
     sequence:
         Use amino acid (`aa`) or nulceotide (`nt`) sequences?
     inplace:
@@ -781,8 +791,12 @@ def tcr_neighbors(
         cell x cell distance matrix with the distances as computed according to `metric`
         offsetted by 1 to make use of sparse matrices. 
     """
-    if cutoff == 0:
+    if cutoff == 0 or metric == "identity":
         metric = "identity"
+        cutoff = 0
+    if key_added is None:
+        tmp_metric = "custom" if isinstance(metric, DistanceCalculator) else metric
+        key_added = f"tcr_neighbors_{sequence}_{tmp_metric}"
     ad = TcrNeighbors(
         adata,
         metric=metric,

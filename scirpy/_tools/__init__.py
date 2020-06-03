@@ -7,6 +7,7 @@ from ._repertoire_overlap import repertoire_overlap
 from ._clonotype_imbalance import clonotype_imbalance
 from ._clonotypes import (
     define_clonotypes,
+    define_clonotype_clusters,
     clonotype_network,
     _define_clonotypes_no_graph,
     clonotype_network_igraph,
