@@ -125,7 +125,17 @@ Glossary
            Multichain cells comprised significantly more reads per cell
            (p = 9.45 × 10−251, Wilcoxon-Mann-Whitney-test), supporting the hypothesis that
            (most of) multichain cells are technical artifacts arising from 
-           cell-multiplets (:cite:`Ilicic2016`). 
+           cell-multiplets (:cite:`Ilicic2016`).
+
+    Orphan chain
+        A :term:`TCR` chain is called *orphan*, if its corresponding counterpart 
+        has not been detected. For instance, if a cell has only a TCR-α chain,
+        but no TCR-β chain, the cell will be flagged as "Orphan alpha". 
+
+        Orphan chains are most likley the effect of stochastic dropouts due to 
+        sequencing inefficiencies. 
+
+        See also :func:`scirpy.tl.chain_pairing`. 
 
     UMI
         Unique molecular identifier. Some single-cell RNA-seq protocols
