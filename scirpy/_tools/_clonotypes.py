@@ -15,9 +15,10 @@ same_v_gene
     See :term:`CDR` for more details.
     
     Possible values are 
+
         * `False` - Ignore V-gene during clonotype definition
         * `"primary_only"` - Only the V-genes of the primary pair of alpha
-        and beta chains needs to match
+          and beta chains needs to match
         * `"all"` - All V-genes of all sequences need to match. 
 
     Chains with no detected V-gene will be treated like a separate "gene" with 
@@ -59,14 +60,13 @@ def define_clonotype_clusters(
     key_added: Union[str, None] = None,
     **kwargs,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    """Define :term:`clonotype clusters<clonotype cluster>` based on :term:`CDR3` distance.
+    """\
+    Define :term:`clonotype clusters<Clonotype cluster>` based on :term:`CDR3` distance.
 
     As opposed to :func:`~scirpy.tl.define_clonotypes` which employs 
     a more stringent definition of :term:`clonotypes <Clonotype>`,
     this function flexibly defines clonotype clusters based on amino acid or nucleic
     acid sequence identity or similarity. 
-    Technically, this function is an alias to :func:`~scirpy.tl.define_clonotype_clusters`
-    with different default parameters.  
 
     Requires running :func:`scirpy.pp.tcr_neighbors` first with the same 
     `sequence` and `metric` values first. 
@@ -97,7 +97,8 @@ def define_clonotype_clusters(
 def define_clonotypes(
     adata, *, key_added="clonotype", **kwargs
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    """Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
+    """\
+    Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
     sequence identity.
 
     As opposed to :func:`~scirpy.tl.define_clonotype_clusters` which employs 
