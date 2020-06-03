@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.5.0.rc1
+      jupytext_version: 1.4.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -616,6 +616,7 @@ ir.pl.clonotype_imbalance(
     control_label="CD4_Trm",
     additional_hue="source",
     plot_type="strip",
+    key_added="clonotype_celltype_imbalance"
 )
 ```
 
@@ -624,9 +625,8 @@ ir.pl.clonotype_imbalance(
 Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality.
 
 ```python
-top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site", max_cols=10).index.values
+top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site").head(n=10).index.values.tolist()
 
 sc.tl.rank_genes_groups(adata, "clonotype", groups=top_clonotype_clusters, method="wilcoxon")
-sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="sample", n_genes=10)
+sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="sample", n_genes=5)
 ```
-
