@@ -119,7 +119,12 @@ def test_seq_to_cell_idx():
 
 def test_build_index_dict(adata_cdr3):
     tn = TcrNeighbors(
-        adata_cdr3, receptor_arms="TRA", dual_tcr="primary_only", sequence="nt"
+        adata_cdr3,
+        receptor_arms="TRA",
+        dual_tcr="primary_only",
+        sequence="nt",
+        cutoff=0,
+        metric="identity",
     )
     tn._build_index_dict()
     npt.assert_equal(
@@ -133,7 +138,14 @@ def test_build_index_dict(adata_cdr3):
         },
     )
 
-    tn = TcrNeighbors(adata_cdr3, receptor_arms="all", dual_tcr="all", sequence="aa")
+    tn = TcrNeighbors(
+        adata_cdr3,
+        receptor_arms="all",
+        dual_tcr="all",
+        sequence="aa",
+        metric="identity",
+        cutoff=0,
+    )
     tn._build_index_dict()
     print(tn.index_dict)
     npt.assert_equal(
@@ -157,7 +169,14 @@ def test_build_index_dict(adata_cdr3):
         },
     )
 
-    tn2 = TcrNeighbors(adata_cdr3, receptor_arms="any", dual_tcr="any", sequence="aa")
+    tn2 = TcrNeighbors(
+        adata_cdr3,
+        receptor_arms="any",
+        dual_tcr="any",
+        sequence="aa",
+        metric="alignment",
+        cutoff=10,
+    )
     tn2._build_index_dict()
     print(tn2.index_dict)
     npt.assert_equal(
@@ -202,7 +221,12 @@ def test_compute_distances1(adata_cdr3, adata_cdr3_mock_distance_calculator):
 def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test single receptor arm with multiple chains and identity distance
     tn = TcrNeighbors(
-        adata_cdr3, metric="identity", cutoff=0, receptor_arms="TRA", dual_tcr="any",
+        adata_cdr3,
+        metric="identity",
+        cutoff=0,
+        receptor_arms="TRA",
+        dual_tcr="any",
+        sequence="aa",
     )
     tn.compute_distances()
     npt.assert_equal(
@@ -226,6 +250,7 @@ def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="TRA",
         dual_tcr="primary_only",
+        sequence="aa",
     )
     tn.compute_distances()
     assert tn.dist.nnz == 9
@@ -244,6 +269,7 @@ def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="TRA",
         dual_tcr="any",
+        sequence="aa",
     )
     tn.compute_distances()
 
@@ -269,6 +295,7 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="TRA",
         dual_tcr="all",
+        sequence="aa",
     )
     tn.compute_distances()
 
@@ -294,6 +321,7 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
         dual_tcr="primary_only",
+        sequence="aa",
     )
     tn.compute_distances()
     print(tn.dist.toarray())
@@ -317,6 +345,7 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="any",
         dual_tcr="primary_only",
+        sequence="aa",
     )
     tn.compute_distances()
     print(tn.dist.toarray())
@@ -340,6 +369,7 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="any",
         dual_tcr="all",
+        sequence="aa",
     )
     tn.compute_distances()
     print(tn.dist.toarray())
@@ -363,6 +393,7 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="any",
         dual_tcr="any",
+        sequence="aa",
     )
     tn.compute_distances()
     print(tn.dist.toarray())
@@ -386,6 +417,7 @@ def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
         dual_tcr="any",
+        sequence="aa",
     )
     tn.compute_distances()
     print(tn.dist.toarray())
@@ -409,6 +441,7 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
         dual_tcr="all",
+        sequence="aa",
     )
     tn.compute_distances()
     print(tn.dist.toarray())
@@ -451,7 +484,7 @@ def test_dist_to_connectivities(adata_cdr3):
 
 
 def test_tcr_neighbors(adata_cdr3):
-    conn, dist = st.pp.tcr_neighbors(adata_cdr3, inplace=False)
+    conn, dist = st.pp.tcr_neighbors(adata_cdr3, inplace=False, sequence="aa")
     assert conn.shape == dist.shape == (5, 5)
 
     st.pp.tcr_neighbors(
@@ -461,6 +494,7 @@ def test_tcr_neighbors(adata_cdr3):
         receptor_arms="TRA",
         dual_tcr="all",
         key_added="nbs",
+        sequence="aa",
     )
     assert adata_cdr3.uns["nbs"]["connectivities"].shape == (5, 5)
     assert adata_cdr3.uns["nbs"]["distances"].shape == (5, 5)

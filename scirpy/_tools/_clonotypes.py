@@ -81,9 +81,9 @@ def define_clonotype_clusters(
         The metric parameter used when running :func:`scirpy.pp.tcr_neighbors`
     key_added
         Name of the columns which will be added to `adata.obs` if inplace is `True`. 
-        Will create the columns `{key_added}` and `{key_added}_size`. 
+        Will create the columns `{{key_added}}` and `{{key_added}}_size`. 
 
-        Defaults to `ct_cluster_{sequence}_{metric}` and `ct_cluster_{sequence}_{metric}_size`. 
+        Defaults to `ct_cluster_{{sequence}}_{{metric}}` and `ct_cluster_{{sequence}}_{{metric}}_size`. 
     {common_doc}  
     """
     if key_added is None:
@@ -115,7 +115,7 @@ def define_clonotypes(
         Annotated data matrix
     key_added
         Name of the columns which will be added to `adata.obs` if inplace is `True`.
-        Will create the columns `{key_added}` and `{key_added}_size`.  
+        Will create the columns `{{key_added}}` and `{{key_added}}_size`.  
     {common_doc}
     """
     if "neighbors_key" not in kwargs:
