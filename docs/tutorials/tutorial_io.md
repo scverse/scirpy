@@ -45,6 +45,32 @@ The example data used in this notebook are available from the
 `Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__. 
 
 
+.. important:: **Limitations of the scirpy data model**
+
+    Currently, reading data into *Scirpy* has the following limitations: 
+
+     * Only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored. 
+     * Non-productive chains are removed. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
+       flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`, 
+       you need to pass the flag explicitly or filter the chains beforehand. 
+     * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`). 
+       Excess chains are removed (those with lowest read count/:term:`UMI` count) 
+       and cells flagged as :term:`Multichain-cell`. 
+
+    For more information, see :ref:`tcr-model`. 
+
+
+.. note:: **TCR quality control**
+
+     * After importing the data, we recommend running the :func:`scirpy.tl.chain_pairing` function. 
+       It will flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell) 
+       and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of alpha- and beta chains). 
+     * We recommend excluding multichain-cells as these likely represent doublets
+     * Based on the *orphan chain* flags, the corresponding cells can be excluded. Alternatively, 
+       these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"` 
+       parameter when running :func:`scirpy.tl.define_clonotypes`. 
+
+
 Loading data from *10x Genomics CellRanger*, *TraCeR* or AIRR-compliant tools
 -----------------------------------------------------------------------------
 
