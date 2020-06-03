@@ -1,6 +1,12 @@
 from .._compat import Literal
 import matplotlib.pyplot as plt
-from typing import Union
+from typing import Union, Sequence, Dict
+from scanpy.plotting._utils import (
+    _set_colors_for_categorical_obs,
+    _set_default_colors_for_categorical_obs,
+    _validate_palette,
+)
+from cycler import Cycler
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
@@ -109,3 +115,34 @@ def style_axes(
             frameon=False,
         )
         ax.set_position([0.1, 0.3, 0.6, 0.55])
+
+
+def _get_colors(
+    adata, obs_key: str, palette: Union[str, Sequence[str], Cycler, None] = None
+) -> Dict[str, str]:
+    """Return colors for a category stored in AnnData. 
+
+    If colors are not stored, new ones are assigned. 
+
+    Since we currently don't plot expression values, only keys from `obs`
+    are supportet, while in scanpy `values_to_plot` (used instead of `obs_key`)
+    can be a key from either `obs` or `var`. 
+
+    TODO: This makes use of private scanpy functions. This is Evil and
+    should be changed in the future. 
+    """
+    # required to turn into categoricals
+    adata._sanitize()
+    values = adata.obs[obs_key].values
+    color_key = f"{obs_key}_colors"
+    if palette:
+        _set_colors_for_categorical_obs(adata, obs_key, palette)
+    elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
+        values.categories
+    ):
+        #  set a default palette in case that no colors or few colors are found
+        _set_default_colors_for_categorical_obs(adata, obs_key)
+    else:
+        _validate_palette(adata, obs_key)
+
+    return {cat: col for cat, col in zip(values.categories, adata.uns[color_key])}

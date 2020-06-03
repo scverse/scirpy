@@ -153,6 +153,7 @@ def curve(
     kde_norm: bool = True,
     order: Union[list, None] = None,
     kernel_kws: Union[dict, None] = None,
+    color: Union[Sequence[str], None] = None,
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
@@ -180,6 +181,8 @@ def curve(
         Specifies the order of groups.  
     shade
         If True, draw a shade between curves
+    color 
+        List of colors for each curve
     {common_doc}
     
     Returns
@@ -212,6 +215,7 @@ def curve(
 
     # Draw a curve for every series
     for i in range(len(order)):
+        tmp_color = None if color is None else color[i]
         label = order[i]
         col = data[label]
         sx = col.sum()
@@ -234,12 +238,12 @@ def curve(
                 y = fy + y
         if shade:
             if outline:
-                ax.plot(x, y, label=label)
-                ax.fill_between(x, y, fy, alpha=0.6)
+                ax.plot(x, y, label=label, color=tmp_color)
+                ax.fill_between(x, y, fy, alpha=0.6, color=tmp_color)
             else:
-                ax.fill_between(x, y, fy, alpha=0.6, label=label)
+                ax.fill_between(x, y, fy, alpha=0.6, label=label, color=tmp_color)
         else:
-            ax.plot(x, y, label=label)
+            ax.plot(x, y, label=label, color=tmp_color)
 
     if style_kws is None:
         style_kws = dict()
