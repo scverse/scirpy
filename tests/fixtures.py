@@ -32,6 +32,28 @@ def adata_cdr3():
 def adata_define_clonotypes():
     obs = pd.DataFrame(
         [
+            ["cell1", "AAA", "ATA", "GGC", "CCC"],
+            ["cell2", "AAA", "ATA", "GGC", "CCC"],
+            ["cell3", "GGG", "ATA", "GGC", "CCC"],
+            ["cell4", "GGG", "ATA", "GGG", "CCC"],
+            ["cell10", "nan", "nan", "nan", "nan"],
+        ],
+        columns=[
+            "cell_id",
+            "TRA_1_cdr3_nt",
+            "TRA_2_cdr3_nt",
+            "TRB_1_cdr3_nt",
+            "TRB_2_cdr3_nt",
+        ],
+    ).set_index("cell_id")
+    adata = AnnData(obs=obs)
+    return adata
+
+
+@pytest.fixture
+def adata_define_clonotype_clusters():
+    obs = pd.DataFrame(
+        [
             ["cell1", "AAA", "AHA", "KKY", "KKK"],
             ["cell2", "AAA", "AHA", "KKY", "KKK"],
             ["cell3", "BBB", "AHA", "KKY", "KKK"],
@@ -63,12 +85,12 @@ def adata_conn():
         )
         .set_index("cell_id")
     )
-    adata.uns["tcr_neighbors"] = {
+    adata.uns["tcr_neighbors_aa_alignment"] = {
         "connectivities": np.array(
             [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
         )
     }
-    assert _is_symmetric(adata.uns["tcr_neighbors"]["connectivities"])
+    assert _is_symmetric(adata.uns["tcr_neighbors_aa_alignment"]["connectivities"])
     return adata
 
 

@@ -374,7 +374,7 @@ class TcrNeighbors:
         metric: Union[
             Literal["alignment", "identity", "levenshtein"], DistanceCalculator
         ] = "identity",
-        cutoff: float = 0,
+        cutoff: float = 10,
         receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
         dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
@@ -385,7 +385,9 @@ class TcrNeighbors:
         """
         start = logging.info("Initializing TcrNeighbors object...")
         if metric == "identity" and cutoff != 0:
-            raise ValueError("Identity metric only works with cutoff = 0")
+            raise ValueError("Identity metric only works with cutoff == 0")
+        if metric != "identity" and cutoff == 0:
+            logging.warn(f"Running with {metric} metric, but cutoff == 0. ")
         if sequence == "nt" and metric == "alignment":
             raise ValueError(
                 "Using nucleotide sequences with alignment metric is not supported. "
@@ -731,7 +733,7 @@ def tcr_neighbors(
     cutoff: int = 10,
     receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
     dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
-    key_added: str = "tcr_neighbors",
+    key_added: Union[str, None] = None,
     sequence: Literal["aa", "nt"] = "nt",
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
@@ -769,7 +771,10 @@ def tcr_neighbors(
         
     key_added:
         dict key under which the result will be stored in `adata.uns`
-        when `inplace` is True.
+        when `inplace` is True. Defaults to `tcr_neighbors_{{sequence}}_{{metric}}`. 
+
+        If metric is an instance of :class:`scirpy.tcr_dist.DistanceCalculator`, 
+        `{{metric}}` defaults to `"custom"`. 
     sequence:
         Use amino acid (`aa`) or nulceotide (`nt`) sequences?
     inplace:
@@ -789,6 +794,9 @@ def tcr_neighbors(
     if cutoff == 0 or metric == "identity":
         metric = "identity"
         cutoff = 0
+    if key_added is None:
+        tmp_metric = "custom" if isinstance(metric, DistanceCalculator) else metric
+        key_added = f"tcr_neighbors_{sequence}_{tmp_metric}"
     ad = TcrNeighbors(
         adata,
         metric=metric,
