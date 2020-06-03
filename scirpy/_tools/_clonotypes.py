@@ -193,14 +193,14 @@ def _define_clonotypes(
 def clonotype_network(
     adata,
     *,
-    sequence: Literal["aa", "nt"] = "aa",
+    sequence: Literal["aa", "nt"] = "nt",
     metric: Literal["identity", "alignment", "levenshtein", "custom"] = "identity",
     min_size: int = 1,
     layout: str = "components",
     layout_kwargs: Union[dict, None] = None,
     neighbors_key: Union[str, None] = None,
     key_clonotype_size: Union[str, None] = None,
-    key_added: str = "X_clonotype_network",
+    key_added: str = "clonotype_network",
     inplace: bool = True,
     random_state=42,
 ) -> Union[None, np.ndarray]:
@@ -237,7 +237,8 @@ def clonotype_network(
         Key under which the clonotype size information is stored in `adata.obs`
         Defaults to `ct_cluster_{sequence}_{metric}_size`. 
     key_added
-        Key under which the layout coordinates will be stored in `adata.obsm`. 
+        Key under which the layout coordinates will be stored in `adata.obsm` and
+        parameters will be stored in `adata.uns`. 
     inplace
         If `True`, store the coordinates in `adata.obsm`, otherwise return them. 
     random_state
@@ -251,7 +252,10 @@ def clonotype_network(
     if neighbors_key is None:
         neighbors_key = f"tcr_neighbors_{sequence}_{metric}"
     if key_clonotype_size is None:
-        key_clonotype_size = f"ct_cluster_{sequence}_{metric}_size"
+        if sequence == "nt" and metric == "identity":
+            key_clonotype_size = "clonotype_size"
+        else:
+            key_clonotype_size = f"ct_cluster_{sequence}_{metric}_size"
     random.seed(random_state)
     try:
         conn = adata.uns[neighbors_key]["connectivities"]
@@ -290,13 +294,14 @@ def clonotype_network(
     coordinates[subgraph_idx, :] = coords
 
     if inplace:
-        adata.obsm[key_added] = coordinates
+        adata.obsm[f"X_{key_added}"] = coordinates
+        adata.uns[key_added] = {"neighbors_key": neighbors_key}
     else:
         return coordinates
 
 
 def clonotype_network_igraph(
-    adata, neighbors_key="tcr_neighbors", basis="clonotype_network"
+    adata, basis="clonotype_network"
 ) -> Tuple[ig.Graph, ig.Layout]:
     """
     Get an `igraph` object representing the clonotype network.
@@ -308,8 +313,6 @@ def clonotype_network_igraph(
     ----------
     adata
         Annotated data matrix.
-    neighbors_key
-        Key in `adata.uns` where tcr neighborhood information is located.
     basis
         Key in `adata.obsm` where the network layout is stored. 
     
@@ -321,6 +324,13 @@ def clonotype_network_igraph(
         corresponding igraph Layout object. 
     """
     from ..util.graph import _get_igraph_from_adjacency
+
+    try:
+        neighbors_key = adata.uns[basis]["neighbors_key"]
+    except KeyError:
+        raise KeyError(
+            f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
+        )
 
     conn = adata.uns[neighbors_key]["connectivities"]
     idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]

@@ -191,7 +191,7 @@ adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 
-In this section, we will define and visualize clonotypes.
+In this section, we will define and visualize :term:`clonotypes <Clonotype>` and :term:`clonotype clusters <Clonotype cluster>`.
 
 *Scirpy* implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with *scanpy*.
 
@@ -219,7 +219,10 @@ In this section, we will define and visualize clonotypes.
     - - :func:`scirpy.pp.tcr_neighbors`
       - Compute a neighborhood graph of CDR3-sequences.
     - - :func:`scirpy.tl.define_clonotypes`
-      - Cluster cells by the similarity of their CDR3-sequences.
+      - Define :term:`clonotypes <Clonotype>` by nucleotide 
+        sequence identity.
+    - - :func:`scirpy.tl.define_clonotype_clusters`
+      - Cluster cells by the similarity of their CDR3-sequences
     - - :func:`scirpy.tl.clonotype_network`
       - Compute positions of cells in clonotype network.
     - - :func:`scirpy.pl.clonotype_network`
@@ -227,33 +230,30 @@ In this section, we will define and visualize clonotypes.
 
 <!-- #endraw -->
 
-### Compute CDR3 neighborhood graph
+### Compute CDR3 neighborhood graph and define clonotypes
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-:func:`scirpy.pp.tcr_neighbors` computes the pairwise sequence alignment of all CDR3 sequences and
-derives a distance from the alignment score. This approach was originally proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
+:func:`scirpy.pp.tcr_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity. 
 
-The function requires to specify a `cutoff` parameter. All cells with a distance between their
-CDR3 sequences lower than `cutoff` will be connected in the network. In the first example,
-we set the cutoff to `0`, to define clonotypes as cells with **identical** CDR3 sequences.
-When the cutoff is `0` no alignment will be performed.
+Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity. 
+In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on 
+amino-acid similarity. 
 
-Then, the function :func:`scirpy.tl.define_clonotypes` will detect connected modules
+The function :func:`scirpy.tl.define_clonotypes` will detect connected modules
 in the graph and annotate them as clonotypes. This will add a `clonotype` and
 `clonotype_size` column to `adata.obs`.
 <!-- #endraw -->
 
 ```python
-ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only", cutoff=0)
+# using default parameters, `tcr_neighbors` will compute nucleotide sequence identity
+ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only")
 ir.tl.define_clonotypes(adata)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 To visualize the network we first call :func:`scirpy.tl.clonotype_network` to compute the layout.
 We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend setting the
 `min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
-
 <!-- #endraw -->
 
 ```python
@@ -261,15 +261,26 @@ ir.tl.clonotype_network(adata, min_size=2)
 ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
-Let's re-compute the network with a `cutoff` of `10`.
-That's the equivalent of 2 `R`s mutating into `N` (using the BLOSUM62 distance matrix, see :cite:`TCRdist`).
+### Re-compute CDR3 neighborhood graph and define clonotype clusters
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+We can now re-compute the neighborhood graph based on amino-acid sequence similarity 
+and define :term:`clonotype clusters <Clonotype cluster>`.
+
+To this end, we need to change set `metric="alignment"` and specify a `cutoff` parameter. 
+The distance is based on the `BLOSUM62 <https://en.wikipedia.org/wiki/BLOSUM>`__ matrix. 
+For instance, a distance of `10` is equivalent to 2 `R`s mutating into `N`. 
+This appoach was initially proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
+
+All cells with a distance between their CDR3 sequences lower than `cutoff` will be connected in the network. 
+<!-- #endraw -->
 
 ```python
 sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=10, receptor_arms="all", dual_tcr="all")
+ir.pp.tcr_neighbors(adata, metric="alignment", 'nt', cutoff=10, receptor_arms="all", dual_tcr="all")
 ir.tl.define_clonotypes(adata, partitions="connected")
 ```
 

@@ -251,7 +251,7 @@ def test_clonotype_network(adata_conn):
         min_size=2,
         layout="components",
         inplace=True,
-        key_added="X_ctn",
+        key_added="ctn",
     )
     coords = adata_conn.obsm["X_ctn"]
     npt.assert_almost_equal(
