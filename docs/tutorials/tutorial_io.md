@@ -187,13 +187,13 @@ is more approriate.
 <!-- #endraw -->
 
 ```python
-ir.pp.tcr_neighbors(adata, metric="alignment", cutoff=25, receptor_arms="any", dual_tcr="primary_only")
+ir.pp.tcr_neighbors(adata, metric="alignment", sequence="aa", cutoff=25, receptor_arms="any", dual_tcr="primary_only")
 ```
 
 ```python
-ir.tl.define_clonotypes(adata)
-ir.tl.clonotype_network(adata, layout="fr")
-ir.pl.clonotype_network(adata, color="clonotype", panel_size=(4, 4))
+ir.tl.define_clonotype_clusters(adata, metric="alignment", sequence="aa")
+ir.tl.clonotype_network(adata, layout="fr", metric="alignment", sequence="aa")
+ir.pl.clonotype_network(adata, color="ct_cluster_aa_alignment", panel_size=(4, 4))
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
