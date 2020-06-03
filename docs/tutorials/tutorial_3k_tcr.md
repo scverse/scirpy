@@ -30,6 +30,9 @@ import pandas as pd
 import numpy as np
 import scanpy as sc
 from matplotlib import pyplot as plt
+import warnings
+
+warnings.filterwarnings('ignore', category=FutureWarning)
 ```
 
 ```python
@@ -280,37 +283,51 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(adata, metric="alignment", 'nt', cutoff=10, receptor_arms="all", dual_tcr="all")
-ir.tl.define_clonotypes(adata, partitions="connected")
+ir.pp.tcr_neighbors(
+    adata,
+    metric="alignment",
+    sequence="aa",
+    cutoff=15,
+    receptor_arms="all",
+    dual_tcr="all",
+)
+ir.tl.define_clonotype_clusters(
+    adata, partitions="connected", sequence="aa", metric="alignment"
+)
 ```
 
 ```python
-ir.tl.clonotype_network(adata, min_size=4)
+ir.tl.clonotype_network(adata, min_size=4, sequence="aa", metric="alignment")
 ```
 
 Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more. 
 
 ```python
 ir.pl.clonotype_network(
-    adata, color="clonotype", legend_fontoutline=3, size=80, panel_size=(6, 6)
+    adata,
+    color="ct_cluster_aa_alignment",
+    legend_fontoutline=3,
+    size=80,
+    panel_size=(6, 6),
+    legend_loc="on data",
 )
 ```
 
 Now we show the same graph, colored by patient.
-We observe that for instance clonotypes 211 and 106 (left-center) are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 1248 (bottom left) is _public_, i.e.
-it is shared across patients _Lung3_ and _Lung1_. 
+We observe that for instance clonotypes 104 and 160 (center-left) are _private_, i.e. they contain cells from
+a single sample only. On the other hand, for instance clonotype 233 (top-left) is _public_, i.e.
+it is shared across patients _Lung5_ and _Lung1_ and _Lung3_. 
 
 ```python
 ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
 ```
 
-We can now extract information (e.g. CDR3-sequences) from a specific clonotype by subsetting `AnnData`. 
-For instance, we can find out that clonotype `1248` does not have a detected alpha chain. 
+We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`. 
+For instance, we can find out that clonotype `233` does not have a detected alpha chain. 
 
 ```python
 adata.obs.loc[
-    adata.obs["clonotype"] == "1248",
+    adata.obs["ct_cluster_aa_alignment"] == "233",
     ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
 ]
 ```
@@ -319,28 +336,35 @@ adata.obs.loc[
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 Using the paramter `use_v_gene` in :func:`~scirpy.tl.define_clonotypes`, we can enforce
-clonotypes to have the same :term:`V-gene <V(D)J>`, and, therefore, the same :term:`CDR1 and 2 <CDR>`
-regions. Let's look for clonotypes with different V genes:
+clonotypes (or clonotype clusters) to have the same :term:`V-gene <V(D)J>`, and, therefore, the same :term:`CDR1 and 2 <CDR>`
+regions. Let's look for clonotype clusters with different V genes:
 <!-- #endraw -->
 
 ```python
-ir.tl.define_clonotypes(adata, same_v_gene="primary_only", key_added="clonotype_same_v")
+ir.tl.define_clonotype_clusters(
+    adata,
+    sequence="aa",
+    metric="alignment",
+    same_v_gene="primary_only",
+    key_added="ct_cluster_aa_alignment_same_v",
+)
 ```
 
 ```python
 # find clonotypes with more than one `clonotype_same_v`
-ct_different_v = adata.obs.groupby("clonotype").apply(
-    lambda x: x["clonotype_same_v"].unique().size > 1
+ct_different_v = adata.obs.groupby("ct_cluster_aa_alignment").apply(
+    lambda x: x["ct_cluster_aa_alignment_same_v"].unique().size > 1
 )
 ct_different_v = ct_different_v[ct_different_v].index.values
 ct_different_v
 ```
 
 ```python
-# Display the first 5 clonotypes with different v genes
+# Display the first 2 clonotypes with different v genes
 adata.obs.loc[
-    adata.obs["clonotype"].isin(ct_different_v[:5]), ["clonotype", "clonotype_same_v", "TRA_1_v_gene", "TRB_1_v_gene"]
-].sort_values("clonotype").drop_duplicates().reset_index(drop=True)
+    adata.obs["ct_cluster_aa_alignment"].isin(ct_different_v[:2]),
+    ["ct_cluster_aa_alignment", "ct_cluster_aa_alignment_same_v", "TRA_1_v_gene", "TRB_1_v_gene"],
+].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
 
 ## Clonotype analysis
