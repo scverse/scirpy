@@ -538,20 +538,21 @@ ir.pl.spectratype(
 )
 ```
 
-## Experimental plots
+## Comparing repertoires
 
+### Repertoire simlarity and overlaps
 
-### Repertoire overlaps
-
+<!-- #raw raw_mimetype="text/restructuredtext" -->
 Overlaps in the adaptive immune receptor repertoire of samples or sample groups enables to pinpoint important clonotype groups, as well as to provide a measure of similarity between samples.  
-Running Scirpy's `repertoire_overlap` tool creates a matrix featuring the abundance of clonotypes in each sample. Additionally, it also computes a (Jaccard) distance matrix of samples as well as the linkage of hierarchical clustering.
+Running Scirpy's :func:`~scirpy.tl.repertoire_overlap` tool creates a matrix featuring the abundance of clonotypes in each sample. Additionally, it also computes a (Jaccard) distance matrix of samples as well as the linkage of hierarchical clustering. 
+<!-- #endraw -->
 
 ```python
 df, dst, lk = ir.tl.repertoire_overlap(adata, "sample", inplace=False)
 df.head()
 ```
 
-The distance matrix can be shown as a heatmap, while samples are reordered based on the linkage computed previously.
+The distance matrix can be shown as a heatmap, while samples are reordered based on hierarchical clustering.
 
 ```python
 ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
@@ -563,19 +564,19 @@ A specific pair of samples can be compared on a scatterplot, where dot size corr
 ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"dpi": 120})
 ```
 
-### Discovering clonotypes preferentially occuring in a group
+### Clonotypes preferentially occuring in a group
 
-Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers `clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers :func:`~scirpy.tl.clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
+<!-- #endraw -->
+
+A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor that can be extracted from patient metadata.
 
 ```python
-# Create a column in obs that gives us the site of the tumor
-
 adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
 ```
 
 ```python
-# Show clonotypes that are most imbalanced between Tumor and Control samples based on Fisher's test
-
 ir.pl.clonotype_imbalance(
     adata,
     replicate_col="sample",
@@ -589,8 +590,6 @@ ir.pl.clonotype_imbalance(
 To get an idea how the above, top-ranked clonotypes compare to the bulk of all clonotypes, a Volcano plot is genereated, showing the `-log10 p-value` of the Fisher's test as a function of `log2(fold-change)` of the normalized proportion of a given clonotype in the test group compared to the control group. To avoid zero division, `0.01*(global minimum proportion)` was added to every normalized clonotype proportions.
 
 ```python
-# Plot a Volcano diagram of p-values and the fold difference between the two groups
-
 ir.pl.clonotype_imbalance(
     adata,
     replicate_col="sample",
@@ -601,3 +600,33 @@ ir.pl.clonotype_imbalance(
     fig_kws={"dpi": 120},
 )
 ```
+
+## Integrating gene expression
+
+### Clonotype imbalance among cell clusters
+
+Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. As an example, using cell type annotation inferred from gene expression clusters, clonotypes belonging to CD4+ and CD8+ regional memory T-cells can be compared.
+
+```python
+ir.pl.clonotype_imbalance(
+    adata,
+    replicate_col="sample",
+    groupby="cluster",
+    case_label="CD8_Trm",
+    control_label="CD4_Trm",
+    additional_hue="source",
+    plot_type="strip",
+)
+```
+
+### Marker genes in top clonotypes
+
+Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality.
+
+```python
+top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site", max_cols=10).index.values
+
+sc.tl.rank_genes_groups(adata, "clonotype", groups=top_clonotype_clusters, method="wilcoxon")
+sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="sample", n_genes=10)
+```
+
