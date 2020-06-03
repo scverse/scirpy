@@ -61,6 +61,18 @@ Currently, reading data into *Scirpy* has the following limitations:
 For more information, see :ref:`tcr-model`. 
 
 
+TCR quality control
+-------------------
+
+ * After importing the data, we recommend running the :func:`scirpy.tl.chain_pairing` function. 
+   It will flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell) 
+   and :term:`Multichain-cells` (i.e. cells with more than two full pairs of alpha- and beta chains). 
+ * We recommend excluding multichain-cells as these likely represent doublets
+ * Based on the *orphan chain* flags, the corresponding cells can be excluded. Alternatively, 
+   these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"` 
+   parameter when running :func:`scirpy.tl.define_clonotypes`. 
+
+
 Loading data from *10x Genomics CellRanger*, *TraCeR* or AIRR-compliant tools
 -----------------------------------------------------------------------------
 
