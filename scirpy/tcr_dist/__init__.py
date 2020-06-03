@@ -20,6 +20,7 @@ metric
     You can choose one of the following metrics: 
       * `identity` -- 1 for identical sequences, 0 otherwise. 
         See :class:`~scirpy.tcr_dist.IdentityDistanceCalculator`. 
+        This metric implies a cutoff of 0. 
       * `levenshtein` -- Levenshtein edit distance.
         See :class:`~scirpy.tcr_dist.LevenshteinDistanceCalculator`. 
       * `alignment` -- Distance based on pairwise sequence alignments using the 
@@ -341,10 +342,15 @@ def tcr_dist(
     {metric}
     {cutoff}
 
+        A cutoff of 0 implies the `identity` metric. 
+
     Returns
     -------
     Upper triangular distance matrix. 
     """
+    if cutoff == 0 or metric == "identity":
+        metric = "identity"
+        cutof = 0
     if isinstance(metric, DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
@@ -721,12 +727,12 @@ def tcr_neighbors(
     *,
     metric: Union[
         Literal["identity", "alignment", "levenshtein"], DistanceCalculator
-    ] = "alignment",
+    ] = "identity",
     cutoff: int = 10,
     receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
     dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
     key_added: str = "tcr_neighbors",
-    sequence: Literal["aa", "nt"] = "aa",
+    sequence: Literal["aa", "nt"] = "nt",
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
@@ -744,8 +750,7 @@ def tcr_neighbors(
     {cutoff}
 
         Two cells with a distance <= the cutoff will be connected. 
-        If cutoff = 0, the CDR3 sequences need to be identical. In this 
-        case, no alignment is performed. 
+        A cutoff of 0 implies the use of the `identity` metric. 
 
     receptor_arms:
          * `"TRA"` - only consider TRA sequences
@@ -781,8 +786,9 @@ def tcr_neighbors(
         cell x cell distance matrix with the distances as computed according to `metric`
         offsetted by 1 to make use of sparse matrices. 
     """
-    if cutoff == 0:
+    if cutoff == 0 or metric == "identity":
         metric = "identity"
+        cutoff = 0
     ad = TcrNeighbors(
         adata,
         metric=metric,
