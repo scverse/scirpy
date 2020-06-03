@@ -64,8 +64,8 @@ adata.obs
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **Importing data**
 
-    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
-    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details. 
+    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) 
+    or the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__ and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details. 
 
     This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
     with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
@@ -91,7 +91,8 @@ sc.pp.log1p(adata)
 
 For the _Wu2020_ dataset, the authors already provide clusters and UMAP coordinates.
 Instead of performing clustering and cluster annotation ourselves, we will just use
-provided data.
+the provided data. The clustering and annotation methodology is 
+described in [their paper](https://doi.org/10.1038/s41586-020-2056-8). 
 
 ```python
 adata.obsm["X_umap"] = adata.obsm["X_umap_orig"]
@@ -122,7 +123,7 @@ adata.obs["cluster"] = [mapping[x] for x in adata.obs["cluster_orig"]]
 Let's inspect the UMAP plots. The first three panels show the UMAP plot colored by sample, patient and cluster.
 We don't observe any clustering of samples or patients that could hint at batch effects.
 
-The lower three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
+The last three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
 We can confirm that the markers correspond to their respective cluster labels.
 
 ```python
@@ -160,7 +161,8 @@ ir.pl.group_abundance(
 )
 ```
 
-Indeed, in this dataset, ~6% of cells have more than a one pair of productive T-cell receptors:
+Indeed, in this dataset, ~6% of cells have more than 
+one pair of productive T-cell receptors:
 
 ```python
 print(
@@ -185,7 +187,7 @@ sc.pl.umap(adata, color="multi_chain")
 adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 ```
 
-## Define clonotypes
+## Define clonotypes and clonotype clusters
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 
