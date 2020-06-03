@@ -536,6 +536,8 @@ def test_clonotype_imbalance(adata_tra):
     )
     freq = freq.sort_values(by=["clonotype", "chain_pairing", "sample"])
     freq = freq.reset_index().iloc[:, 1:6]
+    print(freq)
+    print(stat)
     pdt.assert_frame_equal(freq, expected_freq, check_names=False, check_dtype=False)
     expected_stat = pd.DataFrame.from_dict(
         {
