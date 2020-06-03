@@ -49,8 +49,8 @@ The example data used in this notebook are available from the
 
     Currently, reading data into *Scirpy* has the following limitations: 
 
-     * only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored. 
-     * non-productive chains are removed. _CellRanger_, _TraCeR_, and the _AIRR rearrangment format
+     * Only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored. 
+     * Non-productive chains are removed. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`, 
        you need to pass the flag explicitly or filter the chains beforehand. 
      * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`). 
