@@ -92,10 +92,8 @@ def clonotype_imbalance(
                 " you specified does not belong to a previous run of that tool."
             )
 
-    global_minimum = clonotype_presence.loc[
-        clonotype_presence["Normalized abundance"] > 0, "Normalized abundance"
-    ].min()
-    global_minimum = global_minimum * 0.001
+    global_minimum = clonotype_presence.max().max() * clonotype_presence.shape[0]
+    global_minimum = 100 / global_minimum
 
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
