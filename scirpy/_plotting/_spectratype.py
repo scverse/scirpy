@@ -5,6 +5,7 @@ from anndata import AnnData
 from .. import tl
 from . import base
 from typing import Union, List, Collection, Callable
+from .styling import _get_colors
 
 
 def spectratype(
@@ -63,10 +64,9 @@ def spectratype(
     else:
         ylab = "Number of cells"
 
-    color_key = f"{color}_colors"
-    if color_key in adata.uns and "color" not in kwargs:
-        cat_index = {cat: i for i, cat in enumerate(adata.obs[color].cat.categories)}
-        kwargs["color"] = [adata.uns[color_key][cat_index[cat]] for cat in data.columns]
+    if "color" not in kwargs:
+        colors = _get_colors(adata, color)
+        kwargs["color"] = [colors[cat] for cat in data.columns]
 
     # For KDE curves, we need to convert the contingency tables back
     if viztype == "curve":

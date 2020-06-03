@@ -4,6 +4,7 @@ from anndata import AnnData
 from .. import tl
 from . import base
 from typing import Union, Sequence
+from .styling import _get_colors
 
 
 def group_abundance(
@@ -67,14 +68,9 @@ def group_abundance(
     if max_cols is not None and max_cols > 0:
         abundance = abundance.iloc[:max_cols, :]
 
-    color_key = f"{target_col}_colors"
-    if color_key in adata.uns and "color" not in kwargs:
-        cat_index = {
-            cat: i for i, cat in enumerate(adata.obs[target_col].cat.categories)
-        }
-        kwargs["color"] = [
-            adata.uns[color_key][cat_index[cat]] for cat in abundance.columns
-        ]
+    if "color" not in kwargs:
+        colors = _get_colors(adata, target_col)
+        kwargs["color"] = [colors[cat] for cat in abundance.columns]
 
     # Create text for default labels
     if normalize:
