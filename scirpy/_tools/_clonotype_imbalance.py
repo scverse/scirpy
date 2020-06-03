@@ -91,7 +91,10 @@ def clonotype_imbalance(
                 "Clonotype imbalance calculation depends on repertoire overlap, but the key"
                 " you specified does not belong to a previous run of that tool."
             )
-
+            
+    global_minimum = clonotype_presence.loc[clonotype_presence["Normalized abundance"] > 0, "Normalized abundance"].min()
+    global_minimum = global_minimum * 0.001
+    
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
         adata.obs, replicate_col, groupby, additional_hue, case_label, control_label
@@ -116,7 +119,7 @@ def clonotype_imbalance(
         )
         for suspect in suspects:
             p, logfoldchange, rel_case_sizes, rel_control_sizes = _calculate_imbalance(
-                tdf1[suspect], tdf2[suspect], ncase, ncontrol
+                tdf1[suspect], tdf2[suspect], ncase, ncontrol, global_minimum
             )
             clt_stats.append([suspect, p, -np.log10(p), logfoldchange])
             clt_freq = _extend_clt_freq(
@@ -223,6 +226,7 @@ def _calculate_imbalance(
     control_sizes: Union[np.ndarray, pd.Series],
     ncase: Sequence,
     ncontrol: Sequence,
+    global_minimum: float,
 ) -> Tuple[float, float, np.ndarray, np.ndarray]:
     """Calculate statistics for the probability of an imbalance in the contingency table
     among two groups. 
@@ -241,6 +245,9 @@ def _calculate_imbalance(
     ncontrol
         Total size (all counts or sum of normalized counts) of the control group
         for each replicates.
+    global_minimum
+        Virtual residual value to avoid zero divisions. Typically, it is 1% of the
+        minimum of the whole clonotype abundance table without zero values.
 
     Returns
     -------
@@ -259,7 +266,7 @@ def _calculate_imbalance(
     oddsratio, p = fisher_exact(
         [[case_presence, control_presence], [case_absence, control_absence]]
     )
-    logfoldchange = np.log2((case_mean_freq + 0.0001) / (control_mean_freq + 0.0001))
+    logfoldchange = np.log2((case_mean_freq + global_minimum) / (control_mean_freq + global_minimum))
     return p, logfoldchange, rel_case_sizes, rel_control_sizes
 
 
