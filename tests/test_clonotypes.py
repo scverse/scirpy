@@ -219,9 +219,18 @@ def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
 
 
 def test_clonotype_network(adata_conn):
-    st.tl.define_clonotypes(adata_conn, partitions="connected")
+    st.tl.define_clonotype_clusters(
+        adata_conn, sequence="aa", metric="alignment", partitions="connected"
+    )
     random.seed(42)
-    coords = st.tl.clonotype_network(adata_conn, min_size=1, layout="fr", inplace=False)
+    coords = st.tl.clonotype_network(
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        min_size=1,
+        layout="fr",
+        inplace=False,
+    )
     npt.assert_almost_equal(
         coords,
         np.array(
@@ -236,7 +245,13 @@ def test_clonotype_network(adata_conn):
 
     random.seed(42)
     st.tl.clonotype_network(
-        adata_conn, min_size=2, layout="components", inplace=True, key_added="X_ctn"
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        min_size=2,
+        layout="components",
+        inplace=True,
+        key_added="X_ctn",
     )
     coords = adata_conn.obsm["X_ctn"]
     npt.assert_almost_equal(
