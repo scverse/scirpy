@@ -19,16 +19,28 @@ Glossary
            under the `CC BY-3.0 <https://creativecommons.org/licenses/by/3.0/deed.en>`__ license. 
 
     Clonotype
-        A clonotype designates a collection of T or B cells that bear the same adaptive
-        immune receptors, and thus recognize the same epitopes. Generally, these cells are 
-        also descendants of a common, antecedent cell and belong to the same cell clone.
-        In single-cell RNA-sequencing data, T cells sharing identical
-        :term:`CDR3<CDR>` sequences of both α and β TCR chains are generally
-        considered a clonotype. 
+        A clonotype designates a collection of T or B cells that descend from a 
+        common, antecedent cell, and therefore, bear the same adaptive
+        immune receptors and recognize the same :term:`epitopes<Epitope>`.
+
+        In single-cell RNA-sequencing (scRNA-seq) data, T cells sharing identical
+        complementarity-determining regions 3 (:term:`CDR3`) nucleotide sequences of both α and β 
+        :term:`TCR` chains make up a clonotype.
 
         *Scirpy* provides a flexible approach to clonotype definition based on 
-        :term:`CDR3<CDR>` sequence identity or similarity. For more details, see the 
-        page about our :ref:`TCR model<tcr-model>`. 
+        :term:`CDR3<CDR>` sequence identity or similarity. Additionally, it is possible
+        to require clonotypes to have the same :term:`V-gene <V(D)J>`, enforcing the CDR 1 
+        and 2 regions to be the same. 
+
+        For more details, see the page about our :ref:`TCR model<tcr-model>` and
+        the API documentation of :func:`scirpy.tl.define_clonotypes`. 
+
+    Clonotype cluster
+        A higher-order aggregation of :term:`clonotypes <Clonotype>` that have different 
+        :term:`CDR3<CDR>` nucleotide sequences, but might recognize the same antigen 
+        because they have the same or similar CDR3 amino acid sequence. 
+
+        See also: :func:`scirpy.tl.define_clonotype_clusters`. 
 
     Private clonotype
         A clonotype that is specific for a certain patient.

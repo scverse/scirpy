@@ -30,6 +30,9 @@ import pandas as pd
 import numpy as np
 import scanpy as sc
 from matplotlib import pyplot as plt
+import warnings
+
+warnings.filterwarnings('ignore', category=FutureWarning)
 ```
 
 ```python
@@ -48,9 +51,7 @@ adata = ir.datasets.wu2020_3k()
 `adata` is a regular :class:`~anndata.AnnData` object with additional, TCR-specific columns in `obs`. 
 For more information, check the page about Scirpy's :ref:`data structure <data-structure>`. 
 
-.. note:: **T cell receptors**
-  
-  For more information about our T-cell receptor model, see :ref:`tcr-model`. 
+.. note:: For more information about our T-cell receptor model, see :ref:`tcr-model`. 
 <!-- #endraw -->
 
 ```python
@@ -64,8 +65,8 @@ adata.obs
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **Importing data**
 
-    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x)
-    or `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details. 
+    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2) 
+    or the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__ and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details. 
 
     This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
     with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
@@ -91,7 +92,8 @@ sc.pp.log1p(adata)
 
 For the _Wu2020_ dataset, the authors already provide clusters and UMAP coordinates.
 Instead of performing clustering and cluster annotation ourselves, we will just use
-provided data.
+the provided data. The clustering and annotation methodology is 
+described in [their paper](https://doi.org/10.1038/s41586-020-2056-8). 
 
 ```python
 adata.obsm["X_umap"] = adata.obsm["X_umap_orig"]
@@ -122,7 +124,7 @@ adata.obs["cluster"] = [mapping[x] for x in adata.obs["cluster_orig"]]
 Let's inspect the UMAP plots. The first three panels show the UMAP plot colored by sample, patient and cluster.
 We don't observe any clustering of samples or patients that could hint at batch effects.
 
-The lower three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
+The last three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
 We can confirm that the markers correspond to their respective cluster labels.
 
 ```python
@@ -160,7 +162,8 @@ ir.pl.group_abundance(
 )
 ```
 
-Indeed, in this dataset, ~6% of cells have more than a one pair of productive T-cell receptors:
+Indeed, in this dataset, ~6% of cells have more than 
+one pair of productive T-cell receptors:
 
 ```python
 print(
@@ -185,11 +188,11 @@ sc.pl.umap(adata, color="multi_chain")
 adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 ```
 
-## Define clonotypes
+## Define clonotypes and clonotype clusters
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 
-In this section, we will define and visualize clonotypes.
+In this section, we will define and visualize :term:`clonotypes <Clonotype>` and :term:`clonotype clusters <Clonotype cluster>`.
 
 *Scirpy* implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with *scanpy*.
 
@@ -217,7 +220,10 @@ In this section, we will define and visualize clonotypes.
     - - :func:`scirpy.pp.tcr_neighbors`
       - Compute a neighborhood graph of CDR3-sequences.
     - - :func:`scirpy.tl.define_clonotypes`
-      - Cluster cells by the similarity of their CDR3-sequences.
+      - Define :term:`clonotypes <Clonotype>` by nucleotide 
+        sequence identity.
+    - - :func:`scirpy.tl.define_clonotype_clusters`
+      - Cluster cells by the similarity of their CDR3-sequences
     - - :func:`scirpy.tl.clonotype_network`
       - Compute positions of cells in clonotype network.
     - - :func:`scirpy.pl.clonotype_network`
@@ -225,33 +231,30 @@ In this section, we will define and visualize clonotypes.
 
 <!-- #endraw -->
 
-### Compute CDR3 neighborhood graph
+### Compute CDR3 neighborhood graph and define clonotypes
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-:func:`scirpy.pp.tcr_neighbors` computes the pairwise sequence alignment of all CDR3 sequences and
-derives a distance from the alignment score. This approach was originally proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
+:func:`scirpy.pp.tcr_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity. 
 
-The function requires to specify a `cutoff` parameter. All cells with a distance between their
-CDR3 sequences lower than `cutoff` will be connected in the network. In the first example,
-we set the cutoff to `0`, to define clonotypes as cells with **identical** CDR3 sequences.
-When the cutoff is `0` no alignment will be performed.
+Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity. 
+In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on 
+amino-acid similarity. 
 
-Then, the function :func:`scirpy.tl.define_clonotypes` will detect connected modules
+The function :func:`scirpy.tl.define_clonotypes` will detect connected modules
 in the graph and annotate them as clonotypes. This will add a `clonotype` and
 `clonotype_size` column to `adata.obs`.
 <!-- #endraw -->
 
 ```python
-ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only", cutoff=0)
+# using default parameters, `tcr_neighbors` will compute nucleotide sequence identity
+ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only")
 ir.tl.define_clonotypes(adata)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 To visualize the network we first call :func:`scirpy.tl.clonotype_network` to compute the layout.
 We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend setting the
 `min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
-
 <!-- #endraw -->
 
 ```python
@@ -259,45 +262,70 @@ ir.tl.clonotype_network(adata, min_size=2)
 ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
 ```
 
-Let's re-compute the network with a `cutoff` of `10`.
-That's the equivalent of 2 `R`s mutating into `N` (using the BLOSUM62 distance matrix, see :cite:`TCRdist`).
+### Re-compute CDR3 neighborhood graph and define clonotype clusters
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+We can now re-compute the neighborhood graph based on amino-acid sequence similarity 
+and define :term:`clonotype clusters <Clonotype cluster>`.
+
+To this end, we need to change set `metric="alignment"` and specify a `cutoff` parameter. 
+The distance is based on the `BLOSUM62 <https://en.wikipedia.org/wiki/BLOSUM>`__ matrix. 
+For instance, a distance of `10` is equivalent to 2 `R`s mutating into `N`. 
+This appoach was initially proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
+
+All cells with a distance between their CDR3 sequences lower than `cutoff` will be connected in the network. 
+<!-- #endraw -->
 
 ```python
 sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(adata, cutoff=10, receptor_arms="all", dual_tcr="all")
-ir.tl.define_clonotypes(adata, partitions="connected")
+ir.pp.tcr_neighbors(
+    adata,
+    metric="alignment",
+    sequence="aa",
+    cutoff=15,
+    receptor_arms="all",
+    dual_tcr="all",
+)
+ir.tl.define_clonotype_clusters(
+    adata, partitions="connected", sequence="aa", metric="alignment"
+)
 ```
 
 ```python
-ir.tl.clonotype_network(adata, min_size=4)
+ir.tl.clonotype_network(adata, min_size=4, sequence="aa", metric="alignment")
 ```
 
 Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more. 
 
 ```python
 ir.pl.clonotype_network(
-    adata, color="clonotype", legend_fontoutline=3, size=80, panel_size=(6, 6)
+    adata,
+    color="ct_cluster_aa_alignment",
+    legend_fontoutline=3,
+    size=80,
+    panel_size=(6, 6),
+    legend_loc="on data",
 )
 ```
 
 Now we show the same graph, colored by patient.
-We observe that for instance clonotypes 211 and 106 (left-center) are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 1248 (bottom left) is _public_, i.e.
-it is shared across patients _Lung3_ and _Lung1_. 
+We observe that for instance clonotypes 104 and 160 (center-left) are _private_, i.e. they contain cells from
+a single sample only. On the other hand, for instance clonotype 233 (top-left) is _public_, i.e.
+it is shared across patients _Lung5_ and _Lung1_ and _Lung3_. 
 
 ```python
 ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
 ```
 
-We can now extract information (e.g. CDR3-sequences) from a specific clonotype by subsetting `AnnData`. 
-For instance, we can find out that clonotype `1248` does not have a detected alpha chain. 
+We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`. 
+For instance, we can find out that clonotype `233` does not have a detected alpha chain. 
 
 ```python
 adata.obs.loc[
-    adata.obs["clonotype"] == "1248",
+    adata.obs["ct_cluster_aa_alignment"] == "233",
     ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
 ]
 ```
@@ -306,28 +334,35 @@ adata.obs.loc[
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 Using the paramter `use_v_gene` in :func:`~scirpy.tl.define_clonotypes`, we can enforce
-clonotypes to have the same :term:`V-gene <V(D)J>`, and, therefore, the same :term:`CDR1 and 2 <CDR>`
-regions. Let's look for clonotypes with different V genes:
+clonotypes (or clonotype clusters) to have the same :term:`V-gene <V(D)J>`, and, therefore, the same :term:`CDR1 and 2 <CDR>`
+regions. Let's look for clonotype clusters with different V genes:
 <!-- #endraw -->
 
 ```python
-ir.tl.define_clonotypes(adata, same_v_gene="primary_only", key_added="clonotype_same_v")
+ir.tl.define_clonotype_clusters(
+    adata,
+    sequence="aa",
+    metric="alignment",
+    same_v_gene="primary_only",
+    key_added="ct_cluster_aa_alignment_same_v",
+)
 ```
 
 ```python
 # find clonotypes with more than one `clonotype_same_v`
-ct_different_v = adata.obs.groupby("clonotype").apply(
-    lambda x: x["clonotype_same_v"].unique().size > 1
+ct_different_v = adata.obs.groupby("ct_cluster_aa_alignment").apply(
+    lambda x: x["ct_cluster_aa_alignment_same_v"].unique().size > 1
 )
 ct_different_v = ct_different_v[ct_different_v].index.values
 ct_different_v
 ```
 
 ```python
-# Display the first 5 clonotypes with different v genes
+# Display the first 2 clonotypes with different v genes
 adata.obs.loc[
-    adata.obs["clonotype"].isin(ct_different_v[:5]), ["clonotype", "clonotype_same_v", "TRA_1_v_gene", "TRB_1_v_gene"]
-].sort_values("clonotype").drop_duplicates().reset_index(drop=True)
+    adata.obs["ct_cluster_aa_alignment"].isin(ct_different_v[:2]),
+    ["ct_cluster_aa_alignment", "ct_cluster_aa_alignment_same_v", "TRA_1_v_gene", "TRB_1_v_gene"],
+].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
 
 ## Clonotype analysis
