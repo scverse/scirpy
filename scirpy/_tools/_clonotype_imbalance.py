@@ -91,10 +91,12 @@ def clonotype_imbalance(
                 "Clonotype imbalance calculation depends on repertoire overlap, but the key"
                 " you specified does not belong to a previous run of that tool."
             )
-            
-    global_minimum = clonotype_presence.loc[clonotype_presence["Normalized abundance"] > 0, "Normalized abundance"].min()
+
+    global_minimum = clonotype_presence.loc[
+        clonotype_presence["Normalized abundance"] > 0, "Normalized abundance"
+    ].min()
     global_minimum = global_minimum * 0.001
-    
+
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
         adata.obs, replicate_col, groupby, additional_hue, case_label, control_label
@@ -266,7 +268,9 @@ def _calculate_imbalance(
     oddsratio, p = fisher_exact(
         [[case_presence, control_presence], [case_absence, control_absence]]
     )
-    logfoldchange = np.log2((case_mean_freq + global_minimum) / (control_mean_freq + global_minimum))
+    logfoldchange = np.log2(
+        (case_mean_freq + global_minimum) / (control_mean_freq + global_minimum)
+    )
     return p, logfoldchange, rel_case_sizes, rel_control_sizes
 
 
