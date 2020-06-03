@@ -102,11 +102,12 @@ def adata_clonotype_network():
         .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
         .set_index("cell_id")
     )
-    adata.uns["tcr_neighbors"] = {
+    adata.uns["foo_neighbors"] = {
         "connectivities": np.array(
             [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
         )
     }
+    adata.uns["clonotype_network"] = {"neighbors_key": "foo_neighbors"}
     adata.obsm["X_clonotype_network"] = np.array(
         [
             [2.41359095, 0.23412465],
@@ -115,7 +116,7 @@ def adata_clonotype_network():
             [3.06104282, 2.14395562],
         ]
     )
-    assert _is_symmetric(adata.uns["tcr_neighbors"]["connectivities"])
+    assert _is_symmetric(adata.uns["foo_neighbors"]["connectivities"])
     return adata
 
 
