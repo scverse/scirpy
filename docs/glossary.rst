@@ -37,7 +37,7 @@ Glossary
 
     Clonotype cluster
         A higher-order aggregation of :term:`clonotypes <Clonotype>` that have different 
-        :term:`CDR3<CDR>` nucleotide sequences, but (likely) recognize the same antigen 
+        :term:`CDR3<CDR>` nucleotide sequences, but might recognize the same antigen 
         because they have the same or similar CDR3 amino acid sequence. 
 
         See also: :func:`scirpy.tl.define_clonotype_clusters`. 
