@@ -7,7 +7,7 @@ from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
 from typing import Union, Sequence
 from .. import tl
-from .styling import _init_ax
+from .styling import _init_ax, _get_colors
 from .base import ol_scatter
 
 
@@ -89,16 +89,8 @@ def repertoire_overlap(
                     .agg("size")
                     .reset_index()
                 )
+                colordict = _get_colors(adata, lbl)
                 label_levels = labels[lbl].unique()
-                label_pal = sns.cubehelix_palette(
-                    label_levels.size,
-                    light=0.7,
-                    dark=0.3,
-                    reverse=True,
-                    start=2.5,
-                    rot=-2,
-                )
-                colordict = dict(zip(label_levels, label_pal))
                 for e in label_levels:
                     leg_colors.append((lbl + ": " + e, colordict[e]))
                 labels[lbl] = labels[lbl].astype(str)
