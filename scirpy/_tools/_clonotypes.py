@@ -193,11 +193,13 @@ def _define_clonotypes(
 def clonotype_network(
     adata,
     *,
+    sequence: Literal["aa", "nt"] = "aa",
+    metric: Literal["identity", "alignment", "levenshtein", "custom"] = "identity",
     min_size: int = 1,
     layout: str = "components",
     layout_kwargs: Union[dict, None] = None,
-    neighbors_key: str = "tcr_neighbors",
-    key_clonotype_size: str = "clonotype_size",
+    neighbors_key: Union[str, None] = None,
+    key_clonotype_size: Union[str, None] = None,
     key_added: str = "X_clonotype_network",
     inplace: bool = True,
     random_state=42,
@@ -210,10 +212,16 @@ def clonotype_network(
 
     Singleton clonotypes can be filtered out with the `min_size` parameter. 
 
+    Requires running :func:`scirpy.pp.tcr_neighbors` first. 
+
     Stores coordinates of the clonotype network in `adata.obsm`. 
     
     Parameters
     ----------
+    sequence
+        The `sequence` parameter :func:`scirpy.pp.tcr_neighbors` was ran with. 
+    metric
+        The `metric` parameter :func:`scirpy.pp.tcr_neighbors` was ran with. 
     min_size
         Only show clonotypes with at least `min_size` cells.
     layout
@@ -224,8 +232,10 @@ def clonotype_network(
         Will be passed to the layout function
     neighbors_key
         Key under which the neighborhood graph is stored in `adata.uns`. 
+        Defaults to `tcr_neighbors_{sequence}_{metric}`. 
     key_clonotype_size
         Key under which the clonotype size information is stored in `adata.obs`
+        Defaults to `ct_cluster_{sequence}_{metric}_size`. 
     key_added
         Key under which the layout coordinates will be stored in `adata.obsm`. 
     inplace
@@ -238,6 +248,10 @@ def clonotype_network(
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates. 
     """
+    if neighbors_key is None:
+        neighbors_key = f"tcr_neighbors_{sequence}_{metric}"
+    if key_clonotype_size is None:
+        key_clonotype_size = f"ct_cluster_{sequence}_{metric}_size"
     random.seed(random_state)
     try:
         conn = adata.uns[neighbors_key]["connectivities"]
