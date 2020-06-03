@@ -45,6 +45,22 @@ The example data used in this notebook are available from the
 `Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__. 
 
 
+Limitations of the scirpy data model
+------------------------------------
+
+Currently, reading data into *Scirpy* has the following limitations: 
+
+ * only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored. 
+ * non-productive chains are removed. _CellRanger_, _TraCeR_, and the _AIRR rearrangment format
+   flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`, 
+   you need to pass the flag explicitly or filter the chains beforehand. 
+ * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`). 
+   Excess chains are removed (those with lowest read count/:term:`UMI` count) 
+   and cells flagged as :term:`Multichain-cell`. 
+
+For more information, see :ref:`tcr-model`. 
+
+
 Loading data from *10x Genomics CellRanger*, *TraCeR* or AIRR-compliant tools
 -----------------------------------------------------------------------------
 
