@@ -82,6 +82,7 @@ Define and visualize clonotypes
    :toctree: ./generated
 
    define_clonotypes
+   define_clonotype_clusters
    clonotype_network
    clonotype_network_igraph
    
