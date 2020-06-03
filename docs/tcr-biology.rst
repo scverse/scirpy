@@ -6,13 +6,15 @@ T-cell receptor model
 What is a clonotype?
 ^^^^^^^^^^^^^^^^^^^^
 
-A clonotype designates a collection of T or B cells that bear the same adaptive
-immune receptors, and thus recognize the same :term:`epitopes<Epitope>`.
-Generally, these cells are 
-also descendants of a common, antecedent cell and belong to the same cell clone.
+A clonotype designates a collection of T or B cells that descend from a 
+common, antecedent cell, and therefore, bear the same adaptive
+immune receptors and recognize the same :term:`epitopes<Epitope>`.
+
 In single-cell RNA-sequencing (scRNA-seq) data, T cells sharing identical
-complementarity-determining regions 3 (:term:`CDR3`) sequences of both α and β 
-:term:`TCR` chains make up a clonotype.
+complementarity-determining regions 3 (:term:`CDR3`) nucleotide sequences of both α and β 
+:term:`TCR` chains make up a clonotype. Scirpy provides an option to additionally
+require clonotypes to have the same :term:`V-gene <V(D)J>`, enforcing the CDR 1 
+and 2 regions to be the same. 
 
 
 Dual TCRs
