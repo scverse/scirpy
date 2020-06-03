@@ -64,7 +64,7 @@ The example data used in this notebook are available from the
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_pairing` function. 
        It will flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell) 
-       and :term:`Multichain-cells` (i.e. cells with more than two full pairs of alpha- and beta chains). 
+       and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of alpha- and beta chains). 
      * We recommend excluding multichain-cells as these likely represent doublets
      * Based on the *orphan chain* flags, the corresponding cells can be excluded. Alternatively, 
        these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"` 
