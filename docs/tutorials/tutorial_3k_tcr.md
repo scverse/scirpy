@@ -608,16 +608,23 @@ ir.pl.clonotype_imbalance(
 Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. As an example, using cell type annotation inferred from gene expression clusters, clonotypes belonging to CD4+ and CD8+ regional memory T-cells can be compared.
 
 ```python
-ir.pl.clonotype_imbalance(
+freq, stat = ir.tl.clonotype_imbalance(
     adata,
     replicate_col="sample",
-    groupby="cluster",
-    case_label="CD8_Trm",
-    control_label="CD4_Trm",
-    additional_hue="source",
-    plot_type="strip",
-    key_added="clonotype_celltype_imbalance"
+    groupby="source",
+    case_label="Tumor",
+    control_label="Blood",
+    additional_hue="cluster",
+    inplace = False,
 )
+top_differential_clonotypes = stat.groupby("clonotype").agg({"logpValue": "max"}).reset_index().sort_values(by="logpValue", ascending=False).head(n=15).clonotype.tolist()
+```
+
+To check how specific these top clonotypes are for individual cell types, a UMAP is straighforward.
+
+```python
+sc.pl.umap(adata, color="cluster")
+sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
 ```
 
 ### Marker genes in top clonotypes
