@@ -95,8 +95,8 @@ def repertoire_overlap(
                     leg_colors.append((lbl + ": " + e, colordict[e]))
                 labels[lbl] = labels[lbl].astype(str)
                 labels[lbl] = labels.loc[:, lbl].map(colordict)
-                clust_colors.append(labels[lbl])
                 labels = labels.loc[:, [groupby, lbl]].set_index(groupby)
+                clust_colors.append(labels[lbl])
                 colordict = labels.to_dict()
                 colordict = colordict[lbl]
 
