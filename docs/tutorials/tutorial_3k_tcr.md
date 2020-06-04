@@ -628,7 +628,7 @@ sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
 
 ### Marker genes in top clonotypes
 
-Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality.
+Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality. As an example, ranking of potential marker genes for top clonotype clusters is showed.
 
 ```python
 top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site").head(n=10).index.values.tolist()
