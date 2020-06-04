@@ -95,8 +95,8 @@ def repertoire_overlap(
                     leg_colors.append((lbl + ": " + e, colordict[e]))
                 labels[lbl] = labels[lbl].astype(str)
                 labels[lbl] = labels.loc[:, lbl].map(colordict)
-                clust_colors.append(labels[lbl])
                 labels = labels.loc[:, [groupby, lbl]].set_index(groupby)
+                clust_colors.append(labels[lbl])
                 colordict = labels.to_dict()
                 colordict = colordict[lbl]
 
@@ -123,6 +123,10 @@ def repertoire_overlap(
             if heatmap_cats is None:
                 ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
             else:
+                _clust_colors = []
+                for cl in clust_colors:
+                    _clust_colors.append(cl.loc[distM.index.values])
+                clust_colors = _clust_colors
                 ax = sns.clustermap(
                     1 - distM,
                     col_linkage=linkage,
