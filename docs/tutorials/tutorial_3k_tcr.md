@@ -626,13 +626,28 @@ sc.pl.umap(adata, color="cluster")
 sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
 ```
 
-### Marker genes in top clonotypes
+### Repertoire overlap of cell types
 
-Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality. As an example, ranking of potential marker genes for top clonotype clusters is showed.
+
+Just like comparing repertoire overlap among samples, Scirpy also offers comparison between gene expression clusters. As an example, repertoire overlap of CD4+ and CD8+ regional memomry cells is shown.
 
 ```python
-top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site").head(n=10).index.values.tolist()
+ir.tl.repertoire_overlap(adata, "cluster")
+ir.pl.repertoire_overlap(adata, "cluster", pair_to_plot=["CD4_Trm", "CD8_Trm"],fig_kws={"dpi": 120})
+```
+
+### Marker genes in top clonotypes
+
+Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality. As an example, ranking of potential marker genes in each tumor type for top clonotype clusters is shown. Numbers to the top of the dotplot represent IDs of clonotype clusters identified earlier.
+
+```python
+top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site").head(n=6).index.values.tolist()
 
 sc.tl.rank_genes_groups(adata, "clonotype", groups=top_clonotype_clusters, method="wilcoxon")
-sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="sample", n_genes=5)
+sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="site", n_genes=5, figsize=(12, 4), show=False)
+
+axs = plt.gcf()._get_axes()
+axs[3].text(12, 3, "Clonotype ID", fontsize=12)
+axs[0].tick_params(labelsize=14)
+axs[0].set_ylabel("")
 ```
