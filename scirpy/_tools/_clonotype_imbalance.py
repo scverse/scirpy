@@ -93,7 +93,7 @@ def clonotype_imbalance(
             )
 
     global_minimum = clonotype_presence.min().min() / clonotype_presence.shape[0]
-    global_minimum = global_minimum *0.01
+    global_minimum = global_minimum * 0.01
 
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
@@ -317,4 +317,3 @@ def _extend_clt_freq(
             (suspect, hue, control_label, e, rel_control_sizes.loc[e].mean())
         )
     return clt_freq
-
