@@ -610,13 +610,12 @@ Leveraging the opportunity offered by close integeration with scanpy, transcript
 freq, stat = ir.tl.clonotype_imbalance(
     adata,
     replicate_col="sample",
-    groupby="source",
-    case_label="Tumor",
-    control_label="Blood",
-    additional_hue="cluster",
+    groupby="cluster",
+    case_label="CD8_Teff",
+    control_label="CD8_Trm",
     inplace = False,
 )
-top_differential_clonotypes = stat.groupby("clonotype").agg({"logpValue": "max"}).reset_index().sort_values(by="logpValue", ascending=False).head(n=15).clonotype.tolist()
+top_differential_clonotypes = stat.groupby("clonotype").agg({"logpValue": "max"}).reset_index().sort_values(by="logpValue", ascending=False).head(n=5).clonotype.tolist()
 ```
 
 To check how specific these top clonotypes are for individual cell types, a UMAP is straighforward.
