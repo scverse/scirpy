@@ -260,9 +260,13 @@ def _calculate_imbalance(
     case_mean_freq = np.mean((case_sizes) / np.array(ncase))
     case_presence = case_sizes.sum()
     case_absence = ncase.sum() - case_presence
+    if case_absence < 0:
+        case_absence = 0
     control_mean_freq = np.mean((control_sizes) / np.array(ncontrol))
     control_presence = control_sizes.sum()
     control_absence = ncontrol.sum() - control_presence
+    if control_absence < 0:
+        control_absence = 0
     oddsratio, p = fisher_exact(
         [[case_presence, control_presence], [case_absence, control_absence]]
     )
