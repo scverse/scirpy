@@ -134,9 +134,9 @@ def repertoire_overlap(
                     row_cluster=False,
                     row_colors=clust_colors,
                 )
-                for i in range(len(annotation_labels)):
+                for i, a in enumerate(annotation_labels):
                     ax.ax_row_colors.text(
-                        i + 0.3, -0.4, annotation_labels[i], rotation=90
+                        i + 0.3, -0.4, a, rotation=90
                     )
                 lax = ax.ax_row_dendrogram
                 for e, c in leg_colors:
