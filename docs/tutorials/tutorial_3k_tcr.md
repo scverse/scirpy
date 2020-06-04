@@ -628,8 +628,7 @@ sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
 
 ### Repertoire overlap of cell types
 
-
-Just like comparing repertoire overlap among samples, Scirpy also offers comparison between gene expression clusters. As an example, repertoire overlap of CD4+ and CD8+ regional memomry cells is shown.
+Just like comparing repertoire overlap among samples, Scirpy also offers comparison between gene expression clusters or cell subpopulations. As an example, repertoire overlap of CD4+ and CD8+ regional memomry cells is shown.
 
 ```python
 ir.tl.repertoire_overlap(adata, "cluster")
@@ -647,7 +646,10 @@ sc.tl.rank_genes_groups(adata, "clonotype", groups=top_clonotype_clusters, metho
 sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="site", n_genes=5, figsize=(12, 4), show=False)
 
 axs = plt.gcf()._get_axes()
+axs[1].text(-9, 3.5, "Gene\nexpression", fontsize=12)
+axs[4].text(-0.1, 5.8, "% expressing\ncells", fontsize=12)
 axs[3].text(12, 3, "Clonotype ID", fontsize=12)
-axs[0].tick_params(labelsize=14)
+axs[0].set_xlabel("Marker genes", fontsize=12)
 axs[0].set_ylabel("")
+axs[0].tick_params(labelsize=14)
 ```
