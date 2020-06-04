@@ -123,9 +123,10 @@ def repertoire_overlap(
             if heatmap_cats is None:
                 ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
             else:
-                _clust_colors = []
+                _clust_colors, annotation_labels = [], []
                 for cl in clust_colors:
                     _clust_colors.append(cl.loc[distM.index.values])
+                    annotation_labels.append(cl.name)
                 clust_colors = _clust_colors
                 ax = sns.clustermap(
                     1 - distM,
@@ -133,6 +134,8 @@ def repertoire_overlap(
                     row_cluster=False,
                     row_colors=clust_colors,
                 )
+                for i in range(len(annotation_labels)):
+                    ax.ax_row_colors.text(i+0.3, -0.4, annotation_labels[i], rotation=90)
                 lax = ax.ax_row_dendrogram
                 for e, c in leg_colors:
                     lax.bar(0, 0, color=c, label=e, linewidth=0)
