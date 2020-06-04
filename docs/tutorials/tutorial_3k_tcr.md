@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.5.0.rc1
+      jupytext_version: 1.4.2
 ---
 
 # Analysis of 3k T cells from cancer
@@ -515,8 +515,9 @@ ir.pl.spectratype(
     adata,
     color="cluster",
     viztype="curve",
+    curve_layout="shifted",
     fig_kws={"dpi": 120},
-    kde_kws={"curve_layout": "shifted", "kde_norm": False, "kde_norm": False},
+    kde_kws={"kde_norm": False},
 )
 ```
 
@@ -537,44 +538,45 @@ ir.pl.spectratype(
 )
 ```
 
-## Experimental plots
+## Comparing repertoires
 
+### Repertoire simlarity and overlaps
 
-### Repertoire overlaps
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+Overlaps in the adaptive immune receptor repertoire of samples or sample groups enables to pinpoint important clonotype groups, as well as to provide a measure of similarity between samples.  
+Running Scirpy's :func:`~scirpy.tl.repertoire_overlap` tool creates a matrix featuring the abundance of clonotypes in each sample. Additionally, it also computes a (Jaccard) distance matrix of samples as well as the linkage of hierarchical clustering. 
+<!-- #endraw -->
 
 ```python
 df, dst, lk = ir.tl.repertoire_overlap(adata, "sample", inplace=False)
-```
-
-```python
 df.head()
 ```
 
-```python
-ir.pl.repertoire_overlap(adata, "sample")
-```
+The distance matrix can be shown as a heatmap, while samples are reordered based on hierarchical clustering.
 
 ```python
 ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 ```
 
+A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
+
 ```python
-ir.pl.repertoire_overlap(adata, "sample", dendro_only=True, heatmap_cats=["source"])
+ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"dpi": 120})
 ```
 
-```python
-ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"])
-```
+### Clonotypes preferentially occuring in a group
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers :func:`~scirpy.tl.clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
+<!-- #endraw -->
+
+A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor that can be extracted from patient metadata.
 
 ```python
-# Create a column in obs that gives us the site of the tumor
-
 adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
 ```
 
 ```python
-# Show clonotypes that are the most imbalance between Tumor and Control samples based on Fischer's test
-
 ir.pl.clonotype_imbalance(
     adata,
     replicate_col="sample",
@@ -585,9 +587,9 @@ ir.pl.clonotype_imbalance(
 )
 ```
 
-```python
-# Plot a Volcano diagram of p-values and the fold difference between the two groups
+To get an idea how the above, top-ranked clonotypes compare to the bulk of all clonotypes, a Volcano plot is genereated, showing the `-log10 p-value` of the Fisher's test as a function of `log2(fold-change)` of the normalized proportion of a given clonotype in the test group compared to the control group. To avoid zero division, `0.01*(global minimum proportion)` was added to every normalized clonotype proportions.
 
+```python
 ir.pl.clonotype_imbalance(
     adata,
     replicate_col="sample",
@@ -595,9 +597,42 @@ ir.pl.clonotype_imbalance(
     case_label="Tumor",
     additional_hue="diagnosis",
     plot_type="volcano",
+    fig_kws={"dpi": 120},
 )
 ```
 
-```python
+## Integrating gene expression
+### Clonotype imbalance among cell clusters
 
+Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. As an example, using cell type annotation inferred from gene expression clusters, clonotypes belonging to CD4+ and CD8+ regional memory T-cells can be compared.
+
+```python
+freq, stat = ir.tl.clonotype_imbalance(
+    adata,
+    replicate_col="sample",
+    groupby="source",
+    case_label="Tumor",
+    control_label="Blood",
+    additional_hue="cluster",
+    inplace = False,
+)
+top_differential_clonotypes = stat.groupby("clonotype").agg({"logpValue": "max"}).reset_index().sort_values(by="logpValue", ascending=False).head(n=15).clonotype.tolist()
+```
+
+To check how specific these top clonotypes are for individual cell types, a UMAP is straighforward.
+
+```python
+sc.pl.umap(adata, color="cluster")
+sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
+```
+
+### Marker genes in top clonotypes
+
+Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality. As an example, ranking of potential marker genes for top clonotype clusters is showed.
+
+```python
+top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site").head(n=10).index.values.tolist()
+
+sc.tl.rank_genes_groups(adata, "clonotype", groups=top_clonotype_clusters, method="wilcoxon")
+sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="sample", n_genes=5)
 ```
