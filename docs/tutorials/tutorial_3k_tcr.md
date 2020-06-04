@@ -570,7 +570,7 @@ ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"
 Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers :func:`~scirpy.tl.clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
 <!-- #endraw -->
 
-A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor that can be extracted from patient metadata.
+A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor can be extracted from patient metadata.
 
 ```python
 adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
