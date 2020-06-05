@@ -23,16 +23,18 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %load_ext autoreload
 %autoreload 2
 import sys
-
-sys.path.insert(0, "../..")
-import scirpy as ir
-import pandas as pd
-import numpy as np
-import scanpy as sc
-from matplotlib import pyplot as plt
 import warnings
 
-warnings.filterwarnings('ignore', category=FutureWarning)
+import numpy as np
+import pandas as pd
+
+import scanpy as sc
+import scirpy as ir
+from matplotlib import pyplot as plt
+
+sys.path.insert(0, "../..")
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -361,7 +363,12 @@ ct_different_v
 # Display the first 2 clonotypes with different v genes
 adata.obs.loc[
     adata.obs["ct_cluster_aa_alignment"].isin(ct_different_v[:2]),
-    ["ct_cluster_aa_alignment", "ct_cluster_aa_alignment_same_v", "TRA_1_v_gene", "TRB_1_v_gene"],
+    [
+        "ct_cluster_aa_alignment",
+        "ct_cluster_aa_alignment_same_v",
+        "TRA_1_v_gene",
+        "TRB_1_v_gene",
+    ],
 ].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
 
@@ -561,7 +568,9 @@ ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
 
 ```python
-ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"dpi": 120})
+ir.pl.repertoire_overlap(
+    adata, "sample", pair_to_plot=["LN2", "LT2"], fig_kws={"dpi": 120}
+)
 ```
 
 ### Clonotypes preferentially occuring in a group
@@ -613,7 +622,7 @@ freq, stat = ir.tl.clonotype_imbalance(
     groupby="cluster",
     case_label="CD8_Teff",
     control_label="CD8_Trm",
-    inplace = False,
+    inplace=False,
 )
 top_differential_clonotypes = stat["clonotype"].tolist()[:5]
 ```
@@ -641,7 +650,9 @@ Just like comparing repertoire overlap among samples, Scirpy also offers compari
 
 ```python
 ir.tl.repertoire_overlap(adata, "cluster")
-ir.pl.repertoire_overlap(adata, "cluster", pair_to_plot=["CD8_Teff", "CD8_Trm"],fig_kws={"dpi": 120})
+ir.pl.repertoire_overlap(
+    adata, "cluster", pair_to_plot=["CD8_Teff", "CD8_Trm"], fig_kws={"dpi": 120}
+)
 ```
 
 ### Marker genes in top clonotypes
@@ -649,6 +660,8 @@ ir.pl.repertoire_overlap(adata, "cluster", pair_to_plot=["CD8_Teff", "CD8_Trm"],
 Gene expression of cells belonging to individual clonotypes can also be compared using Scanpy. As an example, differential gene expression of two clonotypes, found to be specific to cell type clusters can also be analysed. 
 
 ```python
-sc.tl.rank_genes_groups(adata, "clonotype", groups=["163"], reference="277", method="wilcoxon")
+sc.tl.rank_genes_groups(
+    adata, "clonotype", groups=["163"], reference="277", method="wilcoxon"
+)
 sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
 ```
