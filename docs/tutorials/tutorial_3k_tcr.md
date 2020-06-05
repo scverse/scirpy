@@ -604,7 +604,7 @@ ir.pl.clonotype_imbalance(
 ## Integrating gene expression
 ### Clonotype imbalance among cell clusters
 
-Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. As an example, using cell type annotation inferred from gene expression clusters, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, for example, can be compared.
+Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. Using cell type annotation inferred from gene expression clusters, for example, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, can be compared.
 
 ```python
 freq, stat = ir.tl.clonotype_imbalance(
