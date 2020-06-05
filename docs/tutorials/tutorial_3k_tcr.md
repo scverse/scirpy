@@ -615,14 +615,24 @@ freq, stat = ir.tl.clonotype_imbalance(
     control_label="CD8_Trm",
     inplace = False,
 )
-top_differential_clonotypes = stat.groupby("clonotype").agg({"logpValue": "max"}).reset_index().sort_values(by="logpValue", ascending=False).head(n=5).clonotype.tolist()
+top_differential_clonotypes = stat["clonotype"].tolist()[:5]
 ```
 
 Showing top clonotypes on a UMAP clearly shows that clonotype 163 is featured by CD8+ tissue-resident memory T cells, while clonotype 277 by CD8+ effector T-cells.
 
 ```python
-sc.pl.umap(adata, color="cluster")
-sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
+sc.pl.umap(adata, color="cluster", ax=ax1, show=False)
+sc.pl.umap(
+    adata,
+    color="clonotype",
+    groups=top_differential_clonotypes,
+    ax=ax2,
+    # increase size of highlighted dots
+    size=[
+        80 if c in top_differential_clonotypes else 30 for c in adata.obs["clonotype"]
+    ],
+)
 ```
 
 ### Repertoire overlap of cell types
@@ -640,18 +650,5 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(adata, "clonotype", groups=["163"], reference="277", method="wilcoxon")
-top_genes = [gene[0] for gene in adata.uns["rank_genes_groups"]["names"][:20]]
-sc.pl.heatmap(adata[adata.obs["clonotype"].isin(["163", "277"]),:], top_genes, groupby="clonotype", show=False)
-
-axs = plt.gcf()._get_axes()
-axs[0].set_xlabel("Marker genes", fontsize=12)
-axs[1].set_ylabel("Gene expression", fontsize=12)
-axs[2].set_ylabel("Clonotype", fontsize=12)
-axs[2].tick_params(labelsize=14)
-axs[1].tick_params(labelsize=14)
-axs[0].tick_params(labelsize=14)
-```
-
-```python
-sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=20)
+sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
 ```
