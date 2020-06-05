@@ -23,16 +23,18 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 %load_ext autoreload
 %autoreload 2
 import sys
-
-sys.path.insert(0, "../..")
-import scirpy as ir
-import pandas as pd
-import numpy as np
-import scanpy as sc
-from matplotlib import pyplot as plt
 import warnings
 
-warnings.filterwarnings('ignore', category=FutureWarning)
+import numpy as np
+import pandas as pd
+
+import scanpy as sc
+import scirpy as ir
+from matplotlib import pyplot as plt
+
+sys.path.insert(0, "../..")
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -361,7 +363,12 @@ ct_different_v
 # Display the first 2 clonotypes with different v genes
 adata.obs.loc[
     adata.obs["ct_cluster_aa_alignment"].isin(ct_different_v[:2]),
-    ["ct_cluster_aa_alignment", "ct_cluster_aa_alignment_same_v", "TRA_1_v_gene", "TRB_1_v_gene"],
+    [
+        "ct_cluster_aa_alignment",
+        "ct_cluster_aa_alignment_same_v",
+        "TRA_1_v_gene",
+        "TRB_1_v_gene",
+    ],
 ].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
 
@@ -561,7 +568,9 @@ ir.pl.repertoire_overlap(adata, "sample", heatmap_cats=["patient", "source"])
 A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
 
 ```python
-ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"dpi": 120})
+ir.pl.repertoire_overlap(
+    adata, "sample", pair_to_plot=["LN2", "LT2"], fig_kws={"dpi": 120}
+)
 ```
 
 ### Clonotypes preferentially occuring in a group
@@ -570,7 +579,7 @@ ir.pl.repertoire_overlap(adata, "sample", pair_to_plot=["LN2", "LT2"],fig_kws={"
 Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers :func:`~scirpy.tl.clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
 <!-- #endraw -->
 
-A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor that can be extracted from patient metadata.
+A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor can be extracted from patient metadata.
 
 ```python
 adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
@@ -604,35 +613,55 @@ ir.pl.clonotype_imbalance(
 ## Integrating gene expression
 ### Clonotype imbalance among cell clusters
 
-Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. As an example, using cell type annotation inferred from gene expression clusters, clonotypes belonging to CD4+ and CD8+ regional memory T-cells can be compared.
+Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. Using cell type annotation inferred from gene expression clusters, for example, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, can be compared.
 
 ```python
 freq, stat = ir.tl.clonotype_imbalance(
     adata,
     replicate_col="sample",
-    groupby="source",
-    case_label="Tumor",
-    control_label="Blood",
-    additional_hue="cluster",
-    inplace = False,
+    groupby="cluster",
+    case_label="CD8_Teff",
+    control_label="CD8_Trm",
+    inplace=False,
 )
-top_differential_clonotypes = stat.groupby("clonotype").agg({"logpValue": "max"}).reset_index().sort_values(by="logpValue", ascending=False).head(n=15).clonotype.tolist()
+top_differential_clonotypes = stat["clonotype"].tolist()[:5]
 ```
 
-To check how specific these top clonotypes are for individual cell types, a UMAP is straighforward.
+Showing top clonotypes on a UMAP clearly shows that clonotype 163 is featured by CD8+ tissue-resident memory T cells, while clonotype 277 by CD8+ effector T-cells.
 
 ```python
-sc.pl.umap(adata, color="cluster")
-sc.pl.umap(adata, color="clonotype", groups=top_differential_clonotypes)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
+sc.pl.umap(adata, color="cluster", ax=ax1, show=False)
+sc.pl.umap(
+    adata,
+    color="clonotype",
+    groups=top_differential_clonotypes,
+    ax=ax2,
+    # increase size of highlighted dots
+    size=[
+        80 if c in top_differential_clonotypes else 30 for c in adata.obs["clonotype"]
+    ],
+)
+```
+
+### Repertoire overlap of cell types
+
+Just like comparing repertoire overlap among samples, Scirpy also offers comparison between gene expression clusters or cell subpopulations. As an example, repertoire overlap of the two cell types compared above is shown.
+
+```python
+ir.tl.repertoire_overlap(adata, "cluster")
+ir.pl.repertoire_overlap(
+    adata, "cluster", pair_to_plot=["CD8_Teff", "CD8_Trm"], fig_kws={"dpi": 120}
+)
 ```
 
 ### Marker genes in top clonotypes
 
-Gene expression of cells belonging to individual clonotypes can be compared using Scanpy's functionality. As an example, ranking of potential marker genes for top clonotype clusters is showed.
+Gene expression of cells belonging to individual clonotypes can also be compared using Scanpy. As an example, differential gene expression of two clonotypes, found to be specific to cell type clusters can also be analysed. 
 
 ```python
-top_clonotype_clusters = ir.tl.group_abundance(adata, groupby="clonotype", target_col="site").head(n=10).index.values.tolist()
-
-sc.tl.rank_genes_groups(adata, "clonotype", groups=top_clonotype_clusters, method="wilcoxon")
-sc.pl.rank_genes_groups_dotplot(adata, groups=top_clonotype_clusters, groupby="sample", n_genes=5)
+sc.tl.rank_genes_groups(
+    adata, "clonotype", groups=["163"], reference="277", method="wilcoxon"
+)
+sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
 ```
