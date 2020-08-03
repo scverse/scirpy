@@ -20,7 +20,7 @@ def adata_cdr3_mock_distance_calculator():
         def __init__(self, n_jobs=None):
             pass
 
-        def calc_dist_mat(self, seqs):
+        def calc_dist_mat(self, seqs, seqs2=None):
             """Don't calculate distances, but return the
             hard-coded distance matrix needed for the test"""
             mat_seqs = np.array(["AAA", "AHA", "KK", "KKK", "KKY", "LLL"])
@@ -43,9 +43,30 @@ def adata_cdr3_mock_distance_calculator():
 
 def test_identity_dist():
     identity = IdentityDistanceCalculator()
+    res = identity.calc_dist_mat(["ARS", "ARS", "RSA"])
+    assert isinstance(res, scipy.sparse.coo_matrix)
     npt.assert_almost_equal(
-        identity.calc_dist_mat(["ARS", "ARS", "RSA"]).toarray(),
-        np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        res.toarray(), np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+    )
+
+
+def test_identity_dist_with_two_seq_arrays():
+    identity = IdentityDistanceCalculator()
+    res = identity.calc_dist_mat(["ARS", "ARS", "RSA", "SAS"], ["KKL", "ARS", "RSA"])
+    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert res.shape == (4, 3)
+    assert res.nnz == 3
+    npt.assert_almost_equal(
+        res.toarray(), np.array([[0, 1, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]]),
+    )
+
+    # test with completely empty result matrix
+    res = identity.calc_dist_mat(["ARS", "ARS", "RSA", "SAS"], ["foo", "bar", "baz"])
+    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert res.shape == (4, 3)
+    assert res.nnz == 0
+    npt.assert_almost_equal(
+        res.toarray(), np.zeros((4, 3)),
     )
 
 
@@ -63,13 +84,29 @@ def test_levenshtein_compute_row():
 def test_levensthein_dist():
     levenshtein10 = LevenshteinDistanceCalculator(10)
     levenshtein1 = LevenshteinDistanceCalculator(1, n_jobs=1)
+    res10 = levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
+    res1 = levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
+    assert isinstance(res10, scipy.sparse.coo_matrix)
+    assert isinstance(res1, scipy.sparse.coo_matrix)
     npt.assert_almost_equal(
-        levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])).toarray(),
+        res10.toarray(),
         np.array([[1, 2, 3, 3], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),
     )
     npt.assert_almost_equal(
-        levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"])).toarray(),
+        res1.toarray(),
         np.array([[1, 2, 0, 0], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),
+    )
+
+
+def test_levensthein_dist_with_two_seq_arrays():
+    levenshtein10 = LevenshteinDistanceCalculator(2)
+    res = levenshtein10.calc_dist_mat(
+        np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
+    )
+    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert res.shape == (5, 2)
+    npt.assert_almost_equal(
+        res.toarray(), np.array([[0, 2], [0, 2], [0, 3], [3, 2], [0, 0]]),
     )
 
 
@@ -77,7 +114,7 @@ def test_align_row():
     aligner = AlignmentDistanceCalculator(cutoff=255)
     aligner10 = AlignmentDistanceCalculator(cutoff=10)
     seqs = ["AWAW", "VWVW", "HHHH"]
-    self_alignment_scores = np.array([30, 30, 32])
+    self_alignment_scores = dict(zip(seqs, [30, 30, 32]))
     row0 = aligner._align_row(seqs, self_alignment_scores, 0)
     row2 = aligner._align_row(seqs, self_alignment_scores, 2)
     npt.assert_equal(row0.toarray(), [[1, 9, 39]])
@@ -95,19 +132,40 @@ def test_alignment_dist():
     seqs = np.array(["AAAA", "AAHA", "HHHH"])
 
     res = aligner.calc_dist_mat(seqs)
+    assert isinstance(res, scipy.sparse.coo_matrix)
     npt.assert_almost_equal(
         res.toarray(), np.array([[1, 7, 25], [0, 1, 19], [0, 0, 1]])
     )
 
     res = aligner10.calc_dist_mat(seqs)
+    assert isinstance(res, scipy.sparse.coo_matrix)
     npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]]))
 
 
-def test_tcr_dist(adata_cdr3):
-    for metric in ["alignment", "identity", "levenshtein"]:
-        unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
-        dist_mat = st.tcr_dist.tcr_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
-        assert dist_mat.shape == (5, 5)
+def test_alignment_dist_with_two_seq_arrays():
+    aligner = AlignmentDistanceCalculator(cutoff=10, n_jobs=1)
+    res = aligner.calc_dist_mat(
+        ["AAAA", "AATA", "HHHH", "WWWW"], ["WWWW", "AAAA", "ATAA"]
+    )
+    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert res.shape == (4, 3)
+
+    npt.assert_almost_equal(
+        res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]])
+    )
+
+
+@pytest.mark.parametrize("metric", ["alignment", "identity", "levenshtein"])
+def test_tcr_dist(adata_cdr3, metric):
+    unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
+    seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
+    dist_mat = st.tcr_dist.tcr_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
+    assert dist_mat.shape == (5, 5)
+
+    dist_mat = st.tcr_dist.tcr_dist(
+        unique_seqs, seqs2, metric=metric, cutoff=8, n_jobs=2
+    )
+    assert dist_mat.shape == (5, 3)
 
 
 def test_seq_to_cell_idx():
