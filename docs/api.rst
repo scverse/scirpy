@@ -83,6 +83,7 @@ Define and visualize clonotypes
 
    define_clonotypes
    define_clonotype_clusters
+   clonotype_convergence
    clonotype_network
    clonotype_network_igraph
    

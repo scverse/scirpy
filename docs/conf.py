@@ -120,6 +120,7 @@ qualname_overrides = {
     "scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix",
     "scirpy.io._datastructures.TcrCell": "scirpy.io.TcrCell",
     "scirpy.io._datastructures.TcrChain": "scirpy.io.TcrChain",
+    "pandas.core.arrays.categorical.Categorical": "pandas.Categorical",
 }
 
 nitpick_ignore = [

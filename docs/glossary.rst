@@ -60,6 +60,17 @@ Glossary
     Multi-tissue clonotype
         A clonotype that occurs in multiple tissues of the same patient.
 
+    Convergent evolution of clonotypes
+        It has been proposed that :term:`TCRs <TCR>` are subject to convergent evolution,
+        i.e. a selection pressure that leads to TCRs recognizing the same antigen
+        (:cite:`Venturi2006`). 
+
+        Evidence of convergent evolution could be clonotypes with the same :term:`CDR3` 
+        amino acid sequence, but different CDR3 nucleotide sequences (due to synonymous
+        codons) or clonotypes with highly similar CDR3 amino acid sequences that 
+        recognize the same antigen. 
+
+
     Epitope
         The part of an antigen that is recognized by the :term:`TCR`
         (or B-cell receptor, or antibody). 

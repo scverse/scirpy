@@ -374,17 +374,17 @@ def adata_vdj():
 def adata_clonotype():
     obs = pd.DataFrame.from_records(
         [
-            ["cell1", "A", "ct1"],
-            ["cell2", "A", "ct1"],
-            ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
-            ["cell4", "B", "ct1"],
-            ["cell5", "B", "ct2"],
-            ["cell6", "B", "ct3"],
-            ["cell7", "B", "ct4"],
-            ["cell8", "B", "ct4"],
+            ["cell1", "A", "ct1", "cc1"],
+            ["cell2", "A", "ct1", "cc1"],
+            ["cell3", "A", "ct1", "cc1"],
+            ["cell3", "A", "NaN", "NaN"],
+            ["cell4", "B", "ct1", "cc1"],
+            ["cell5", "B", "ct2", "cc2"],
+            ["cell6", "B", "ct3", "cc2"],
+            ["cell7", "B", "ct4", "cc3"],
+            ["cell8", "B", "ct4", "cc3"],
         ],
-        columns=["cell_id", "group", "clonotype"],
+        columns=["cell_id", "group", "clonotype", "clonotype_cluster"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata
