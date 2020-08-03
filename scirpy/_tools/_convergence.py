@@ -1,6 +1,7 @@
 from anndata import AnnData
 from typing import Optional
 import pandas as pd
+from pandas.core.arrays.categorical import Categorical
 
 
 def clonotype_convergence(
@@ -10,7 +11,7 @@ def clonotype_convergence(
     key_fine: str,
     key_added: str = "is_convergent",
     inplace=True
-) -> Optional[pd.Categorical]:
+) -> Optional[Categorical]:
     """
     Finds evidence for :term:`Convergent evolution of clonotypes`. 
 
