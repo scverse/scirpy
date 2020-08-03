@@ -1,16 +1,16 @@
 from anndata import AnnData
 from typing import Optional
-import numpy as np
+import pandas as pd
 
 
 def clonotype_convergence(
     adata: AnnData,
+    *,
     key_coarse: str,
     key_fine: str,
-    *,
     key_added: str = "is_convergent",
     inplace=True
-) -> Optional[np.ndarray]:
+) -> Optional[pd.Categorical]:
     """
     Finds evidence for :term:`Convergent evolution of clonotypes`. 
 
@@ -42,7 +42,7 @@ def clonotype_convergence(
     
     Returns
     -------
-    Depending on the value of `inplace`, either returns or adds to `adata` a boolean
+    Depending on the value of `inplace`, either returns or adds to `adata` a categorical
     vector indicating for each cell whether it belongs to a "convergent clonotype". 
     """
     convergence_df = (
@@ -56,6 +56,10 @@ def clonotype_convergence(
     )
     convergent_clonotypes = convergence_df.loc[convergence_df[0] > 1, key_coarse]
     result = adata.obs[key_coarse].isin(convergent_clonotypes)
+    result = pd.Categorical(
+        ["convergent" if x else "not convergent" for x in result],
+        categories=["convergent", "not convergent"],
+    )
     if inplace:
         adata.obs[key_added] = result
     else:

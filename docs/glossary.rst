@@ -61,7 +61,7 @@ Glossary
         A clonotype that occurs in multiple tissues of the same patient.
 
     Convergent evolution of clonotypes
-        It has been proposed that :term`TCRs <TCR>` are subject to convergent evolution,
+        It has been proposed that :term:`TCRs <TCR>` are subject to convergent evolution,
         i.e. a selection pressure that leads to TCRs recognizing the same antigen
         (:cite:`Venturi2006`). 
 

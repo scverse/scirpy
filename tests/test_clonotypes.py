@@ -1,6 +1,7 @@
 # pylama:ignore=W0611,W0404
 import pandas as pd
 import numpy.testing as npt
+import pandas.testing as pdt
 import scirpy as st
 from anndata import AnnData
 import numpy as np
@@ -10,6 +11,7 @@ from .fixtures import (
     adata_define_clonotypes,
     adata_define_clonotype_clusters,
     adata_clonotype_network,
+    adata_clonotype,
 )
 import random
 import pytest
@@ -280,5 +282,38 @@ def test_clonotype_network_igraph(adata_clonotype_network):
     )
 
 
-def test_clonotype_convergence():
-    assert False
+def test_clonotype_convergence(adata_clonotype):
+    res = st.tl.clonotype_convergence(
+        adata_clonotype,
+        key_coarse="clonotype_cluster",
+        key_fine="clonotype",
+        inplace=False,
+    )
+    st.tl.clonotype_convergence(
+        adata_clonotype,
+        key_coarse="clonotype_cluster",
+        key_fine="clonotype",
+        inplace=True,
+        key_added="is_convergent_",
+    )
+    pdt.assert_extension_array_equal(res, adata_clonotype.obs["is_convergent_"].values)
+    pdt.assert_extension_array_equal(
+        res,
+        pd.Categorical(
+            ["not convergent"] * 5 + ["convergent"] * 2 + ["not convergent"] * 2,
+            categories=["convergent", "not convergent"],
+        ),
+    )
+
+    res = st.tl.clonotype_convergence(
+        adata_clonotype,
+        key_fine="clonotype_cluster",
+        key_coarse="clonotype",
+        inplace=False,
+    )
+    pdt.assert_extension_array_equal(
+        res,
+        pd.Categorical(
+            ["not convergent"] * 9, categories=["convergent", "not convergent"],
+        ),
+    )
