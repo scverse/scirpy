@@ -12,3 +12,4 @@ from ._clonotypes import (
     _define_clonotypes_no_graph,
     clonotype_network_igraph,
 )
+from ._convergence import clonotype_convergence

@@ -278,3 +278,7 @@ def test_clonotype_network_igraph(adata_clonotype_network):
             ]
         ),
     )
+
+
+def test_clonotype_convergence():
+    assert False
