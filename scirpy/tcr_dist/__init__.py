@@ -207,11 +207,11 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
             total = len(seqs)
         else:
             data = zip(itertools.repeat(seqs2), itertools.repeat(0), seqs)
-            total = len(seqs2)
+            total = len(seqs)
 
         with Pool(self.n_jobs) as p:
             rows = p.starmap_progress(
-                self._compute_row, data, chunksize=200, total=total
+                self._compute_row, data, chunksize=2000, total=total
             )
 
         score_mat = scipy.sparse.vstack(rows)
@@ -365,11 +365,11 @@ class AlignmentDistanceCalculator(DistanceCalculator):
                 itertools.repeat(0),
                 seqs,
             )
-            total = len(seqs2)
+            total = len(seqs)
 
         with Pool(self.n_jobs) as p:
             rows = p.starmap_progress(
-                self._align_row, data, chunksize=200, total=total,
+                self._align_row, data, chunksize=2000, total=total,
             )
 
         score_mat = scipy.sparse.vstack(rows)
