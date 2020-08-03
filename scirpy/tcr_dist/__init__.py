@@ -83,20 +83,27 @@ class DistanceCalculator(abc.ABC):
 
     @_doc_params(dist_mat=_doc_dist_mat)
     @abc.abstractmethod
-    def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
+    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
         """\
-        Calculate pairwise distance matrix of all sequences in `seqs`.
+        Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`. 
+        
+        When `seqs2` is omitted, computes the pairwise distance of `seqs` against
+        itself. 
         
         {dist_mat}
        
         Parameters
         ----------
         seqs
-            array containing CDR3 sequences. Should not contain duplicates. 
+            array containing CDR3 sequences. Must not contain duplicates. 
+        seqs2 
+            second array containing CDR3 sequences. Must not contain
+            duplicates either. 
 
         Returns
         -------
-        Sparse, upper triangular distance matrix. 
+        Sparse pairwise distance matrix. If only `seqs` is provided, only
+        the upper triangular distance matrix is returned. 
         """
         pass
 
@@ -122,11 +129,31 @@ class IdentityDistanceCalculator(DistanceCalculator):
     def __init__(self, cutoff: float = 0, n_jobs: Union[int, None] = None):
         super().__init__(cutoff, n_jobs)
 
-    def calc_dist_mat(self, seqs: np.ndarray) -> coo_matrix:
+    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
         """In this case, the offseted distance matrix is the identity matrix. 
         
         More details: :meth:`DistanceCalculator.calc_dist_mat`"""
-        return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="coo")
+        if seqs2 is None:
+            # In this case, the offsetted distance matrix is the identity matrix
+            return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="coo")
+        else:
+            # actually compare the values
+            def coord_generator():
+                for (i1, s1), (i2, s2) in itertools.product(
+                    enumerate(seqs), enumerate(seqs2)
+                ):
+                    if s1 == s2:
+                        yield 1, i1, i2
+
+            try:
+                d, row, col = zip(*coord_generator())
+            except ValueError:
+                # happens when there is no match at all
+                d, row, col = (), (), ()
+
+            return coo_matrix(
+                (d, (row, col)), dtype=self.DTYPE, shape=(len(seqs), len(seqs2))
+            )
 
 
 @_doc_params(params=_doc_params_distance_calculator)
@@ -150,9 +177,11 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
     {params}
     """
 
-    def _compute_row(self, seqs: np.ndarray, i_row: int) -> coo_matrix:
+    def _compute_row(
+        self, seqs: np.ndarray, i_row: int, seq2: Union[None, str] = None
+    ) -> coo_matrix:
         """Compute a row of the upper diagnomal distance matrix"""
-        target = seqs[i_row]
+        target = seqs[i_row] if seq2 is None else seq2
 
         def coord_generator():
             for j, s2 in enumerate(seqs[i_row:], start=i_row):
@@ -160,26 +189,35 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
                 if d <= self.cutoff:
                     yield d + 1, j
 
-        d, col = zip(*coord_generator())
-        row = np.zeros(len(col), dtype="int")
-        return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, seqs.size))
+        try:
+            d, col = zip(*coord_generator())
+            row = np.zeros(len(col), dtype="int")
+        except ValueError:
+            # when there are no coordinates > 0
+            d, col, row = (), (), ()
 
-    def calc_dist_mat(self, seqs: np.ndarray) -> csr_matrix:
+        return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
+
+    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
         """Calculate the distance matrix. 
 
         See :meth:`DistanceCalculator.calc_dist_mat`. """
-        p = Pool(self.n_jobs)
-        rows = p.starmap_progress(
-            self._compute_row,
-            zip(itertools.repeat(seqs), range(len(seqs))),
-            chunksize=200,
-            total=len(seqs),
-        )
-        p.close()
+        if seqs2 is None:
+            data = zip(itertools.repeat(seqs), range(len(seqs)))
+            total = len(seqs)
+        else:
+            data = zip(itertools.repeat(seqs2), itertools.repeat(0), seqs)
+            total = len(seqs2)
+
+        with Pool(self.n_jobs) as p:
+            rows = p.starmap_progress(
+                self._compute_row, data, chunksize=200, total=total
+            )
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
-        assert score_mat.shape[0] == score_mat.shape[1]
+        assert score_mat.shape[0] == len(seqs)
+        assert score_mat.shape[1] == (len(seqs2) if seqs2 is not None else len(seqs))
 
         return score_mat
 
@@ -238,7 +276,11 @@ class AlignmentDistanceCalculator(DistanceCalculator):
         self.gap_extend = gap_extend
 
     def _align_row(
-        self, seqs: np.ndarray, self_alignment_scores: np.array, i_row: int
+        self,
+        seqs: np.ndarray,
+        self_alignment_scores: Dict[str, int],
+        i_row: int,
+        seq2: Union[str, None] = None,
     ) -> np.ndarray:
         """Generates a row of the triangular distance matrix. 
         
@@ -254,13 +296,16 @@ class AlignmentDistanceCalculator(DistanceCalculator):
             alignment scores into distances. 
         i_row
             Index of the row in the final distance matrix. Determines the target sequence. 
+        seq2
+            Second sequence agains which to calculate the alignment. If omitted
+            this will be inferred from `i_row` (-> self-alignment)
 
         Returns
         -------
         The i_th row of the final score matrix. 
         """
         subst_mat = parasail.Matrix(self.subst_mat)
-        target = seqs[i_row]
+        target = seqs[i_row] if seq2 is None else seq2
         profile = parasail.profile_create_16(target, subst_mat)
 
         def coord_generator():
@@ -268,52 +313,69 @@ class AlignmentDistanceCalculator(DistanceCalculator):
                 r = parasail.nw_scan_profile_16(
                     profile, s2, self.gap_open, self.gap_extend
                 )
-                max_score = np.min(self_alignment_scores[[i_row, j]])
+                max_score = np.min(
+                    [self_alignment_scores[target], self_alignment_scores[s2]]
+                )
                 d = max_score - r.score
                 if d <= self.cutoff:
                     yield d + 1, j
 
-        d, col = zip(*coord_generator())
-        row = np.zeros(len(col), dtype="int")
+        try:
+            d, col = zip(*coord_generator())
+            row = np.zeros(len(col), dtype="int")
+        except ValueError:
+            # when there are no coordinates > 0
+            d, col, row = (), (), ()
+
         return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
 
-    def calc_dist_mat(self, seqs: Collection) -> coo_matrix:
+    def _self_alignment_scores(self, seqs: Collection) -> dict:
+        """Calculate self-alignments. We need them as reference values
+        to turn scores into dists"""
+        return {
+            s: parasail.nw_scan_16(
+                s, s, self.gap_open, self.gap_extend, parasail.Matrix(self.subst_mat),
+            ).score
+            for s in seqs
+        }
+
+    def calc_dist_mat(
+        self, seqs: Collection, seqs2: Union[Collection, None] = None
+    ) -> coo_matrix:
         """Calculate the distances between amino acid sequences based on
         of all-against-all pairwise sequence alignments.
 
         See :meth:`DistanceCalculator.calc_dist_mat` for more details. 
         """
-        # first, calculate self-alignments. We need them as refererence values
-        # to turn scores into dists
-        self_alignment_scores = np.array(
-            [
-                parasail.nw_scan_16(
-                    s,
-                    s,
-                    self.gap_open,
-                    self.gap_extend,
-                    parasail.Matrix(self.subst_mat),
-                ).score
-                for s in seqs
-            ]
+        self_alignment_scores = self._self_alignment_scores(
+            set(itertools.chain(seqs, [] if seqs2 is None else seqs2))
         )
 
-        p = Pool(self.n_jobs)
-        rows = p.starmap_progress(
-            self._align_row,
-            zip(
+        if seqs2 is None:
+            data = zip(
                 itertools.repeat(seqs),
                 itertools.repeat(self_alignment_scores),
                 range(len(seqs)),
-            ),
-            chunksize=200,
-            total=len(seqs),
-        )
-        p.close()
+            )
+            total = len(seqs)
+        else:
+            data = zip(
+                itertools.repeat(seqs2),
+                itertools.repeat(self_alignment_scores),
+                itertools.repeat(0),
+                seqs,
+            )
+            total = len(seqs2)
+
+        with Pool(self.n_jobs) as p:
+            rows = p.starmap_progress(
+                self._align_row, data, chunksize=200, total=total,
+            )
 
         score_mat = scipy.sparse.vstack(rows)
         score_mat.eliminate_zeros()
-        assert score_mat.shape[0] == score_mat.shape[1]
+        assert score_mat.shape[0] == len(seqs)
+        assert score_mat.shape[1] == (len(seqs2) if seqs2 is not None else len(seqs))
 
         return score_mat
 
@@ -321,13 +383,14 @@ class AlignmentDistanceCalculator(DistanceCalculator):
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=_doc_dist_mat)
 def tcr_dist(
     unique_seqs: np.ndarray,
+    unique_seqs2: Union[None, np.ndarray] = None,
     *,
     metric: Union[
         Literal["alignment", "identity", "levenshtein"], DistanceCalculator
     ] = "identity",
     cutoff: float = 10,
     n_jobs: Union[int, None] = None,
-):
+) -> coo_matrix:
     """\
     Calculate a sequence x sequence distance matrix.
 
@@ -339,6 +402,9 @@ def tcr_dist(
         Numpy array of nucleotide or amino acid sequences. 
         Must not contain duplicates. 
         Note that not all distance metrics support nucleotide sequences. 
+    unique_seqs2
+        Second array sequences. When omitted, `tcr_dist` computes 
+        the square matrix of `unique_seqs`. 
     {metric}
     {cutoff}
 
@@ -346,7 +412,9 @@ def tcr_dist(
 
     Returns
     -------
-    Upper triangular distance matrix. 
+    Upper triangular distance matrix when only `unique_seqs` is provided. 
+    A full rectangular distance matrix when both `unique_seqs` and 
+    `unique_seqs2` are provided. 
     """
     if cutoff == 0 or metric == "identity":
         metric = "identity"
@@ -362,7 +430,7 @@ def tcr_dist(
     else:
         raise ValueError("Invalid distance metric.")
 
-    dist_mat = dist_calc.calc_dist_mat(unique_seqs)
+    dist_mat = dist_calc.calc_dist_mat(unique_seqs, unique_seqs2)
     return dist_mat
 
 
