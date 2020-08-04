@@ -225,8 +225,13 @@ class ParallelDistanceCalculator(DistanceCalculator):
         with Pool(self.n_jobs) as p:
             block_results = p.starmap_progress(self._compute_block, blocks)
 
+        try:
+            dists, rows, cols = zip(*itertools.chain(*block_results))
+        except ValueError:
+            # happens when there is no match at all
+            dists, rows, cols = (), (), ()
+
         shape = (len(seqs), len(seqs2)) if seqs2 is not None else (len(seqs), len(seqs))
-        dists, rows, cols = zip(*itertools.chain(*block_results))
         score_mat = scipy.sparse.coo_matrix(
             (dists, (rows, cols)), dtype=self.DTYPE, shape=shape
         )
@@ -304,7 +309,7 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     {params}
     """
 
-    def _compute_block(self, seqs1, seqs2, origin) -> coo_matrix:
+    def _compute_block(self, seqs1, seqs2, origin):
         origin_row, origin_col = origin
         if seqs2 is not None:
             # compute the full matrix
@@ -378,109 +383,54 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         self.gap_open = gap_open
         self.gap_extend = gap_extend
 
-    def _align_row(
-        self,
-        seqs: np.ndarray,
-        self_alignment_scores: Dict[str, int],
-        i_row: int,
-        seq2: Union[str, None] = None,
-    ) -> np.ndarray:
-        """Generates a row of the triangular distance matrix. 
-        
-        Aligns `seqs[i_row]` with all other sequences in `seqs[i_row:]`. 
-
-        Parameters
-        ----------
-        seqs
-            Array of amino acid sequences
-        self_alignment_scores
-            Array containing the scores of aligning each sequence in `seqs` 
-            with itself. This is used as a reference value to turn 
-            alignment scores into distances. 
-        i_row
-            Index of the row in the final distance matrix. Determines the target sequence. 
-        seq2
-            Second sequence agains which to calculate the alignment. If omitted
-            this will be inferred from `i_row` (-> self-alignment)
-
-        Returns
-        -------
-        The i_th row of the final score matrix. 
-        """
+    def _compute_block(self, seqs1, seqs2, origin):
         subst_mat = parasail.Matrix(self.subst_mat)
-        target = seqs[i_row] if seq2 is None else seq2
-        profile = parasail.profile_create_16(target, subst_mat)
+        origin_row, origin_col = origin
 
-        def coord_generator():
-            for j, s2 in enumerate(seqs[i_row:], start=i_row):
+        square_matrix = seqs2 is None
+        if square_matrix:
+            seqs2 = seqs1
+
+        self_alignment_scores1 = self._self_alignment_scores(seqs1)
+        if square_matrix:
+            self_alignment_scores2 = self_alignment_scores1
+        else:
+            self_alignment_scores2 = self._self_alignment_scores(seqs2)
+
+        result = []
+        for row, s1 in enumerate(seqs1):
+            col_start = row if square_matrix else 0
+            for col, s2 in enumerate(seqs2[col_start:], start=col_start):
+                profile = parasail.profile_create_16(s1, subst_mat)
                 r = parasail.nw_scan_profile_16(
                     profile, s2, self.gap_open, self.gap_extend
                 )
                 max_score = np.min(
-                    [self_alignment_scores[target], self_alignment_scores[s2]]
+                    [self_alignment_scores1[row], self_alignment_scores2[col]]
                 )
                 d = max_score - r.score
                 if d <= self.cutoff:
-                    yield d + 1, j
+                    result.append((d + 1, origin_row + row, origin_col + col))
 
-        try:
-            d, col = zip(*coord_generator())
-            row = np.zeros(len(col), dtype="int")
-        except ValueError:
-            # when there are no coordinates > 0
-            d, col, row = (), (), ()
-
-        return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
+        return result
 
     def _self_alignment_scores(self, seqs: Sequence) -> dict:
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists"""
-        return {
-            s: parasail.nw_scan_16(
-                s, s, self.gap_open, self.gap_extend, parasail.Matrix(self.subst_mat),
-            ).score
-            for s in seqs
-        }
-
-    def calc_dist_mat(
-        self, seqs: Sequence, seqs2: Union[Sequence, None] = None
-    ) -> coo_matrix:
-        """Calculate the distances between amino acid sequences based on
-        of all-against-all pairwise sequence alignments.
-
-        See :meth:`DistanceCalculator.calc_dist_mat` for more details. 
-        """
-        self_alignment_scores = self._self_alignment_scores(
-            set(itertools.chain(seqs, [] if seqs2 is None else seqs2))
+        return np.fromiter(
+            (
+                parasail.nw_scan_16(
+                    s,
+                    s,
+                    self.gap_open,
+                    self.gap_extend,
+                    parasail.Matrix(self.subst_mat),
+                ).score
+                for s in seqs
+            ),
+            dtype=int,
+            count=len(seqs),
         )
-
-        if seqs2 is None:
-            data = zip(
-                itertools.repeat(seqs),
-                itertools.repeat(self_alignment_scores),
-                range(len(seqs)),
-            )
-            total = len(seqs)
-        else:
-            data = zip(
-                itertools.repeat(seqs2),
-                itertools.repeat(self_alignment_scores),
-                itertools.repeat(0),
-                seqs,
-            )
-            total = len(seqs)
-
-        with Pool(self.n_jobs) as p:
-            rows = p.starmap_progress(
-                self._align_row, data, chunksize=2000, total=total,
-            )
-
-        score_mat = scipy.sparse.vstack(rows)
-        score_mat.eliminate_zeros()
-        assert score_mat.shape[0] == len(seqs)
-        assert score_mat.shape[1] == (len(seqs2) if seqs2 is not None else len(seqs))
-
-        return score_mat
 
 
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=_doc_dist_mat)
