@@ -2,7 +2,7 @@ import parasail
 from ..util._multiprocessing import EnhancedPool as Pool
 import itertools
 from anndata import AnnData
-from typing import Union, Collection, List, Tuple, Dict
+from typing import Union, Sequence, List, Tuple, Dict, Optional
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
@@ -40,10 +40,19 @@ _doc_params_distance_calculator = """\
 cutoff
     Will eleminate distances > cutoff to make efficient 
     use of sparse matrices. 
+"""
+
+_doc_params_parallel_distance_calculator = (
+    _doc_params_distance_calculator
+    + """\
 n_jobs
     Number of jobs to use for the pairwise distance calculation. 
-    If None, use all jobs. 
+    If None, use all jobs (only for ParallelDistanceCalculators). 
+block_size
+    The width of a block of the matrix that will be delegated to a worker
+    process. The block contains `block_size ** 2` elements. 
 """
+)
 
 _doc_dist_mat = """\
 Calculates the upper triangle, including the diagonal. 
@@ -73,17 +82,18 @@ class DistanceCalculator(abc.ABC):
     #: The sparse matrix dtype. Defaults to uint8, constraining the max distance to 255.
     DTYPE = "uint8"
 
-    def __init__(self, cutoff: float, n_jobs: Union[int, None] = None):
+    def __init__(self, cutoff: float):
         if cutoff > 255:
             raise ValueError(
                 "Using a cutoff > 255 is not possible due to the `uint8` dtype used"
             )
         self.cutoff = cutoff
-        self.n_jobs = n_jobs
 
     @_doc_params(dist_mat=_doc_dist_mat)
     @abc.abstractmethod
-    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
+    def calc_dist_mat(
+        self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
+    ) -> coo_matrix:
         """\
         Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`. 
         
@@ -108,6 +118,123 @@ class DistanceCalculator(abc.ABC):
         pass
 
 
+@_doc_params(params=_doc_params_parallel_distance_calculator)
+class ParallelDistanceCalculator(DistanceCalculator):
+    """
+    Abstract base class for a DistanceCalculator that computes distances in parallel. 
+
+    It does so in a blockwise fashion. The function computing distances
+    for a single block needs to be overriden. 
+
+    Parameters
+    ----------
+    {params}
+    """
+
+    def __init__(
+        self,
+        cutoff: float,
+        n_jobs: Optional[int] = None,
+        block_size: Optional[int] = 50,
+    ):
+        super().__init__(cutoff)
+        self.n_jobs = n_jobs
+        self.block_size = block_size
+
+    @abc.abstractmethod
+    def _compute_block(
+        self,
+        seqs1: Sequence[str],
+        seqs2: Union[Sequence[str], None],
+        origin: Tuple[int, int],
+    ) -> Tuple[int, int, int]:
+        """Compute the distances for a block of the matrix
+
+        Parameters
+        ----------
+        seqs1
+            array containing sequences
+        seqs2 
+            other array containing sequences. If `None` compute the square matrix
+            of `seqs1` and iteratoe over the upper triangle including the diagonal only. 
+        origin 
+            row, col coordinates of the origin of the block. 
+
+        Returns 
+        ------
+        List of (distance, row, col) tuples for all elements with distance != 0.
+        row, col must be the coordinates in the final matrix (they can be derived using
+        `origin`). Can't be a generator because this needs to be picklable. 
+        """
+        pass
+
+    @staticmethod
+    def _block_iter(
+        seqs1: Sequence[str],
+        seqs2: Optional[Sequence[str]] = None,
+        block_size: Optional[int] = 50,
+    ) -> Tuple[Sequence[str], Union[Sequence[str], None], Tuple[int, int]]:
+        """Iterate over sequences in blocks. 
+        
+        Parameters
+        ----------
+        seqs1
+            array containing (unique) sequences
+        seqs2
+            array containing other sequences. If `None` compute
+            the square matrix of `seqs1` and iterate over the upper triangle (including
+            the diagonal) only. 
+        block_size
+            side length of a block (will have `block_size ** 2` elements.)
+
+        Yields
+        ------
+        seqs1
+            subset of length `block_size` of seqs1
+        seqs2
+            subset of length `block_size` of seqs2. If seqs2 is None, this will
+            be `None` if the block is on the diagonal, or a subset of seqs1 otherwise. 
+        origin
+            (row, col) coordinates of the origin of the block. 
+        """
+        square_mat = seqs2 is None
+        if square_mat:
+            seqs2 = seqs1
+        for row in range(0, len(seqs1), block_size):
+            start_col = row if square_mat else 0
+            for col in range(start_col, len(seqs2), block_size):
+                if row == col and square_mat:
+                    # block on the diagonal.
+                    # yield None for seqs2 to indicate that we only want the upper
+                    # diagonal.
+                    yield seqs1[row : row + block_size], None, (row, row)
+                else:
+                    yield seqs1[row : row + block_size], seqs2[
+                        col : col + block_size
+                    ], (row, col)
+
+    def calc_dist_mat(
+        self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
+    ) -> coo_matrix:
+        """Calculate the distance matrix. 
+
+        See :meth:`DistanceCalculator.calc_dist_mat`. """
+        # precompute blocks as list to have total number of blocks for progressbar
+        blocks = list(self._block_iter(seqs, seqs2, self.block_size))
+
+        with Pool(self.n_jobs) as p:
+            block_results = p.starmap_progress(self._compute_block, blocks)
+
+        shape = (len(seqs), len(seqs2)) if seqs2 is not None else (len(seqs), len(seqs))
+        dists, rows, cols = zip(*itertools.chain(*block_results))
+        score_mat = scipy.sparse.coo_matrix(
+            (dists, (rows, cols)), dtype=self.DTYPE, shape=shape
+        )
+        score_mat.eliminate_zeros()
+
+        return score_mat
+
+
 @_doc_params(params=_doc_params_distance_calculator)
 class IdentityDistanceCalculator(DistanceCalculator):
     """\
@@ -126,8 +253,8 @@ class IdentityDistanceCalculator(DistanceCalculator):
     {params}
     """
 
-    def __init__(self, cutoff: float = 0, n_jobs: Union[int, None] = None):
-        super().__init__(cutoff, n_jobs)
+    def __init__(self, cutoff: float = 0):
+        super().__init__(cutoff)
 
     def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
         """In this case, the offseted distance matrix is the identity matrix. 
@@ -156,8 +283,8 @@ class IdentityDistanceCalculator(DistanceCalculator):
             )
 
 
-@_doc_params(params=_doc_params_distance_calculator)
-class LevenshteinDistanceCalculator(DistanceCalculator):
+@_doc_params(params=_doc_params_parallel_distance_calculator)
+class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     """\
     Calculates the Levenshtein edit-distance between sequences. 
     
@@ -177,53 +304,28 @@ class LevenshteinDistanceCalculator(DistanceCalculator):
     {params}
     """
 
-    def _compute_row(
-        self, seqs: np.ndarray, i_row: int, seq2: Union[None, str] = None
-    ) -> coo_matrix:
-        """Compute a row of the upper diagnomal distance matrix"""
-        target = seqs[i_row] if seq2 is None else seq2
-
-        def coord_generator():
-            for j, s2 in enumerate(seqs[i_row:], start=i_row):
-                d = levenshtein_dist(target, s2)
-                if d <= self.cutoff:
-                    yield d + 1, j
-
-        try:
-            d, col = zip(*coord_generator())
-            row = np.zeros(len(col), dtype="int")
-        except ValueError:
-            # when there are no coordinates > 0
-            d, col, row = (), (), ()
-
-        return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
-
-    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
-        """Calculate the distance matrix. 
-
-        See :meth:`DistanceCalculator.calc_dist_mat`. """
-        if seqs2 is None:
-            data = zip(itertools.repeat(seqs), range(len(seqs)))
-            total = len(seqs)
+    def _compute_block(self, seqs1, seqs2, origin) -> coo_matrix:
+        origin_row, origin_col = origin
+        if seqs2 is not None:
+            # compute the full matrix
+            coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
         else:
-            data = zip(itertools.repeat(seqs2), itertools.repeat(0), seqs)
-            total = len(seqs)
-
-        with Pool(self.n_jobs) as p:
-            rows = p.starmap_progress(
-                self._compute_row, data, chunksize=2000, total=total
+            # compute only upper triangle in this case
+            coord_iterator = itertools.combinations_with_replacement(
+                enumerate(seqs1), r=2
             )
 
-        score_mat = scipy.sparse.vstack(rows)
-        score_mat.eliminate_zeros()
-        assert score_mat.shape[0] == len(seqs)
-        assert score_mat.shape[1] == (len(seqs2) if seqs2 is not None else len(seqs))
+        result = []
+        for (row, s1), (col, s2) in coord_iterator:
+            d = levenshtein_dist(s1, s2)
+            if d <= self.cutoff:
+                result.append((d + 1, origin_row + row, origin_col + col))
 
-        return score_mat
+        return result
 
 
-@_doc_params(params=_doc_params_distance_calculator)
-class AlignmentDistanceCalculator(DistanceCalculator):
+@_doc_params(params=_doc_params_parallel_distance_calculator)
+class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
     Calculates distance between sequences based on pairwise sequence alignment. 
 
@@ -265,12 +367,13 @@ class AlignmentDistanceCalculator(DistanceCalculator):
         self,
         cutoff: float,
         n_jobs: Union[int, None] = None,
+        block_size: int = 50,
         *,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        super().__init__(cutoff, n_jobs)
+        super().__init__(cutoff, n_jobs, block_size)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend
@@ -329,7 +432,7 @@ class AlignmentDistanceCalculator(DistanceCalculator):
 
         return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(1, len(seqs)))
 
-    def _self_alignment_scores(self, seqs: Collection) -> dict:
+    def _self_alignment_scores(self, seqs: Sequence) -> dict:
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists"""
         return {
@@ -340,7 +443,7 @@ class AlignmentDistanceCalculator(DistanceCalculator):
         }
 
     def calc_dist_mat(
-        self, seqs: Collection, seqs2: Union[Collection, None] = None
+        self, seqs: Sequence, seqs2: Union[Sequence, None] = None
     ) -> coo_matrix:
         """Calculate the distances between amino acid sequences based on
         of all-against-all pairwise sequence alignments.

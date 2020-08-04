@@ -4,6 +4,7 @@ from scirpy.tcr_dist import (
     DistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
+    ParallelDistanceCalculator,
     TcrNeighbors,
 )
 import numpy as np
@@ -41,6 +42,44 @@ def adata_cdr3_mock_distance_calculator():
     return MockDistanceCalculator()
 
 
+def test_block_iter():
+    seqs1 = list("ABCDE")
+    seqs2 = list("HIJKLM")
+    b1 = list(ParallelDistanceCalculator._block_iter(seqs1, block_size=2))
+    b2 = list(ParallelDistanceCalculator._block_iter(seqs1, seqs2, block_size=3))
+    b3 = list(ParallelDistanceCalculator._block_iter(seqs1, seqs2, block_size=50))
+    b4 = list(
+        ParallelDistanceCalculator._block_iter(list("ABC"), list("ABC"), block_size=1)
+    )
+    L = list
+    assert b1 == [
+        (L("AB"), None, (0, 0)),
+        (L("AB"), L("CD"), (0, 2)),
+        (L("AB"), L("E"), (0, 4)),
+        (L("CD"), None, (2, 2)),
+        (L("CD"), L("E"), (2, 4)),
+        (L("E"), None, (4, 4)),
+    ]
+    assert b2 == [
+        (L("ABC"), L("HIJ"), (0, 0)),
+        (L("ABC"), L("KLM"), (0, 3)),
+        (L("DE"), L("HIJ"), (3, 0)),
+        (L("DE"), L("KLM"), (3, 3)),
+    ]
+    assert b3 == [(L("ABCDE"), L("HIJKLM"), (0, 0))]
+    assert b4 == [
+        (L("A"), L("A"), (0, 0)),
+        (L("A"), L("B"), (0, 1)),
+        (L("A"), L("C"), (0, 2)),
+        (L("B"), L("A"), (1, 0)),
+        (L("B"), L("B"), (1, 1)),
+        (L("B"), L("C"), (1, 2)),
+        (L("C"), L("A"), (2, 0)),
+        (L("C"), L("B"), (2, 1)),
+        (L("C"), L("C"), (2, 2)),
+    ]
+
+
 def test_identity_dist():
     identity = IdentityDistanceCalculator()
     res = identity.calc_dist_mat(["ARS", "ARS", "RSA"])
@@ -70,24 +109,43 @@ def test_identity_dist_with_two_seq_arrays():
     )
 
 
-def test_levenshtein_compute_row():
+def test_levenshtein_compute_block():
     levenshtein1 = LevenshteinDistanceCalculator(1)
     seqs = np.array(["A", "AAA", "AA"])
-    row0 = levenshtein1._compute_row(seqs, 0)
-    row2 = levenshtein1._compute_row(seqs, 2)
-    assert row0.getnnz() == 2
-    assert row2.getnnz() == 1
-    npt.assert_equal(row0.toarray(), [[1, 0, 2]])
-    npt.assert_equal(row2.toarray(), [[0, 0, 1]])
+    seqs2 = np.array(["AB", "BAA"])
+    b1 = list(levenshtein1._compute_block(seqs, None, (10, 20)))
+    b2 = list(levenshtein1._compute_block(seqs, seqs, (10, 20)))
+    b3 = list(levenshtein1._compute_block(seqs, seqs2, (10, 20)))
+    b4 = list(levenshtein1._compute_block(seqs2, seqs, (10, 20)))
+
+    assert b1 == [(1, 10, 20), (2, 10, 22), (1, 11, 21), (2, 11, 22), (1, 12, 22)]
+    assert b2 == [
+        (1, 10, 20),
+        (2, 10, 22),
+        (1, 11, 21),
+        (2, 11, 22),
+        (2, 12, 20),
+        (2, 12, 21),
+        (1, 12, 22),
+    ]
+    assert b3 == [(2, 10, 20), (2, 11, 21), (2, 12, 20), (2, 12, 21)]
+    assert b4 == [(2, 10, 20), (2, 10, 22), (2, 11, 21), (2, 11, 22)]
 
 
 def test_levensthein_dist():
-    levenshtein10 = LevenshteinDistanceCalculator(10)
-    levenshtein1 = LevenshteinDistanceCalculator(1, n_jobs=1)
+    levenshtein10 = LevenshteinDistanceCalculator(10, block_size=50)
+    levenshtein10_2 = LevenshteinDistanceCalculator(10, block_size=2)
+    levenshtein1 = LevenshteinDistanceCalculator(1, n_jobs=1, block_size=1)
+
     res10 = levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
+    res10_2 = levenshtein10_2.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
     res1 = levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
+
     assert isinstance(res10, scipy.sparse.coo_matrix)
+    assert isinstance(res10_2, scipy.sparse.coo_matrix)
     assert isinstance(res1, scipy.sparse.coo_matrix)
+
+    npt.assert_equal(res10.toarray(), res10_2.toarray())
     npt.assert_almost_equal(
         res10.toarray(),
         np.array([[1, 2, 3, 3], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),

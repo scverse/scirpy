@@ -201,6 +201,7 @@ TCR distance metrics: `tcr_dist`
 
    tcr_dist
    DistanceCalculator
+   ParallelDistanceCalculator
    IdentityDistanceCalculator
    LevenshteinDistanceCalculator
    AlignmentDistanceCalculator
