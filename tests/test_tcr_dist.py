@@ -168,18 +168,18 @@ def test_levensthein_dist_with_two_seq_arrays():
     )
 
 
-def test_align_row():
+def test_alignment_compute_block():
     aligner = AlignmentDistanceCalculator(cutoff=255)
     aligner10 = AlignmentDistanceCalculator(cutoff=10)
     seqs = ["AWAW", "VWVW", "HHHH"]
-    self_alignment_scores = dict(zip(seqs, [30, 30, 32]))
-    row0 = aligner._align_row(seqs, self_alignment_scores, 0)
-    row2 = aligner._align_row(seqs, self_alignment_scores, 2)
-    npt.assert_equal(row0.toarray(), [[1, 9, 39]])
-    npt.assert_equal(row2.toarray(), [[0, 0, 1]])
 
-    row0_10 = aligner10._align_row(seqs, self_alignment_scores, 0)
-    npt.assert_equal(row0_10.toarray(), [[1, 9, 0]])
+    b1 = aligner._compute_block(seqs, None, (0, 0))
+    b2 = aligner10._compute_block(seqs, None, (10, 20))
+    b3 = aligner10._compute_block(seqs, seqs, (10, 20))
+
+    assert b1 == [(1, 0, 0), (9, 0, 1), (39, 0, 2), (1, 1, 1), (41, 1, 2), (1, 2, 2)]
+    assert b2 == [(1, 10, 20), (9, 10, 21), (1, 11, 21), (1, 12, 22)]
+    assert b3 == [(1, 10, 20), (9, 10, 21), (9, 11, 20), (1, 11, 21), (1, 12, 22)]
 
 
 def test_alignment_dist():
