@@ -223,7 +223,9 @@ class ParallelDistanceCalculator(DistanceCalculator):
         blocks = list(self._block_iter(seqs, seqs2, self.block_size))
 
         with Pool(self.n_jobs) as p:
-            block_results = p.starmap_progress(self._compute_block, blocks)
+            block_results = p.starmap_progress(
+                self._compute_block, blocks, total=len(blocks)
+            )
 
         try:
             dists, rows, cols = zip(*itertools.chain(*block_results))
