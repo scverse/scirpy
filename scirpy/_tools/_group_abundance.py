@@ -55,9 +55,7 @@ def _group_abundance(
     else:
         ranked_target = sort
 
-    ranked_groups = (
-        result_df_count.apply(np.sum, axis=0).sort_values(ascending=False).index.values
-    )
+    ranked_groups = result_df_count.apply(np.sum, axis=0).index.values
     result_df = result_df.loc[ranked_target, ranked_groups]
 
     return result_df
