@@ -84,4 +84,4 @@ Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues>`_.
 Citation
 ^^^^^^^^
 
-    Sturm, G. Tamas, GS, ..., Finotello, F. (2020). Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data. BioRxiv. doi:`10.1101/2020.04.10.035865 <https://doi.org/10.1101/2020.04.10.035865>`_
+    Sturm, G. Tamas, GS, ..., Finotello, F. (2020). Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data. Bioinformatics. doi:`10.1093/bioinformatics/btaa611 <https://doi.org/10.1093/bioinformatics/btaa611>`_
