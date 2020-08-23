@@ -510,7 +510,7 @@ class TcrNeighbors:
         if metric == "identity" and cutoff != 0:
             raise ValueError("Identity metric only works with cutoff == 0")
         if metric != "identity" and cutoff == 0:
-            logging.warn(f"Running with {metric} metric, but cutoff == 0. ")
+            logging.warning(f"Running with {metric} metric, but cutoff == 0. ")
         if sequence == "nt" and metric == "alignment":
             raise ValueError(
                 "Using nucleotide sequences with alignment metric is not supported. "
@@ -808,14 +808,19 @@ class TcrNeighbors:
             )
             logging.info(f"Finished computing {arm} pairwise distances.", time=start)
 
-        coords, values = zip(*self._cell_dist_mat_reduce())
-
-        rows, cols = zip(*coords)
-        dist_mat = coo_matrix(
-            (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
-        )
-        dist_mat.eliminate_zeros()
-        self._dist_mat = dist_mat.tocsr()
+        try:
+            coords, values = zip(*self._cell_dist_mat_reduce())
+        except ValueError:
+            # happens when there are no distances computed (e.g. all CDR3s are NAN)
+            # -> construct empty CSR matrix
+            self._dist_mat = csr_matrix((self.adata.n_obs, self.adata.n_obs))
+        else:
+            rows, cols = zip(*coords)
+            dist_mat = coo_matrix(
+                (values, (rows, cols)), shape=(self.adata.n_obs, self.adata.n_obs)
+            )
+            dist_mat.eliminate_zeros()
+            self._dist_mat = dist_mat.tocsr()
 
     @property
     def dist(self):

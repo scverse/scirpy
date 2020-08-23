@@ -575,6 +575,24 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
     )
 
 
+def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    """Test for #174. Gracefully handle the case when there are no distances. """
+    adata_cdr3.obs["TRA_1_cdr3"] = np.nan
+    adata_cdr3.obs["TRB_1_cdr3"] = np.nan
+    # test both receptor arms, primary chain only
+    tn = TcrNeighbors(
+        adata_cdr3,
+        metric=adata_cdr3_mock_distance_calculator,
+        receptor_arms="all",
+        dual_tcr="primary_only",
+        sequence="aa",
+        cutoff=0,
+    )
+    tn.compute_distances()
+    print(tn.dist.toarray())
+    npt.assert_equal(tn.dist.toarray(), np.zeros((5, 5)))
+
+
 def test_dist_to_connectivities(adata_cdr3):
     # empty anndata, just need the object
     tn = TcrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
