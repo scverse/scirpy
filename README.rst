@@ -67,10 +67,7 @@ Alternatively, install the latest development version:
 
 .. code-block::
 
-    git clone git@github.com:icbi-lab/scirpy.git
-    cd scirpy
-    pip install flit
-    flit install
+    pip install git+https://github.com/icbi-lab/scirpy.git@master
 
 
 Release notes
