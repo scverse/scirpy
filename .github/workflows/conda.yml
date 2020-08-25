@@ -9,7 +9,6 @@ on:
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
-    name: conda ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +24,7 @@ jobs:
         uses: goanpeca/setup-miniconda@v1
         with:
           auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
 
       - name: Set-up channels and install conda build
         run: |
@@ -37,5 +37,5 @@ jobs:
       - name: build and test package
         run: |
           cd .conda
-          conda build . --no-anaconda-upload --python ${{ matrix.python-version }}
+          conda build --no-anaconda-upload .
         shell: bash

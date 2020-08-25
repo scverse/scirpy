@@ -36,9 +36,9 @@ html: | symlink
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 symlink:
-	mkdir -p generated
+	mkdir -p _build/html/generated
 	# link static to the generated directory, s.t. relative links keep working.
-	ln -sn ../_static generated/_static || true
+	ln -sn ../_static _build/html/generated/_static || true
 
 clean:
 	rm -rf generated

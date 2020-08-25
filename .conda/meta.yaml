@@ -17,6 +17,13 @@ build:
 requirements:
   # The way the version is resolved from SCM (flit + get_version)
   # requires all dependencies to be installed at build time.
+  host:
+    - python >=3.6
+    - flit
+    - setuptools_scm
+    - pytoml
+    - importlib_metadata
+
   run:
     - python >=3.6
     - anndata >=0.7.3
