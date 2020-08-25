@@ -6,23 +6,24 @@ on:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install flit
-        flit install
-    - name: Build and publish
-      env:
-        FLIT_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        FLIT_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        flit build
-        flit publish
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # required for setuptools-scm
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: |
+          python -m pip install flit
+          flit install
+      - name: Build and publish
+        env:
+          FLIT_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          FLIT_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          flit build
+          flit publish

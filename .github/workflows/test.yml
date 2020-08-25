@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # required for setuptools-scm
       - uses: actions/cache@v1
         with:
           path: ~/.cache/pip
@@ -43,10 +45,7 @@ jobs:
           pip install $pkg
       - name: Install dependencies
         run: |
-          python -m pip install flit
-          flit install --deps all
-        env:
-          FLIT_ROOT_INSTALL: 1
+          pip install .[test,rpack]
       - name: Check black formatting
         run: |
           black --check scirpy tests

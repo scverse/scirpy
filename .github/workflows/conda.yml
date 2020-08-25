@@ -5,7 +5,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
-    
+
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
@@ -14,15 +14,17 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-    
+
     steps:
       - uses: actions/checkout@v2
-        
-      - name: Setup Minoconda 
+        with:
+          fetch-depth: 0 # required for setuptools-scm
+
+      - name: Setup Minoconda
         uses: goanpeca/setup-miniconda@v1
         with:
           auto-update-conda: true
-      
+
       - name: Set-up channels and install conda build
         run: |
           conda config --add channels defaults
@@ -30,7 +32,7 @@ jobs:
           conda config --add channels conda-forge
           conda install -y conda-build conda-verify
         shell: bash
-          
+
       - name: build and test package
         run: |
           cd .conda
