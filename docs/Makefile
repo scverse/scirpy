@@ -14,7 +14,7 @@ help:
 
 .PHONY: help Makefile
 
-livehtml: | clean
+livehtml: | clean symlink
 	sleep 1 && touch *.rst
 	sphinx-autobuild \
 	-p 0 \
@@ -32,7 +32,15 @@ livehtml: | clean
         --ignore "*.tex" \
 	-b html $(SOURCEDIR) $(BUILDDIR)/html
 
-clean: 
+html: | symlink
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+symlink:
+	mkdir -p _build/html/generated
+	# link static to the generated directory, s.t. relative links keep working.
+	ln -sn ../_static _build/html/generated/_static || true
+
+clean:
 	rm -rf generated
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 

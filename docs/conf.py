@@ -93,7 +93,7 @@ nbsphinx_timeout = 300
 
 # -- HTML styling ----------------------------------------------------------------------
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "scanpydoc"
 # add custom stylesheet
 # https://stackoverflow.com/a/43186995/2340703
 html_static_path = ["_static"]
@@ -110,7 +110,7 @@ html_theme_options = dict(navigation_depth=4, logo_only=True)
 
 
 def setup(app):
-    app.add_css_file("custom.css")
+    pass
 
 
 # -- Supress 'reference target not found' errors ---------------------------------------
