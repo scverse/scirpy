@@ -13,6 +13,10 @@ from pathlib import Path
 import airr
 from ..util import _doc_params, _is_na, _is_true
 
+# IMGT locus names
+# see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
+VALID_CHAINS = ["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"]
+
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = _tracerlib
@@ -249,7 +253,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
             tcr_obj.add_chain(
                 TcrChain(
                     chain_type=chain_series["chain"]
-                    if chain_series["chain"] in ["TRA", "TRB"]
+                    if chain_series["chain"] in VALID_CHAINS
                     else "other",
                     cdr3=chain_series["cdr3"],
                     cdr3_nt=chain_series["cdr3_nt"],
