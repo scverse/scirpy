@@ -37,9 +37,20 @@ def _sanitize_anndata(adata: AnnData) -> None:
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
+    CATEGORICAL_COLS = ("locus", "v_gene", "d_gene", "j_gene", "c_gene", "multichain")
+
+    # Sanitize has_ir column into categorical
     # This should always be a categorical with True / False
     has_ir_mask = _is_true(adata.obs["has_ir"])
-    adata.obs["has_ir"] = ["True" if x else "False" for x in has_ir_mask]
+    adata.obs["has_ir"] = pd.Categorical(
+        ["True" if x else "False" for x in has_ir_mask]
+    )
+
+    # Turn other columns into categorical
+    for col in adata.obs.columns:
+        if col.endswith(CATEGORICAL_COLS):
+            adata.obs[col] = pd.Categorical(adata.obs[col])
+
     adata._sanitize()
 
 

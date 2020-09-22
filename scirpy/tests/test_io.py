@@ -66,10 +66,10 @@ def test_read_10x():
     obs = anndata.obs
     # this has `is_cell=false` and should be filtered out
     assert "AAACCTGAGACCTTTG-1" not in anndata.obs_names
-    assert obs.shape[0] == 2
+    assert obs.shape[0] == 3
     cell1 = obs.iloc[0, :]
     cell2 = obs.iloc[1, :]
-    cell3 = obs.iloc[3, :]
+    cell3 = obs.iloc[2, :]
 
     assert cell1.name == "AAACCTGAGACCTTTG-2"
     assert cell1["IR_VDJ_1_cdr3"] == "CASSPPSQGLSTGELFF"
@@ -99,9 +99,9 @@ def test_read_10x():
 
     assert cell3.name == "CAGGTGCTCGTGGTCG-1"
     assert cell3["IR_VJ_1_locus"] == "IGK"
-    assert cell3["IR_VJ_2_locus"] == "IGK"
+    assert _is_na(cell3["IR_VJ_2_locus"])  # non-productive
     assert cell3["IR_VDJ_1_locus"] == "IGH"
-    assert cell3["IR_VDJ_2_locus"] == "IGH"
+    assert _is_na(cell3["IR_VDJ_2_locus"])  # non-productive
 
 
 @pytest.mark.conda
@@ -131,10 +131,12 @@ def test_read_airr():
     # Test that reading the files one-by-one or at once yields the same results
     anndata_tra = read_airr(TESTDATA / "airr/rearrangement_tra.tsv")
     anndata_trb = read_airr(TESTDATA / "airr/rearrangement_trb.tsv")
+    anndata_ig = read_airr(TESTDATA / "airr/rearrangement_ig.tsv")
     anndata = read_airr(
         [
             TESTDATA / "airr/rearrangement_tra.tsv",
             TESTDATA / "airr/rearrangement_trb.tsv",
+            TESTDATA / "airr/rearrangement_ig.tsv",
         ]
     )
     tra_cols = [
@@ -147,19 +149,38 @@ def test_read_airr():
         "IR_VJ_1_expr",
     ]
     trb_cols = [x.replace("IR_VJ", "IR_VDJ") for x in tra_cols]
-    pdt.assert_frame_equal(anndata.obs[tra_cols], anndata_tra.obs[tra_cols])
-    pdt.assert_frame_equal(anndata.obs[trb_cols], anndata_trb.obs[trb_cols])
+    ig_cols = tra_cols + trb_cols
+    pdt.assert_frame_equal(
+        anndata.obs.loc[anndata.obs["IR_VJ_1_locus"] == "TRA", tra_cols],
+        anndata_tra.obs.loc[:, tra_cols],
+        check_categorical=False,  # categories differ, obviously
+    )
+    pdt.assert_frame_equal(
+        anndata.obs.loc[anndata.obs["IR_VDJ_1_locus"] == "TRB", trb_cols],
+        anndata_trb.obs.loc[:, trb_cols],
+        check_categorical=False,  # categories differ, obviously
+    )
+    pdt.assert_frame_equal(
+        anndata.obs.loc[anndata.obs["IR_VDJ_1_locus"] == "IGH", ig_cols],
+        anndata_ig.obs.loc[:, ig_cols],
+        check_categorical=False,  # categories differ, obviously
+    )
 
     # test some fundamental values
-    assert "cell1" in anndata.obs_names and "cell2" in anndata.obs_names
-    assert anndata.obs.shape[0] == 3
+    assert anndata.obs.shape[0] == 5
 
     cell1 = anndata.obs.loc["cell1", :]
     cell2 = anndata.obs.loc["cell2", :]
+    cell3 = anndata.obs.loc["AAACCTGCAGCGTAAG-1", :]
 
     assert cell1.name == "cell1"
     assert cell1["IR_VJ_1_cdr3"] == "CTRPKWESPMVDAFDIW"
     assert cell1["IR_VDJ_2_cdr3"] == "CQQYDNLQITF"
     assert cell1["IR_VDJ_1_cdr3"] == "CQQYYHTPYSF"
+    assert cell1["IR_VJ_1_locus"] == "TRA"
+    assert cell1["IR_VDJ_1_locus"] == "TRB"
 
     assert cell2.name == "cell2"
+
+    assert cell3["IR_VJ_1_locus"] == "IGL"
+    assert cell3["IR_VDJ_1_locus"] == "IGH"
