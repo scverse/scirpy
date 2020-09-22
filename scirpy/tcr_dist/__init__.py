@@ -121,10 +121,10 @@ class DistanceCalculator(abc.ABC):
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class ParallelDistanceCalculator(DistanceCalculator):
     """
-    Abstract base class for a DistanceCalculator that computes distances in parallel. 
+    Abstract base class for a DistanceCalculator that computes distances in parallel.
 
     It does so in a blockwise fashion. The function computing distances
-    for a single block needs to be overriden. 
+    for a single block needs to be overriden.
 
     Parameters
     ----------
@@ -154,17 +154,17 @@ class ParallelDistanceCalculator(DistanceCalculator):
         ----------
         seqs1
             array containing sequences
-        seqs2 
+        seqs2
             other array containing sequences. If `None` compute the square matrix
-            of `seqs1` and iteratoe over the upper triangle including the diagonal only. 
-        origin 
-            row, col coordinates of the origin of the block. 
+            of `seqs1` and iteratoe over the upper triangle including the diagonal only.
+        origin
+            row, col coordinates of the origin of the block.
 
-        Returns 
+        Returns
         ------
         List of (distance, row, col) tuples for all elements with distance != 0.
         row, col must be the coordinates in the final matrix (they can be derived using
-        `origin`). Can't be a generator because this needs to be picklable. 
+        `origin`). Can't be a generator because this needs to be picklable.
         """
         pass
 
@@ -174,8 +174,8 @@ class ParallelDistanceCalculator(DistanceCalculator):
         seqs2: Optional[Sequence[str]] = None,
         block_size: Optional[int] = 50,
     ) -> Tuple[Sequence[str], Union[Sequence[str], None], Tuple[int, int]]:
-        """Iterate over sequences in blocks. 
-        
+        """Iterate over sequences in blocks.
+
         Parameters
         ----------
         seqs1
@@ -183,7 +183,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         seqs2
             array containing other sequences. If `None` compute
             the square matrix of `seqs1` and iterate over the upper triangle (including
-            the diagonal) only. 
+            the diagonal) only.
         block_size
             side length of a block (will have `block_size ** 2` elements.)
 
@@ -193,9 +193,9 @@ class ParallelDistanceCalculator(DistanceCalculator):
             subset of length `block_size` of seqs1
         seqs2
             subset of length `block_size` of seqs2. If seqs2 is None, this will
-            be `None` if the block is on the diagonal, or a subset of seqs1 otherwise. 
+            be `None` if the block is on the diagonal, or a subset of seqs1 otherwise.
         origin
-            (row, col) coordinates of the origin of the block. 
+            (row, col) coordinates of the origin of the block.
         """
         square_mat = seqs2 is None
         if square_mat:
@@ -216,9 +216,9 @@ class ParallelDistanceCalculator(DistanceCalculator):
     def calc_dist_mat(
         self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
     ) -> coo_matrix:
-        """Calculate the distance matrix. 
+        """Calculate the distance matrix.
 
-        See :meth:`DistanceCalculator.calc_dist_mat`. """
+        See :meth:`DistanceCalculator.calc_dist_mat`."""
         # precompute blocks as list to have total number of blocks for progressbar
         blocks = list(self._block_iter(seqs, seqs2, self.block_size))
 
@@ -264,8 +264,8 @@ class IdentityDistanceCalculator(DistanceCalculator):
         super().__init__(cutoff)
 
     def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
-        """In this case, the offseted distance matrix is the identity matrix. 
-        
+        """In this case, the offseted distance matrix is the identity matrix.
+
         More details: :meth:`DistanceCalculator.calc_dist_mat`"""
         if seqs2 is None:
             # In this case, the offsetted distance matrix is the identity matrix
@@ -502,9 +502,9 @@ class TcrNeighbors:
         dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
     ):
-        """Class to compute Neighborhood graphs of CDR3 sequences. 
+        """Class to compute Neighborhood graphs of CDR3 sequences.
 
-        For documentation of the parameters, see :func:`tcr_neighbors`. 
+        For documentation of the parameters, see :func:`tcr_neighbors`.
         """
         start = logging.info("Initializing TcrNeighbors object...")
         if metric == "identity" and cutoff != 0:
@@ -530,12 +530,12 @@ class TcrNeighbors:
         unique_seqs: np.ndarray, cdr_seqs: np.ndarray
     ) -> Dict[int, List[int]]:
         """
-        Compute sequence to cell index for a single chain (e.g. `TRA_1`). 
+        Compute sequence to cell index for a single chain (e.g. `TRA_1`).
 
-        Maps cell_idx -> [list, of, seq_idx]. 
-        Useful to build a cell x cell matrix from a seq x seq matrix. 
+        Maps cell_idx -> [list, of, seq_idx].
+        Useful to build a cell x cell matrix from a seq x seq matrix.
 
-        Computes magic lookup indexes in linear time. 
+        Computes magic lookup indexes in linear time.
 
         Parameters
         ----------
@@ -546,7 +546,7 @@ class TcrNeighbors:
 
         Returns
         -------
-        Sequence2Cell mapping    
+        Sequence2Cell mapping
         """
         # 1) reverse mapping of amino acid sequence to index in sequence-distance matrix
         seq_to_index = {seq: i for i, seq in enumerate(unique_seqs)}
@@ -568,12 +568,12 @@ class TcrNeighbors:
         return seq_to_cell
 
     def _build_index_dict(self):
-        """Build nested dictionary for each receptor arm (TRA, TRB) containing all 
+        """Build nested dictionary for each receptor arm (TRA, TRB) containing all
         combinations of receptor_arms x primary/secondary_chain
-        
-        If the merge mode for either `receptor_arm` or `dual_tcr` is `all`, 
+
+        If the merge mode for either `receptor_arm` or `dual_tcr` is `all`,
         includes a lookup table that contains the number of CDR3 sequences for
-        each cell. 
+        each cell.
         """
         receptor_arms = (
             ["TRA", "TRB"]
@@ -653,7 +653,7 @@ class TcrNeighbors:
 
     def _reduce_arms_all(self, values, cell_row, cell_col):
         """Reduce multiple receptor arms into a single value when 'all' sequences
-        need to match. This requires additional checking effort for teh number 
+        need to match. This requires additional checking effort for teh number
         of chains in the given cell, since we can't make the distinction between
         no chain and dist > cutoff based on the distances (both would contain a
         0 in the distance matrix)."""
@@ -689,9 +689,9 @@ class TcrNeighbors:
 
     @staticmethod
     def _reduce_arms_any(lst, *args):
-        """Reduce arms when *any* of the sequences needs to match. 
+        """Reduce arms when *any* of the sequences needs to match.
         This is the simpler case. This also works with only one entry
-        (e.g. arms = "TRA") """
+        (e.g. arms = "TRA")"""
         # need to exclude 0 values, since the dist mat is offseted by 1.
         try:
             return min(x for x in lst if x != 0)
@@ -701,7 +701,7 @@ class TcrNeighbors:
 
     @staticmethod
     def _reduce_dual_any(d, *args):
-        """Reduce dual tcrs to a single value when *any* of the sequences needs 
+        """Reduce dual tcrs to a single value when *any* of the sequences needs
         to match (by minimum). This also works with only one entry (i.e. 'primary only')
         """
         # need to exclude 0 values, since the dist mat is offseted by 1.
@@ -713,7 +713,7 @@ class TcrNeighbors:
 
     def _reduce_coord_dict(self, coord_dict):
         """Applies reduction functions to the coord dict.
-        Yield (coords, value) pairs. """
+        Yield (coords, value) pairs."""
         start = logging.info("Constructing cell x cell distance matrix...")
         reduce_dual = (
             self._reduce_dual_all if self.dual_tcr == "all" else self._reduce_dual_any
@@ -730,14 +730,18 @@ class TcrNeighbors:
                 reduce_dual(value_dict, chain, cell_row, cell_col)
                 for chain, value_dict in entry.items()
             )
-            reduced = reduce_arms(reduced_dual, cell_row, cell_col,)
+            reduced = reduce_arms(
+                reduced_dual,
+                cell_row,
+                cell_col,
+            )
             yield (cell_row, cell_col), reduced
         logging.info("Finished constructing cell x cell distance matrix. ", time=start)
 
     def _cell_dist_mat_reduce(self):
-        """Compute the distance matrix by using custom reduction functions. 
+        """Compute the distance matrix by using custom reduction functions.
         More flexible than `_build_cell_dist_mat_min`, but requires more memory.
-        Reduce dual is called before reduce arms. 
+        Reduce dual is called before reduce arms.
         """
         coord_dict = dict()
 
@@ -787,15 +791,16 @@ class TcrNeighbors:
         yield from self._reduce_coord_dict(coord_dict)
 
     def compute_distances(
-        self, n_jobs: Union[int, None] = None,
+        self,
+        n_jobs: Union[int, None] = None,
     ):
-        """Computes the distances between CDR3 sequences 
+        """Computes the distances between CDR3 sequences
 
         Parameters
         ----------
         n_jobs
-            Number of CPUs to use for alignment and levenshtein distance. 
-            Default: use all CPUS. 
+            Number of CPUs to use for alignment and levenshtein distance.
+            Default: use all CPUS.
         """
         for arm, arm_dict in self.index_dict.items():
             start = logging.info(f"Computing {arm} pairwise distances...")
@@ -824,15 +829,15 @@ class TcrNeighbors:
 
     @property
     def dist(self):
-        """The computed distance matrix. 
-        Requires to invoke `compute_distances() first. """
+        """The computed distance matrix.
+        Requires to invoke `compute_distances() first."""
         return self._dist_mat
 
     @property
     def connectivities(self):
-        """Get the weighted adjacecency matrix derived from the distance matrix. 
+        """Get the weighted adjacecency matrix derived from the distance matrix.
 
-        The cutoff will be used to normalize the distances. 
+        The cutoff will be used to normalize the distances.
         """
         if self.cutoff == 0:
             return self._dist_mat

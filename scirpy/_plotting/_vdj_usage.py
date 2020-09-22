@@ -28,14 +28,14 @@ def vdj_usage(
     """Creates a ribbon plot of the most abundant VDJ combinations.
 
     Currently works with primary alpha and beta chains only.
-    
+
     Parameters
     ----------
     adata
         AnnData object to work on.
     vdj_cols
         Columns containing gene segment information.
-        Overwrite default only if you know what you are doing!         
+        Overwrite default only if you know what you are doing!
     normalize_to
         Either the name of a categorical column that should be used as the base
         for computing fractions, or an iterable specifying a size factor for each cell.
@@ -55,16 +55,16 @@ def vdj_usage(
     draw_bars
         If `False`, only ribbons are drawn and no bars.
     full_combination
-        If set to `False`, the bands represent the frequency of a binary gene segment 
-        combination of the two connectec loci (e.g. combination of TRBD and TRBJ genes). 
+        If set to `False`, the bands represent the frequency of a binary gene segment
+        combination of the two connectec loci (e.g. combination of TRBD and TRBJ genes).
         By default each band represents an individual combination of all five loci.
     fig_kws
-        Dictionary of keyword args that will be passed to the matplotlib 
+        Dictionary of keyword args that will be passed to the matplotlib
         figure (e.g. `figsize`)
 
     Returns
     -------
-    Axes object. 
+    Axes object.
     """
 
     df = adata.obs.assign(
@@ -97,7 +97,9 @@ def vdj_usage(
         td = td["cell_weights"]
         sector = col[2:7].replace("_", "")
         if full_combination:
-            unct = td[bar_clip + 1 :,].sum()
+            unct = td[
+                bar_clip + 1 :,
+            ].sum()
             if td.size > bar_clip:
                 if draw_bars:
                     ax.bar(i + 1, unct, width=barwidth, color="grey", edgecolor="black")
@@ -231,14 +233,14 @@ def gapped_ribbons(
     figresolution: int = 300,
 ) -> plt.Axes:
     """Draws ribbons using `fill_between`
-    Called by VDJ usage plot to connect bars. 
+    Called by VDJ usage plot to connect bars.
 
     Parameters
     ----------
     data
         Breakpoints defining the ribbon as a 2D matrix. Each row is an x position, columns are the lower and upper extent of the ribbon at that position.
     ax
-        Custom axis, almost always called with an axis supplied.  
+        Custom axis, almost always called with an axis supplied.
     xstart
         The midpoint of the first bar.
     gapfreq
@@ -258,8 +260,8 @@ def gapped_ribbons(
     figsize
         Size of the resulting figure in inches.
     figresolution
-        Resolution of the figure in dpi. 
-    
+        Resolution of the figure in dpi.
+
     Returns
     -------
     Axes object.

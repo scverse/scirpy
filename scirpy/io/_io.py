@@ -29,7 +29,7 @@ For more information, see :ref:`tcr-model`.
 
 
 def _sanitize_anndata(adata: AnnData) -> None:
-    """Sanitization and sanity checks on TCR-anndata object. 
+    """Sanitization and sanity checks on TCR-anndata object.
     Should be executed by every read_xxx function"""
     assert (
         len(adata.X.shape) == 2

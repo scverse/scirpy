@@ -19,40 +19,44 @@ def spectratype(
     kde_kws: Union[dict, None] = None,
     **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
-    """Show the distribution of CDR3 region lengths. 
+    """Show the distribution of CDR3 region lengths.
 
-    Ignores NaN values. 
-    
+    Ignores NaN values.
+
     Parameters
     ----------
     adata
         AnnData object to work on.
-    cdr3_col 
-        Column(s) containing CDR3 lengths.        
+    cdr3_col
+        Column(s) containing CDR3 lengths.
     color
-        Color by this column from `obs`. E.g. sample or diagnosis 
+        Color by this column from `obs`. E.g. sample or diagnosis
     combine_fun
         A function definining how the `cdr3_col` columns should be merged,
-        in case multiple ones were specified. 
-        (e.g. sum, mean, median, etc).  
+        in case multiple ones were specified.
+        (e.g. sum, mean, median, etc).
     normalize
         If True, compute fractions of abundances relative to the `cdr3_col` column
-        rather than reporting abosolute numbers. Alternatively, the name of a column 
+        rather than reporting abosolute numbers. Alternatively, the name of a column
         containing a categorical variable can be provided according to which
-        the values will be normalized.  
+        the values will be normalized.
     viztype
         Type of plot to produce.
     **kwargs
         Additional parameters passed to the base plotting function
 
-    
+
     Returns
     -------
     Axes object
     """
 
     data = tl.spectratype(
-        adata, cdr3_col, target_col=color, combine_fun=combine_fun, fraction=normalize,
+        adata,
+        cdr3_col,
+        target_col=color,
+        combine_fun=combine_fun,
+        fraction=normalize,
     )
 
     groupby_text = cdr3_col if isinstance(cdr3_col, str) else "|".join(cdr3_col)

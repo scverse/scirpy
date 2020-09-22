@@ -35,24 +35,24 @@ def clonotype_imbalance(
     Adds two dataframes (pval and logFC for clonotypes;
     abundance of clonotypes per sample) to `uns`
 
-    .. warning:: 
-        This is an experimental function that will likely change in the future. 
-    
+    .. warning::
+        This is an experimental function that will likely change in the future.
+
     Parameters
     ----------
     adata
-        AnnData object to work on.       
+        AnnData object to work on.
     replicate_col
         Column with batch or sample labels.
     groupby
         The column containing categories that we want to compare and find imbalance between
     case_label
-        The label in `groupby` column that we want to compare. 
+        The label in `groupby` column that we want to compare.
     control_label
         The label in `groupby` column that we use as a baseline for comparison. If not set
-        (None by default), all labels that are not equal to `case_label` make up the baseline. 
+        (None by default), all labels that are not equal to `case_label` make up the baseline.
     target_col
-        The clusters (clonotypes by default) that are imbalanced. 
+        The clusters (clonotypes by default) that are imbalanced.
     additional_hue
         An additional grouping factor. If the `case_label` was tumor for example, this could
         help make a distinction between imbalance in lung and colorectal tumors.
@@ -60,7 +60,7 @@ def clonotype_imbalance(
         The number of top clonotypes to be visualized.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
+        rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized or an iterable
         providing cell weights directly. Setting it to `False` or `None` assigns equal weight
         to all cells.
@@ -72,8 +72,8 @@ def clonotype_imbalance(
     key_added
         If the tools has already been run, the results are added to `uns` under this key.
     **kwargs
-        Additional arguments passed to the base plotting function.  
-    
+        Additional arguments passed to the base plotting function.
+
     Returns
     -------
     Axes object

@@ -36,7 +36,7 @@ def _patch_plot_edges(neighbors_key, edges_cmap=None):
 def _plot_edges(
     axs, adata, basis, edges_width, edges_color, neighbors_key, edges_cmap=None
 ):
-    """Add edges from a scatterplot. 
+    """Add edges from a scatterplot.
 
     Adapted from https://github.com/theislab/scanpy/blob/master/scanpy/plotting/_tools/scatterplots.py
     """

@@ -17,7 +17,12 @@ def _strip_roles(text: str):
 
 
 def insert_function_images(
-    app: Sphinx, what: str, name: str, obj: Any, options: Options, lines: List[str],
+    app: Sphinx,
+    what: str,
+    name: str,
+    obj: Any,
+    options: Options,
+    lines: List[str],
 ):
     for ext in ["png", "svg"]:
         path = app.config.api_dir / f"{name}.{ext}"

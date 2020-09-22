@@ -14,9 +14,9 @@ def alpha_diversity(
     vistype: Literal["bar"] = "bar",
     **kwargs
 ) -> plt.Axes:
-    """Plot the alpha diversity per group. 
+    """Plot the alpha diversity per group.
 
-    Calls :func:`scirpy.tl.alpha_diversity`. 
+    Calls :func:`scirpy.tl.alpha_diversity`.
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ def alpha_diversity(
     target_col
         Column on which to compute the alpha diversity
     vistype
-        Visualization type. Currently only 'bar' is supported. 
+        Visualization type. Currently only 'bar' is supported.
     **kwargs
         Additional parameters passed to :func:`scirpy.pl.base.bar`
     """

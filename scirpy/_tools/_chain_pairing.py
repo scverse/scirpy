@@ -22,9 +22,9 @@ def chain_pairing(
     Returns
     -------
     Depending on the value of `inplace`, either
-    returns a Series with a chain pairing category for each cell 
-    or adds a `chain_pairing` column to `adata`. 
-    
+    returns a Series with a chain pairing category for each cell
+    or adds a `chain_pairing` column to `adata`.
+
     """
     x = adata.obs
     string_length = len("Two full chains")

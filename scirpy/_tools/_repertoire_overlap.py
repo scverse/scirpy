@@ -24,14 +24,14 @@ def repertoire_overlap(
 
     .. warning::
 
-        This function is experimental and is likely to change in the future. 
-    
+        This function is experimental and is likely to change in the future.
+
     Parameters
     ----------
     adata
         AnnData object to work on.
     groupby
-        Column with group labels (e.g. samples, tussue source, diagnosis, etc).        
+        Column with group labels (e.g. samples, tussue source, diagnosis, etc).
     target_col
         Category that overlaps among groups (`clonotype` by default, but can
         in principle be any group or cluster)
@@ -41,7 +41,7 @@ def repertoire_overlap(
         The minimum required weight to accept presence.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
+        rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized or an iterable
         providing cell weights directly. Setting it to `False` or `None` assigns equal weight
         to all cells.
@@ -53,7 +53,7 @@ def repertoire_overlap(
 
     Returns
     -------
-    A DataFrame used by the pairwise scatterplot, distance matrix and linkage. 
+    A DataFrame used by the pairwise scatterplot, distance matrix and linkage.
     """
 
     # Remove NA rows

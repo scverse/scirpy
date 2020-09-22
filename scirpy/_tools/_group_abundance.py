@@ -71,34 +71,34 @@ def group_abundance(
     fraction: Union[None, str, bool] = None,
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
 ) -> pd.DataFrame:
-    """Summarizes the number/fraction of cells of a certain category by a certain group. 
+    """Summarizes the number/fraction of cells of a certain category by a certain group.
 
-    Ignores NaN values. 
-    
+    Ignores NaN values.
+
     Parameters
     ----------
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. E.g, sample, or group. 
+        Group by this column from `obs`. E.g, sample, or group.
     target_col
         Caregorical variable from `obs` according to which the abundance/fractions
-        will be computed. This defaults to "has_tcr", simply counting 
-        the number of cells with a detected :term:`TCR` by group.        
+        will be computed. This defaults to "has_tcr", simply counting
+        the number of cells with a detected :term:`TCR` by group.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
-        name can be provided according to that the values will be normalized. 
+        rather than reporting abosolute numbers. Alternatively, a column
+        name can be provided according to that the values will be normalized.
     sort
-        How to arrange the dataframe columns. 
-        Default is by the category count ("count"). 
+        How to arrange the dataframe columns.
+        Default is by the category count ("count").
         Other options are "alphabetical" or to provide a list of column names.
         By providing an explicit list, the DataFrame can also be subsetted to
-        specific categories. 
+        specific categories.
 
     Returns
     -------
-    Returns a data frame with the number (or fraction) of cells per group. 
+    Returns a data frame with the number (or fraction) of cells per group.
     """
     if target_col not in adata.obs.columns:
         raise ValueError("`target_col` not found in obs`")

@@ -15,35 +15,35 @@ def alpha_diversity(
 ) -> pd.DataFrame:
     """Computes the alpha diversity of clonotypes within a group.
 
-    Uses the `Shannon Entropy <https://mathworld.wolfram.com/Entropy.html>`__ as 
-    diversity measure. The Entrotpy gets 
-    `normalized to group size <https://math.stackexchange.com/a/945172>`__. 
+    Uses the `Shannon Entropy <https://mathworld.wolfram.com/Entropy.html>`__ as
+    diversity measure. The Entrotpy gets
+    `normalized to group size <https://math.stackexchange.com/a/945172>`__.
 
-    Ignores NaN values. 
+    Ignores NaN values.
 
     Parameters
     ----------
     adata
-        Annotated data matrix 
-    groupby 
-        Column of `obs` by which the grouping will be performed. 
+        Annotated data matrix
+    groupby
+        Column of `obs` by which the grouping will be performed.
     target_col
         Column on which to compute the alpha diversity
     inplace
         If `True`, add a column to `obs`. Otherwise return a DataFrame
-        with the alpha diversities. 
+        with the alpha diversities.
     key_added
-        Key under which the alpha diversity will be stored if inplace is `True`. 
-        Defaults to `alpha_diversity_{target_col}`. 
+        Key under which the alpha diversity will be stored if inplace is `True`.
+        Defaults to `alpha_diversity_{target_col}`.
 
     Returns
     -------
     Depending on the value of inplace returns a DataFrame with the alpha diversity
-    for each group or adds a column to `adata.obs`. 
+    for each group or adds a column to `adata.obs`.
     """
     # Could rely on skbio.math if more variants are required.
     def _shannon_entropy(freq):
-        """Normalized shannon entropy according to 
+        """Normalized shannon entropy according to
         https://math.stackexchange.com/a/945172
         """
         np.testing.assert_almost_equal(np.sum(freq), 1)

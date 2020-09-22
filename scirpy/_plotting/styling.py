@@ -22,10 +22,10 @@ def apply_style_to_axes(
         Axes object
     style
         Style to apply to the axes. Currently supported are `None` (disable styling)
-        and `'default'` (default style). 
+        and `'default'` (default style).
     style_kws
-        Parameters passed to :func:`scirpy.pl.styling.style_axes` which 
-        override the defaults provided by the style. 
+        Parameters passed to :func:`scirpy.pl.styling.style_axes` which
+        override the defaults provided by the style.
     """
     if style is not None:
         style_kws = dict() if style_kws is None else style_kws
@@ -55,8 +55,8 @@ def style_axes(
     change_xticks: bool = True,
     add_legend: bool = True,
 ) -> None:
-    """Style an axes object. 
-    
+    """Style an axes object.
+
     Parameters
     ----------
     ax
@@ -70,19 +70,19 @@ def style_axes(
     ylab
         Label for the y axis.
     title_loc
-        Position of the plot title (can be {'center', 'left', 'right'}). 
+        Position of the plot title (can be {'center', 'left', 'right'}).
     title_pad
         Padding of the plot title.
     title_fontsize
-        Font size of the plot title. 
+        Font size of the plot title.
     label_fontsize
-        Font size of the axis labels.   
+        Font size of the axis labels.
     tick_fontsize
-        Font size of the axis tick labels. 
+        Font size of the axis tick labels.
     change_xticks
-        REmoves ticks from x axis. 
+        REmoves ticks from x axis.
     add_legend
-        Font size of the axis tick labels. 
+        Font size of the axis tick labels.
     """
     ax.set_title(
         title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
@@ -120,16 +120,16 @@ def style_axes(
 def _get_colors(
     adata, obs_key: str, palette: Union[str, Sequence[str], Cycler, None] = None
 ) -> Dict[str, str]:
-    """Return colors for a category stored in AnnData. 
+    """Return colors for a category stored in AnnData.
 
-    If colors are not stored, new ones are assigned. 
+    If colors are not stored, new ones are assigned.
 
     Since we currently don't plot expression values, only keys from `obs`
     are supportet, while in scanpy `values_to_plot` (used instead of `obs_key`)
-    can be a key from either `obs` or `var`. 
+    can be a key from either `obs` or `var`.
 
     TODO: This makes use of private scanpy functions. This is Evil and
-    should be changed in the future. 
+    should be changed in the future.
     """
     # required to turn into categoricals
     adata._sanitize()
