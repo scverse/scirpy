@@ -71,7 +71,10 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     adata.obs.drop("clonotype", axis="columns", inplace=True)
 
     st._tools._clonal_expansion._clip_and_count(
-        adata, groupby="group", target_col="new_col", clip_at=2,
+        adata,
+        groupby="group",
+        target_col="new_col",
+        clip_at=2,
     )
     npt.assert_equal(
         adata.obs["new_col_clipped_count"],
@@ -81,7 +84,11 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     # check if it raises value error if target_col does not exist
     with pytest.raises(ValueError):
         st._tools._clonal_expansion._clip_and_count(
-            adata, groupby="group", target_col="clonotype", clip_at=2, fraction=False,
+            adata,
+            groupby="group",
+            target_col="clonotype",
+            clip_at=2,
+            fraction=False,
         )
 
 
@@ -191,7 +198,11 @@ def test_group_abundance():
         adata, groupby="clonotype", target_col="group", fraction=False
     )
     expected_count = pd.DataFrame.from_dict(
-        {"ct1": {"A": 3.0, "B": 1.0}, "ct2": {"A": 0.0, "B": 1.0},}, orient="index",
+        {
+            "ct1": {"A": 3.0, "B": 1.0},
+            "ct2": {"A": 0.0, "B": 1.0},
+        },
+        orient="index",
     )
     npt.assert_equal(res.values, expected_count.values)
 
@@ -200,7 +211,11 @@ def test_group_abundance():
         adata, groupby="clonotype", target_col="group", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
-        {"ct1": {"A": 0.75, "B": 0.25}, "ct2": {"A": 0.0, "B": 1.0},}, orient="index",
+        {
+            "ct1": {"A": 0.75, "B": 0.25},
+            "ct2": {"A": 0.0, "B": 1.0},
+        },
+        orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
 
@@ -209,7 +224,11 @@ def test_group_abundance():
         adata, groupby="group", target_col="clonotype", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
-        {"A": {"ct1": 1.0, "ct2": 0.0}, "B": {"ct1": 0.5, "ct2": 0.5},}, orient="index",
+        {
+            "A": {"ct1": 1.0, "ct2": 0.0},
+            "B": {"ct1": 0.5, "ct2": 0.5},
+        },
+        orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
 
@@ -217,10 +236,16 @@ def test_group_abundance():
 def test_spectratype(adata_tra):
     # Check numbers
     res1 = st.tl.spectratype(
-        adata_tra, groupby="TRA_1_cdr3", target_col="sample", fraction=False,
+        adata_tra,
+        groupby="TRA_1_cdr3",
+        target_col="sample",
+        fraction=False,
     )
     res2 = st.tl.spectratype(
-        adata_tra, groupby=("TRA_1_cdr3",), target_col="sample", fraction=False,
+        adata_tra,
+        groupby=("TRA_1_cdr3",),
+        target_col="sample",
+        fraction=False,
     )
     expected_count = pd.DataFrame.from_dict(
         {

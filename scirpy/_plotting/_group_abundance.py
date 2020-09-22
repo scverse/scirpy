@@ -17,42 +17,42 @@ def group_abundance(
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
     **kwargs,
 ) -> plt.Axes:
-    """Plots the number of cells per group, split up by a categorical variable. 
+    """Plots the number of cells per group, split up by a categorical variable.
 
-    Generates a stacked bar chart with one bar per group. Stacks 
-    are colored according to the categorical variable specified in `target_col`. 
+    Generates a stacked bar chart with one bar per group. Stacks
+    are colored according to the categorical variable specified in `target_col`.
 
-    Ignores NaN values. 
-    
+    Ignores NaN values.
+
     Parameters
     ----------
     adata
         AnnData object to work on.
     groupby
-        Group by this column from `obs`. For instance, "sample" or "diagnosis". 
+        Group by this column from `obs`. For instance, "sample" or "diagnosis".
     target_col
-        Column on which to compute the abundance. 
+        Column on which to compute the abundance.
         Defaults to `has_tcr` which computes the number of all cells
-        that have a T-cell receptor. 
+        that have a T-cell receptor.
     normalize
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, the name
-        of a column containing a categorical variable can be provided, 
-        according to which the values will be normalized. 
-    max_cols: 
+        of a column containing a categorical variable can be provided,
+        according to which the values will be normalized.
+    max_cols:
         Only plot the first `max_cols` columns. If set to `None` (the default)
-        the function will raise a `ValueError` if attempting to plot more 
-        than 100 columns. Set to `0` to disable. 
+        the function will raise a `ValueError` if attempting to plot more
+        than 100 columns. Set to `0` to disable.
     sort
-        How to arrange the dataframe columns. 
-        Default is by the category count ("count"). 
+        How to arrange the dataframe columns.
+        Default is by the category count ("count").
         Other options are "alphabetical" or to provide a list of column names.
         By providing an explicit list, the DataFrame can also be subsetted to
-        specific categories. Sorting (and subsetting) occurs before `max_cols` 
-        is applied. 
+        specific categories. Sorting (and subsetting) occurs before `max_cols`
+        is applied.
     **kwargs
-        Additional arguments passed to :func:`scirpy.pl.base.bar`.  
-    
+        Additional arguments passed to :func:`scirpy.pl.base.bar`.
+
     Returns
     -------
     Axes object

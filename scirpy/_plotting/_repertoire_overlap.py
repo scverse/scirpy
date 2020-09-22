@@ -28,15 +28,15 @@ def repertoire_overlap(
     """Visualizes overlap betwen a pair of samples on a scatter plot or
     all samples on a heatmap or draws a dendrogram of samples only.
 
-    .. warning:: 
-        This is an experimental function that will likely change in the future. 
-    
+    .. warning::
+        This is an experimental function that will likely change in the future.
+
     Parameters
     ----------
     adata
         AnnData object to work on.
     groupby
-        Column with group labels (e.g. samples, tissue source, diagnosis, etc).        
+        Column with group labels (e.g. samples, tissue source, diagnosis, etc).
     target_col
         Category that overlaps among groups (`clonotype` by default, but can
         in principle be any group or cluster)
@@ -52,15 +52,15 @@ def repertoire_overlap(
         The minimum required weight to accept presence.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
+        rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized or an iterable
         providing cell weights directly. Setting it to `False` or `None` assigns equal weight
         to all cells.
     added_key
         If the tools has already been run, the results are added to `uns` under this key.
     **kwargs
-        Additional arguments passed to the base plotting function.  
-    
+        Additional arguments passed to the base plotting function.
+
     Returns
     -------
     Axes object

@@ -14,30 +14,30 @@ def spectratype(
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
 ) -> pd.DataFrame:
-    """Summarizes the distribution of :term:`CDR3` region lengths. 
+    """Summarizes the distribution of :term:`CDR3` region lengths.
 
-    Ignores NaN values. 
-    
+    Ignores NaN values.
+
     Parameters
     ----------
     adata
         AnnData object to work on.
     groupby
-        Column(s) containing CDR3 sequences.        
+        Column(s) containing CDR3 sequences.
     target_col
-        Color by this column from `obs`. E.g. sample or diagnosis 
+        Color by this column from `obs`. E.g. sample or diagnosis
     combine_fun
-        A function definining how the groupby columns should be merged 
-        (e.g. sum, mean, median, etc).  
+        A function definining how the groupby columns should be merged
+        (e.g. sum, mean, median, etc).
     fraction
         If True, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
-        name can be provided according to that the values will be normalized.  
+        rather than reporting abosolute numbers. Alternatively, a column
+        name can be provided according to that the values will be normalized.
 
 
     Returns
     -------
-    A DataFrame with spectratype information. 
+    A DataFrame with spectratype information.
     """
     if len(np.intersect1d(adata.obs.columns, groupby)) < 1:
         raise ValueError(

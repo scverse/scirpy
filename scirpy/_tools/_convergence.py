@@ -13,17 +13,17 @@ def clonotype_convergence(
     inplace=True
 ) -> Optional[Categorical]:
     """
-    Finds evidence for :term:`Convergent evolution of clonotypes`. 
+    Finds evidence for :term:`Convergent evolution of clonotypes`.
 
     Compares different definitions of :term:`clonotypes <Clonotype>` or
-    :term:`clonotype clusters <Clonotype cluster>` (e.g. clonotypes defined by 
+    :term:`clonotype clusters <Clonotype cluster>` (e.g. clonotypes defined by
     nucleotide sequence identity and clonotype clusters defined by amino acid
-    sequence identity). Annotates cells as *convergent*, if a "coarse" clonotype 
+    sequence identity). Annotates cells as *convergent*, if a "coarse" clonotype
     definition (amino acid sequence identity in the example) contains multiple
-    "fine" clonotypes (nucleotide sequence identity in the example). 
+    "fine" clonotypes (nucleotide sequence identity in the example).
 
     Clonotype definitions may be derived using :func:`scirpy.tl.define_clonotypes` or
-    :func:`scirpy.tl.define_clonotype_clusters`. 
+    :func:`scirpy.tl.define_clonotype_clusters`.
 
     Parameters
     ----------
@@ -31,20 +31,20 @@ def clonotype_convergence(
         Annotated data matrix
     key_coarse
         Key in adata.obs holding the "coarse" clonotype cluster defintion. E.g.
-        `ct_cluster_aa_identity`. 
+        `ct_cluster_aa_identity`.
     key_fine
-        Key in adata.obs holding the "fine" clonotype/clonotype cluster definition. 
+        Key in adata.obs holding the "fine" clonotype/clonotype cluster definition.
         E.g. `clonotype`
     key_added
-        Key under which the result is stored in `adata.obs`. 
+        Key under which the result is stored in `adata.obs`.
     inplace
         If True, a column with the result will be stored in `adata.obs`. Otherwise
         the result is returned.
-    
+
     Returns
     -------
     Depending on the value of `inplace`, either returns or adds to `adata` a categorical
-    vector indicating for each cell whether it belongs to a "convergent clonotype". 
+    vector indicating for each cell whether it belongs to a "convergent clonotype".
     """
     convergence_df = (
         adata.obs.loc[:, [key_coarse, key_fine]]

@@ -14,37 +14,37 @@ def merge_with_tcr(
     validate: str = "one_to_one",
     **kwargs
 ) -> None:
-    """Merge TCR data with transcriptomics data into a single :class:`~anndata.AnnData` 
-    object. 
+    """Merge TCR data with transcriptomics data into a single :class:`~anndata.AnnData`
+    object.
 
     :ref:`Reading in TCR data<importing-data>` results in an :class:`~anndata.AnnData`
     object with TCR information stored in `obs`. Use this function to merge
-    it with another :class:`~anndata.AnnData` which contains transcriptomics data. 
+    it with another :class:`~anndata.AnnData` which contains transcriptomics data.
 
-    Will keep all objects (e.g. `neighbors`, `umap`) from `adata` and integrate 
-    `obs` from `adata_tcr` into `adata`. 
-    Everything other than `.obs` from `adata_tcr` will be discarded. 
+    Will keep all objects (e.g. `neighbors`, `umap`) from `adata` and integrate
+    `obs` from `adata_tcr` into `adata`.
+    Everything other than `.obs` from `adata_tcr` will be discarded.
 
-    This function uses :func:`pandas.merge` to join the two `.obs` data frames. 
+    This function uses :func:`pandas.merge` to join the two `.obs` data frames.
 
-    Modifies `adata` inplace. 
+    Modifies `adata` inplace.
 
     Parameters
     ----------
     adata
-        AnnData with the transcriptomics data. Will be modified inplace. 
+        AnnData with the transcriptomics data. Will be modified inplace.
     adata_tcr
         AnnData with the TCR data
     on
         Columns to join on. Default: The index and "batch", if it exists in both `obs`.
     left_index
-        See :func:`pandas.merge`. 
+        See :func:`pandas.merge`.
     right_index
-        See :func:`pandas.merge`.  
+        See :func:`pandas.merge`.
     validate
-        See :func:`pandas.merge`. 
+        See :func:`pandas.merge`.
     **kwargs
-        Additional kwargs are passed to :func:`pandas.merge`. 
+        Additional kwargs are passed to :func:`pandas.merge`.
     """
     if on is None:
         if ("batch" in adata.obs.columns) and ("batch" in adata_tcr.obs.columns):

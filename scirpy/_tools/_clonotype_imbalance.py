@@ -29,30 +29,30 @@ def clonotype_imbalance(
     Adds two dataframes (abundance of clonotypes per sample; pval and logFC for clonotypes) to `uns`
 
     .. warning::
-        
-        This is an experimental function and will likely change in the future. 
-    
+
+        This is an experimental function and will likely change in the future.
+
     Parameters
     ----------
     adata
-        AnnData object to work on.       
+        AnnData object to work on.
     replicate_col
         Column with batch or sample labels.
     groupby
         The column containing categories that we want to compare and find imbalance between
     case_label
-        The label in `groupby` column that we want to compare. 
+        The label in `groupby` column that we want to compare.
     control_label
         The label in `groupby` column that we use as a baseline for comparison. If not set
-        (None by default), all labels that are not equal to `case_label` make up the baseline. 
+        (None by default), all labels that are not equal to `case_label` make up the baseline.
     target_col
-        The clusters (clonotypes by default) that are imbalanced. 
+        The clusters (clonotypes by default) that are imbalanced.
     additional_hue
         An additional grouping factor. If the `case_label` was tumor for example, this could
         help make a distinction between imbalance in lung and colorectal tumors.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
-        rather than reporting abosolute numbers. Alternatively, a column 
+        rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized or an iterable
         providing cell weights directly. Setting it to `False` or `None` assigns equal weight
         to all cells.
@@ -67,7 +67,7 @@ def clonotype_imbalance(
 
     Returns
     -------
-    Two dataframes: abundance of clonotypes per sample; pval and logFC for clonotypes. 
+    Two dataframes: abundance of clonotypes per sample; pval and logFC for clonotypes.
     """
 
     # Retrieve clonotype presence matrix
@@ -166,12 +166,12 @@ def _create_case_control_groups(
     case_label: str,
     control_label: Union[None, str],
 ) -> List:
-    """Creates groups for comparison. 
-    
+    """Creates groups for comparison.
+
     Parameters
     ----------
     df
-        A pandas dataframe with all the columns we will use for grouping.       
+        A pandas dataframe with all the columns we will use for grouping.
     replicate_col
         Column with batch or sample labels.
     groupby
@@ -180,17 +180,17 @@ def _create_case_control_groups(
         An additional grouping factor. If the `case_label` was tumor for example, this could
         help make a distinction between imbalance in lung and colorectal tumors.
     case_label
-        The label in `groupby` column that we want to compare. 
+        The label in `groupby` column that we want to compare.
     control_label
         The label in `groupby` column that we use as a baseline for comparison. If not set
-        (None by default), all labels that are not equal to `case_label` make up the baseline. 
+        (None by default), all labels that are not equal to `case_label` make up the baseline.
     target_col
-        The clusters (clonotypes by default) that are imbalanced. 
+        The clusters (clonotypes by default) that are imbalanced.
 
     Returns
     -------
     A list, where each item consist of a hue, list of cases, list of controls,
-    number of cases, number of controls. 
+    number of cases, number of controls.
     """
 
     case_control_groups = []
@@ -229,19 +229,19 @@ def _calculate_imbalance(
     global_minimum: float,
 ) -> Tuple[float, float, np.ndarray, np.ndarray]:
     """Calculate statistics for the probability of an imbalance in the contingency table
-    among two groups. 
-    
+    among two groups.
+
     Parameters
     ----------
     case_sizes
         An iterable of sizes (conts or normalized counts) in a given group for
-        each replicates. 
+        each replicates.
     control_sizes
         An iterable of sizes (conts or normalized counts) in the control group for
         each replicates.
     ncase
         Total size (all counts or sum of normalized counts) of a given group for
-        each replicates. 
+        each replicates.
     ncontrol
         Total size (all counts or sum of normalized counts) of the control group
         for each replicates.
@@ -252,7 +252,7 @@ def _calculate_imbalance(
     Returns
     -------
     The p-value of a Fischers exact test and a logFoldChange of the case frequency
-    compared to the control frequency and the relative sizes for case and control groups. 
+    compared to the control frequency and the relative sizes for case and control groups.
     """
 
     rel_case_sizes = case_sizes / np.array(ncase)
@@ -285,16 +285,16 @@ def _extend_clt_freq(
     rel_case_sizes: pd.Series,
     rel_control_sizes: pd.Series,
 ) -> List:
-    """Adds case and control frequencies to a summary list resembling the long data format.  
-    
+    """Adds case and control frequencies to a summary list resembling the long data format.
+
     Parameters
     ----------
     clt_freq
-        A list of records to be extended. 
+        A list of records to be extended.
     suspect
         Label for the clonotype tested.
     hue
-        label for hue (subgrouping factor). 
+        label for hue (subgrouping factor).
     case_label
         Label for cases.
     control_label
@@ -307,7 +307,7 @@ def _extend_clt_freq(
     Returns
     -------
     The extended list, where each item is a tuple of the tested clonotype, hue label,
-    group label, replicate name, group size (frequency). 
+    group label, replicate name, group size (frequency).
     """
 
     for e in rel_case_sizes.index.values:

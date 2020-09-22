@@ -9,7 +9,7 @@ import scipy.sparse
 
 
 def _allclose_sparse(A, B, atol=1e-8):
-    """Check if two sparse matrices are almost equal. 
+    """Check if two sparse matrices are almost equal.
 
     From https://stackoverflow.com/questions/47770906/how-to-test-if-two-sparse-arrays-are-almost-equal/47771340#47771340
     """
@@ -68,7 +68,7 @@ def _is_symmetric(M) -> bool:
 
 
 def __is_na(x):
-    """the non-vectorized version, to be called from a function 
+    """the non-vectorized version, to be called from a function
     that gets vectorized"""
     return (
         pd.isnull(x)
@@ -81,23 +81,23 @@ def __is_na(x):
 
 @np.vectorize
 def _is_na(x):
-    """Check if an object or string is NaN. 
-    The function is vectorized over numpy arrays or pandas Series 
+    """Check if an object or string is NaN.
+    The function is vectorized over numpy arrays or pandas Series
     but also works for single values.
-    
-    Pandas Series are converted to numpy arrays. 
+
+    Pandas Series are converted to numpy arrays.
     """
     return __is_na(x)
 
 
 def _is_true(x):
-    """Evaluates true for bool(x) unless _is_false(x) evaluates true. 
-    I.e. strings like "false" evaluate as False. 
+    """Evaluates true for bool(x) unless _is_false(x) evaluates true.
+    I.e. strings like "false" evaluate as False.
 
-    Everything that evaluates to _is_na(x) evaluates evaluate to False. 
+    Everything that evaluates to _is_na(x) evaluates evaluate to False.
 
-    The function is vectorized over numpy arrays or pandas Series 
-    but also works for single values.  """
+    The function is vectorized over numpy arrays or pandas Series
+    but also works for single values."""
     return ~_is_false(x) & ~_is_na(x)
 
 
@@ -111,12 +111,12 @@ def __is_false(x):
 
 
 def _is_false(x):
-    """Evaluates false for bool(False) and str("false")/str("False"). 
-    The function is vectorized over numpy arrays or pandas Series. 
+    """Evaluates false for bool(False) and str("false")/str("False").
+    The function is vectorized over numpy arrays or pandas Series.
 
-    Everything that is NA as defined in `is_na()` evaluates to False. 
-    
-    but also works for single values.  """
+    Everything that is NA as defined in `is_na()` evaluates to False.
+
+    but also works for single values."""
     x = np.array(x).astype(object)
 
     return __is_false(x)
@@ -126,7 +126,7 @@ def _add_to_uns(
     adata: AnnData, tool: str, result: Any, *, parameters: dict = None, domain="scirpy"
 ) -> None:
     """Store results of a tool in `adata.uns`.
-    
+
     Parameters
     ----------
     adata
@@ -134,15 +134,15 @@ def _add_to_uns(
     tool
         Name of the tool (=dict key of adata.uns)
     result
-        Result to store 
+        Result to store
     parameters
-        Parameters the tool was ran with. If `None`, it is assumed 
+        Parameters the tool was ran with. If `None`, it is assumed
         that the tools does not take parameters and the result
-        is directly stored in `uns[domain][tool]`. 
+        is directly stored in `uns[domain][tool]`.
         Otherwise, the parameters are converted into a named tuple
-        that is used as a dict key: `uns[domain][tool][param_named_tuple] = result`. 
+        that is used as a dict key: `uns[domain][tool][param_named_tuple] = result`.
     domain
-        top level key of `adata.uns` to store results under. 
+        top level key of `adata.uns` to store results under.
     """
     if domain not in adata.uns:
         adata.uns[domain] = dict()
@@ -163,14 +163,14 @@ def _normalize_counts(
 ) -> pd.Series:
     """
     Produces a pd.Series with group sizes that can be used to normalize
-    counts in a DataFrame. 
+    counts in a DataFrame.
 
     Parameters
     ----------
     normalize
         If False, returns a scaling factor of `1`
         If True, computes the group sizes according to `default_col`
-        If normalize is a colname, compute the group sizes according to the colname. 
+        If normalize is a colname, compute the group sizes according to the colname.
     """
     if not normalize:
         return np.ones(obs.shape[0])
@@ -186,7 +186,7 @@ def _normalize_counts(
 
 
 def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:
-    """Get results of a tool from `adata.uns`. 
+    """Get results of a tool from `adata.uns`.
 
     Parameters
     ----------
@@ -195,21 +195,21 @@ def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:
     tool
         name of the tool
     parameters
-        Parameters the tool was ran with. If `None` it is assumed 
-        that the tools does not take parameters and the result is directly 
-        stored in `uns[domain][tool]`. Otherwise, the parameters are converted 
-        into a named tuple that is used as dict key: 
-        `uns[domain][tool][param_named_tuple]`. Raises a KeyError if no such 
-        entry exists. 
+        Parameters the tool was ran with. If `None` it is assumed
+        that the tools does not take parameters and the result is directly
+        stored in `uns[domain][tool]`. Otherwise, the parameters are converted
+        into a named tuple that is used as dict key:
+        `uns[domain][tool][param_named_tuple]`. Raises a KeyError if no such
+        entry exists.
 
     Raises
     ------
     KeyError
-        If no entry for the tool or for the given parameters exist. 
+        If no entry for the tool or for the given parameters exist.
 
     Returns
     -------
-    The stored result. 
+    The stored result.
     """
     if parameters is None:
         return adata.uns["scirpy"][tool]

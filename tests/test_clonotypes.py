@@ -314,6 +314,7 @@ def test_clonotype_convergence(adata_clonotype):
     pdt.assert_extension_array_equal(
         res,
         pd.Categorical(
-            ["not convergent"] * 9, categories=["convergent", "not convergent"],
+            ["not convergent"] * 9,
+            categories=["convergent", "not convergent"],
         ),
     )

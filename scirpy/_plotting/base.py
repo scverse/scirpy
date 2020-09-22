@@ -379,7 +379,8 @@ def _add_labels(
             if legend_fontoutline is not None:
                 path_effect = [
                     patheffects.withStroke(
-                        linewidth=legend_fontoutline, foreground="w",
+                        linewidth=legend_fontoutline,
+                        foreground="w",
                     )
                 ]
             else:
@@ -412,27 +413,27 @@ def embedding(
     wspace: float = None,
     **kwargs,
 ) -> Union[None, Sequence[plt.Axes]]:
-    """A customized wrapper to the :func:`scanpy.pl.embedding` function. 
+    """A customized wrapper to the :func:`scanpy.pl.embedding` function.
 
     The differences to the scanpy embedding function are:
         * allows to specify a `panel_size`
-        * Allows to specify a different `basis`, `legend_loc` and `palette` 
-          for each panel. The number of panels is defined by the `color` parameter. 
+        * Allows to specify a different `basis`, `legend_loc` and `palette`
+          for each panel. The number of panels is defined by the `color` parameter.
         * Use a patched version for adding "on data" labels. The original
-          raises a flood of warnings when coords are `nan`. 
-        * For columns with many categories, cycles through colors 
+          raises a flood of warnings when coords are `nan`.
+        * For columns with many categories, cycles through colors
           instead of reverting to grey
-        * allows to specify axes, even if multiple colors are set. 
+        * allows to specify axes, even if multiple colors are set.
 
     Parameters
     ----------
     adata
         annotated data matrix
     basis
-        embedding to plot. 
-        Get the coordinates from the "X_{basis}" key in `adata.obsm`. 
-        This can be a list of the same length as `color` to specify 
-        different bases for each panel. 
+        embedding to plot.
+        Get the coordinates from the "X_{basis}" key in `adata.obsm`.
+        This can be a list of the same length as `color` to specify
+        different bases for each panel.
     color
         Keys for annotations of observations/cells or variables/genes, e.g.,
         `'ann1'` or `['ann1', 'ann2']`.
@@ -441,14 +442,14 @@ def embedding(
     palette
         Colors to use for plotting categorical annotation groups.
         The palette can be a valid :class:`~matplotlib.colors.ListedColormap` name
-        (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object. 
-        It is possible to specify a list of the same size as `color` to choose 
-        a different color map for each panel. 
+        (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object.
+        It is possible to specify a list of the same size as `color` to choose
+        a different color map for each panel.
     legend_loc
         Location of legend, either `'on data'`, `'right margin'` or a valid keyword
         for the `loc` parameter of :class:`~matplotlib.legend.Legend`.
     ax
-        A matplotlib axes object or a list with the same length as `color` thereof. 
+        A matplotlib axes object or a list with the same length as `color` thereof.
     ncols
         Number of columns for multi-panel plots
     show
@@ -458,14 +459,14 @@ def embedding(
     hspace
         Adjust the height of the space between multiple panels.
     **kwargs
-        Arguments to pass to :func:`scanpy.pl.embedding`. 
+        Arguments to pass to :func:`scanpy.pl.embedding`.
 
     Returns
     -------
     axes
         A list of axes objects, containing one
-        element for each `color`, or None if `show == True`. 
-    
+        element for each `color`, or None if `show == True`.
+
     See also
     --------
     :func:`scanpy.pl.embedding`

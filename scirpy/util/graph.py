@@ -61,7 +61,7 @@ def layout_components(
     arrange_boxes
         How to arrange the individual components. Can be "size"
         to arange them by the component size, or "rpack" to pack them as densly
-        as possible, or "squarify" to arrange them using a treemap algorithm. 
+        as possible, or "squarify" to arrange them using a treemap algorithm.
     pad_x
         Padding between subgraphs in the x dimension.
     pad_y
@@ -127,7 +127,12 @@ def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
     else:
         scale_width, scale_height = aspect_ratio, 1
     bboxes = [
-        (x, y, width * scale_width - pad_x, height * scale_height - pad_y,)
+        (
+            x,
+            y,
+            width * scale_width - pad_x,
+            height * scale_height - pad_y,
+        )
         for (x, y), (width, height) in zip(origins, dimensions)
     ]
     return bboxes[::-1]

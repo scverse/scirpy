@@ -65,7 +65,13 @@ def adata_define_clonotype_clusters():
             ["cell9", "nan", "nan", "nan", "KKK"],
             ["cell10", "nan", "nan", "nan", "nan"],
         ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3",],
+        columns=[
+            "cell_id",
+            "TRA_1_cdr3",
+            "TRA_2_cdr3",
+            "TRB_1_cdr3",
+            "TRB_2_cdr3",
+        ],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata

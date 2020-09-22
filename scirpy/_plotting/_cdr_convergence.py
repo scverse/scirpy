@@ -27,8 +27,8 @@ def cdr_convergence(
     """how many nucleotide versions a single CDR3 amino acid sequence typically has in a given group
     cells belong to each clonotype within a certain sample.
 
-    Ignores NaN values. 
-    
+    Ignores NaN values.
+
     Parameters
     ----------
     adata
@@ -36,32 +36,32 @@ def cdr_convergence(
     groupby
         Group by this column from `obs`. Samples or diagnosis for example.
     target_col
-        Column on which to compute the expansion. Useful if we want to specify the chain.        
+        Column on which to compute the expansion. Useful if we want to specify the chain.
     for_cells
-        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.          
+        A whitelist of cells that should be included in the analysis. If not specified, cells with NaN values in the group definition columns will be ignored. When the tool is executed by the plotting function, the whitelist is not updated.
     clip_at
-        All clonotypes with more copies than `clip_at` will be summarized into 
-        a single group. 
+        All clonotypes with more copies than `clip_at` will be summarized into
+        a single group.
     grouporder
         Specifies the order of group (samples).
     top_n
-        Number of groups to plot. 
+        Number of groups to plot.
     viztype
-        The user can later choose the layout of the plot. Currently supports `bar` and `stacked`.  
+        The user can later choose the layout of the plot. Currently supports `bar` and `stacked`.
     vizarg
-        Custom values to be passed to the plot in a dictionary of arguments.   
+        Custom values to be passed to the plot in a dictionary of arguments.
     ax
-        Custom axis if needed.  
+        Custom axis if needed.
     curve_layout
-        if the KDE-based curves should be stacked or shifted vetrically.  
+        if the KDE-based curves should be stacked or shifted vetrically.
     sizeprofile
-        Figure size and font sizes to make everything legible. Currenty only `small` is supported.      
+        Figure size and font sizes to make everything legible. Currenty only `small` is supported.
     fraction
         If True, compute fractions of cells rather than reporting
         abosolute numbers. Always relative to the main grouping variable.leton, doublet or triplet clonotype.
     no_singles
         If non-convergent clonotypes should be shown explicitely.
-    
+
     Returns
     -------
     List of axes or the dataFrame to plot.

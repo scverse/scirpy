@@ -18,15 +18,15 @@ def clonal_expansion(
     viztype: Literal["bar", "barh"] = "bar",
     **kwargs,
 ):
-    """Visualize clonal expansion. 
+    """Visualize clonal expansion.
 
-    Plots the fraction of cells that belong to an expanded :term:`Clonotype` by 
-    a categorical variable. 
+    Plots the fraction of cells that belong to an expanded :term:`Clonotype` by
+    a categorical variable.
 
     If `summarize_by` is set to "clonotype" it plots the fraction
-    of clonotypes instead of the fraction of cells. 
+    of clonotypes instead of the fraction of cells.
 
-    Removes all entries with `NaN` in `target_col` prior to plotting. 
+    Removes all entries with `NaN` in `target_col` prior to plotting.
 
     Parameters
     ----------
@@ -35,19 +35,19 @@ def clonal_expansion(
     groupby
         Group by this categorical variable in `adata.obs`.
     target_col
-        Column in `adata.obs` containing the clonotype information.  
+        Column in `adata.obs` containing the clonotype information.
     clip_at
         All entries in `target_col` with more copies than `clip_at`
-        will be summarized into a single group.         
+        will be summarized into a single group.
     expanded_in
-        Calculate clonal expansion within groups. To calculate expansion 
+        Calculate clonal expansion within groups. To calculate expansion
         within patients, set this to the column containing patient annotation.
         If set to None, a clonotype counts as expanded if there's any cell of the
-        same clonotype across the entire dataset. See also :term:`Public clonotype`. 
+        same clonotype across the entire dataset. See also :term:`Public clonotype`.
     summarize_by
         Can be either `cell` to count cells belonging to a clonotype (the default),
         or `clonotype` to count clonotypes. The former leads to a over-representation
-        of expanded clonotypes but better represents the fraction of expanded cells. 
+        of expanded clonotypes but better represents the fraction of expanded cells.
     normalize
         If True, compute fractions rather than reporting
         abosolute numbers.

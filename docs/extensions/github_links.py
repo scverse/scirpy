@@ -27,7 +27,12 @@ class AutoLink(NamedTuple):
     ):
         url = self.url_template.format(text)
         title = self.title_template.format(text)
-        options = {**dict(classes=[self.class_name],), **options}
+        options = {
+            **dict(
+                classes=[self.class_name],
+            ),
+            **options,
+        }
         node = nodes.reference(rawtext, title, refuri=url, **options)
         return [node], []
 

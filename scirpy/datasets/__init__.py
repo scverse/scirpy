@@ -13,8 +13,8 @@ HERE = Path(__file__).parent
 
 @contextmanager
 def _monkey_patch_tqdm():
-    """Monkey-patch tqdm.auto to allow download without ipywidgets installed. 
-    
+    """Monkey-patch tqdm.auto to allow download without ipywidgets installed.
+
     See also https://github.com/theislab/scanpy/pull/1130.
     """
     tqdm_auto = tqdm.auto.tqdm

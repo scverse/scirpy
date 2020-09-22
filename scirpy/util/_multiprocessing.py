@@ -6,7 +6,7 @@ class EnhancedPool(mpp.Pool):
     def istarmap(self, func, iterable, chunksize=1):
         """starmap-version of imap
 
-        From https://stackoverflow.com/a/57364423/2340703. 
+        From https://stackoverflow.com/a/57364423/2340703.
         """
         if self._state != mpp.RUN:
             raise ValueError("Pool not running")

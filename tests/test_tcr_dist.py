@@ -85,7 +85,8 @@ def test_identity_dist():
     res = identity.calc_dist_mat(["ARS", "ARS", "RSA"])
     assert isinstance(res, scipy.sparse.coo_matrix)
     npt.assert_almost_equal(
-        res.toarray(), np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        res.toarray(),
+        np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
     )
 
 
@@ -96,7 +97,8 @@ def test_identity_dist_with_two_seq_arrays():
     assert res.shape == (4, 3)
     assert res.nnz == 3
     npt.assert_almost_equal(
-        res.toarray(), np.array([[0, 1, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]]),
+        res.toarray(),
+        np.array([[0, 1, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]]),
     )
 
     # test with completely empty result matrix
@@ -105,7 +107,8 @@ def test_identity_dist_with_two_seq_arrays():
     assert res.shape == (4, 3)
     assert res.nnz == 0
     npt.assert_almost_equal(
-        res.toarray(), np.zeros((4, 3)),
+        res.toarray(),
+        np.zeros((4, 3)),
     )
 
 
@@ -164,7 +167,8 @@ def test_levensthein_dist_with_two_seq_arrays():
     assert isinstance(res, scipy.sparse.coo_matrix)
     assert res.shape == (5, 2)
     npt.assert_almost_equal(
-        res.toarray(), np.array([[0, 2], [0, 2], [0, 3], [3, 2], [0, 0]]),
+        res.toarray(),
+        np.array([[0, 2], [0, 2], [0, 3], [3, 2], [0, 0]]),
     )
 
 
@@ -270,7 +274,10 @@ def test_build_index_dict(adata_cdr3):
             "TRA": {
                 "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "AHA"],
-                "seq_to_cell": {1: {0: [0, 3], 1: [1]}, 2: {0: [3, 4], 1: [0]},},
+                "seq_to_cell": {
+                    1: {0: [0, 3], 1: [1]},
+                    2: {0: [3, 4], 1: [0]},
+                },
                 "chains_per_cell": np.array([2, 1, 0, 2, 1]),
             },
             "TRB": {
@@ -301,7 +308,10 @@ def test_build_index_dict(adata_cdr3):
             "TRA": {
                 "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "AHA"],
-                "seq_to_cell": {1: {0: [0, 3], 1: [1]}, 2: {0: [3, 4], 1: [0]},},
+                "seq_to_cell": {
+                    1: {0: [0, 3], 1: [1]},
+                    2: {0: [3, 4], 1: [0]},
+                },
             },
             "TRB": {
                 "chain_inds": [1, 2],
@@ -329,7 +339,13 @@ def test_compute_distances1(adata_cdr3, adata_cdr3_mock_distance_calculator):
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
-            [[1, 0, 0, 1, 0], [0, 1, 0, 0, 0], [0] * 5, [1, 0, 0, 1, 0], [0] * 5,]
+            [
+                [1, 0, 0, 1, 0],
+                [0, 1, 0, 0, 0],
+                [0] * 5,
+                [1, 0, 0, 1, 0],
+                [0] * 5,
+            ]
         ),
     )
 
@@ -373,7 +389,13 @@ def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
-            [[1, 4, 0, 1, 0], [4, 1, 0, 4, 0], [0] * 5, [1, 4, 0, 1, 0], [0] * 5,]
+            [
+                [1, 4, 0, 1, 0],
+                [4, 1, 0, 4, 0],
+                [0] * 5,
+                [1, 4, 0, 1, 0],
+                [0] * 5,
+            ]
         ),
     )
 
@@ -613,7 +635,8 @@ def test_dist_to_connectivities(adata_cdr3):
     C = tn2.connectivities
     assert C.nnz == tn2._dist_mat.nnz
     npt.assert_equal(
-        C.toarray(), tn2._dist_mat.toarray(),
+        C.toarray(),
+        tn2._dist_mat.toarray(),
     )
 
 

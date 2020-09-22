@@ -9,7 +9,10 @@ from anndata import AnnData
 @pytest.fixture
 def test_df():
     return pd.DataFrame.from_dict(
-        {"ct1": {"A": 3.0, "B": 1.0, "C": 4}, "ct2": {"A": 0.0, "B": 1.0, "C": 2.5},},
+        {
+            "ct1": {"A": 3.0, "B": 1.0, "C": 4},
+            "ct2": {"A": 0.0, "B": 1.0, "C": 2.5},
+        },
         orient="index",
     )
 

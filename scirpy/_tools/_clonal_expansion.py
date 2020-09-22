@@ -16,8 +16,8 @@ def _clip_and_count(
     key_added: Union[str, None] = None,
     fraction: bool = True,
 ) -> Union[None, np.ndarray]:
-    """Counts the number of identical entries in `target_col` 
-    for each group in `group_by`. 
+    """Counts the number of identical entries in `target_col`
+    for each group in `group_by`.
     """
     if target_col not in adata.obs.columns:
         raise ValueError("`target_col` not found in obs.")
@@ -57,9 +57,9 @@ def clonal_expansion(
     key_added: str = "clonal_expansion",
     inplace: bool = True,
 ) -> Union[None, np.ndarray]:
-    """Adds a column to `obs` recording which clonotypes are expanded. 
-    
-    Counts NaN values like any other value in `target_col`. 
+    """Adds a column to `obs` recording which clonotypes are expanded.
+
+    Counts NaN values like any other value in `target_col`.
 
     Parameters
     ----------
@@ -69,22 +69,22 @@ def clonal_expansion(
         Column containing the clontype annoataion
     expanded_in
         Calculate clonal expansion within groups. Usually makes sense to set
-        this to the column containing sample annotation. If set to None, 
+        this to the column containing sample annotation. If set to None,
         a clonotype counts as expanded if there's any cell of the same clonotype
-        across the entire dataset. 
+        across the entire dataset.
     clip_at:
-        All clonotypes with more than `clip_at` clones will be summarized into 
+        All clonotypes with more than `clip_at` clones will be summarized into
         a single category
     key_added
-        Key under which the results will be added to `obs`. 
+        Key under which the results will be added to `obs`.
     inplace
-        If True, adds a column to `obs`. Otherwise returns an array 
-        with the clipped counts. 
+        If True, adds a column to `obs`. Otherwise returns an array
+        with the clipped counts.
 
     Returns
     -------
     Depending on the value of inplace, adds a column to adata or returns
-    an array with the clipped count per cell. 
+    an array with the clipped count per cell.
     """
     return _clip_and_count(
         adata,
@@ -106,30 +106,30 @@ def summarize_clonal_expansion(
     **kwargs,
 ) -> pd.DataFrame:
     """
-    Summarizes clonal expansion by a grouping variable. 
+    Summarizes clonal expansion by a grouping variable.
 
-    Removes all entries with `NaN` in `target_col` prior to summarization. 
+    Removes all entries with `NaN` in `target_col` prior to summarization.
 
     Parameters
     ----------
     adata
         annotated data matrix
     groupby
-        summarize by this column in `adata.obs`. 
+        summarize by this column in `adata.obs`.
     target_col
         column in obs which holds the clonotype information
     summarize_by
         Can be either `cell` to count cells belonging to a clonotype (the default),
         or "clonotype" to count clonotypes. The former leads to a over-representation
-        of expanded clonotypes but better represents the fraction of expanded cells. 
+        of expanded clonotypes but better represents the fraction of expanded cells.
     normalize
-        If `False`, plot absolute cell counts. If `True`, scale each group to 1. 
+        If `False`, plot absolute cell counts. If `True`, scale each group to 1.
     **kwargs
-        Additional arguments passed to :func:`clonal_expansion`. 
-    
+        Additional arguments passed to :func:`clonal_expansion`.
+
     Returns
     -------
-    A DataFrame with one row for each unique value in `groupby`. 
+    A DataFrame with one row for each unique value in `groupby`.
     """
     if summarize_by not in ["clonotype", "cell"]:
         raise ValueError("Invalue value for `summarize_by`. ")

@@ -205,50 +205,50 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
 ) -> Union[None, np.ndarray]:
-    """Layouts the clonotype network for plotting. 
+    """Layouts the clonotype network for plotting.
 
-    Other than with transcriptomics data, this network usually consists 
-    of many disconnected components, each of them representing cells 
-    of the same clonotype. 
+    Other than with transcriptomics data, this network usually consists
+    of many disconnected components, each of them representing cells
+    of the same clonotype.
 
-    Singleton clonotypes can be filtered out with the `min_size` parameter. 
+    Singleton clonotypes can be filtered out with the `min_size` parameter.
 
-    Requires running :func:`scirpy.pp.tcr_neighbors` first. 
+    Requires running :func:`scirpy.pp.tcr_neighbors` first.
 
-    Stores coordinates of the clonotype network in `adata.obsm`. 
-    
+    Stores coordinates of the clonotype network in `adata.obsm`.
+
     Parameters
     ----------
     sequence
-        The `sequence` parameter :func:`scirpy.pp.tcr_neighbors` was ran with. 
+        The `sequence` parameter :func:`scirpy.pp.tcr_neighbors` was ran with.
     metric
-        The `metric` parameter :func:`scirpy.pp.tcr_neighbors` was ran with. 
+        The `metric` parameter :func:`scirpy.pp.tcr_neighbors` was ran with.
     min_size
         Only show clonotypes with at least `min_size` cells.
     layout
-        The layout algorithm to use. Can be anything supported by 
-        `igraph.Graph.layout`  or "components" to layout all connected components 
-        individually. See :func:`scirpy.util.graph.layout_components` for more details. 
+        The layout algorithm to use. Can be anything supported by
+        `igraph.Graph.layout`  or "components" to layout all connected components
+        individually. See :func:`scirpy.util.graph.layout_components` for more details.
     layout_kwargs
         Will be passed to the layout function
     neighbors_key
-        Key under which the neighborhood graph is stored in `adata.uns`. 
-        Defaults to `tcr_neighbors_{sequence}_{metric}`. 
+        Key under which the neighborhood graph is stored in `adata.uns`.
+        Defaults to `tcr_neighbors_{sequence}_{metric}`.
     key_clonotype_size
         Key under which the clonotype size information is stored in `adata.obs`
-        Defaults to `ct_cluster_{sequence}_{metric}_size`. 
+        Defaults to `ct_cluster_{sequence}_{metric}_size`.
     key_added
         Key under which the layout coordinates will be stored in `adata.obsm` and
-        parameters will be stored in `adata.uns`. 
+        parameters will be stored in `adata.uns`.
     inplace
-        If `True`, store the coordinates in `adata.obsm`, otherwise return them. 
+        If `True`, store the coordinates in `adata.obsm`, otherwise return them.
     random_state
-        Random seed set before computing the layout. 
+        Random seed set before computing the layout.
 
     Returns
     -------
     Depending on the value of `inplace` returns either nothing or the computed
-    coordinates. 
+    coordinates.
     """
     if neighbors_key is None:
         neighbors_key = f"tcr_neighbors_{sequence}_{metric}"
@@ -307,22 +307,22 @@ def clonotype_network_igraph(
     """
     Get an `igraph` object representing the clonotype network.
 
-    Requires running :func:`scirpy.tl.clonotype_network` before, to 
-    compute the layout. 
+    Requires running :func:`scirpy.tl.clonotype_network` before, to
+    compute the layout.
 
     Parameters
     ----------
     adata
         Annotated data matrix.
     basis
-        Key in `adata.obsm` where the network layout is stored. 
-    
+        Key in `adata.obsm` where the network layout is stored.
+
     Returns
     -------
     graph
         igraph object
-    layout 
-        corresponding igraph Layout object. 
+    layout
+        corresponding igraph Layout object.
     """
     from ..util.graph import _get_igraph_from_adjacency
 
@@ -352,16 +352,16 @@ def _define_clonotypes_no_graph(
     The current definition of a clonotype is
     same CDR3 sequence for both primary and secondary
     TRA and TRB chains. If all chains are `NaN`, the clonotype will
-    be `NaN` as well. 
+    be `NaN` as well.
 
     Parameters
     ----------
     adata
         Annotated data matrix
     flavor
-        Biological model to define clonotypes. 
-        `all_chains`: All four chains of a cell in a clonotype need to be the same. 
-        `primary_only`: Only primary alpha and beta chain need to be the same. 
+        Biological model to define clonotypes.
+        `all_chains`: All four chains of a cell in a clonotype need to be the same.
+        `primary_only`: Only primary alpha and beta chain need to be the same.
     inplace
         If True, adds a column to adata.obs
     key_added
@@ -370,9 +370,9 @@ def _define_clonotypes_no_graph(
     Returns
     -------
     Depending on the value of `inplace`, either
-    returns a Series with a clonotype for each cell 
-    or adds a `clonotype` column to `adata`. 
-    
+    returns a Series with a clonotype for each cell
+    or adds a `clonotype` column to `adata`.
+
     """
     groupby_cols = {
         "all_chains": ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"],
