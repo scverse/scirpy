@@ -33,7 +33,6 @@ def test_workflow():
 
     ir.pl.clonotype_network(adata)
 
-<<<<<<< HEAD
     # turn nans into consistent value (nan)
     for col in adata.obs.columns:
         adata.obs.loc[_is_na(adata.obs[col]), col] = np.nan
@@ -46,6 +45,3 @@ def test_workflow():
     pdt.assert_frame_equal(
         adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False
     )
-=======
-    pdt.assert_frame_equal(adata.obs, adata_obs_expected)
->>>>>>> 1fbef18e... Add a minimal test-suite to be ran on conda build
