@@ -58,9 +58,9 @@ jobs:
         run: |
           $pkg = switch ("${{ matrix.python-version }}")
           {
-              "3.6" {"https://download.lfd.uci.edu/pythonlibs/w3jqiv8s/pycairo-1.19.1-cp36-cp36m-win_amd64.whl"}
-              "3.7" {"https://download.lfd.uci.edu/pythonlibs/w3jqiv8s/pycairo-1.19.1-cp37-cp37m-win_amd64.whl"}
-              "3.8" {"https://download.lfd.uci.edu/pythonlibs/w3jqiv8s/pycairo-1.19.1-cp38-cp38-win_amd64.whl"}
+              "3.6" {"https://download.lfd.uci.edu/pythonlibs/x2tqcw5k/pycairo-1.19.1-cp36-cp36m-win_amd64.whl"}
+              "3.7" {"https://download.lfd.uci.edu/pythonlibs/x2tqcw5k/pycairo-1.19.1-cp37-cp37m-win_amd64.whl"}
+              "3.8" {"https://download.lfd.uci.edu/pythonlibs/x2tqcw5k/pycairo-1.19.1-cp38-cp38-win_amd64.whl"}
           }
           pip install $pkg
 
