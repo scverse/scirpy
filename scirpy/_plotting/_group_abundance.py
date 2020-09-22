@@ -10,7 +10,7 @@ from .styling import _get_colors
 def group_abundance(
     adata: Union[dict, AnnData],
     groupby: str,
-    target_col: str = "has_tcr",
+    target_col: str = "has_ir",
     *,
     normalize: Union[None, str, bool] = None,
     max_cols: Union[None, int] = None,
@@ -32,7 +32,7 @@ def group_abundance(
         Group by this column from `obs`. For instance, "sample" or "diagnosis".
     target_col
         Column on which to compute the abundance.
-        Defaults to `has_tcr` which computes the number of all cells
+        Defaults to `has_ir` which computes the number of all cells
         that have a T-cell receptor.
     normalize
         If `True`, compute fractions of abundances relative to the `groupby` column

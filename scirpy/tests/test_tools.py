@@ -25,7 +25,7 @@ def test_chain_pairing():
             ["True", "False", "AAAA", "nan", "CCCC", "DDDD"],
         ],
         columns=[
-            "has_tcr",
+            "has_ir",
             "multi_chain",
             "TRA_1_cdr3",
             "TRA_2_cdr3",

@@ -53,7 +53,7 @@ class IrChain:
 
     def __init__(
         self,
-        locus: Literal[VALID_CHAINS],
+        locus: Literal["TRA", "TRG", "IGK", "IGL", "TRB", "TRD", "IGH", "other"],
         *,
         cdr3: str = None,
         cdr3_nt: str = None,

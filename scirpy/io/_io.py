@@ -38,8 +38,8 @@ def _sanitize_anndata(adata: AnnData) -> None:
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
     # This should always be a categorical with True / False
-    has_tcr_mask = _is_true(adata.obs["has_tcr"])
-    adata.obs["has_tcr"] = ["True" if x else "False" for x in has_tcr_mask]
+    has_ir_mask = _is_true(adata.obs["has_ir"])
+    adata.obs["has_ir"] = ["True" if x else "False" for x in has_ir_mask]
     adata._sanitize()
 
 
@@ -132,7 +132,7 @@ def _process_tcr_cell(tcr_obj: IrCell) -> dict:
                 )
 
     # in some weird reasons, it can happen that a cell has been called from
-    # TCR-seq but no TCR seqs have been found. `has_tcr` should be equal
+    # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
     # to "at least one productive chain"
     res_dict["has_ir"] = not (
         _is_na(res_dict["IR_VJ_1_cdr3"]) and _is_na(res_dict["IR_VDJ_1_cdr3"])

@@ -137,7 +137,7 @@ sc.pp.log1p(adata)
 sc.pp.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_tcr", "CD3E"])
+sc.pl.umap(adata, color=["has_ir", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -183,7 +183,7 @@ sc.pp.log1p(adata)
 sc.pp.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_tcr", "CD3E"])
+sc.pl.umap(adata, color=["has_ir", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -326,7 +326,7 @@ sc.pp.log1p(adata)
 sc.pp.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_tcr", "CD3E"])
+sc.pl.umap(adata, color=["has_ir", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -380,5 +380,5 @@ sc.pp.log1p(adata)
 sc.pp.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_tcr", "CD3E", "sample"])
+sc.pl.umap(adata, color=["has_ir", "CD3E", "sample"])
 ```

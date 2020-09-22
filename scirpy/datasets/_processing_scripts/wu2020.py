@@ -85,7 +85,7 @@ adata.obsm["X_umap_orig"][:, 0] = (
     np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 )
 
-np.sum(adata.obs["has_tcr"])
+np.sum(adata.obs["has_ir"])
 
 adata.write_h5ad("wu2020.h5ad", compression="lzf")
 

@@ -66,7 +66,7 @@ def _group_abundance(
 def group_abundance(
     adata: AnnData,
     groupby: str,
-    target_col: str = "has_tcr",
+    target_col: str = "has_ir",
     *,
     fraction: Union[None, str, bool] = None,
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
@@ -83,7 +83,7 @@ def group_abundance(
         Group by this column from `obs`. E.g, sample, or group.
     target_col
         Caregorical variable from `obs` according to which the abundance/fractions
-        will be computed. This defaults to "has_tcr", simply counting
+        will be computed. This defaults to "has_ir", simply counting
         the number of cells with a detected :term:`TCR` by group.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column

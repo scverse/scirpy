@@ -32,8 +32,8 @@ def chain_pairing(
 
     logging.debug("Done initalizing")
 
-    mask_has_tcr = _is_true(x["has_tcr"].values)
-    mask_multichain = mask_has_tcr & _is_true(x["multi_chain"].values)
+    mask_has_ir = _is_true(x["has_ir"].values)
+    mask_multichain = mask_has_ir & _is_true(x["multi_chain"].values)
 
     logging.debug("Done with masks part 1")
 
@@ -46,9 +46,9 @@ def chain_pairing(
 
     for m in [mask_has_tra1, mask_has_trb1, mask_has_tra2, mask_has_trb2]:
         # no cell can have a cdr3 sequence but no TCR
-        assert np.setdiff1d(np.where(m)[0], np.where(mask_has_tcr)[0]).size == 0
+        assert np.setdiff1d(np.where(m)[0], np.where(mask_has_ir)[0]).size == 0
 
-    results[~mask_has_tcr] = "No TCR"
+    results[~mask_has_ir] = "No TCR"
     results[mask_has_tra1] = "Orphan alpha"
     results[mask_has_trb1] = "Orphan beta"
     results[mask_has_tra1 & mask_has_trb1] = "Single pair"
