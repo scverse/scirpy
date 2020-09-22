@@ -282,7 +282,7 @@ tcr_cells = []
 for idx, row in tcr_table.iterrows():
     cell = ir.io.IrCell(cell_id=row["cell_id"])
     alpha_chain = ir.io.IrChain(
-        chain_type="TRA",
+        locus="TRA",
         cdr3=row["cdr3_alpha"],
         cdr3_nt=row["cdr3_nt_alpha"],
         expr=row["count_alpha"],
@@ -291,7 +291,7 @@ for idx, row in tcr_table.iterrows():
         is_productive=row["productive_alpha"],
     )
     beta_chain = ir.io.IrChain(
-        chain_type="TRB",
+        locus="TRB",
         cdr3=row["cdr3_beta"],
         cdr3_nt=row["cdr3_nt_beta"],
         expr=row["count_beta"],

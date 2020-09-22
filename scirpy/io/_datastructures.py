@@ -13,8 +13,9 @@ class IrChain:
 
     Parameters
     ----------
-    chain_type
-        Currently supported: ["TRA", "TRB", "other"]
+    locus
+        IGMT locus name or "other".
+        See https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names.
     cdr3
         Amino acid sequence of the CDR3 region
     cdr3_nt
@@ -40,9 +41,19 @@ class IrChain:
         For type == TRB: sum of nucleotides inserted in the VD + DJ junction
     """
 
+    #: Chain 1 is the chain with the V-J junction
+    VJ_LOCI = ("TRA", "TRG", "IGK", "IGL")
+
+    #: Chain 2 is the chain with the V-D-J junction
+    VDJ_LOCI = ("TRB", "TRD", "IGH")
+
+    #: Valid chains are IMGT locus names or "other"
+    #: see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
+    VALID_LOCI = VJ_LOCI + VDJ_LOCI + ("other",)
+
     def __init__(
         self,
-        chain_type: Literal["TRA", "TRB", "other"],
+        locus: Literal[VALID_CHAINS],
         *,
         cdr3: str = None,
         cdr3_nt: str = None,
@@ -55,10 +66,15 @@ class IrChain:
         c_gene: str = None,
         junction_ins: int = None,
     ):
-        if chain_type not in ["TRA", "TRB", "other"]:
-            raise ValueError("Invalid chain type: {}".format(chain_type))
+        if locus not in self.VALID_LOCI:
+            raise ValueError("Invalid chain type: {}".format(locus))
 
-        self.chain_type = chain_type
+        self.locus = locus
+        self.junction_type = (
+            "VJ"
+            if locus in self.VJ_LOCI
+            else ("VDJ" if locus in self.VDJ_LOCI else None)
+        )
         self.cdr3 = cdr3.upper() if not _is_na(cdr3) else None
         self.cdr3_nt = cdr3_nt.upper() if not _is_na(cdr3_nt) else None
         self.expr = float(expr)

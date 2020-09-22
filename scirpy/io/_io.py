@@ -13,9 +13,6 @@ from pathlib import Path
 import airr
 from ..util import _doc_params, _is_na, _is_true
 
-# IMGT locus names
-# see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
-VALID_CHAINS = ["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"]
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -95,14 +92,19 @@ def _process_tcr_cell(tcr_obj: IrCell) -> dict:
     res_dict = dict()
     res_dict["cell_id"] = tcr_obj.cell_id
     chain_dict = dict()
-    for c in ["TRA", "TRB"]:
+    for junction_type in ["VJ", "VDJ"]:
         # sorting subordinately by raw and cdr3 ensures consistency
         # between load from json and load from csv.
         tmp_chains = sorted(
-            [x for x in tcr_obj.chains if x.chain_type == c and x.is_productive],
+            [
+                x
+                for x in tcr_obj.chains
+                if x.junction_type == junction_type and x.is_productive
+            ],
             key=lambda x: (x.expr, x.expr_raw, x.cdr3),
             reverse=True,
         )
+        # multichain if at least one of the receptor arms is multichain
         res_dict["multi_chain"] = res_dict.get("multi_chain", False) | (
             len(tmp_chains) > 2
         )
@@ -110,9 +112,10 @@ def _process_tcr_cell(tcr_obj: IrCell) -> dict:
         tmp_chains = tmp_chains[:2]
         # add None if less than two chains
         tmp_chains += [None] * (2 - len(tmp_chains))
-        chain_dict[c] = tmp_chains
+        chain_dict[junction_type] = tmp_chains
 
     for key in [
+        "locus",
         "cdr3",
         "junction_ins",
         "expr",
@@ -122,28 +125,28 @@ def _process_tcr_cell(tcr_obj: IrCell) -> dict:
         "c_gene",
         "cdr3_nt",
     ]:
-        for c, tmp_chains in chain_dict.items():
+        for junction_type, tmp_chains in chain_dict.items():
             for i, chain in enumerate(tmp_chains):
-                res_dict["{}_{}_{}".format(c, i + 1, key)] = (
+                res_dict["IR_{}_{}_{}".format(junction_type, i + 1, key)] = (
                     getattr(chain, key) if chain is not None else None
                 )
 
     # in some weird reasons, it can happen that a cell has been called from
     # TCR-seq but no TCR seqs have been found. `has_tcr` should be equal
     # to "at least one productive chain"
-    res_dict["has_tcr"] = not (
-        _is_na(res_dict["TRA_1_cdr3"]) and _is_na(res_dict["TRB_1_cdr3"])
+    res_dict["has_ir"] = not (
+        _is_na(res_dict["IR_VJ_1_cdr3"]) and _is_na(res_dict["IR_VDJ_1_cdr3"])
     )
 
-    if _is_na(res_dict["TRA_1_cdr3"]):
+    if _is_na(res_dict["IR_VJ_1_cdr3"]):
         assert _is_na(
-            res_dict["TRA_2_cdr3"]
+            res_dict["IR_VJ_2_cdr3"]
         ), "There can't be a secondary chain if there is no primary one: {}".format(
             res_dict
         )
-    if _is_na(res_dict["TRB_1_cdr3"]):
+    if _is_na(res_dict["IR_VDJ_1_cdr3"]):
         assert _is_na(
-            res_dict["TRB_2_cdr3"]
+            res_dict["IR_VDJ_2_cdr3"]
         ), "There can't be a secondary chain if there is no primary one: {}".format(
             res_dict
         )
@@ -194,22 +197,24 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         chain_types = [g["chain"] for g in genes.values()]
         chain_type = chain_types[0] if np.unique(chain_types).size == 1 else "other"
         # for now, gamma/delta is "other" as well.
-        chain_type = chain_type if chain_type in ["TRA", "TRB"] else "other"
+        chain_type = chain_type if chain_type in IrChain.VALID_LOCI else "other"
 
         # compute inserted nucleotides
-        # VJ junction for TRA chains
-        # VD + DJ junction for TRB chains
+        # VJ junction for TRA, TRG, IGK, IGL chains
+        # VD + DJ junction for TRB, TRD, IGH chains
         #
         # Notes on indexing:
         # some tryouts have shown, that the indexes in the json file
         # seem to be python-type indexes (i.e. the 'end' index is exclusive).
         # Therefore, no `-1` needs to be subtracted when computing the number
         # of inserted nucleotides.
-        if chain_type == "TRA" and v_gene is not None and j_gene is not None:
-            assert d_gene is None, "TRA chains should not have a D region"
+        if chain_type in IrChain.VJ_LOCI and v_gene is not None and j_gene is not None:
+            assert (
+                d_gene is None
+            ), "TRA, TRG or IG-light chains should not have a D region"
             inserted_nts = genes["j"]["start"] - genes["v"]["end"]
         elif (
-            chain_type == "TRB"
+            chain_type in IrChain.VDJ_LOCI
             and v_gene is not None
             and d_gene is not None
             and j_gene is not None
@@ -223,7 +228,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
         tcr_obj.add_chain(
             IrChain(
-                chain_type=chain_type,
+                locus=chain_type,
                 cdr3=cell["cdr3"],
                 cdr3_nt=cell["cdr3_seq"],
                 expr=cell["umi_count"],
@@ -252,9 +257,11 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
         for _, chain_series in cell_df.iterrows():
             tcr_obj.add_chain(
                 IrChain(
-                    chain_type=chain_series["chain"]
-                    if chain_series["chain"] in VALID_CHAINS
-                    else "other",
+                    locus=(
+                        chain_series["chain"]
+                        if chain_series["chain"] in IrChain.VALID_LOCI
+                        else "other"
+                    ),
                     cdr3=chain_series["cdr3"],
                     cdr3_nt=chain_series["cdr3_nt"],
                     expr=chain_series["umis"],
@@ -372,7 +379,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                 )
 
             yield IrChain(
-                chain_type,
+                locus=chain_type,
                 cdr3=tmp_chain.cdr3,
                 cdr3_nt=tmp_chain.cdr3nt,
                 expr=tmp_chain.TPM,
@@ -471,7 +478,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
             tmp_cell.add_chain(
                 IrChain(
                     is_productive=row["productive"],
-                    chain_type=row["locus"],
+                    locus=row["locus"],
                     v_gene=row["v_call"] if "v_call" in row else None,
                     d_gene=row["d_call"] if "d_call" in row else None,
                     j_gene=row["j_call"] if "j_call" in row else None,
