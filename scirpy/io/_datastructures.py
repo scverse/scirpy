@@ -1,6 +1,6 @@
-"""Datastructures for TCR data. 
+"""Datastructures for TCR data.
 
-Currently only used as intermediate storage. 
+Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
@@ -8,8 +8,8 @@ from .._compat import Literal
 from ..util import _is_na, _is_true
 
 
-class TcrChain:
-    """Data structure for a T cell receptor chain.
+class IrChain:
+    """Data structure for an immune cell receptor chain.
 
     Parameters
     ----------
@@ -71,13 +71,13 @@ class TcrChain:
         self.junction_ins = junction_ins
 
     def __repr__(self):
-        return "TcrChain object: " + str(self.__dict__)
+        return "IrChain object: " + str(self.__dict__)
 
 
-class TcrCell:
-    """Data structure for a Cell with T-cell receptors.
+class IrCell:
+    """Data structure for a Cell with immune receptors.
 
-    A TcrCell can hold multiple TcrChains.
+    An IrCell can hold multiple IrChains.
 
     Parameters
     ----------
@@ -92,12 +92,12 @@ class TcrCell:
         self.chains = list()
 
     def __repr__(self):
-        return "TcrCell {} with {} chains".format(self._cell_id, len(self.chains))
+        return "IrCell {} with {} chains".format(self._cell_id, len(self.chains))
 
     @property
     def cell_id(self):
         return self._cell_id
 
-    def add_chain(self, chain: TcrChain) -> None:
-        """Add a :class:`TcrChain`"""
+    def add_chain(self, chain: IrChain) -> None:
+        """Add a :class:`IrChain`"""
         self.chains.append(chain)

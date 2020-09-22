@@ -1,15 +1,15 @@
 API
 ===
 
-Import scirpy together with scanpy as 
+Import scirpy together with scanpy as
 
 .. code-block:: python
 
-   import scanpy as sc   
+   import scanpy as sc
    import scirpy as ir
 
 For consistency, the scirpy API tries to follow the `scanpy API <https://scanpy.readthedocs.io/en/stable/api/index.html>`__
-as closely as possible. 
+as closely as possible.
 
 .. _api-io:
 
@@ -17,12 +17,12 @@ Input/Output: `io`
 ------------------
 
 The following functions allow to import :term:`V(D)J` information from various
-formats. 
+formats.
 
 .. module:: scirpy.io
 
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    read_h5ad
    read_10x_vdj
@@ -30,15 +30,15 @@ formats.
    read_airr
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
-a list of :class:`~scirpy.io.TcrCell` objects first, and then converting them into
-an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_tcr_objs`. 
-For more details, check the :ref:`Data loading tutorial <importing-data>`. 
+a list of :class:`~scirpy.io.IrCell` objects first, and then converting them into
+an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_tcr_objs`.
+For more details, check the :ref:`Data loading tutorial <importing-data>`.
 
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
-   TcrCell
-   TcrChain
+   IrCell
+   IrChain
    from_tcr_objs
 
 
@@ -58,21 +58,21 @@ Tools: `tl`
 -----------
 
 Tools add an interpretable annotation to the :class:`~anndata.AnnData` object
-which usually can be visualized by a corresponding plotting function. 
+which usually can be visualized by a corresponding plotting function.
 
 .. module:: scirpy.tl
 
 Generic
 ^^^^^^^
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    group_abundance
 
 Quality control
 ^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    chain_pairing
 
@@ -86,7 +86,7 @@ Define and visualize clonotypes
    clonotype_convergence
    clonotype_network
    clonotype_network_igraph
-   
+
 Analyse clonal diversity
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
@@ -115,7 +115,7 @@ Plotting: `pl`
 Generic
 ^^^^^^^
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    embedding
 
@@ -124,11 +124,11 @@ Tools
 ^^^^^
 Every of these plotting functions has a corresponding *tool* in the :mod:`scirpy.tl`
 section. Depending on the computational load, tools are either invoked on-the-fly
-when calling the plotting function or need to be precomputed and stored in 
-:class:`~anndata.AnnData` previously. 
+when calling the plotting function or need to be precomputed and stored in
+:class:`~anndata.AnnData` previously.
 
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    alpha_diversity
    clonal_expansion
@@ -140,7 +140,7 @@ when calling the plotting function or need to be precomputed and stored in
    clonotype_network
 
 
-   
+
 Base plotting functions: `pl.base`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -161,7 +161,7 @@ Plot styling: `pl.styling`
 .. module:: scirpy.pl.styling
 
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    apply_style_to_axes
    style_axes
@@ -186,7 +186,7 @@ Utility functions: `util`
 .. module:: scirpy.util
 
 .. autosummary::
-   :toctree: ./generated 
+   :toctree: ./generated
 
    graph.layout_components
 

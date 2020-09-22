@@ -6,7 +6,23 @@ import pandas.testing as pdt
 from . import TESTDATA
 
 
-@pytest.mark.conda
+@pytest.mark.parametrize(
+    "path",
+    [
+        "tests/data/10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
+        "tests/data/10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+    ],
+)
+def test_read_10x_example(path):
+    """Test that a full 10x CSV table can be imported without errors.
+
+    Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
+    and https://support.10xgenomics.com/single-cell-vdj/datasets/4.0.0/sc5p_v2_hs_melanoma_10k
+    under CC-BY-4.0
+    """
+    anndata = read_10x_vdj(path)
+
+
 def test_read_10x_csv():
     anndata = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     obs = anndata.obs

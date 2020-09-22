@@ -37,47 +37,47 @@ anndata.logging.anndata_logger.setLevel("ERROR")
 Loading TCR data with scirpy
 ============================
 
-In this notebook, we demonstrate how single-cell :term:`TCR` data can be imported into 
+In this notebook, we demonstrate how single-cell :term:`TCR` data can be imported into
 an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
-AnnData and how Scirpy makes use of it, check out the :ref:`data-structure` section. 
+AnnData and how Scirpy makes use of it, check out the :ref:`data-structure` section.
 
 The example data used in this notebook are available from the
-`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__. 
+`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
 
 
 .. important:: **Limitations of the scirpy data model**
 
-    Currently, reading data into *Scirpy* has the following limitations: 
+    Currently, reading data into *Scirpy* has the following limitations:
 
-     * Only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored. 
+     * Only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored.
      * Non-productive chains are removed. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
-       flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`, 
-       you need to pass the flag explicitly or filter the chains beforehand. 
-     * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`). 
-       Excess chains are removed (those with lowest read count/:term:`UMI` count) 
-       and cells flagged as :term:`Multichain-cell`. 
+       flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
+       you need to pass the flag explicitly or filter the chains beforehand.
+     * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`).
+       Excess chains are removed (those with lowest read count/:term:`UMI` count)
+       and cells flagged as :term:`Multichain-cell`.
 
-    For more information, see :ref:`tcr-model`. 
+    For more information, see :ref:`tcr-model`.
 
 
 .. note:: **TCR quality control**
 
-     * After importing the data, we recommend running the :func:`scirpy.tl.chain_pairing` function. 
-       It will flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell) 
-       and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of alpha- and beta chains). 
+     * After importing the data, we recommend running the :func:`scirpy.tl.chain_pairing` function.
+       It will flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell)
+       and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of alpha- and beta chains).
      * We recommend excluding multichain-cells as these likely represent doublets
-     * Based on the *orphan chain* flags, the corresponding cells can be excluded. Alternatively, 
-       these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"` 
-       parameter when running :func:`scirpy.tl.define_clonotypes`. 
+     * Based on the *orphan chain* flags, the corresponding cells can be excluded. Alternatively,
+       these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"`
+       parameter when running :func:`scirpy.tl.define_clonotypes`.
 
 
 Loading data from *10x Genomics CellRanger*, *TraCeR* or AIRR-compliant tools
 -----------------------------------------------------------------------------
 
 We provide convenience functions to load data from *CellRanger* or *TraCeR* with a single function call,
-supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively. 
+supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively.
 Moreover, we support importing data in the community-standard
-`AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. 
+`AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__.
 
 .. module:: scirpy.io
    :noindex:
@@ -88,13 +88,13 @@ Moreover, we support importing data in the community-standard
    read_10x_vdj
    read_tracer
    read_airr
-   
+
 Read 10x data
 ^^^^^^^^^^^^^
 
-With :func:`~scirpy.io.read_10x_vdj` we can load `filtered_contig_annotations.csv` or `contig_annotations.json` files as they are produced by *CellRanger*. 
-Here, we demonstrate how to load paired single cell transcriptomics and TCR sequencing data from COVID19 patients 
-from `GSE145926 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145926>`_ (:cite:`Liao2020`). 
+With :func:`~scirpy.io.read_10x_vdj` we can load `filtered_contig_annotations.csv` or `contig_annotations.json` files as they are produced by *CellRanger*.
+Here, we demonstrate how to load paired single cell transcriptomics and TCR sequencing data from COVID19 patients
+from `GSE145926 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145926>`_ (:cite:`Liao2020`).
 <!-- #endraw -->
 
 ```python
@@ -109,7 +109,7 @@ adata = sc.read_10x_h5(
 )
 ```
 
-This particular sample only has a detected TCR for a small fraction of the cells: 
+This particular sample only has a detected TCR for a small fraction of the cells:
 
 ```python
 adata_tcr.shape
@@ -128,9 +128,9 @@ using :func:`scirpy.pp.merge_with_tcr`:
 ir.pp.merge_with_tcr(adata, adata_tcr)
 ```
 
-Now, we can use TCR-related variables together with the gene expression data. 
-Here, we visualize the cells with a detected TCR on the UMAP plot. 
-It is reassuring that the TCRs coincide with the T-cell marker gene CD3. 
+Now, we can use TCR-related variables together with the gene expression data.
+Here, we visualize the cells with a detected TCR on the UMAP plot.
+It is reassuring that the TCRs coincide with the T-cell marker gene CD3.
 
 ```python
 sc.pp.log1p(adata)
@@ -145,15 +145,15 @@ Read Smart-seq2 data processed with TraCeR
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `TraCeR <https://github.com/Teichlab/tracer>`__ (:cite:`Stubbington2016-kh`) is a method commonly used
-to extract TCR sequences from data generated with Smart-seq2 or other full-length single-cell sequencing protocols. 
+to extract TCR sequences from data generated with Smart-seq2 or other full-length single-cell sequencing protocols.
 `Nf-core <https://nf-co.re/>`_ provides a full `pipeline for processing Smart-seq2 sequencing data <https://github.com/nf-core/smartseq2/>`__.
 
 The :func:`scirpy.io.read_tracer` function obtains its TCR information from the `.pkl` file
-in the `filtered_TCR_seqs` folder TraCeR generates for each cell. 
+in the `filtered_TCR_seqs` folder TraCeR generates for each cell.
 
 For this example, we load the ~500 cells from triple-negative breast cancer patients from
-`GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`_ (:cite:`Chung2017`). 
-The raw data has been processed using the aforementioned `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core. 
+`GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`_ (:cite:`Chung2017`).
+The raw data has been processed using the aforementioned `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core.
 <!-- #endraw -->
 
 ```python
@@ -190,12 +190,12 @@ sc.pl.umap(adata, color=["has_tcr", "CD3E"])
 Read an AIRR-compliant rearrangement table
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We generated example data using `immuneSIM <https://immunesim.readthedocs.io/en/latest/>`__ (:cite:`Weber2020`). 
-The data consists of 100 cells and does not include transcriptomics data. 
+We generated example data using `immuneSIM <https://immunesim.readthedocs.io/en/latest/>`__ (:cite:`Weber2020`).
+The data consists of 100 cells and does not include transcriptomics data.
 
 The rearrangement tables are often organized into separate tables per chain. Therefore, :func:`scirpy.io.read_airr` supports
 specifiying multiple `tsv` files at once. This would have the same effect as concatenating them before
-the import. 
+the import.
 <!-- #endraw -->
 
 ```python
@@ -203,13 +203,13 @@ adata = ir.io.read_airr(["example_data/immunesim_airr/immunesim_tra.tsv", "examp
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-The dataset does not come with transcriptomics data. We can, therefore, not 
-show the UMAP plot highlighting cells with TCRs, but we can still use scirpy 
+The dataset does not come with transcriptomics data. We can, therefore, not
+show the UMAP plot highlighting cells with TCRs, but we can still use scirpy
 to analyse it. Below, we visualize the clonotype network
 connecting cells with similar :term:`CDR3` sequences.
 
-**Note:** The cutoff of 25 was chosen for demonstration purposes on this small sample dataset. Usually a smaller cutoff 
-is more approriate. 
+**Note:** The cutoff of 25 was chosen for demonstration purposes on this small sample dataset. Usually a smaller cutoff
+is more approriate.
 <!-- #endraw -->
 
 ```python
@@ -228,9 +228,9 @@ ir.pl.clonotype_network(adata, color="ct_cluster_aa_alignment", panel_size=(4, 4
 Creating AnnData objects from other formats
 -------------------------------------------
 
-Often, TCR data are just provided as a simple table listing the :term:`CDR3` sequences for each cell. 
+Often, TCR data are just provided as a simple table listing the :term:`CDR3` sequences for each cell.
 We provide a generic data structure for cells with TCRs, which can then be converted into
-an :class:`~anndata.AnnData` object. 
+an :class:`~anndata.AnnData` object.
 
 .. module:: scirpy.io
    :noindex:
@@ -238,24 +238,24 @@ an :class:`~anndata.AnnData` object.
 .. autosummary::
    :toctree: ../generated
 
-   TcrCell
-   TcrChain
+   IrCell
+   IrChain
    from_tcr_objs
 
 If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`_
-for a `read_XXX` function. 
+for a `read_XXX` function.
 
 For this example, we again load the triple-negative breast cancer data from :cite:`Chung2017`. However, this
-time, we retrieve the TCR data from a separate summary table containing the TCR information 
-(we generated this table for the sake of the example, but it could as well 
-be a supplementary file from the paper). 
+time, we retrieve the TCR data from a separate summary table containing the TCR information
+(we generated this table for the sake of the example, but it could as well
+be a supplementary file from the paper).
 
 Such a table typically contains information about
 
  * CDR3 sequences (amino acid and/or nucleotide)
  * expression of the receptor chain (e.g. count, :term:`UMI`, transcripts per million (TPM))
  * the :term:`V(D)J` genes for each chain
- * information if the chain is :term:`productive <productive chain>`. 
+ * information if the chain is :term:`productive <productive chain>`.
 <!-- #endraw -->
 
 ```python
@@ -270,18 +270,18 @@ tcr_table
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Our task is now to dissect the table into :class:`~scirpy.io.TcrCell` and :class:`~scirpy.io.TcrChain` objects. 
-Each :class:`~scirpy.io.TcrCell` can have an arbitrary number of chains. 
-When converting the :class:`~scirpy.io.TcrCell` objects into an :class:`~anndata.AnnData` object, 
+Our task is now to dissect the table into :class:`~scirpy.io.IrCell` and :class:`~scirpy.io.IrChain` objects.
+Each :class:`~scirpy.io.IrCell` can have an arbitrary number of chains.
+When converting the :class:`~scirpy.io.IrCell` objects into an :class:`~anndata.AnnData` object,
 scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
-this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`tcr-model`. 
+this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`tcr-model`.
 <!-- #endraw -->
 
 ```python
 tcr_cells = []
 for idx, row in tcr_table.iterrows():
-    cell = ir.io.TcrCell(cell_id=row["cell_id"])
-    alpha_chain = ir.io.TcrChain(
+    cell = ir.io.IrCell(cell_id=row["cell_id"])
+    alpha_chain = ir.io.IrChain(
         chain_type="TRA",
         cdr3=row["cdr3_alpha"],
         cdr3_nt=row["cdr3_nt_alpha"],
@@ -290,7 +290,7 @@ for idx, row in tcr_table.iterrows():
         j_gene=row["j_alpha"],
         is_productive=row["productive_alpha"],
     )
-    beta_chain = ir.io.TcrChain(
+    beta_chain = ir.io.IrChain(
         chain_type="TRB",
         cdr3=row["cdr3_beta"],
         cdr3_nt=row["cdr3_nt_beta"],
@@ -306,7 +306,7 @@ for idx, row in tcr_table.iterrows():
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Now, we can convert the list of :class:`~scirpy.io.TcrCell` objects using :func:`scirpy.io.from_tcr_objs`.
+Now, we can convert the list of :class:`~scirpy.io.IrCell` objects using :func:`scirpy.io.from_tcr_objs`.
 <!-- #endraw -->
 
 ```python
@@ -333,11 +333,11 @@ sc.pl.umap(adata, color=["has_tcr", "CD3E"])
 Combining multiple samples
 --------------------------
 
-It is quite common that the sequncing data is split up in multiple samples. 
+It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
-in this document. Then, we combine them using :meth:`anndata.AnnData.concatenate`. 
+in this document. Then, we combine them using :meth:`anndata.AnnData.concatenate`.
 
-Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`. 
+Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
 <!-- #endraw -->
 
 ```python
@@ -370,10 +370,10 @@ for sample, sample_meta in samples.items():
 adata = adatas[0].concatenate(adatas[1:])
 ```
 
-The data is now integrated in a single object. 
-Again, the detected TCRs coincide with `CD3E` gene expression. 
-We clearly observe batch effects between the samples -- for a meaningful downstream analysis further 
-processing steps such as highly-variable gene filtering and batch correction are necessary. 
+The data is now integrated in a single object.
+Again, the detected TCRs coincide with `CD3E` gene expression.
+We clearly observe batch effects between the samples -- for a meaningful downstream analysis further
+processing steps such as highly-variable gene filtering and batch correction are necessary.
 
 ```python
 sc.pp.log1p(adata)

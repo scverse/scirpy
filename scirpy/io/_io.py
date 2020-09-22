@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from anndata import AnnData
-from ._datastructures import TcrCell, TcrChain
+from ._datastructures import IrCell, IrChain
 from typing import Collection, Sequence, Union
 import numpy as np
 from glob import iglob
@@ -47,9 +47,9 @@ def _sanitize_anndata(adata: AnnData) -> None:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
+def from_tcr_objs(tcr_objs: Collection[IrCell]) -> AnnData:
     """\
-    Convert a collection of :class:`TcrCell` objects to an :class:`~anndata.AnnData`.
+    Convert a collection of :class:`IrCell` objects to an :class:`~anndata.AnnData`.
 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
@@ -75,17 +75,17 @@ def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
+def _process_tcr_cell(tcr_obj: IrCell) -> dict:
     """\
-    Process a TcrCell object into a dictionary according
-    to wour working model of TCRs.
+    Process a IrCell object into a dictionary according
+    to our working model of TCRs.
 
     {doc_working_model}
 
     Parameters
     ----------
     tcr_obj
-        TcrCell object to process
+        IrCell object to process
 
     Returns
     -------
@@ -162,7 +162,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             continue
         barcode = cell["barcode"]
         if barcode not in tcr_objs:
-            tcr_obj = TcrCell(barcode)
+            tcr_obj = IrCell(barcode)
             tcr_objs[barcode] = tcr_obj
         else:
             tcr_obj = tcr_objs[barcode]
@@ -222,7 +222,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             inserted_nts = None
 
         tcr_obj.add_chain(
-            TcrChain(
+            IrChain(
                 chain_type=chain_type,
                 cdr3=cell["cdr3"],
                 cdr3_nt=cell["cdr3_seq"],
@@ -248,10 +248,10 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
-        tcr_obj = TcrCell(barcode)
+        tcr_obj = IrCell(barcode)
         for _, chain_series in cell_df.iterrows():
             tcr_obj.add_chain(
-                TcrChain(
+                IrChain(
                     chain_type=chain_series["chain"]
                     if chain_series["chain"] in VALID_CHAINS
                     else "other",
@@ -371,7 +371,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                     else np.nan
                 )
 
-            yield TcrChain(
+            yield IrChain(
                 chain_type,
                 cdr3=tmp_chain.cdr3,
                 cdr3_nt=tmp_chain.cdr3nt,
@@ -387,7 +387,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
         os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True
     ):
         cell_name = summary_file.split(os.sep)[-3]
-        tcr_obj = TcrCell(cell_name)
+        tcr_obj = IrCell(cell_name)
         try:
             with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
@@ -457,7 +457,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
             try:
                 tmp_cell = tcr_objs[cell_id]
             except KeyError:
-                tmp_cell = TcrCell(cell_id=cell_id)
+                tmp_cell = IrCell(cell_id=cell_id)
                 tcr_objs[cell_id] = tmp_cell
 
             try:
@@ -469,7 +469,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 expr_raw = None
 
             tmp_cell.add_chain(
-                TcrChain(
+                IrChain(
                     is_productive=row["productive"],
                     chain_type=row["locus"],
                     v_gene=row["v_call"] if "v_call" in row else None,
