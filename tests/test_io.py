@@ -5,21 +5,7 @@ import pytest
 import pandas.testing as pdt
 
 
-def test_read_10x_example():
-    """Test that a full 10x CSV table can be imported without errors.
-
-    Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
-    under CC-BY-4.0
-    """
-    anndata = read_10x_vdj(
-        "tests/data/10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz"
-    )
-
-
-# def test_read_tracer_example():
-#     anndata = read_tracer("tutorial/example_data/tracer/tracer_100")
-
-
+@pytest.mark.conda
 def test_read_10x_csv():
     anndata = read_10x_vdj("tests/data/10x/filtered_contig_annotations.csv")
     obs = anndata.obs
@@ -46,6 +32,7 @@ def test_read_10x_csv():
     assert _is_na(cell2["TRB_2_cdr3"])
 
 
+@pytest.mark.conda
 def test_read_10x():
     anndata = read_10x_vdj("tests/data/10x/all_contig_annotations.json")
     obs = anndata.obs
@@ -79,6 +66,7 @@ def test_read_10x():
     assert cell2["TRA_2_junction_ins"] == 4
 
 
+@pytest.mark.conda
 def test_read_tracer():
     with pytest.raises(IOError):
         anndata = read_tracer("scirpy")
@@ -100,6 +88,7 @@ def test_read_tracer():
     assert cell2["TRB_1_j_gene"] == "TRBJ2-5"
 
 
+@pytest.mark.conda
 def test_read_airr():
     # Test that reading the files one-by-one or at once yields the same results
     anndata_tra = read_airr("tests/data/airr/rearrangement_tra.tsv")
