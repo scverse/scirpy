@@ -69,3 +69,8 @@ doc = [
 
 [tool.flit.metadata.urls]
 Documentation = 'https://icbi-lab.github.io/scirpy/'
+
+[tool.pytest.ini_options]
+markers = [
+    "conda: marks a subset of tests to be ran on the Bioconda CI."
+]
