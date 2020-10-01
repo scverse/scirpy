@@ -8,6 +8,7 @@ Bioconda-CI when building the container as a quick consistency check.
 The tests need to be quick in order not to overload the bioconda CI,
 but AIRR-compliance mandates to have these tests.
 """
+from . import TESTDATA
 import scirpy as ir
 import pytest
 import pandas.testing as pdt
@@ -19,10 +20,10 @@ import numpy as np
 @pytest.mark.conda
 def test_workflow():
     adata = ir.io.read_10x_vdj(
-        "tests/data/10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz"
+        TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz"
     )
     adata_obs_expected = pd.read_pickle(
-        "tests/data/test_workflow/adata.obs.expected.pkl.gz"
+        TESTDATA / "test_workflow/adata.obs.expected.pkl.gz"
     )
     ir.tl.chain_pairing(adata)
     ir.pp.tcr_neighbors(adata)

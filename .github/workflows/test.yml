@@ -48,7 +48,7 @@ jobs:
           pip install .[test,rpack]
       - name: Check black formatting
         run: |
-          black --check scirpy tests
+          black --check .
       - name: Test with pytest
         run: |
           pytest

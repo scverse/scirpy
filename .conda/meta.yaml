@@ -42,7 +42,6 @@ requirements:
 
 test:
   source_files:
-    - tests
     - docs
   requires:
     - pytest
@@ -55,7 +54,7 @@ test:
   imports:
     - scirpy
   commands:
-    - pytest
+    - pytest --pyargs scirpy
     - cd docs && jupytext --execute tutorials/tutorial_3k_tcr.md
 
 about:

@@ -74,3 +74,7 @@ Documentation = 'https://icbi-lab.github.io/scirpy/'
 markers = [
     "conda: marks a subset of tests to be ran on the Bioconda CI."
 ]
+minversion = 6.0
+testpaths = 'scirpy/tests'
+norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
+

@@ -3,11 +3,12 @@ from scirpy.util import _is_na, _is_false
 import numpy as np
 import pytest
 import pandas.testing as pdt
+from . import TESTDATA
 
 
 @pytest.mark.conda
 def test_read_10x_csv():
-    anndata = read_10x_vdj("tests/data/10x/filtered_contig_annotations.csv")
+    anndata = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     obs = anndata.obs
     assert obs.shape[0] == 4
     cell1 = obs.iloc[1, :]
@@ -34,7 +35,7 @@ def test_read_10x_csv():
 
 @pytest.mark.conda
 def test_read_10x():
-    anndata = read_10x_vdj("tests/data/10x/all_contig_annotations.json")
+    anndata = read_10x_vdj(TESTDATA / "10x/all_contig_annotations.json")
     obs = anndata.obs
     # this has `is_cell=false` and should be filtered out
     assert "AAACCTGAGACCTTTG-1" not in anndata.obs_names
@@ -69,9 +70,9 @@ def test_read_10x():
 @pytest.mark.conda
 def test_read_tracer():
     with pytest.raises(IOError):
-        anndata = read_tracer("scirpy")
+        anndata = read_tracer(TESTDATA / "10x")
 
-    anndata = read_tracer("tests/data/tracer")
+    anndata = read_tracer(TESTDATA / "tracer")
     assert "cell1" in anndata.obs_names and "cell2" in anndata.obs_names
     assert anndata.obs.shape[0] == 2
 
@@ -91,12 +92,12 @@ def test_read_tracer():
 @pytest.mark.conda
 def test_read_airr():
     # Test that reading the files one-by-one or at once yields the same results
-    anndata_tra = read_airr("tests/data/airr/rearrangement_tra.tsv")
-    anndata_trb = read_airr("tests/data/airr/rearrangement_trb.tsv")
+    anndata_tra = read_airr(TESTDATA / "airr/rearrangement_tra.tsv")
+    anndata_trb = read_airr(TESTDATA / "airr/rearrangement_trb.tsv")
     anndata = read_airr(
         [
-            "tests/data/airr/rearrangement_tra.tsv",
-            "tests/data/airr/rearrangement_trb.tsv",
+            TESTDATA / "airr/rearrangement_tra.tsv",
+            TESTDATA / "airr/rearrangement_trb.tsv",
         ]
     )
     tra_cols = [
