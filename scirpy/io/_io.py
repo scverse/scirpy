@@ -9,6 +9,7 @@ import pickle
 import os.path
 from . import _tracerlib
 import sys
+from pathlib import Path
 import airr
 from ..util import _doc_params, _is_na, _is_true
 
@@ -17,14 +18,14 @@ from ..util import _doc_params, _is_na, _is_true
 sys.modules["tracerlib"] = _tracerlib
 
 doc_working_model = """\
-Currently, reading data into *Scirpy* has the following limitations: 
- * only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored. 
+Currently, reading data into *Scirpy* has the following limitations:
+ * only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored.
  * non-productive chains are removed
- * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`). 
-   Excess chains are removed (those with lowest read count/:term:`UMI` count) 
-   and cells flagged as :term:`Multichain-cell`. 
+ * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`).
+   Excess chains are removed (those with lowest read count/:term:`UMI` count)
+   and cells flagged as :term:`Multichain-cell`.
 
-For more information, see :ref:`tcr-model`. 
+For more information, see :ref:`tcr-model`.
 """
 
 
@@ -44,11 +45,11 @@ def _sanitize_anndata(adata: AnnData) -> None:
 @_doc_params(doc_working_model=doc_working_model)
 def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
     """\
-    Convert a collection of :class:`TcrCell` objects to an :class:`~anndata.AnnData`. 
+    Convert a collection of :class:`TcrCell` objects to an :class:`~anndata.AnnData`.
 
-    This is useful for converting arbitrary data formats into 
-    the scirpy :ref:`data-structure`. 
-    
+    This is useful for converting arbitrary data formats into
+    the scirpy :ref:`data-structure`.
+
     {doc_working_model}
 
     Parameters
@@ -58,7 +59,7 @@ def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
 
     Returns
     -------
-    :class:`~anndata.AnnData` object with TCR information in `obs`. 
+    :class:`~anndata.AnnData` object with TCR information in `obs`.
 
     """
     tcr_df = pd.DataFrame.from_records(
@@ -73,10 +74,10 @@ def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
 def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     """\
     Process a TcrCell object into a dictionary according
-    to wour working model of TCRs. 
+    to wour working model of TCRs.
 
     {doc_working_model}
-    
+
     Parameters
     ----------
     tcr_obj
@@ -84,8 +85,8 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
 
     Returns
     -------
-    Dictionary representing one row of the final `AnnData.obs` 
-    data frame. 
+    Dictionary representing one row of the final `AnnData.obs`
+    data frame.
     """
     res_dict = dict()
     res_dict["cell_id"] = tcr_obj.cell_id
@@ -146,7 +147,7 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     return res_dict
 
 
-def _read_10x_vdj_json(path: str, filtered: bool = True) -> AnnData:
+def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """Read TCR data from a 10x genomics `all_contig_annotations.json` file"""
     with open(path, "r") as f:
         cells = json.load(f)
@@ -235,7 +236,7 @@ def _read_10x_vdj_json(path: str, filtered: bool = True) -> AnnData:
     return from_tcr_objs(tcr_objs.values())
 
 
-def _read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
+def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """Read TCR data from a 10x genomics `_contig_annotations.csv` file """
     df = pd.read_csv(path)
 
@@ -268,16 +269,16 @@ def _read_10x_vdj_csv(path: str, filtered: bool = True) -> AnnData:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
+def read_10x_vdj(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """\
-    Read TCR data from 10x Genomics cell-ranger output. 
+    Read TCR data from 10x Genomics cell-ranger output.
 
     Supports `all_contig_annotations.json` and
-    `{{all,filtered}}_contig_annotations.csv`. 
+    `{{all,filtered}}_contig_annotations.csv`.
 
-    If the `json` file is available, it is preferable as it 
-    contains additional information about V(D)J-junction insertions. Other than 
-    that there should be no difference.  
+    If the `json` file is available, it is preferable as it
+    contains additional information about V(D)J-junction insertions. Other than
+    that there should be no difference.
 
     {doc_working_model}
 
@@ -285,37 +286,38 @@ def read_10x_vdj(path: str, filtered: bool = True) -> AnnData:
     ----------
     path
         Path to `filterd_contig_annotations.csv`, `all_contig_annotations.csv` or
-        `all_contig_annotations.json`. 
+        `all_contig_annotations.json`.
     filtered
         Only keep filtered contig annotations (i.e. `is_cell` and `high_confidence`).
         If using `filtered_contig_annotations.csv` already, this option
-        is futile. 
+        is futile.
 
     Returns
     -------
     AnnData object with TCR data in `obs` for each cell. For more details see
-    :ref:`data-structure`.   
+    :ref:`data-structure`.
     """
-    if path.endswith("json"):
+    path = Path(path)
+    if path.suffix == ".json":
         return _read_10x_vdj_json(path, filtered)
     else:
         return _read_10x_vdj_csv(path, filtered)
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_tracer(path: str) -> AnnData:
+def read_tracer(path: Union[str, Path]) -> AnnData:
     """\
-    Read data from `TraCeR <https://github.com/Teichlab/tracer>`_ (:cite:`Stubbington2016-kh`). 
+    Read data from `TraCeR <https://github.com/Teichlab/tracer>`_ (:cite:`Stubbington2016-kh`).
 
-    Requires the TraCeR output directory which contains a folder for each cell. 
+    Requires the TraCeR output directory which contains a folder for each cell.
     Unfortunately the results files generated by `tracer summarize` do not
     contain all required information.
 
-    The function will read TCR information from the `filtered_TCR_seqs/<CELL_ID>.pkl` 
-    files. 
+    The function will read TCR information from the `filtered_TCR_seqs/<CELL_ID>.pkl`
+    files.
 
     {doc_working_model}
-    
+
     Parameters
     ----------
     path
@@ -324,9 +326,10 @@ def read_tracer(path: str) -> AnnData:
     Returns
     -------
     AnnData object with TCR data in `obs` for each cell. For more details see
-    :ref:`data-structure`.    
+    :ref:`data-structure`.
     """
     tcr_objs = {}
+    path = str(path)
 
     def _process_chains(chains, chain_type):
         for tmp_chain in chains:
@@ -409,40 +412,41 @@ def read_tracer(path: str) -> AnnData:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_airr(path: Union[str, Sequence[str]]) -> AnnData:
+def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
     """\
-    Read AIRR-compliant data. 
+    Read AIRR-compliant data.
 
     Reads data organized in the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
-    
+
     The following columns are required:
      * `cell_id`
      * `productive`
      * `locus`
      * `consensus_count`
-     * at least one of `junction_aa` or `junction`. 
+     * at least one of `junction_aa` or `junction`.
 
 
     {doc_working_model}
-    
+
     Parameters
     ----------
     path
         Path to the AIRR rearrangement tsv file. If different
         chains are split up into multiple files, these can be specified
-        as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`. 
+        as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
 
     Returns
     -------
     AnnData object with TCR data in `obs` for each cell. For more details see
-    :ref:`data-structure`.    
+    :ref:`data-structure`.
     """
     tcr_objs = {}
 
-    if isinstance(path, str):
+    if isinstance(path, str) or isinstance(path, Path):
         path = [path]
 
     for tmp_path in path:
+        tmp_path = str(tmp_path)
         reader = airr.read_rearrangement(tmp_path)
         for row in reader:
             cell_id = row["cell_id"]
