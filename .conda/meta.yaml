@@ -42,7 +42,6 @@ requirements:
 
 test:
   source_files:
-    - tests
     - docs
   requires:
     - pytest
