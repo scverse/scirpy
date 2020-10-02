@@ -6,6 +6,7 @@ from anndata import AnnData
 from collections import namedtuple
 from scipy.sparse import issparse, csr_matrix, csc_matrix
 import scipy.sparse
+import warnings
 
 
 def _allclose_sparse(A, B, atol=1e-8):
@@ -236,3 +237,21 @@ def _read_to_str(path):
     """Read a file into a string"""
     with open(path, "r") as f:
         return f.read()
+
+
+def deprecated(message):
+    """Decorator to mark a function as deprecated"""
+
+    def deprecated_decorator(func):
+        def deprecated_func(*args, **kwargs):
+            warnings.warn(
+                "{} is a deprecated function and will be removed in a "
+                "future version of scirpy. {}".format(func.__name__, message),
+                category=FutureWarning,
+                stacklevel=2,
+            )
+            return func(*args, **kwargs)
+
+        return deprecated_func
+
+    return deprecated_decorator
