@@ -6,6 +6,7 @@ import pytest
 import numpy.testing as npt
 import pandas.testing as pdt
 import numpy as np
+import itertools
 from scirpy.util import _get_from_uns
 from .fixtures import adata_clonotype, adata_tra, adata_vdj, adata_diversity
 
@@ -13,24 +14,29 @@ from .fixtures import adata_clonotype, adata_tra, adata_vdj, adata_diversity
 def test_chain_pairing():
     obs = pd.DataFrame.from_records(
         [
-            ["False", "nan", "nan", "nan", "nan", "nan"],
-            ["True", "True", "AAAA", "BBBB", "CCCC", "DDDD"],
-            ["True", "False", "AAAA", "BBBB", "CCCC", "DDDD"],
-            ["True", "nan", "AAAA", "nan", "nan", "nan"],
-            ["True", "False", "AAAA", "nan", "CCCC", "nan"],
-            ["True", "False", "AAAA", "BBBB", "nan", "nan"],
-            ["True", "False", "AAAA", "BBBB", "CCCC", "nan"],
-            ["True", "False", "nan", "nan", "CCCC", "nan"],
-            ["True", "False", "nan", "nan", "CCCC", "DDDD"],
-            ["True", "False", "AAAA", "nan", "CCCC", "DDDD"],
+            ["False", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            ["True", "True", "AA", "BB", "CC", "DD", "TRA", "TRA", "TRA", "TRB"],
+            ["True", "False", "AA", "BB", "CC", "DD", "TRA", "TRA", "TRB", "TRB"],
+            ["True", "False", "AA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
+            ["True", "False", "AA", "nan", "CC", "nan", "TRA", "nan", "TRB", "nan"],
+            ["True", "False", "AA", "BB", "nan", "nan", "TRA", "TRA", "nan", "nan"],
+            ["True", "False", "AA", "BB", "CC", "nan", "TRA", "TRA", "TRB", "TRB"],
+            ["True", "False", "nan", "nan", "CC", "nan", "nan", "nan", "TRB", "nan"],
+            ["True", "False", "nan", "nan", "CC", "DD", "nan", "nan", "TRB", "TRB"],
+            ["True", "False", "AA", "nan", "CC", "DD", "TRA", "nan", "TRB", "TRB"],
+            ["True", "False", "AA", "nan", "CC", "DD", "TRA", "nan", "TRB", "IGH"],
         ],
         columns=[
             "has_ir",
             "multi_chain",
-            "TRA_1_cdr3",
-            "TRA_2_cdr3",
-            "TRB_1_cdr3",
-            "TRB_2_cdr3",
+            "IR_VJ_1_cdr3",
+            "IR_VJ_2_cdr3",
+            "IR_VDJ_1_cdr3",
+            "IR_VDJ_2_cdr3",
+            "IR_VJ_1_locus",
+            "IR_VJ_2_locus",
+            "IR_VDJ_1_locus",
+            "IR_VDJ_2_locus",
         ],
     )
     adata = AnnData(obs=obs)
@@ -38,17 +44,104 @@ def test_chain_pairing():
     npt.assert_equal(
         res,
         [
-            "No TCR",
-            "Multichain",
-            "Two full chains",
-            "Orphan alpha",
-            "Single pair",
-            "Orphan alpha",
-            "Extra alpha",
-            "Orphan beta",
-            "Orphan beta",
-            "Extra beta",
+            "no IR",
+            "multichain",
+            "two full chains",
+            "orphan VJ",
+            "single pair",
+            "orphan VJ",
+            "extra VJ",
+            "orphan VDJ",
+            "orphan VDJ",
+            "extra VDJ",
+            "ambiguous",
         ],
+    )
+
+
+def test_chain_qc():
+    obs = pd.DataFrame.from_records(
+        [
+            ["False", "nan", "nan", "nan", "nan", "nan"],
+            ["True", "True", "TRA", "TRB", "TRA", "TRB"],
+            # multichain takes precedencee over ambiguous
+            ["True", "True", "TRA", "IGH", "nan", "nan"],
+            ["True", "False", "TRA", "TRB", "nan", "nan"],
+            ["True", "False", "TRA", "TRB", "TRA", "nan"],
+            ["True", "False", "TRA", "TRB", "nan", "TRB"],
+            ["True", "False", "TRA", "TRB", "TRA", "TRB"],
+            ["True", "False", "IGK", "IGH", "nan", "nan"],
+            ["True", "False", "IGL", "IGH", "IGL", "IGH"],
+            ["True", "False", "IGL", "IGH", "IGK", "IGH"],
+            ["True", "False", "nan", "IGH", "nan", "IGH"],
+            ["True", "False", "TRA", "TRB", "TRG", "TRB"],
+            ["True", "False", "IGK", "TRB", "nan", "nan"],
+            ["True", "False", "TRA", "nan", "nan", "nan"],
+            ["True", "False", "IGL", "nan", "nan", "nan"],
+        ],
+        columns=[
+            "has_ir",
+            "multi_chain",
+            "IR_VJ_1_locus",
+            "IR_VDJ_1_locus",
+            "IR_VJ_2_locus",
+            "IR_VDJ_2_locus",
+        ],
+    )
+    # fake chains
+    for chain, chain_number in itertools.product(["VJ", "VDJ"], ["1", "2"]):
+        obs[f"IR_{chain}_{chain_number}_cdr3"] = [
+            "AAA" if x != "nan" else "nan"
+            for x in obs[f"IR_{chain}_{chain_number}_locus"]
+        ]
+    adata = AnnData(obs=obs)
+
+    st.tl.chain_qc(adata, key_added=("rec_type", "rec_subtype", "ch_pairing"))
+
+    npt.assert_equal(
+        adata.obs["rec_type"],
+        np.array(
+            [
+                "no IR",
+                "multichain",
+                "multichain",
+                "TCR",
+                "TCR",
+                "TCR",
+                "TCR",
+                "BCR",
+                "BCR",
+                "BCR",
+                "BCR",
+                "TCR",
+                "ambiguous",
+                "TCR",
+                "BCR",
+            ]
+        ),
+    )
+    npt.assert_equal(
+        adata.obs["rec_subtype"],
+        np.array(
+            [
+                "no IR",
+                "multichain",
+                #
+                "multichain",
+                "TRA+TRB",
+                "TRA+TRB",
+                "TRA+TRB",
+                "TRA+TRB",
+                "IGH+IGK",
+                "IGH+IGL",
+                "ambiguous",
+                "IGH",
+                "ambiguous",
+                "ambiguous",
+                "TRA+TRB",
+                "IGH+IGL",
+            ]
+        ),
     )
 
 

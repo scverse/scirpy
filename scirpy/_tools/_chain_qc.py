@@ -31,7 +31,7 @@ def chain_pairing(
         inplace=inplace,
         key_added=("receptor_type", "receptor_subtype", key_added),
     )
-    if inplace:
+    if not inplace:
         return res[2]
 
 
@@ -127,7 +127,7 @@ def chain_qc(
     type_is_t = has_tr & ~has_ig
     type_is_b = ~has_tr & has_ig
 
-    subtype_is_tab = (has_tra | has_trb) & ~(has_trg | has_trd | has_igh)
+    subtype_is_tab = (has_tra | has_trb) & ~(has_trg | has_trd | has_ig)
     subtype_is_tgd = (has_trg | has_trd) & ~(has_tra | has_trb | has_ig)
     subtype_is_ighk = (has_igk) & ~(has_tr | has_igl)
     subtype_is_ighl = (has_igl) & ~(has_tr | has_igk)

@@ -136,7 +136,7 @@ def adata_conn():
             IR_VJ_1_LOCUS=["TRA"] * 4,
             IR_VDJ_1_LOCUS=["TRB"] * 4,
             IR_VJ_2_LOCUS=["TRA"] * 4,
-            IR_VDJ_1_LOCUS=["TRB"] * 4,
+            IR_VDJ_2_LOCUS=["TRB"] * 4,
         )
         .set_index("cell_id")
     )

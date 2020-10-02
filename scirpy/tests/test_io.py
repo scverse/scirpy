@@ -9,8 +9,8 @@ from . import TESTDATA
 @pytest.mark.parametrize(
     "path",
     [
-        "tests/data/10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
-        "tests/data/10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
     ],
 )
 def test_read_10x_example(path):
