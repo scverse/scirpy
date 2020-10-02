@@ -20,13 +20,19 @@ import pytest
 def test_define_clonotypes_no_graph():
     obs = pd.DataFrame.from_records(
         [
-            ["cell1", "AAAA", "nan", "nan", "nan"],
-            ["cell2", "nan", "nan", "nan", "nan"],
-            ["cell3", "AAAA", "nan", "nan", "nan"],
-            ["cell4", "AAAA", "BBBB", "nan", "nan"],
-            ["cell5", "nan", "nan", "CCCC", "DDDD"],
+            ["cell1", "AAAA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
+            ["cell2", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            ["cell3", "AAAA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
+            ["cell4", "AAAA", "BBBB", "nan", "nan", "TRA", "TRB", "nan", "nan"],
+            ["cell5", "nan", "nan", "CCCC", "DDDD", "nan", "nan", "TRA", "TRB"],
         ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+        columns=[
+            "cell_id",
+            "IR_VJ_1_cdr3",
+            "IR_VJ_2_cdr3",
+            "IR_VDJ_1_cdr3",
+            "IR_VDJ_2_cdr3",
+        ],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
 
@@ -208,7 +214,7 @@ def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
     st.pp.tcr_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
-        receptor_arms="TRB",
+        receptor_arms="VDJ",
         dual_tcr="primary_only",
         sequence="aa",
     )
