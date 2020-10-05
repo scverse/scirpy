@@ -17,54 +17,54 @@ from tqdm import tqdm
 
 _doc_metrics = """\
 metric
-    You can choose one of the following metrics: 
-      * `identity` -- 1 for identical sequences, 0 otherwise. 
-        See :class:`~scirpy.tcr_dist.IdentityDistanceCalculator`. 
-        This metric implies a cutoff of 0. 
+    You can choose one of the following metrics:
+      * `identity` -- 1 for identical sequences, 0 otherwise.
+        See :class:`~scirpy.tcr_dist.IdentityDistanceCalculator`.
+        This metric implies a cutoff of 0.
       * `levenshtein` -- Levenshtein edit distance.
-        See :class:`~scirpy.tcr_dist.LevenshteinDistanceCalculator`. 
-      * `alignment` -- Distance based on pairwise sequence alignments using the 
-        BLOSUM62 matrix. This option is incompatible with nucleotide sequences. 
-        See :class:`~scirpy.tcr_dist.AlignmentDistanceCalculator`. 
-      * any instance of :class:`~scirpy.tcr_dist.DistanceCalculator`. 
+        See :class:`~scirpy.tcr_dist.LevenshteinDistanceCalculator`.
+      * `alignment` -- Distance based on pairwise sequence alignments using the
+        BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
+        See :class:`~scirpy.tcr_dist.AlignmentDistanceCalculator`.
+      * any instance of :class:`~scirpy.tcr_dist.DistanceCalculator`.
 """
 
 _doc_cutoff = """\
 cutoff
     All distances `> cutoff` will be replaced by `0` and eliminated from the sparse
-    matrix. A sensible cutoff depends on the distance metric, you can find 
-    information in the corresponding docs. 
+    matrix. A sensible cutoff depends on the distance metric, you can find
+    information in the corresponding docs.
 """
 
 _doc_params_distance_calculator = """\
 cutoff
-    Will eleminate distances > cutoff to make efficient 
-    use of sparse matrices. 
+    Will eleminate distances > cutoff to make efficient
+    use of sparse matrices.
 """
 
 _doc_params_parallel_distance_calculator = (
     _doc_params_distance_calculator
     + """\
 n_jobs
-    Number of jobs to use for the pairwise distance calculation. 
-    If None, use all jobs (only for ParallelDistanceCalculators). 
+    Number of jobs to use for the pairwise distance calculation.
+    If None, use all jobs (only for ParallelDistanceCalculators).
 block_size
     The width of a block of the matrix that will be delegated to a worker
-    process. The block contains `block_size ** 2` elements. 
+    process. The block contains `block_size ** 2` elements.
 """
 )
 
 _doc_dist_mat = """\
-Calculates the upper triangle, including the diagonal. 
+Calculates the upper triangle, including the diagonal.
 
 .. important::
-    * Distances are offset by 1 to allow efficient use of sparse matrices 
-      (:math:`d' = d+1`). 
-    * That means, a `distance > cutoff` is represented as `0`, a `distance == 0` 
-      is represented as `1`, a `distance == 1` is represented as `2` and so on. 
-    * Only returns distances `<= cutoff`. Larger distances are eliminated 
-      from the sparse matrix. 
-    * Distances are non-negative. 
+    * Distances are offset by 1 to allow efficient use of sparse matrices
+      (:math:`d' = d+1`).
+    * That means, a `distance > cutoff` is represented as `0`, a `distance == 0`
+      is represented as `1`, a `distance == 1` is represented as `2` and so on.
+    * Only returns distances `<= cutoff`. Larger distances are eliminated
+      from the sparse matrix.
+    * Distances are non-negative.
 """
 
 
@@ -72,11 +72,11 @@ Calculates the upper triangle, including the diagonal.
 class DistanceCalculator(abc.ABC):
     """\
     Abstract base class for a :term:`CDR3`-sequence distance calculator.
-    
+
     Parameters
     ----------
     {params}
-    
+
     """
 
     #: The sparse matrix dtype. Defaults to uint8, constraining the max distance to 255.
@@ -95,25 +95,25 @@ class DistanceCalculator(abc.ABC):
         self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
     ) -> coo_matrix:
         """\
-        Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`. 
-        
+        Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`.
+
         When `seqs2` is omitted, computes the pairwise distance of `seqs` against
-        itself. 
-        
+        itself.
+
         {dist_mat}
-       
+
         Parameters
         ----------
         seqs
-            array containing CDR3 sequences. Must not contain duplicates. 
-        seqs2 
+            array containing CDR3 sequences. Must not contain duplicates.
+        seqs2
             second array containing CDR3 sequences. Must not contain
-            duplicates either. 
+            duplicates either.
 
         Returns
         -------
         Sparse pairwise distance matrix. If only `seqs` is provided, only
-        the upper triangular distance matrix is returned. 
+        the upper triangular distance matrix is returned.
         """
         pass
 
@@ -245,15 +245,15 @@ class ParallelDistanceCalculator(DistanceCalculator):
 @_doc_params(params=_doc_params_distance_calculator)
 class IdentityDistanceCalculator(DistanceCalculator):
     """\
-    Calculates the Identity-distance between :term:`CDR3` sequences. 
+    Calculates the Identity-distance between :term:`CDR3` sequences.
 
-    The identity distance is defined as 
+    The identity distance is defined as
         * `0`, if sequences are identical
         * `1`, if sequences are not identical.
 
     Choosing a cutoff:
-        For this DistanceCalculator, per definition, the cutoff = 0. 
-        The `cutoff` argument is ignored. 
+        For this DistanceCalculator, per definition, the cutoff = 0.
+        The `cutoff` argument is ignored.
 
     Parameters
     ----------
@@ -293,18 +293,18 @@ class IdentityDistanceCalculator(DistanceCalculator):
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     """\
-    Calculates the Levenshtein edit-distance between sequences. 
-    
-    The edit distance is the total number of deletion, addition and modification 
-    events. 
+    Calculates the Levenshtein edit-distance between sequences.
+
+    The edit distance is the total number of deletion, addition and modification
+    events.
 
     This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
-    to calculate the distances. 
+    to calculate the distances.
 
     Choosing a cutoff:
-        Each modification stands for a deletion, addition or modification event. 
+        Each modification stands for a deletion, addition or modification event.
         While lacking empirical data, it seems unlikely that CDR3 sequences with more
-        than two modifications still recognize the same antigen. 
+        than two modifications still recognize the same antigen.
 
     Parameters
     ----------
@@ -334,30 +334,30 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
-    Calculates distance between sequences based on pairwise sequence alignment. 
+    Calculates distance between sequences based on pairwise sequence alignment.
 
-    The distance between two sequences is defined as :math:`S_{{1,2}}^{{max}} - S_{{1,2}}`, 
-    where :math:`S_{{1,2}}` is the alignment score of sequences 1 and 2 and 
-    :math:`S_{{1,2}}^{{max}}` is the max. achievable alignment score of sequences 1 and 2. 
-    :math:`S_{{1,2}}^{{max}}` is defined as :math:`\\min(S_{{1,1}}, S_{{2,2}})`. 
+    The distance between two sequences is defined as :math:`S_{{1,2}}^{{max}} - S_{{1,2}}`,
+    where :math:`S_{{1,2}}` is the alignment score of sequences 1 and 2 and
+    :math:`S_{{1,2}}^{{max}}` is the max. achievable alignment score of sequences 1 and 2.
+    :math:`S_{{1,2}}^{{max}}` is defined as :math:`\\min(S_{{1,1}}, S_{{2,2}})`.
 
-    The use of alignment-based distances is heavily inspired by :cite:`TCRdist`. 
+    The use of alignment-based distances is heavily inspired by :cite:`TCRdist`.
 
-    High-performance sequence alignments are calculated leveraging 
-    the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).  
+    High-performance sequence alignments are calculated leveraging
+    the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).
 
     Choosing a cutoff:
-        Alignment distances need to be viewed in the light of the substitution matrix. 
-        The alignment distance is the difference between the actual alignment 
-        score and the max. achievable alignment score. For instance, a mutation 
-        from *Leucine* (`L`) to *Isoleucine* (`I`) results in a BLOSUM62 score of `2`. 
+        Alignment distances need to be viewed in the light of the substitution matrix.
+        The alignment distance is the difference between the actual alignment
+        score and the max. achievable alignment score. For instance, a mutation
+        from *Leucine* (`L`) to *Isoleucine* (`I`) results in a BLOSUM62 score of `2`.
         An `L` aligned with `L` achieves a score of `4`. The distance is, therefore, `2`.
 
         On the other hand, a single *Tryptophane* (`W`) mutating into, e.g.
-        *Proline* (`P`) already results in a distance of `15`. 
+        *Proline* (`P`) already results in a distance of `15`.
 
-        We are still lacking empirical data up to which distance a CDR3 sequence still 
-        is likely to recognize the same antigen, but reasonable cutoffs are `<15`. 
+        We are still lacking empirical data up to which distance a CDR3 sequence still
+        is likely to recognize the same antigen, but reasonable cutoffs are `<15`.
 
     Parameters
     ----------
@@ -450,26 +450,26 @@ def tcr_dist(
     Calculate a sequence x sequence distance matrix.
 
     {dist_mat}
-    
+
     Parameters
     ----------
     unique_seqs
-        Numpy array of nucleotide or amino acid sequences. 
-        Must not contain duplicates. 
-        Note that not all distance metrics support nucleotide sequences. 
+        Numpy array of nucleotide or amino acid sequences.
+        Must not contain duplicates.
+        Note that not all distance metrics support nucleotide sequences.
     unique_seqs2
-        Second array sequences. When omitted, `tcr_dist` computes 
-        the square matrix of `unique_seqs`. 
+        Second array sequences. When omitted, `tcr_dist` computes
+        the square matrix of `unique_seqs`.
     {metric}
     {cutoff}
 
-        A cutoff of 0 implies the `identity` metric. 
+        A cutoff of 0 implies the `identity` metric.
 
     Returns
     -------
-    Upper triangular distance matrix when only `unique_seqs` is provided. 
-    A full rectangular distance matrix when both `unique_seqs` and 
-    `unique_seqs2` are provided. 
+    Upper triangular distance matrix when only `unique_seqs` is provided.
+    A full rectangular distance matrix when both `unique_seqs` and
+    `unique_seqs2` are provided.
     """
     if cutoff == 0 or metric == "identity":
         metric = "identity"
@@ -498,7 +498,7 @@ class TcrNeighbors:
             Literal["alignment", "identity", "levenshtein"], DistanceCalculator
         ] = "identity",
         cutoff: float = 10,
-        receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
+        receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
         dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
     ):
@@ -515,6 +515,15 @@ class TcrNeighbors:
             raise ValueError(
                 "Using nucleotide sequences with alignment metric is not supported. "
             )
+        if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
+            raise ValueError(
+                "Invalid value for `receptor_arms`. Note that starting with v0.5 "
+                "`TRA` and `TRB` are not longer valid values."
+            )
+        if dual_tcr not in ["primary_only", "all", "any"]:
+            raise ValueError("Invalid value for `dual_tcr")
+        if sequence not in ["aa", "nt"]:
+            raise ValueError("Invalid value for `sequence`")
         self.adata = adata
         self.metric = metric
         self.cutoff = cutoff
@@ -576,8 +585,8 @@ class TcrNeighbors:
         each cell.
         """
         receptor_arms = (
-            ["TRA", "TRB"]
-            if self.receptor_arms not in ["TRA", "TRB"]
+            ["VJ", "VDJ"]
+            if self.receptor_arms not in ["VJ", "VDJ"]
             else [self.receptor_arms]
         )
         chain_inds = [1] if self.dual_tcr == "primary_only" else [1, 2]
@@ -586,7 +595,7 @@ class TcrNeighbors:
         arm_dict = {}
         for arm in receptor_arms:
             cdr_seqs = {
-                k: self.adata.obs[f"{arm}_{k}_cdr3{sequence}"].values
+                k: self.adata.obs[f"IR_{arm}_{k}_cdr3{sequence}"].values
                 for k in chain_inds
             }
             unique_seqs = np.hstack(list(cdr_seqs.values()))
@@ -605,7 +614,7 @@ class TcrNeighbors:
                 arm_dict[arm]["chains_per_cell"] = np.sum(
                     ~_is_na(
                         self.adata.obs.loc[
-                            :, [f"{arm}_{k}_cdr3{sequence}" for k in chain_inds]
+                            :, [f"IR_{arm}_{k}_cdr3{sequence}" for k in chain_inds]
                         ]
                     ),
                     axis=1,
@@ -673,15 +682,15 @@ class TcrNeighbors:
         except StopIteration:
             # only one arm
             tra_chains = (
-                self.index_dict["TRA"]["chains_per_cell"][cell_row],
-                self.index_dict["TRA"]["chains_per_cell"][cell_col],
+                self.index_dict["VJ"]["chains_per_cell"][cell_row],
+                self.index_dict["VJ"]["chains_per_cell"][cell_col],
             )
             trb_chains = (
-                self.index_dict["TRB"]["chains_per_cell"][cell_row],
-                self.index_dict["TRB"]["chains_per_cell"][cell_col],
+                self.index_dict["VDJ"]["chains_per_cell"][cell_row],
+                self.index_dict["VDJ"]["chains_per_cell"][cell_col],
             )
-            # Either exactely one chain for TRA or
-            # exactely on e chain for TRB for both cells.
+            # Either exactely one chain for VJ or
+            # exactely one chain for VDJ for both cells.
             if tra_chains == (0, 0) or trb_chains == (0, 0):
                 return arm1
             else:
@@ -691,7 +700,7 @@ class TcrNeighbors:
     def _reduce_arms_any(lst, *args):
         """Reduce arms when *any* of the sequences needs to match.
         This is the simpler case. This also works with only one entry
-        (e.g. arms = "TRA")"""
+        (e.g. arms = "VJ")"""
         # need to exclude 0 values, since the dist mat is offseted by 1.
         try:
             return min(x for x in lst if x != 0)
@@ -864,7 +873,7 @@ def tcr_neighbors(
         Literal["identity", "alignment", "levenshtein"], DistanceCalculator
     ] = "identity",
     cutoff: int = 10,
-    receptor_arms: Literal["TRA", "TRB", "all", "any"] = "all",
+    receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
     key_added: Union[str, None] = None,
     sequence: Literal["aa", "nt"] = "nt",
@@ -872,10 +881,10 @@ def tcr_neighbors(
     n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[csr_matrix, csr_matrix], None]:
     """\
-    Construct a neighborhood graph based on :term:`CDR3` sequence similarity. 
+    Construct a neighborhood graph based on :term:`CDR3` sequence similarity.
 
-    All cells with a CDR3 distance `< cutoff` receive an edge in the graph. 
-    Edges are weighted by the distance. 
+    All cells with a CDR3 distance `< cutoff` receive an edge in the graph.
+    Edges are weighted by the distance.
 
     Parameters
     ----------
@@ -884,8 +893,8 @@ def tcr_neighbors(
     {metric}
     {cutoff}
 
-        Two cells with a distance <= the cutoff will be connected. 
-        A cutoff of 0 implies the use of the `identity` metric. 
+        Two cells with a distance <= the cutoff will be connected.
+        A cutoff of 0 implies the use of the `identity` metric.
 
     receptor_arms:
          * `"TRA"` - only consider TRA sequences
@@ -896,33 +905,33 @@ def tcr_neighbors(
     dual_tcr:
          * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
          * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
-           cutoff for any of the chains. 
+           cutoff for any of the chains.
          * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
-           cutoff for all of the chains. 
+           cutoff for all of the chains.
 
         See also :term:`Dual TCR`
-        
+
     key_added:
         dict key under which the result will be stored in `adata.uns`
-        when `inplace` is True. Defaults to `tcr_neighbors_{{sequence}}_{{metric}}`. 
+        when `inplace` is True. Defaults to `tcr_neighbors_{{sequence}}_{{metric}}`.
 
-        If metric is an instance of :class:`scirpy.tcr_dist.DistanceCalculator`, 
-        `{{metric}}` defaults to `"custom"`. 
+        If metric is an instance of :class:`scirpy.tcr_dist.DistanceCalculator`,
+        `{{metric}}` defaults to `"custom"`.
     sequence:
         Use amino acid (`aa`) or nulceotide (`nt`) sequences?
     inplace:
         If `True`, store the results in `adata.uns`. Otherwise return
-        the results. 
+        the results.
     n_jobs:
-        Number of cores to use for alignment and levenshtein distance. 
-    
+        Number of cores to use for alignment and levenshtein distance.
+
     Returns
     -------
     connectivities
         weighted adjacency matrix
     dist
         cell x cell distance matrix with the distances as computed according to `metric`
-        offsetted by 1 to make use of sparse matrices. 
+        offsetted by 1 to make use of sparse matrices.
     """
     if cutoff == 0 or metric == "identity":
         metric = "identity"

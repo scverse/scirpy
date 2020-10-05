@@ -240,7 +240,7 @@ def test_seq_to_cell_idx():
 def test_build_index_dict(adata_cdr3):
     tn = TcrNeighbors(
         adata_cdr3,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="primary_only",
         sequence="nt",
         cutoff=0,
@@ -250,7 +250,7 @@ def test_build_index_dict(adata_cdr3):
     npt.assert_equal(
         tn.index_dict,
         {
-            "TRA": {
+            "VJ": {
                 "chain_inds": [1],
                 "unique_seqs": ["GCGAUGGCG", "GCGGCGGCG", "GCUGCUGCU"],
                 "seq_to_cell": {1: {0: [1], 1: [0], 2: [3]}},
@@ -271,7 +271,7 @@ def test_build_index_dict(adata_cdr3):
     npt.assert_equal(
         tn.index_dict,
         {
-            "TRA": {
+            "VJ": {
                 "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "AHA"],
                 "seq_to_cell": {
@@ -280,7 +280,7 @@ def test_build_index_dict(adata_cdr3):
                 },
                 "chains_per_cell": np.array([2, 1, 0, 2, 1]),
             },
-            "TRB": {
+            "VDJ": {
                 "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
                 "seq_to_cell": {
@@ -305,7 +305,7 @@ def test_build_index_dict(adata_cdr3):
     npt.assert_equal(
         tn2.index_dict,
         {
-            "TRA": {
+            "VJ": {
                 "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "AHA"],
                 "seq_to_cell": {
@@ -313,7 +313,7 @@ def test_build_index_dict(adata_cdr3):
                     2: {0: [3, 4], 1: [0]},
                 },
             },
-            "TRB": {
+            "VDJ": {
                 "chain_inds": [1, 2],
                 "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
                 "seq_to_cell": {
@@ -331,7 +331,7 @@ def test_compute_distances1(adata_cdr3, adata_cdr3_mock_distance_calculator):
         adata_cdr3,
         metric="identity",
         cutoff=0,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="primary_only",
         sequence="aa",
     )
@@ -356,7 +356,7 @@ def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
         adata_cdr3,
         metric="identity",
         cutoff=0,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="any",
         sequence="aa",
     )
@@ -380,7 +380,7 @@ def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
     tn = TcrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="primary_only",
         sequence="aa",
     )
@@ -405,7 +405,7 @@ def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator):
     tn = TcrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="any",
         sequence="aa",
     )
@@ -431,7 +431,7 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
     tn = TcrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="all",
         sequence="aa",
     )
@@ -599,8 +599,8 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are no distances. """
-    adata_cdr3.obs["TRA_1_cdr3"] = np.nan
-    adata_cdr3.obs["TRB_1_cdr3"] = np.nan
+    adata_cdr3.obs["IR_VJ_1_cdr3"] = np.nan
+    adata_cdr3.obs["IR_VDJ_1_cdr3"] = np.nan
     # test both receptor arms, primary chain only
     tn = TcrNeighbors(
         adata_cdr3,
@@ -648,7 +648,7 @@ def test_tcr_neighbors(adata_cdr3):
         adata_cdr3,
         metric="levenshtein",
         cutoff=3,
-        receptor_arms="TRA",
+        receptor_arms="VJ",
         dual_tcr="all",
         key_added="nbs",
         sequence="aa",

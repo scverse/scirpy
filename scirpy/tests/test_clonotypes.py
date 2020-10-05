@@ -17,48 +17,6 @@ import random
 import pytest
 
 
-def test_define_clonotypes_no_graph():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "AAAA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
-            ["cell2", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-            ["cell3", "AAAA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
-            ["cell4", "AAAA", "BBBB", "nan", "nan", "TRA", "TRB", "nan", "nan"],
-            ["cell5", "nan", "nan", "CCCC", "DDDD", "nan", "nan", "TRA", "TRB"],
-        ],
-        columns=[
-            "cell_id",
-            "IR_VJ_1_cdr3",
-            "IR_VJ_2_cdr3",
-            "IR_VDJ_1_cdr3",
-            "IR_VDJ_2_cdr3",
-        ],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    res = st.tl._define_clonotypes_no_graph(adata, inplace=False)
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res,
-        ["clonotype_1", np.nan, "clonotype_1", "clonotype_0", "clonotype_2"],
-    )
-
-    res_primary_only = st.tl._define_clonotypes_no_graph(
-        adata, flavor="primary_only", inplace=False
-    )
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res_primary_only,
-        ["clonotype_0", np.nan, "clonotype_0", "clonotype_0", "clonotype_1"],
-    )
-
-    # test inplace
-    st.tl._define_clonotypes_no_graph(adata, key_added="clonotype_")
-    npt.assert_equal(res, adata.obs["clonotype_"].values)
-
-
 @pytest.mark.parametrize(
     "same_v_gene,ct_expected,ct_size_expected",
     [

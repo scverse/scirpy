@@ -39,7 +39,7 @@ def test_workflow():
 
     # # Use this code to re-generate the "expected file", if necessary.
     # adata.obs.to_pickle(
-    #     "tests/data/test_workflow/adata.obs.expected.pkl.gz", protocol=4
+    #     TESTDATA / "test_workflow/adata.obs.expected.pkl.gz", protocol=4
     # )
 
     pdt.assert_frame_equal(

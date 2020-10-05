@@ -330,13 +330,13 @@ def test_spectratype(adata_tra):
     # Check numbers
     res1 = st.tl.spectratype(
         adata_tra,
-        groupby="TRA_1_cdr3",
+        groupby="IR_VJ_1_cdr3",
         target_col="sample",
         fraction=False,
     )
     res2 = st.tl.spectratype(
         adata_tra,
-        groupby=("TRA_1_cdr3",),
+        groupby=("IR_VJ_1_cdr3",),
         target_col="sample",
         fraction=False,
     )
@@ -368,7 +368,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = st.tl.spectratype(
-        adata_tra, groupby="TRA_1_cdr3", target_col="sample", fraction="sample"
+        adata_tra, groupby="IR_VJ_1_cdr3", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {

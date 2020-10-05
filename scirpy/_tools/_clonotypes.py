@@ -2,7 +2,7 @@ from anndata import AnnData
 import igraph as ig
 from .._compat import Literal
 from typing import Union, Tuple
-from ..util import _is_na, _doc_params
+from ..util import _doc_params
 from ..util.graph import _get_igraph_from_adjacency, layout_components
 import numpy as np
 import pandas as pd
@@ -11,35 +11,35 @@ import random
 _define_clonotypes_doc = """\
 same_v_gene
     Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
-    as the CDR1 and CDR2 regions are fully encoded in this gene. 
+    as the CDR1 and CDR2 regions are fully encoded in this gene.
     See :term:`CDR` for more details.
-    
-    Possible values are 
+
+    Possible values are
 
         * `False` - Ignore V-gene during clonotype definition
         * `"primary_only"` - Only the V-genes of the primary pair of alpha
           and beta chains needs to match
-        * `"all"` - All V-genes of all sequences need to match. 
+        * `"all"` - All V-genes of all sequences need to match.
 
-    Chains with no detected V-gene will be treated like a separate "gene" with 
-    the name "None".  
+    Chains with no detected V-gene will be treated like a separate "gene" with
+    the name "None".
 partitions
-    How to find graph partitions that define a clonotype. 
-    Possible values are `leiden`, for using the "Leiden" algorithm and 
-    `connected` to find fully connected sub-graphs. 
+    How to find graph partitions that define a clonotype.
+    Possible values are `leiden`, for using the "Leiden" algorithm and
+    `connected` to find fully connected sub-graphs.
 
-    The difference is that the Leiden algorithm further divides 
-    fully connected subgraphs into highly-connected modules. 
+    The difference is that the Leiden algorithm further divides
+    fully connected subgraphs into highly-connected modules.
 resolution
-    `resolution` parameter for the leiden algorithm. 
+    `resolution` parameter for the leiden algorithm.
 n_iterations
-    `n_iterations` parameter for the leiden algorithm. 
+    `n_iterations` parameter for the leiden algorithm.
 neighbors_key
     Key under which the neighboorhood graph is stored in `adata.uns`.
-    By default, tries to read from `tcr_neighbors_{sequence}_{metric}`, 
-    e.g. `tcr_neighbors_nt_identity`. 
+    By default, tries to read from `tcr_neighbors_{sequence}_{metric}`,
+    e.g. `tcr_neighbors_nt_identity`.
 inplace
-    If `True`, adds the results to anndata, otherwise returns them. 
+    If `True`, adds the results to anndata, otherwise returns them.
 
 Returns
 -------
@@ -47,13 +47,13 @@ clonotype
     an array containing the clonotype id for each cell
 clonotype_size
     an array containing the number of cells in the respective clonotype
-    for each cell.    
+    for each cell.
 """
 
 
 @_doc_params(common_doc=_define_clonotypes_doc)
 def define_clonotype_clusters(
-    adata,
+    adata: AnnData,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: Literal["alignment", "levenshtein", "identity"] = "identity",
@@ -63,13 +63,13 @@ def define_clonotype_clusters(
     """\
     Define :term:`clonotype clusters<Clonotype cluster>` based on :term:`CDR3` distance.
 
-    As opposed to :func:`~scirpy.tl.define_clonotypes` which employs 
+    As opposed to :func:`~scirpy.tl.define_clonotypes` which employs
     a more stringent definition of :term:`clonotypes <Clonotype>`,
     this function flexibly defines clonotype clusters based on amino acid or nucleic
-    acid sequence identity or similarity. 
+    acid sequence identity or similarity.
 
-    Requires running :func:`scirpy.pp.tcr_neighbors` first with the same 
-    `sequence` and `metric` values first. 
+    Requires running :func:`scirpy.pp.tcr_neighbors` first with the same
+    `sequence` and `metric` values first.
 
     Parameters
     ----------
@@ -80,11 +80,11 @@ def define_clonotype_clusters(
     metric
         The metric parameter used when running :func:`scirpy.pp.tcr_neighbors`
     key_added
-        Name of the columns which will be added to `adata.obs` if inplace is `True`. 
-        Will create the columns `{{key_added}}` and `{{key_added}}_size`. 
+        Name of the columns which will be added to `adata.obs` if inplace is `True`.
+        Will create the columns `{{key_added}}` and `{{key_added}}_size`.
 
-        Defaults to `ct_cluster_{{sequence}}_{{metric}}` and `ct_cluster_{{sequence}}_{{metric}}_size`. 
-    {common_doc}  
+        Defaults to `ct_cluster_{{sequence}}_{{metric}}` and `ct_cluster_{{sequence}}_{{metric}}_size`.
+    {common_doc}
     """
     if key_added is None:
         key_added = f"ct_cluster_{sequence}_{metric}"
@@ -95,20 +95,20 @@ def define_clonotype_clusters(
 
 @_doc_params(common_doc=_define_clonotypes_doc)
 def define_clonotypes(
-    adata, *, key_added="clonotype", **kwargs
+    adata: AnnData, *, key_added: str = "clonotype", **kwargs
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
     """\
     Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
     sequence identity.
 
-    As opposed to :func:`~scirpy.tl.define_clonotype_clusters` which employs 
+    As opposed to :func:`~scirpy.tl.define_clonotype_clusters` which employs
     a more flexible definition of :term:`clonotype clusters <Clonotype cluster>`,
-    this function stringently defines clonotypes based on nucleic acid sequence 
+    this function stringently defines clonotypes based on nucleic acid sequence
     identity. Technically, this function is an alias to :func:`~scirpy.tl.define_clonotype_clusters`
-    with different default parameters.  
+    with different default parameters.
 
-    Requires running :func:`scirpy.pp.tcr_neighbors` with `sequence='nt'` and 
-    `metric='identity` first (which are the default parameters).  
+    Requires running :func:`scirpy.pp.tcr_neighbors` with `sequence='nt'` and
+    `metric='identity` first (which are the default parameters).
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ def define_clonotypes(
         Annotated data matrix
     key_added
         Name of the columns which will be added to `adata.obs` if inplace is `True`.
-        Will create the columns `{{key_added}}` and `{{key_added}}_size`.  
+        Will create the columns `{{key_added}}` and `{{key_added}}_size`.
     {common_doc}
     """
     if "neighbors_key" not in kwargs:
@@ -125,7 +125,7 @@ def define_clonotypes(
 
 
 def _define_clonotypes(
-    adata,
+    adata: AnnData,
     *,
     same_v_gene: Union[bool, Literal["primary_only", "all"]] = False,
     partitions: Literal["connected", "leiden"] = "connected",
@@ -160,8 +160,8 @@ def _define_clonotypes(
                 f"{x}_{tra1_v_gene}_{trb1_v_gene}"
                 for x, tra1_v_gene, trb1_v_gene in zip(
                     part.membership,
-                    adata.obs["TRA_1_v_gene"],
-                    adata.obs["TRB_1_v_gene"],
+                    adata.obs["IR_VJ_1_v_gene"],
+                    adata.obs["IR_VDJ_1_v_gene"],
                 )
             ]
         )
@@ -171,10 +171,10 @@ def _define_clonotypes(
                 f"{x}_{tra1_v_gene}_{trb1_v_gene}_{tra2_v_gene}_{trb2_v_gene}"
                 for x, tra1_v_gene, trb1_v_gene, tra2_v_gene, trb2_v_gene in zip(
                     part.membership,
-                    adata.obs["TRA_1_v_gene"],
-                    adata.obs["TRB_1_v_gene"],
-                    adata.obs["TRA_2_v_gene"],
-                    adata.obs["TRB_2_v_gene"],
+                    adata.obs["IR_VJ_1_v_gene"],
+                    adata.obs["IR_VDJ_1_v_gene"],
+                    adata.obs["IR_VJ_2_v_gene"],
+                    adata.obs["IR_VDJ_2_v_gene"],
                 )
             ]
         )
@@ -192,7 +192,7 @@ def _define_clonotypes(
 
 
 def clonotype_network(
-    adata,
+    adata: AnnData,
     *,
     sequence: Literal["aa", "nt"] = "nt",
     metric: Literal["identity", "alignment", "levenshtein", "custom"] = "identity",
@@ -302,7 +302,7 @@ def clonotype_network(
 
 
 def clonotype_network_igraph(
-    adata, basis="clonotype_network"
+    adata: AnnData, basis="clonotype_network"
 ) -> Tuple[ig.Graph, ig.Layout]:
     """
     Get an `igraph` object representing the clonotype network.
@@ -338,60 +338,3 @@ def clonotype_network_igraph(
     g = _get_igraph_from_adjacency(conn).subgraph(idx)
     layout = ig.Layout(coords=adata.obsm["X_" + basis][idx, :].tolist())
     return g, layout
-
-
-def _define_clonotypes_no_graph(
-    adata: AnnData,
-    *,
-    flavor: Literal["all_chains", "primary_only"] = "all_chains",
-    inplace: bool = True,
-    key_added: str = "clonotype",
-) -> Union[None, np.ndarray]:
-    """Old version of clonotype definition that works without graphs.
-
-    The current definition of a clonotype is
-    same CDR3 sequence for both primary and secondary
-    TRA and TRB chains. If all chains are `NaN`, the clonotype will
-    be `NaN` as well.
-
-    Parameters
-    ----------
-    adata
-        Annotated data matrix
-    flavor
-        Biological model to define clonotypes.
-        `all_chains`: All four chains of a cell in a clonotype need to be the same.
-        `primary_only`: Only primary alpha and beta chain need to be the same.
-    inplace
-        If True, adds a column to adata.obs
-    key_added
-        Column name to add to 'obs'
-
-    Returns
-    -------
-    Depending on the value of `inplace`, either
-    returns a Series with a clonotype for each cell
-    or adds a `clonotype` column to `adata`.
-
-    """
-    groupby_cols = {
-        "all_chains": ["TRA_1_cdr3", "TRB_1_cdr3", "TRA_2_cdr3", "TRA_2_cdr3"],
-        "primary_only": ["TRA_1_cdr3", "TRB_1_cdr3"],
-    }
-    clonotype_col = np.array(
-        [
-            "clonotype_{}".format(x)
-            for x in adata.obs.groupby(groupby_cols[flavor], observed=True).ngroup()
-        ]
-    )
-    clonotype_col[
-        _is_na(adata.obs["TRA_1_cdr3"])
-        & _is_na(adata.obs["TRA_2_cdr3"])
-        & _is_na(adata.obs["TRB_1_cdr3"])
-        & _is_na(adata.obs["TRB_2_cdr3"])
-    ] = np.nan
-
-    if inplace:
-        adata.obs[key_added] = clonotype_col
-    else:
-        return clonotype_col
