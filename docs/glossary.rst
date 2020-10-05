@@ -97,9 +97,11 @@ Glossary
 
     V(D)J
         The variability of :term:`TCR` chain sequences originates from the genetic recombination
-        of **V**\ ariable, **D**\ iversity and **J**\ oining gene segments. The TCR-α
-        chain gets assembled from V and J loci only, the TCR-β chain from all three
-        V, D and J loci.
+        of **V**\ ariable, **D**\ iversity and **J**\ oining gene segments. The TCR-α,
+        TCR-ɣ, IG-κ, and IG-λ chains get assembled from V and J loci only. We refer
+        to these chains as `VJ` chains in Scirpy. The TCR-β, TCR-δ, and IG-heavy chains
+        get assembled from all three segments. We refer to these chains as `VDJ`-chains
+        in Scirpy.
 
         As an example, the figure below shows how a TCR-α chain is assembed from
         the *tra* locus. V to J recombination joins one of many TRAV segments to one of
@@ -164,3 +166,27 @@ Glossary
     receptor type
 
     receptor subtype
+
+    IR
+
+    BCR
+
+    dual IR
+
+    AIRR
+        Adaptive Immune Receptor Repertoire.
+        See also the `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_.
+
+    chain locus
+        Scirpy supports all valid `IGMT locus names <http://www.imgt.org/IMGTScientificChart/Nomenclature/IMGTnomenclature.html>`_:
+
+        Loci with a :term:`VJ<V(D)J>` junction:
+            * `TRA` (T-cell receptor alpha)
+            * `TRG` (T-cell receptor gamma)
+            * `IGL` (Immunoglobulin lambda)
+            * `IGK` (Immunoglobulin kappa)
+
+        Loci with a :term:`VDJ<V(D)J>` junction:
+            * `TRB` (T-cell receptor beta)
+            * `TRD` (T cell receptor delta)
+            * `IGH` (Immunoglobulin heavy chain)

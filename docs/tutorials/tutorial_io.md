@@ -34,10 +34,10 @@ anndata.logging.anndata_logger.setLevel("ERROR")
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. _importing-data:
 
-Loading TCR data with scirpy
-============================
+Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
+=========================================================================
 
-In this notebook, we demonstrate how single-cell :term:`TCR` data can be imported into
+In this notebook, we demonstrate how single-cell :term:`IR`-data can be imported into
 an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
 AnnData and how Scirpy makes use of it, check out the :ref:`data-structure` section.
 
@@ -45,27 +45,32 @@ The example data used in this notebook are available from the
 `Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
 
 
-.. important:: **Limitations of the scirpy data model**
+.. important:: **The Scirpy data model**
 
-    Currently, reading data into *Scirpy* has the following limitations:
+    Currently, the Scirpy data model has the following constraints:
 
-     * Only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored.
+     * BCR and TCR chains are supported. Chain loci must be valid :term:`chain locus`, 
+       i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or 
+       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). Other chains are discarded. 
      * Non-productive chains are removed. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
-     * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`).
+     * Each chain can contain up to two `VJ` and two `VDJ` chains (:term:`Dual IR`).
        Excess chains are removed (those with lowest read count/:term:`UMI` count)
        and cells flagged as :term:`Multichain-cell`.
 
-    For more information, see :ref:`tcr-model`.
+    For more information, see :ref:`receptor-model`.
 
 
 .. note:: **TCR quality control**
 
-     * After importing the data, we recommend running the :func:`scirpy.tl.chain_pairing` function.
-       It will flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell)
-       and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of alpha- and beta chains).
-     * We recommend excluding multichain-cells as these likely represent doublets
+     * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
+       It will 
+           1. identify the :term:`receptor type` and :term:`receptor subtype` and flag cells
+              as `ambiguous` that cannot unambigously be assigned to a certain receptor (sub)type, and 
+           2. flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell)
+              and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of VJ- and VDJ-chains).
+     * We recommend excluding multichain- and ambiguous cells as these likely represent doublets
      * Based on the *orphan chain* flags, the corresponding cells can be excluded. Alternatively,
        these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"`
        parameter when running :func:`scirpy.tl.define_clonotypes`.
@@ -200,6 +205,7 @@ the import.
 
 ```python
 adata = ir.io.read_airr(["example_data/immunesim_airr/immunesim_tra.tsv", "example_data/immunesim_airr/immunesim_trb.tsv"])
+ir.tl.chain_qc(adata)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -228,8 +234,8 @@ ir.pl.clonotype_network(adata, color="ct_cluster_aa_alignment", panel_size=(4, 4
 Creating AnnData objects from other formats
 -------------------------------------------
 
-Often, TCR data are just provided as a simple table listing the :term:`CDR3` sequences for each cell.
-We provide a generic data structure for cells with TCRs, which can then be converted into
+Often, immune receptor (IR) data are just provided as a simple table listing the :term:`CDR3` sequences for each cell.
+We provide a generic data structure for cells with IRs, which can then be converted into
 an :class:`~anndata.AnnData` object.
 
 .. module:: scirpy.io
@@ -240,7 +246,7 @@ an :class:`~anndata.AnnData` object.
 
    IrCell
    IrChain
-   from_tcr_objs
+   from_ir_objs
 
 If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`_
 for a `read_XXX` function.
@@ -253,6 +259,7 @@ be a supplementary file from the paper).
 Such a table typically contains information about
 
  * CDR3 sequences (amino acid and/or nucleotide)
+ * The :term:`chain locus`, e.g. `TRA`, `TRB`, or `IGH`. 
  * expression of the receptor chain (e.g. count, :term:`UMI`, transcripts per million (TPM))
  * the :term:`V(D)J` genes for each chain
  * information if the chain is :term:`productive <productive chain>`.
@@ -274,7 +281,7 @@ Our task is now to dissect the table into :class:`~scirpy.io.IrCell` and :class:
 Each :class:`~scirpy.io.IrCell` can have an arbitrary number of chains.
 When converting the :class:`~scirpy.io.IrCell` objects into an :class:`~anndata.AnnData` object,
 scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
-this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`tcr-model`.
+this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`receptor-model`.
 <!-- #endraw -->
 
 ```python
@@ -306,7 +313,7 @@ for idx, row in tcr_table.iterrows():
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Now, we can convert the list of :class:`~scirpy.io.IrCell` objects using :func:`scirpy.io.from_tcr_objs`.
+Now, we can convert the list of :class:`~scirpy.io.IrCell` objects using :func:`scirpy.io.from_ir_objs`.
 <!-- #endraw -->
 
 ```python

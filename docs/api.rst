@@ -31,7 +31,7 @@ formats.
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
 a list of :class:`~scirpy.io.IrCell` objects first, and then converting them into
-an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_tcr_objs`.
+an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_ir_objs`.
 For more details, check the :ref:`Data loading tutorial <importing-data>`.
 
 .. autosummary::
@@ -39,7 +39,7 @@ For more details, check the :ref:`Data loading tutorial <importing-data>`.
 
    IrCell
    IrChain
-   from_tcr_objs
+   from_ir_objs
 
 
 Preprocessing: `pp`
@@ -50,8 +50,8 @@ Preprocessing: `pp`
 .. autosummary::
    :toctree: ./generated
 
-   merge_with_tcr
-   tcr_neighbors
+   merge_with_ir
+   ir_neighbors
 
 
 Tools: `tl`
@@ -191,15 +191,15 @@ Utility functions: `util`
    graph.layout_components
 
 
-TCR distance metrics: `tcr_dist`
+IR distance metrics: `ir_dist`
 -----------------------------------
 
-.. module:: scirpy.tcr_dist
+.. module:: scirpy.ir_dist
 
 .. autosummary::
    :toctree: ./generated
 
-   tcr_dist
+   sequence_dist
    DistanceCalculator
    ParallelDistanceCalculator
    IdentityDistanceCalculator
