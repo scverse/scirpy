@@ -133,10 +133,11 @@ def adata_conn():
             IR_VDJ_1_v_gene=["bv1", "bv1", "bv2", "bv1"],
             IR_VJ_2_v_gene=["a2v1", "a2v2", "a2v2", "a2v1"],
             IR_VDJ_2_v_gene=["b2v1", "b2v2", "b2v2", "b2v1"],
-            IR_VJ_1_LOCUS=["TRA"] * 4,
-            IR_VDJ_1_LOCUS=["TRB"] * 4,
-            IR_VJ_2_LOCUS=["TRA"] * 4,
-            IR_VDJ_2_LOCUS=["TRB"] * 4,
+            IR_VJ_1_LOCUS=["TRA", "IGL", "IGL", "IGK"],
+            IR_VDJ_1_LOCUS=["TRB", "IGH", "IGH", "IGH"],
+            IR_VJ_2_LOCUS=["TRA", "IGL", "IGL", "IGK"],
+            IR_VDJ_2_LOCUS=["TRB", "IGH", "IGH", "IGH"],
+            receptor_type=["TCR", "BCR", "BCR", "BCR"],
         )
         .set_index("cell_id")
     )

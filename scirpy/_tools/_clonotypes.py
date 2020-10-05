@@ -23,6 +23,13 @@ same_v_gene
 
     Chains with no detected V-gene will be treated like a separate "gene" with
     the name "None".
+within_group
+    Enforces clonotypes to have the same group. Per default, this is
+    set to :term:`receptor type<receptor_type>`, i.e. clonotypes cannot comprise both
+    B cells and T cells. Set this to :term:`receptor subtype<receptor_subtype>` if you
+    don't want clonotypes to be shared across e.g. gamma-delta and alpha-beta T-cells.
+    You can also set this to any other column in `adata.obs` that contains
+    a grouping, or to `None`, if you want no constraints.
 partitions
     How to find graph partitions that define a clonotype.
     Possible values are `leiden`, for using the "Leiden" algorithm and
@@ -128,6 +135,7 @@ def _define_clonotypes(
     adata: AnnData,
     *,
     same_v_gene: Union[bool, Literal["primary_only", "all"]] = False,
+    within_group: Union[str, None] = "receptor_type",
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
@@ -135,6 +143,15 @@ def _define_clonotypes(
     key_added: str = "clonotype",
     inplace: bool = True,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
+    if within_group is not None and within_group not in adata.obs.columns:
+        msg = f"column `{within_group}` not found in `adata.obs`. "
+        if within_group in ("receptor_type", "receptor_subtype"):
+            msg += "Did you run `tl.chain_qc`? "
+        raise ValueError(msg)
+
+    if same_v_gene is not False and same_v_gene not in ("all", "primary_only"):
+        raise ValueError("Invalid value for `same_v_gene`.")
+
     try:
         conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
@@ -152,34 +169,36 @@ def _define_clonotypes(
     else:
         part = g.clusters(mode="weak")
 
-    if same_v_gene is False:
-        clonotype = np.array([str(x) for x in part.membership])
-    elif same_v_gene == "primary_only":
-        clonotype = np.array(
-            [
-                f"{x}_{tra1_v_gene}_{trb1_v_gene}"
-                for x, tra1_v_gene, trb1_v_gene in zip(
-                    part.membership,
-                    adata.obs["IR_VJ_1_v_gene"],
-                    adata.obs["IR_VDJ_1_v_gene"],
-                )
-            ]
-        )
+    # basic clonotype = graph partition
+    clonotype = [str(x) for x in part.membership]
+
+    # add v gene to definition
+    if same_v_gene == "primary_only":
+        clonotype = [
+            f"{x}_{tra1_v_gene}_{trb1_v_gene}"
+            for x, tra1_v_gene, trb1_v_gene in zip(
+                clonotype,
+                adata.obs["IR_VJ_1_v_gene"],
+                adata.obs["IR_VDJ_1_v_gene"],
+            )
+        ]
     elif same_v_gene == "all":
-        clonotype = np.array(
-            [
-                f"{x}_{tra1_v_gene}_{trb1_v_gene}_{tra2_v_gene}_{trb2_v_gene}"
-                for x, tra1_v_gene, trb1_v_gene, tra2_v_gene, trb2_v_gene in zip(
-                    part.membership,
-                    adata.obs["IR_VJ_1_v_gene"],
-                    adata.obs["IR_VDJ_1_v_gene"],
-                    adata.obs["IR_VJ_2_v_gene"],
-                    adata.obs["IR_VDJ_2_v_gene"],
-                )
-            ]
-        )
-    else:
-        raise ValueError("Invalud value for `same_v_gene`.")
+        clonotype = [
+            f"{x}_{tra1_v_gene}_{trb1_v_gene}_{tra2_v_gene}_{trb2_v_gene}"
+            for x, tra1_v_gene, trb1_v_gene, tra2_v_gene, trb2_v_gene in zip(
+                clonotype,
+                adata.obs["IR_VJ_1_v_gene"],
+                adata.obs["IR_VDJ_1_v_gene"],
+                adata.obs["IR_VJ_2_v_gene"],
+                adata.obs["IR_VDJ_2_v_gene"],
+            )
+        ]
+
+    # add receptor_type to definition
+    if within_group is not None:
+        clonotype = [
+            f"{x}_{group}" for x, group in zip(clonotype, adata.obs[within_group])
+        ]
 
     clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
     assert len(clonotype) == len(clonotype_size) == adata.obs.shape[0]
