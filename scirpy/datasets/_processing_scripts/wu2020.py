@@ -70,7 +70,7 @@ def _load_adata(path):
     adata.obs = adata.obs.join(obs, how="inner")
     assert adata.shape[0] == umap_coords.shape[0]
     adata.obsm["X_umap_orig"] = umap_coords
-    st.pp.merge_with_tcr(adata, adata_tcr)
+    st.pp.merge_with_ir(adata, adata_tcr)
     return adata
 
 

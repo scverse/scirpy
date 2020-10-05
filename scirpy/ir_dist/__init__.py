@@ -6,7 +6,7 @@ from typing import Union, Sequence, List, Tuple, Dict, Optional
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
-from ..util import _is_na
+from ..util import _is_na, deprecated
 import abc
 from Levenshtein import distance as levenshtein_dist
 import scipy.spatial
@@ -19,14 +19,14 @@ _doc_metrics = """\
 metric
     You can choose one of the following metrics:
       * `identity` -- 1 for identical sequences, 0 otherwise.
-        See :class:`~scirpy.tcr_dist.IdentityDistanceCalculator`.
+        See :class:`~scirpy.ir_dist.IdentityDistanceCalculator`.
         This metric implies a cutoff of 0.
       * `levenshtein` -- Levenshtein edit distance.
-        See :class:`~scirpy.tcr_dist.LevenshteinDistanceCalculator`.
+        See :class:`~scirpy.ir_dist.LevenshteinDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
-        See :class:`~scirpy.tcr_dist.AlignmentDistanceCalculator`.
-      * any instance of :class:`~scirpy.tcr_dist.DistanceCalculator`.
+        See :class:`~scirpy.ir_dist.AlignmentDistanceCalculator`.
+      * any instance of :class:`~scirpy.ir_dist.DistanceCalculator`.
 """
 
 _doc_cutoff = """\
@@ -435,8 +435,16 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         )
 
 
+@deprecated(
+    "Due to added BCR support, this function has been renamed "
+    "to `sequence_dist`. The old version will be removed in a future release. "
+)
+def tcr_dist(*args, **kwargs):
+    return sequence_dist(*args, **kwargs)
+
+
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=_doc_dist_mat)
-def tcr_dist(
+def sequence_dist(
     unique_seqs: np.ndarray,
     unique_seqs2: Union[None, np.ndarray] = None,
     *,
@@ -458,7 +466,7 @@ def tcr_dist(
         Must not contain duplicates.
         Note that not all distance metrics support nucleotide sequences.
     unique_seqs2
-        Second array sequences. When omitted, `tcr_dist` computes
+        Second array sequences. When omitted, `sequence_dist` computes
         the square matrix of `unique_seqs`.
     {metric}
     {cutoff}
@@ -489,7 +497,15 @@ def tcr_dist(
     return dist_mat
 
 
-class TcrNeighbors:
+@deprecated(
+    "Due to added BCR support, this function has been renamed "
+    "to `IrNeighbors`. The old version will be removed in a future release. "
+)
+def TcrNeighbors(*args, **kwargs):
+    return IrNeighbors(*args, **kwargs)
+
+
+class IrNeighbors:
     def __init__(
         self,
         adata: AnnData,
@@ -499,14 +515,14 @@ class TcrNeighbors:
         ] = "identity",
         cutoff: float = 10,
         receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
-        dual_tcr: Literal["primary_only", "all", "any"] = "primary_only",
+        dual_ir: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
     ):
         """Class to compute Neighborhood graphs of CDR3 sequences.
 
-        For documentation of the parameters, see :func:`tcr_neighbors`.
+        For documentation of the parameters, see :func:`ir_neighbors`.
         """
-        start = logging.info("Initializing TcrNeighbors object...")
+        start = logging.info("Initializing IrNeighbors object...")
         if metric == "identity" and cutoff != 0:
             raise ValueError("Identity metric only works with cutoff == 0")
         if metric != "identity" and cutoff == 0:
@@ -520,19 +536,19 @@ class TcrNeighbors:
                 "Invalid value for `receptor_arms`. Note that starting with v0.5 "
                 "`TRA` and `TRB` are not longer valid values."
             )
-        if dual_tcr not in ["primary_only", "all", "any"]:
-            raise ValueError("Invalid value for `dual_tcr")
+        if dual_ir not in ["primary_only", "all", "any"]:
+            raise ValueError("Invalid value for `dual_ir")
         if sequence not in ["aa", "nt"]:
             raise ValueError("Invalid value for `sequence`")
         self.adata = adata
         self.metric = metric
         self.cutoff = cutoff
         self.receptor_arms = receptor_arms
-        self.dual_tcr = dual_tcr
+        self.dual_ir = dual_ir
         self.sequence = sequence
         self._build_index_dict()
         self._dist_mat = None
-        logging.info("Finished initalizing TcrNeighbors object. ", time=start)
+        logging.info("Finished initalizing IrNeighbors object. ", time=start)
 
     @staticmethod
     def _seq_to_cell_idx(
@@ -580,7 +596,7 @@ class TcrNeighbors:
         """Build nested dictionary for each receptor arm (TRA, TRB) containing all
         combinations of receptor_arms x primary/secondary_chain
 
-        If the merge mode for either `receptor_arm` or `dual_tcr` is `all`,
+        If the merge mode for either `receptor_arm` or `dual_ir` is `all`,
         includes a lookup table that contains the number of CDR3 sequences for
         each cell.
         """
@@ -589,7 +605,7 @@ class TcrNeighbors:
             if self.receptor_arms not in ["VJ", "VDJ"]
             else [self.receptor_arms]
         )
-        chain_inds = [1] if self.dual_tcr == "primary_only" else [1, 2]
+        chain_inds = [1] if self.dual_ir == "primary_only" else [1, 2]
         sequence = "" if self.sequence == "aa" else "_nt"
 
         arm_dict = {}
@@ -610,7 +626,7 @@ class TcrNeighbors:
             }
 
             # need the count of chains per cell for the `all` strategies.
-            if self.receptor_arms == "all" or self.dual_tcr == "all":
+            if self.receptor_arms == "all" or self.dual_ir == "all":
                 arm_dict[arm]["chains_per_cell"] = np.sum(
                     ~_is_na(
                         self.adata.obs.loc[
@@ -623,7 +639,7 @@ class TcrNeighbors:
         self.index_dict = arm_dict
 
     def _reduce_dual_all(self, d, chain, cell_row, cell_col):
-        """Reduce dual TCRs into a single value when 'all' sequences
+        """Reduce dual IRs into a single value when 'all' sequences
         need to match. This requires additional checking effort for the number
         of chains in the given cell, since we can't make the distinction between
         no chain and dist > cutoff based on the distances (both would contain a
@@ -710,7 +726,7 @@ class TcrNeighbors:
 
     @staticmethod
     def _reduce_dual_any(d, *args):
-        """Reduce dual tcrs to a single value when *any* of the sequences needs
+        """Reduce dual irs to a single value when *any* of the sequences needs
         to match (by minimum). This also works with only one entry (i.e. 'primary only')
         """
         # need to exclude 0 values, since the dist mat is offseted by 1.
@@ -725,7 +741,7 @@ class TcrNeighbors:
         Yield (coords, value) pairs."""
         start = logging.info("Constructing cell x cell distance matrix...")
         reduce_dual = (
-            self._reduce_dual_all if self.dual_tcr == "all" else self._reduce_dual_any
+            self._reduce_dual_all if self.dual_ir == "all" else self._reduce_dual_any
         )
         reduce_arms = (
             self._reduce_arms_all
@@ -814,7 +830,7 @@ class TcrNeighbors:
         for arm, arm_dict in self.index_dict.items():
             start = logging.info(f"Computing {arm} pairwise distances...")
 
-            arm_dict["dist_mat"] = tcr_dist(
+            arm_dict["dist_mat"] = sequence_dist(
                 arm_dict["unique_seqs"],
                 metric=self.metric,
                 cutoff=self.cutoff,
@@ -866,7 +882,7 @@ class TcrNeighbors:
 
 
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=_doc_dist_mat)
-def tcr_neighbors(
+def ir_neighbors(
     adata: AnnData,
     *,
     metric: Union[
@@ -874,7 +890,7 @@ def tcr_neighbors(
     ] = "identity",
     cutoff: int = 10,
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
-    dual_tcr: Literal["primary_only", "any", "all"] = "primary_only",
+    dual_ir: Literal["primary_only", "any", "all"] = "primary_only",
     key_added: Union[str, None] = None,
     sequence: Literal["aa", "nt"] = "nt",
     inplace: bool = True,
@@ -902,20 +918,20 @@ def tcr_neighbors(
          * `"all"` - both TRA and TRB need to match
          * `"any"` - either TRA or TRB need to match
 
-    dual_tcr:
+    dual_ir:
          * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
          * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
            cutoff for any of the chains.
          * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
            cutoff for all of the chains.
 
-        See also :term:`Dual TCR`
+        See also :term:`Dual IR`
 
     key_added:
         dict key under which the result will be stored in `adata.uns`
-        when `inplace` is True. Defaults to `tcr_neighbors_{{sequence}}_{{metric}}`.
+        when `inplace` is True. Defaults to `ir_neighbors_{{sequence}}_{{metric}}`.
 
-        If metric is an instance of :class:`scirpy.tcr_dist.DistanceCalculator`,
+        If metric is an instance of :class:`scirpy.ir_dist.DistanceCalculator`,
         `{{metric}}` defaults to `"custom"`.
     sequence:
         Use amino acid (`aa`) or nulceotide (`nt`) sequences?
@@ -938,13 +954,13 @@ def tcr_neighbors(
         cutoff = 0
     if key_added is None:
         tmp_metric = "custom" if isinstance(metric, DistanceCalculator) else metric
-        key_added = f"tcr_neighbors_{sequence}_{tmp_metric}"
-    ad = TcrNeighbors(
+        key_added = f"ir_neighbors_{sequence}_{tmp_metric}"
+    ad = IrNeighbors(
         adata,
         metric=metric,
         cutoff=cutoff,
         receptor_arms=receptor_arms,
-        dual_tcr=dual_tcr,
+        dual_ir=dual_ir,
         sequence=sequence,
     )
     ad.compute_distances(n_jobs)
@@ -956,7 +972,7 @@ def tcr_neighbors(
         adata.uns[key_added]["params"] = {
             "metric": metric,
             "cutoff": cutoff,
-            "dual_tcr": dual_tcr,
+            "dual_ir": dual_ir,
             "receptor_arms": receptor_arms,
         }
         adata.uns[key_added]["connectivities"] = ad.connectivities

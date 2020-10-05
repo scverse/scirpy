@@ -8,7 +8,7 @@ from .._compat import Literal
 
 
 def _group_abundance(
-    tcr_obs: pd.DataFrame,
+    ir_obs: pd.DataFrame,
     groupby: str,
     target_col: str,
     *,
@@ -16,17 +16,17 @@ def _group_abundance(
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
 ) -> pd.DataFrame:
     # remove NA rows
-    na_mask = _is_na(tcr_obs[groupby]) | _is_na(tcr_obs[target_col])
-    tcr_obs = tcr_obs.loc[~na_mask, :]
+    na_mask = _is_na(ir_obs[groupby]) | _is_na(ir_obs[target_col])
+    ir_obs = ir_obs.loc[~na_mask, :]
 
     # normalize to fractions
-    scale_vector = _normalize_counts(tcr_obs, normalize=fraction, default_col=groupby)
-    tcr_obs = tcr_obs.assign(count=1, weight=scale_vector)
+    scale_vector = _normalize_counts(ir_obs, normalize=fraction, default_col=groupby)
+    ir_obs = ir_obs.assign(count=1, weight=scale_vector)
 
     # Calculate distribution of lengths in each group. Use sum instead of count
     # to reflect weights
     group_counts = (
-        tcr_obs.loc[:, [groupby, target_col, "count", "weight"]]
+        ir_obs.loc[:, [groupby, target_col, "count", "weight"]]
         .groupby([groupby, target_col], observed=True)
         .sum()
         .reset_index()
@@ -84,7 +84,7 @@ def group_abundance(
     target_col
         Caregorical variable from `obs` according to which the abundance/fractions
         will be computed. This defaults to "has_ir", simply counting
-        the number of cells with a detected :term:`TCR` by group.
+        the number of cells with a detected :term:`IR` by group.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column
@@ -103,8 +103,8 @@ def group_abundance(
     if target_col not in adata.obs.columns:
         raise ValueError("`target_col` not found in obs`")
 
-    tcr_obs = adata.obs
+    ir_obs = adata.obs
 
     return _group_abundance(
-        tcr_obs, groupby, target_col=target_col, fraction=fraction, sort=sort
+        ir_obs, groupby, target_col=target_col, fraction=fraction, sort=sort
     )

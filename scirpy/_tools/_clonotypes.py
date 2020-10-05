@@ -43,8 +43,8 @@ n_iterations
     `n_iterations` parameter for the leiden algorithm.
 neighbors_key
     Key under which the neighboorhood graph is stored in `adata.uns`.
-    By default, tries to read from `tcr_neighbors_{sequence}_{metric}`,
-    e.g. `tcr_neighbors_nt_identity`.
+    By default, tries to read from `ir_neighbors_{sequence}_{metric}`,
+    e.g. `ir_neighbors_nt_identity`.
 inplace
     If `True`, adds the results to anndata, otherwise returns them.
 
@@ -75,7 +75,7 @@ def define_clonotype_clusters(
     this function flexibly defines clonotype clusters based on amino acid or nucleic
     acid sequence identity or similarity.
 
-    Requires running :func:`scirpy.pp.tcr_neighbors` first with the same
+    Requires running :func:`scirpy.pp.ir_neighbors` first with the same
     `sequence` and `metric` values first.
 
     Parameters
@@ -83,9 +83,9 @@ def define_clonotype_clusters(
     adata
         Annotated data matrix
     sequence
-        The sequence parameter used when running :func:scirpy.pp.tcr_neighbors`
+        The sequence parameter used when running :func:scirpy.pp.ir_neighbors`
     metric
-        The metric parameter used when running :func:`scirpy.pp.tcr_neighbors`
+        The metric parameter used when running :func:`scirpy.pp.ir_neighbors`
     key_added
         Name of the columns which will be added to `adata.obs` if inplace is `True`.
         Will create the columns `{{key_added}}` and `{{key_added}}_size`.
@@ -96,7 +96,7 @@ def define_clonotype_clusters(
     if key_added is None:
         key_added = f"ct_cluster_{sequence}_{metric}"
     if "neighbors_key" not in kwargs:
-        kwargs["neighbors_key"] = f"tcr_neighbors_{sequence}_{metric}"
+        kwargs["neighbors_key"] = f"ir_neighbors_{sequence}_{metric}"
     return _define_clonotypes(adata, key_added=key_added, **kwargs)
 
 
@@ -114,7 +114,7 @@ def define_clonotypes(
     identity. Technically, this function is an alias to :func:`~scirpy.tl.define_clonotype_clusters`
     with different default parameters.
 
-    Requires running :func:`scirpy.pp.tcr_neighbors` with `sequence='nt'` and
+    Requires running :func:`scirpy.pp.ir_neighbors` with `sequence='nt'` and
     `metric='identity` first (which are the default parameters).
 
     Parameters
@@ -127,7 +127,7 @@ def define_clonotypes(
     {common_doc}
     """
     if "neighbors_key" not in kwargs:
-        kwargs["neighbors_key"] = "tcr_neighbors_nt_identity"
+        kwargs["neighbors_key"] = "ir_neighbors_nt_identity"
     return _define_clonotypes(adata, key_added=key_added, **kwargs)
 
 
@@ -139,7 +139,7 @@ def _define_clonotypes(
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
-    neighbors_key: str = "tcr_neighbors",
+    neighbors_key: str = "ir_neighbors",
     key_added: str = "clonotype",
     inplace: bool = True,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
@@ -156,7 +156,7 @@ def _define_clonotypes(
         conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
         raise ValueError(
-            "Connectivities were not found. Did you run `pp.tcr_neighbors`?"
+            "Connectivities were not found. Did you run `pp.ir_neighbors`?"
         )
     g = _get_igraph_from_adjacency(conn)
 
@@ -232,16 +232,16 @@ def clonotype_network(
 
     Singleton clonotypes can be filtered out with the `min_size` parameter.
 
-    Requires running :func:`scirpy.pp.tcr_neighbors` first.
+    Requires running :func:`scirpy.pp.ir_neighbors` first.
 
     Stores coordinates of the clonotype network in `adata.obsm`.
 
     Parameters
     ----------
     sequence
-        The `sequence` parameter :func:`scirpy.pp.tcr_neighbors` was ran with.
+        The `sequence` parameter :func:`scirpy.pp.ir_neighbors` was ran with.
     metric
-        The `metric` parameter :func:`scirpy.pp.tcr_neighbors` was ran with.
+        The `metric` parameter :func:`scirpy.pp.ir_neighbors` was ran with.
     min_size
         Only show clonotypes with at least `min_size` cells.
     layout
@@ -252,7 +252,7 @@ def clonotype_network(
         Will be passed to the layout function
     neighbors_key
         Key under which the neighborhood graph is stored in `adata.uns`.
-        Defaults to `tcr_neighbors_{sequence}_{metric}`.
+        Defaults to `ir_neighbors_{sequence}_{metric}`.
     key_clonotype_size
         Key under which the clonotype size information is stored in `adata.obs`
         Defaults to `ct_cluster_{sequence}_{metric}_size`.
@@ -270,7 +270,7 @@ def clonotype_network(
     coordinates.
     """
     if neighbors_key is None:
-        neighbors_key = f"tcr_neighbors_{sequence}_{metric}"
+        neighbors_key = f"ir_neighbors_{sequence}_{metric}"
     if key_clonotype_size is None:
         if sequence == "nt" and metric == "identity":
             key_clonotype_size = "clonotype_size"
@@ -280,7 +280,7 @@ def clonotype_network(
     try:
         conn = adata.uns[neighbors_key]["connectivities"]
     except KeyError:
-        raise ValueError("Connectivity data not found. Did you run `pp.tcr_neighbors`?")
+        raise ValueError("Connectivity data not found. Did you run `pp.ir_neighbors`?")
 
     try:
         clonotype_size = adata.obs[key_clonotype_size].values
@@ -292,7 +292,7 @@ def clonotype_network(
     if not adata.n_obs == conn.shape[0] == conn.shape[0]:
         raise ValueError(
             "Dimensions of connectivity matrix and AnnData do not match. Maybe you "
-            "need to re-run `pp.tcr_neighbors?"
+            "need to re-run `pp.ir_neighbors?"
         )
 
     graph = _get_igraph_from_adjacency(conn)

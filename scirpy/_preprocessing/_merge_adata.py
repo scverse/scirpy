@@ -3,9 +3,9 @@ from anndata import AnnData
 from ..io._io import _sanitize_anndata
 
 
-def merge_with_tcr(
+def merge_with_ir(
     adata: AnnData,
-    adata_tcr: AnnData,
+    adata_ir: AnnData,
     *,
     how: str = "left",
     on: Union[List[str], str] = None,
@@ -14,16 +14,16 @@ def merge_with_tcr(
     validate: str = "one_to_one",
     **kwargs
 ) -> None:
-    """Merge TCR data with transcriptomics data into a single :class:`~anndata.AnnData`
-    object.
+    """Merge adaptive immune receptor (:term:`IR`) data with transcriptomics data into a
+    single :class:`~anndata.AnnData` object.
 
-    :ref:`Reading in TCR data<importing-data>` results in an :class:`~anndata.AnnData`
-    object with TCR information stored in `obs`. Use this function to merge
+    :ref:`Reading in IR data<importing-data>` results in an :class:`~anndata.AnnData`
+    object with IR information stored in `obs`. Use this function to merge
     it with another :class:`~anndata.AnnData` which contains transcriptomics data.
 
     Will keep all objects (e.g. `neighbors`, `umap`) from `adata` and integrate
-    `obs` from `adata_tcr` into `adata`.
-    Everything other than `.obs` from `adata_tcr` will be discarded.
+    `obs` from `adata_ir` into `adata`.
+    Everything other than `.obs` from `adata_ir` will be discarded.
 
     This function uses :func:`pandas.merge` to join the two `.obs` data frames.
 
@@ -33,8 +33,8 @@ def merge_with_tcr(
     ----------
     adata
         AnnData with the transcriptomics data. Will be modified inplace.
-    adata_tcr
-        AnnData with the TCR data
+    adata_ir
+        AnnData with the adaptive immune receptor (IR) data
     on
         Columns to join on. Default: The index and "batch", if it exists in both `obs`.
     left_index
@@ -47,11 +47,11 @@ def merge_with_tcr(
         Additional kwargs are passed to :func:`pandas.merge`.
     """
     if on is None:
-        if ("batch" in adata.obs.columns) and ("batch" in adata_tcr.obs.columns):
+        if ("batch" in adata.obs.columns) and ("batch" in adata_ir.obs.columns):
             on = "batch"
 
     adata.obs = adata.obs.merge(
-        adata_tcr.obs,
+        adata_ir.obs,
         how=how,
         on=on,
         left_index=left_index,

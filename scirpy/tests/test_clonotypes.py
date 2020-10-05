@@ -79,7 +79,7 @@ def test_define_clonotype_clusters(
     # Test with higher leiden resolution
     st.tl.define_clonotype_clusters(
         adata_conn,
-        neighbors_key="tcr_neighbors_aa_alignment",
+        neighbors_key="ir_neighbors_aa_alignment",
         within_group=None,
         same_v_gene=False,
         key_added="ct2",
@@ -92,8 +92,8 @@ def test_define_clonotype_clusters(
 
 
 def test_clonotypes_end_to_end1(adata_define_clonotypes):
-    # default parameters of tcr-neighbors should yield nt-identity
-    st.pp.tcr_neighbors(adata_define_clonotypes, receptor_arms="all", dual_tcr="all")
+    # default parameters of ir-neighbors should yield nt-identity
+    st.pp.ir_neighbors(adata_define_clonotypes, receptor_arms="all", dual_ir="all")
     clonotypes, _ = st.tl.define_clonotypes(
         adata_define_clonotypes, inplace=False, within_group=None
     )
@@ -103,11 +103,11 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
 
 
 def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
-        dual_tcr="all",
+        dual_ir="all",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
@@ -119,11 +119,11 @@ def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="any",
-        dual_tcr="any",
+        dual_ir="any",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
@@ -135,11 +135,11 @@ def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
-        dual_tcr="any",
+        dual_ir="any",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
@@ -151,11 +151,11 @@ def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="any",
-        dual_tcr="all",
+        dual_ir="all",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
@@ -167,11 +167,11 @@ def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
-        dual_tcr="primary_only",
+        dual_ir="primary_only",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
@@ -183,11 +183,11 @@ def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="VDJ",
-        dual_tcr="primary_only",
+        dual_ir="primary_only",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(

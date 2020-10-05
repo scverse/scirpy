@@ -141,12 +141,12 @@ def adata_conn():
         )
         .set_index("cell_id")
     )
-    adata.uns["tcr_neighbors_aa_alignment"] = {
+    adata.uns["ir_neighbors_aa_alignment"] = {
         "connectivities": np.array(
             [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
         )
     }
-    assert _is_symmetric(adata.uns["tcr_neighbors_aa_alignment"]["connectivities"])
+    assert _is_symmetric(adata.uns["ir_neighbors_aa_alignment"]["connectivities"])
     return adata
 
 

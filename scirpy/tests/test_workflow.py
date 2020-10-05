@@ -26,7 +26,7 @@ def test_workflow():
         TESTDATA / "test_workflow/adata.obs.expected.pkl.gz"
     )
     ir.tl.chain_pairing(adata)
-    ir.pp.tcr_neighbors(adata)
+    ir.pp.ir_neighbors(adata)
     ir.tl.define_clonotypes(adata)
     ir.tl.clonotype_network(adata)
     ir.tl.clonal_expansion(adata)

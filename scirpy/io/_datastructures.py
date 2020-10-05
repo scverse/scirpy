@@ -1,4 +1,4 @@
-"""Datastructures for TCR data.
+"""Datastructures for Adaptive immune receptor (IR) data.
 
 Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115

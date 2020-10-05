@@ -53,15 +53,15 @@ def alpha_diversity(
         else:
             return -np.sum((freq * np.log(freq)) / np.log(len(freq)))
 
-    tcr_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
+    ir_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clono_counts = (
-        tcr_obs.groupby([groupby, target_col], observed=True)
+        ir_obs.groupby([groupby, target_col], observed=True)
         .size()
         .reset_index(name="count")
     )
 
     diversity = dict()
-    for k in sorted(tcr_obs[groupby].unique()):
+    for k in sorted(ir_obs[groupby].unique()):
         tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
         tmp_freqs = tmp_counts / np.sum(tmp_counts)
         diversity[k] = _shannon_entropy(tmp_freqs)
