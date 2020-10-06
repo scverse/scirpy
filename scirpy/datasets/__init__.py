@@ -30,19 +30,17 @@ def _monkey_patch_tqdm():
 )
 def wu2020() -> AnnData:
     """\
-    Return the dataset from [Wu2020]_ as AnnData object. 
+    Return the dataset from [Wu2020]_ as AnnData object.
 
     200k cells, of which 100k have TCRs.
 
     This is how the dataset was processed:
 
-    .. code-block:: python 
+    .. code-block:: python
 
     {processing_code}
     """
-    # os.makedirs(settings.datasetdir, exist_ok=True)
-    # TODO host it on github or similar
-    url = "https://github.com/icbi-lab/scirpy/releases/download/v0.1/wu2020.h5ad"
+    url = "https://github.com/icbi-lab/scirpy/releases/download/v0.4.2/wu2020.h5ad"
     filename = settings.datasetdir / "wu2020.h5ad"
     with _monkey_patch_tqdm():
         adata = read(filename, backup_url=url)
@@ -56,8 +54,8 @@ def wu2020() -> AnnData:
 )
 def wu2020_3k() -> AnnData:
     """\
-    Return the dataset from :cite:`Wu2020` as AnnData object, downsampled 
-    to 3000 TCR-containing cells. 
+    Return the dataset from :cite:`Wu2020` as AnnData object, downsampled
+    to 3000 TCR-containing cells.
 
     This is how the dataset was processed:
 
@@ -67,7 +65,7 @@ def wu2020_3k() -> AnnData:
     """
     # os.makedirs(settings.datasetdir, exist_ok=True)
     # TODO host it on github or similar
-    url = "https://github.com/icbi-lab/scirpy/releases/download/v0.1/wu2020_3k.h5ad"
+    url = "https://github.com/icbi-lab/scirpy/releases/download/v0.4.2/wu2020_3k.h5ad"
     filename = settings.datasetdir / "wu2020_3k.h5ad"
     with _monkey_patch_tqdm():
         adata = read(filename, backup_url=url)

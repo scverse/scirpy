@@ -3,8 +3,8 @@
 import scanpy as sc
 import sys
 
-sys.path.append("../../..")
-import scirpy as st
+sys.path.insert(0, "../../..")
+import scirpy as ir
 from multiprocessing import Pool
 import os
 import pandas as pd
@@ -56,7 +56,7 @@ def _load_adata(path):
     obs = metadata.loc[metadata["sample"] == sample_id, :]
     umap_coords = umap.loc[metadata["sample"] == sample_id, :].values
     adata = sc.read_10x_mtx(path)
-    adata_tcr = st.read_10x_vdj_csv(
+    adata_tcr = ir.io.read_10x_vdj(
         os.path.join(path, "filtered_contig_annotations.csv.gz")
     )
     adata.obs_names = [
@@ -70,7 +70,7 @@ def _load_adata(path):
     adata.obs = adata.obs.join(obs, how="inner")
     assert adata.shape[0] == umap_coords.shape[0]
     adata.obsm["X_umap_orig"] = umap_coords
-    st.pp.merge_with_ir(adata, adata_tcr)
+    ir.pp.merge_with_ir(adata, adata_tcr)
     return adata
 
 
@@ -85,7 +85,7 @@ adata.obsm["X_umap_orig"][:, 0] = (
     np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 )
 
-np.sum(adata.obs["has_ir"])
+np.sum(adata.obs["has_ir"] == "True")
 
 adata.write_h5ad("wu2020.h5ad", compression="lzf")
 
