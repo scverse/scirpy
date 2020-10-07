@@ -66,6 +66,7 @@ The example data used in this notebook are available from the
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
        It will
+       
            1. identify the :term:`Receptor type` and :term:`Receptor subtype` and flag cells
               as `ambiguous` that cannot unambigously be assigned to a certain receptor (sub)type, and
            2. flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell)

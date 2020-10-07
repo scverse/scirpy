@@ -74,7 +74,7 @@ Quality control
 .. autosummary::
    :toctree: ./generated
 
-   chain_pairing
+   chain_qc
 
 Define and visualize clonotypes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
