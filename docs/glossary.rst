@@ -10,7 +10,7 @@ Glossary
         recognition, mediated by :term:`CDR` regions.
 
         *Scirpy* currently only supports α/β-TCRs. For more information, see the
-        page about our :ref:`TCR model<tcr-model>`.
+        page about our :ref:`TCR model<receptor-model>`.
 
         .. figure:: img/tcr.jpg
            :width: 310px
@@ -25,7 +25,7 @@ Glossary
 
         In single-cell RNA-sequencing (scRNA-seq) data, T or B cells sharing identical
         complementarity-determining regions 3 (:term:`CDR3`) nucleotide sequences of both
-        :term:`VJ<V(D)J` and :term:`VDJ<V(D)J>` chains (e.g. both α and β :term:`TCR` chains)
+        :term:`VJ<V(D)J>` and :term:`VDJ<V(D)J>` chains (e.g. both α and β :term:`TCR` chains)
         make up a clonotype..
 
         *Scirpy* provides a flexible approach to clonotype definition based on
@@ -116,7 +116,7 @@ Glossary
            Image from :cite:`Attaf2015` under the `CC BY-NC-SA-3.0 <https://creativecommons.org/licenses/by-nc-sa/3.0/>`__ license.
 
     Dual TCR
-        See :term:`dual IR`.
+        See :term:`Dual IR`.
 
     Multichain-cell
         Cells with more than two α- and β chains that do not fit into the
@@ -137,8 +137,8 @@ Glossary
 
     Orphan chain
         A :term:`IR` chain is called *orphan*, if its corresponding counterpart
-        has not been detected. For instance, if a cell has only a :term:`VJ<V(D)J` chain,
-        (e.g. TCR-alpha), but no :term:`VDJ<V(D)J` chain (e.g. TCR-beta),
+        has not been detected. For instance, if a cell has only a :term:`VJ<V(D)J>` chain,
+        (e.g. TCR-alpha), but no :term:`VDJ<V(D)J>` chain (e.g. TCR-beta),
         the cell will be flagged as "Orphan VJ".
 
         Orphan chains are most likley the effect of stochastic dropouts due to
@@ -152,35 +152,39 @@ Glossary
         PCR bias. With these protocols, UMI-counts replace the read-counts
         generally used with RNA-seq.
 
-    productive chain
+    Productive chain
         Productive chains are :term:`IR` chains with a :term:`CDR3` sequence that produces
         a functional peptide. Scirpy relies on the preprocessing tools (e.g.
         CellRanger or TraCeR) for flagging non-productive chains.
         Typically chains are flagged as non-productive if they contain
         a stop codon or are not within the reading frame.
 
-    receptor type
+    Receptor type
+        Either BCR or TCR
 
-    receptor subtype
+    Receptor subtype
+        alpha/beta T cells, gamma/delta T cells, IGK vs IGL BCR.
 
     IR
+        Immune receptor.
 
     BCR
+        B-cell receptor.
 
-    dual IR
+    Dual IR
         :term:`TCRs<TCR>` with more than one pair of α- and β chains. While this was
         previously thought to be impossible due to the mechanism of allelic exclusion
         (:cite:`Brady2010-gh`), there is an increasing amound of evidence for a *bona fide*
         dual-TCR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`).
 
         For more information on how *Scirpy* handles dual TCRs, see the
-        page about our :ref:`TCR model<tcr-model>`.
+        page about our :ref:`TCR model<receptor-model>`.
 
     AIRR
         Adaptive Immune Receptor Repertoire.
         See also the `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_.
 
-    chain locus
+    Chain locus
         Scirpy supports all valid `IGMT locus names <http://www.imgt.org/IMGTScientificChart/Nomenclature/IMGTnomenclature.html>`_:
 
         Loci with a :term:`VJ<V(D)J>` junction:
@@ -197,5 +201,5 @@ Glossary
     IG
         Immunoglobulin
 
-    alellically included B-cells
-        See :term:`dual IR`.
+    Alellically included B-cells
+        See :term:`Dual IR`.

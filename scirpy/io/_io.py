@@ -26,7 +26,7 @@ Currently, reading data into *Scirpy* has the following limitations:
    Excess chains are removed (those with lowest read count/:term:`UMI` count)
    and cells flagged as :term:`Multichain-cell`.
 
-For more information, see :ref:`ir-model`.
+For more information, see :ref:`receptor-model`.
 """
 
 

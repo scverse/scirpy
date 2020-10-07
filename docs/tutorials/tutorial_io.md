@@ -49,9 +49,9 @@ The example data used in this notebook are available from the
 
     Currently, the Scirpy data model has the following constraints:
 
-     * BCR and TCR chains are supported. Chain loci must be valid :term:`chain locus`, 
-       i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or 
-       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). Other chains are discarded. 
+     * BCR and TCR chains are supported. Chain loci must be valid :term:`Chain locus`,
+       i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or
+       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). Other chains are discarded.
      * Non-productive chains are removed. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
@@ -65,9 +65,9 @@ The example data used in this notebook are available from the
 .. note:: **TCR quality control**
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
-       It will 
-           1. identify the :term:`receptor type` and :term:`receptor subtype` and flag cells
-              as `ambiguous` that cannot unambigously be assigned to a certain receptor (sub)type, and 
+       It will
+           1. identify the :term:`Receptor type` and :term:`Receptor subtype` and flag cells
+              as `ambiguous` that cannot unambigously be assigned to a certain receptor (sub)type, and
            2. flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell)
               and :term:`multichain-cells <Multichain-cell>` (i.e. cells with more than two full pairs of VJ- and VDJ-chains).
      * We recommend excluding multichain- and ambiguous cells as these likely represent doublets
@@ -126,11 +126,11 @@ adata.shape
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 Next, we integrate both the TCR and the transcriptomics data into a single :class:`anndata.AnnData` object
-using :func:`scirpy.pp.merge_with_tcr`:
+using :func:`scirpy.pp.merge_with_ir`:
 <!-- #endraw -->
 
 ```python
-ir.pp.merge_with_tcr(adata, adata_tcr)
+ir.pp.merge_with_ir(adata, adata_tcr)
 ```
 
 Now, we can use TCR-related variables together with the gene expression data.
@@ -179,7 +179,7 @@ adata.shape
 ```python
 # Load TCR data and merge it with transcriptomics data
 adata_tcr = ir.io.read_tracer("example_data/chung-park-2017/tracer/")
-ir.pp.merge_with_tcr(adata, adata_tcr)
+ir.pp.merge_with_ir(adata, adata_tcr)
 ```
 
 ```python
@@ -204,7 +204,12 @@ the import.
 <!-- #endraw -->
 
 ```python
-adata = ir.io.read_airr(["example_data/immunesim_airr/immunesim_tra.tsv", "example_data/immunesim_airr/immunesim_trb.tsv"])
+adata = ir.io.read_airr(
+    [
+        "example_data/immunesim_airr/immunesim_tra.tsv",
+        "example_data/immunesim_airr/immunesim_trb.tsv",
+    ]
+)
 ir.tl.chain_qc(adata)
 ```
 
@@ -219,7 +224,14 @@ is more approriate.
 <!-- #endraw -->
 
 ```python
-ir.pp.tcr_neighbors(adata, metric="alignment", sequence="aa", cutoff=25, receptor_arms="any", dual_tcr="primary_only")
+ir.pp.ir_neighbors(
+    adata,
+    metric="alignment",
+    sequence="aa",
+    cutoff=25,
+    receptor_arms="any",
+    dual_ir="primary_only",
+)
 ```
 
 ```python
@@ -259,10 +271,10 @@ be a supplementary file from the paper).
 Such a table typically contains information about
 
  * CDR3 sequences (amino acid and/or nucleotide)
- * The :term:`chain locus`, e.g. `TRA`, `TRB`, or `IGH`. 
+ * The :term:`Chain locus`, e.g. `TRA`, `TRB`, or `IGH`.
  * expression of the receptor chain (e.g. count, :term:`UMI`, transcripts per million (TPM))
  * the :term:`V(D)J` genes for each chain
- * information if the chain is :term:`productive <productive chain>`.
+ * information if the chain is :term:`productive <Productive chain>`.
 <!-- #endraw -->
 
 ```python
@@ -317,14 +329,14 @@ Now, we can convert the list of :class:`~scirpy.io.IrCell` objects using :func:`
 <!-- #endraw -->
 
 ```python
-adata_tcr = ir.io.from_tcr_objs(tcr_cells)
+adata_tcr = ir.io.from_ir_objs(tcr_cells)
 ```
 
 ```python
 # We can re-use the transcriptomics data from above...
 adata = sc.AnnData(expr_chung)
 # ... and merge it with the TCR data
-ir.pp.merge_with_tcr(adata, adata_tcr)
+ir.pp.merge_with_ir(adata, adata_tcr)
 ```
 
 ```python
@@ -364,7 +376,7 @@ for sample, sample_meta in samples.items():
     tcr_file = glob(f"example_data/liao-2019-covid19/*{sample}*.csv.gz")[0]
     adata = sc.read_10x_h5(gex_file)
     adata_tcr = ir.io.read_10x_vdj(tcr_file)
-    ir.pp.merge_with_tcr(adata, adata_tcr)
+    ir.pp.merge_with_ir(adata, adata_tcr)
     adata.obs["sample"] = sample
     adata.obs["group"] = sample_meta["group"]
     # concatenation only works with unique gene names

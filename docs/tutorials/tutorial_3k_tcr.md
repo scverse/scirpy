@@ -343,7 +343,13 @@ In this context, the VJ-chain refers to a TCR-alpha chain.
 ```python
 adata.obs.loc[
     adata.obs["ct_cluster_aa_alignment"] == "233",
-    ["IR_VJ_1_cdr3", "IR_VJ_2_cdr3", "IR_VDJ_1_cdr3", "IR_VDJ_2_cdr3", "receptor_subtype"],
+    [
+        "IR_VJ_1_cdr3",
+        "IR_VJ_2_cdr3",
+        "IR_VDJ_1_cdr3",
+        "IR_VDJ_2_cdr3",
+        "receptor_subtype",
+    ],
 ]
 ```
 

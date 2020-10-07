@@ -12,7 +12,7 @@ immune receptors and recognize the same :term:`epitopes<Epitope>`.
 
 In single-cell RNA-sequencing (scRNA-seq) data, T or B cells sharing identical
 complementarity-determining regions 3 (:term:`CDR3`) nucleotide sequences of both
-:term:`VJ<V(D)J` and :term:`VDJ<V(D)J>` chains (e.g. both α and β :term:`TCR` chains)
+:term:`VJ<V(D)J>` and :term:`VDJ<V(D)J>` chains (e.g. both α and β :term:`TCR` chains)
 make up a clonotype. Scirpy provides an option to additionally
 require clonotypes to have the same :term:`V-gene <V(D)J>`, enforcing the CDR 1
 and 2 regions to be the same.

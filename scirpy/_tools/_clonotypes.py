@@ -25,8 +25,8 @@ same_v_gene
     the name "None".
 within_group
     Enforces clonotypes to have the same group. Per default, this is
-    set to :term:`receptor type<receptor_type>`, i.e. clonotypes cannot comprise both
-    B cells and T cells. Set this to :term:`receptor subtype<receptor_subtype>` if you
+    set to :term:`receptor_type<Receptor type>`, i.e. clonotypes cannot comprise both
+    B cells and T cells. Set this to :term:`receptor_subtype<Receptor subtype>` if you
     don't want clonotypes to be shared across e.g. gamma-delta and alpha-beta T-cells.
     You can also set this to any other column in `adata.obs` that contains
     a grouping, or to `None`, if you want no constraints.

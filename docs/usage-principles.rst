@@ -60,7 +60,7 @@ Scirpy adds the following :term:`IR`-related columns to `AnnData.obs`:
 
 Where `<attr>` is any of:
 
- * `locus`: The :term:`IGMT locus name<chain locus>` of the chain (`TRA`, `IGH`, etc.)
+ * `locus`: The :term:`IGMT locus name<Chain locus>` of the chain (`TRA`, `IGH`, etc.)
  * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
  * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
  * `junction_ins`: The number of nucleotides inserted in the `VD` + `DJ` junctions or the `VJ` junction, respectively.
