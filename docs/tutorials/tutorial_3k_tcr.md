@@ -34,7 +34,7 @@ import scanpy as sc
 import scirpy as ir
 from matplotlib import pyplot as plt
 
-# warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -153,18 +153,29 @@ about the T cell receptor compositions to `adata.obs`. We can visualize it using
     - *Orphan chain* refers to cells that have either a single alpha or beta receptor chain.
     - *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain.
     - *Multichain* refers to cells with more than two receptor pairs detected. These cells are likely doublets.
+
+
+.. note:: **receptor type and receptor subtype**
+
+    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains 
+      are labelled as `ambiguous`. 
+    - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations. 
+    
+    For more details, see :func:`scirpy.tl.chain_qc`. 
 <!-- #endraw -->
 
 ```python
 ir.tl.chain_qc(adata)
 ```
 
+As expected, the dataset contains only α/β T-cell receptors: 
+
 ```python
-ir.pl.group_abundance(
-    adata,
-    groupby="chain_pairing",
-    target_col="source",
-)
+ir.pl.group_abundance(adata, groupby="receptor_subtype", target_col="source")
+```
+
+```python
+ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
 ```
 
 Indeed, in this dataset, ~6% of cells have more than
@@ -175,7 +186,7 @@ print(
     "Fraction of cells with more than one pair of TCRs: {:.2f}".format(
         np.sum(
             adata.obs["chain_pairing"].isin(
-                ["Extra beta", "Extra alpha", "Two full chains"]
+                ["extra VJ", "extra VDJ", "two full chains"]
             )
         )
         / adata.n_obs
@@ -295,7 +306,7 @@ ir.pp.ir_neighbors(
     dual_ir="all",
 )
 ir.tl.define_clonotype_clusters(
-    adata, partitions="connected", sequence="aa", metric="alignment"
+    adata, partitions="connected", sequence="aa", metric="alignment", within_group=None
 )
 ```
 
@@ -326,12 +337,13 @@ ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
 ```
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
-For instance, we can find out that clonotype `233` does not have a detected alpha chain.
+For instance, we can find out that clonotype `233` does not have any detected :term:`VJ-chain<V(D)J>`. 
+In this context, the VJ-chain refers to a TCR-alpha chain. 
 
 ```python
 adata.obs.loc[
     adata.obs["ct_cluster_aa_alignment"] == "233",
-    ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+    ["IR_VJ_1_cdr3", "IR_VJ_2_cdr3", "IR_VDJ_1_cdr3", "IR_VDJ_2_cdr3", "receptor_subtype"],
 ]
 ```
 
@@ -369,8 +381,8 @@ adata.obs.loc[
     [
         "ct_cluster_aa_alignment",
         "ct_cluster_aa_alignment_same_v",
-        "TRA_1_v_gene",
-        "TRB_1_v_gene",
+        "IR_VJ_1_v_gene",
+        "IR_VDJ_1_v_gene",
     ],
 ].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
@@ -472,7 +484,7 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="TRB_1_v_gene", target_col="cluster", normalize=True, max_cols=10
+    adata, groupby="IR_VJ_1_v_gene", target_col="cluster", normalize=True, max_cols=10
 )
 ```
 
@@ -481,13 +493,13 @@ We can pre-select groups by filtering `adata`:
 ```python
 ir.pl.group_abundance(
     adata[
-        adata.obs["TRB_1_v_gene"].isin(
+        adata.obs["IR_VDJ_1_v_gene"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
         ),
         :,
     ],
     groupby="cluster",
-    target_col="TRB_1_v_gene",
+    target_col="IR_VDJ_1_v_gene",
     normalize=True,
 )
 ```
@@ -497,15 +509,17 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
+# TODO VDJ usage is currently broken, see #194
+# ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 ```
 
 We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes:
 
 ```python
-ir.pl.vdj_usage(
-    adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]), :], top_n=None
-)
+# TODO VDJ usage is currently broken, see #194
+# ir.pl.vdj_usage(
+#     adata[adata.obs["clonotype"].isin(["274_TCR", "277_TCR", "211_TCR", "106_TCR"]), :], top_n=None
+# )
 ```
 
 ### Spectratype plots
@@ -536,13 +550,13 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 ```python
 ir.pl.spectratype(
     adata[
-        adata.obs["TRB_1_v_gene"].isin(
+        adata.obs["IR_VDJ_1_v_gene"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
         ),
         :,
     ],
-    cdr3_col="TRB_1_cdr3",
-    color="TRB_1_v_gene",
+    cdr3_col="IR_VDJ_1_cdr3",
+    color="IR_VDJ_1_v_gene",
     normalize="sample",
     fig_kws={"dpi": 120},
 )
@@ -664,7 +678,7 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clonotype", groups=["163"], reference="277", method="wilcoxon"
+    adata, "clonotype", groups=["163_TCR"], reference="277_TCR", method="wilcoxon"
 )
-sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
+sc.pl.rank_genes_groups_violin(adata, groups="163_TCR", n_genes=15)
 ```
