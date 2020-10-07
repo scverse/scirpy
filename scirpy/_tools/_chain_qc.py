@@ -81,7 +81,7 @@ def chain_qc(
         * `multichain` (all cells with more than two VJ or more than two VDJ chains)
         * `no IR` (all chains with not immune receptor chains)
 
-    Paremeters
+    Parameters
     ----------
     adata
         Annotated data matrix
