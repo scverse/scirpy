@@ -50,14 +50,17 @@ for single-cell transcriptomics data.
    Image by `F. Alex Wolf <http://falexwolf.de/>`__.
 
 
-Scirpy adds the following TCR-related columns to `AnnData.obs`:
+Scirpy adds the following :term:`IR`-related columns to `AnnData.obs`:
 
- * `has_ir`: `True` for all cells with a T-cell receptor
- * `TRA_1_<attr>`/`TRA_2_<attr>`: columns related to the primary and secondary TCR-alpha chain
- * `TRB_1_<attr>`/`TRB_2_<attr>`: columns related to the primary and secondary TCR-beta chain
+ * `has_ir`: `True` for all cells with an adaptive immune receptor
+ * `IR_VJ_1_<attr>`/`IR_VJ_2_<attr>`: columns related to the primary and secondary
+   :term:`VJ<V(D)J>`-chain of a receptor (`TRA`, `TRG`, `IGK`, or `IGL`)
+ * `IR_VDJ_1_<attr>`/`IR_VDJ_2_<attr>`: columns related to the primary and secondary
+   :term:`VDJ<V(D)J>`-chain of a receptor (`TRB`, `TRD`, or `IGH`)
 
 Where `<attr>` is any of:
 
+ * `locus`: The :term:`IGMT locus name<chain locus>` of the chain (`TRA`, `IGH`, etc.)
  * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
  * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
  * `junction_ins`: The number of nucleotides inserted in the `VD` + `DJ` junctions or the `VJ` junction, respectively.

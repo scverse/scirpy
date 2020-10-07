@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.2
+      jupytext_version: 1.5.0.rc1
 ---
 
 # Analysis of 3k T cells from cancer
@@ -28,13 +28,13 @@ import warnings
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, "../..")
+
 import scanpy as sc
 import scirpy as ir
 from matplotlib import pyplot as plt
 
-sys.path.insert(0, "../..")
-
-warnings.filterwarnings("ignore", category=FutureWarning)
+# warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -50,10 +50,10 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-`adata` is a regular :class:`~anndata.AnnData` object with additional, TCR-specific columns in `obs`.
+`adata` is a regular :class:`~anndata.AnnData` object with additional, :term:`IR`-specific columns in `obs`.
 For more information, check the page about Scirpy's :ref:`data structure <data-structure>`.
 
-.. note:: For more information about our T-cell receptor model, see :ref:`tcr-model`.
+.. note:: For more information about our T-cell receptor model, see :ref:`receptor-model`.
 <!-- #endraw -->
 
 ```python
@@ -67,11 +67,11 @@ adata.obs
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **Importing data**
 
-    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2)
+    `scirpy` natively supports reading :term:`IR` data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2)
     or the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__ and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details.
 
     This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
-    with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
+    with transcriptomics data using :func:`scirpy.pp.merge_with_ir`. The exact procedure
     is described in :func:`scirpy.datasets.wu2020`.
 
 <!-- #endraw -->
@@ -103,6 +103,7 @@ adata.obsm["X_umap"] = adata.obsm["X_umap_orig"]
 
 ```python
 mapping = {
+    "nan": "other",
     "3.1-MT": "other",
     "4.1-Trm": "CD4_Trm",
     "4.2-RPL32": "CD4_RPL32",
@@ -144,7 +145,7 @@ sc.pl.umap(
 While most of T cell receptors have exactly one pair of α and β chains, up to one third of
 T cells can have *dual TCRs*, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
-Using the :func:`scirpy.tl.chain_pairing` function, we can add a summary
+Using the :func:`scirpy.tl.chain_qc` function, we can add a summary
 about the T cell receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
 
 .. note:: **chain pairing**
@@ -155,12 +156,14 @@ about the T cell receptor compositions to `adata.obs`. We can visualize it using
 <!-- #endraw -->
 
 ```python
-ir.tl.chain_pairing(adata)
+ir.tl.chain_qc(adata)
 ```
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="chain_pairing", target_col="source",
+    adata,
+    groupby="chain_pairing",
+    target_col="source",
 )
 ```
 
@@ -213,13 +216,13 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
     * - :func:`scanpy.pl.umap`
       - Plot UMAP colored by different parameters.
 
-.. list-table:: Analysis steps on TCR data
+.. list-table:: Analysis steps on IR data
     :widths: 40 60
     :header-rows: 1
 
     - - scirpy function
       - objective
-    - - :func:`scirpy.pp.tcr_neighbors`
+    - - :func:`scirpy.pp.ir_neighbors`
       - Compute a neighborhood graph of CDR3-sequences.
     - - :func:`scirpy.tl.define_clonotypes`
       - Define :term:`clonotypes <Clonotype>` by nucleotide
@@ -236,7 +239,7 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
 ### Compute CDR3 neighborhood graph and define clonotypes
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-:func:`scirpy.pp.tcr_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity.
+:func:`scirpy.pp.ir_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity.
 
 Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity.
 In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on
@@ -248,8 +251,8 @@ in the graph and annotate them as clonotypes. This will add a `clonotype` and
 <!-- #endraw -->
 
 ```python
-# using default parameters, `tcr_neighbors` will compute nucleotide sequence identity
-ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only")
+# using default parameters, `ir_neighbors` will compute nucleotide sequence identity
+ir.pp.ir_neighbors(adata, receptor_arms="all", dual_ir="primary_only")
 ir.tl.define_clonotypes(adata)
 ```
 
@@ -283,13 +286,13 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(
+ir.pp.ir_neighbors(
     adata,
     metric="alignment",
     sequence="aa",
     cutoff=15,
     receptor_arms="all",
-    dual_tcr="all",
+    dual_ir="all",
 )
 ir.tl.define_clonotype_clusters(
     adata, partitions="connected", sequence="aa", metric="alignment"

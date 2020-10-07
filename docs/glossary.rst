@@ -23,16 +23,17 @@ Glossary
         common, antecedent cell, and therefore, bear the same adaptive
         immune receptors and recognize the same :term:`epitopes<Epitope>`.
 
-        In single-cell RNA-sequencing (scRNA-seq) data, T cells sharing identical
-        complementarity-determining regions 3 (:term:`CDR3`) nucleotide sequences of both α and β
-        :term:`TCR` chains make up a clonotype.
+        In single-cell RNA-sequencing (scRNA-seq) data, T or B cells sharing identical
+        complementarity-determining regions 3 (:term:`CDR3`) nucleotide sequences of both
+        :term:`VJ<V(D)J` and :term:`VDJ<V(D)J>` chains (e.g. both α and β :term:`TCR` chains)
+        make up a clonotype..
 
         *Scirpy* provides a flexible approach to clonotype definition based on
         :term:`CDR3<CDR>` sequence identity or similarity. Additionally, it is possible
         to require clonotypes to have the same :term:`V-gene <V(D)J>`, enforcing the CDR 1
         and 2 regions to be the same.
 
-        For more details, see the page about our :ref:`TCR model<tcr-model>` and
+        For more details, see the page about our :ref:`IR model<receptor-model>` and
         the API documentation of :func:`scirpy.tl.define_clonotypes`.
 
     Clonotype cluster
@@ -61,8 +62,8 @@ Glossary
         A clonotype that occurs in multiple tissues of the same patient.
 
     Convergent evolution of clonotypes
-        It has been proposed that :term:`TCRs <TCR>` are subject to convergent evolution,
-        i.e. a selection pressure that leads to TCRs recognizing the same antigen
+        It has been proposed that :term:`IRs <IR>` are subject to convergent evolution,
+        i.e. a selection pressure that leads to IRs recognizing the same antigen
         (:cite:`Venturi2006`).
 
         Evidence of convergent evolution could be clonotypes with the same :term:`CDR3`
@@ -72,23 +73,24 @@ Glossary
 
 
     Epitope
-        The part of an antigen that is recognized by the :term:`TCR`
-        (or B-cell receptor, or antibody).
+        The part of an antigen that is recognized by the :term:`TCR`, :term:`BCR`,
+        or antibody.
 
     CDR3
         Complementary-determining region 3. See :term:`CDR`.
 
     CDR
         Complementary-determining region. The diversity and, therefore, antigen-specificity
-        of :term:`TCRs<TCR>` is predominanly determined by three hypervariable loops
+        of :term:`IRs<IR>` is predominanly determined by three hypervariable loops
         (CDR1, CDR2, and CDR3) on each of the α- and β receptor arms.
 
         CDR1 and CDR2 are fully encoded in germline V genes. In contrast,
-        the CDR3 loops are assembled from V and J segments (TCR-α) and V, D and
-        J segments (TCR-β) and comprise random additions and deletions at the junction
-        sites (see also :term:`V(D)J`). Thus, CDR3 regions make up a large part of the
-        TCR variability and are therefore thought to be particularly important for antigen
-        specificity (reviewed in :cite:`Attaf2015`).
+        the CDR3 loops are assembled from :term:`V, (D), and J segments<V(D)J>` and
+        comprise random additions and deletions at the junction
+        sites. Thus, CDR3 regions make up a large part of the
+        adpative immune receptor variability and are therefore thought to
+        be particularly important for antigen specificity
+        (reviewed in :cite:`Attaf2015`).
 
         .. figure:: img/tcr_cdr3.png
            :width: 310px
@@ -96,16 +98,16 @@ Glossary
            Image from :cite:`Attaf2015` under the `CC BY-NC-SA-3.0 <https://creativecommons.org/licenses/by-nc-sa/3.0/>`__ license.
 
     V(D)J
-        The variability of :term:`TCR` chain sequences originates from the genetic recombination
-        of **V**\ ariable, **D**\ iversity and **J**\ oining gene segments. The TCR-α,
-        TCR-ɣ, IG-κ, and IG-λ chains get assembled from V and J loci only. We refer
+        The variability of :term:`IR` chain sequences originates from the genetic recombination
+        of **V**\ ariable, **D**\ iversity and **J**\ oining gene segments. The :term:`TCR`-α,
+        TCR-ɣ, :term:`IG`-κ, and IG-λ chains get assembled from V and J loci only. We refer
         to these chains as `VJ` chains in Scirpy. The TCR-β, TCR-δ, and IG-heavy chains
         get assembled from all three segments. We refer to these chains as `VDJ`-chains
         in Scirpy.
 
         As an example, the figure below shows how a TCR-α chain is assembed from
-        the *tra* locus. V to J recombination joins one of many TRAV segments to one of
-        many TRAJ segments. Next, introns are spliced out, resulting in a TCR-α chain
+        the *tra* locus. V to J recombination joins one of many `TRAV` segments to one of
+        many `TRAJ` segments. Next, introns are spliced out, resulting in a TCR-α chain
         transcript with V, J and C segments directly next to each other (reviewed in :cite:`Attaf2015`).
 
         .. figure:: img/vdj.png
@@ -114,18 +116,11 @@ Glossary
            Image from :cite:`Attaf2015` under the `CC BY-NC-SA-3.0 <https://creativecommons.org/licenses/by-nc-sa/3.0/>`__ license.
 
     Dual TCR
-        :term:`TCRs<TCR>` with more than one pair of α- and β chains. While this was
-        previously thought to be impossible due to the mechanism of allelic exclusion
-        (:cite:`Brady2010-gh`), there is an increasing amound of evidence for a *bona fide*
-        dual-TCR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`).
-
-        For more information on how *Scirpy* handles dual TCRs, see the
-        page about our :ref:`TCR model<tcr-model>`.
-
+        See :term:`dual IR`.
 
     Multichain-cell
         Cells with more than two α- and β chains that do not fit into the
-        :term:`Dual TCR` model. These are usually rare and could be explained
+        :term:`Dual IR` model. These are usually rare and could be explained
         by doublets/multiplets, i.e. two ore more cells that were captured
         in the same droplet.
 
@@ -141,14 +136,15 @@ Glossary
            cell-multiplets (:cite:`Ilicic2016`).
 
     Orphan chain
-        A :term:`TCR` chain is called *orphan*, if its corresponding counterpart
-        has not been detected. For instance, if a cell has only a TCR-α chain,
-        but no TCR-β chain, the cell will be flagged as "Orphan alpha".
+        A :term:`IR` chain is called *orphan*, if its corresponding counterpart
+        has not been detected. For instance, if a cell has only a :term:`VJ<V(D)J` chain,
+        (e.g. TCR-alpha), but no :term:`VDJ<V(D)J` chain (e.g. TCR-beta),
+        the cell will be flagged as "Orphan VJ".
 
         Orphan chains are most likley the effect of stochastic dropouts due to
         sequencing inefficiencies.
 
-        See also :func:`scirpy.tl.chain_pairing`.
+        See also :func:`scirpy.tl.chain_qc`.
 
     UMI
         Unique molecular identifier. Some single-cell RNA-seq protocols
@@ -157,7 +153,7 @@ Glossary
         generally used with RNA-seq.
 
     productive chain
-        Productive chains are TCR chains with a :term:`CDR3` sequence that produces
+        Productive chains are :term:`IR` chains with a :term:`CDR3` sequence that produces
         a functional peptide. Scirpy relies on the preprocessing tools (e.g.
         CellRanger or TraCeR) for flagging non-productive chains.
         Typically chains are flagged as non-productive if they contain
@@ -172,6 +168,13 @@ Glossary
     BCR
 
     dual IR
+        :term:`TCRs<TCR>` with more than one pair of α- and β chains. While this was
+        previously thought to be impossible due to the mechanism of allelic exclusion
+        (:cite:`Brady2010-gh`), there is an increasing amound of evidence for a *bona fide*
+        dual-TCR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`).
+
+        For more information on how *Scirpy* handles dual TCRs, see the
+        page about our :ref:`TCR model<tcr-model>`.
 
     AIRR
         Adaptive Immune Receptor Repertoire.
@@ -190,3 +193,9 @@ Glossary
             * `TRB` (T-cell receptor beta)
             * `TRD` (T cell receptor delta)
             * `IGH` (Immunoglobulin heavy chain)
+
+    IG
+        Immunoglobulin
+
+    alellically included B-cells
+        See :term:`dual IR`.
