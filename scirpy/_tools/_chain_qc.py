@@ -48,7 +48,7 @@ def chain_qc(
     and fine annotation of receptor types, a third classifying cells according
     to the number of matched receptor types.
 
-    `receptor_type` can be one of the following:
+    `receptor_type` can be one of the following
         * `TCR` (all cells that contain any combination of TRA/TRB/TRG/TRD chains,
            but no IGH/IGK/IGL chains)
         * `BCR` (all cells that contain any combination of IGH/IGK/IGL chains,
@@ -57,7 +57,7 @@ def chain_qc(
         * `multichain` (all cells with more than two VJ or more than two VDJ chains)
         * `no IR` (all cells without any detected immune receptor)
 
-    `receptor_subtype` can be one of the following:
+    `receptor_subtype` can be one of the following
         * `TRA+TRB` (all cells that have only TRA and/or TRB chains)
         * `TRG+TRD` (all cells that have only TRG and/or TRD chains)
         * `IGH` (all cells that have only IGH chains, but no IGL or IGK)
