@@ -2,21 +2,22 @@ from anndata import AnnData
 import matplotlib.pyplot as plt
 from typing import Callable, Union, Tuple, Sequence
 import numpy as np
-from ..util import _normalize_counts
+from ..util import _normalize_counts, _is_na
 from .styling import _init_ax
+from ..io import IrChain
 
 
 def vdj_usage(
     adata: AnnData,
     *,
-    vdj_cols: list = [
+    vdj_cols: Sequence = (
         "IR_VJ_1_j_gene",
         "IR_VJ_1_v_gene",
         "IR_VDJ_1_v_gene",
         "IR_VDJ_1_d_gene",
         "IR_VDJ_1_j_gene",
-    ],
-    normalize_to: Union[None, str, Sequence[float]] = None,
+    ),
+    normalize_to: Union[bool, str, Sequence[float]] = False,
     ax: Union[plt.Axes, None] = None,
     bar_clip: int = 5,
     top_n: Union[None, int] = 10,
@@ -67,9 +68,11 @@ def vdj_usage(
     Axes object.
     """
 
+    vdj_cols = list(vdj_cols)
+
     df = adata.obs.assign(
         cell_weights=_normalize_counts(adata.obs, normalize_to)
-        if isinstance(normalize_to, (bool, str)) or normalize_to is None
+        if isinstance(normalize_to, (bool, str))
         else normalize_to
     )
 
@@ -95,7 +98,9 @@ def vdj_usage(
         )
         genes = td[col].tolist()
         td = td["cell_weights"]
-        sector = col[2:7].replace("_", "")
+        # IR_VDJ_1_v_gene -> VDJ1v
+        sector = "".join(col.split("_")[1:4])
+
         if full_combination:
             unct = td[
                 bar_clip + 1 :,
@@ -108,39 +113,46 @@ def vdj_usage(
             else:
                 gene_tops["other_" + sector] = 0
                 bottom = 0
+            bar_clip = min(bar_clip, td.shape[0] - 1)
         else:
             bottom = 0
-            bar_clip = td.shape[0]
+            bar_clip = td.shape[0] - 1
+
         for j in range(bar_clip + 1):
-            try:
-                y = td[bar_clip - j]
-                gene = genes[bar_clip - j]
-                if gene == "None":
-                    gene = "No_" + sector
-                gene_tops[gene] = bottom + y
-                if full_combination:
-                    bcolor = "lightgrey"
-                else:
-                    bcolor = None
-                if draw_bars:
-                    barcoll = ax.bar(
-                        i + 1,
-                        y,
-                        width=barwidth,
-                        bottom=bottom,
-                        color=bcolor,
-                        edgecolor="black",
+            # try:
+            y = td[bar_clip - j]
+            gene = genes[bar_clip - j]
+            if _is_na(gene):
+                gene = "No_" + sector
+            gene_tops[gene] = bottom + y
+            if full_combination:
+                bcolor = "lightgrey"
+            else:
+                bcolor = None
+            if draw_bars:
+                barcoll = ax.bar(
+                    i + 1,
+                    y,
+                    width=barwidth,
+                    bottom=bottom,
+                    color=bcolor,
+                    edgecolor="black",
+                )
+                gene_colors[gene] = barcoll.patches[-1].get_facecolor()
+                gene_text = gene
+                for tmp_chain in IrChain.VALID_LOCI:
+                    gene_text = gene_text.replace(tmp_chain, "")
+                if (bar_clip - bar_text_clip) < j:
+                    ax.text(
+                        1 + i - barwidth / 2 + 0.05,
+                        bottom + 0.05,
+                        gene_text,
                     )
-                    gene_colors[gene] = barcoll.patches[-1].get_facecolor()
-                    if (bar_clip - bar_text_clip) < j:
-                        ax.text(
-                            1 + i - barwidth / 2 + 0.05,
-                            bottom + 0.05,
-                            gene.replace("TRA", "").replace("TRB", ""),
-                        )
-                bottom += y
-            except:
-                pass
+            bottom += y
+        # except:
+        #     pass
+
+    # return ax
 
     # Create a case for full combinations or just the neighbours
     if full_combination:
@@ -176,14 +188,13 @@ def vdj_usage(
             ribcol = None
             for i in range(len(r) - 1):
                 g = r[i + 1]
-                sector = target_pair[i][2:7].replace("_", "")
-                if g == "None":
+                # IR_VDJ_1_v_gene -> VDJ1v
+                sector = "".join(col.split("_")[1:4])
+                if _is_na(g):
                     g = "No_" + sector
                 if g not in gene_tops_c:
                     g = "other_" + sector
-                if full_combination:
-                    pass
-                else:
+                if not full_combination:
                     if ribcol is None:
                         ribcol = gene_colors[g]
                 t = gene_tops_c[g]
@@ -204,17 +215,18 @@ def vdj_usage(
                 )
 
     # Make tick labels nicer
-    ax.set_xticks(range(1, len(vdj_cols) + 1))
-    if vdj_cols == [
-        "TRA_1_j_gene",
-        "TRA_1_v_gene",
-        "TRB_1_v_gene",
-        "TRB_1_d_gene",
-        "TRB_1_j_gene",
-    ]:
-        ax.set_xticklabels(["TRAJ", "TRAV", "TRBV", "TRBD", "TRBJ"])
-    else:
-        ax.set_xticklabels(vdj_cols)
+    # TODO this needs updating now that B cells are supported.
+    # ax.set_xticks(range(1, len(vdj_cols) + 1))
+    # if vdj_cols == [
+    #     "TRA_1_j_gene",
+    #     "TRA_1_v_gene",
+    #     "TRB_1_v_gene",
+    #     "TRB_1_d_gene",
+    #     "TRB_1_j_gene",
+    # ]:
+    #     ax.set_xticklabels(["TRAJ", "TRAV", "TRBV", "TRBD", "TRBJ"])
+    # else:
+    ax.set_xticklabels([x.replace("VJ_", "").replace("_gene", "") for x in vdj_cols])
 
     return ax
 

@@ -1,7 +1,4 @@
 # pylama:ignore=W0611,W0404
-import pandas as pd
-from anndata import AnnData
-import pytest
 from scirpy import pl
 from .fixtures import (
     adata_tra,
@@ -10,11 +7,7 @@ from .fixtures import (
     adata_vdj,
     adata_clonotype_network,
 )
-import scirpy._plotting as irplt
 import matplotlib.pyplot as plt
-import numpy.testing as npt
-import pandas.testing as pdt
-import numpy as np
 
 
 def test_clonal_expansion(adata_clonotype):
