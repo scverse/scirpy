@@ -8,7 +8,7 @@ from ..util import _is_na
 
 def spectratype(
     adata: AnnData,
-    groupby: Union[str, Collection[str]] = "TRA_1_cdr3",
+    groupby: Union[str, Collection[str]] = "IR_VJ_1_cdr3",
     *,
     target_col: str,
     combine_fun: Callable = np.sum,
@@ -50,22 +50,18 @@ def spectratype(
         groupby = list(set(groupby))
 
     # Remove NAs
-    tcr_obs = adata.obs.loc[
-        ~np.any(_is_na(adata.obs[groupby].values), axis=1), :
-    ].copy()
+    ir_obs = adata.obs.loc[~np.any(_is_na(adata.obs[groupby].values), axis=1), :].copy()
 
     # Combine (potentially) multiple length columns into one
-    tcr_obs["lengths"] = (
-        tcr_obs.loc[:, groupby].applymap(len).apply(combine_fun, axis=1)
-    )
+    ir_obs["lengths"] = ir_obs.loc[:, groupby].applymap(len).apply(combine_fun, axis=1)
 
     cdr3_lengths = _group_abundance(
-        tcr_obs, groupby="lengths", target_col=target_col, fraction=fraction
+        ir_obs, groupby="lengths", target_col=target_col, fraction=fraction
     )
 
     # Should include all lengths, not just the abundant ones
-    cdr3_lengths = cdr3_lengths.reindex(
-        range(int(tcr_obs["lengths"].max()) + 1)
-    ).fillna(value=0.0)
+    cdr3_lengths = cdr3_lengths.reindex(range(int(ir_obs["lengths"].max()) + 1)).fillna(
+        value=0.0
+    )
 
     return cdr3_lengths

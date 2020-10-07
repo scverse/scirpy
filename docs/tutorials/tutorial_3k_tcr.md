@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.2
+      jupytext_version: 1.5.0.rc1
 ---
 
 # Analysis of 3k T cells from cancer
@@ -28,11 +28,11 @@ import warnings
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, "../..")
+
 import scanpy as sc
 import scirpy as ir
 from matplotlib import pyplot as plt
-
-sys.path.insert(0, "../..")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 ```
@@ -50,10 +50,10 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-`adata` is a regular :class:`~anndata.AnnData` object with additional, TCR-specific columns in `obs`.
+`adata` is a regular :class:`~anndata.AnnData` object with additional, :term:`IR`-specific columns in `obs`.
 For more information, check the page about Scirpy's :ref:`data structure <data-structure>`.
 
-.. note:: For more information about our T-cell receptor model, see :ref:`tcr-model`.
+.. note:: For more information about our T-cell receptor model, see :ref:`receptor-model`.
 <!-- #endraw -->
 
 ```python
@@ -67,11 +67,11 @@ adata.obs
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: **Importing data**
 
-    `scirpy` natively supports reading TCR data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2)
+    `scirpy` natively supports reading :term:`IR` data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2)
     or the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__ and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details.
 
     This particular dataset has been imported using :func:`scirpy.io.read_10x_vdj` and merged
-    with transcriptomics data using :func:`scirpy.pp.merge_with_tcr`. The exact procedure
+    with transcriptomics data using :func:`scirpy.pp.merge_with_ir`. The exact procedure
     is described in :func:`scirpy.datasets.wu2020`.
 
 <!-- #endraw -->
@@ -103,6 +103,7 @@ adata.obsm["X_umap"] = adata.obsm["X_umap_orig"]
 
 ```python
 mapping = {
+    "nan": "other",
     "3.1-MT": "other",
     "4.1-Trm": "CD4_Trm",
     "4.2-RPL32": "CD4_RPL32",
@@ -144,7 +145,7 @@ sc.pl.umap(
 While most of T cell receptors have exactly one pair of α and β chains, up to one third of
 T cells can have *dual TCRs*, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
-Using the :func:`scirpy.tl.chain_pairing` function, we can add a summary
+Using the :func:`scirpy.tl.chain_qc` function, we can add a summary
 about the T cell receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
 
 .. note:: **chain pairing**
@@ -152,16 +153,29 @@ about the T cell receptor compositions to `adata.obs`. We can visualize it using
     - *Orphan chain* refers to cells that have either a single alpha or beta receptor chain.
     - *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain.
     - *Multichain* refers to cells with more than two receptor pairs detected. These cells are likely doublets.
+
+
+.. note:: **receptor type and receptor subtype**
+
+    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains 
+      are labelled as `ambiguous`. 
+    - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations. 
+    
+    For more details, see :func:`scirpy.tl.chain_qc`. 
 <!-- #endraw -->
 
 ```python
-ir.tl.chain_pairing(adata)
+ir.tl.chain_qc(adata)
+```
+
+As expected, the dataset contains only α/β T-cell receptors: 
+
+```python
+ir.pl.group_abundance(adata, groupby="receptor_subtype", target_col="source")
 ```
 
 ```python
-ir.pl.group_abundance(
-    adata, groupby="chain_pairing", target_col="source",
-)
+ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
 ```
 
 Indeed, in this dataset, ~6% of cells have more than
@@ -172,7 +186,7 @@ print(
     "Fraction of cells with more than one pair of TCRs: {:.2f}".format(
         np.sum(
             adata.obs["chain_pairing"].isin(
-                ["Extra beta", "Extra alpha", "Two full chains"]
+                ["extra VJ", "extra VDJ", "two full chains"]
             )
         )
         / adata.n_obs
@@ -213,13 +227,13 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
     * - :func:`scanpy.pl.umap`
       - Plot UMAP colored by different parameters.
 
-.. list-table:: Analysis steps on TCR data
+.. list-table:: Analysis steps on IR data
     :widths: 40 60
     :header-rows: 1
 
     - - scirpy function
       - objective
-    - - :func:`scirpy.pp.tcr_neighbors`
+    - - :func:`scirpy.pp.ir_neighbors`
       - Compute a neighborhood graph of CDR3-sequences.
     - - :func:`scirpy.tl.define_clonotypes`
       - Define :term:`clonotypes <Clonotype>` by nucleotide
@@ -236,7 +250,7 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
 ### Compute CDR3 neighborhood graph and define clonotypes
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-:func:`scirpy.pp.tcr_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity.
+:func:`scirpy.pp.ir_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity.
 
 Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity.
 In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on
@@ -248,8 +262,8 @@ in the graph and annotate them as clonotypes. This will add a `clonotype` and
 <!-- #endraw -->
 
 ```python
-# using default parameters, `tcr_neighbors` will compute nucleotide sequence identity
-ir.pp.tcr_neighbors(adata, receptor_arms="all", dual_tcr="primary_only")
+# using default parameters, `ir_neighbors` will compute nucleotide sequence identity
+ir.pp.ir_neighbors(adata, receptor_arms="all", dual_ir="primary_only")
 ir.tl.define_clonotypes(adata)
 ```
 
@@ -283,16 +297,16 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.tcr_neighbors(
+ir.pp.ir_neighbors(
     adata,
     metric="alignment",
     sequence="aa",
     cutoff=15,
     receptor_arms="all",
-    dual_tcr="all",
+    dual_ir="all",
 )
 ir.tl.define_clonotype_clusters(
-    adata, partitions="connected", sequence="aa", metric="alignment"
+    adata, partitions="connected", sequence="aa", metric="alignment", within_group=None
 )
 ```
 
@@ -323,12 +337,19 @@ ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
 ```
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
-For instance, we can find out that clonotype `233` does not have a detected alpha chain.
+For instance, we can find out that clonotype `233` does not have any detected :term:`VJ-chain<V(D)J>`. 
+In this context, the VJ-chain refers to a TCR-alpha chain. 
 
 ```python
 adata.obs.loc[
     adata.obs["ct_cluster_aa_alignment"] == "233",
-    ["TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
+    [
+        "IR_VJ_1_cdr3",
+        "IR_VJ_2_cdr3",
+        "IR_VDJ_1_cdr3",
+        "IR_VDJ_2_cdr3",
+        "receptor_subtype",
+    ],
 ]
 ```
 
@@ -366,8 +387,8 @@ adata.obs.loc[
     [
         "ct_cluster_aa_alignment",
         "ct_cluster_aa_alignment_same_v",
-        "TRA_1_v_gene",
-        "TRB_1_v_gene",
+        "IR_VJ_1_v_gene",
+        "IR_VDJ_1_v_gene",
     ],
 ].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
@@ -469,7 +490,7 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="TRB_1_v_gene", target_col="cluster", normalize=True, max_cols=10
+    adata, groupby="IR_VJ_1_v_gene", target_col="cluster", normalize=True, max_cols=10
 )
 ```
 
@@ -478,13 +499,13 @@ We can pre-select groups by filtering `adata`:
 ```python
 ir.pl.group_abundance(
     adata[
-        adata.obs["TRB_1_v_gene"].isin(
+        adata.obs["IR_VDJ_1_v_gene"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
         ),
         :,
     ],
     groupby="cluster",
-    target_col="TRB_1_v_gene",
+    target_col="IR_VDJ_1_v_gene",
     normalize=True,
 )
 ```
@@ -494,15 +515,17 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
+# TODO VDJ usage is currently broken, see #194
+# ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
 ```
 
 We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes:
 
 ```python
-ir.pl.vdj_usage(
-    adata[adata.obs["clonotype"].isin(["274", "277", "211", "106"]), :], top_n=None
-)
+# TODO VDJ usage is currently broken, see #194
+# ir.pl.vdj_usage(
+#     adata[adata.obs["clonotype"].isin(["274_TCR", "277_TCR", "211_TCR", "106_TCR"]), :], top_n=None
+# )
 ```
 
 ### Spectratype plots
@@ -533,13 +556,13 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 ```python
 ir.pl.spectratype(
     adata[
-        adata.obs["TRB_1_v_gene"].isin(
+        adata.obs["IR_VDJ_1_v_gene"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
         ),
         :,
     ],
-    cdr3_col="TRB_1_cdr3",
-    color="TRB_1_v_gene",
+    cdr3_col="IR_VDJ_1_cdr3",
+    color="IR_VDJ_1_v_gene",
     normalize="sample",
     fig_kws={"dpi": 120},
 )
@@ -661,7 +684,7 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clonotype", groups=["163"], reference="277", method="wilcoxon"
+    adata, "clonotype", groups=["163_TCR"], reference="277_TCR", method="wilcoxon"
 )
-sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
+sc.pl.rank_genes_groups_violin(adata, groups="163_TCR", n_genes=15)
 ```

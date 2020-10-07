@@ -26,7 +26,7 @@ def test_workflow():
         TESTDATA / "test_workflow/adata.obs.expected.pkl.gz"
     )
     ir.tl.chain_pairing(adata)
-    ir.pp.tcr_neighbors(adata)
+    ir.pp.ir_neighbors(adata)
     ir.tl.define_clonotypes(adata)
     ir.tl.clonotype_network(adata)
     ir.tl.clonal_expansion(adata)
@@ -39,7 +39,7 @@ def test_workflow():
 
     # # Use this code to re-generate the "expected file", if necessary.
     # adata.obs.to_pickle(
-    #     "tests/data/test_workflow/adata.obs.expected.pkl.gz", protocol=4
+    #     TESTDATA / "test_workflow/adata.obs.expected.pkl.gz", protocol=4
     # )
 
     pdt.assert_frame_equal(

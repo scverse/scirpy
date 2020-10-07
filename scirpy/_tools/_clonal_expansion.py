@@ -1,7 +1,7 @@
 from anndata import AnnData
 from ..util import _is_na, _normalize_counts
 import numpy as np
-from typing import Union
+from typing import Union, List
 from .._compat import Literal
 import pandas as pd
 
@@ -10,7 +10,7 @@ def _clip_and_count(
     adata: AnnData,
     target_col: str,
     *,
-    groupby: Union[str, None] = None,
+    groupby: Union[str, None, List[str]] = None,
     clip_at: int = 3,
     inplace: bool = True,
     key_added: Union[str, None] = None,

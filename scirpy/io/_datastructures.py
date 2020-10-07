@@ -1,6 +1,6 @@
-"""Datastructures for TCR data. 
+"""Datastructures for Adaptive immune receptor (IR) data.
 
-Currently only used as intermediate storage. 
+Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
@@ -8,13 +8,14 @@ from .._compat import Literal
 from ..util import _is_na, _is_true
 
 
-class TcrChain:
-    """Data structure for a T cell receptor chain.
+class IrChain:
+    """Data structure for an immune cell receptor chain.
 
     Parameters
     ----------
-    chain_type
-        Currently supported: ["TRA", "TRB", "other"]
+    locus
+        IGMT locus name or "other".
+        See https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names.
     cdr3
         Amino acid sequence of the CDR3 region
     cdr3_nt
@@ -40,9 +41,19 @@ class TcrChain:
         For type == TRB: sum of nucleotides inserted in the VD + DJ junction
     """
 
+    #: Chain 1 is the chain with the V-J junction
+    VJ_LOCI = ("TRA", "TRG", "IGK", "IGL")
+
+    #: Chain 2 is the chain with the V-D-J junction
+    VDJ_LOCI = ("TRB", "TRD", "IGH")
+
+    #: Valid chains are IMGT locus names or "other"
+    #: see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
+    VALID_LOCI = VJ_LOCI + VDJ_LOCI + ("other",)
+
     def __init__(
         self,
-        chain_type: Literal["TRA", "TRB", "other"],
+        locus: Literal["TRA", "TRG", "IGK", "IGL", "TRB", "TRD", "IGH", "other"],
         *,
         cdr3: str = None,
         cdr3_nt: str = None,
@@ -55,10 +66,15 @@ class TcrChain:
         c_gene: str = None,
         junction_ins: int = None,
     ):
-        if chain_type not in ["TRA", "TRB", "other"]:
-            raise ValueError("Invalid chain type: {}".format(chain_type))
+        if locus not in self.VALID_LOCI:
+            raise ValueError("Invalid chain type: {}".format(locus))
 
-        self.chain_type = chain_type
+        self.locus = locus
+        self.junction_type = (
+            "VJ"
+            if locus in self.VJ_LOCI
+            else ("VDJ" if locus in self.VDJ_LOCI else None)
+        )
         self.cdr3 = cdr3.upper() if not _is_na(cdr3) else None
         self.cdr3_nt = cdr3_nt.upper() if not _is_na(cdr3_nt) else None
         self.expr = float(expr)
@@ -71,13 +87,13 @@ class TcrChain:
         self.junction_ins = junction_ins
 
     def __repr__(self):
-        return "TcrChain object: " + str(self.__dict__)
+        return "IrChain object: " + str(self.__dict__)
 
 
-class TcrCell:
-    """Data structure for a Cell with T-cell receptors.
+class IrCell:
+    """Data structure for a Cell with immune receptors.
 
-    A TcrCell can hold multiple TcrChains.
+    An IrCell can hold multiple IrChains.
 
     Parameters
     ----------
@@ -92,12 +108,12 @@ class TcrCell:
         self.chains = list()
 
     def __repr__(self):
-        return "TcrCell {} with {} chains".format(self._cell_id, len(self.chains))
+        return "IrCell {} with {} chains".format(self._cell_id, len(self.chains))
 
     @property
     def cell_id(self):
         return self._cell_id
 
-    def add_chain(self, chain: TcrChain) -> None:
-        """Add a :class:`TcrChain`"""
+    def add_chain(self, chain: IrChain) -> None:
+        """Add a :class:`IrChain`"""
         self.chains.append(chain)

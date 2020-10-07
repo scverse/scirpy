@@ -1,4 +1,4 @@
-from ._chain_pairing import chain_pairing
+from ._chain_qc import chain_pairing, chain_qc
 from ._clonal_expansion import clonal_expansion, summarize_clonal_expansion
 from ._diversity import alpha_diversity
 from ._group_abundance import group_abundance
@@ -9,7 +9,6 @@ from ._clonotypes import (
     define_clonotypes,
     define_clonotype_clusters,
     clonotype_network,
-    _define_clonotypes_no_graph,
     clonotype_network_igraph,
 )
 from ._convergence import clonotype_convergence

@@ -17,53 +17,19 @@ import random
 import pytest
 
 
-def test_define_clonotypes_no_graph():
-    obs = pd.DataFrame.from_records(
-        [
-            ["cell1", "AAAA", "nan", "nan", "nan"],
-            ["cell2", "nan", "nan", "nan", "nan"],
-            ["cell3", "AAAA", "nan", "nan", "nan"],
-            ["cell4", "AAAA", "BBBB", "nan", "nan"],
-            ["cell5", "nan", "nan", "CCCC", "DDDD"],
-        ],
-        columns=["cell_id", "TRA_1_cdr3", "TRA_2_cdr3", "TRB_1_cdr3", "TRB_2_cdr3"],
-    ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-
-    res = st.tl._define_clonotypes_no_graph(adata, inplace=False)
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res,
-        ["clonotype_1", np.nan, "clonotype_1", "clonotype_0", "clonotype_2"],
-    )
-
-    res_primary_only = st.tl._define_clonotypes_no_graph(
-        adata, flavor="primary_only", inplace=False
-    )
-    npt.assert_equal(
-        # order is by alphabet: BBBB < nan
-        # we don't care about the order of numbers, so this is ok.
-        res_primary_only,
-        ["clonotype_0", np.nan, "clonotype_0", "clonotype_0", "clonotype_1"],
-    )
-
-    # test inplace
-    st.tl._define_clonotypes_no_graph(adata, key_added="clonotype_")
-    npt.assert_equal(res, adata.obs["clonotype_"].values)
-
-
 @pytest.mark.parametrize(
-    "same_v_gene,ct_expected,ct_size_expected",
+    "same_v_gene,within_group,ct_expected,ct_size_expected",
     [
-        (False, ["0", "0", "0", "1"], [3, 3, 3, 1]),
+        (False, None, ["0", "0", "0", "1"], [3, 3, 3, 1]),
         (
             "primary_only",
+            None,
             ["0_av1_bv1", "0_av1_bv1", "0_av2_bv2", "1_av1_bv1"],
             [2, 2, 1, 1],
         ),
         (
             "all",
+            None,
             [
                 "0_av1_bv1_a2v1_b2v1",
                 "0_av1_bv1_a2v2_b2v2",
@@ -72,14 +38,22 @@ def test_define_clonotypes_no_graph():
             ],
             [1, 1, 1, 1],
         ),
+        (False, "receptor_type", ["0_TCR", "0_BCR", "0_BCR", "1_BCR"], [1, 2, 2, 1]),
+        (
+            "primary_only",
+            "receptor_type",
+            ["0_av1_bv1_TCR", "0_av1_bv1_BCR", "0_av2_bv2_BCR", "1_av1_bv1_BCR"],
+            [1, 1, 1, 1],
+        ),
     ],
 )
 def test_define_clonotype_clusters(
-    adata_conn, same_v_gene, ct_expected, ct_size_expected
+    adata_conn, same_v_gene, within_group, ct_expected, ct_size_expected
 ):
     clonotype, clonotype_size = st.tl.define_clonotype_clusters(
         adata_conn,
         metric="alignment",
+        within_group=within_group,
         sequence="aa",
         same_v_gene=same_v_gene,
         inplace=False,
@@ -91,6 +65,7 @@ def test_define_clonotype_clusters(
     st.tl.define_clonotype_clusters(
         adata_conn,
         metric="alignment",
+        within_group=within_group,
         sequence="aa",
         same_v_gene=same_v_gene,
         key_added="ct",
@@ -104,7 +79,8 @@ def test_define_clonotype_clusters(
     # Test with higher leiden resolution
     st.tl.define_clonotype_clusters(
         adata_conn,
-        neighbors_key="tcr_neighbors_aa_alignment",
+        neighbors_key="ir_neighbors_aa_alignment",
+        within_group=None,
         same_v_gene=False,
         key_added="ct2",
         partitions="leiden",
@@ -116,24 +92,26 @@ def test_define_clonotype_clusters(
 
 
 def test_clonotypes_end_to_end1(adata_define_clonotypes):
-    # default parameters of tcr-neighbors should yield nt-identity
-    st.pp.tcr_neighbors(adata_define_clonotypes, receptor_arms="all", dual_tcr="all")
-    clonotypes, _ = st.tl.define_clonotypes(adata_define_clonotypes, inplace=False)
+    # default parameters of ir-neighbors should yield nt-identity
+    st.pp.ir_neighbors(adata_define_clonotypes, receptor_arms="all", dual_ir="all")
+    clonotypes, _ = st.tl.define_clonotypes(
+        adata_define_clonotypes, inplace=False, within_group=None
+    )
     print(clonotypes)
     expected = [0, 0, 1, 2, 3]
     npt.assert_equal(clonotypes, [str(x) for x in expected])
 
 
 def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
-        dual_tcr="all",
+        dual_ir="all",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False
+        adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
     expected = [0, 0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -141,15 +119,15 @@ def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="any",
-        dual_tcr="any",
+        dual_ir="any",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False
+        adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
     expected = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
@@ -157,15 +135,15 @@ def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
-        dual_tcr="any",
+        dual_ir="any",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False
+        adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
     expected = [0, 0, 0, 0, 0, 0, 1, 0, 2, 3]
@@ -173,15 +151,15 @@ def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="any",
-        dual_tcr="all",
+        dual_ir="all",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False
+        adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
     expected = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
@@ -189,15 +167,15 @@ def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
-        dual_tcr="primary_only",
+        dual_ir="primary_only",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False
+        adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
     expected = [0, 0, 1, 2, 0, 0, 3, 4, 5, 6]
@@ -205,15 +183,15 @@ def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
-    st.pp.tcr_neighbors(
+    st.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
-        receptor_arms="TRB",
-        dual_tcr="primary_only",
+        receptor_arms="VDJ",
+        dual_ir="primary_only",
         sequence="aa",
     )
     clonotypes, _ = st.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False
+        adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
     expected = [0, 0, 0, 1, 0, 0, 2, 3, 4, 5]
@@ -222,7 +200,11 @@ def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
 
 def test_clonotype_network(adata_conn):
     st.tl.define_clonotype_clusters(
-        adata_conn, sequence="aa", metric="alignment", partitions="connected"
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        partitions="connected",
+        within_group=None,
     )
     random.seed(42)
     coords = st.tl.clonotype_network(

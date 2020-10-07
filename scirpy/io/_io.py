@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from anndata import AnnData
-from ._datastructures import TcrCell, TcrChain
+from ._datastructures import IrCell, IrChain
 from typing import Collection, Sequence, Union
 import numpy as np
 from glob import iglob
@@ -11,7 +11,8 @@ from . import _tracerlib
 import sys
 from pathlib import Path
 import airr
-from ..util import _doc_params, _is_na, _is_true
+from ..util import _doc_params, _is_na, _is_true, deprecated
+
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -25,27 +26,38 @@ Currently, reading data into *Scirpy* has the following limitations:
    Excess chains are removed (those with lowest read count/:term:`UMI` count)
    and cells flagged as :term:`Multichain-cell`.
 
-For more information, see :ref:`tcr-model`.
+For more information, see :ref:`receptor-model`.
 """
 
 
 def _sanitize_anndata(adata: AnnData) -> None:
-    """Sanitization and sanity checks on TCR-anndata object.
+    """Sanitization and sanity checks on IR-anndata object.
     Should be executed by every read_xxx function"""
     assert (
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
+    CATEGORICAL_COLS = ("locus", "v_gene", "d_gene", "j_gene", "c_gene", "multichain")
+
+    # Sanitize has_ir column into categorical
     # This should always be a categorical with True / False
-    has_tcr_mask = _is_true(adata.obs["has_tcr"])
-    adata.obs["has_tcr"] = ["True" if x else "False" for x in has_tcr_mask]
+    has_ir_mask = _is_true(adata.obs["has_ir"])
+    adata.obs["has_ir"] = pd.Categorical(
+        ["True" if x else "False" for x in has_ir_mask]
+    )
+
+    # Turn other columns into categorical
+    for col in adata.obs.columns:
+        if col.endswith(CATEGORICAL_COLS):
+            adata.obs[col] = pd.Categorical(adata.obs[col])
+
     adata._sanitize()
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
+def from_ir_objs(ir_objs: Collection[IrCell]) -> AnnData:
     """\
-    Convert a collection of :class:`TcrCell` objects to an :class:`~anndata.AnnData`.
+    Convert a collection of :class:`IrCell` objects to an :class:`~anndata.AnnData`.
 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
@@ -54,34 +66,34 @@ def from_tcr_objs(tcr_objs: Collection[TcrCell]) -> AnnData:
 
     Parameters
     ----------
-    tcr_objs
+    ir_objs
 
 
     Returns
     -------
-    :class:`~anndata.AnnData` object with TCR information in `obs`.
+    :class:`~anndata.AnnData` object with :term:`IR` information in `obs`.
 
     """
-    tcr_df = pd.DataFrame.from_records(
-        (_process_tcr_cell(x) for x in tcr_objs), index="cell_id"
+    ir_df = pd.DataFrame.from_records(
+        (_process_ir_cell(x) for x in ir_objs), index="cell_id"
     )
-    adata = AnnData(obs=tcr_df, X=np.empty([tcr_df.shape[0], 0]))
+    adata = AnnData(obs=ir_df, X=np.empty([ir_df.shape[0], 0]))
     _sanitize_anndata(adata)
     return adata
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
+def _process_ir_cell(ir_obj: IrCell) -> dict:
     """\
-    Process a TcrCell object into a dictionary according
-    to wour working model of TCRs.
+    Process a IrCell object into a dictionary according
+    to our working model of adaptive immune receptors.
 
     {doc_working_model}
 
     Parameters
     ----------
-    tcr_obj
-        TcrCell object to process
+    ir_obj
+        IrCell object to process
 
     Returns
     -------
@@ -89,16 +101,21 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
     data frame.
     """
     res_dict = dict()
-    res_dict["cell_id"] = tcr_obj.cell_id
+    res_dict["cell_id"] = ir_obj.cell_id
     chain_dict = dict()
-    for c in ["TRA", "TRB"]:
+    for junction_type in ["VJ", "VDJ"]:
         # sorting subordinately by raw and cdr3 ensures consistency
         # between load from json and load from csv.
         tmp_chains = sorted(
-            [x for x in tcr_obj.chains if x.chain_type == c and x.is_productive],
+            [
+                x
+                for x in ir_obj.chains
+                if x.junction_type == junction_type and x.is_productive
+            ],
             key=lambda x: (x.expr, x.expr_raw, x.cdr3),
             reverse=True,
         )
+        # multichain if at least one of the receptor arms is multichain
         res_dict["multi_chain"] = res_dict.get("multi_chain", False) | (
             len(tmp_chains) > 2
         )
@@ -106,9 +123,10 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
         tmp_chains = tmp_chains[:2]
         # add None if less than two chains
         tmp_chains += [None] * (2 - len(tmp_chains))
-        chain_dict[c] = tmp_chains
+        chain_dict[junction_type] = tmp_chains
 
     for key in [
+        "locus",
         "cdr3",
         "junction_ins",
         "expr",
@@ -118,28 +136,28 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
         "c_gene",
         "cdr3_nt",
     ]:
-        for c, tmp_chains in chain_dict.items():
+        for junction_type, tmp_chains in chain_dict.items():
             for i, chain in enumerate(tmp_chains):
-                res_dict["{}_{}_{}".format(c, i + 1, key)] = (
+                res_dict["IR_{}_{}_{}".format(junction_type, i + 1, key)] = (
                     getattr(chain, key) if chain is not None else None
                 )
 
     # in some weird reasons, it can happen that a cell has been called from
-    # TCR-seq but no TCR seqs have been found. `has_tcr` should be equal
+    # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
     # to "at least one productive chain"
-    res_dict["has_tcr"] = not (
-        _is_na(res_dict["TRA_1_cdr3"]) and _is_na(res_dict["TRB_1_cdr3"])
+    res_dict["has_ir"] = not (
+        _is_na(res_dict["IR_VJ_1_cdr3"]) and _is_na(res_dict["IR_VDJ_1_cdr3"])
     )
 
-    if _is_na(res_dict["TRA_1_cdr3"]):
+    if _is_na(res_dict["IR_VJ_1_cdr3"]):
         assert _is_na(
-            res_dict["TRA_2_cdr3"]
+            res_dict["IR_VJ_2_cdr3"]
         ), "There can't be a secondary chain if there is no primary one: {}".format(
             res_dict
         )
-    if _is_na(res_dict["TRB_1_cdr3"]):
+    if _is_na(res_dict["IR_VDJ_1_cdr3"]):
         assert _is_na(
-            res_dict["TRB_2_cdr3"]
+            res_dict["IR_VDJ_2_cdr3"]
         ), "There can't be a secondary chain if there is no primary one: {}".format(
             res_dict
         )
@@ -148,20 +166,20 @@ def _process_tcr_cell(tcr_obj: TcrCell) -> dict:
 
 
 def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData:
-    """Read TCR data from a 10x genomics `all_contig_annotations.json` file"""
+    """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
     with open(path, "r") as f:
         cells = json.load(f)
 
-    tcr_objs = {}
+    ir_objs = {}
     for cell in cells:
         if filtered and not (cell["is_cell"] and cell["high_confidence"]):
             continue
         barcode = cell["barcode"]
-        if barcode not in tcr_objs:
-            tcr_obj = TcrCell(barcode)
-            tcr_objs[barcode] = tcr_obj
+        if barcode not in ir_objs:
+            ir_obj = IrCell(barcode)
+            ir_objs[barcode] = ir_obj
         else:
-            tcr_obj = tcr_objs[barcode]
+            ir_obj = ir_objs[barcode]
 
         genes = dict()
         mapping = {
@@ -190,22 +208,24 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         chain_types = [g["chain"] for g in genes.values()]
         chain_type = chain_types[0] if np.unique(chain_types).size == 1 else "other"
         # for now, gamma/delta is "other" as well.
-        chain_type = chain_type if chain_type in ["TRA", "TRB"] else "other"
+        chain_type = chain_type if chain_type in IrChain.VALID_LOCI else "other"
 
         # compute inserted nucleotides
-        # VJ junction for TRA chains
-        # VD + DJ junction for TRB chains
+        # VJ junction for TRA, TRG, IGK, IGL chains
+        # VD + DJ junction for TRB, TRD, IGH chains
         #
         # Notes on indexing:
         # some tryouts have shown, that the indexes in the json file
         # seem to be python-type indexes (i.e. the 'end' index is exclusive).
         # Therefore, no `-1` needs to be subtracted when computing the number
         # of inserted nucleotides.
-        if chain_type == "TRA" and v_gene is not None and j_gene is not None:
-            assert d_gene is None, "TRA chains should not have a D region"
+        if chain_type in IrChain.VJ_LOCI and v_gene is not None and j_gene is not None:
+            assert (
+                d_gene is None
+            ), "TRA, TRG or IG-light chains should not have a D region"
             inserted_nts = genes["j"]["start"] - genes["v"]["end"]
         elif (
-            chain_type == "TRB"
+            chain_type in IrChain.VDJ_LOCI
             and v_gene is not None
             and d_gene is not None
             and j_gene is not None
@@ -217,9 +237,9 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         else:
             inserted_nts = None
 
-        tcr_obj.add_chain(
-            TcrChain(
-                chain_type=chain_type,
+        ir_obj.add_chain(
+            IrChain(
+                locus=chain_type,
                 cdr3=cell["cdr3"],
                 cdr3_nt=cell["cdr3_seq"],
                 expr=cell["umi_count"],
@@ -233,24 +253,26 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             )
         )
 
-    return from_tcr_objs(tcr_objs.values())
+    return from_ir_objs(ir_objs.values())
 
 
 def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
-    """Read TCR data from a 10x genomics `_contig_annotations.csv` file """
+    """Read IR data from a 10x genomics `_contig_annotations.csv` file """
     df = pd.read_csv(path)
 
-    tcr_objs = {}
+    ir_objs = {}
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
-        tcr_obj = TcrCell(barcode)
+        ir_obj = IrCell(barcode)
         for _, chain_series in cell_df.iterrows():
-            tcr_obj.add_chain(
-                TcrChain(
-                    chain_type=chain_series["chain"]
-                    if chain_series["chain"] in ["TRA", "TRB"]
-                    else "other",
+            ir_obj.add_chain(
+                IrChain(
+                    locus=(
+                        chain_series["chain"]
+                        if chain_series["chain"] in IrChain.VALID_LOCI
+                        else "other"
+                    ),
                     cdr3=chain_series["cdr3"],
                     cdr3_nt=chain_series["cdr3_nt"],
                     expr=chain_series["umis"],
@@ -263,15 +285,15 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
                 )
             )
 
-        tcr_objs[barcode] = tcr_obj
+        ir_objs[barcode] = ir_obj
 
-    return from_tcr_objs(tcr_objs.values())
+    return from_ir_objs(ir_objs.values())
 
 
 @_doc_params(doc_working_model=doc_working_model)
 def read_10x_vdj(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """\
-    Read TCR data from 10x Genomics cell-ranger output.
+    Read :term:`IR` data from 10x Genomics cell-ranger output.
 
     Supports `all_contig_annotations.json` and
     `{{all,filtered}}_contig_annotations.csv`.
@@ -294,7 +316,7 @@ def read_10x_vdj(path: Union[str, Path], filtered: bool = True) -> AnnData:
 
     Returns
     -------
-    AnnData object with TCR data in `obs` for each cell. For more details see
+    AnnData object with IR data in `obs` for each cell. For more details see
     :ref:`data-structure`.
     """
     path = Path(path)
@@ -367,8 +389,8 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                     else np.nan
                 )
 
-            yield TcrChain(
-                chain_type,
+            yield IrChain(
+                locus=chain_type,
                 cdr3=tmp_chain.cdr3,
                 cdr3_nt=tmp_chain.cdr3nt,
                 expr=tmp_chain.TPM,
@@ -383,7 +405,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
         os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True
     ):
         cell_name = summary_file.split(os.sep)[-3]
-        tcr_obj = TcrCell(cell_name)
+        tcr_obj = IrCell(cell_name)
         try:
             with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
@@ -408,7 +430,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
             "<CELL>/filtered_TCR_seqs/*.pkl"
         )
 
-    return from_tcr_objs(tcr_objs.values())
+    return from_ir_objs(tcr_objs.values())
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -437,10 +459,10 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
 
     Returns
     -------
-    AnnData object with TCR data in `obs` for each cell. For more details see
+    AnnData object with IR data in `obs` for each cell. For more details see
     :ref:`data-structure`.
     """
-    tcr_objs = {}
+    ir_objs = {}
 
     if isinstance(path, str) or isinstance(path, Path):
         path = [path]
@@ -451,10 +473,10 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
         for row in reader:
             cell_id = row["cell_id"]
             try:
-                tmp_cell = tcr_objs[cell_id]
+                tmp_cell = ir_objs[cell_id]
             except KeyError:
-                tmp_cell = TcrCell(cell_id=cell_id)
-                tcr_objs[cell_id] = tmp_cell
+                tmp_cell = IrCell(cell_id=cell_id)
+                ir_objs[cell_id] = tmp_cell
 
             try:
                 # this is not an official field
@@ -465,9 +487,9 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 expr_raw = None
 
             tmp_cell.add_chain(
-                TcrChain(
+                IrChain(
                     is_productive=row["productive"],
-                    chain_type=row["locus"],
+                    locus=row["locus"],
                     v_gene=row["v_call"] if "v_call" in row else None,
                     d_gene=row["d_call"] if "d_call" in row else None,
                     j_gene=row["j_call"] if "j_call" in row else None,
@@ -479,4 +501,4 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 )
             )
 
-    return from_tcr_objs(tcr_objs.values())
+    return from_ir_objs(ir_objs.values())

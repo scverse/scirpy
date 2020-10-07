@@ -1,4 +1,4 @@
-"""Python library for single-cell TCR analysis"""
+"""Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"""
 
 from ._metadata import __version__, __author__, __email__, within_flit
 

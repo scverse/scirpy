@@ -40,7 +40,8 @@ requires = [
     # for getting the version
     'setuptools_scm',
     'pytoml',
-    'importlib_metadata>=0.7; python_version < "3.8"'
+    'importlib_metadata>=0.7; python_version < "3.8"',
+    'pycairo>=1.20; sys_platform == "win32"'
 ]
 
 [tool.flit.metadata.requires-extra]
