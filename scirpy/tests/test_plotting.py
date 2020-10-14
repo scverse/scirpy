@@ -8,6 +8,7 @@ from .fixtures import (
     adata_clonotype_network,
 )
 import matplotlib.pyplot as plt
+import pytest
 
 
 def test_clonal_expansion(adata_clonotype):
@@ -51,8 +52,11 @@ def test_clonotype_imbalance(adata_tra):
     assert isinstance(p, plt.Axes)
 
 
-def test_vdj_usage(adata_vdj):
-    p = pl.vdj_usage(adata_vdj, normalize_to="sample")
+@pytest.mark.parametrize("full_combination", [True, False])
+def test_vdj_usage(adata_vdj, full_combination):
+    p = pl.vdj_usage(
+        adata_vdj, normalize_to="sample", full_combination=full_combination
+    )
     assert isinstance(p, plt.Axes)
 
 
