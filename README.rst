@@ -1,6 +1,6 @@
 Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data
 ====================================================================================
-|tests| |docs| |pypi| |bioconda| |black|
+|tests| |docs| |pypi| |bioconda| |airr| |black|
 
 .. |tests| image:: https://github.com/icbi-lab/scirpy/workflows/tests/badge.svg
     :target: https://github.com/icbi-lab/scirpy/actions?query=workflow%3Atests
@@ -21,6 +21,10 @@ Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
     :alt: The uncompromising python formatter
+    
+.. |airr| image:: https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=flat)
+    :target: https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html
+    :alt: AIRR-compliant
 
 Scirpy is a scalable python-toolkit to analyse  T cell receptor (TCR) repertoires from
 single-cell RNA sequencing (scRNA-seq) data. It seamlessly integrates with the popular
