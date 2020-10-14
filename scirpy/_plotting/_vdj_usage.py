@@ -28,7 +28,8 @@ def vdj_usage(
     ),
     normalize_to: Union[bool, str, Sequence[float]] = False,
     ax: Union[plt.Axes, None] = None,
-    max_segments: int = 5,
+    max_segments: Union[int, None] = None,
+    max_labelled_segments: Union[int, None] = 5,
     max_ribbons: Union[None, int] = 10,
     barwidth: float = 0.4,
     draw_bars: bool = True,
@@ -57,6 +58,8 @@ def vdj_usage(
     max_segments
         The maximum number of segments in a bar (number of different V, D or J segments
         that should be shown separately).
+    max_labelled_segments
+        The maximum number of segments that receive a gene label
     max_ribbons
         The maximum number of ribbons (individual VDJ combinations). If set to `None`,
         all ribbons are drawn. If `full_combination=False`, the max number of ribbons
@@ -93,8 +96,13 @@ def vdj_usage(
     if ax is None:
         ax = _init_ax(default_figargs)
 
+    # the number of segments or ribbons can't exceed the number of cells
     if max_ribbons is None:
         max_ribbons = df.shape[0]
+    if max_segments is None:
+        max_segments = df.shape[0]
+    if max_labelled_segments is None:
+        max_labelled_segments = df.shape[0]
 
     # Store segments and colors of segments for each column individually.
     gene_tops = {col: dict() for col in vdj_cols}
@@ -103,7 +111,7 @@ def vdj_usage(
     # Draw a stacked bar for every gene loci and save positions on the bar
     for col_idx, col_name in enumerate(vdj_cols):
         gene_weights = (
-            df.groupby(col_name)
+            df.groupby(col_name, observed=True)
             .agg({"cell_weights": "sum"})
             .sort_values(by="cell_weights", ascending=False)
             .reset_index()
@@ -130,7 +138,9 @@ def vdj_usage(
             bottom = 0
 
         # Draw gene segments
-        for segment_size, gene in list(zip(segment_sizes, genes))[:max_segments][::-1]:
+        for i, (segment_size, gene) in list(enumerate(zip(segment_sizes, genes)))[
+            :max_segments
+        ][::-1]:
             if _is_na(gene):
                 gene = "none"
             gene_tops[col_name][gene] = bottom + segment_size
@@ -146,16 +156,17 @@ def vdj_usage(
                 gene_colors[col_name][gene] = bar_colors.patches[-1].get_facecolor()
 
                 gene_text = _sanitize_gene_name(gene)
-                ax.text(
-                    1 + col_idx - barwidth / 2 + 0.05,
-                    bottom + 0.05,
-                    gene_text,
-                )
+                if i < max_labelled_segments:
+                    ax.text(
+                        1 + col_idx - barwidth / 2 + 0.05,
+                        bottom + 0.05,
+                        gene_text,
+                    )
             bottom += segment_size
 
     # Create a case for full combinations or just the neighbours
     if full_combination:
-        draw_mat = [vdj_cols]
+        draw_mat = [list(vdj_cols)]
     else:
         draw_mat = []
         for lc in range(1, len(vdj_cols)):
@@ -163,23 +174,20 @@ def vdj_usage(
 
     # Draw ribbons
     for ribbon_start_x_coord, target_pair in enumerate(draw_mat, start=1):
-
-        def _add_source_weight(grp):
-            grp["source_weight"] = grp["cell_weights"].sum()
-            return grp
-
         # Count occurance of individual VDJ combinations
         gene_combinations = (
-            df.groupby(target_pair)
+            df.groupby(target_pair, observed=True)
             .agg({"cell_weights": "sum"})
-            .groupby(target_pair[0])
-            .apply(_add_source_weight)
             .reset_index()
-            # Sort ribbons by: weight of the source segment, weight of the ribbon, name
-            # of the gene.
             .sort_values(
-                by=["source_weight", "cell_weights", target_pair[0]],
-                ascending=[False, False, True],
+                by=[
+                    "cell_weights",
+                    target_pair[0],
+                ],
+                ascending=[
+                    False,
+                    True,
+                ],
             )
         )
 

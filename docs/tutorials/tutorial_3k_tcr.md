@@ -20,21 +20,22 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 <!-- #endraw -->
 
 ```python
+# This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
 import sys
 import warnings
 
+sys.path.insert(0, "../..")
+warnings.filterwarnings("ignore", category=FutureWarning)
+```
+
+```python
 import numpy as np
 import pandas as pd
-
-sys.path.insert(0, "../..")
-
 import scanpy as sc
 import scirpy as ir
 from matplotlib import pyplot as plt
-
-warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -515,17 +516,17 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-# TODO VDJ usage is currently broken, see #194
-# ir.pl.vdj_usage(adata, full_combination=False, top_n=30)
+ir.pl.vdj_usage(adata, full_combination=False, max_segments=None, max_ribbons=30)
 ```
 
 We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes:
 
 ```python
-# TODO VDJ usage is currently broken, see #194
-# ir.pl.vdj_usage(
-#     adata[adata.obs["clonotype"].isin(["274_TCR", "277_TCR", "211_TCR", "106_TCR"]), :], top_n=None
-# )
+ir.pl.vdj_usage(
+    adata[adata.obs["clonotype"].isin(["274_TCR", "277_TCR", "211_TCR", "106_TCR"]), :],
+    max_ribbons=None,
+    max_segments=100,
+)
 ```
 
 ### Spectratype plots
