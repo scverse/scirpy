@@ -55,8 +55,9 @@ Scirpy implements a network-based clonotype definition that enables
 clustering cells into :term:`clonotypes<Clonotype>` based on *identical*
 :term:`CDR3` *nucleotide sequences* and into :term:`clonotype clusters<Clonotype cluster>`
 based on
- - *identical CDR3 amino acid sequences*, or
- - *similar CDR3 amino acid sequences* based on pairwise sequence alignment.
+
+- *identical CDR3 amino acid sequences*, or
+- *similar CDR3 amino acid sequences* based on pairwise sequence alignment.
 
 The latter approach is inspired by studies showing that similar TCR sequences
 also share epitope targets (:cite:`Fischer2019`, :cite:`Glanville2017-ay`,

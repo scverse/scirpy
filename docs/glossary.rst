@@ -171,10 +171,11 @@ Glossary
     Receptor subtype
         More fine-grained classification of the :term:`receptor type<Receptor type>`
         into
-         * α/β T cells
-         * γ/δ T cells
-         * IG-heavy/IG-κ B cells
-         * IG-heavy/IG-λ B cells
+
+        * α/β T cells
+        * γ/δ T cells
+        * IG-heavy/IG-κ B cells
+        * IG-heavy/IG-λ B cells
 
         See also :func:`scirpy.tl.chain_qc`.
 
