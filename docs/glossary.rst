@@ -3,14 +3,16 @@ Glossary
 ========
 
 .. glossary::
+    :sorted:
+
     TCR
         T-cell receptor. A TCR consists of one α and one β chain
         (or, alternatively, one γ and one δ chain). Each chain consists of a
         constant and a variable region. The variable region is responsible for antigen
         recognition, mediated by :term:`CDR` regions.
 
-        *Scirpy* currently only supports α/β-TCRs. For more information, see the
-        page about our :ref:`TCR model<receptor-model>`.
+        For more information on how Scirpy represents TCRs, see the page about our
+        :ref:`receptor model<receptor-model>`.
 
         .. figure:: img/tcr.jpg
            :width: 310px
@@ -116,13 +118,15 @@ Glossary
            Image from :cite:`Attaf2015` under the `CC BY-NC-SA-3.0 <https://creativecommons.org/licenses/by-nc-sa/3.0/>`__ license.
 
     Dual TCR
+        :term:`TCRs<TCR>` with more than one pair of α- and β (or γ- and δ) chains.
         See :term:`Dual IR`.
 
     Multichain-cell
-        Cells with more than two α- and β chains that do not fit into the
-        :term:`Dual IR` model. These are usually rare and could be explained
-        by doublets/multiplets, i.e. two ore more cells that were captured
-        in the same droplet.
+        Cells with more than two pairs of :term:`VJ<V(D)J>` and
+        :term:`VDJ<V(D)J>` sequences that do not fit into the :term:`Dual IR`
+        model. These are usually rare and could be explained by
+        doublets/multiplets, i.e. two ore more cells that were captured in
+        the same droplet.
 
         .. figure:: img/multichain.png
            :width: 450px
@@ -141,7 +145,7 @@ Glossary
         (e.g. TCR-alpha), but no :term:`VDJ<V(D)J>` chain (e.g. TCR-beta),
         the cell will be flagged as "Orphan VJ".
 
-        Orphan chains are most likley the effect of stochastic dropouts due to
+        Orphan chains are most likely the effect of stochastic dropouts due to
         sequencing inefficiencies.
 
         See also :func:`scirpy.tl.chain_qc`.
@@ -160,29 +164,51 @@ Glossary
         a stop codon or are not within the reading frame.
 
     Receptor type
-        Either BCR or TCR
+        Classification of immune receptors into :term:`BCR` and :term:`TCR`.
+
+        See also :func:`scirpy.tl.chain_qc`.
 
     Receptor subtype
-        alpha/beta T cells, gamma/delta T cells, IGK vs IGL BCR.
+        More fine-grained classification of the :term:`receptor type<Receptor type>`
+        into
+         * α/β T cells
+         * γ/δ T cells
+         * IG-heavy/IG-κ B cells
+         * IG-heavy/IG-λ B cells
+
+        See also :func:`scirpy.tl.chain_qc`.
+
 
     IR
         Immune receptor.
 
     BCR
-        B-cell receptor.
+        B-cell receptor. A BCR consiste of two Immunoglobulin (IG) heavy chains and
+        two IG light chains. The two light chains contain a variable region, which is
+        responsible for antigen recognition.
+
+        .. figure:: img/bcr.jpg
+           :width: 310px
+
+           Image By CNX `OpenStax <http://cnx.org/contents/GFy_h8cu@10.53:rZudN6XP@2/Introduction>`__
+           under the `CC BY-4.0 <https://creativecommons.org/licenses/by/4.0/deed.en>`__ license,
+           obtained from `wikimedia commons <https://commons.wikimedia.org/w/index.php?curid=49935883>`__
 
     Dual IR
-        :term:`TCRs<TCR>` with more than one pair of α- and β chains. While this was
+        :term:`IRs<IR>` with more than one pair of :term:`VJ<V(D)J>` and
+        :term:`VDJ<V(D)J>` sequences. While this was
         previously thought to be impossible due to the mechanism of allelic exclusion
         (:cite:`Brady2010-gh`), there is an increasing amound of evidence for a *bona fide*
-        dual-TCR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`).
+        dual-IR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`, :cite:`Vettermann2010`).
 
-        For more information on how *Scirpy* handles dual TCRs, see the
-        page about our :ref:`TCR model<receptor-model>`.
+        For more information on how *Scirpy* handles dual IRs, see the
+        page about our :ref:`IR model<receptor-model>`.
 
     AIRR
         Adaptive Immune Receptor Repertoire.
         See also the `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_.
+
+        Within the Scirpy documentation, we simply speak of :term:`immune receptors (IR)<IR>`.
 
     Chain locus
         Scirpy supports all valid `IGMT locus names <http://www.imgt.org/IMGTScientificChart/Nomenclature/IMGTnomenclature.html>`_:
@@ -202,4 +228,4 @@ Glossary
         Immunoglobulin
 
     Alellically included B-cells
-        See :term:`Dual IR`.
+        A B cell with two pairs of :term:`IG` chains. See :term:`Dual IR`.

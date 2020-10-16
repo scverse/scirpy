@@ -19,14 +19,17 @@ from ..util import _doc_params, _is_na, _is_true, deprecated
 sys.modules["tracerlib"] = _tracerlib
 
 doc_working_model = """\
-Currently, reading data into *Scirpy* has the following limitations:
- * only alpha- and beta :term:`TCR` chains are supported. Other chains are ignored.
- * non-productive chains are removed
- * Each chain can contain up to two alpha and two beta chains (:term:`Dual TCR`).
-   Excess chains are removed (those with lowest read count/:term:`UMI` count)
-   and cells flagged as :term:`Multichain-cell`.
 
-For more information, see :ref:`receptor-model`.
+.. note::
+    Reading data into *Scirpy* has the following constraints:
+     * each cell can have up to four chains (:term:`Dual IR`):
+       two :term:`VJ<V(D)J>` and two :term:`VDJ<V(D)J>` chains.
+     * Excess chains are removed (those with lowest read count/:term:`UMI` count)
+       and cells flagged as :term:`Multichain-cell`.
+     * non-productive chains are removed
+     * chain loci must be :term:`IGMT locus names<Chain locus>`.
+
+    For more information, see :ref:`receptor-model`.
 """
 
 
