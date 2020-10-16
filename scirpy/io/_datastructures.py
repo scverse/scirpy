@@ -41,10 +41,10 @@ class IrChain:
         For type == TRB: sum of nucleotides inserted in the VD + DJ junction
     """
 
-    #: Chain 1 is the chain with the V-J junction
+    #: Chains with the :term:`V-J<V(D)J>` junction
     VJ_LOCI = ("TRA", "TRG", "IGK", "IGL")
 
-    #: Chain 2 is the chain with the V-D-J junction
+    #: Chains with the :term:`V-D-J<V(D)J>` junction
     VDJ_LOCI = ("TRB", "TRD", "IGH")
 
     #: Valid chains are IMGT locus names or "other"

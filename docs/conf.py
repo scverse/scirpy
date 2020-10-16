@@ -39,8 +39,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinxcontrib.bibtex",
-    "scanpydoc",
     "nbsphinx",
+    "scanpydoc",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 

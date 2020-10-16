@@ -50,9 +50,9 @@ def chain_qc(
 
     `receptor_type` can be one of the following
         * `TCR` (all cells that contain any combination of TRA/TRB/TRG/TRD chains,
-           but no IGH/IGK/IGL chains)
+          but no IGH/IGK/IGL chains)
         * `BCR` (all cells that contain any combination of IGH/IGK/IGL chains,
-           but no TCR chains)
+          but no TCR chains)
         * `ambiguous` (all cells that contain both BCR and TCR chains)
         * `multichain` (all cells with more than two VJ or more than two VDJ chains)
         * `no IR` (all cells without any detected immune receptor)
@@ -65,7 +65,7 @@ def chain_qc(
         * `IGH+IGK` (all cells that have only IGH and IGK chains)
         * `multichain` (all cells with more than two VJ or more than two VDJ chains)
         * `ambiguous` (all cells that are none of the above, e.g. TRA+TRD, TRA+IGH or,
-           IGH+IGK as the primary and IGH+IGL as the secondary receptor)
+          IGH+IGK as the primary and IGH+IGL as the secondary receptor)
         * `no IR` (all cells without any detected immune receptor)
 
     `chain_pairing` can be one of the following
@@ -73,11 +73,11 @@ def chain_qc(
         * `orphan VJ` (all cells that have only one VJ chain)
         * `orphan VDJ` (all cells that have only one VDJ chain)
         * `extra VJ` (all cells that have a matched pair of VJ and VDJ chains plus an
-           additional VJ-chain)
+          additional VJ-chain)
         * `extra VDJ` (analogous)
         * `two full chains` (all cells that have two matched pairs of VJ and VDJ chains)
         * `ambiguous` (all cells that have unmatched chains, i.e. that have been
-           classified as an `ambiguous` receptor_subtype)
+          classified as an `ambiguous` receptor_subtype)
         * `multichain` (all cells with more than two VJ or more than two VDJ chains)
         * `no IR` (all chains with not immune receptor chains)
 
