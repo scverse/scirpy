@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from anndata import AnnData
 from ._datastructures import IrCell, IrChain
-from typing import Collection, Sequence, Union
+from typing import Collection, Sequence, Union, Dict
 import numpy as np
 from glob import iglob
 import pickle
@@ -11,7 +11,7 @@ from . import _tracerlib
 import sys
 from pathlib import Path
 import airr
-from ..util import _doc_params, _is_na, _is_true, deprecated
+from ..util import _doc_params, _is_na, _is_true, _translate_dna_to_protein
 
 
 # patch sys.modules to enable pickle import.
@@ -509,3 +509,84 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
             )
 
     return from_ir_objs(ir_objs.values())
+
+
+@_doc_params(doc_working_model=doc_working_model)
+def read_bracer(path: Union[str, Path]) -> AnnData:
+    """\
+    Read data from `BraCeR <https://github.com/Teichlab/bracer>`_ (:cite:`Lindeman2018`).
+
+    Requires the `changeodb.tab` file as input which is created by the
+    `bracer summarise` step.
+
+    {doc_working_model}
+
+    Parameters
+    ----------
+    path
+        Path to the `changeodb.tab` file.
+
+    Returns
+    -------
+    AnnData object with BCR data in `obs` for each cell. For more details see
+    :ref:`data-structure`.
+    """
+    changeodb = pd.read_csv(path, sep="\t", na_values=["None"])
+
+    bcr_cells = dict()
+    for _, row in changeodb.iterrows():
+        cell_id = row["CELL"]
+        try:
+            tmp_ir_cell = bcr_cells[cell_id]
+        except KeyError:
+            tmp_ir_cell = IrCell(cell_id)
+            bcr_cells[cell_id] = tmp_ir_cell
+
+        v_gene = row["V_CALL"] if not pd.isnull(row["V_CALL"]) else None
+        d_gene = row["D_CALL"] if not pd.isnull(row["D_CALL"]) else None
+        j_gene = row["J_CALL"] if not pd.isnull(row["J_CALL"]) else None
+        c_gene = row["C_CALL"].split("*")[0] if not pd.isnull(row["C_CALL"]) else None
+        locus = "IG" + row["LOCUS"]
+
+        if (
+            locus in IrChain.VJ_LOCI
+            and not pd.isnull(row["V_SEQ_START"])
+            and not pd.isnull(row["J_SEQ_START"])
+        ):
+            assert pd.isnull(
+                row["D_SEQ_START"]
+            ), "TRA, TRG or IG-light chains should not have a D region" + str(row)
+            inserted_nts = row["J_SEQ_START"] - (
+                row["V_SEQ_START"] + row["V_SEQ_LENGTH"]
+            )
+
+        elif (
+            locus in IrChain.VDJ_LOCI
+            and not pd.isnull(row["V_SEQ_START"])
+            and not pd.isnull(row["D_SEQ_START"])
+            and not pd.isnull(row["J_SEQ_START"])
+        ):
+            inserted_nts = (
+                row["D_SEQ_START"] - (row["V_SEQ_START"] + row["V_SEQ_LENGTH"])
+            ) + (row["J_SEQ_START"] - (row["D_SEQ_START"] + row["D_SEQ_LENGTH"]))
+        else:
+            inserted_nts = None
+
+        cdr3_nt = row["JUNCTION"] if not pd.isnull(row["JUNCTION"]) else None
+        cdr3_aa = _translate_dna_to_protein(cdr3_nt) if cdr3_nt is not None else None
+
+        tmp_chain = IrChain(
+            locus=locus,
+            cdr3=cdr3_aa,
+            cdr3_nt=cdr3_nt,
+            expr=row["TPM"],
+            is_productive=row["FUNCTIONAL"],
+            v_gene=v_gene,
+            d_gene=d_gene,
+            j_gene=j_gene,
+            c_gene=c_gene,
+            junction_ins=inserted_nts,
+        )
+        tmp_ir_cell.add_chain(tmp_chain)
+
+    return from_ir_objs(bcr_cells.values())

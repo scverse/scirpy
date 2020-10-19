@@ -62,11 +62,11 @@ The example data used in this notebook are available from the
     For more information, see :ref:`receptor-model`.
 
 
-.. note:: **TCR quality control**
+.. note:: **:term:`IR` quality control**
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
        It will
-       
+
            1. identify the :term:`Receptor type` and :term:`Receptor subtype` and flag cells
               as `ambiguous` that cannot unambigously be assigned to a certain receptor (sub)type, and
            2. flag cells with :term:`orphan chains <Orphan chain>` (i.e. cells with only a single detected cell)
@@ -77,10 +77,10 @@ The example data used in this notebook are available from the
        parameter when running :func:`scirpy.tl.define_clonotypes`.
 
 
-Loading data from *10x Genomics CellRanger*, *TraCeR* or AIRR-compliant tools
------------------------------------------------------------------------------
+Loading data from *10x Genomics CellRanger*, *TraCeR*, *BraCer* or AIRR-compliant tools
+---------------------------------------------------------------------------------------
 
-We provide convenience functions to load data from *CellRanger* or *TraCeR* with a single function call,
+We provide convenience functions to load data from *CellRanger*, *TraCeR*, or *BraCeR* with a single function call,
 supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively.
 Moreover, we support importing data in the community-standard
 `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__.
@@ -93,6 +93,7 @@ Moreover, we support importing data in the community-standard
 
    read_10x_vdj
    read_tracer
+   read_bracer
    read_airr
 
 Read 10x data

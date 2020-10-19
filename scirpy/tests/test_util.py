@@ -5,6 +5,7 @@ from scirpy.util import (
     _normalize_counts,
     _is_symmetric,
     _reduce_nonzero,
+    _translate_dna_to_protein,
 )
 from scirpy.util.graph import layout_components
 from itertools import combinations
@@ -14,6 +15,7 @@ import pandas as pd
 import numpy.testing as npt
 import pytest
 import scipy.sparse
+from .fixtures import adata_tra
 
 import warnings
 
@@ -206,3 +208,8 @@ def test_layout_components():
             "packer is not installed. "
         )
     layout_components(g, arrange_boxes="squarify", component_layout="fr")
+
+
+def test_translate_dna_to_protein(adata_tra):
+    for nt, aa in zip(adata_tra.obs["IR_VJ_1_cdr3_nt"], adata_tra.obs["IR_VJ_1_cdr3"]):
+        assert _translate_dna_to_protein(nt) == aa

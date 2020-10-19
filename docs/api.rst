@@ -27,6 +27,7 @@ formats.
    read_h5ad
    read_10x_vdj
    read_tracer
+   read_bracer
    read_airr
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
