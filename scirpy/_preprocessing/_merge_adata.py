@@ -49,6 +49,8 @@ def merge_with_ir(
     if on is None:
         if ("batch" in adata.obs.columns) and ("batch" in adata_ir.obs.columns):
             on = "batch"
+        else:
+            on = []
 
     adata.obs = adata.obs.merge(
         adata_ir.obs,
