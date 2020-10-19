@@ -78,6 +78,7 @@ def test_chain_qc():
             ["True", "False", "IGK", "TRB", "nan", "nan"],
             ["True", "False", "TRA", "nan", "nan", "nan"],
             ["True", "False", "IGL", "nan", "nan", "nan"],
+            ["True", "False", "nan", "TRD", "nan", "nan"],
         ],
         columns=[
             "has_ir",
@@ -117,6 +118,7 @@ def test_chain_qc():
                 "ambiguous",
                 "TCR",
                 "BCR",
+                "TCR",
             ]
         ),
     )
@@ -140,6 +142,7 @@ def test_chain_qc():
                 "ambiguous",
                 "TRA+TRB",
                 "IGH+IGL",
+                "TRG+TRD",
             ]
         ),
     )

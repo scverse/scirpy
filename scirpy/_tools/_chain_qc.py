@@ -117,7 +117,7 @@ def chain_qc(
     has_igl = (vj_loci == "IGL").any(axis=1)
 
     has_trb = (vdj_loci == "TRB").any(axis=1)
-    has_trd = (vdj_loci == "TRG").any(axis=1)
+    has_trd = (vdj_loci == "TRD").any(axis=1)
     has_igh = (vdj_loci == "IGH").any(axis=1)
 
     has_tr = has_tra | has_trg | has_trb | has_trd
