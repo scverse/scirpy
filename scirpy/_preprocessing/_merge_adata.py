@@ -1,6 +1,66 @@
-from typing import Union, List
+from typing import Union, List, Dict
 from anndata import AnnData
-from ..io._io import _sanitize_anndata
+from ..io._convert_anndata import (
+    _sanitize_anndata,
+    IR_OBS_COLS,
+    to_ir_objs,
+    from_ir_objs,
+)
+from ..io._datastructures import IrCell
+from scanpy import logging
+import itertools
+
+
+def merge_ir_adatas(adata1: AnnData, adata2: AnnData) -> AnnData:
+    """
+    Merge two AnnData objects with :term:`IR` information (e.g. BCR with TCR).
+
+    Decomposes the IR information back into :class:`scirpy.io.IrCell` objects
+    and merges them on a chain-level. If both objects contain the same cell-id, and
+    the same chains, the corresponding row in `adata.obs` will be unchanged.
+    If both objects contain the same cell-id, but different chains, the chains
+    will be merged and the cell annotated as :term:`ambiguous<Receptor type>` or
+    :term:`multi-chain<Multichain-cell>` if appropriate.
+
+    Discards everything not in `adata.obs` (e.g. gene expression, UMAP coordinates,
+    etc.) and keeps non-IR related columns from `adata1`, but discards them from
+    `adata2`.
+
+    Parameters
+    ----------
+    adata
+        first AnnData object containing IR information
+    adata2
+        second AnnData object containint IR information
+
+    Returns
+    -------
+    Single adata object with the merged IR information.
+    """
+    ir_objs1 = to_ir_objs(adata1)
+    ir_objs2 = to_ir_objs(adata2)
+    cell_dict: Dict[str, IrCell] = dict()
+    for cell in itertools.chain(ir_objs1, ir_objs2):
+        try:
+            tmp_cell = cell_dict[cell.cell_id]
+            tmp_cell.multi_chain |= cell.multi_chain
+            tmp_cell.chains.extend(cell.chains)
+        except KeyError:
+            cell_dict[cell.cell_id] = cell
+
+    # remove duplicate chains
+    for cell in cell_dict.values():
+        cell.chains = list(set(cell.chains))
+
+    adata_merged = from_ir_objs(cell_dict.values())
+    obs_merged = adata1.obs.drop(IR_OBS_COLS, axis="columns").merge(
+        adata_merged.obs,
+        left_index=True,
+        right_index=True,
+        validate="one_to_one",
+        on=None,
+    )
+    return obs_merged
 
 
 def merge_with_ir(
@@ -47,19 +107,26 @@ def merge_with_ir(
         Additional kwargs are passed to :func:`pandas.merge`.
     """
     if on is None:
+        # since we are merging on index, no additional columns will be considered
+        # when on is None.
         if ("batch" in adata.obs.columns) and ("batch" in adata_ir.obs.columns):
             on = "batch"
-        else:
-            on = []
 
-    adata.obs = adata.obs.merge(
-        adata_ir.obs,
-        how=how,
-        on=on,
-        left_index=left_index,
-        right_index=right_index,
-        validate=validate,
-        **kwargs
-    )
+    if "has_ir" in adata.columns:
+        logging.warning(
+            "It seems you already have immune receptor (IR) data in `adata`. "
+            "Merging IR objects by chain. "
+        )
+        adata.obs = merge_ir_adatas(adata, adata_ir)
+    else:
+        adata.obs = adata.obs.merge(
+            adata_ir.obs,
+            how=how,
+            on=on,
+            left_index=left_index,
+            right_index=right_index,
+            validate=validate,
+            **kwargs
+        )
 
     _sanitize_anndata(adata)

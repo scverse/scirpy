@@ -210,3 +210,7 @@ def test_read_bracer():
         == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
     )
     assert cell2["IR_VDJ_1_junction_ins"] == 24
+
+
+def test_convert_anndata():
+    assert False, "not implemented"

@@ -6,6 +6,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 
 from .._compat import Literal
 from ..util import _is_na, _is_true
+from typing import Union
 
 
 class IrChain:
@@ -89,6 +90,23 @@ class IrChain:
     def __repr__(self):
         return "IrChain object: " + str(self.__dict__)
 
+    def __hash__(self):
+        return hash(
+            (
+                self.locus,
+                self.cdr3,
+                self.cdr3_nt,
+                self.expr,
+                self.expr_raw,
+                self.v_gene,
+                self.d_gene,
+                self.j_gene,
+                self.c_gene,
+                self.junction_ins,
+                self.is_productive,
+            )
+        )
+
 
 class IrCell:
     """Data structure for a Cell with immune receptors.
@@ -100,11 +118,18 @@ class IrCell:
     cell_id
         cell id or barcode.  Needs to match the cell id used for transcriptomics
         data (i.e. the `adata.obs_names`)
+    multi_chain
+        explicitly mark this cell as :term:`Multichain-cell`. Even if this is set to
+        `False`, :func:`scirpy.io.from_tcr_objs` will consider the cell as multi chain,
+        if it has more than two :term:`VJ<V(D)J>` or :term:`VDJ<V(D)J>` chains. However,
+        if this is set to `True`, the function will consider it as multi-chain
+        regardless of the number of chains.
     """
 
-    def __init__(self, cell_id: str):
+    def __init__(self, cell_id: str, *, multi_chain: bool = False):
 
         self._cell_id = cell_id
+        self.multi_chain = multi_chain
         self.chains = list()
 
     def __repr__(self):

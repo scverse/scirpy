@@ -1,5 +1,6 @@
 from scanpy import read_h5ad
-from ._io import read_10x_vdj, read_tracer, from_ir_objs, read_airr, read_bracer
+from ._io import read_10x_vdj, read_tracer, read_airr, read_bracer
+from ._convert_anndata import from_ir_objs
 from ..util import deprecated
 from ._datastructures import IrCell, IrChain
 
