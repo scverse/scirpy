@@ -1,4 +1,4 @@
-from scirpy.io import read_10x_vdj, read_tracer, read_airr
+from scirpy.io import read_10x_vdj, read_tracer, read_airr, read_bracer
 from scirpy.util import _is_na, _is_false
 import numpy as np
 import pytest
@@ -184,3 +184,29 @@ def test_read_airr():
 
     assert cell3["IR_VJ_1_locus"] == "IGL"
     assert cell3["IR_VDJ_1_locus"] == "IGH"
+
+
+@pytest.mark.conda
+def test_read_bracer():
+    anndata = read_bracer(TESTDATA / "bracer/changeodb.tab")
+    assert "SRR10788834" in anndata.obs.index
+    assert anndata.obs.shape[0] == 6
+
+    cell1 = anndata.obs.loc["SRR10779208", :]
+    cell2 = anndata.obs.loc["SRR10788834", :]
+
+    assert cell1.name == "SRR10779208"
+    assert cell1["IR_VJ_1_locus"] == "IGK"
+    assert cell1["IR_VDJ_1_locus"] == "IGH"
+    assert cell1["IR_VDJ_1_j_gene"] == "IGHJ4"
+    assert cell1["IR_VDJ_1_cdr3_nt"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
+    assert cell1["IR_VDJ_1_cdr3"] == "CATMTGGDLDYW"
+    assert cell1["IR_VJ_1_junction_ins"] == 1
+
+    assert cell2.name == "SRR10788834"
+    assert cell2["IR_VDJ_1_cdr3"] == "CARDHIVVLEPTPKRYGMDVW"
+    assert (
+        cell2["IR_VDJ_1_cdr3_nt"]
+        == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
+    )
+    assert cell2["IR_VDJ_1_junction_ins"] == 24

@@ -37,8 +37,8 @@ class IrChain:
         gene symbol of c gene
     junction_ins
         nucleotides inserted in the junctions.
-        For type == TRA: nucleotides inserted in the VJ junction
-        For type == TRB: sum of nucleotides inserted in the VD + DJ junction
+        For :term:`VJ<V(D)J>` chains: nucleotides inserted in the VJ junction
+        For :term:`VDJ<V(D)J>` chains: sum of nucleotides inserted in the VD + DJ junction
     """
 
     #: Chains with the :term:`V-J<V(D)J>` junction
