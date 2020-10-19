@@ -111,7 +111,7 @@ def test_read_tracer():
 
     anndata = read_tracer(TESTDATA / "tracer")
     assert "cell1" in anndata.obs_names and "cell2" in anndata.obs_names
-    assert anndata.obs.shape[0] == 2
+    assert anndata.obs.shape[0] == 3
 
     cell1 = anndata.obs.loc["cell1", :]
     cell2 = anndata.obs.loc["cell2", :]

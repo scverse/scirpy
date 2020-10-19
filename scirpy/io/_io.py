@@ -356,14 +356,14 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     def _process_chains(chains, chain_type):
         for tmp_chain in chains:
             if tmp_chain.has_D_segment:
-                assert chain_type == "TRB", chain_type
+                assert chain_type in IrChain.VDJ_LOCI
                 assert len(tmp_chain.junction_details) == 5
                 assert len(tmp_chain.summary) == 8
                 v_gene = tmp_chain.summary[0].split("*")[0]
                 d_gene = tmp_chain.summary[1].split("*")[0]
                 j_gene = tmp_chain.summary[2].split("*")[0]
             else:
-                assert chain_type == "TRA", chain_type
+                assert chain_type in IrChain.VJ_LOCI
                 assert len(tmp_chain.junction_details) == 3
                 assert len(tmp_chain.summary) == 7
                 v_gene = tmp_chain.summary[0].split("*")[0]
@@ -389,6 +389,10 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                     else np.nan
                 )
 
+            if tmp_chain.cdr3 == "N/A" or tmp_chain.cdr3nt == "N/A":
+                # ignore chains that have no sequence
+                continue
+
             yield IrChain(
                 locus=chain_type,
                 cdr3=tmp_chain.cdr3,
@@ -410,12 +414,12 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
             with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
                 chains = tracer_obj.recombinants["TCR"]
-                if "A" in chains and chains["A"] is not None:
-                    for tmp_chain in _process_chains(chains["A"], "TRA"):
-                        tcr_obj.add_chain(tmp_chain)
-                if "B" in chains and chains["B"] is not None:
-                    for tmp_chain in _process_chains(chains["B"], "TRB"):
-                        tcr_obj.add_chain(tmp_chain)
+                for chain_id in "ABGD":
+                    if chain_id in chains and chains[chain_id] is not None:
+                        for tmp_chain in _process_chains(
+                            chains[chain_id], f"TR{chain_id}"
+                        ):
+                            tcr_obj.add_chain(tmp_chain)
         except Exception as e:
             raise Exception(
                 "Error loading TCR data from cell {}".format(summary_file)
