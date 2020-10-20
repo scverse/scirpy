@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: ipynb,py:light
-#     notebook_metadata_filter: -kernelspec
-#     text_representation:
-#       extension: .py
-#       format_name: light
-#       format_version: '1.5'
-#       jupytext_version: 1.6.0
-# ---
-
-# %load_ext autoreload
-# %autoreload 2
-
-# +
 # %env OPENBLAS_NUM_THREADS=16
 # %env OMP_NUM_THREADS=16
 # %env MKL_NUM_THREADS=16
@@ -30,8 +14,6 @@ import pandas as pd
 import numpy as np
 from scipy.sparse import csr_matrix
 from pathlib import Path
-
-# -
 
 # The dataset has been downloaded from ENA and then processed using the Smart-seq2 Pipeline:
 # https://github.com/nf-core/smartseq2/
@@ -140,79 +122,12 @@ adata = sc.AnnData(
 adata_tcr = ir.io.read_tracer(
     "/data/datasets/Maynard_Bivona_2020_NSCLC/smartseq2_pipeline/TraCeR"
 )
-
 adata_bcr = ir.io.read_bracer(
     "/data/datasets/Maynard_Bivona_2020_NSCLC/smartseq2_pipeline/BraCeR/filtered_BCR_summary/changeodb.tab"
 )
 
 ir.pp.merge_with_ir(adata, adata_tcr)
-
 ir.pp.merge_with_ir(adata, adata_bcr)
 
 # Write out the dataset
 adata.write_h5ad("maynard2020.h5ad", compression="lzf")
-
-# ### Some quick peeks at the data
-
-ir.tl.chain_qc(adata)
-ir.pl.group_abundance(adata, groupby="receptor_type")
-
-# Quality control - calculate QC covariates
-adata.obs["n_counts"] = adata.layers["raw_counts"].sum(axis=1)
-adata.obs["log_counts"] = np.log(adata.obs["n_counts"])
-adata.obs["n_genes"] = (adata.layers["raw_counts"] > 0).sum(1)
-mt_gene_mask = np.array([gene.lower().startswith("mt-") for gene in adata.var_names])
-adata.layers["raw_counts"][:, mt_gene_mask]
-adata.obs["mt_counts"] = adata.layers["raw_counts"][:, mt_gene_mask].sum(axis=1)
-adata.obs["mt_frac"] = np.divide(adata.obs["mt_counts"], adata.obs["n_counts"])
-
-import seaborn as sns
-
-# Quality control - plot QC metrics
-# Sample quality plots
-t1 = sc.pl.violin(adata, "n_counts", groupby="sample_name", size=2, log=True, cut=0)
-t2 = sc.pl.violin(adata, "mt_frac", groupby="sample_name")
-
-adata_pp = adata[adata.obs["mt_frac"] < 0.2, :].copy()
-
-adata_pp.shape
-
-# don't need this als already TPM
-# sc.pp.normalize_per_cell(adata_pp, counts_per_cell_after=1e6)
-sc.pp.log1p(adata_pp)
-
-sc.pp.pca(adata_pp, n_comps=50, svd_solver="arpack")
-
-sc.pp.neighbors(adata_pp)
-
-sc.tl.umap(adata_pp)
-
-sc.pl.umap(adata_pp, color=["sample_name", "patient_id"])
-
-sc.pl.umap(adata_pp, color=["CD8A", "CD3E", "PDCD1"])
-
-sc.pl.umap(adata_pp, color=["receptor_type"])
-
-sc.pl.umap(adata_pp, color="receptor_type", groups=["ambiguous", "multichain"])
-
-from IPython.display import display
-
-with pd.option_context("display.max_rows", 30, "display.max_columns", 9999):
-    display(adata_pp.obs.loc[adata_pp.obs["receptor_type"] == "ambiguous", :])
-
-ir.pp.ir_neighbors(adata_pp, receptor_arms="all", dual_ir="primary_only")
-
-ir.pp.ir_neighbors(
-    adata_pp,
-    metric="alignment",
-    sequence="aa",
-    receptor_arms="all",
-    dual_ir="primary_only",
-)
-
-ir.tl.define_clonotypes(adata_pp)
-
-ir.tl.clonotype_network(adata_pp, min_size=2)
-ir.pl.clonotype_network(adata_pp, color="clonotype", legend_loc="none")
-
-ir.pl.clonotype_network(adata_pp, color=["receptor_subtype"])
