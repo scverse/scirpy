@@ -128,7 +128,7 @@ class IrCell:
         data (i.e. the `adata.obs_names`)
     multi_chain
         explicitly mark this cell as :term:`Multichain-cell`. Even if this is set to
-        `False`, :func:`scirpy.io.from_tcr_objs` will consider the cell as multi chain,
+        `False`, :func:`scirpy.io.from_ir_objs` will consider the cell as multi chain,
         if it has more than two :term:`VJ<V(D)J>` or :term:`VDJ<V(D)J>` chains. However,
         if this is set to `True`, the function will consider it as multi-chain
         regardless of the number of chains.

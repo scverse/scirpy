@@ -97,7 +97,7 @@ def merge_with_ir(
         step (non IR-columns). Defaults to "batch" if present in both `obs`
         data frames.
     **kwargs
-        Passed to the *first* merge step. See :func:`pd.DataFrame.merge`.
+        Passed to the *first* merge step. See :func:`pandas.merge`.
     """
     if len(kwargs):
         raise ValueError(
