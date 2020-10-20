@@ -11,7 +11,13 @@ try:
     proj = pytoml.loads((here.parent / "pyproject.toml").read_text())
     metadata = proj["tool"]["flit"]["metadata"]
 
-    __version__ = get_version(root="..", relative_to=__file__)
+    __version__ = get_version(
+        # Allegedly, the parameters from pyproject.toml should be passed automatically.
+        # However, this didn't work, so I pass them explicitly here.
+        root="..",
+        relative_to=__file__,
+        **proj["tool"]["setuptools_scm"]
+    )
     __author__ = metadata["author"]
     __email__ = metadata["author-email"]
 

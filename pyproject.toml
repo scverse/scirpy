@@ -79,3 +79,5 @@ minversion = 6.0
 testpaths = 'scirpy/tests'
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 
+[tool.setuptools_scm]
+git_describe_command = "git describe --dirty --tags --long --match v*.*.*"
