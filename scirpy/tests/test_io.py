@@ -1,4 +1,12 @@
-from scirpy.io import read_10x_vdj, read_tracer, read_airr, read_bracer
+from anndata._core.anndata import AnnData
+from scirpy.io import (
+    read_10x_vdj,
+    read_tracer,
+    read_airr,
+    read_bracer,
+    from_ir_objs,
+    to_ir_objs,
+)
 from scirpy.util import _is_na, _is_false
 import numpy as np
 import pytest
@@ -11,10 +19,15 @@ from . import TESTDATA
     [
         TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
         TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/filtered_contig_annotations.csv",
     ],
 )
-def test_read_10x_example(path):
+def test_read_and_convert_10x_example(path):
     """Test that a full 10x CSV table can be imported without errors.
+
+    Additionally test that the round-trip conversion using `to_ir_objs` and
+    `from_ir_objs` is the identity. Doing this here to avoid loading the data twice
+    since this is already one of the longer-running tests.
 
     Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
     and https://support.10xgenomics.com/single-cell-vdj/datasets/4.0.0/sc5p_v2_hs_melanoma_10k
@@ -23,7 +36,13 @@ def test_read_10x_example(path):
     anndata = read_10x_vdj(path)
     assert anndata.shape[0] > 0
 
+    # Test that round-trip conversion succeeds
+    ir_objs = to_ir_objs(anndata)
+    anndata2 = from_ir_objs(ir_objs)
+    pdt.assert_frame_equal(anndata.obs, anndata2.obs)
 
+
+@pytest.mark.conda
 def test_read_10x_csv():
     anndata = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     obs = anndata.obs
@@ -210,7 +229,3 @@ def test_read_bracer():
         == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
     )
     assert cell2["IR_VDJ_1_junction_ins"] == 24
-
-
-def test_convert_anndata():
-    assert False, "not implemented"

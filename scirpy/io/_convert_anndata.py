@@ -139,6 +139,12 @@ def _process_ir_cell(ir_obj: IrCell) -> dict:
         _is_na(res_dict["IR_VJ_1_cdr3"]) and _is_na(res_dict["IR_VDJ_1_cdr3"])
     )
 
+    # if there are not chains at all, we want multi-chain to be nan
+    # This is to be consistent with when turning an anndata object into ir_objs
+    # and converting it back to anndata.
+    if not len(ir_obj.chains):
+        res_dict["multi_chain"] = np.nan
+
     if _is_na(res_dict["IR_VJ_1_cdr3"]):
         assert _is_na(
             res_dict["IR_VJ_2_cdr3"]
@@ -180,8 +186,13 @@ def to_ir_objs(adata: AnnData) -> List[IrCell]:
                 }
                 # per definition, we currently only have productive chains in adata.
                 chain_dict["is_productive"] = True
-                tmp_ir_cell.add_chain(IrChain(**chain_dict))
-                cells.append(tmp_ir_cell)
+                if not _is_na(chain_dict["locus"]):
+                    # if no locus/chain specified, the correponding chain
+                    # does not exists and we don't want to add this.
+                    # This is also the way we can represent cells without IR.
+                    tmp_ir_cell.add_chain(IrChain(**chain_dict))
+
+            cells.append(tmp_ir_cell)
     except KeyError as e:
         raise ValueError(
             f"Key {str(e)} not found in adata. Does it contain immune receptor data?"

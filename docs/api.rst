@@ -41,6 +41,7 @@ For more details, check the :ref:`Data loading tutorial <importing-data>`.
    IrCell
    IrChain
    from_ir_objs
+   to_ir_objs
 
 
 Preprocessing: `pp`

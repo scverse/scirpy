@@ -52,6 +52,22 @@ class IrChain:
     #: see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
     VALID_LOCI = VJ_LOCI + VDJ_LOCI + ("other",)
 
+    # Attributes that are required to be equal for an object to be equal.
+    # Used for __eq__ and __hash__
+    _EQUALITY_ATTIBUTES = [
+        "locus",
+        "cdr3",
+        "cdr3_nt",
+        "expr",
+        "expr_raw",
+        "is_productive",
+        "v_gene",
+        "d_gene",
+        "j_gene",
+        "c_gene",
+        "junction_ins",
+    ]
+
     def __init__(
         self,
         locus: Literal["TRA", "TRG", "IGK", "IGL", "TRB", "TRD", "IGH", "other"],
@@ -79,33 +95,25 @@ class IrChain:
         self.cdr3 = cdr3.upper() if not _is_na(cdr3) else None
         self.cdr3_nt = cdr3_nt.upper() if not _is_na(cdr3_nt) else None
         self.expr = float(expr)
-        self.expr_raw = float(expr_raw) if expr_raw is not None else None
+        self.expr_raw = float(expr_raw) if not _is_na(expr_raw) else None
         self.is_productive = _is_true(is_productive)
         self.v_gene = v_gene
         self.d_gene = d_gene
         self.j_gene = j_gene
         self.c_gene = c_gene
-        self.junction_ins = junction_ins
+        self.junction_ins = int(junction_ins) if not _is_na(junction_ins) else None
 
     def __repr__(self):
         return "IrChain object: " + str(self.__dict__)
 
-    def __hash__(self):
-        return hash(
-            (
-                self.locus,
-                self.cdr3,
-                self.cdr3_nt,
-                self.expr,
-                self.expr_raw,
-                self.v_gene,
-                self.d_gene,
-                self.j_gene,
-                self.c_gene,
-                self.junction_ins,
-                self.is_productive,
-            )
+    def __eq__(self, other):
+        return all(
+            getattr(self, attr) == getattr(other, attr)
+            for attr in self._EQUALITY_ATTIBUTES
         )
+
+    def __hash__(self):
+        return hash(tuple((getattr(self, attr) for attr in self._EQUALITY_ATTIBUTES)))
 
 
 class IrCell:
@@ -129,7 +137,7 @@ class IrCell:
     def __init__(self, cell_id: str, *, multi_chain: bool = False):
 
         self._cell_id = cell_id
-        self.multi_chain = multi_chain
+        self.multi_chain = _is_true(multi_chain)
         self.chains = list()
 
     def __repr__(self):
