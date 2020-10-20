@@ -62,8 +62,8 @@ def maynard2020() -> AnnData:
     """\
     Return the dataset from :cite:`Maynard2020` as AnnData object.
 
-    21k cells profiled with Smart-seq2, of which 3,500 have :term:`TCRs<TCR>`: and
-    1,500 have :term:`BCRs<BCR>`.
+    21k cells from NSCLC profiled with Smart-seq2, of which 3,500 have :term:`TCRs<TCR>`
+    and 1,500 have :term:`BCRs<BCR>`.
 
     The raw FASTQ files have been obtained from `PRJNA591860 <https://www.ebi.ac.uk/ena/browser/view/PRJNA591860>`__
     and processed using the nf-core `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__.

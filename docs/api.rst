@@ -179,6 +179,7 @@ Datasets: `datasets`
 
    wu2020
    wu2020_3k
+   maynard2020
 
 
 
