@@ -1,5 +1,5 @@
-Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data
-====================================================================================
+Scirpy: A Scanpy extension for analyzing single-cell immune-cell receptor sequencing data
+=========================================================================================
 |tests| |docs| |pypi| |bioconda| |airr| |black|
 
 .. |tests| image:: https://github.com/icbi-lab/scirpy/workflows/tests/badge.svg
@@ -26,8 +26,8 @@ Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing 
     :target: https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html
     :alt: AIRR-compliant
 
-Scirpy is a scalable python-toolkit to analyse  T cell receptor (TCR) repertoires from
-single-cell RNA sequencing (scRNA-seq) data. It seamlessly integrates with the popular
+Scirpy is a scalable python-toolkit to analyse T cell receptor (TCR) or B cell receptor (BCR) 
+repertoires from single-cell RNA sequencing (scRNA-seq) data. It seamlessly integrates with the popular
 `scanpy <https://scanpy.readthedocs.io/en/stable/index.html>`_ library and
 provides various modules for data import, analysis and visualization.
 
@@ -42,7 +42,7 @@ Please refer to the `documentation <https://icbi-lab.github.io/scirpy>`_. In par
 - `Tutorial <https://icbi-lab.github.io/scirpy/tutorials/tutorial_3k_tcr.html>`_, and the
 - `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_.
 
-In the documentation, you can also learn more about our `T-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
+In the documentation, you can also learn more about our `immune-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
 
 Case-study
 ~~~~~~~~~~
