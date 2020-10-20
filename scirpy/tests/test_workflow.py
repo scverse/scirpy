@@ -15,6 +15,7 @@ import pandas.testing as pdt
 import pandas as pd
 from scirpy.util import _is_na
 import numpy as np
+from .util import _normalize_df_types
 
 
 @pytest.mark.conda
@@ -25,7 +26,7 @@ def test_workflow():
     adata_obs_expected = pd.read_pickle(
         TESTDATA / "test_workflow/adata.obs.expected.pkl.gz"
     )
-    ir.tl.chain_pairing(adata)
+    ir.tl.chain_qc(adata)
     ir.pp.ir_neighbors(adata)
     ir.tl.define_clonotypes(adata)
     ir.tl.clonotype_network(adata)
@@ -34,8 +35,7 @@ def test_workflow():
     ir.pl.clonotype_network(adata)
 
     # turn nans into consistent value (nan)
-    for col in adata.obs.columns:
-        adata.obs.loc[_is_na(adata.obs[col]), col] = np.nan
+    _normalize_df_types(adata.obs)
 
     # # Use this code to re-generate the "expected file", if necessary.
     # adata.obs.to_pickle(
