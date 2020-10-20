@@ -76,6 +76,6 @@ def maynard2020() -> AnnData:
     {processing_code}
     """
     url = "https://github.com/icbi-lab/scirpy/releases/download/d0.1.0/maynard2020.h5ad"
-    filename = settings.datasetdir / "wu2020.h5ad"
+    filename = settings.datasetdir / "maynard2020.h5ad"
     adata = read(filename, backup_url=url)
     return adata
