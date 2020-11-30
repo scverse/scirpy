@@ -207,5 +207,6 @@ IR distance metrics: `ir_dist`
    ParallelDistanceCalculator
    IdentityDistanceCalculator
    LevenshteinDistanceCalculator
+   HammingSubstitutionDistanceCalculator
    AlignmentDistanceCalculator
 
