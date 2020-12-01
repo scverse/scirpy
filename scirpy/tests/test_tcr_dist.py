@@ -4,7 +4,7 @@ from scirpy.ir_dist import (
     DistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
-    HammingSubstitutionDistanceCalculator,
+    HammingDistanceCalculator,
     ParallelDistanceCalculator,
     IrNeighbors,
 )
@@ -174,7 +174,7 @@ def test_levensthein_dist_with_two_seq_arrays():
 
 
 def test_hamming_dist():
-    hamming10 = HammingSubstitutionDistanceCalculator(2)
+    hamming10 = HammingDistanceCalculator(2)
     res = hamming10.calc_dist_mat(
         np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
     )
