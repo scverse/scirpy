@@ -9,7 +9,7 @@ from scanpy import logging
 from ..util import _is_na, deprecated
 import abc
 from Levenshtein import distance as levenshtein_dist
-from scipy.spatial.distance import hamming as hamming_dist
+from Levenshtein import hamming as hamming_dist
 import scipy.spatial
 import scipy.sparse
 from scipy.sparse import coo_matrix, csr_matrix
@@ -340,7 +340,7 @@ class HammingSubstitutionDistanceCalculator(ParallelDistanceCalculator):
 
     The edit distance is the total number of substitution events.
 
-    This class relies on `scipy <https://github.com/scipy/scipy>`_
+    This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
     to calculate the distances.
 
     Choosing a cutoff:
