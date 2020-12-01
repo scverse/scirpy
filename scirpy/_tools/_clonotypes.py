@@ -63,7 +63,9 @@ def define_clonotype_clusters(
     adata: AnnData,
     *,
     sequence: Literal["aa", "nt"] = "aa",
-    metric: Literal["alignment", "levenshtein", "hamming-substitution", "identity"] = "identity",
+    metric: Literal[
+        "alignment", "levenshtein", "hamming-substitution", "identity"
+    ] = "identity",
     key_added: Union[str, None] = None,
     **kwargs,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
@@ -214,7 +216,9 @@ def clonotype_network(
     adata: AnnData,
     *,
     sequence: Literal["aa", "nt"] = "nt",
-    metric: Literal["identity", "alignment", "levenshtein", "hamming-substitution", "custom"] = "identity",
+    metric: Literal[
+        "identity", "alignment", "levenshtein", "hamming-substitution", "custom"
+    ] = "identity",
     min_size: int = 1,
     layout: str = "components",
     layout_kwargs: Union[dict, None] = None,

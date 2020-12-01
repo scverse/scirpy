@@ -333,6 +333,7 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
 
         return result
 
+
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class HammingSubstitutionDistanceCalculator(ParallelDistanceCalculator):
     """\
@@ -495,7 +496,8 @@ def sequence_dist(
     unique_seqs2: Union[None, np.ndarray] = None,
     *,
     metric: Union[
-        Literal["alignment", "identity", "levenshtein", "hamming-substitution"], DistanceCalculator
+        Literal["alignment", "identity", "levenshtein", "hamming-substitution"],
+        DistanceCalculator,
     ] = "identity",
     cutoff: float = 10,
     n_jobs: Union[int, None] = None,
@@ -559,7 +561,8 @@ class IrNeighbors:
         adata: AnnData,
         *,
         metric: Union[
-            Literal["alignment", "identity", "levenshtein", "hamming-substitution"], DistanceCalculator
+            Literal["alignment", "identity", "levenshtein", "hamming-substitution"],
+            DistanceCalculator,
         ] = "identity",
         cutoff: float = 10,
         receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
@@ -934,7 +937,8 @@ def ir_neighbors(
     adata: AnnData,
     *,
     metric: Union[
-        Literal["identity", "alignment", "levenshtein", "hamming-substitution"], DistanceCalculator
+        Literal["identity", "alignment", "levenshtein", "hamming-substitution"],
+        DistanceCalculator,
     ] = "identity",
     cutoff: int = 10,
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
