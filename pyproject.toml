@@ -29,6 +29,8 @@ requires = [
     'pandas>=0.21',
     'numpy',
     'scipy',
+    # mandate wheel package for parasail until https://github.com/jeffdaily/parasail-python/issues/55 gets resolved.
+    'wheel',
     'parasail',
     'scikit-learn',
     'python-levenshtein',
@@ -41,7 +43,7 @@ requires = [
     'setuptools_scm',
     'pytoml',
     'importlib_metadata>=0.7; python_version < "3.8"',
-    'pycairo>=1.20; sys_platform == "win32"'
+    'pycairo>=1.20; sys_platform == "win32"',
 ]
 
 [tool.flit.metadata.requires-extra]
