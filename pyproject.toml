@@ -67,8 +67,6 @@ doc = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
-    # ipyernel fails on macos if this is not installed.
-    'appnope; sys_platform == "darwin"'
 ]
 
 [tool.flit.metadata.urls]
