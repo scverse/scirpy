@@ -339,7 +339,10 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
     """\
     Calculates the Hamming distance between sequences of identical length.
 
-    The edit distance is the total number of substitution events.
+    The edit distance is the total number of substitution events. Sequences
+    with different lengths will be treated as though they exceeded the
+    distance-cutoff, i.e. they receive a distance of `0` in the sparse distance
+    matrix and will not be connected by an edge in the graph.
 
     This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
     to calculate the distances.
