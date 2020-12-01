@@ -30,8 +30,7 @@ requires = [
     'numpy',
     'scipy',
     # parasail 1.2.1 fails to be installd on MacOS
-    'parasail',
-    'parasail != 1.2.1; sys_platform == "darwin"',
+    'parasail != 1.2.1',
     'scikit-learn',
     'python-levenshtein',
     'python-igraph',
