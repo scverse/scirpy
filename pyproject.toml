@@ -29,9 +29,9 @@ requires = [
     'pandas>=0.21',
     'numpy',
     'scipy',
-    # mandate wheel package for parasail until https://github.com/jeffdaily/parasail-python/issues/55 gets resolved.
-    'wheel',
+    # parasail 1.2.1 fails to be installd on MacOS
     'parasail',
+    'parasail != 1.2.1; sys_platform == "darwin"',
     'scikit-learn',
     'python-levenshtein',
     'python-igraph',
