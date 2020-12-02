@@ -74,7 +74,7 @@ jobs:
           # when on master, we want to deploy to the root dir (-> ".")
           target_dir=$(echo $tmp_target_dir | sed "s/heads\/master/./")
           echo $target_dir
-          echo "::set-env name=target_dir::$target_dir"
+          echo "target_dir=$target_dir" >> $GITHUB_ENV
         env:
           github_ref: ${{ github.ref }}
 
@@ -82,10 +82,11 @@ jobs:
         if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.7' )
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
           BRANCH: gh-pages # The branch the action should deploy to.
           FOLDER: docs/_build/html # The folder the action should deploy.
           TARGET_FOLDER: ${{ env.target_dir }}
           CLEAN: true
           CLEAN_EXCLUDE: '["heads", "pull", "tags"]'
           SINGLE_COMMIT: true
+          REPOSITORY_NAME: icbi-lab/scirpy

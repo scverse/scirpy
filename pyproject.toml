@@ -29,7 +29,8 @@ requires = [
     'pandas>=0.21',
     'numpy',
     'scipy',
-    'parasail',
+    # parasail 1.2.1 fails to be installd on MacOS
+    'parasail != 1.2.1',
     'scikit-learn',
     'python-levenshtein',
     'python-igraph',
@@ -41,7 +42,7 @@ requires = [
     'setuptools_scm',
     'pytoml',
     'importlib_metadata>=0.7; python_version < "3.8"',
-    'pycairo>=1.20; sys_platform == "win32"'
+    'pycairo>=1.20; sys_platform == "win32"',
 ]
 
 [tool.flit.metadata.requires-extra]

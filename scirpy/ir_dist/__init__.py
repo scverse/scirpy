@@ -9,6 +9,7 @@ from scanpy import logging
 from ..util import _is_na, deprecated
 import abc
 from Levenshtein import distance as levenshtein_dist
+from Levenshtein import hamming as hamming_dist
 import scipy.spatial
 import scipy.sparse
 from scipy.sparse import coo_matrix, csr_matrix
@@ -23,6 +24,8 @@ metric
         This metric implies a cutoff of 0.
       * `levenshtein` -- Levenshtein edit distance.
         See :class:`~scirpy.ir_dist.LevenshteinDistanceCalculator`.
+      * `hamming` -- Hamming distance for CDR3 sequences of equal length.
+        See :class:`~scirpy.ir_dist.HammingDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.AlignmentDistanceCalculator`.
@@ -332,6 +335,53 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
+class HammingDistanceCalculator(ParallelDistanceCalculator):
+    """\
+    Calculates the Hamming distance between sequences of identical length.
+
+    The edit distance is the total number of substitution events. Sequences
+    with different lengths will be treated as though they exceeded the
+    distance-cutoff, i.e. they receive a distance of `0` in the sparse distance
+    matrix and will not be connected by an edge in the graph.
+
+    This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
+    to calculate the distances.
+
+    Choosing a cutoff:
+        Each modification stands for a substitution event.
+        While lacking empirical data, it seems unlikely that CDR3 sequences with more
+        than two modifications still recognize the same antigen.
+
+    Parameters
+    ----------
+    {params}
+    """
+
+    def _compute_block(self, seqs1, seqs2, origin):
+        origin_row, origin_col = origin
+        if seqs2 is not None:
+            # compute the full matrix
+            coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
+        else:
+            # compute only upper triangle in this case
+            coord_iterator = itertools.combinations_with_replacement(
+                enumerate(seqs1), r=2
+            )
+
+        result = []
+        for (row, s1), (col, s2) in coord_iterator:
+
+            # require identical length of sequences
+            if len(s1) != len(s2):
+                continue
+            d = hamming_dist(s1, s2)
+            if d <= self.cutoff:
+                result.append((d + 1, origin_row + row, origin_col + col))
+
+        return result
+
+
+@_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
     Calculates distance between sequences based on pairwise sequence alignment.
@@ -449,7 +499,8 @@ def sequence_dist(
     unique_seqs2: Union[None, np.ndarray] = None,
     *,
     metric: Union[
-        Literal["alignment", "identity", "levenshtein"], DistanceCalculator
+        Literal["alignment", "identity", "levenshtein", "hamming"],
+        DistanceCalculator,
     ] = "identity",
     cutoff: float = 10,
     n_jobs: Union[int, None] = None,
@@ -490,6 +541,8 @@ def sequence_dist(
         dist_calc = IdentityDistanceCalculator(cutoff=cutoff)
     elif metric == "levenshtein":
         dist_calc = LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
+    elif metric == "hamming":
+        dist_calc = HammingDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs)
     else:
         raise ValueError("Invalid distance metric.")
 
@@ -511,7 +564,8 @@ class IrNeighbors:
         adata: AnnData,
         *,
         metric: Union[
-            Literal["alignment", "identity", "levenshtein"], DistanceCalculator
+            Literal["alignment", "identity", "levenshtein", "hamming"],
+            DistanceCalculator,
         ] = "identity",
         cutoff: float = 10,
         receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
@@ -824,7 +878,7 @@ class IrNeighbors:
         Parameters
         ----------
         n_jobs
-            Number of CPUs to use for alignment and levenshtein distance.
+            Number of CPUs to use for alignment, levenshtein or hamming distance.
             Default: use all CPUS.
         """
         for arm, arm_dict in self.index_dict.items():
@@ -886,7 +940,8 @@ def ir_neighbors(
     adata: AnnData,
     *,
     metric: Union[
-        Literal["identity", "alignment", "levenshtein"], DistanceCalculator
+        Literal["identity", "alignment", "levenshtein", "hamming"],
+        DistanceCalculator,
     ] = "identity",
     cutoff: int = 10,
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
@@ -939,7 +994,7 @@ def ir_neighbors(
         If `True`, store the results in `adata.uns`. Otherwise return
         the results.
     n_jobs:
-        Number of cores to use for alignment and levenshtein distance.
+        Number of cores to use for alignment, levenshtein or hamming distance.
 
     Returns
     -------

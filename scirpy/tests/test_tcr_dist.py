@@ -4,6 +4,7 @@ from scirpy.ir_dist import (
     DistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
+    HammingDistanceCalculator,
     ParallelDistanceCalculator,
     IrNeighbors,
 )
@@ -169,6 +170,19 @@ def test_levensthein_dist_with_two_seq_arrays():
     npt.assert_almost_equal(
         res.toarray(),
         np.array([[0, 2], [0, 2], [0, 3], [3, 2], [0, 0]]),
+    )
+
+
+def test_hamming_dist():
+    hamming10 = HammingDistanceCalculator(2)
+    res = hamming10.calc_dist_mat(
+        np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
+    )
+    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert res.shape == (5, 2)
+    npt.assert_almost_equal(
+        res.toarray(),
+        np.array([[0, 0], [0, 2], [0, 0], [3, 0], [0, 0]]),
     )
 
 
