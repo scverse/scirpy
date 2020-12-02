@@ -89,3 +89,4 @@ jobs:
           CLEAN: true
           CLEAN_EXCLUDE: '["heads", "pull", "tags"]'
           SINGLE_COMMIT: true
+          REPOSITORY_NAME: icbi-lab/scirpy
