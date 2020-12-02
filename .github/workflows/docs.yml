@@ -82,7 +82,7 @@ jobs:
         if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.7' )
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
-          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
           BRANCH: gh-pages # The branch the action should deploy to.
           FOLDER: docs/_build/html # The folder the action should deploy.
           TARGET_FOLDER: ${{ env.target_dir }}
