@@ -43,6 +43,8 @@ requires = [
     'pytoml',
     'importlib_metadata>=0.7; python_version < "3.8"',
     'pycairo>=1.20; sys_platform == "win32"',
+    # should be part of airr, but didn't get installed on RTD
+    'yamlordereddictloader >=0.4.0',
 ]
 
 [tool.flit.metadata.requires-extra]
