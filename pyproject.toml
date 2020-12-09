@@ -61,6 +61,7 @@ tutorials = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
+    'nbconvert'
 ]
 doc = [
     'sphinx>=3.0.1,<3.1',
