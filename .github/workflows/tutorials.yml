@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install .[tutorials]
-          python -m ipykernel install --name python
+          python -m ipykernel install --name python --user
 
       - name: Execute the notebooks
         run: |
