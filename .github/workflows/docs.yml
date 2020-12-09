@@ -33,7 +33,7 @@ jobs:
       - name: Install macOS system dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cairo pkg-config pandoc
+          brew install cairo pkg-config autoconf automake libtool
 
       - name: Install Ubuntu system dependencies
         if: matrix.os == 'ubuntu-latest'
