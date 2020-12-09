@@ -28,7 +28,7 @@ jobs:
       - name: Install macOS system dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cairo pkg-config
+          brew install cairo pkg-config autoconf automake libtool
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
