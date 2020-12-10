@@ -19,7 +19,9 @@ jobs:
           then
             tmp_target_dir=$(echo $tmp_target_dir | sed "s/\/merge$//")
           fi
+          # dirty hack - won't delete the directory, but at least purge its contents.
           mkdir empty
+          touch empty/.deleted
           echo "target_dir=$target_dir" >> $GITHUB_ENV
         env:
           github_ref: ${{ github.ref }}
