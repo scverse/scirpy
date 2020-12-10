@@ -41,15 +41,8 @@ cutoff
     For the identity metric, the cutoff is ignored and always set to `0`.
 """
 
-_doc_params_distance_calculator = """\
-cutoff
-    Will eleminate distances > cutoff to make efficient
-    use of sparse matrices.
-"""
 
-_doc_params_parallel_distance_calculator = (
-    _doc_params_distance_calculator
-    + """\
+_doc_params_parallel_distance_calculator = """\
 n_jobs
     Number of jobs to use for the pairwise distance calculation.
     If None, use all jobs (only for ParallelDistanceCalculators).
@@ -57,7 +50,7 @@ block_size
     The width of a block of the matrix that will be delegated to a worker
     process. The block contains `block_size ** 2` elements.
 """
-)
+
 
 _doc_dist_mat = """\
 Calculates the upper triangle, including the diagonal.
@@ -73,14 +66,14 @@ Calculates the upper triangle, including the diagonal.
 """
 
 
-@_doc_params(params=_doc_params_distance_calculator)
 class DistanceCalculator(abc.ABC):
     """\
     Abstract base class for a :term:`CDR3`-sequence distance calculator.
 
     Parameters
     ----------
-    {params}
+    cutoff:
+        Distances > cutoff will be eliminated to make efficient use of sparse matrices.
 
     """
 
@@ -248,7 +241,6 @@ class ParallelDistanceCalculator(DistanceCalculator):
         return score_mat
 
 
-@_doc_params(params=_doc_params_distance_calculator)
 class IdentityDistanceCalculator(DistanceCalculator):
     """\
     Calculates the Identity-distance between :term:`CDR3` sequences.
@@ -263,7 +255,10 @@ class IdentityDistanceCalculator(DistanceCalculator):
 
     Parameters
     ----------
-    {params}
+    cutoff
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices. For the IdentitzDistanceCalculator this argument
+        will be ignored and is always 0.
     """
 
     def __init__(self, cutoff: int = 0):
@@ -315,6 +310,9 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
 
     Parameters
     ----------
+    cutoff
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices. The default cutoff is `2`.
     {params}
     """
 
@@ -363,6 +361,9 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
 
     Parameters
     ----------
+    cutoff
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices. The default cutoff is `2`.
     {params}
     """
 
@@ -425,6 +426,9 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     Parameters
     ----------
+    cutoff
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices. The default cutoff is `10`.
     {params}
     subst_mat
         Name of parasail substitution matrix
