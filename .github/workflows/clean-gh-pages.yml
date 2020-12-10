@@ -22,7 +22,7 @@ jobs:
           # dirty hack - won't delete the directory, but at least purge its contents.
           mkdir empty
           touch empty/.deleted
-          echo "target_dir=$target_dir" >> $GITHUB_ENV
+          echo "target_dir=$tmp_target_dir" >> $GITHUB_ENV
         env:
           github_ref: ${{ github.ref }}
       - name: Remove from gh-pages
