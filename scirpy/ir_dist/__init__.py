@@ -36,7 +36,9 @@ _doc_cutoff = """\
 cutoff
     All distances `> cutoff` will be replaced by `0` and eliminated from the sparse
     matrix. A sensible cutoff depends on the distance metric, you can find
-    information in the corresponding docs.
+    information in the corresponding docs. If set to `None`, the cutoff
+    will be `10` for the `alignment` metric, and `2` for `levenshtein` and `hamming`.
+    For the identity metric, the cutoff is ignored and always set to `0`.
 """
 
 _doc_params_distance_calculator = """\
@@ -85,7 +87,7 @@ class DistanceCalculator(abc.ABC):
     #: The sparse matrix dtype. Defaults to uint8, constraining the max distance to 255.
     DTYPE = "uint8"
 
-    def __init__(self, cutoff: float):
+    def __init__(self, cutoff: int):
         if cutoff > 255:
             raise ValueError(
                 "Using a cutoff > 255 is not possible due to the `uint8` dtype used"
@@ -136,7 +138,8 @@ class ParallelDistanceCalculator(DistanceCalculator):
 
     def __init__(
         self,
-        cutoff: float,
+        cutoff: int,
+        *,
         n_jobs: Optional[int] = None,
         block_size: Optional[int] = 50,
     ):
@@ -263,7 +266,8 @@ class IdentityDistanceCalculator(DistanceCalculator):
     {params}
     """
 
-    def __init__(self, cutoff: float = 0):
+    def __init__(self, cutoff: int = 0):
+        cutoff = 0
         super().__init__(cutoff)
 
     def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
@@ -314,6 +318,11 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     {params}
     """
 
+    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
+        if cutoff is None:
+            cutoff = 2
+        super().__init__(cutoff, **kwargs)
+
     def _compute_block(self, seqs1, seqs2, origin):
         origin_row, origin_col = origin
         if seqs2 is not None:
@@ -356,6 +365,11 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
     ----------
     {params}
     """
+
+    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
+        if cutoff is None:
+            cutoff = 2
+        super().__init__(cutoff, **kwargs)
 
     def _compute_block(self, seqs1, seqs2, origin):
         origin_row, origin_col = origin
@@ -422,15 +436,17 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: float,
+        cutoff: Union[None, int] = None,
+        *,
         n_jobs: Union[int, None] = None,
         block_size: int = 50,
-        *,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        super().__init__(cutoff, n_jobs, block_size)
+        if cutoff is None:
+            cutoff = 10
+        super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend
@@ -502,7 +518,7 @@ def sequence_dist(
         Literal["alignment", "identity", "levenshtein", "hamming"],
         DistanceCalculator,
     ] = "identity",
-    cutoff: float = 10,
+    cutoff: Union[None, int] = None,
     n_jobs: Union[int, None] = None,
 ) -> coo_matrix:
     """\
@@ -567,7 +583,7 @@ class IrNeighbors:
             Literal["alignment", "identity", "levenshtein", "hamming"],
             DistanceCalculator,
         ] = "identity",
-        cutoff: float = 10,
+        cutoff: Union[int, None] = None,
         receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
         dual_ir: Literal["primary_only", "all", "any"] = "primary_only",
         sequence: Literal["aa", "nt"] = "aa",
@@ -943,7 +959,7 @@ def ir_neighbors(
         Literal["identity", "alignment", "levenshtein", "hamming"],
         DistanceCalculator,
     ] = "identity",
-    cutoff: int = 10,
+    cutoff: Union[int, None] = None,
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_ir: Literal["primary_only", "any", "all"] = "primary_only",
     key_added: Union[str, None] = None,
