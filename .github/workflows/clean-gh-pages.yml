@@ -1,0 +1,35 @@
+# Delete a PR preview from the docs after it has been merged or closed.
+name: clean-docs
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  clean-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get target dir and make empty target folder
+        run: |
+          # get rid of "refs/"
+          tmp_target_dir=$(echo $github_ref | sed "s/^refs\///")
+          echo $tmp_target_dir
+          # get rid of "merge" at the end of ref for PRs
+          if [[ $tmp_target_dir = pull/* ]]
+          then
+            tmp_target_dir=$(echo $tmp_target_dir | sed "s/\/merge$//")
+          fi
+          mkdir empty
+          echo "target_dir=$target_dir" >> $GITHUB_ENV
+        env:
+          github_ref: ${{ github.ref }}
+      - name: Remove from gh-pages
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          BRANCH: gh-pages # The branch the action should deploy to.
+          FOLDER: empty  # The folder the action should deploy.
+          TARGET_FOLDER: ${{ env.target_dir }}
+          CLEAN: true
+          CLEAN_EXCLUDE: '["heads", "pull", "tags"]'
+          SINGLE_COMMIT: true
+          REPOSITORY_NAME: icbi-lab/scirpy
