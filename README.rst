@@ -21,12 +21,12 @@ Scirpy: A Scanpy extension for analyzing single-cell immune-cell receptor sequen
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
     :alt: The uncompromising python formatter
-    
+
 .. |airr| image:: https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=flat)
     :target: https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html
     :alt: AIRR-compliant
 
-Scirpy is a scalable python-toolkit to analyse T cell receptor (TCR) or B cell receptor (BCR) 
+Scirpy is a scalable python-toolkit to analyse T cell receptor (TCR) or B cell receptor (BCR)
 repertoires from single-cell RNA sequencing (scRNA-seq) data. It seamlessly integrates with the popular
 `scanpy <https://scanpy.readthedocs.io/en/stable/index.html>`_ library and
 provides various modules for data import, analysis and visualization.
@@ -50,7 +50,7 @@ The case study from our preprint is available `here <https://icbi-lab.github.io/
 
 Installation
 ^^^^^^^^^^^^
-You need to have Python 3.6 or newer installed on your system. If you don't have
+You need to have Python 3.7 or newer installed on your system. If you don't have
 Python installed, we recommend installing `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_.
 
 There are several alternative options to install scirpy:
