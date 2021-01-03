@@ -200,6 +200,9 @@ def sequence_dist(
         else (None, seqs_unique_inverse)
     )
     dist_calc = _get_metric(metric, cutoff, n_jobs=n_jobs, **kwargs)
+
+    logging.info(f"Calculating distances with metric {metric}")
+
     dist_mat = dist_calc.calc_dist_mat(seqs_unique, seqs2_unique)
 
     # DOK format for slicing with meshgrid (COO does not support subscript)
@@ -210,8 +213,10 @@ def sequence_dist(
         # does not work properly.
         # The matrix is already upper diagonal. Use the transpose method, see
         # https://stackoverflow.com/a/58806735/2340703.
+        logging.hint("Mirroring matrix at diagonal")
         dist_mat = dist_mat + dist_mat.T - scipy.sparse.diags(dist_mat.diagonal())
 
+    logging.hint("Expanding non-unique sequences to sequence x sequence matrix")
     i, j = np.meshgrid(
         seqs_unique_inverse, seqs2_unique_inverse, sparse=True, indexing="ij"
     )
@@ -220,6 +225,8 @@ def sequence_dist(
     if seqs2 is None:
         # If seq x seq, only return the upper triangle. Values in the lower
         # triangle may have been introduced by expanding the non-unique values.
-        dist_mat = scipy.sparse.triu(dist_mat, k=0, format="csr")
-
-    return dist_mat.tocsr()
+        logging.hint("Converting to upper triangular CSR matrix")
+        return scipy.sparse.triu(dist_mat, k=0, format="csr")  # type: ignore
+    else:
+        logging.hint("Converting to CSR matrix")
+        return dist_mat.tocsr()  # type: ignore

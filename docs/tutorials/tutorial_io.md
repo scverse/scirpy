@@ -62,7 +62,7 @@ The example data used in this notebook are available from the
     For more information, see :ref:`receptor-model`.
 
 
-.. note:: **:term:`IR` quality control**
+.. note:: **IR quality control**
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
        It will
