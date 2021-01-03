@@ -1,5 +1,4 @@
 from ._merge_adata import merge_with_ir
-from ..ir_dist import ir_neighbors
 from ..util import deprecated
 
 
@@ -16,4 +15,8 @@ def merge_with_tcr(adata, adata_tcr, **kwargs):
     "to `ir_neighbors`. The old version will be removed in a future release. "
 )
 def tcr_neighbors(*args, dual_tcr="primary_only", **kwargs):
-    return ir_neighbors(*args, dual_ir=dual_tcr, **kwargs)
+    # TODO update deprecation warnings
+    assert False
+
+
+# TODO add deprecation warning for ir_neighbors

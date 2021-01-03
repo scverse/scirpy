@@ -1,12 +1,11 @@
 import pytest
-from scirpy.ir_dist import (
+from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     DistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
     HammingDistanceCalculator,
     ParallelDistanceCalculator,
-    IrNeighbors,
 )
 import numpy as np
 import numpy.testing as npt
@@ -231,8 +230,9 @@ def test_alignment_dist_with_two_seq_arrays():
     )
 
 
-@pytest.mark.parametrize("metric", ["alignment", "identity", "levenshtein"])
-def test_sequence_dist(adata_cdr3, metric):
+@pytest.mark.parametrize("metric", ["alignment", "identity", "hamming", "levenshtein"])
+def test_sequence_dist_all_metrics(metric):
+    """Smoke test, no assertions!"""
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
     dist_mat = st.ir_dist.sequence_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
@@ -244,98 +244,63 @@ def test_sequence_dist(adata_cdr3, metric):
     assert dist_mat.shape == (5, 3)
 
 
-def test_seq_to_cell_idx():
-    unique_seqs = np.array(["AAA", "ABA", "CCC", "XXX", "AA"])
-    cdr_seqs = np.array(["AAA", "CCC", "ABA", "CCC", np.nan, "AA", "AA"])
-    result = IrNeighbors._seq_to_cell_idx(unique_seqs, cdr_seqs)
-    assert result == {0: [0], 1: [2], 2: [1, 3], 3: [], 4: [5, 6]}
+@pytest.mark.parametrize(
+    "metric,cutoff,expected_square,expected",
+    [
+        (
+            "identity",
+            0,
+            [
+                [1, 0, 0, 0, 1],
+                [0, 1, 0, 0, 0],
+                [0, 0, 1, 1, 0],
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ],
+            [
+                [0, 0, 1, 0],
+                [1, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 1, 0],
+            ],
+        ),
+        (
+            "levenshtein",
+            10,
+            [
+                [1, 2, 3, 3, 1],
+                [0, 1, 3, 3, 2],
+                [0, 0, 1, 1, 3],
+                [0, 0, 0, 1, 3],
+                [0, 0, 0, 0, 1],
+            ],
+            [
+                [2, 3, 1, 3],
+                [1, 4, 2, 4],
+                [3, 4, 3, 4],
+                [3, 4, 3, 4],
+                [2, 3, 1, 3],
+            ],
+        ),
+    ],
+)
+def test_sequence_dist(metric, cutoff, expected_square, expected):
+    seqs1 = np.array(["AAA", "ARA", "FFA", "FFA", "AAA"])
+    seqs2 = np.array(["ARA", "CAC", "AAA", "CAC"])
 
+    res = st.ir_dist.sequence_dist(seqs1, metric=metric, cutoff=cutoff)
+    npt.assert_almost_equal(res.toarray(), np.array(expected_square))
 
-def test_build_index_dict(adata_cdr3):
-    tn = IrNeighbors(
-        adata_cdr3,
-        receptor_arms="VJ",
-        dual_ir="primary_only",
-        sequence="nt",
-        cutoff=0,
-        metric="identity",
+    res = st.ir_dist.sequence_dist(seqs1, seqs2, metric=metric, cutoff=cutoff)
+    res_t = st.ir_dist.sequence_dist(seqs2, seqs1, metric=metric, cutoff=cutoff)
+    npt.assert_almost_equal(
+        res.toarray(),
+        np.array(expected),
     )
-    tn._build_index_dict()
-    npt.assert_equal(
-        tn.index_dict,
-        {
-            "VJ": {
-                "chain_inds": [1],
-                "unique_seqs": ["GCGAUGGCG", "GCGGCGGCG", "GCUGCUGCU"],
-                "seq_to_cell": {1: {0: [1], 1: [0], 2: [3]}},
-            }
-        },
-    )
-
-    tn = IrNeighbors(
-        adata_cdr3,
-        receptor_arms="all",
-        dual_ir="all",
-        sequence="aa",
-        metric="identity",
-        cutoff=0,
-    )
-    tn._build_index_dict()
-    print(tn.index_dict)
-    npt.assert_equal(
-        tn.index_dict,
-        {
-            "VJ": {
-                "chain_inds": [1, 2],
-                "unique_seqs": ["AAA", "AHA"],
-                "seq_to_cell": {
-                    1: {0: [0, 3], 1: [1]},
-                    2: {0: [3, 4], 1: [0]},
-                },
-                "chains_per_cell": np.array([2, 1, 0, 2, 1]),
-            },
-            "VDJ": {
-                "chain_inds": [1, 2],
-                "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
-                "seq_to_cell": {
-                    1: {0: [], 1: [1], 2: [], 3: [0], 4: [3, 4]},
-                    2: {0: [3], 1: [], 2: [0, 1], 3: [], 4: []},
-                },
-                "chains_per_cell": np.array([2, 2, 0, 2, 1]),
-            },
-        },
-    )
-
-    tn2 = IrNeighbors(
-        adata_cdr3,
-        receptor_arms="any",
-        dual_ir="any",
-        sequence="aa",
-        metric="alignment",
-        cutoff=10,
-    )
-    tn2._build_index_dict()
-    print(tn2.index_dict)
-    npt.assert_equal(
-        tn2.index_dict,
-        {
-            "VJ": {
-                "chain_inds": [1, 2],
-                "unique_seqs": ["AAA", "AHA"],
-                "seq_to_cell": {
-                    1: {0: [0, 3], 1: [1]},
-                    2: {0: [3, 4], 1: [0]},
-                },
-            },
-            "VDJ": {
-                "chain_inds": [1, 2],
-                "unique_seqs": ["AAA", "KK", "KKK", "KKY", "LLL"],
-                "seq_to_cell": {
-                    1: {0: [], 1: [1], 2: [], 3: [0], 4: [3, 4]},
-                    2: {0: [3], 1: [], 2: [0, 1], 3: [], 4: []},
-                },
-            },
-        },
+    npt.assert_almost_equal(
+        res_t.toarray(),
+        np.array(expected).T,
     )
 
 
@@ -629,43 +594,26 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
     npt.assert_equal(tn.dist.toarray(), np.zeros((5, 5)))
 
 
-def test_dist_to_connectivities(adata_cdr3):
-    # empty anndata, just need the object
-    tn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
-    tn._dist_mat = scipy.sparse.csr_matrix(
-        [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
-    )
-    C = tn.connectivities
-    assert C.nnz == tn._dist_mat.nnz
-    npt.assert_equal(
-        C.toarray(),
-        np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
-    )
+# def test_dist_to_connectivities(adata_cdr3):
+#     # empty anndata, just need the object
+#     tn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
+#     tn._dist_mat = scipy.sparse.csr_matrix(
+#         [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
+#     )
+#     C = tn.connectivities
+#     assert C.nnz == tn._dist_mat.nnz
+#     npt.assert_equal(
+#         C.toarray(),
+#         np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
+#     )
 
-    tn2 = IrNeighbors(adata_cdr3, metric="identity", cutoff=0)
-    tn2._dist_mat = scipy.sparse.csr_matrix(
-        [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
-    )
-    C = tn2.connectivities
-    assert C.nnz == tn2._dist_mat.nnz
-    npt.assert_equal(
-        C.toarray(),
-        tn2._dist_mat.toarray(),
-    )
-
-
-def test_ir_neighbors(adata_cdr3):
-    conn, dist = st.pp.ir_neighbors(adata_cdr3, inplace=False, sequence="aa")
-    assert conn.shape == dist.shape == (5, 5)
-
-    st.pp.ir_neighbors(
-        adata_cdr3,
-        metric="levenshtein",
-        cutoff=3,
-        receptor_arms="VJ",
-        dual_ir="all",
-        key_added="nbs",
-        sequence="aa",
-    )
-    assert adata_cdr3.uns["nbs"]["connectivities"].shape == (5, 5)
-    assert adata_cdr3.uns["nbs"]["distances"].shape == (5, 5)
+#     tn2 = IrNeighbors(adata_cdr3, metric="identity", cutoff=0)
+#     tn2._dist_mat = scipy.sparse.csr_matrix(
+#         [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
+#     )
+#     C = tn2.connectivities
+#     assert C.nnz == tn2._dist_mat.nnz
+#     npt.assert_equal(
+#         C.toarray(),
+#         tn2._dist_mat.toarray(),
+#     )

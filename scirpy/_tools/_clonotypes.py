@@ -8,6 +8,20 @@ import numpy as np
 import pandas as pd
 import random
 
+
+def define_clonotypes(
+    adata: AnnData,
+    *,
+    receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
+    dual_ir: Literal["primary_only", "any", "all"] = "primary_only",
+    same_v_gene: bool = False,
+    within_group: Union[str, None] = "receptor_type",
+    key_added: str = "clonotype",
+    inplace: bool = True,
+):
+    pass
+
+
 _define_clonotypes_doc = """\
 same_v_gene
     Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
