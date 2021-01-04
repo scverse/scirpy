@@ -105,7 +105,7 @@ def ir_dist(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[dict, None]:
-    col = "IR_{chain_type}_{chain_id}_{key}"
+    COLUMN = "IR_{chain_type}_{chain_id}_{key}"
     key = "cdr3" if sequence == "aa" else "cdr3_nt"
     result = {
         "VJ": dict(),
@@ -114,22 +114,22 @@ def ir_dist(
     }
     dist_calc = _get_metric(metric, cutoff, n_jobs=n_jobs)
 
-    # get unique all seqs for VJ and VDJ
-    for chain_type in result.keys():
+    # get all unique seqs for VJ and VDJ
+    for chain_type in ["VJ", "VDJ"]:
         tmp_seqs = np.concatenate(
             [
                 np.unique(
                     adata.obs[
-                        col.format(chain_type=chain_type, chain_id=chain_id, key=key)
+                        COLUMN.format(chain_type=chain_type, chain_id=chain_id, key=key)
                     ]
                 )
                 for chain_id in ["1", "2"]
             ]
         )
-        result[chain_type]["seqs"] = tmp_seqs[~_is_na(tmp_seqs)]
+        result[chain_type]["seqs"] = tmp_seqs[~_is_na(tmp_seqs)]  # type: ignore
 
     # compute distance matrices
-    for chain_type in result.keys():
+    for chain_type in ["VJ", "VDJ"]:
         logging.info(
             f"Computing sequence x sequence distance matrix for {chain_type} sequences."
         )

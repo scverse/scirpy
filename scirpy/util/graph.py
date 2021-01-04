@@ -1,12 +1,74 @@
-import scipy
+import scipy.sparse
 from scanpy import logging
 import igraph as ig
 import numpy as np
 from .._compat import Literal
+from scipy.sparse import spmatrix, csr_matrix
 import sys
 
 
-def _get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
+def igraph_from_sparse_matrix(
+    matrix: spmatrix,
+    matrix_type: Literal["connectivity", "distance"] = "distance",
+    *,
+    max_value: float = None,
+) -> ig.Graph:
+    # TODO test with triangular matrix
+    """
+    Get an igraph object from an adjacency or distance matrix.
+
+    Parameters:
+    -----------
+    sparse_matrix
+        A sparse matrix that represents the connectivity or distance matrix for the graph.
+        Zero-entries mean "no edge between the two nodes". Only the upper triangle
+        of the matrix will be considered.
+    matrix_type
+        Whether the `sparse_matrix` represents connectivities (higher value = smaller distance)
+        or distances (higher value = higher distance). Distance matrices will be
+        converted into connectivities. A connectivity matrix is also known as
+        weighted adjacency matrix.
+    max_value
+        When converting distances to connectivities, this will be considered the
+        maximum distance. This defaults to `numpy.max(sparse_matrix)`.
+
+    Returns
+    -------
+    igraph object
+    """
+    matrix = matrix.tocsr()
+
+    if matrix_type == "distance":
+        matrix = _distance_to_connectivity(matrix, max_value=max_value)
+
+    return _get_igraph_from_adjacency(matrix)
+
+
+def _distance_to_connectivity(distances: csr_matrix, *, max_value=None) -> csr_matrix:
+    """Get a weighted adjacency matrix from a distance matrix.
+
+    The max_value is used to normalize the distances. If not specified it will
+    be the max. of the input matrix.
+    """
+    # TODO test
+    # TODO test with max_value < max(distances)
+    if not isinstance(distances, csr_matrix):
+        raise ValueError("Distance matrix must be in CSR format.")
+
+    if max_value is None:
+        max_value = np.max(distances)
+
+    connectivities = distances.copy()
+    d = connectivities.data - 1
+
+    # structure of the matrix stayes the same, we can safely change the data only
+    connectivities.data = (max_value - d) / max_value
+    connectivities.eliminate_zeros()
+
+    return connectivities
+
+
+def _get_igraph_from_adjacency(adj: csr_matrix, edge_type: str = None):
     """Get igraph graph from adjacency matrix.
     Better than Graph.Adjacency for sparse matrices
 
@@ -54,7 +116,7 @@ def layout_components(
     Parameters
     ----------
     graph
-        The graph to plot.
+        The igraph object to plot.
     component_layout
         Layout function used to layout individual components.
         Can be anything that can be passed to `igraph.Graph.layout`

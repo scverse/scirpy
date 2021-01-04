@@ -8,6 +8,8 @@ from scipy.sparse import issparse, csr_matrix, csc_matrix
 import scipy.sparse
 import warnings
 
+# TODO clean up util
+
 
 def _allclose_sparse(A, B, atol=1e-8):
     """Check if two sparse matrices are almost equal.
