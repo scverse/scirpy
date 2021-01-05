@@ -665,6 +665,7 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
     npt.assert_equal(tn.dist.toarray(), np.zeros((5, 5)))
 
 
+# TODO move to util tests
 # def test_dist_to_connectivities(adata_cdr3):
 #     # empty anndata, just need the object
 #     tn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
