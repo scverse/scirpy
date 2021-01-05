@@ -189,12 +189,10 @@ def sequence_dist(
 
     Returns
     -------
-    Upper triangular distance matrix when only `seqs` is provided.
-    A full rectangular distance matrix when both `seqs` and
-    `seqs2` are provided.
+    Sparse pairwise distance matrix.
     """
-    seqs_unique, seqs_unique_inverse = np.unique(seqs, return_inverse=True)
-    seqs2_unique, seqs2_unique_inverse = (
+    seqs_unique, seqs_unique_inverse = np.unique(seqs, return_inverse=True)  # type: ignore
+    seqs2_unique, seqs2_unique_inverse = (  # type: ignore
         np.unique(seqs2, return_inverse=True)
         if seqs2 is not None
         else (None, seqs_unique_inverse)
@@ -205,16 +203,8 @@ def sequence_dist(
 
     dist_mat = dist_calc.calc_dist_mat(seqs_unique, seqs2_unique)
 
-    # DOK format for slicing with meshgrid (COO does not support subscript)
-    dist_mat = dist_mat.todok()
-
-    if seqs2 is None:
-        # mirror at diagonal, otherwise expansion from non-unique values
-        # does not work properly.
-        # The matrix is already upper diagonal. Use the transpose method, see
-        # https://stackoverflow.com/a/58806735/2340703.
-        logging.hint("Mirroring matrix at diagonal")
-        dist_mat = dist_mat + dist_mat.T - scipy.sparse.diags(dist_mat.diagonal())
+    # Slicing with CSR is faster than with DOK
+    dist_mat = dist_mat.tocsr()
 
     logging.hint("Expanding non-unique sequences to sequence x sequence matrix")
     i, j = np.meshgrid(
@@ -222,11 +212,4 @@ def sequence_dist(
     )
     dist_mat = dist_mat[i, j]
 
-    if seqs2 is None:
-        # If seq x seq, only return the upper triangle. Values in the lower
-        # triangle may have been introduced by expanding the non-unique values.
-        logging.hint("Converting to upper triangular CSR matrix")
-        return scipy.sparse.triu(dist_mat, k=0, format="csr")  # type: ignore
-    else:
-        logging.hint("Converting to CSR matrix")
-        return dist_mat.tocsr()  # type: ignore
+    return dist_mat
