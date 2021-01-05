@@ -24,7 +24,7 @@ block_size
 
 
 _doc_dist_mat = """\
-Calculates the upper triangle, including the diagonal.
+Calculates the full pairwise distance matrix.
 
 .. important::
     * Distances are offset by 1 to allow efficient use of sparse matrices
@@ -82,10 +82,24 @@ class DistanceCalculator(abc.ABC):
 
         Returns
         -------
-        Sparse pairwise distance matrix. If only `seqs` is provided, only
-        the upper triangular distance matrix is returned.
+        Sparse pairwise distance matrix.
         """
         pass
+
+    @staticmethod
+    def squarify(triangular_matrix):
+        """Mirror a triangular matrix at the diagonal to make it a square matrix.
+
+        The input matrix *must* be upper triangular to begin with, otherwise
+        the results will be incorrect. No guard rails!
+        """
+        # The matrix is already upper diagonal. Use the transpose method, see
+        # https://stackoverflow.com/a/58806735/2340703.
+        return (
+            triangular_matrix
+            + triangular_matrix.T
+            - scipy.sparse.diags(triangular_matrix.diagonal())
+        )
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
@@ -210,7 +224,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         )
         score_mat.eliminate_zeros()
 
-        return score_mat
+        return self.squarify(score_mat)
 
 
 class IdentityDistanceCalculator(DistanceCalculator):
