@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Sequence, Iterable
+from typing import Union, Tuple, Sequence, Iterable, Dict
 from anndata import AnnData
 from .._compat import Literal
 import numpy as np
@@ -27,6 +27,82 @@ def define_clonotype_clusters(
     pass
 
 
+class DoubleLookupNeighborFinder:
+    def __init__(
+        self,
+        feature_table: pd.DataFrame,
+    ):
+        """
+        Parameters
+        ----------
+        feature_table
+            A data frame with features in columns. Rows must be unique.
+        """
+        self.feature_table = feature_table
+
+        # n_feature x n_feature sparse, symmetric distance matrices
+        self.distance_matrices: Dict[str, sp.csr_matrix] = dict()
+        # mapping feature_label -> feature_index with len = n_feature
+        self.distance_matrix_labels: Dict[str, dict] = dict()
+        # tuples (dist_mat, forward, reverse)
+        # dist_mat: name of associated distance matrix
+        # forward: clonotype -> feature_index lookups
+        # reverse: feature_index -> clonotype lookups
+        self.lookups: Dict[str, Tuple[str, np.ndarray, dict]] = dict()
+
+    def lookup(self, clonotype_id, lookup_table):
+        """Get ids of neighboring clonotypes given a pair of lookup tables
+        and a distance matrix"""
+        distance_matrix_name, forward, reverse = self.lookups[lookup_table]
+        distance_matrix = self.distance_matrices[distance_matrix_name]
+        # get column indices directly from sparse row
+        return itertools.chain.from_iterable(
+            (reverse[i] for i in distance_matrix[forward[clonotype_id], :].indices)  # type: ignore
+        )
+
+    def add_distance_matrix(
+        self, name: str, distance_matrix: sp.csr_matrix, labels: Sequence
+    ):
+        """Add a distance matrix."""
+        self.distance_matrices[name] = distance_matrix
+        self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
+
+    def add_lookup_table(
+        self, clonotype_feature: str, distance_matrix: str, *, name: str
+    ):
+        forward = self._build_forward_lookup_table(clonotype_feature, distance_matrix)
+        reverse = self._build_reverse_lookup_table(clonotype_feature, distance_matrix)
+        self.lookups[name] = (distance_matrix, forward, reverse)
+
+    def _build_forward_lookup_table(
+        self, clonotype_feature: str, distance_matrix: str
+    ) -> np.ndarray:
+        """Create a lookup array that maps each clonotype to the respective
+        index in the feature distance matrix.
+        """
+        return np.array(
+            [
+                self.distance_matrix_labels[distance_matrix][k]
+                for k in self.feature_table[clonotype_feature]
+            ]
+        )
+
+    def _build_reverse_lookup_table(
+        self, clonotype_feature: str, distance_matrix: str
+    ) -> dict:
+        """Create a reverse-lookup dict that maps each (numeric) index
+        of a feature distance matric to a list of associated numeric clonotype indices."""
+        tmp_reverse_lookup = dict()
+        tmp_index_lookup = self.distance_matrix_labels[distance_matrix]
+        for i, k in enumerate(self.feature_table[clonotype_feature]):
+            try:
+                tmp_reverse_lookup[tmp_index_lookup[k]].append(i)
+            except KeyError:
+                tmp_reverse_lookup[tmp_index_lookup[k]] = [i]
+
+        return tmp_reverse_lookup
+
+
 class ClonotypeNeighbors:
     def __init__(
         self,
@@ -40,14 +116,6 @@ class ClonotypeNeighbors:
         metric,
     ):
         self.key = "cdr3" if sequence == "aa" else "cdr3_nt"
-        # n_feature x n_feature sparse, symmetric distance matrices
-        self.feature_distances = dict()
-        # mapping feature_label -> feature_index with len = n_feature
-        self.feature_indexes = dict()
-        # clonotype -> feature_index lookups
-        self.lookups = dict()
-        # feature_index -> clonotype lookups
-        self.reverse_lookups = dict()
 
         # store sequence distances
         for chain_type in ["VJ", "VDJ"]:
@@ -90,53 +158,17 @@ class ClonotypeNeighbors:
             adata.obs.loc[clonotype_cols, :].drop_duplicates().reset_index()
         )
 
-        self._build_lookup_table("IR_VJ_1_cdr3", "VJ")
-        self._build_lookup_table("IR_VJ_1_cdr3", "VDJ")
-        self._build_lookup_table("IR_VDJ_1_cdr3", "VJ")
-        self._build_lookup_table("IR_VDJ_1_cdr3", "VDJ")
-        self._build_lookup_table("IR_VJ_2_cdr3", "VJ")
-        self._build_lookup_table("IR_VJ_2_cdr3", "VDJ")
-        self._build_lookup_table("IR_VDJ_2_cdr3", "VJ")
-        self._build_lookup_table("IR_VDJ_2_cdr3", "VDJ")
-        self._build_lookup_table("IR_VJ_1_v_gene", "v_gene")
-        self._build_lookup_table("IR_VDJ_1_v_gene", "v_gene")
+        self._build_lookup_table("IR_VJ_1_cdr3", "VJ", name="VJ_1")
+        self._build_lookup_table("IR_VDJ_1_cdr3", "VDJ", name="VDJ_1")
+        self._build_lookup_table("IR_VJ_2_cdr3", "VJ", name="VJ_2")
+        self._build_lookup_table("IR_VDJ_2_cdr3", "VDJ", name="VDJ_2")
+        self._build_lookup_table("IR_VJ_1_v_gene", "v_gene", name="VJ_v")
+        self._build_lookup_table("IR_VDJ_1_v_gene", "v_gene", name="VDJ_v")
 
-    def _build_lookup_table(self, clonotype_feature, distance_matrix):
-        self._build_forward_lookup_table(clonotype_feature, distance_matrix)
-        self._build_reverse_lookup_table(clonotype_feature, distance_matrix)
-
-    def _build_forward_lookup_table(self, clonotype_feature: str, distance_matrix: str):
-        """Create a lookup array that maps each clonotype to the respective
-        index in the feature distance matrix.
-
-        Parameters
-        ----------
-        feature
-            Column in the clonotype dataframe
-        feature_labels
-            array containing annotations for a distance matrix. Must have the
-            same dimensionsas one axis of the distance matrix. For the VDJ:VDJ distances
-            this would contain the corresponding CDR3 sequences.
-        """
-        self.lookups[(clonotype_feature, distance_matrix)] = np.array(
-            [
-                self.feature_indexes[distance_matrix][k]
-                for k in self.clonotypes[clonotype_feature]
-            ]
-        )
-
-    def _build_reverse_lookup_table(self, clonotype_feature: str, distance_matrix: str):
-        """Create a reverse-lookup dict that maps each (numeric) index
-        of a feature distance matric to a list of associated numeric clonotype indices."""
-        tmp_reverse_lookup = dict()
-        tmp_index_lookup = self.feature_indexes[distance_matrix]
-        for i, k in enumerate(self.clonotypes[clonotype_feature]):
-            try:
-                tmp_reverse_lookup[tmp_index_lookup[k]].append(i)
-            except KeyError:
-                tmp_reverse_lookup[tmp_index_lookup[k]] = [i]
-
-        self.reverse_lookups[(clonotype_feature, distance_matrix)] = tmp_reverse_lookup
+    def compute_distances(self):
+        for i, ct in self.clonotypes.itertuples():
+            neighbors_vj1 = self.reverse_lookups["VJ_1"][self.lookups["VJ_1"][i]]
+            neighbors_vj1_2 = self.reverse_lookups["VJ_2"][self.lookups["VJ_1"][i]]
 
 
 #
