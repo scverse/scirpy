@@ -105,6 +105,8 @@ def ir_dist(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[dict, None]:
+    """Computes a sequence-distance metric between all unique VJ CDR3 sequences and
+    between all unique VDJ CDR3 sequences"""
     COLUMN = "IR_{chain_type}_{chain_id}_{key}"
     key = "cdr3" if sequence == "aa" else "cdr3_nt"
     result = {
