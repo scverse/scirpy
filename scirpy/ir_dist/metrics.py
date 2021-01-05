@@ -1,8 +1,8 @@
 import parasail
+from scipy.sparse.csr import csr_matrix
 from ..util._multiprocessing import EnhancedPool as Pool
 import itertools
 from typing import Union, Sequence, Tuple, Optional
-from .._compat import Literal
 import numpy as np
 import abc
 from Levenshtein import distance as levenshtein_dist
@@ -63,7 +63,7 @@ class DistanceCalculator(abc.ABC):
     @abc.abstractmethod
     def calc_dist_mat(
         self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
-    ) -> coo_matrix:
+    ) -> csr_matrix:
         """\
         Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`.
 
@@ -87,12 +87,15 @@ class DistanceCalculator(abc.ABC):
         pass
 
     @staticmethod
-    def squarify(triangular_matrix):
+    def squarify(triangular_matrix: csr_matrix) -> csr_matrix:
         """Mirror a triangular matrix at the diagonal to make it a square matrix.
 
         The input matrix *must* be upper triangular to begin with, otherwise
         the results will be incorrect. No guard rails!
         """
+        assert (
+            triangular_matrix.shape[0] == triangular_matrix.shape[1]
+        ), "needs to be square matrix"
         # The matrix is already upper diagonal. Use the transpose method, see
         # https://stackoverflow.com/a/58806735/2340703.
         return (
@@ -200,7 +203,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
 
     def calc_dist_mat(
         self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
-    ) -> coo_matrix:
+    ) -> csr_matrix:
         """Calculate the distance matrix.
 
         See :meth:`DistanceCalculator.calc_dist_mat`."""
@@ -223,8 +226,12 @@ class ParallelDistanceCalculator(DistanceCalculator):
             (dists, (rows, cols)), dtype=self.DTYPE, shape=shape
         )
         score_mat.eliminate_zeros()
+        score_mat = score_mat.tocsr()
 
-        return self.squarify(score_mat)
+        if seqs2 is None:
+            score_mat = self.squarify(score_mat)
+
+        return score_mat
 
 
 class IdentityDistanceCalculator(DistanceCalculator):
@@ -251,13 +258,13 @@ class IdentityDistanceCalculator(DistanceCalculator):
         cutoff = 0
         super().__init__(cutoff)
 
-    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> coo_matrix:
+    def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> csr_matrix:
         """In this case, the offseted distance matrix is the identity matrix.
 
         More details: :meth:`DistanceCalculator.calc_dist_mat`"""
         if seqs2 is None:
             # In this case, the offsetted distance matrix is the identity matrix
-            return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="coo")
+            return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="csr")
         else:
             # actually compare the values
             def coord_generator():
@@ -275,7 +282,7 @@ class IdentityDistanceCalculator(DistanceCalculator):
 
             return coo_matrix(
                 (d, (row, col)), dtype=self.DTYPE, shape=(len(seqs), len(seqs2))
-            )
+            ).tocsr()
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)

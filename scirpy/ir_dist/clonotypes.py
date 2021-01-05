@@ -63,12 +63,8 @@ def _reduce_seqs(
     -------
     Square upper triangular sparse distance matrix with `ncol = nrow = len(target)`.
     """
-    result_dist_mat = coo_matrix(
-        itertools.chain(
-            _expand_matrix_to_target(dist_mat1, index1, [x[0] for x in target_tuples]),
-            _expand_matrix_to_target(dist_mat2, index2, [x[1] for x in target_tuples]),
-        )
-    ).tocsr()
+    m1 = _expand_matrix_to_target(dist_mat1, index1, [x[0] for x in target_tuples])
+    m2 = _expand_matrix_to_target(dist_mat2, index2, [x[1] for x in target_tuples])
 
     if operation == "and":
         res = result_dist_mat == 2
@@ -77,41 +73,14 @@ def _reduce_seqs(
     return res  # type: ignore
 
 
-def _expand_matrix_to_target(dist_mat: spmatrix, index: Iterable, target: Sequence):
-    """Expand a distance matrix with a given index to a given target
-    based on graph partitions.
-
-    Graph partitions are connected subgraphs in the graph represented by the
-    `dist_mat`.
-
-    All entries in target must be contained in index.
-
-    Yields
-    ------
-    coordinates for constructing the expanded COO sparse matrix
-    """
-    g = igraph_from_sparse_matrix(dist_mat)
-    part = g.clusters(mode="weak")
-
-    # maps each entry from index to its partition
-    part_dict = {seq: p for seq, p in zip(index, part.membership)}  # type: ignore
-
-    # numpy array same length as target: maps each target to its partition
-    target_partitions = np.fromiter(
-        (part_dict[t] for t in target), int, count=len(target)
+def _expand_matrix_to_target(
+    dist_mat: spmatrix, index: Iterable, target: Sequence
+) -> spmatrix:
+    index_dict = {idx: i for i, idx in enumerate(index)}
+    target_idx = np.fromiter(
+        (index_dict[t] for t in target), dtype=int, count=len(target)
     )
 
-    # maps each partition to all positions in target
-    lookup_dict = dict()
-    for i, part in enumerate(target_partitions):
-        try:
-            lookup_dict[part].append(i)
-        except KeyError:
-            lookup_dict[part] = [i]
-
-    # yield coordinates to construct COO matrix
-    for i, part in enumerate(target_partitions):
-        for idx in lookup_dict[part]:
-            # only upper triangle
-            if i <= idx:
-                yield (i, idx, 1)
+    dist_mat = dist_mat.todok()
+    dist_mat = dist_mat[target_idx, target_idx.T]
+    return dist_mat

@@ -13,6 +13,8 @@ import scirpy as st
 import scipy.sparse
 from .fixtures import adata_cdr3
 from anndata import AnnData
+from .util import _squarify
+from scirpy.util import _is_symmetric
 
 
 @pytest.fixture
@@ -26,20 +28,69 @@ def adata_cdr3_mock_distance_calculator():
             hard-coded distance matrix needed for the test"""
             mat_seqs = np.array(["AAA", "AHA", "KK", "KKK", "KKY", "LLL"])
             mask = np.isin(mat_seqs, seqs)
-            return scipy.sparse.coo_matrix(
+            dist_mat = scipy.sparse.csr_matrix(
                 np.array(
                     [
                         [1, 4, 0, 0, 0, 0],
-                        [0, 1, 0, 0, 0, 0],
+                        [4, 1, 0, 0, 0, 0],
                         [0, 0, 1, 10, 10, 0],
-                        [0, 0, 0, 1, 5, 0],
-                        [0, 0, 0, 0, 1, 0],
+                        [0, 0, 10, 1, 5, 0],
+                        [0, 0, 10, 5, 1, 0],
                         [0, 0, 0, 0, 0, 1],
                     ]
                 )[mask, :][:, mask]
             )
+            assert _is_symmetric(dist_mat)
+            return dist_mat
 
     return MockDistanceCalculator()
+
+
+def test_squarify():
+    npt.assert_almost_equal(
+        DistanceCalculator.squarify(
+            scipy.sparse.csr_matrix(
+                np.array(
+                    [
+                        [1, 2, 3, 3],
+                        [0, 1, 2, 2],
+                        [0, 0, 1, 2],
+                        [0, 0, 0, 1],
+                    ]
+                )
+            )
+        ).toarray(),
+        np.array(
+            [
+                [1, 2, 3, 3],
+                [2, 1, 2, 2],
+                [3, 2, 1, 2],
+                [3, 2, 2, 1],
+            ]
+        ),
+    )
+    npt.assert_almost_equal(
+        DistanceCalculator.squarify(
+            scipy.sparse.csr_matrix(
+                np.array(
+                    [
+                        [1, 2, 0, 0],
+                        [0, 1, 2, 2],
+                        [0, 0, 1, 2],
+                        [0, 0, 0, 1],
+                    ]
+                )
+            )
+        ).toarray(),
+        np.array(
+            [
+                [1, 2, 0, 0],
+                [2, 1, 2, 2],
+                [0, 2, 1, 2],
+                [0, 2, 2, 1],
+            ]
+        ),
+    )
 
 
 def test_block_iter():
@@ -83,7 +134,7 @@ def test_block_iter():
 def test_identity_dist():
     identity = IdentityDistanceCalculator()
     res = identity.calc_dist_mat(["ARS", "ARS", "RSA"])
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     npt.assert_almost_equal(
         res.toarray(),
         np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
@@ -93,7 +144,7 @@ def test_identity_dist():
 def test_identity_dist_with_two_seq_arrays():
     identity = IdentityDistanceCalculator()
     res = identity.calc_dist_mat(["ARS", "ARS", "RSA", "SAS"], ["KKL", "ARS", "RSA"])
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (4, 3)
     assert res.nnz == 3
     npt.assert_almost_equal(
@@ -103,7 +154,7 @@ def test_identity_dist_with_two_seq_arrays():
 
     # test with completely empty result matrix
     res = identity.calc_dist_mat(["ARS", "ARS", "RSA", "SAS"], ["foo", "bar", "baz"])
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (4, 3)
     assert res.nnz == 0
     npt.assert_almost_equal(
@@ -144,18 +195,32 @@ def test_levensthein_dist():
     res10_2 = levenshtein10_2.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
     res1 = levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
 
-    assert isinstance(res10, scipy.sparse.coo_matrix)
-    assert isinstance(res10_2, scipy.sparse.coo_matrix)
-    assert isinstance(res1, scipy.sparse.coo_matrix)
+    assert isinstance(res10, scipy.sparse.csr_matrix)
+    assert isinstance(res10_2, scipy.sparse.csr_matrix)
+    assert isinstance(res1, scipy.sparse.csr_matrix)
 
     npt.assert_equal(res10.toarray(), res10_2.toarray())
     npt.assert_almost_equal(
         res10.toarray(),
-        np.array([[1, 2, 3, 3], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),
+        np.array(
+            [
+                [1, 2, 3, 3],
+                [2, 1, 2, 2],
+                [3, 2, 1, 2],
+                [3, 2, 2, 1],
+            ]
+        ),
     )
     npt.assert_almost_equal(
         res1.toarray(),
-        np.array([[1, 2, 0, 0], [0, 1, 2, 2], [0, 0, 1, 2], [0, 0, 0, 1]]),
+        np.array(
+            [
+                [1, 2, 0, 0],
+                [2, 1, 2, 2],
+                [0, 2, 1, 2],
+                [0, 2, 2, 1],
+            ]
+        ),
     )
 
 
@@ -164,7 +229,7 @@ def test_levensthein_dist_with_two_seq_arrays():
     res = levenshtein10.calc_dist_mat(
         np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
     )
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
     npt.assert_almost_equal(
         res.toarray(),
@@ -177,7 +242,7 @@ def test_hamming_dist():
     res = hamming10.calc_dist_mat(
         np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
     )
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
     npt.assert_almost_equal(
         res.toarray(),
@@ -207,14 +272,16 @@ def test_alignment_dist():
     seqs = np.array(["AAAA", "AAHA", "HHHH"])
 
     res = aligner.calc_dist_mat(seqs)
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     npt.assert_almost_equal(
-        res.toarray(), np.array([[1, 7, 25], [0, 1, 19], [0, 0, 1]])
+        res.toarray(), _squarify(np.array([[1, 7, 25], [0, 1, 19], [0, 0, 1]]))
     )
 
     res = aligner10.calc_dist_mat(seqs)
-    assert isinstance(res, scipy.sparse.coo_matrix)
-    npt.assert_almost_equal(res.toarray(), np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]]))
+    assert isinstance(res, scipy.sparse.csr_matrix)
+    npt.assert_almost_equal(
+        res.toarray(), _squarify(np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]]))
+    )
 
 
 def test_alignment_dist_with_two_seq_arrays():
@@ -222,7 +289,7 @@ def test_alignment_dist_with_two_seq_arrays():
     res = aligner.calc_dist_mat(
         ["AAAA", "AATA", "HHHH", "WWWW"], ["WWWW", "AAAA", "ATAA"]
     )
-    assert isinstance(res, scipy.sparse.coo_matrix)
+    assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (4, 3)
 
     npt.assert_almost_equal(
@@ -250,13 +317,15 @@ def test_sequence_dist_all_metrics(metric):
         (
             "identity",
             0,
-            [
-                [1, 0, 0, 0, 1],
-                [0, 1, 0, 0, 0],
-                [0, 0, 1, 1, 0],
-                [0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 1],
-            ],
+            _squarify(
+                [
+                    [1, 0, 0, 0, 1],
+                    [0, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 0],
+                    [0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 1],
+                ]
+            ),
             [
                 [0, 0, 1, 0],
                 [1, 0, 0, 0],
@@ -268,13 +337,15 @@ def test_sequence_dist_all_metrics(metric):
         (
             "levenshtein",
             10,
-            [
-                [1, 2, 3, 3, 1],
-                [0, 1, 3, 3, 2],
-                [0, 0, 1, 1, 3],
-                [0, 0, 0, 1, 3],
-                [0, 0, 0, 0, 1],
-            ],
+            _squarify(
+                [
+                    [1, 2, 3, 3, 1],
+                    [0, 1, 3, 3, 2],
+                    [0, 0, 1, 1, 3],
+                    [0, 0, 0, 1, 3],
+                    [0, 0, 0, 0, 1],
+                ]
+            ),
             [
                 [2, 3, 1, 3],
                 [1, 4, 2, 4],
