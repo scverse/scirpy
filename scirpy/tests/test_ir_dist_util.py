@@ -69,3 +69,39 @@ def test_set_dict_id(set_dict):
     assert set_dict & set() == SetDict()
     assert set() & set_dict == SetDict()
     assert SetDict() & SetDict() == SetDict()
+
+
+@pytest.mark.parametrize(
+    "o1,o2,expected",
+    [
+        (SetDict(foo=2, bar=4), SetDict(baz=5), {"foo": 2, "bar": 4, "baz": 5}),
+        (SetDict(foo=2, bar=4), set(["baz"]), NotImplementedError),
+        (SetDict(foo=2, bar=4), SetDict(foo=1, bar=5), {"foo": 1, "bar": 4}),
+        (SetDict(foo=2, bar=4), SetDict(baz=5, foo=1), {"bar": 4, "baz": 5, "foo": 1}),
+    ],
+)
+def test_set_dict_or(o1, o2, expected):
+    if isinstance(expected, type) and issubclass(expected, Exception):
+        with pytest.raises(expected):
+            o1 | o2
+    else:
+        assert o1 | o2 == expected
+
+
+@pytest.mark.parametrize(
+    "o1,o2,expected",
+    [
+        (SetDict(foo=2, bar=4), SetDict(baz=5), {}),
+        (SetDict(foo=2, bar=4), set(["baz"]), {}),
+        (SetDict(foo=2, bar=4), set(["bar"]), {"bar": 4}),
+        (set(["bar"]), SetDict(foo=2, bar=4), {"bar": 4}),
+        (SetDict(foo=2, bar=4), SetDict(foo=1, bar=5), {"foo": 2, "bar": 5}),
+        (SetDict(foo=2, bar=4), SetDict(baz=5, foo=1), {"foo": 2}),
+    ],
+)
+def test_set_dict_and(o1, o2, expected):
+    if isinstance(expected, type) and issubclass(expected, Exception):
+        with pytest.raises(expected):
+            o1 & o2
+    else:
+        assert o1 & o2 == expected

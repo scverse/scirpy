@@ -118,7 +118,7 @@ class SetDict(MutableMapping):
                 )
             )
         else:
-            raise NotImplementedError("Operation implementedonly for SetDict. ")
+            raise NotImplementedError("Operation implemented only for SetDict. ")
 
     def __ror__(self, other):
         return self.__or__(other)
@@ -140,3 +140,6 @@ class SetDict(MutableMapping):
 
     def __rand__(self, other):
         return self.__and__(other)
+
+    def __repr__(self) -> str:
+        return self.store.__repr__()
