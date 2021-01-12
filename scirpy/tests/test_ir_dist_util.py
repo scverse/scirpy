@@ -129,9 +129,7 @@ def test_set_dict_and(o1, o2, expected):
 
 
 def test_dlnf_lookup_table(dlnf):
-    dlnf.add_lookup_table(
-        clonotype_feature="VJ", distance_matrix="test", name="VJ_test"
-    )
+    dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
     dist_mat, forward, reverse = dlnf.lookups["VJ_test"]
     assert dist_mat == "test"
     npt.assert_array_equal(forward, np.array([0, 1, 2, 3, 0, 2, 3]))
@@ -142,9 +140,7 @@ def test_dlnf_lookup_table(dlnf):
         3: [3, 6],
     }
 
-    dlnf.add_lookup_table(
-        clonotype_feature="VDJ", distance_matrix="test", name="VDJ_test"
-    )
+    dlnf.add_lookup_table(feature_col="VDJ", distance_matrix="test", name="VDJ_test")
     dist_mat, forward, reverse = dlnf.lookups["VDJ_test"]
     assert dist_mat == "test"
     npt.assert_array_equal(forward, np.array([0, 1, 2, 3, 3, 3, 3]))
@@ -157,9 +153,7 @@ def test_dlnf_lookup_table(dlnf):
 
 
 def test_dlnf_lookup(dlnf):
-    dlnf.add_lookup_table(
-        clonotype_feature="VJ", distance_matrix="test", name="VJ_test"
-    )
+    dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
     assert (
         list(dlnf.lookup(0, "VJ_test"))
         == list(dlnf.lookup(4, "VJ_test"))

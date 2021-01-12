@@ -1,5 +1,4 @@
 from collections.abc import MutableMapping
-from notebooks.pyVDJ.pyvdj.diversity import shannon
 import numpy as np
 import pandas as pd
 import itertools
