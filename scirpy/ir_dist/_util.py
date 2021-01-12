@@ -2,7 +2,7 @@ from collections.abc import MutableMapping
 import numpy as np
 import pandas as pd
 import itertools
-from typing import Dict, Sequence, Tuple
+from typing import Dict, Sequence, Tuple, Iterable
 import scipy.sparse as sp
 
 
@@ -29,15 +29,16 @@ class DoubleLookupNeighborFinder:
         # reverse: feature_index -> clonotype lookups
         self.lookups: Dict[str, Tuple[str, np.ndarray, dict]] = dict()
 
-    def lookup(self, clonotype_id, lookup_table):
+    def lookup(self, clonotype_id, lookup_table) -> Iterable[Tuple[int, int]]:
         """Get ids of neighboring clonotypes given a pair of lookup tables
         and a distance matrix"""
         distance_matrix_name, forward, reverse = self.lookups[lookup_table]
         distance_matrix = self.distance_matrices[distance_matrix_name]
         row = distance_matrix[forward[clonotype_id], :]
         # get column indices directly from sparse row
-        return itertools.chain.from_iterable(
-            (reverse[i], distance) for i, distance in zip(row.indices, row.data)  # type: ignore
+        yield from itertools.chain.from_iterable(
+            zip(reverse[i], itertools.repeat(distance))
+            for i, distance in zip(row.indices, row.data)  # type: ignore
         )
 
     def add_distance_matrix(

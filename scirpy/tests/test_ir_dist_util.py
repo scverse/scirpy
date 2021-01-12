@@ -2,11 +2,32 @@
 
 from scirpy.ir_dist._util import SetDict, DoubleLookupNeighborFinder
 import pytest
+import numpy as np
+import scipy.sparse as sp
+import pandas as pd
+import numpy.testing as npt
 
 
 @pytest.fixture
 def set_dict():
     return SetDict(foo=1, bar=4, baz=9)
+
+
+@pytest.fixture
+def dlnf():
+    clonotypes = pd.DataFrame().assign(
+        VJ=["A", "B", "C", "D", "A", "C", "D"],
+        VDJ=["A", "B", "C", "D", "D", "D", "D"],
+    )
+    dlnf = DoubleLookupNeighborFinder(feature_table=clonotypes)
+    dlnf.add_distance_matrix(
+        name="test",
+        distance_matrix=sp.csr_matrix(
+            [[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 4], [0, 0, 4, 3]]
+        ),
+        labels=np.array(["A", "B", "C", "D"]),
+    )
+    return dlnf
 
 
 def test_set_dict_init():
@@ -105,3 +126,53 @@ def test_set_dict_and(o1, o2, expected):
             o1 & o2
     else:
         assert o1 & o2 == expected
+
+
+def test_dlnf_lookup_table(dlnf):
+    dlnf.add_lookup_table(
+        clonotype_feature="VJ", distance_matrix="test", name="VJ_test"
+    )
+    dist_mat, forward, reverse = dlnf.lookups["VJ_test"]
+    assert dist_mat == "test"
+    npt.assert_array_equal(forward, np.array([0, 1, 2, 3, 0, 2, 3]))
+    assert reverse == {
+        0: [0, 4],
+        1: [1],
+        2: [2, 5],
+        3: [3, 6],
+    }
+
+    dlnf.add_lookup_table(
+        clonotype_feature="VDJ", distance_matrix="test", name="VDJ_test"
+    )
+    dist_mat, forward, reverse = dlnf.lookups["VDJ_test"]
+    assert dist_mat == "test"
+    npt.assert_array_equal(forward, np.array([0, 1, 2, 3, 3, 3, 3]))
+    assert reverse == {
+        0: [0],
+        1: [1],
+        2: [2],
+        3: [3, 4, 5, 6],
+    }
+
+
+def test_dlnf_lookup(dlnf):
+    dlnf.add_lookup_table(
+        clonotype_feature="VJ", distance_matrix="test", name="VJ_test"
+    )
+    assert (
+        list(dlnf.lookup(0, "VJ_test"))
+        == list(dlnf.lookup(4, "VJ_test"))
+        == [(0, 1), (4, 1)]
+    )
+    assert list(dlnf.lookup(1, "VJ_test")) == [(1, 2)]
+    assert (
+        list(dlnf.lookup(2, "VJ_test"))
+        == list(dlnf.lookup(5, "VJ_test"))
+        == [(2, 3), (5, 3), (3, 4), (6, 4)]
+    )
+    assert (
+        list(dlnf.lookup(3, "VJ_test"))
+        == list(dlnf.lookup(6, "VJ_test"))
+        == [(2, 4), (5, 4), (3, 3), (6, 3)]
+    )

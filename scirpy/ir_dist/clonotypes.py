@@ -40,14 +40,18 @@ class ClonotypeNeighbors:
         metric,
     ):
         self.key = "cdr3" if sequence == "aa" else "cdr3_nt"
+        self.clonotpyes = self._define_clonotypes(
+            adata, self.key, receptor_arms, dual_ir, same_v_gene
+        )
 
-        # store sequence distances
+        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotpyes)
         for chain_type in ["VJ", "VDJ"]:
             distance_dict = adata.uns[f"ir_dist_{sequence}_{metric}"]
-            self.feature_distances[chain_type] = distance_dict["distances"]
-            self.feature_indexes[chain_type] = {
-                k: i for i, k in enumerate(distance_dict["seqs"])
-            }
+            self.neighbor_finder.add_distance_matrix(
+                name=chain_type,
+                distance_matrix=distance_dict["distances"],
+                labels=distance_dict["seqs"],
+            )
 
         # store v gene distances
         v_genes = np.unique(
@@ -63,31 +67,31 @@ class ClonotypeNeighbors:
                 ]
             )
         )
-        self.feature_distances["v_gene"] = sp.identity(
-            len(v_genes), dtype=bool, format="csr"
+        self.neighbor_finder.add_distance_matrix(
+            "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
         )
-        self.feature_indexes["v_gene"] = {k: i for i, k in enumerate(v_genes)}
 
+        self.neighbor_finder.add_lookup_table("IR_VJ_1_cdr3", "VJ", name="VJ_1")
+        self.neighbor_finder.add_lookup_table("IR_VDJ_1_cdr3", "VDJ", name="VDJ_1")
+        self.neighbor_finder.add_lookup_table("IR_VJ_2_cdr3", "VJ", name="VJ_2")
+        self.neighbor_finder.add_lookup_table("IR_VDJ_2_cdr3", "VDJ", name="VDJ_2")
+        self.neighbor_finder.add_lookup_table("IR_VJ_1_v_gene", "v_gene", name="VJ_v")
+        self.neighbor_finder.add_lookup_table("IR_VDJ_1_v_gene", "v_gene", name="VDJ_v")
+
+    @staticmethod
+    def _define_clonotypes(adata, key, receptor_arms, dual_ir, same_v_gene):
+        """Define clonotypes based on sequence identity"""
         # Define clonotypes. TODO v-genes, within_group
         receptor_arm_cols = (
             ["VJ", "VDJ"] if receptor_arms in ["all", "any"] else [receptor_arms]
         )
         dual_ir_cols = ["1"] if dual_ir == "primary_only" else ["1", "2"]
         clonotype_cols = [
-            f"IR_{arm}_{i}_{self.key}"
+            f"IR_{arm}_{i}_{key}"
             for arm, i in itertools.product(receptor_arm_cols, dual_ir_cols)
         ]
-
-        self.clonotypes = (
-            adata.obs.loc[clonotype_cols, :].drop_duplicates().reset_index()
-        )
-
-        self._build_lookup_table("IR_VJ_1_cdr3", "VJ", name="VJ_1")
-        self._build_lookup_table("IR_VDJ_1_cdr3", "VDJ", name="VDJ_1")
-        self._build_lookup_table("IR_VJ_2_cdr3", "VJ", name="VJ_2")
-        self._build_lookup_table("IR_VDJ_2_cdr3", "VDJ", name="VDJ_2")
-        self._build_lookup_table("IR_VJ_1_v_gene", "v_gene", name="VJ_v")
-        self._build_lookup_table("IR_VDJ_1_v_gene", "v_gene", name="VDJ_v")
+        clonotypes = adata.obs.loc[clonotype_cols, :].drop_duplicates().reset_index()
+        return clonotypes
 
     def compute_distances(self):
         for i, ct in self.clonotypes.itertuples():
