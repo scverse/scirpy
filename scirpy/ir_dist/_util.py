@@ -2,7 +2,7 @@ from collections.abc import MutableMapping
 import numpy as np
 import pandas as pd
 import itertools
-from typing import Dict, Sequence, Tuple, Iterable
+from typing import Dict, Sequence, Tuple, Iterable, Union
 import scipy.sparse as sp
 from scipy.sparse.csr import csr_matrix
 
@@ -51,7 +51,12 @@ class DoubleLookupNeighborFinder:
         # reverse: feature_index -> clonotype lookups
         self.lookups: Dict[str, Tuple[str, np.ndarray, dict]] = dict()
 
-    def lookup(self, object_id: int, lookup_table: str) -> Iterable[Tuple[int, int]]:
+    def lookup(
+        self,
+        object_id: int,
+        forward_lookup_table: str,
+        reverse_lookup_table: Union[str, None] = None,
+    ) -> Iterable[Tuple[int, int]]:
         """Get ids of neighboring objects from a lookup table.
 
         Performs the following lookup:
@@ -62,11 +67,26 @@ class DoubleLookupNeighborFinder:
         ----------
         object_id
             The row index of the feature_table.
-        lookup_id
+        forward_lookup_table
             The unique identifier of a lookup table previously added via
             `add_lookup_table`.
+        reverse_lookup_table
+            The unique identifier of the lookup table used for the reverse lookup.
+            If not provided will use the same lookup table for forward and reverse
+            lookup. This is useful to calculate distances across features from
+            different columns of the feature table.
         """
-        distance_matrix_name, forward, reverse = self.lookups[lookup_table]
+        distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
+        if reverse_lookup_table is not None:
+            distance_matrix_name_reverse, _, reverse = self.lookups[
+                reverse_lookup_table
+            ]
+            if distance_matrix_name != distance_matrix_name_reverse:
+                raise ValueError(
+                    "Forward and reverse lookup tablese must be defined "
+                    "on the same distance matrices."
+                )
+
         distance_matrix = self.distance_matrices[distance_matrix_name]
         row = distance_matrix[forward[object_id], :]
         # get column indices directly from sparse row

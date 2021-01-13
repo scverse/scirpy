@@ -156,7 +156,7 @@ class ClonotypeNeighbors:
         dual_ir=Literal["primary_only", "all", "any"],
         same_v_gene: bool,
         within_group: Union[None, Sequence[str]],
-        distance_dict: Mapping[str, Mapping[str, object]],
+        distance_dict: Mapping[str, Mapping],
         sequence_key: str,
     ):
         self.adata = adata
@@ -193,11 +193,10 @@ class ClonotypeNeighbors:
 
     def _add_distance_matrices(self):
         for chain_type in self._receptor_arm_cols:
-            distance_dict = self.adata.uns[self.distance_key]
             self.neighbor_finder.add_distance_matrix(
                 name=chain_type,
-                distance_matrix=distance_dict["distances"],
-                labels=distance_dict["seqs"],
+                distance_matrix=self.distance_dict[chain_type]["distances"],
+                labels=self.distance_dict[chain_type]["seqs"],
             )
 
         # # store v gene distances
@@ -229,4 +228,18 @@ class ClonotypeNeighbors:
 
     def compute_distances(self):
         for i, ct in self.clonotypes.itertuples():
-            self.neighbor_finder.lookup(i, "VJ_1")
+            if self.receptor_arms == "VJ":
+                if self.dual_ir == "primary_only":
+                    res = SetDict(self.neighbor_finder.lookup(i, "VJ_1"))
+                if self.dual_ir == "all":
+                    r1 = SetDict(self.neighbor_finder.lookup(i, "VJ_1"))
+                    r2 = SetDict(self.neighbor_finder.lookup(i, "VJ_2"))
+                    r1_2 = SetDict(self.neighbor_finder.lookup(i, "VJ_1", "VJ_2"))
+                    r2_1 = SetDict(self.neighbor_finder.lookup(i, "VJ_2", "VJ_1"))
+                    res = (r1 & r2) | (r1_2 & r2_1)
+                if self.dual_ir == "any":
+                    r1 = SetDict(self.neighbor_finder.lookup(i, "VJ_1"))
+                    r2 = SetDict(self.neighbor_finder.lookup(i, "VJ_2"))
+                    r1_2 = SetDict(self.neighbor_finder.lookup(i, "VJ_1", "VJ_2"))
+                    r2_1 = SetDict(self.neighbor_finder.lookup(i, "VJ_2", "VJ_1"))
+                    res = r1 | r2 | r1_2 | r2_1

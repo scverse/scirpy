@@ -30,6 +30,13 @@ def dlnf():
     return dlnf
 
 
+@pytest.fixture
+def dlnf_with_lookup(dlnf):
+    dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
+    dlnf.add_lookup_table(feature_col="VDJ", distance_matrix="test", name="VDJ_test")
+    return dlnf
+
+
 def test_set_dict_init():
     expected = {"foo": 1, "bar": 4, "baz": 9}
 
@@ -152,21 +159,51 @@ def test_dlnf_lookup_table(dlnf):
     }
 
 
-def test_dlnf_lookup(dlnf):
-    dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
+def test_dlnf_lookup(dlnf_with_lookup):
     assert (
-        list(dlnf.lookup(0, "VJ_test"))
-        == list(dlnf.lookup(4, "VJ_test"))
+        list(dlnf_with_lookup.lookup(0, "VJ_test"))
+        == list(dlnf_with_lookup.lookup(4, "VJ_test"))
         == [(0, 1), (4, 1)]
     )
-    assert list(dlnf.lookup(1, "VJ_test")) == [(1, 2)]
+    assert list(dlnf_with_lookup.lookup(1, "VJ_test")) == [(1, 2)]
     assert (
-        list(dlnf.lookup(2, "VJ_test"))
-        == list(dlnf.lookup(5, "VJ_test"))
+        list(dlnf_with_lookup.lookup(2, "VJ_test"))
+        == list(dlnf_with_lookup.lookup(5, "VJ_test"))
         == [(2, 3), (5, 3), (3, 4), (6, 4)]
     )
     assert (
-        list(dlnf.lookup(3, "VJ_test"))
-        == list(dlnf.lookup(6, "VJ_test"))
+        list(dlnf_with_lookup.lookup(3, "VJ_test"))
+        == list(dlnf_with_lookup.lookup(6, "VJ_test"))
         == [(2, 4), (5, 4), (3, 3), (6, 3)]
     )
+
+
+@pytest.mark.parametrize("clonotype_id", range(6))
+def test_dnlf_lookup_with_two_identical_forward_and_reverse_tables(
+    dlnf_with_lookup, clonotype_id
+):
+    assert list(dlnf_with_lookup.lookup(clonotype_id, "VJ_test")) == list(
+        dlnf_with_lookup.lookup(clonotype_id, "VJ_test", "VJ_test")
+    )
+    assert list(dlnf_with_lookup.lookup(clonotype_id, "VDJ_test")) == list(
+        dlnf_with_lookup.lookup(clonotype_id, "VDJ_test", "VDJ_test")
+    )
+
+
+def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup):
+    assert (
+        list(dlnf_with_lookup.lookup(0, "VJ_test", "VDJ_test"))
+        == list(dlnf_with_lookup.lookup(4, "VJ_test", "VDJ_test"))
+        == [(0, 1)]
+    )
+    assert (
+        list(dlnf_with_lookup.lookup(3, "VJ_test", "VDJ_test"))
+        == list(dlnf_with_lookup.lookup(6, "VJ_test", "VDJ_test"))
+        == [(2, 4), (3, 3), (4, 3), (5, 3), (6, 3)]
+    )
+    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test")) == [
+        (2, 3),
+        (5, 3),
+        (3, 4),
+        (6, 4),
+    ]
