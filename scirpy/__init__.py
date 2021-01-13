@@ -10,3 +10,4 @@ if not within_flit():
     from . import _tools as tl
     from . import _plotting as pl
     from . import datasets
+    from . import ir_dist

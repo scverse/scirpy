@@ -114,6 +114,9 @@ class DoubleLookupNeighborFinder:
             raise ValueError("Dimension mismatch!")
         if not isinstance(distance_matrix, csr_matrix):
             raise TypeError("Distance matrix must be sparse and in CSR format. ")
+
+        # The class relies on zeros not being explicitly stored during reverse lookup.
+        distance_matrix.eliminate_zeros()
         self.distance_matrices[name] = distance_matrix
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
 

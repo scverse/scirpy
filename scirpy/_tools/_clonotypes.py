@@ -1,12 +1,147 @@
 from anndata import AnnData
 import igraph as ig
 from .._compat import Literal
-from typing import Union, Tuple
+from typing import Union, Tuple, Sequence
 from ..util import _doc_params
 from ..util.graph import _get_igraph_from_adjacency, layout_components
+from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
 import pandas as pd
 import random
+
+
+def define_clonotype_clusters(
+    adata: AnnData,
+    *,
+    sequence: Literal["aa", "nt"] = "aa",
+    metric: Literal["alignment", "levenshtein", "hamming", "identity"] = "identity",
+    receptor_arms=Literal["VJ", "VDJ", "all", "any"],
+    dual_ir=Literal["primary_only", "all", "any"],
+    same_v_gene: bool = False,
+    within_group: Union[Sequence[str], str, None] = "receptor_type",
+    key_added: str = "clonotype",
+    partitions: Literal["connected", "leiden"] = "connected",
+    resolution: float = 1,
+    n_iterations: int = 5,
+    distance_key: Union[str, None] = None,
+    inplace: bool = True,
+) -> Union[Tuple[np.ndarray, np.ndarray], None]:
+    """
+    Define :term:`clonotype clusters<Clonotype cluster>`.
+
+    Parameters:
+    -----------
+    adata
+        Annotated data matrix
+    sequence
+        The sequence parameter used when running :func:scirpy.pp.ir_dist`
+    metric
+        The metric parameter used when running :func:`scirpy.pp.ir_dist`
+    receptor_arms
+         * `"TRA"` - only consider TRA sequences
+         * `"TRB"` - only consider TRB sequences
+         * `"all"` - both TRA and TRB need to match
+         * `"any"` - either TRA or TRB need to match
+    dual_ir
+         * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
+         * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
+           cutoff for any of the chains.
+         * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
+           cutoff for all of the chains.
+
+        See also :term:`Dual IR`.
+
+    same_v_gene
+        Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
+        as the CDR1 and CDR2 regions are fully encoded in this gene.
+        See :term:`CDR` for more details.
+
+        v genes are matched based on the behaviour defined with `receptor_arms` and
+        `dual_ir`.
+
+    within_group
+        Enforces clonotypes to have the same group defined by one or multiple grouping
+        variables. Per default, this is set to :term:`receptor_type<Receptor type>`,
+        i.e. clonotypes cannot comprise both B cells and T cells. Set this to
+        :term:`receptor_subtype<Receptor subtype>` if you don't want clonotypes to
+        be shared across e.g. gamma-delta and alpha-beta T-cells.
+        You can also set this to any other column in `adata.obs` that contains
+        a grouping, or to `None`, if you want no constraints.
+
+    key_added
+        TODO
+
+    partitions
+        How to find graph partitions that define a clonotype.
+        Possible values are `leiden`, for using the "Leiden" algorithm and
+        `connected` to find fully connected sub-graphs.
+
+        The difference is that the Leiden algorithm further divides
+        fully connected subgraphs into highly-connected modules.
+    resolution
+        `resolution` parameter for the leiden algorithm.
+    n_iterations
+        `n_iterations` parameter for the leiden algorithm.
+    distance_key
+        Key in `adata.uns` where the sequence distances are stored. This defaults
+        to `ir_dist_{sequence}_{metric}`.
+    inplace
+        If `True`, adds the results to anndata, otherwise returns them.
+
+    Returns
+    -------
+    clonotype
+        an array containing the clonotype id for each cell
+    clonotype_size
+        an array containing the number of cells in the respective clonotype
+        for each cell.
+    """
+    if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
+        raise ValueError(
+            "Invalid value for `receptor_arms`. Note that starting with v0.5 "
+            "`TRA` and `TRB` are not longer valid values."
+        )
+
+    if dual_ir not in ["primary_only", "all", "any"]:
+        raise ValueError("Invalid value for `dual_ir")
+
+    if within_group is not None:
+        if isinstance(within_group, str):
+            within_group = [within_group]
+        for group_col in within_group:
+            if group_col not in adata.obs.columns:
+                msg = f"column `{within_group}` not found in `adata.obs`. "
+                if group_col in ("receptor_type", "receptor_subtype"):
+                    msg += "Did you run `tl.chain_qc`? "
+                raise ValueError(msg)
+
+    if distance_key is None:
+        distance_key = f"ir_dist_{sequence}_{metric}"
+    try:
+        distance_dict = adata.uns[distance_key]
+    except KeyError:
+        raise ValueError(
+            "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
+        )
+
+    sequence_key = "cdr3" if sequence == "aa" else "cdr3_nt"
+
+    ctn = ClonotypeNeighbors(
+        adata,
+        receptor_arms=receptor_arms,
+        dual_ir=dual_ir,
+        same_v_gene=same_v_gene,
+        within_group=within_group,
+        distance_dict=distance_dict,
+        sequence_key=sequence_key,
+    )
+    # TODO log progress and time
+    ctn.prepare()
+    ctn.compute_distances()
+    pass
+
+    # TODO store clonotype distance in uns
+    pass
 
 
 def define_clonotypes(
@@ -70,48 +205,6 @@ clonotype_size
     an array containing the number of cells in the respective clonotype
     for each cell.
 """
-
-
-@_doc_params(common_doc=_define_clonotypes_doc)
-def define_clonotype_clusters(
-    adata: AnnData,
-    *,
-    sequence: Literal["aa", "nt"] = "aa",
-    metric: Literal["alignment", "levenshtein", "hamming", "identity"] = "identity",
-    key_added: Union[str, None] = None,
-    **kwargs,
-) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    """\
-    Define :term:`clonotype clusters<Clonotype cluster>` based on :term:`CDR3` distance.
-
-    As opposed to :func:`~scirpy.tl.define_clonotypes` which employs
-    a more stringent definition of :term:`clonotypes <Clonotype>`,
-    this function flexibly defines clonotype clusters based on amino acid or nucleic
-    acid sequence identity or similarity.
-
-    Requires running :func:`scirpy.pp.ir_neighbors` first with the same
-    `sequence` and `metric` values first.
-
-    Parameters
-    ----------
-    adata
-        Annotated data matrix
-    sequence
-        The sequence parameter used when running :func:scirpy.pp.ir_neighbors`
-    metric
-        The metric parameter used when running :func:`scirpy.pp.ir_neighbors`
-    key_added
-        Name of the columns which will be added to `adata.obs` if inplace is `True`.
-        Will create the columns `{{key_added}}` and `{{key_added}}_size`.
-
-        Defaults to `ct_cluster_{{sequence}}_{{metric}}` and `ct_cluster_{{sequence}}_{{metric}}_size`.
-    {common_doc}
-    """
-    if key_added is None:
-        key_added = f"ct_cluster_{sequence}_{metric}"
-    if "neighbors_key" not in kwargs:
-        kwargs["neighbors_key"] = f"ir_neighbors_{sequence}_{metric}"
-    return _define_clonotypes(adata, key_added=key_added, **kwargs)
 
 
 @_doc_params(common_doc=_define_clonotypes_doc)

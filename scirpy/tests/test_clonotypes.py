@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy.testing as npt
 import pandas.testing as pdt
-import scirpy as st
+import scirpy as ir
 from anndata import AnnData
 import numpy as np
 from scirpy.util import _is_symmetric
@@ -50,7 +50,7 @@ import pytest
 def test_define_clonotype_clusters(
     adata_conn, same_v_gene, within_group, ct_expected, ct_size_expected
 ):
-    clonotype, clonotype_size = st.tl.define_clonotype_clusters(
+    clonotype, clonotype_size = ir.tl.define_clonotype_clusters(
         adata_conn,
         metric="alignment",
         within_group=within_group,
@@ -62,7 +62,7 @@ def test_define_clonotype_clusters(
     npt.assert_equal(clonotype, ct_expected)
     npt.assert_equal(clonotype_size, ct_size_expected)
 
-    st.tl.define_clonotype_clusters(
+    ir.tl.define_clonotype_clusters(
         adata_conn,
         metric="alignment",
         within_group=within_group,
@@ -77,7 +77,7 @@ def test_define_clonotype_clusters(
     npt.assert_equal(adata_conn.obs["ct_size"].values, ct_size_expected)
 
     # Test with higher leiden resolution
-    st.tl.define_clonotype_clusters(
+    ir.tl.define_clonotype_clusters(
         adata_conn,
         neighbors_key="ir_neighbors_aa_alignment",
         within_group=None,
@@ -93,8 +93,8 @@ def test_define_clonotype_clusters(
 
 def test_clonotypes_end_to_end1(adata_define_clonotypes):
     # default parameters of ir-neighbors should yield nt-identity
-    st.pp.ir_neighbors(adata_define_clonotypes, receptor_arms="all", dual_ir="all")
-    clonotypes, _ = st.tl.define_clonotypes(
+    ir.pp.ir_neighbors(adata_define_clonotypes, receptor_arms="all", dual_ir="all")
+    clonotypes, _ = ir.tl.define_clonotypes(
         adata_define_clonotypes, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -103,14 +103,14 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
 
 
 def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
-    st.pp.ir_neighbors(
+    ir.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
         dual_ir="all",
         sequence="aa",
     )
-    clonotypes, _ = st.tl.define_clonotype_clusters(
+    clonotypes, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -119,14 +119,14 @@ def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
-    st.pp.ir_neighbors(
+    ir.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="any",
         dual_ir="any",
         sequence="aa",
     )
-    clonotypes, _ = st.tl.define_clonotype_clusters(
+    clonotypes, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -135,14 +135,14 @@ def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
-    st.pp.ir_neighbors(
+    ir.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
         dual_ir="any",
         sequence="aa",
     )
-    clonotypes, _ = st.tl.define_clonotype_clusters(
+    clonotypes, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -151,14 +151,14 @@ def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
-    st.pp.ir_neighbors(
+    ir.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="any",
         dual_ir="all",
         sequence="aa",
     )
-    clonotypes, _ = st.tl.define_clonotype_clusters(
+    clonotypes, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -167,14 +167,14 @@ def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
-    st.pp.ir_neighbors(
+    ir.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="all",
         dual_ir="primary_only",
         sequence="aa",
     )
-    clonotypes, _ = st.tl.define_clonotype_clusters(
+    clonotypes, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -183,14 +183,14 @@ def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
 
 
 def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
-    st.pp.ir_neighbors(
+    ir.pp.ir_neighbors(
         adata_define_clonotype_clusters,
         cutoff=0,
         receptor_arms="VDJ",
         dual_ir="primary_only",
         sequence="aa",
     )
-    clonotypes, _ = st.tl.define_clonotype_clusters(
+    clonotypes, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters, inplace=False, within_group=None
     )
     print(clonotypes)
@@ -199,7 +199,7 @@ def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
 
 
 def test_clonotype_network(adata_conn):
-    st.tl.define_clonotype_clusters(
+    ir.tl.define_clonotype_clusters(
         adata_conn,
         sequence="aa",
         metric="alignment",
@@ -207,7 +207,7 @@ def test_clonotype_network(adata_conn):
         within_group=None,
     )
     random.seed(42)
-    coords = st.tl.clonotype_network(
+    coords = ir.tl.clonotype_network(
         adata_conn,
         sequence="aa",
         metric="alignment",
@@ -228,7 +228,7 @@ def test_clonotype_network(adata_conn):
     )
 
     random.seed(42)
-    st.tl.clonotype_network(
+    ir.tl.clonotype_network(
         adata_conn,
         sequence="aa",
         metric="alignment",
@@ -246,11 +246,11 @@ def test_clonotype_network(adata_conn):
     )
 
     with pytest.raises(ValueError):
-        st.tl.clonotype_network(adata_conn[[1, 3], :])
+        ir.tl.clonotype_network(adata_conn[[1, 3], :])
 
 
 def test_clonotype_network_igraph(adata_clonotype_network):
-    g, lo = st.tl.clonotype_network_igraph(adata_clonotype_network)
+    g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
     assert g.vcount() == 3
     npt.assert_almost_equal(
         np.array(lo.coords),
@@ -265,13 +265,13 @@ def test_clonotype_network_igraph(adata_clonotype_network):
 
 
 def test_clonotype_convergence(adata_clonotype):
-    res = st.tl.clonotype_convergence(
+    res = ir.tl.clonotype_convergence(
         adata_clonotype,
         key_coarse="clonotype_cluster",
         key_fine="clonotype",
         inplace=False,
     )
-    st.tl.clonotype_convergence(
+    ir.tl.clonotype_convergence(
         adata_clonotype,
         key_coarse="clonotype_cluster",
         key_fine="clonotype",
@@ -287,7 +287,7 @@ def test_clonotype_convergence(adata_clonotype):
         ),
     )
 
-    res = st.tl.clonotype_convergence(
+    res = ir.tl.clonotype_convergence(
         adata_clonotype,
         key_fine="clonotype_cluster",
         key_coarse="clonotype",

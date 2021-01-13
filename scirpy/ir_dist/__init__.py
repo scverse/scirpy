@@ -1,3 +1,4 @@
+"""Compute distances between immune receptor sequences"""
 import itertools
 from anndata import AnnData
 from typing import Union, List, Tuple, Dict
@@ -62,7 +63,9 @@ cutoff
 """
 
 
-def _get_metric(metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs):
+def _get_distance_calculator(
+    metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs
+):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
@@ -106,7 +109,10 @@ def ir_dist(
     n_jobs: Union[int, None] = None,
 ) -> Union[dict, None]:
     """Computes a sequence-distance metric between all unique VJ CDR3 sequences and
-    between all unique VDJ CDR3 sequences"""
+    between all unique VDJ CDR3 sequences
+
+    TODO docs
+    """
     COLUMN = "IR_{chain_type}_{chain_id}_{key}"
     key = "cdr3" if sequence == "aa" else "cdr3_nt"
     result = {
@@ -114,7 +120,7 @@ def ir_dist(
         "VDJ": dict(),
         "params": {"metric": str(metric), "sequence": sequence, "cutoff": cutoff},
     }
-    dist_calc = _get_metric(metric, cutoff, n_jobs=n_jobs)
+    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs)
 
     # get all unique seqs for VJ and VDJ
     for chain_type in ["VJ", "VDJ"]:
@@ -199,7 +205,7 @@ def sequence_dist(
         if seqs2 is not None
         else (None, seqs_unique_inverse)
     )
-    dist_calc = _get_metric(metric, cutoff, n_jobs=n_jobs, **kwargs)
+    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs, **kwargs)
 
     logging.info(f"Calculating distances with metric {metric}")
 
