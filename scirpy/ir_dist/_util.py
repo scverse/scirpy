@@ -4,6 +4,7 @@ import pandas as pd
 import itertools
 from typing import Dict, Sequence, Tuple, Iterable
 import scipy.sparse as sp
+from scipy.sparse.csr import csr_matrix
 
 
 class DoubleLookupNeighborFinder:
@@ -91,6 +92,8 @@ class DoubleLookupNeighborFinder:
         """
         if not (len(labels) == distance_matrix.shape[0] == distance_matrix.shape[1]):
             raise ValueError("Dimension mismatch!")
+        if not isinstance(distance_matrix, csr_matrix):
+            raise TypeError("Distance matrix must be sparse and in CSR format. ")
         self.distance_matrices[name] = distance_matrix
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
 

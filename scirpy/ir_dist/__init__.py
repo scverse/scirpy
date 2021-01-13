@@ -112,7 +112,7 @@ def ir_dist(
     result = {
         "VJ": dict(),
         "VDJ": dict(),
-        "params": {"metric": metric, "sequence": sequence, "cutoff": cutoff},
+        "params": {"metric": str(metric), "sequence": sequence, "cutoff": cutoff},
     }
     dist_calc = _get_metric(metric, cutoff, n_jobs=n_jobs)
 

@@ -1,4 +1,5 @@
-from typing import Union, Tuple, Sequence, Iterable, Dict
+from scirpy.ir_dist import MetricType
+from typing import Mapping, Union, Tuple, Sequence, Iterable, Dict
 from anndata import AnnData
 from .._compat import Literal
 import numpy as np
@@ -8,234 +9,224 @@ import pandas as pd
 from ._util import SetDict, DoubleLookupNeighborFinder
 
 
+def define_clonotypes():
+    """Alias for define_clonotype_clusters based on nt sequence identity"""
+    pass
+
+
 def define_clonotype_clusters(
     adata: AnnData,
     *,
-    same_v_gene: Union[bool, Literal["primary_only", "all"]] = False,
-    within_group: Union[str, None] = "receptor_type",
-    partitions: Literal["connected", "leiden"] = "connected",
+    sequence: Literal["aa", "nt"] = "aa",
+    metric: Literal["alignment", "levenshtein", "hamming", "identity"] = "identity",
     receptor_arms=Literal["VJ", "VDJ", "all", "any"],
     dual_ir=Literal["primary_only", "all", "any"],
+    same_v_gene: bool = False,
+    within_group: Union[Sequence[str], str, None] = "receptor_type",
+    key_added: str = "clonotype",
+    partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
-    neighbors_key: str = "ir_neighbors",
-    key_added: str = "clonotype",
+    distance_key: Union[str, None] = None,
     inplace: bool = True,
-    sequence,
-    metric,
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:
+    """
+    Define :term:`clonotype clusters<Clonotype cluster>`.
+
+    Parameters:
+    -----------
+    adata
+        Annotated data matrix
+    sequence
+        The sequence parameter used when running :func:scirpy.pp.ir_dist`
+    metric
+        The metric parameter used when running :func:`scirpy.pp.ir_dist`
+    receptor_arms
+         * `"TRA"` - only consider TRA sequences
+         * `"TRB"` - only consider TRB sequences
+         * `"all"` - both TRA and TRB need to match
+         * `"any"` - either TRA or TRB need to match
+    dual_ir
+         * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
+         * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
+           cutoff for any of the chains.
+         * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
+           cutoff for all of the chains.
+
+        See also :term:`Dual IR`.
+
+    same_v_gene
+        Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
+        as the CDR1 and CDR2 regions are fully encoded in this gene.
+        See :term:`CDR` for more details.
+
+        v genes are matched based on the behaviour defined with `receptor_arms` and
+        `dual_ir`.
+
+    within_group
+        Enforces clonotypes to have the same group defined by one or multiple grouping
+        variables. Per default, this is set to :term:`receptor_type<Receptor type>`,
+        i.e. clonotypes cannot comprise both B cells and T cells. Set this to
+        :term:`receptor_subtype<Receptor subtype>` if you don't want clonotypes to
+        be shared across e.g. gamma-delta and alpha-beta T-cells.
+        You can also set this to any other column in `adata.obs` that contains
+        a grouping, or to `None`, if you want no constraints.
+
+    key_added
+        TODO
+
+    partitions
+        How to find graph partitions that define a clonotype.
+        Possible values are `leiden`, for using the "Leiden" algorithm and
+        `connected` to find fully connected sub-graphs.
+
+        The difference is that the Leiden algorithm further divides
+        fully connected subgraphs into highly-connected modules.
+    resolution
+        `resolution` parameter for the leiden algorithm.
+    n_iterations
+        `n_iterations` parameter for the leiden algorithm.
+    distance_key
+        Key in `adata.uns` where the sequence distances are stored. This defaults
+        to `ir_dist_{sequence}_{metric}`.
+    inplace
+        If `True`, adds the results to anndata, otherwise returns them.
+
+    Returns
+    -------
+    clonotype
+        an array containing the clonotype id for each cell
+    clonotype_size
+        an array containing the number of cells in the respective clonotype
+        for each cell.
+    """
+    if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
+        raise ValueError(
+            "Invalid value for `receptor_arms`. Note that starting with v0.5 "
+            "`TRA` and `TRB` are not longer valid values."
+        )
+
+    if dual_ir not in ["primary_only", "all", "any"]:
+        raise ValueError("Invalid value for `dual_ir")
+
+    if within_group is not None:
+        if isinstance(within_group, str):
+            within_group = [within_group]
+        for group_col in within_group:
+            if group_col not in adata.obs.columns:
+                msg = f"column `{within_group}` not found in `adata.obs`. "
+                if group_col in ("receptor_type", "receptor_subtype"):
+                    msg += "Did you run `tl.chain_qc`? "
+                raise ValueError(msg)
+
+    if distance_key is None:
+        distance_key = f"ir_dist_{sequence}_{metric}"
+    try:
+        distance_dict = adata.uns[distance_key]
+    except KeyError:
+        raise ValueError(
+            "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
+        )
+
+    sequence_key = "cdr3" if sequence == "aa" else "cdr3_nt"
+
+    ctn = ClonotypeNeighbors(
+        adata,
+        receptor_arms=receptor_arms,
+        dual_ir=dual_ir,
+        same_v_gene=same_v_gene,
+        within_group=within_group,
+        distance_dict=distance_dict,
+        sequence_key=sequence_key,
+    )
+    # TODO log progress and time
+    ctn.prepare()
+    ctn.compute_distances()
+    pass
+
     pass
 
 
 class ClonotypeNeighbors:
     def __init__(
         self,
-        adata,
+        adata: AnnData,
         *,
-        same_v_gene,
-        within_group,
-        receptor_arms,
-        dual_ir,
-        sequence,
-        metric,
+        receptor_arms=Literal["VJ", "VDJ", "all", "any"],
+        dual_ir=Literal["primary_only", "all", "any"],
+        same_v_gene: bool,
+        within_group: Union[None, Sequence[str]],
+        distance_dict: Mapping[str, Mapping[str, object]],
+        sequence_key: str,
     ):
-        self.key = "cdr3" if sequence == "aa" else "cdr3_nt"
-        self.clonotpyes = self._define_clonotypes(
-            adata, self.key, receptor_arms, dual_ir, same_v_gene
+        self.adata = adata
+        self.same_v_gene = same_v_gene
+        self.within_group = within_group
+        self.receptor_arms = receptor_arms
+        self.dual_ir = dual_ir
+        self.distance_dict = distance_dict
+        self.sequence_key = sequence_key
+
+        self._receptor_arm_cols = (
+            ["VJ", "VDJ"]
+            if self.receptor_arms in ["all", "any"]
+            else [self.receptor_arms]
+        )
+        self._dual_ir_cols = ["1"] if self.dual_ir == "primary_only" else ["1", "2"]
+
+    def prepare(self):
+        self._make_clonotype_table()
+        self._add_distance_matrices()
+        self._add_lookup_tables()
+        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
+
+    def _make_clonotype_table(self):
+        """Define clonotypes based identical IR features"""
+        # Define clonotypes. TODO v-genes, within_group
+        clonotype_cols = [
+            f"IR_{arm}_{i}_{self.sequence_key}"
+            for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols)
+        ]
+        self.clonotypes = (
+            self.adata.obs.loc[clonotype_cols, :].drop_duplicates().reset_index()
         )
 
-        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotpyes)
-        for chain_type in ["VJ", "VDJ"]:
-            distance_dict = adata.uns[f"ir_dist_{sequence}_{metric}"]
+    def _add_distance_matrices(self):
+        for chain_type in self._receptor_arm_cols:
+            distance_dict = self.adata.uns[self.distance_key]
             self.neighbor_finder.add_distance_matrix(
                 name=chain_type,
                 distance_matrix=distance_dict["distances"],
                 labels=distance_dict["seqs"],
             )
 
-        # store v gene distances
-        v_genes = np.unique(
-            np.concatenate(
-                [
-                    adata.obs[c].values
-                    for c in [
-                        "IR_VJ_1_v_gene",
-                        "IR_VJ_2_v_gene",
-                        "IR_VDJ_1_v_gene",
-                        "IR_VDJ_2_v_gene",
-                    ]
-                ]
+        # # store v gene distances
+        # v_genes = np.unique(
+        #     np.concatenate(
+        #         [
+        #             self.adata.obs[c].values
+        #             for c in [
+        #                 "IR_VJ_1_v_gene",
+        #                 "IR_VJ_2_v_gene",
+        #                 "IR_VDJ_1_v_gene",
+        #                 "IR_VDJ_2_v_gene",
+        #             ]
+        #         ]
+        #     )
+        # )
+        # self.neighbor_finder.add_distance_matrix(
+        #     "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
+        # )
+
+    def _add_lookup_tables(self):
+        for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
+            self.neighbor_finder.add_lookup_table(
+                f"{arm}_{i}", f"IR_{arm}_{i}_{self.sequence_key}", arm
             )
-        )
-        self.neighbor_finder.add_distance_matrix(
-            "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
-        )
 
-        self.neighbor_finder.add_lookup_table("IR_VJ_1_cdr3", "VJ", name="VJ_1")
-        self.neighbor_finder.add_lookup_table("IR_VDJ_1_cdr3", "VDJ", name="VDJ_1")
-        self.neighbor_finder.add_lookup_table("IR_VJ_2_cdr3", "VJ", name="VJ_2")
-        self.neighbor_finder.add_lookup_table("IR_VDJ_2_cdr3", "VDJ", name="VDJ_2")
-        self.neighbor_finder.add_lookup_table("IR_VJ_1_v_gene", "v_gene", name="VJ_v")
-        self.neighbor_finder.add_lookup_table("IR_VDJ_1_v_gene", "v_gene", name="VDJ_v")
-
-    @staticmethod
-    def _define_clonotypes(adata, key, receptor_arms, dual_ir, same_v_gene):
-        """Define clonotypes based on sequence identity"""
-        # Define clonotypes. TODO v-genes, within_group
-        receptor_arm_cols = (
-            ["VJ", "VDJ"] if receptor_arms in ["all", "any"] else [receptor_arms]
-        )
-        dual_ir_cols = ["1"] if dual_ir == "primary_only" else ["1", "2"]
-        clonotype_cols = [
-            f"IR_{arm}_{i}_{key}"
-            for arm, i in itertools.product(receptor_arm_cols, dual_ir_cols)
-        ]
-        clonotypes = adata.obs.loc[clonotype_cols, :].drop_duplicates().reset_index()
-        return clonotypes
+        # self.neighbor_finder.add_lookup_table("VJ_v", "IR_VJ_1_v_gene", "v_gene")
+        # self.neighbor_finder.add_lookup_table("VDJ_v", "IR_VDJ_1_v_gene", "v_gene")
 
     def compute_distances(self):
         for i, ct in self.clonotypes.itertuples():
-            neighbors_vj1 = self.reverse_lookups["VJ_1"][self.lookups["VJ_1"][i]]
-            neighbors_vj1_2 = self.reverse_lookups["VJ_2"][self.lookups["VJ_1"][i]]
-
-
-#
-#
-#
-#
-# def _expand_and_reduce_distances(adata, *receptor_arms, dual_ir, sequence, metric):
-#     """
-#     Expand the sequence distances to a matrix of distances between clonotypes.
-
-#     # TODO include v_gene et al into the clonotype definition.
-#     # I believe this could be handled as a matrix-vector product.
-
-#     Returns a vector of unique clonotypes and a sparse distance matrix of the
-#     same dimension.
-#     """
-#     if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
-#         raise ValueError("Invalid value for receptor_arms!")
-#     if dual_ir not in ["primary_only", "all", "any"]:
-#         raise ValueError("Invalid value for dual_ir!")
-
-#     seq_dist = adata.uns[f"ir_dist_{sequence}_{metric}"]
-#     key = "cdr3" if sequence == "aa" else "cdr3_nt"
-#     use_receptor_arms = (
-#         ["VJ", "VDJ"] if receptor_arms in ["all", "any"] else [receptor_arms]
-#     )
-
-#     receptor_arm_dists = {
-#         arm: _reduce_chains(
-#             adata, seq_dist[arm]["distances"], seq_dist[arm]["seqs"], dual_ir, arm, key
-#         )
-#         for arm in use_receptor_arms
-#     }
-
-#     return _reduce_arms(adata, receptor_arm_dists, receptor_arms, key)
-
-
-# def _reduce_chains(adata, dist_mat, index, dual_ir, receptor_arm, key):
-#     if dual_ir == "primary_only":
-#         seqs = np.unique(adata.obs[f"IR_{receptor_arm}_1_{key}"])
-#         seqs = seqs[~_is_na(seqs)]
-#         return seqs, _expand_matrix_to_target(dist_mat, index, seqs)
-#     else:
-#         target_tuples = np.unique(
-#             [
-#                 (pri, sec)
-#                 for pri, sec in zip(
-#                     adata.obs[f"IR_{receptor_arm}_1_{key}"],
-#                     adata.obs[f"IR_{receptor_arm}_2_{key}"],
-#                 )
-#                 if not _is_na(pri)
-#             ]
-#         )
-#         m1 = _expand_matrix_to_target(dist_mat, index, [x[0] for x in target_tuples])
-#         m2 = _expand_matrix_to_target(dist_mat, index, [x[1] for x in target_tuples])
-#         if dual_ir == "all":
-#             return target_tuples, m1.maximum(m2).multiply(m1 > 0).multiply(m2 > 0)
-#         else:
-#             return target_tuples, _reduce_nonzero(m1, m2)
-
-
-# def _reduce_arms(adata, receptor_arm_dists, receptor_arms, key):
-#     if receptor_arms in ["VJ", "VDJ"]:
-#         return receptor_arm_dists[receptor_arms]
-#     else:
-#         target_tuples = np.unique(
-#             [
-#                 ((vj_pri, vj_sec), (vdj_pri, vdj_sec))
-#                 for vj_pri, vj_sec, vdj_pri, vdj_sec in zip(
-#                     adata.obs[f"IR_VJ_1_{key}"],
-#                     adata.obs[f"IR_VJ_2_{key}"],
-#                     adata.obs[f"IR_VDJ_1_{key}"],
-#                     adata.obs[f"IR_VDJ_2_{key}"],
-#                 )
-#                 if not (_is_na(vj_pri) and _is_na(vdj_pri))
-#             ]
-#         )
-#         index_vj, dist_vj = receptor_arm_dists["VJ"]
-#         index_vdj, dist_vdj = receptor_arm_dists["VDJ"]
-#         m1 = _expand_matrix_to_target(dist_vj, index_vj, [x[0] for x in target_tuples])
-#         m2 = _expand_matrix_to_target(
-#             dist_vdj, index_vdj, [x[1] for x in target_tuples]
-#         )
-#         if receptor_arms == "all":
-#             return target_tuples, m1.maximum(m2).multiply(m1 > 0).multiply(m2 > 0)
-#         else:
-#             return target_tuples, _reduce_nonzero(m1, m2)
-
-
-# # def _reduce_seqs(
-# #     dist_mat1: spmatrix,
-# #     dist_mat2: spmatrix,
-# #     index1: Sequence,
-# #     index2: Sequence,
-# #     target_tuples: Sequence[Tuple],
-# #     operation: Literal["and", "or"],
-# # ) -> csr_matrix:
-# #     """Expands and merges two distance matrices
-
-# #     Parameters
-# #     ----------
-# #     dist_mat1, dist_mat2
-# #         square (upper triangular) sparse adjacency matrix
-# #     index1, index2
-# #         index for the dist matrices.
-# #         `len(index) == dist_mat.shape[0] == dist_mat.shape[1]`
-# #     target_tuples
-# #         Contains tuples with entries from (index1, index2). The function
-# #         computes the distances between the tuples based on the input distance
-# #         matrix and the operation
-# #     operation
-# #         If `and`, both entries in the target tuple must be connected in their respective
-# #         distance matrices. If `or`, at least one of the entries in the target tuple
-# #         must be connected.
-
-# #     Returns
-# #     -------
-# #     Square upper triangular sparse distance matrix with `ncol = nrow = len(target)`.
-# #     """
-# #     m1 = _expand_matrix_to_target(dist_mat1, index1, [x[0] for x in target_tuples])
-# #     m2 = _expand_matrix_to_target(dist_mat2, index2, [x[1] for x in target_tuples])
-
-# #     if operation == "and":
-# #         res = result_dist_mat == 2
-# #     else:
-# #         res = result_dist_mat >= 1
-# #     return res  # type: ignore
-
-
-# def _expand_matrix_to_target(
-#     dist_mat: spmatrix, index: Iterable, target: Sequence
-# ) -> spmatrix:
-#     """Subset a square matrix with rows and columns `index` such that its new rows and
-#     columns match `target`"""
-#     index_dict = {idx: i for i, idx in enumerate(index)}
-#     target_idx = np.fromiter(
-#         (index_dict[t] for t in target), dtype=int, count=len(target)
-#     )
-#     i, j = np.meshgrid(target_idx, target_idx, sparse=True, indexing="ij")
-
-#     dist_mat = dist_mat[i, j]
-#     return dist_mat
+            self.neighbor_finder.lookup(i, "VJ_1")
