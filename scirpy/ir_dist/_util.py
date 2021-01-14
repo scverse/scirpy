@@ -105,7 +105,9 @@ class DoubleLookupNeighborFinder:
             row = distance_matrix[idx_in_dist_mat, :]
             # ... and get column indices directly from sparse row
             yield from itertools.chain.from_iterable(
-                zip(reverse[i], itertools.repeat(distance))
+                # if no entry found (e.g. because of cross-table lookup)
+                # return nothing (-> empty iterator)
+                zip(reverse.get(i, iter(())), itertools.repeat(distance))
                 for i, distance in zip(row.indices, row.data)  # type: ignore
             )
 

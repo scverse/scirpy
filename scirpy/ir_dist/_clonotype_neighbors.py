@@ -6,6 +6,8 @@ import scipy.sparse as sp
 import itertools
 from ._util import SetDict, DoubleLookupNeighborFinder
 from ..util import _is_na, _is_true
+from functools import reduce
+from operator import ior, iand
 
 
 class ClonotypeNeighbors:
@@ -113,23 +115,27 @@ class ClonotypeNeighbors:
 
     def _dist_for_clonotype(self, ct_id: int) -> sp.csr_matrix:
         """Compute neighboring clonotypes for a given clonotype"""
-        if self.receptor_arms == "VJ":
-            if self.dual_ir == "primary_only":
-                res = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_1"))
-            if self.dual_ir == "all":
-                r1 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_1"))
-                r2 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_2"))
-                r1_2 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_1", "VJ_2"))
-                r2_1 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_2", "VJ_1"))
-                res = (r1 & r2) | (r1_2 & r2_1)
-            if self.dual_ir == "any":
-                r1 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_1"))
-                r2 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_2"))
-                r1_2 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_1", "VJ_2"))
-                r2_1 = SetDict(self.neighbor_finder.lookup(ct_id, "VJ_2", "VJ_1"))
-                res = r1 | r2 | r1_2 | r2_1
-            row = self._dict_to_sparse_row(res, self.clonotypes.shape[0])
-            return row
+        res = dict()
+        for tmp_receptor_arm in self._receptor_arm_cols:
+            arm_res = dict()
+            for tmp_chain1, tmp_chain2 in itertools.product(
+                self._dual_ir_cols, repeat=2
+            ):
+                arm_res[f"{tmp_chain1}-{tmp_chain2}"] = SetDict(
+                    self.neighbor_finder.lookup(
+                        ct_id,
+                        f"{tmp_receptor_arm}_{tmp_chain1}",
+                        f"{tmp_receptor_arm}_{tmp_chain2}",
+                    )
+                )
+            operator = iand if self.dual_ir == "all" else ior
+            res[tmp_receptor_arm] = reduce(operator, arm_res.values())
+
+        operator = iand if self.receptor_arms == "all" else ior
+        res = reduce(operator, res.values())
+
+        row = self._dict_to_sparse_row(res, self.clonotypes.shape[0])
+        return row
 
     @staticmethod
     def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
