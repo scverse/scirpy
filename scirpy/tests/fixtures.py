@@ -33,6 +33,8 @@ def adata_cdr3():
                 "TRA",
                 "TRB",
             ],
+            # This row has no chains, but "has_ir" = True. That can happen if
+            # the user does not filter the data.
             [
                 "cell3",
                 "nan",
@@ -57,6 +59,8 @@ def adata_cdr3():
                 "TRA",
                 "TRB",
             ],
+            # this row is in inconsistent state (on purpose). There should never
+            # be a clonotype with a secondary and no primary chain.
             [
                 "cell5",
                 "nan",
@@ -83,7 +87,9 @@ def adata_cdr3():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
+    obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
+    adata._sanitize()
     return adata
 
 

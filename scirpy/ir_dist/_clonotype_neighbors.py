@@ -41,7 +41,9 @@ class ClonotypeNeighbors:
     def _prepare(self):
         """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
         self._make_clonotype_table()
-        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
+        self.neighbor_finder = DoubleLookupNeighborFinder(
+            self.clonotypes, nan_dist=np.nan if self.dual_ir == "all" else 0
+        )
         self._add_distance_matrices()
         self._add_lookup_tables()
 
@@ -55,7 +57,7 @@ class ClonotypeNeighbors:
         clonotypes = (
             self.adata.obs.loc[_is_true(self.adata.obs["has_ir"]), clonotype_cols]
             .drop_duplicates()
-            .reset_index()
+            .reset_index(drop=True)
         )
 
         # make sure all nans are consistent "nan"

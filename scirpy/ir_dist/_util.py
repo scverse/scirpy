@@ -8,7 +8,7 @@ from scipy.sparse.csr import csr_matrix
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(self, feature_table: pd.DataFrame, *, nan_dist: int = 0):
+    def __init__(self, feature_table: pd.DataFrame, *, nan_dist: float = 0):
         """
         A datastructure to efficiently retrieve distances based on different features.
 

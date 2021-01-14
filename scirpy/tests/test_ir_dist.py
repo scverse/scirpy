@@ -5,9 +5,16 @@ import numpy as np
 import numpy.testing as npt
 import scirpy as ir
 import scipy.sparse
-from .fixtures import adata_cdr3
+from .fixtures import adata_cdr3  # NOQA
 from .util import _squarify
 from scirpy.util import _is_symmetric
+import pandas.testing as pdt
+import pandas as pd
+
+
+def _assert_frame_equal(left, right):
+    """alias to pandas.testing.assert_frame_equal configured for the tests in this file"""
+    pdt.assert_frame_equal(left, right, check_dtype=False, check_categorical=False)
 
 
 @pytest.fixture
@@ -103,6 +110,53 @@ def test_sequence_dist(metric, cutoff, expected_square, expected):
     )
 
 
+@pytest.mark.parametrize(
+    "metric,expected_key,expected_dist_vj,expected_dist_vdj",
+    [
+        (
+            "identity",
+            "ir_dist_aa_identity",
+            np.identity(2),
+            np.identity(5),
+        ),
+        (
+            "mock",
+            "ir_dist_aa_custom",
+            np.array([[1, 4], [4, 1]]),
+            np.array(
+                [
+                    [1, 0, 0, 0, 0],
+                    [0, 1, 10, 10, 0],
+                    [0, 10, 1, 5, 0],
+                    [0, 10, 5, 1, 0],
+                    [0, 0, 0, 0, 1],
+                ]
+            ),
+        ),
+    ],
+)
+def test_ir_dist(
+    adata_cdr3,
+    adata_cdr3_mock_distance_calculator,
+    metric,
+    expected_key,
+    expected_dist_vj,
+    expected_dist_vdj,
+):
+    expected_seq_vj = np.array(["AAA", "AHA"])
+    expected_seq_vdj = np.array(["AAA", "KK", "KKK", "KKY", "LLL"])
+    ir.pp.ir_dist(
+        adata_cdr3,
+        metric=metric if metric != "mock" else adata_cdr3_mock_distance_calculator,
+        sequence="aa",
+    )
+    res = adata_cdr3.uns[expected_key]
+    npt.assert_array_equal(res["VJ"]["seqs"], expected_seq_vj)
+    npt.assert_array_equal(res["VDJ"]["seqs"], expected_seq_vdj)
+    npt.assert_array_equal(res["VJ"]["distances"].toarray(), expected_dist_vj)
+    npt.assert_array_equal(res["VDJ"]["distances"].toarray(), expected_dist_vdj)
+
+
 def test_compute_distances1(adata_cdr3):
     # test single chain with identity distance
     ir.pp.ir_dist(adata_cdr3, metric="identity", cutoff=0, sequence="aa")
@@ -113,34 +167,44 @@ def test_compute_distances1(adata_cdr3):
         distance_key="ir_dist_aa_identity",
         sequence_key="cdr3",
     )
+    _assert_frame_equal(
+        cn.clonotypes, pd.DataFrame({"IR_VJ_1_cdr3": ["AAA", "AHA", "nan"]})
+    )
     dist = cn.compute_distances()
     npt.assert_equal(
         dist.toarray(),
         np.array(
             [
-                [1, 0, 0, 1, 0],
-                [0, 1, 0, 0, 0],
-                [0] * 5,
-                [1, 0, 0, 1, 0],
-                [0] * 5,
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 0],
             ]
         ),
     )
 
 
-def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
+def test_compute_distances2(adata_cdr3):
     # test single receptor arm with multiple chains and identity distance
-    cn = IrNeighbors(
+    ir.pp.ir_dist(adata_cdr3, metric="identity", cutoff=0, sequence="aa")
+    cn = ClonotypeNeighbors(
         adata_cdr3,
-        metric="identity",
-        cutoff=0,
         receptor_arms="VJ",
         dual_ir="any",
-        sequence="aa",
+        distance_key="ir_dist_aa_identity",
+        sequence_key="cdr3",
     )
-    cn.compute_distances()
+    _assert_frame_equal(
+        cn.clonotypes,
+        pd.DataFrame(
+            {
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+            }
+        ),
+    )
+    dist = cn.compute_distances()
     npt.assert_equal(
-        tn.dist.toarray(),
+        dist.toarray(),
         np.array(
             [
                 [1, 1, 0, 1, 1],
@@ -155,24 +219,27 @@ def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test single chain with custom distance
-    cn = IrNeighbors(
+    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
+    cn = ClonotypeNeighbors(
         adata_cdr3,
-        metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="VJ",
         dual_ir="primary_only",
-        sequence="aa",
+        distance_key="ir_dist_aa_custom",
+        sequence_key="cdr3",
     )
     cn.compute_distances()
-    assert tn.dist.nnz == 9
+    _assert_frame_equal(
+        cn.clonotypes, pd.DataFrame({"IR_VJ_1_cdr3": ["AAA", "AHA", "nan"]})
+    )
+    dist = cn.compute_distances()
+    assert dist.nnz == 4
     npt.assert_equal(
-        tn.dist.toarray(),
+        dist.toarray(),
         np.array(
             [
-                [1, 4, 0, 1, 0],
-                [4, 1, 0, 4, 0],
-                [0] * 5,
-                [1, 4, 0, 1, 0],
-                [0] * 5,
+                [1, 4, 0],
+                [4, 1, 0],
+                [0, 0, 0],
             ]
         ),
     )
