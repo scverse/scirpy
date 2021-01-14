@@ -120,7 +120,18 @@ class ClonotypeNeighbors:
         return sp.vstack(dist_rows)  # type: ignore
 
     def _dist_for_clonotype(self, ct_id: int) -> sp.csr_matrix:
-        """Compute neighboring clonotypes for a given clonotype"""
+        """Compute neighboring clonotypes for a given clonotype.
+
+        Or operations use the min dist of two matching entries.
+        And operations use the max dist of two matchin entries.
+
+        The motivation for using the max instead of sum/average is
+        that our hypotheis is that a receptor recognizes the same antigen if it
+        has a sequence dist < threshold. If we require both receptors to
+        match ("and"), the higher one should count.
+
+        TODO add this to the docs where necessary.
+        """
         res = dict()
         for tmp_receptor_arm in self._receptor_arm_cols:
             arm_res = dict()

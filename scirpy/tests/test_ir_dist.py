@@ -562,29 +562,3 @@ def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
             distance_key="ir_dist_aa_custom",
             sequence_key="cdr3",
         )
-
-
-# TODO move to util tests
-# def test_dist_to_connectivities(adata_cdr3):
-#     # empty anndata, just need the object
-#     cn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
-#     tn._dist_mat = scipy.sparse.csr_matrix(
-#         [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
-#     )
-#     C = tn.connectivities
-#     assert C.nnz == tn._dist_mat.nnz
-#     npt.assert_equal(
-#         C.toarray(),
-#         np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
-#     )
-
-#     tn2 = IrNeighbors(adata_cdr3, metric="identity", cutoff=0)
-#     tn2._dist_mat = scipy.sparse.csr_matrix(
-#         [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
-#     )
-#     C = tn2.connectivities
-#     assert C.nnz == tn2._dist_mat.nnz
-#     npt.assert_equal(
-#         C.toarray(),
-#         tn2._dist_mat.toarray(),
-#     )

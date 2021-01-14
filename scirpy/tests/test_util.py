@@ -4,7 +4,6 @@ from scirpy.util import (
     _is_true,
     _normalize_counts,
     _is_symmetric,
-    _reduce_nonzero,
     _translate_dna_to_protein,
 )
 from scirpy.util.graph import layout_components
@@ -15,29 +14,11 @@ import pandas as pd
 import numpy.testing as npt
 import pytest
 import scipy.sparse
-from .fixtures import adata_tra
 
 import warnings
 
 
-def test_reduce_nonzero():
-    A = np.array([[0, 0, 3], [1, 2, 5], [7, 0, 0]])
-    B = np.array([[1, 0, 3], [2, 1, 0], [6, 0, 5]])
-    A_csr = scipy.sparse.csr_matrix(A)
-    B_csr = scipy.sparse.csr_matrix(B)
-    A_csc = scipy.sparse.csc_matrix(A)
-    B_csc = scipy.sparse.csc_matrix(B)
-
-    expected = np.array([[1, 0, 3], [1, 1, 5], [6, 0, 5]])
-
-    with pytest.raises(ValueError):
-        _reduce_nonzero(A, B)
-    npt.assert_equal(_reduce_nonzero(A_csr, B_csr).toarray(), expected)
-    npt.assert_equal(_reduce_nonzero(A_csc, B_csc).toarray(), expected)
-    npt.assert_equal(_reduce_nonzero(A_csr, A_csr.copy()).toarray(), A_csr.toarray())
-
-
-def test_is_symmatric():
+def test_is_symmetric():
     M = np.array([[1, 2, 2], [2, 1, 3], [2, 3, 1]])
     S_csr = scipy.sparse.csr_matrix(M)
     S_csc = scipy.sparse.csc_matrix(M)
@@ -213,3 +194,29 @@ def test_layout_components():
 def test_translate_dna_to_protein(adata_tra):
     for nt, aa in zip(adata_tra.obs["IR_VJ_1_cdr3_nt"], adata_tra.obs["IR_VJ_1_cdr3"]):
         assert _translate_dna_to_protein(nt) == aa
+
+
+# TODO move to util tests
+def test_dist_to_connectivities(adata_cdr3):
+    # empty anndata, just need the object
+    cn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
+    tn._dist_mat = scipy.sparse.csr_matrix(
+        [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
+    )
+    C = tn.connectivities
+    assert C.nnz == tn._dist_mat.nnz
+    npt.assert_equal(
+        C.toarray(),
+        np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
+    )
+
+    tn2 = IrNeighbors(adata_cdr3, metric="identity", cutoff=0)
+    tn2._dist_mat = scipy.sparse.csr_matrix(
+        [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
+    )
+    C = tn2.connectivities
+    assert C.nnz == tn2._dist_mat.nnz
+    npt.assert_equal(
+        C.toarray(),
+        tn2._dist_mat.toarray(),
+    )

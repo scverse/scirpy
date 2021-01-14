@@ -7,7 +7,6 @@ import numpy.testing as npt
 import pandas.testing as pdt
 import numpy as np
 import itertools
-from scirpy.util import _get_from_uns
 from .fixtures import adata_clonotype, adata_tra, adata_vdj, adata_diversity
 
 

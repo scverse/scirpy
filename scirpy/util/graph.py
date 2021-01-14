@@ -4,7 +4,6 @@ import igraph as ig
 import numpy as np
 from .._compat import Literal
 from scipy.sparse import spmatrix, csr_matrix
-import sys
 
 
 def igraph_from_sparse_matrix(
@@ -82,6 +81,7 @@ def _get_igraph_from_adjacency(adj: csr_matrix, edge_type: str = None):
     g = ig.Graph(directed=False)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
 
+    # TODO triu is inefficient
     sources, targets = scipy.sparse.triu(adj, k=1).nonzero()
     weights = adj[sources, targets].astype("float")
     g.add_edges(list(zip(sources, targets)))

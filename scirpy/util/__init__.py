@@ -1,14 +1,10 @@
 import pandas as pd
 import numpy as np
 from textwrap import dedent
-from typing import Any, Union
-from anndata import AnnData
-from collections import namedtuple
-from scipy.sparse import issparse, csr_matrix, csc_matrix
+from typing import Union
+from scipy.sparse import issparse
 import scipy.sparse
 import warnings
-
-# TODO clean up util
 
 
 def _allclose_sparse(A, B, atol=1e-8):
@@ -27,39 +23,6 @@ def _allclose_sparse(A, B, atol=1e-8):
         return False
     else:
         return np.allclose(v1, v2, atol=atol, equal_nan=True)
-
-
-def _reduce_nonzero(A, B, f=np.min):
-    """Apply a reduction function to two sparse matrices ignoring
-    0-entries"""
-    if A.shape != B.shape:
-        raise ValueError("Shapes of a and B must match. ")
-    if not isinstance(A, (csc_matrix, csr_matrix)) or not isinstance(
-        B, (csc_matrix, csr_matrix)
-    ):
-        raise ValueError("This only works with sparse matrices in CSC or CSR format. ")
-
-    def _setdiff_coords(A, B):
-        """Returns X and Y coords that only exist in matrix A, but not in B"""
-        coords_A = set(zip(*A.nonzero()))
-        coords_B = set(zip(*B.nonzero()))
-        setdiff = coords_A - coords_B
-        if len(setdiff):
-            ind0, ind1 = zip(*setdiff)
-            return np.array(ind0), np.array(ind1)
-        else:
-            return np.array([]), np.array([])
-
-    # now the indices that exist in both matrices contain the mimimum.
-    # those that only exist in one matrix 0
-    X = A.minimum(B).tolil()
-    # Therefore, we fill those that are in one matrix, but not another
-    not_in_b0, not_in_b1 = _setdiff_coords(A, X)
-    not_in_a0, not_in_a1 = _setdiff_coords(B, X)
-    X[not_in_b0, not_in_b1] = A[not_in_b0, not_in_b1]
-    X[not_in_a0, not_in_a1] = B[not_in_a0, not_in_a1]
-
-    return X.tocsr()
 
 
 def _is_symmetric(M) -> bool:
@@ -125,42 +88,6 @@ def _is_false(x):
     return __is_false(x)
 
 
-def _add_to_uns(
-    adata: AnnData, tool: str, result: Any, *, parameters: dict = None, domain="scirpy"
-) -> None:
-    """Store results of a tool in `adata.uns`.
-
-    Parameters
-    ----------
-    adata
-        Annotated data matrix
-    tool
-        Name of the tool (=dict key of adata.uns)
-    result
-        Result to store
-    parameters
-        Parameters the tool was ran with. If `None`, it is assumed
-        that the tools does not take parameters and the result
-        is directly stored in `uns[domain][tool]`.
-        Otherwise, the parameters are converted into a named tuple
-        that is used as a dict key: `uns[domain][tool][param_named_tuple] = result`.
-    domain
-        top level key of `adata.uns` to store results under.
-    """
-    if domain not in adata.uns:
-        adata.uns[domain] = dict()
-
-    if parameters is None:
-        adata.uns[domain][tool] = result
-    else:
-        if tool not in adata.uns[domain]:
-            adata.uns[domain][tool] = dict()
-        assert isinstance(adata.uns[domain][tool], dict)
-        Parameters = namedtuple("Parameters", sorted(parameters))
-        param_tuple = Parameters(**parameters)
-        adata.uns[domain][tool][param_tuple] = result
-
-
 def _normalize_counts(
     obs: pd.DataFrame, normalize: Union[bool, str], default_col: Union[None, str] = None
 ) -> pd.Series:
@@ -186,40 +113,6 @@ def _normalize_counts(
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
     return 1 / obs.groupby(normalize_col)[normalize_col].transform("count").values
-
-
-def _get_from_uns(adata: AnnData, tool: str, *, parameters: dict = None) -> Any:
-    """Get results of a tool from `adata.uns`.
-
-    Parameters
-    ----------
-    adata
-        annotated data matrix
-    tool
-        name of the tool
-    parameters
-        Parameters the tool was ran with. If `None` it is assumed
-        that the tools does not take parameters and the result is directly
-        stored in `uns[domain][tool]`. Otherwise, the parameters are converted
-        into a named tuple that is used as dict key:
-        `uns[domain][tool][param_named_tuple]`. Raises a KeyError if no such
-        entry exists.
-
-    Raises
-    ------
-    KeyError
-        If no entry for the tool or for the given parameters exist.
-
-    Returns
-    -------
-    The stored result.
-    """
-    if parameters is None:
-        return adata.uns["scirpy"][tool]
-    else:
-        Parameters = namedtuple("Parameters", sorted(parameters))
-        param_tuple = Parameters(**parameters)
-        return adata.uns["scirpy"][tool][param_tuple]
 
 
 def _doc_params(**kwds):

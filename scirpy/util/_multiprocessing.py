@@ -32,4 +32,6 @@ class EnhancedPool(mpp.Pool):
 
     def starmap_progress(self, func, iterable, chunksize=1, total=None):
         """Implementation of starmap with progressbar"""
-        return list(tqdm(self.istarmap(func, iterable), total=total))
+        return list(
+            tqdm(self.istarmap(func, iterable, chunksize=chunksize), total=total)
+        )
