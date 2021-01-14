@@ -17,7 +17,7 @@ def set_dict():
 def dlnf():
     clonotypes = pd.DataFrame().assign(
         VJ=["A", "B", "C", "D", "A", "C", "D"],
-        VDJ=["A", "B", "C", "D", "D", "D", "D"],
+        VDJ=["A", "B", "C", "D", "nan", "D", "nan"],
     )
     dlnf = DoubleLookupNeighborFinder(feature_table=clonotypes)
     dlnf.add_distance_matrix(
@@ -150,12 +150,13 @@ def test_dlnf_lookup_table(dlnf):
     dlnf.add_lookup_table(feature_col="VDJ", distance_matrix="test", name="VDJ_test")
     dist_mat, forward, reverse = dlnf.lookups["VDJ_test"]
     assert dist_mat == "test"
-    npt.assert_array_equal(forward, np.array([0, 1, 2, 3, 3, 3, 3]))
+    npt.assert_array_equal(forward, np.array([0, 1, 2, 3, np.nan, 3, np.nan]))
     assert reverse == {
         0: [0],
         1: [1],
         2: [2],
-        3: [3, 4, 5, 6],
+        3: [3, 5],
+        np.nan: [4, 6],
     }
 
 
@@ -178,15 +179,40 @@ def test_dlnf_lookup(dlnf_with_lookup):
     )
 
 
-@pytest.mark.parametrize("clonotype_id", range(6))
+@pytest.mark.parametrize(
+    "nan_dist,expected",
+    [
+        (0, []),
+        (42, [(4, 42), (6, 42)]),
+        (np.nan, [(4, np.nan), (6, np.nan)]),
+    ],
+)
+def test_dlnf_lookup_nan(dlnf_with_lookup, nan_dist, expected):
+    dlnf_with_lookup.nan_dist = nan_dist
+    assert list(dlnf_with_lookup.lookup(0, "VDJ_test")) == [(0, 1)]
+    assert (
+        list(dlnf_with_lookup.lookup(3, "VDJ_test"))
+        == list(dlnf_with_lookup.lookup(5, "VDJ_test"))
+        == [(2, 4), (3, 3), (5, 3)]
+    )
+    assert (
+        list(dlnf_with_lookup.lookup(4, "VDJ_test"))
+        == list(dlnf_with_lookup.lookup(6, "VDJ_test"))
+        == expected
+    )
+
+
+@pytest.mark.parametrize("clonotype_id", range(7))
 def test_dnlf_lookup_with_two_identical_forward_and_reverse_tables(
     dlnf_with_lookup, clonotype_id
 ):
-    assert list(dlnf_with_lookup.lookup(clonotype_id, "VJ_test")) == list(
-        dlnf_with_lookup.lookup(clonotype_id, "VJ_test", "VJ_test")
+    npt.assert_array_equal(
+        list(dlnf_with_lookup.lookup(clonotype_id, "VJ_test")),
+        list(dlnf_with_lookup.lookup(clonotype_id, "VJ_test", "VJ_test")),
     )
-    assert list(dlnf_with_lookup.lookup(clonotype_id, "VDJ_test")) == list(
-        dlnf_with_lookup.lookup(clonotype_id, "VDJ_test", "VDJ_test")
+    npt.assert_array_equal(
+        list(dlnf_with_lookup.lookup(clonotype_id, "VDJ_test")),
+        list(dlnf_with_lookup.lookup(clonotype_id, "VDJ_test", "VDJ_test")),
     )
 
 
@@ -199,7 +225,7 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup)
     assert (
         list(dlnf_with_lookup.lookup(3, "VJ_test", "VDJ_test"))
         == list(dlnf_with_lookup.lookup(6, "VJ_test", "VDJ_test"))
-        == [(2, 4), (3, 3), (4, 3), (5, 3), (6, 3)]
+        == [(2, 4), (3, 3), (5, 3)]
     )
     assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test")) == [
         (2, 3),
@@ -207,3 +233,8 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup)
         (3, 4),
         (6, 4),
     ]
+    assert (
+        list(dlnf_with_lookup.lookup(4, "VDJ_test", "VJ_test"))
+        == list(dlnf_with_lookup.lookup(6, "VDJ_test", "VJ_test"))
+        == []
+    )

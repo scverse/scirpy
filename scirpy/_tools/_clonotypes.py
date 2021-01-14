@@ -117,9 +117,7 @@ def define_clonotype_clusters(
 
     if distance_key is None:
         distance_key = f"ir_dist_{sequence}_{metric}"
-    try:
-        distance_dict = adata.uns[distance_key]
-    except KeyError:
+    if distance_key not in adata.uns:
         raise ValueError(
             "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
         )
@@ -132,15 +130,16 @@ def define_clonotype_clusters(
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
         within_group=within_group,
-        distance_dict=distance_dict,
+        distance_key=distance_key,
         sequence_key=sequence_key,
     )
     # TODO log progress and time
-    ctn.prepare()
+    ctn._prepare()
     ctn.compute_distances()
     pass
 
     # TODO store clonotype distance in uns
+    # TODO store clonotypes in obs
     pass
 
 

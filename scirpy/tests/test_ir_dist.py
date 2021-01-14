@@ -1,11 +1,11 @@
 import pytest
 from scirpy.ir_dist.metrics import DistanceCalculator
+from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
 import numpy.testing as npt
 import scirpy as ir
 import scipy.sparse
 from .fixtures import adata_cdr3
-from anndata import AnnData
 from .util import _squarify
 from scirpy.util import _is_symmetric
 
@@ -103,19 +103,19 @@ def test_sequence_dist(metric, cutoff, expected_square, expected):
     )
 
 
-def test_compute_distances1(adata_cdr3, adata_cdr3_mock_distance_calculator):
+def test_compute_distances1(adata_cdr3):
     # test single chain with identity distance
-    tn = IrNeighbors(
+    ir.pp.ir_dist(adata_cdr3, metric="identity", cutoff=0, sequence="aa")
+    cn = ClonotypeNeighbors(
         adata_cdr3,
-        metric="identity",
-        cutoff=0,
         receptor_arms="VJ",
         dual_ir="primary_only",
-        sequence="aa",
+        distance_key="ir_dist_aa_identity",
+        sequence_key="cdr3",
     )
-    tn.compute_distances()
+    dist = cn.compute_distances()
     npt.assert_equal(
-        tn.dist.toarray(),
+        dist.toarray(),
         np.array(
             [
                 [1, 0, 0, 1, 0],
@@ -130,7 +130,7 @@ def test_compute_distances1(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test single receptor arm with multiple chains and identity distance
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric="identity",
         cutoff=0,
@@ -138,7 +138,7 @@ def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dual_ir="any",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     npt.assert_equal(
         tn.dist.toarray(),
         np.array(
@@ -155,14 +155,14 @@ def test_compute_distances2(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test single chain with custom distance
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="VJ",
         dual_ir="primary_only",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     assert tn.dist.nnz == 9
     npt.assert_equal(
         tn.dist.toarray(),
@@ -180,14 +180,14 @@ def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test single receptor arm with multiple chains and custom distance
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="VJ",
         dual_ir="any",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
 
     assert tn.dist.nnz == 16
     npt.assert_equal(
@@ -206,14 +206,14 @@ def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test single receptor arm with multiple chains and custom distance
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="VJ",
         dual_ir="all",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
 
     print(tn.dist.toarray())
     npt.assert_equal(
@@ -232,14 +232,14 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
     # test both receptor arms, primary chain only
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
         dual_ir="primary_only",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
@@ -256,14 +256,14 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 
 def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="any",
         dual_ir="primary_only",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
@@ -280,14 +280,14 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 
 def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="any",
         dual_ir="all",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
@@ -304,14 +304,14 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 
 def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="any",
         dual_ir="any",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
@@ -328,14 +328,14 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 
 def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
         dual_ir="any",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
@@ -352,14 +352,14 @@ def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 
 def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
         dual_ir="all",
         sequence="aa",
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(
         tn.dist.toarray(),
@@ -380,7 +380,7 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
     adata_cdr3.obs["IR_VJ_1_cdr3"] = np.nan
     adata_cdr3.obs["IR_VDJ_1_cdr3"] = np.nan
     # test both receptor arms, primary chain only
-    tn = IrNeighbors(
+    cn = IrNeighbors(
         adata_cdr3,
         metric=adata_cdr3_mock_distance_calculator,
         receptor_arms="all",
@@ -388,7 +388,7 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
         sequence="aa",
         cutoff=0,
     )
-    tn.compute_distances()
+    cn.compute_distances()
     print(tn.dist.toarray())
     npt.assert_equal(tn.dist.toarray(), np.zeros((5, 5)))
 
@@ -396,7 +396,7 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
 # TODO move to util tests
 # def test_dist_to_connectivities(adata_cdr3):
 #     # empty anndata, just need the object
-#     tn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
+#     cn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
 #     tn._dist_mat = scipy.sparse.csr_matrix(
 #         [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
 #     )

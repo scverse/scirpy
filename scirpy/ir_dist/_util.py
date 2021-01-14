@@ -8,10 +8,7 @@ from scipy.sparse.csr import csr_matrix
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(
-        self,
-        feature_table: pd.DataFrame,
-    ):
+    def __init__(self, feature_table: pd.DataFrame, *, nan_dist: int = 0):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -38,8 +35,13 @@ class DoubleLookupNeighborFinder:
             A data frame with features in columns. Rows must be unique.
             In our case, rows are clonotypes, and features can be CDR3 sequences,
             v genes, etc.
+        nan_dist
+            Distance between two "nan" labels. Currently, a label is
+            considered "nan" if it is the literal string "nan". This might change
+            in the future.
         """
         self.feature_table = feature_table
+        self.nan_dist = nan_dist
 
         # n_feature x n_feature sparse, symmetric distance matrices
         self.distance_matrices: Dict[str, sp.csr_matrix] = dict()
@@ -61,7 +63,11 @@ class DoubleLookupNeighborFinder:
 
         Performs the following lookup:
 
-            clonotype_id -> dist_mat -> neighboring features -> neighboring object
+            clonotype_id -> dist_mat -> neighboring features -> neighboring object.
+
+        "nan"s are not looked up via the distance matrix. Instead they have
+        a special entry in the lookup tables and yield the distance predefined in
+        `self.nan_dist`.
 
         Parameters
         ----------
@@ -88,12 +94,20 @@ class DoubleLookupNeighborFinder:
                 )
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
-        row = distance_matrix[forward[object_id], :]
-        # get column indices directly from sparse row
-        yield from itertools.chain.from_iterable(
-            zip(reverse[i], itertools.repeat(distance))
-            for i, distance in zip(row.indices, row.data)  # type: ignore
-        )
+        idx_in_dist_mat = forward[object_id]
+        if np.isnan(idx_in_dist_mat):
+            if self.nan_dist != 0:
+                # special case for nan. Either yield predefined distance, or
+                # do not yield any entries if the predefined distance is 0.
+                yield from zip(reverse[np.nan], itertools.repeat(self.nan_dist))
+        else:
+            # get distances from the distance matrix...
+            row = distance_matrix[idx_in_dist_mat, :]
+            # ... and get column indices directly from sparse row
+            yield from itertools.chain.from_iterable(
+                zip(reverse[i], itertools.repeat(distance))
+                for i, distance in zip(row.indices, row.data)  # type: ignore
+            )
 
     def add_distance_matrix(
         self, name: str, distance_matrix: sp.csr_matrix, labels: Sequence
@@ -119,6 +133,7 @@ class DoubleLookupNeighborFinder:
         distance_matrix.eliminate_zeros()
         self.distance_matrices[name] = distance_matrix
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
+        self.distance_matrix_labels[name]["nan"] = np.nan
 
     def add_lookup_table(self, name: str, feature_col: str, distance_matrix: str):
         """Build a pair of forward- and reverse-lookup tables.

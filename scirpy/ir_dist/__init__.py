@@ -98,7 +98,7 @@ def _get_distance_calculator(
     return dist_calc
 
 
-def ir_dist(
+def _ir_dist(
     adata: AnnData,
     *,
     metric: MetricType = "identity",

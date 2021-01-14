@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse as sp
 import itertools
 from ._util import SetDict, DoubleLookupNeighborFinder
+from ..util import _is_na, _is_true
 
 
 class ClonotypeNeighbors:
@@ -14,9 +15,9 @@ class ClonotypeNeighbors:
         *,
         receptor_arms=Literal["VJ", "VDJ", "all", "any"],
         dual_ir=Literal["primary_only", "all", "any"],
-        same_v_gene: bool,
-        within_group: Union[None, Sequence[str]],
-        distance_dict: Mapping[str, Mapping],
+        same_v_gene: bool = False,
+        within_group: Union[None, Sequence[str]] = None,
+        distance_key: str,
         sequence_key: str,
     ):
         """Compute distances between clonotypes"""
@@ -25,7 +26,7 @@ class ClonotypeNeighbors:
         self.within_group = within_group
         self.receptor_arms = receptor_arms
         self.dual_ir = dual_ir
-        self.distance_dict = distance_dict
+        self.distance_dict = adata.uns[distance_key]
         self.sequence_key = sequence_key
 
         self._receptor_arm_cols = (
@@ -35,7 +36,9 @@ class ClonotypeNeighbors:
         )
         self._dual_ir_cols = ["1"] if self.dual_ir == "primary_only" else ["1", "2"]
 
-    def prepare(self):
+        self._prepare()
+
+    def _prepare(self):
         """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
         self._make_clonotype_table()
         self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
@@ -49,9 +52,17 @@ class ClonotypeNeighbors:
             f"IR_{arm}_{i}_{self.sequence_key}"
             for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols)
         ]
-        self.clonotypes = (
-            self.adata.obs.loc[clonotype_cols, :].drop_duplicates().reset_index()
+        clonotypes = (
+            self.adata.obs.loc[_is_true(self.adata.obs["has_ir"]), clonotype_cols]
+            .drop_duplicates()
+            .reset_index()
         )
+
+        # make sure all nans are consistent "nan"
+        # This workaround will be made obsolete by #190.
+        for col in clonotypes.columns:
+            clonotypes.loc[_is_na(clonotypes[col]), col] = "nan"
+        self.clonotypes = clonotypes
 
     def _add_distance_matrices(self):
         """Add all required distance matrices to the DLNF"""
@@ -96,7 +107,7 @@ class ClonotypeNeighbors:
         distance matrix."""
         n_clonotypes = self.clonotypes.shape[0]
         dist_rows = map(self._dist_for_clonotype, range(n_clonotypes))
-        return sp.vstack(dist_rows)
+        return sp.vstack(dist_rows)  # type: ignore
 
     def _dist_for_clonotype(self, ct_id: int) -> sp.csr_matrix:
         """Compute neighboring clonotypes for a given clonotype"""
