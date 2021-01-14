@@ -62,6 +62,12 @@ class ClonotypeNeighbors:
             .reset_index(drop=True)
         )
 
+        if clonotypes.shape[0] == 0:
+            raise ValueError(
+                "Error computing clonotypes. "
+                "No cells with IR information found (`adata.obs['has_ir'] == True`)"
+            )
+
         # make sure all nans are consistent "nan"
         # This workaround will be made obsolete by #190.
         for col in clonotypes.columns:

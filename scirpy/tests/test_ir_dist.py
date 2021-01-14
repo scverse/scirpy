@@ -332,9 +332,10 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    dist = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 13, 0, 0, 0],
@@ -417,8 +418,8 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = IrNeighbors(
-        metric=adata_cdr3_mock_distance_calculator,
+    cn = ClonotypeNeighbors(
+        adata_cdr3,
         receptor_arms="any",
         dual_ir="any",
         distance_key="ir_dist_aa_custom",
@@ -452,7 +453,7 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = IrNeighbors(
+    cn = ClonotypeNeighbors(
         adata_cdr3,
         receptor_arms="all",
         dual_ir="any",
@@ -470,9 +471,9 @@ def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    sit = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 1, 0, 0, 0],
@@ -538,12 +539,12 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
         pd.DataFrame(
             {
                 "IR_VJ_1_cdr3": ["nan"],
-                "IR_VJ_1_cdr3": ["nan"],
+                "IR_VDJ_1_cdr3": ["nan"],
             }
         ),
     )
     dist = cn.compute_distances()
-    npt.assert_equal(dist.toarray(), np.zeros(1, 1))
+    npt.assert_equal(dist.toarray(), np.zeros((1, 1)))
 
 
 def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
@@ -553,19 +554,14 @@ def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
     adata_cdr3.obs["has_ir"] = "False"
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="all",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(),
-    )
-    dist = cn.compute_distances()
-    npt.assert_equal(dist.toarray(), np.zeros(1, 1))
+    with pytest.raises(ValueError):
+        cn = ClonotypeNeighbors(
+            adata_cdr3,
+            receptor_arms="all",
+            dual_ir="primary_only",
+            distance_key="ir_dist_aa_custom",
+            sequence_key="cdr3",
+        )
 
 
 # TODO move to util tests

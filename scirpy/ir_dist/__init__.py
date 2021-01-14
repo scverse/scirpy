@@ -124,17 +124,15 @@ def _ir_dist(
 
     # get all unique seqs for VJ and VDJ
     for chain_type in ["VJ", "VDJ"]:
-        tmp_seqs = np.unique(
-            np.concatenate(
-                [
-                    adata.obs[
-                        COLUMN.format(chain_type=chain_type, chain_id=chain_id, key=key)
-                    ]
-                    for chain_id in ["1", "2"]
+        tmp_seqs = np.concatenate(
+            [
+                adata.obs[
+                    COLUMN.format(chain_type=chain_type, chain_id=chain_id, key=key)
                 ]
-            )
+                for chain_id in ["1", "2"]
+            ]
         )
-        result[chain_type]["seqs"] = tmp_seqs[~_is_na(tmp_seqs)]  # type: ignore
+        result[chain_type]["seqs"] = np.unique(tmp_seqs[~_is_na(tmp_seqs)])  # type: ignore
 
     # compute distance matrices
     for chain_type in ["VJ", "VDJ"]:

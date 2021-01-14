@@ -238,7 +238,7 @@ class SetDict(MutableMapping):
         elif isinstance(other, SetDict):
             return SetDict(
                 (
-                    (k, max(self[k], other[k]))
+                    (k, self[k] + other[k] - 1)
                     for k in (set(self.store) & set(other.store))
                 )
             )
