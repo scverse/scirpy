@@ -135,7 +135,7 @@ class ClonotypeNeighbors:
     def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
         """Efficient way of converting a SetDict to a 1 x n sparse row in CSR format"""
         sparse_row = sp.csr_matrix((1, row_len))
-        sparse_row.data = np.fromiter(row_dict.values(), int, len(row_dict))
+        sparse_row.data = np.fromiter(row_dict.values(), float, len(row_dict))
         sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
         sparse_row.indptr = np.array([0, len(row_dict)])
         return sparse_row
