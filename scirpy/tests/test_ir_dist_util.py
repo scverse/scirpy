@@ -106,7 +106,6 @@ def test_set_dict_id(set_dict):
     assert SetDict() & SetDict() == SetDict()
 
 
-# TODO with nan
 @pytest.mark.parametrize(
     "o1,o2,expected",
     [
@@ -114,6 +113,7 @@ def test_set_dict_id(set_dict):
         (SetDict(foo=2, bar=4), set(["baz"]), NotImplementedError),
         (SetDict(foo=2, bar=4), SetDict(foo=1, bar=5), {"foo": 1, "bar": 4}),
         (SetDict(foo=2, bar=4), SetDict(baz=5, foo=1), {"bar": 4, "baz": 5, "foo": 1}),
+        (SetDict(foo=np.nan, bar=4), SetDict(foo=5, bar=np.nan), {"foo": 5, "bar": 4}),
     ],
 )
 def test_set_dict_or(o1, o2, expected):
@@ -133,6 +133,7 @@ def test_set_dict_or(o1, o2, expected):
         (set(["bar"]), SetDict(foo=2, bar=4), {"bar": 4}),
         (SetDict(foo=2, bar=4), SetDict(foo=1, bar=5), {"foo": 2, "bar": 5}),
         (SetDict(foo=2, bar=4), SetDict(baz=5, foo=1), {"foo": 2}),
+        (SetDict(foo=np.nan, bar=4), SetDict(foo=5, bar=np.nan), {"foo": 5, "bar": 4}),
     ],
 )
 def test_set_dict_and(o1, o2, expected):
@@ -192,7 +193,7 @@ def test_dlnf_lookup(dlnf_with_lookup):
 @pytest.mark.parametrize(
     "nan_dist,expected",
     [
-        (0, []),
+        (0, [(4, 0), (6, 0)]),
         (42, [(4, 42), (6, 42)]),
         (np.nan, [(4, np.nan), (6, np.nan)]),
     ],

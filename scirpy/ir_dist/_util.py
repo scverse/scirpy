@@ -98,10 +98,9 @@ class DoubleLookupNeighborFinder:
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
             # special case for nan. Yield a predefined distance.
-            # We do want to yield explicit zeros if nan_dist == 0.
-            # This allows to perform an `&` comparison in SetDict between a distance
-            # and `nan`, ignoring the distance between two nans.
-            yield from zip(reverse[np.nan], itertools.repeat(self.nan_dist))
+            yield from zip(
+                reverse.get(np.nan, iter(())), itertools.repeat(self.nan_dist)
+            )
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
@@ -191,12 +190,16 @@ class SetDict(MutableMapping):
         * when using `&`, the max value is retained.
         * when using `|`, the min value is retained.
 
+        np.nan is a neutral element for both `&` and `|`
+
         Examples:
         ---------
         >>> SetDict(a=5, b=7) | SetDict(a=2, c=8)
         SetDict(a=2, b=7, c=8)
         >>> SetDict(a=5, b=7) & SetDict(a=2, c=8)
         SetDict(a=5)
+        >>> SetDict(a=5, b=np.nan) & SetDict(a=np.nan, b=8)
+        SetDict(a=5, by=8)
         """
         self.store = dict(*args, **kwargs)
         # self.update(dict(*args, **kwargs))
