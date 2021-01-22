@@ -49,7 +49,10 @@ class ClonotypeNeighbors:
         #   two nans being ignored when using `&` in SetDict (max -> ignore 0).
         #   Set to np.nan if dual_ir == "any". Since `|` uses np.nanmin, nans are ignored.
         self.neighbor_finder = DoubleLookupNeighborFinder(
-            self.clonotypes, nan_dist=0 if self.dual_ir == "all" else np.nan
+            self.clonotypes,
+            nan_dist=0
+            if self.dual_ir == "all"  # or self.dual_ir == "primary_only"
+            else np.nan,
         )
         self._add_distance_matrices()
         self._add_lookup_tables()
@@ -139,7 +142,7 @@ class ClonotypeNeighbors:
 
         TODO add this to the docs where necessary.
         """
-        res = dict()
+        res = []
         for tmp_receptor_arm in self._receptor_arm_cols:
 
             def _lookup(tmp_chain1, tmp_chain2):
@@ -152,18 +155,24 @@ class ClonotypeNeighbors:
                 )
 
             if self.dual_ir == "primary_only":
-                res[tmp_receptor_arm] = _lookup(1, 1)
+                tmp_res = _lookup(1, 1)
             elif self.dual_ir == "all":
-                res[tmp_receptor_arm] = (_lookup(1, 1) & _lookup(2, 2)) | (
+                tmp_res = (_lookup(1, 1) & _lookup(2, 2)) | (
                     _lookup(1, 2) & _lookup(2, 1)
                 )
             else:  # "any"
-                res[tmp_receptor_arm] = (
-                    _lookup(1, 1) | _lookup(2, 2) | _lookup(1, 2) | _lookup(2, 1)
+                tmp_res = _lookup(1, 1) | _lookup(2, 2) | _lookup(1, 2) | _lookup(2, 1)
+
+            tmp_nan_dist = 0 if self.receptor_arms == "all" else np.nan
+            res.append(
+                SetDict(
+                    (k, tmp_nan_dist if np.isnan(v) or v == 0 else v)
+                    for k, v in tmp_res.items()
                 )
+            )
 
         operator = iand if self.receptor_arms == "all" else ior
-        res = reduce(operator, res.values())
+        res = reduce(operator, res)
 
         row = self._dict_to_sparse_row(res, self.clonotypes.shape[0])
         return row

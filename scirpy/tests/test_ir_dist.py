@@ -5,7 +5,7 @@ import numpy as np
 import numpy.testing as npt
 import scirpy as ir
 import scipy.sparse
-from .fixtures import adata_cdr3  # NOQA
+from .fixtures import adata_cdr3, adata_cdr3_2  # NOQA
 from .util import _squarify
 from scirpy.util import _is_symmetric
 import pandas.testing as pdt
@@ -354,6 +354,53 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
     )
 
 
+@pytest.mark.parametrize("dual_ir", ["all", "any", "primary_only"])
+@pytest.mark.parametrize(
+    "receptor_arms,expected",
+    [
+        (
+            "all",
+            np.array(
+                [
+                    [1, 0, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                ]
+            ),
+        ),
+        (
+            "any",
+            np.array(
+                [
+                    [1, 1, 0],
+                    [1, 1, 1],
+                    [0, 1, 1],
+                ]
+            ),
+        ),
+        ("VJ", np.array([[1, 0], [0, 0]])),
+        ("VDJ", np.array([[1, 0], [0, 1]])),
+    ],
+)
+def test_compute_distances6_2(
+    adata_cdr3_2, adata_cdr3_mock_distance_calculator, receptor_arms, dual_ir, expected
+):
+    """Test that `dual_ir` does not impact the second reduction step"""
+    ir.pp.ir_dist(
+        adata_cdr3_2, metric=adata_cdr3_mock_distance_calculator, sequence="aa"
+    )
+    cn = ClonotypeNeighbors(
+        adata_cdr3_2,
+        receptor_arms=receptor_arms,
+        dual_ir=dual_ir,
+        distance_key="ir_dist_aa_custom",
+        sequence_key="cdr3",
+    )
+    dist = cn.compute_distances().toarray()
+    print(dist)
+    npt.assert_equal(dist, expected)
+
+
 def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     cn = ClonotypeNeighbors(
@@ -372,9 +419,10 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    dist = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 4, 0, 1, 0],

@@ -94,6 +94,27 @@ def adata_cdr3():
 
 
 @pytest.fixture
+def adata_cdr3_2():
+    obs = pd.DataFrame(
+        [
+            ["c1", "AAA", "AAA", "KKK", "KKK"],
+            ["c2", "AAA", "AAA", "LLL", "LLL"],
+            ["c3", "nan", "nan", "LLL", "LLL"],
+        ],
+        columns=[
+            "cell_id",
+            "IR_VJ_1_cdr3",
+            "IR_VJ_2_cdr3",
+            "IR_VDJ_1_cdr3",
+            "IR_VDJ_2_cdr3",
+        ],
+    ).set_index("cell_id")
+    obs["has_ir"] = "True"
+    adata = AnnData(obs=obs)
+    return adata
+
+
+@pytest.fixture
 def adata_define_clonotypes():
     obs = pd.DataFrame(
         [
