@@ -58,7 +58,7 @@ class DoubleLookupNeighborFinder:
         object_id: int,
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
-    ) -> Iterable[Tuple[int, int]]:
+    ) -> Iterable[Tuple[int, float]]:
         """Get ids of neighboring objects from a lookup table.
 
         Performs the following lookup:
@@ -96,10 +96,11 @@ class DoubleLookupNeighborFinder:
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
-            if self.nan_dist != 0:
-                # special case for nan. Either yield predefined distance, or
-                # do not yield any entries if the predefined distance is 0.
-                yield from zip(reverse[np.nan], itertools.repeat(self.nan_dist))
+            # special case for nan. Yield a predefined distance.
+            # We do want to yield explicit zeros if nan_dist == 0.
+            # This allows to perform an `&` comparison in SetDict between a distance
+            # and `nan`, ignoring the distance between two nans.
+            yield from zip(reverse[np.nan], itertools.repeat(self.nan_dist))
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
@@ -222,7 +223,7 @@ class SetDict(MutableMapping):
         elif isinstance(other, SetDict):
             return SetDict(
                 (
-                    (k, min(self.get(k, np.inf), other.get(k, np.inf)))
+                    (k, np.nanmin((self.get(k, np.inf), other.get(k, np.inf))))
                     for k in (set(self.store) | set(other.store))
                 )
             )
@@ -238,7 +239,7 @@ class SetDict(MutableMapping):
         elif isinstance(other, SetDict):
             return SetDict(
                 (
-                    (k, max(self[k], other[k]))
+                    (k, np.max((self[k], other[k])))
                     for k in (set(self.store) & set(other.store))
                 )
             )

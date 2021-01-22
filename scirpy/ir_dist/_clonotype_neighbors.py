@@ -43,8 +43,13 @@ class ClonotypeNeighbors:
     def _prepare(self):
         """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
         self._make_clonotype_table()
+
+        # nan_dist:
+        #   Set to 0 if dual_ir == all. Explicit zeros lead to distances between
+        #   two nans being ignored when using `&` in SetDict (max -> ignore 0).
+        #   Set to np.nan if dual_ir == "any". Since `|` uses np.nanmin, nans are ignored.
         self.neighbor_finder = DoubleLookupNeighborFinder(
-            self.clonotypes, nan_dist=np.nan if self.dual_ir == "all" else 0
+            self.clonotypes, nan_dist=0 if self.dual_ir == "all" else np.nan
         )
         self._add_distance_matrices()
         self._add_lookup_tables()
@@ -117,7 +122,9 @@ class ClonotypeNeighbors:
         distance matrix."""
         n_clonotypes = self.clonotypes.shape[0]
         dist_rows = map(self._dist_for_clonotype, range(n_clonotypes))
-        return sp.vstack(dist_rows)  # type: ignore
+        dist = sp.vstack(dist_rows)
+        dist.eliminate_zeros()
+        return dist  # type: ignore
 
     def _dist_for_clonotype(self, ct_id: int) -> sp.csr_matrix:
         """Compute neighboring clonotypes for a given clonotype.
@@ -134,19 +141,26 @@ class ClonotypeNeighbors:
         """
         res = dict()
         for tmp_receptor_arm in self._receptor_arm_cols:
-            arm_res = dict()
-            for tmp_chain1, tmp_chain2 in itertools.product(
-                self._dual_ir_cols, repeat=2
-            ):
-                arm_res[f"{tmp_chain1}-{tmp_chain2}"] = SetDict(
+
+            def _lookup(tmp_chain1, tmp_chain2):
+                return SetDict(
                     self.neighbor_finder.lookup(
                         ct_id,
                         f"{tmp_receptor_arm}_{tmp_chain1}",
                         f"{tmp_receptor_arm}_{tmp_chain2}",
                     )
                 )
-            operator = iand if self.dual_ir == "all" else ior
-            res[tmp_receptor_arm] = reduce(operator, arm_res.values())
+
+            if self.dual_ir == "primary_only":
+                res[tmp_receptor_arm] = _lookup(1, 1)
+            elif self.dual_ir == "all":
+                res[tmp_receptor_arm] = (_lookup(1, 1) & _lookup(2, 2)) | (
+                    _lookup(1, 2) & _lookup(2, 1)
+                )
+            else:  # "any"
+                res[tmp_receptor_arm] = (
+                    _lookup(1, 1) | _lookup(2, 2) | _lookup(1, 2) | _lookup(2, 1)
+                )
 
         operator = iand if self.receptor_arms == "all" else ior
         res = reduce(operator, res.values())
@@ -158,7 +172,11 @@ class ClonotypeNeighbors:
     def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
         """Efficient way of converting a SetDict to a 1 x n sparse row in CSR format"""
         sparse_row = sp.csr_matrix((1, row_len))
-        sparse_row.data = np.fromiter(row_dict.values(), float, len(row_dict))
+        sparse_row.data = np.fromiter(
+            (x if np.isfinite(x) else 0 for x in row_dict.values()),
+            int,
+            len(row_dict),
+        )
         sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
         sparse_row.indptr = np.array([0, len(row_dict)])
         return sparse_row

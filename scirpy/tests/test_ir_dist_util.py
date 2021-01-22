@@ -106,6 +106,7 @@ def test_set_dict_id(set_dict):
     assert SetDict() & SetDict() == SetDict()
 
 
+# TODO with nan
 @pytest.mark.parametrize(
     "o1,o2,expected",
     [

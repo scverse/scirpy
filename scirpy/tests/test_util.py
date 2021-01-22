@@ -14,6 +14,7 @@ import pandas as pd
 import numpy.testing as npt
 import pytest
 import scipy.sparse
+from .fixtures import adata_tra, adata_cdr3
 
 import warnings
 
@@ -158,6 +159,7 @@ def test_normalize_counts(group_df):
     )
 
 
+@pytest.mark.filterwarnings("ignore:UserWarning")
 def test_layout_components():
     g = ig.Graph()
 
@@ -196,8 +198,8 @@ def test_translate_dna_to_protein(adata_tra):
         assert _translate_dna_to_protein(nt) == aa
 
 
-# TODO move to util tests
 def test_dist_to_connectivities(adata_cdr3):
+    # TODO
     # empty anndata, just need the object
     cn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
     tn._dist_mat = scipy.sparse.csr_matrix(

@@ -202,9 +202,10 @@ def test_compute_distances2(adata_cdr3):
             }
         ),
     )
-    dist = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 1, 0, 1, 1],
@@ -232,8 +233,10 @@ def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator):
     )
     dist = cn.compute_distances()
     assert dist.nnz == 4
+    dist = dist.toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 4, 0],
@@ -298,9 +301,10 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    dist = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 0, 0, 4, 0],
@@ -332,14 +336,16 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
+    # TODO how should this be handled? And because of nan_dist, the result
+    # probably depends on dual_ir as well...
     dist = cn.compute_distances().toarray()
     print(dist)
     npt.assert_equal(
         dist,
         np.array(
             [
-                [1, 13, 0, 0, 0],
-                [13, 1, 0, 0, 0],
+                [1, 10, 0, 0, 0],
+                [10, 1, 0, 0, 0],
                 [0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 0],
                 [0, 0, 0, 0, 1],
@@ -401,9 +407,10 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    dist = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 10, 0, 4, 0],
@@ -506,9 +513,10 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    dist = cn.compute_distances()
+    dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
-        dist.toarray(),
+        dist,
         np.array(
             [
                 [1, 0, 0, 0, 0],
