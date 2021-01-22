@@ -8,7 +8,7 @@ from scipy.sparse.csr import csr_matrix
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(self, feature_table: pd.DataFrame, *, nan_dist: float = 0):
+    def __init__(self, feature_table: pd.DataFrame, *, nan_dist: float = np.nan):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -38,7 +38,8 @@ class DoubleLookupNeighborFinder:
         nan_dist
             Distance between two "nan" labels. Currently, a label is
             considered "nan" if it is the literal string "nan". This might change
-            in the future.
+            in the future. `np.nan` is the universal neutral element for both
+            `np.nanmin` and `np.nanmax`.
         """
         self.feature_table = feature_table
         self.nan_dist = nan_dist
@@ -239,7 +240,7 @@ class SetDict(MutableMapping):
         elif isinstance(other, SetDict):
             return SetDict(
                 (
-                    (k, np.max((self[k], other[k])))
+                    (k, np.nanmax((self[k], other[k])))
                     for k in (set(self.store) & set(other.store))
                 )
             )

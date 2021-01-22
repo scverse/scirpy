@@ -336,8 +336,6 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
             }
         ),
     )
-    # TODO how should this be handled? And because of nan_dist, the result
-    # probably depends on dual_ir as well...
     dist = cn.compute_distances().toarray()
     print(dist)
     npt.assert_equal(

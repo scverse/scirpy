@@ -43,17 +43,7 @@ class ClonotypeNeighbors:
     def _prepare(self):
         """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
         self._make_clonotype_table()
-
-        # nan_dist:
-        #   Set to 0 if dual_ir == all. Explicit zeros lead to distances between
-        #   two nans being ignored when using `&` in SetDict (max -> ignore 0).
-        #   Set to np.nan if dual_ir == "any". Since `|` uses np.nanmin, nans are ignored.
-        self.neighbor_finder = DoubleLookupNeighborFinder(
-            self.clonotypes,
-            nan_dist=0
-            if self.dual_ir == "all"  # or self.dual_ir == "primary_only"
-            else np.nan,
-        )
+        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
         self._add_distance_matrices()
         self._add_lookup_tables()
 
@@ -163,13 +153,7 @@ class ClonotypeNeighbors:
             else:  # "any"
                 tmp_res = _lookup(1, 1) | _lookup(2, 2) | _lookup(1, 2) | _lookup(2, 1)
 
-            tmp_nan_dist = 0 if self.receptor_arms == "all" else np.nan
-            res.append(
-                SetDict(
-                    (k, tmp_nan_dist if np.isnan(v) or v == 0 else v)
-                    for k, v in tmp_res.items()
-                )
-            )
+            res.append(tmp_res)
 
         operator = iand if self.receptor_arms == "all" else ior
         res = reduce(operator, res)
