@@ -6,7 +6,12 @@ from scirpy.util import (
     _is_symmetric,
     _translate_dna_to_protein,
 )
-from scirpy.util.graph import layout_components
+from scirpy.util.graph import (
+    igraph_from_sparse_matrix,
+    layout_components,
+    _distance_to_connectivity,
+    _get_sparse_from_igraph,
+)
 from itertools import combinations
 import igraph as ig
 import numpy as np
@@ -14,7 +19,7 @@ import pandas as pd
 import numpy.testing as npt
 import pytest
 import scipy.sparse
-from .fixtures import adata_tra, adata_cdr3
+from .fixtures import adata_tra
 
 import warnings
 
@@ -198,27 +203,51 @@ def test_translate_dna_to_protein(adata_tra):
         assert _translate_dna_to_protein(nt) == aa
 
 
-def test_dist_to_connectivities(adata_cdr3):
-    # TODO
-    # empty anndata, just need the object
-    cn = IrNeighbors(adata_cdr3, metric="alignment", cutoff=10)
-    tn._dist_mat = scipy.sparse.csr_matrix(
-        [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]]
-    )
-    C = tn.connectivities
-    assert C.nnz == tn._dist_mat.nnz
+@pytest.mark.parametrize(
+    "dist,expected_conn,max_value",
+    [
+        (
+            [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]],
+            [[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]],
+            None,
+        ),
+        (
+            [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]],
+            [
+                [0, 1, 1, 0.8],
+                [0, 0, 0.95, 0.65],
+                [1, 0.8, 0, 0.95],
+                [0.55, 0, 0, 0],
+            ],
+            20,
+        ),
+        (
+            [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
+            [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
+            None,
+        ),
+    ],
+)
+def test_dist_to_connectivities(dist, expected_conn, max_value):
+    dist_mat = scipy.sparse.csr_matrix(dist)
+    C = _distance_to_connectivity(dist_mat, max_value=max_value)
+    assert C.nnz == dist_mat.nnz
     npt.assert_equal(
         C.toarray(),
-        np.array([[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]]),
+        np.array(expected_conn),
     )
 
-    tn2 = IrNeighbors(adata_cdr3, metric="identity", cutoff=0)
-    tn2._dist_mat = scipy.sparse.csr_matrix(
-        [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]]
-    )
-    C = tn2.connectivities
-    assert C.nnz == tn2._dist_mat.nnz
-    npt.assert_equal(
-        C.toarray(),
-        tn2._dist_mat.toarray(),
-    )
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        [[1, 0, 0, 0.6], [0, 1, 0.9, 0.3], [1, 0.6, 1, 0.9], [0.1, 0, 0, 1]],
+        [[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]],
+    ],
+)
+def test_igraph_from_adjacency(matrix):
+    matrix = scipy.sparse.csr_matrix(matrix)
+    g = igraph_from_sparse_matrix(matrix, matrix_type="distance")
+    assert len(list(g.vs)) == matrix.shape[0]
+    matrix_roundtrip = _get_sparse_from_igraph(g, weight_attr="weight")
+    npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())

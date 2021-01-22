@@ -1,4 +1,3 @@
-import scipy.sparse
 from scanpy import logging
 import igraph as ig
 import numpy as np
@@ -8,20 +7,18 @@ from scipy.sparse import spmatrix, csr_matrix
 
 def igraph_from_sparse_matrix(
     matrix: spmatrix,
-    matrix_type: Literal["connectivity", "distance"] = "distance",
     *,
+    matrix_type: Literal["connectivity", "distance"] = "distance",
     max_value: float = None,
 ) -> ig.Graph:
-    # TODO test with triangular matrix
     """
     Get an igraph object from an adjacency or distance matrix.
 
     Parameters:
     -----------
-    sparse_matrix
+    matrix
         A sparse matrix that represents the connectivity or distance matrix for the graph.
-        Zero-entries mean "no edge between the two nodes". Only the upper triangle
-        of the matrix will be considered.
+        Zero-entries mean "no edge between the two nodes".
     matrix_type
         Whether the `sparse_matrix` represents connectivities (higher value = smaller distance)
         or distances (higher value = higher distance). Distance matrices will be
@@ -46,11 +43,21 @@ def igraph_from_sparse_matrix(
 def _distance_to_connectivity(distances: csr_matrix, *, max_value=None) -> csr_matrix:
     """Get a weighted adjacency matrix from a distance matrix.
 
-    The max_value is used to normalize the distances. If not specified it will
-    be the max. of the input matrix.
+    A distance of 1 (in the sparse matrix) corresponds to an actual distance of 0.
+    An actual distance of 0 corresponds to a connectivity of 1.
+
+    A distance of 0 (in the sparse matrix) corresponds to an actual distance of
+    infinity. An actual distance of infinity corresponds to a connectivity of 0.
+
+    Parameters
+    ----------
+    distances
+        sparse distance matrix
+    max_value
+        The max_value is used to normalize the distances, i.e. distances
+        are divided by this value. If not specified it will
+        be the max. of the input matrix.
     """
-    # TODO test
-    # TODO test with max_value < max(distances)
     if not isinstance(distances, csr_matrix):
         raise ValueError("Distance matrix must be in CSR format.")
 
@@ -60,45 +67,59 @@ def _distance_to_connectivity(distances: csr_matrix, *, max_value=None) -> csr_m
     connectivities = distances.copy()
     d = connectivities.data - 1
 
-    # structure of the matrix stayes the same, we can safely change the data only
+    # structure of the matrix stays the same, we can safely change the data only
     connectivities.data = (max_value - d) / max_value
     connectivities.eliminate_zeros()
 
     return connectivities
 
 
-def _get_igraph_from_adjacency(adj: csr_matrix, edge_type: str = None):
-    """Get igraph graph from adjacency matrix.
-    Better than Graph.Adjacency for sparse matrices
+def _get_igraph_from_adjacency(adj: csr_matrix):
+    """Get an undirected igraph graph from adjacency matrix.
+    Better than Graph.Adjacency for sparse matrices.
 
     Parameters
     ----------
     adj
-        (weighted) adjacency matrix
-    edge_type
-        A type attribute added to all edges
+        sparse, weighted, symmetrical adjacency matrix.
     """
-    g = ig.Graph(directed=False)
-    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
-
-    # TODO triu is inefficient
-    sources, targets = scipy.sparse.triu(adj, k=1).nonzero()
-    weights = adj[sources, targets].astype("float")
-    g.add_edges(list(zip(sources, targets)))
-
+    sources, targets = adj.nonzero()
+    weights = adj[sources, targets]
     if isinstance(weights, np.matrix):
         weights = weights.A1
 
+    g = ig.Graph(directed=False)
+    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
+    g.add_edges(list(zip(sources, targets)))
+
     g.es["weight"] = weights
-    if edge_type is not None:
-        g.es["type"] = edge_type
 
     if g.vcount() != adj.shape[0]:
         logging.warning(
             f"The constructed graph has only {g.vcount()} nodes. "
             "Your adjacency matrix contained redundant nodes."
-        )
+        )  # type: ignore
+
+    # since we start from a symmetrical matrix, and the graph is undirected,
+    # it is fine to take either of the two edges when simplifying.
+    # g.simplify(combine_edges="first")
+
     return g
+
+
+def _get_sparse_from_igraph(graph, weight_attr=None):
+    # TODO remove unless I end up using this for testing.
+    edges = graph.get_edgelist()
+    if weight_attr is None:
+        weights = [1] * len(edges)
+    else:
+        weights = graph.es[weight_attr]
+    shape = graph.vcount()
+    shape = (shape, shape)
+    if len(edges) > 0:
+        return csr_matrix((weights, zip(*edges)), shape=shape)
+    else:
+        return csr_matrix(shape)
 
 
 def layout_components(

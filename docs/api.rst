@@ -192,6 +192,7 @@ Utility functions: `util`
    :toctree: ./generated
 
    graph.layout_components
+   graph.igraph_from_sparse_matrix
 
 
 IR distance utilities: `ir_dist`
