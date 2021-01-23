@@ -10,7 +10,7 @@ import scipy.sparse as sp
 from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
 
-
+# TODO document the set masks
 class SetMask(abc.ABC):
     """A sparse mask vector that supports set operations"""
 

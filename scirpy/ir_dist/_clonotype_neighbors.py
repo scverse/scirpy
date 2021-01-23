@@ -1,12 +1,13 @@
 from typing import Mapping, Union, Sequence
 from anndata import AnnData
 from scanpy import logging
+from scipy.sparse.csr import csr_matrix
 from tqdm.std import tqdm
 from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp
 import itertools
-from ._util import DoubleLookupNeighborFinder
+from ._util import DoubleLookupNeighborFinder, BoolSetMask
 from multiprocessing import Pool
 from ..util import _is_na, _is_true
 from functools import reduce
@@ -173,5 +174,8 @@ class ClonotypeNeighbors:
         operator = and_ if self.receptor_arms == "all" else or_
         res = reduce(operator, res)
 
-        row = res.data
-        return row
+        # if it's a bool set masks it corresponds to all nan
+        if isinstance(res, BoolSetMask):
+            return csr_matrix((1, len(res)))
+        else:
+            return res.data
