@@ -61,6 +61,10 @@ cutoff
 """
 
 
+def _get_metric_key(metric: MetricType) -> str:
+    return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
+
+
 def _get_distance_calculator(
     metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs
 ):
@@ -171,10 +175,7 @@ def _ir_dist(
     # return or store results
     if inplace:
         if key_added is None:
-            tmp_metric = (
-                "custom" if isinstance(metric, metrics.DistanceCalculator) else metric
-            )
-            key_added = f"ir_dist_{sequence}_{tmp_metric}"
+            key_added = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
         adata.uns[key_added] = result
     else:
         return result

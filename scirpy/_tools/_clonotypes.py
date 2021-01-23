@@ -1,25 +1,33 @@
+from scirpy import ir_dist
+from scirpy.ir_dist import MetricType, _get_metric_key
 from anndata import AnnData
 import igraph as ig
 from .._compat import Literal
 from typing import Union, Tuple, Sequence
 from ..util import _doc_params
-from ..util.graph import _get_igraph_from_adjacency, layout_components
+from ..util.graph import (
+    _get_igraph_from_adjacency,
+    igraph_from_sparse_matrix,
+    layout_components,
+)
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
 import pandas as pd
 import random
+from scanpy import logging
 
 
+# TODO define default values
 def define_clonotype_clusters(
     adata: AnnData,
     *,
     sequence: Literal["aa", "nt"] = "aa",
-    metric: Literal["alignment", "levenshtein", "hamming", "identity"] = "identity",
+    metric: MetricType = "identity",
     receptor_arms=Literal["VJ", "VDJ", "all", "any"],
     dual_ir=Literal["primary_only", "all", "any"],
     same_v_gene: bool = False,
     within_group: Union[Sequence[str], str, None] = "receptor_type",
-    key_added: str = "clonotype",
+    key_added: str = None,
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
@@ -37,11 +45,13 @@ def define_clonotype_clusters(
         The sequence parameter used when running :func:scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
+
     receptor_arms
          * `"TRA"` - only consider TRA sequences
          * `"TRB"` - only consider TRB sequences
          * `"all"` - both TRA and TRB need to match
          * `"any"` - either TRA or TRB need to match
+
     dual_ir
          * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
          * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
@@ -69,7 +79,15 @@ def define_clonotype_clusters(
         a grouping, or to `None`, if you want no constraints.
 
     key_added
-        TODO
+        The column name under which the clonotype clusters and cluster sizes
+        will be stored in `adata.obs` and under which the clonotype network will be
+        stored in `adata.uns`.
+            * Defaults to `cc_{sequence}_{metric}`, e.g. `cc_aa_levenshtein`,
+              where `cc` stands for "clonotype cluster".
+            * The clonotype sizes will be stored in `{key_added}_size`,
+              e.g. `cc_aa_levenshtein_size`.
+            * The clonotype x clonotype network will be stored in `{key_added}_dist`,
+              e.g. `cc_aa_levenshtein_dist`.
 
     partitions
         How to find graph partitions that define a clonotype.
@@ -78,6 +96,7 @@ def define_clonotype_clusters(
 
         The difference is that the Leiden algorithm further divides
         fully connected subgraphs into highly-connected modules.
+
     resolution
         `resolution` parameter for the leiden algorithm.
     n_iterations
@@ -116,13 +135,21 @@ def define_clonotype_clusters(
                 raise ValueError(msg)
 
     if distance_key is None:
-        distance_key = f"ir_dist_{sequence}_{metric}"
+        distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
     if distance_key not in adata.uns:
-        raise ValueError(
-            "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
-        )
-
-    sequence_key = "cdr3" if sequence == "aa" else "cdr3_nt"
+        if distance_key == "ir_dist_nt_identity":
+            # For the case of "clonotypes" we want to compute the distance automatically
+            # if it doesn't exist yet. Since it's just a sparse ID matrix, this
+            # should be instant.
+            logging.info(
+                "ir_dist for sequence='nt' and metric='identity' not found. "
+                "Computing with default parameters."
+            )  # type: ignore
+            ir_dist(adata, metric="identity", sequence="nt", key_added=distance_key)
+        else:
+            raise ValueError(
+                "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
+            )
 
     ctn = ClonotypeNeighbors(
         adata,
@@ -131,82 +158,33 @@ def define_clonotype_clusters(
         same_v_gene=same_v_gene,
         within_group=within_group,
         distance_key=distance_key,
-        sequence_key=sequence_key,
+        sequence_key="cdr3" if sequence == "aa" else "cdr3_nt",
     )
-    # TODO log progress and time
-    ctn._prepare()
-    ctn.compute_distances()
-    pass
+    clonotype_dist = ctn.compute_distances()
+    g = igraph_from_sparse_matrix(clonotype_dist, matrix_type="distance")
+
+    if partitions == "leiden":
+        part = g.community_leiden(
+            objective_function="modularity",
+            resolution_parameter=resolution,
+            n_iterations=n_iterations,
+        )
+    else:
+        part = g.clusters(mode="weak")
+
+    # clonotype = graph partition
+    clonotype = [str(x) for x in part.membership]
+    clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
+
+    adata.obs[key_added]
+    adata.obs[key_added + "_size"]
+    adata.uns[key_added + "_distances"] = clonotype_dist
 
     # TODO store clonotype distance in uns
     # TODO store clonotypes in obs
-    pass
 
 
-def define_clonotypes(
-    adata: AnnData,
-    *,
-    receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
-    dual_ir: Literal["primary_only", "any", "all"] = "primary_only",
-    same_v_gene: bool = False,
-    within_group: Union[str, None] = "receptor_type",
-    key_added: str = "clonotype",
-    inplace: bool = True,
-):
-    pass
-
-
-_define_clonotypes_doc = """\
-same_v_gene
-    Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
-    as the CDR1 and CDR2 regions are fully encoded in this gene.
-    See :term:`CDR` for more details.
-
-    Possible values are
-
-        * `False` - Ignore V-gene during clonotype definition
-        * `"primary_only"` - Only the V-genes of the primary pair of alpha
-          and beta chains needs to match
-        * `"all"` - All V-genes of all sequences need to match.
-
-    Chains with no detected V-gene will be treated like a separate "gene" with
-    the name "None".
-within_group
-    Enforces clonotypes to have the same group. Per default, this is
-    set to :term:`receptor_type<Receptor type>`, i.e. clonotypes cannot comprise both
-    B cells and T cells. Set this to :term:`receptor_subtype<Receptor subtype>` if you
-    don't want clonotypes to be shared across e.g. gamma-delta and alpha-beta T-cells.
-    You can also set this to any other column in `adata.obs` that contains
-    a grouping, or to `None`, if you want no constraints.
-partitions
-    How to find graph partitions that define a clonotype.
-    Possible values are `leiden`, for using the "Leiden" algorithm and
-    `connected` to find fully connected sub-graphs.
-
-    The difference is that the Leiden algorithm further divides
-    fully connected subgraphs into highly-connected modules.
-resolution
-    `resolution` parameter for the leiden algorithm.
-n_iterations
-    `n_iterations` parameter for the leiden algorithm.
-neighbors_key
-    Key under which the neighboorhood graph is stored in `adata.uns`.
-    By default, tries to read from `ir_neighbors_{sequence}_{metric}`,
-    e.g. `ir_neighbors_nt_identity`.
-inplace
-    If `True`, adds the results to anndata, otherwise returns them.
-
-Returns
--------
-clonotype
-    an array containing the clonotype id for each cell
-clonotype_size
-    an array containing the number of cells in the respective clonotype
-    for each cell.
-"""
-
-
-@_doc_params(common_doc=_define_clonotypes_doc)
+# TODO update
 def define_clonotypes(
     adata: AnnData, *, key_added: str = "clonotype", **kwargs
 ) -> Union[Tuple[np.ndarray, np.ndarray], None]:

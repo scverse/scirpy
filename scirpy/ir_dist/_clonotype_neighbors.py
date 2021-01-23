@@ -1,5 +1,6 @@
 from typing import Mapping, Union, Sequence
 from anndata import AnnData
+from scanpy import logging
 from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp
@@ -8,6 +9,7 @@ from ._util import SetDict, DoubleLookupNeighborFinder
 from ..util import _is_na, _is_true
 from functools import reduce
 from operator import ior, iand
+from tqdm.contrib import tmap
 
 
 class ClonotypeNeighbors:
@@ -42,10 +44,12 @@ class ClonotypeNeighbors:
 
     def _prepare(self):
         """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
+        start = logging.info("Initializing lookup tables. ")
         self._make_clonotype_table()
         self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
         self._add_distance_matrices()
         self._add_lookup_tables()
+        logging.hint("Done initializing lookup tables.", time=start)
 
     def _make_clonotype_table(self):
         """Define clonotypes based identical IR features"""
@@ -54,6 +58,7 @@ class ClonotypeNeighbors:
             f"IR_{arm}_{i}_{self.sequence_key}"
             for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols)
         ]
+
         clonotypes = (
             self.adata.obs.loc[_is_true(self.adata.obs["has_ir"]), clonotype_cols]
             .drop_duplicates()
@@ -113,10 +118,12 @@ class ClonotypeNeighbors:
         """Compute the distances between clonotypes. `prepare` must have
         been ran previously. Returns a clonotype x clonotype sparse
         distance matrix."""
+        start = logging.info("Computing clonotype x clonotype distances. ")
         n_clonotypes = self.clonotypes.shape[0]
-        dist_rows = map(self._dist_for_clonotype, range(n_clonotypes))
+        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
+        logging.hint("Done computing clonotype x clonotype distances. ", time=start)
         return dist  # type: ignore
 
     def _dist_for_clonotype(self, ct_id: int) -> sp.csr_matrix:
