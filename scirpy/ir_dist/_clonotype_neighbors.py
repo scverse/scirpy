@@ -1,15 +1,16 @@
 from typing import Mapping, Union, Sequence
 from anndata import AnnData
 from scanpy import logging
+from tqdm.std import tqdm
 from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp
 import itertools
 from ._util import SetDict, DoubleLookupNeighborFinder
+from multiprocessing import Pool
 from ..util import _is_na, _is_true
 from functools import reduce
-from operator import ior, iand
-from tqdm.contrib import tmap
+from operator import and_, or_
 
 
 class ClonotypeNeighbors:
@@ -25,7 +26,6 @@ class ClonotypeNeighbors:
         sequence_key: str,
     ):
         """Compute distances between clonotypes"""
-        self.adata = adata
         self.same_v_gene = same_v_gene
         self.within_group = within_group
         self.receptor_arms = receptor_arms
@@ -40,18 +40,18 @@ class ClonotypeNeighbors:
         )
         self._dual_ir_cols = ["1"] if self.dual_ir == "primary_only" else ["1", "2"]
 
-        self._prepare()
+        self._prepare(adata)
 
-    def _prepare(self):
+    def _prepare(self, adata: AnnData):
         """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
         start = logging.info("Initializing lookup tables. ")
-        self._make_clonotype_table()
+        self._make_clonotype_table(adata)
         self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
         self._add_distance_matrices()
         self._add_lookup_tables()
         logging.hint("Done initializing lookup tables.", time=start)
 
-    def _make_clonotype_table(self):
+    def _make_clonotype_table(self, adata):
         """Define clonotypes based identical IR features"""
         # Define clonotypes. TODO v-genes, within_group
         clonotype_cols = [
@@ -60,7 +60,7 @@ class ClonotypeNeighbors:
         ]
 
         clonotypes = (
-            self.adata.obs.loc[_is_true(self.adata.obs["has_ir"]), clonotype_cols]
+            adata.obs.loc[_is_true(adata.obs["has_ir"]), clonotype_cols]
             .drop_duplicates()
             .reset_index(drop=True)
         )
@@ -120,7 +120,16 @@ class ClonotypeNeighbors:
         distance matrix."""
         start = logging.info("Computing clonotype x clonotype distances. ")
         n_clonotypes = self.clonotypes.shape[0]
-        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        # with Pool() as p:
+        #     dist_rows = list(
+        #         tqdm(
+        #             p.imap(
+        #                 self._dist_for_clonotype, range(n_clonotypes), chunksize=500
+        #             ),
+        #             total=n_clonotypes,
+        #         )
+        #     )
+        dist_rows = map(self._dist_for_clonotype, range(n_clonotypes))
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
@@ -143,12 +152,10 @@ class ClonotypeNeighbors:
         for tmp_receptor_arm in self._receptor_arm_cols:
 
             def _lookup(tmp_chain1, tmp_chain2):
-                return SetDict(
-                    self.neighbor_finder.lookup(
-                        ct_id,
-                        f"{tmp_receptor_arm}_{tmp_chain1}",
-                        f"{tmp_receptor_arm}_{tmp_chain2}",
-                    )
+                return self.neighbor_finder.lookup(
+                    ct_id,
+                    f"{tmp_receptor_arm}_{tmp_chain1}",
+                    f"{tmp_receptor_arm}_{tmp_chain2}",
                 )
 
             if self.dual_ir == "primary_only":
@@ -162,7 +169,7 @@ class ClonotypeNeighbors:
 
             res.append(tmp_res)
 
-        operator = iand if self.receptor_arms == "all" else ior
+        operator = and_ if self.receptor_arms == "all" else or_
         res = reduce(operator, res)
 
         row = self._dict_to_sparse_row(res, self.clonotypes.shape[0])
@@ -172,11 +179,14 @@ class ClonotypeNeighbors:
     def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
         """Efficient way of converting a SetDict to a 1 x n sparse row in CSR format"""
         sparse_row = sp.csr_matrix((1, row_len))
-        sparse_row.data = np.fromiter(
-            (x if np.isfinite(x) else 0 for x in row_dict.values()),
-            int,
-            len(row_dict),
-        )
-        sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
-        sparse_row.indptr = np.array([0, len(row_dict)])
+        if isinstance(row_dict, SetDict):
+            # if it is only a set (equivalent to all nan dists), just return an empty row
+            sparse_row.data = np.fromiter(
+                (x if np.isfinite(x) else 0 for x in row_dict.values()),
+                int,
+                len(row_dict),
+            )
+            sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
+            sparse_row.indptr = np.array([0, len(row_dict)])
+
         return sparse_row

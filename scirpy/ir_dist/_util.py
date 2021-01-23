@@ -1,12 +1,92 @@
-from collections.abc import MutableMapping
+import collections.abc as cabc
+from functools import reduce
+from operator import or_
 import numpy as np
 import pandas as pd
 import itertools
-from typing import Dict, Sequence, Tuple, Iterable, Union
+from typing import Dict, Sequence, Tuple, Iterable, Union, Mapping
 import scipy.sparse as sp
 from scipy.sparse.csr import csr_matrix
 
 
+class SetDict(cabc.MutableMapping):
+    def __init__(self, *args, **kwargs):
+        """A dictionary that supports set operations.
+
+        Values are combined as follows:
+        * when using `&`, the max value is retained.
+        * when using `|`, the min value is retained.
+
+        np.nan is a neutral element for both `&` and `|`
+
+        Examples:
+        ---------
+        >>> SetDict(a=5, b=7) | SetDict(a=2, c=8)
+        SetDict(a=2, b=7, c=8)
+        >>> SetDict(a=5, b=7) & SetDict(a=2, c=8)
+        SetDict(a=5)
+        >>> SetDict(a=5, b=np.nan) & SetDict(a=np.nan, b=8)
+        SetDict(a=5, by=8)
+        """
+        self.store = dict(*args, **kwargs)
+        # self.update(dict(*args, **kwargs))
+
+    def __getitem__(self, key):
+        return self.store[key]
+
+    def __setitem__(self, key, value):
+        self.store[key] = value
+
+    def __delitem__(self, key):
+        del self.store[key]
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def __or__(self, other):
+        if isinstance(other, set):
+            # sets act as neutral element for or.
+            # if the set contains additional elements, they are discarded, but
+            # all values of the dict itself are returned.
+            return self
+        if isinstance(other, SetDict):
+            # TODO vectorizing nanmin should speed this up significantly
+            return SetDict(
+                (
+                    (k, min((self.get(k, np.inf), other.get(k, np.inf))))
+                    for k in (set(self.store) | set(other.store))
+                )
+            )
+        else:
+            return NotImplemented
+
+    def __ror__(self, other):
+        return self.__or__(other)
+
+    def __and__(self, other):
+        if isinstance(other, set):
+            return SetDict(((k, self.store[k]) for k in set(self.store) & other))
+        elif isinstance(other, SetDict):
+            return SetDict(
+                (
+                    (k, max((self[k], other[k])))
+                    for k in (set(self.store) & set(other.store))
+                )
+            )
+        else:
+            return NotImplemented
+
+    def __rand__(self, other):
+        return self.__and__(other)
+
+    def __repr__(self) -> str:
+        return self.store.__repr__()
+
+
+# TODO remove nan_dist
 class DoubleLookupNeighborFinder:
     def __init__(self, feature_table: pd.DataFrame, *, nan_dist: float = np.nan):
         """
@@ -52,14 +132,14 @@ class DoubleLookupNeighborFinder:
         # dist_mat: name of associated distance matrix
         # forward: clonotype -> feature_index lookups
         # reverse: feature_index -> clonotype lookups
-        self.lookups: Dict[str, Tuple[str, np.ndarray, dict]] = dict()
+        self.lookups: Dict[str, Tuple[str, np.ndarray, Mapping]] = dict()
 
     def lookup(
         self,
         object_id: int,
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
-    ) -> Iterable[Tuple[int, float]]:
+    ) -> Union[set, SetDict]:
         """Get ids of neighboring objects from a lookup table.
 
         Performs the following lookup:
@@ -97,19 +177,19 @@ class DoubleLookupNeighborFinder:
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
-            # special case for nan. Yield a predefined distance.
-            yield from zip(
-                reverse.get(np.nan, iter(())), itertools.repeat(self.nan_dist)
-            )
+
+            return reverse.get("nan", set())
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
             # ... and get column indices directly from sparse row
-            yield from itertools.chain.from_iterable(
-                # if no entry found (e.g. because of cross-table lookup)
-                # return nothing (-> empty iterator)
-                zip(reverse.get(i, iter(())), itertools.repeat(distance))
-                for i, distance in zip(row.indices, row.data)  # type: ignore
+            return SetDict(
+                itertools.chain.from_iterable(
+                    # if no entry found (e.g. because of cross-table lookup)
+                    # return nothing (-> empty iterator)
+                    zip(reverse.get(i, iter(())), itertools.repeat(distance))
+                    for i, distance in zip(row.indices, row.data)  # type: ignore
+                )
             )
 
     def add_distance_matrix(
@@ -136,6 +216,7 @@ class DoubleLookupNeighborFinder:
         distance_matrix.eliminate_zeros()
         self.distance_matrices[name] = distance_matrix
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
+        # The label "nan" does not have an index in the matrix
         self.distance_matrix_labels[name]["nan"] = np.nan
 
     def add_lookup_table(self, name: str, feature_col: str, distance_matrix: str):
@@ -168,92 +249,21 @@ class DoubleLookupNeighborFinder:
 
     def _build_reverse_lookup_table(
         self, feature_col: str, distance_matrix: str
-    ) -> dict:
+    ) -> Mapping[float, set]:
         """Create a reverse-lookup dict that maps each (numeric) index
         of a feature distance matric to a list of associated numeric clonotype indices."""
         tmp_reverse_lookup = dict()
         tmp_index_lookup = self.distance_matrix_labels[distance_matrix]
         for i, k in enumerate(self.feature_table[feature_col]):
+            tmp_key = tmp_index_lookup[k]
+            if np.isnan(tmp_key):
+                tmp_key = "nan"
             try:
-                tmp_reverse_lookup[tmp_index_lookup[k]].append(i)
+                tmp_reverse_lookup[tmp_key].append(i)
             except KeyError:
-                tmp_reverse_lookup[tmp_index_lookup[k]] = [i]
+                tmp_reverse_lookup[tmp_key] = [i]
 
-        return tmp_reverse_lookup
-
-
-class SetDict(MutableMapping):
-    def __init__(self, *args, **kwargs):
-        """A dictionary that supports set operations.
-
-        Values are combined as follows:
-        * when using `&`, the max value is retained.
-        * when using `|`, the min value is retained.
-
-        np.nan is a neutral element for both `&` and `|`
-
-        Examples:
-        ---------
-        >>> SetDict(a=5, b=7) | SetDict(a=2, c=8)
-        SetDict(a=2, b=7, c=8)
-        >>> SetDict(a=5, b=7) & SetDict(a=2, c=8)
-        SetDict(a=5)
-        >>> SetDict(a=5, b=np.nan) & SetDict(a=np.nan, b=8)
-        SetDict(a=5, by=8)
-        """
-        self.store = dict(*args, **kwargs)
-        # self.update(dict(*args, **kwargs))
-
-    def __getitem__(self, key):
-        return self.store[key]
-
-    def __setitem__(self, key, value):
-        self.store[key] = value
-
-    def __delitem__(self, key):
-        del self.store[key]
-
-    def __iter__(self):
-        return iter(self.store)
-
-    def __len__(self):
-        return len(self.store)
-
-    def __or__(self, other):
-        if isinstance(other, set):
-            raise NotImplementedError(
-                "Cannot combine SetDict and set using 'or' (wouldn't know how to handle the score)"
-            )
-        elif isinstance(other, SetDict):
-            return SetDict(
-                (
-                    (k, np.nanmin((self.get(k, np.inf), other.get(k, np.inf))))
-                    for k in (set(self.store) | set(other.store))
-                )
-            )
-        else:
-            raise NotImplementedError("Operation implemented only for SetDict. ")
-
-    def __ror__(self, other):
-        return self.__or__(other)
-
-    def __and__(self, other):
-        if isinstance(other, set):
-            return SetDict(((k, self.store[k]) for k in set(self.store) & other))
-        elif isinstance(other, SetDict):
-            return SetDict(
-                (
-                    (k, np.nanmax((self[k], other[k])))
-                    for k in (set(self.store) & set(other.store))
-                )
-            )
-        else:
-            raise NotImplementedError(
-                "Operation implemented only for SetDict and set. "
-            )
-
-    def __rand__(self, other):
-        return self.__and__(other)
-
-    def __repr__(self) -> str:
-        return self.store.__repr__()
+        # convert all of them to sets. In particular nan needs to be a set
+        # nan can be quite large and like that it doesn't have to be re-initalized
+        # all over.
+        return {k: set(v) for k, v in tmp_reverse_lookup.items()}
