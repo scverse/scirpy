@@ -1,15 +1,12 @@
 """Compute distances between immune receptor sequences"""
-import itertools
 from anndata import AnnData
-from typing import Union, List, Tuple, Dict
+from typing import Union
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
 from ..util import _is_na, deprecated
-from scipy.sparse import coo_matrix, csr_matrix
-import scipy.sparse
+from scipy.sparse import csr_matrix
 from ..util import _doc_params
-from tqdm import tqdm
 from . import metrics
 
 
@@ -23,13 +20,14 @@ def tcr_dist(*args, **kwargs):
 
 # TODO: deprecated / removed exceptions for all changed public API items.
 def TcrNeighbors(*args, **kwargs):
-    raise NotImplementedError(
-        "TcrNeighbors has been renamed in v0.5.0 and removed in v0.7.0"
-    )
+    raise RuntimeError("TcrNeighbors has been renamed in v0.5.0 and removed in v0.7.0")
 
 
 def IrNeighbors(*args, **kwargs):
-    raise NotImplementedError("IrNeighbors has been removed in v0.7.0")
+    raise RuntimeError(
+        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` "
+        "or `sequence_dist` for that functionality. "
+    )
 
 
 MetricType = Union[
@@ -98,22 +96,50 @@ def _get_distance_calculator(
     return dist_calc
 
 
+@_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: AnnData,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,
-    key_added: Union[str, None] = None,
     sequence: Literal["aa", "nt"] = "nt",
+    key_added: Union[str, None] = None,
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[dict, None]:
     """Computes a sequence-distance metric between all unique VJ CDR3 sequences and
-    between all unique VDJ CDR3 sequences
+    between all unique VDJ CDR3 sequences.
 
-    TODO docs
+    This is a required proprocessing step for clonotype definition and clonotype
+    networks.
+
+    Parameters
+    ----------
+    adata
+        annotated data matrix
+    {metric}
+    {cutoff}
+    sequence
+        Compute distances based on amino acid (`aa`) or nucleotide (`nt`) sequences.
+    key_added
+        Dictionary key under which the results will be stored in `adata.uns` if
+        `inplace=True`. Defaults to `ir_dist_{{sequence}}_{{metric}}`.
+        If `metric` is an instance of :class:`scirpy.ir_dist.metric.DistanceCalculator`,
+        `{{metric}}` defaults to `custom`.
+    inplace
+        If true, store the result in `adata.uns`. Otherwise return a dictionary
+        with the results.
+    n_jobs
+        Number of cores to use for distance calculation. Passed on to
+        :class:`scirpy.ir_dist.metric.DistanceCalculator`.
+
+    Returns
+    -------
+    Depending on the value of `inplace` either returns nothing or a dictionary
+    with symmetrical, sparse, pairwise distance matrices for all `VJ` and `VDJ`
+    sequences.
     """
-    COLUMN = "IR_{chain_type}_{chain_id}_{key}"
+    obs_col = "IR_{chain_type}_{chain_id}_{key}"
     key = "cdr3" if sequence == "aa" else "cdr3_nt"
     result = {
         "VJ": dict(),
@@ -127,7 +153,7 @@ def _ir_dist(
         tmp_seqs = np.concatenate(
             [
                 adata.obs[
-                    COLUMN.format(chain_type=chain_type, chain_id=chain_id, key=key)
+                    obs_col.format(chain_type=chain_type, chain_id=chain_id, key=key)
                 ]
                 for chain_id in ["1", "2"]
             ]
@@ -138,7 +164,7 @@ def _ir_dist(
     for chain_type in ["VJ", "VDJ"]:
         logging.info(
             f"Computing sequence x sequence distance matrix for {chain_type} sequences."
-        )
+        )  # type: ignore
         tmp_seqs = result[chain_type]["seqs"]
         result[chain_type]["distances"] = dist_calc.calc_dist_mat(tmp_seqs).tocsr()
 
@@ -195,7 +221,7 @@ def sequence_dist(
 
     Returns
     -------
-    Sparse pairwise distance matrix.
+    Symmetrical, sparse pairwise distance matrix.
     """
     seqs_unique, seqs_unique_inverse = np.unique(seqs, return_inverse=True)  # type: ignore
     seqs2_unique, seqs2_unique_inverse = (  # type: ignore

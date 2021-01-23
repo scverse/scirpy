@@ -11,13 +11,16 @@ def merge_with_tcr(adata, adata_tcr, **kwargs):
     return merge_with_ir(adata, adata_tcr, **kwargs)
 
 
-@deprecated(
-    "Due to added BCR support, this function has been renamed "
-    "to `ir_neighbors`. The old version will be removed in a future release. "
-)
 def tcr_neighbors(*args, dual_tcr="primary_only", **kwargs):
-    # TODO update deprecation warnings
-    assert False
+    raise RuntimeError(
+        "`tcr_neighbors` has been deprecated in v0.5.0 and "
+        "replaced by `ir_dist` in v0.7.0 and its behaviour "
+        "has slightly changed. Please read the new docs and update your code. "
+    )
 
 
-# TODO add deprecation warning for ir_neighbors
+def ir_neighbors(*args, **kwargs):
+    raise RuntimeError(
+        "`ir_neighbors` has been replaced by `ir_dist` in v0.7.0 and its behaviour "
+        "has slightly changed. Please read the new docs and update your code. "
+    )
