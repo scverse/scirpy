@@ -1,65 +1,69 @@
 import collections.abc as cabc
+import abc
 from functools import reduce
-from operator import or_
+from operator import add
 import numpy as np
 import pandas as pd
 import itertools
 from typing import Dict, Sequence, Tuple, Iterable, Union, Mapping
 import scipy.sparse as sp
 from scipy.sparse.csr import csr_matrix
+from .._compat import Literal
 
 
-class SetDict(cabc.MutableMapping):
-    def __init__(self, *args, **kwargs):
-        """A dictionary that supports set operations.
+class SetMask(abc.ABC):
+    """A sparse mask vector that supports set operations"""
 
-        Values are combined as follows:
-        * when using `&`, the max value is retained.
-        * when using `|`, the min value is retained.
+    def __init__(self, data: csr_matrix):
+        if not isinstance(data, csr_matrix):
+            raise ValueError("data must be a csr_matrix")
+        self.data = data
+        pass
 
-        np.nan is a neutral element for both `&` and `|`
-
-        Examples:
-        ---------
-        >>> SetDict(a=5, b=7) | SetDict(a=2, c=8)
-        SetDict(a=2, b=7, c=8)
-        >>> SetDict(a=5, b=7) & SetDict(a=2, c=8)
-        SetDict(a=5)
-        >>> SetDict(a=5, b=np.nan) & SetDict(a=np.nan, b=8)
-        SetDict(a=5, by=8)
-        """
-        self.store = dict(*args, **kwargs)
-        # self.update(dict(*args, **kwargs))
-
-    def __getitem__(self, key):
-        return self.store[key]
-
-    def __setitem__(self, key, value):
-        self.store[key] = value
-
-    def __delitem__(self, key):
-        del self.store[key]
-
-    def __iter__(self):
-        return iter(self.store)
+    def __repr__(self):
+        try:
+            return f"1x{len(self)} {type(self).__name__} with {self.data.nzz} elements"
+        except AttributeError:
+            return f"uninitalized {type(self).__name__}"
 
     def __len__(self):
-        return len(self.store)
+        return self.data.shape[1]
+
+    def __getitem__(self, key):
+        return self.data[0, key]
+
+    def __eq__(self, other) -> bool:
+        """Not very efficient, mainly for testing"""
+        return type(self) == type(other) and np.array_equal(
+            self.data.toarray(), other.data.toarray()
+        )
+
+
+class BoolSetMask(SetMask):
+    """A SetMask of boolean type. I.e. it does not contain values, only 1/0.
+
+    There are no guard rails regarding the actual values. If you store values
+    different than 0/1 in the bool set mask strange things may happen.
+    """
+
+    @staticmethod
+    def empty(size: int):
+        """Create an empty setmask of a given length"""
+        data = sp.csr_matrix((1, size))
+        return BoolSetMask(data)
+
+    @staticmethod
+    def from_list(lst):
+        data = sp.csr_matrix(lst)
+        return BoolSetMask(data)
 
     def __or__(self, other):
-        if isinstance(other, set):
-            # sets act as neutral element for or.
-            # if the set contains additional elements, they are discarded, but
-            # all values of the dict itself are returned.
-            return self
-        if isinstance(other, SetDict):
-            # TODO vectorizing nanmin should speed this up significantly
-            return SetDict(
-                (
-                    (k, min((self.get(k, np.inf), other.get(k, np.inf))))
-                    for k in (set(self.store) | set(other.store))
-                )
-            )
+        if isinstance(other, BoolSetMask):
+            return BoolSetMask(self.data.maximum(other.data))
+        if isinstance(other, NumberSetMask):
+            # neutral element! valuese that are 1 in the BoolSetMask and 0 in the
+            # NumberSetMask will stay 0.
+            return other
         else:
             return NotImplemented
 
@@ -67,28 +71,56 @@ class SetDict(cabc.MutableMapping):
         return self.__or__(other)
 
     def __and__(self, other):
-        if isinstance(other, set):
-            return SetDict(((k, self.store[k]) for k in set(self.store) & other))
-        elif isinstance(other, SetDict):
-            return SetDict(
-                (
-                    (k, max((self[k], other[k])))
-                    for k in (set(self.store) & set(other.store))
-                )
-            )
+        if isinstance(other, BoolSetMask):
+            return BoolSetMask(self.data.multiply(other.data))
+        elif isinstance(other, NumberSetMask):
+            return NumberSetMask(self.data.multiply(other.data))
         else:
             return NotImplemented
 
     def __rand__(self, other):
         return self.__and__(other)
 
-    def __repr__(self) -> str:
-        return self.store.__repr__()
+
+class NumberSetMask(SetMask):
+    """A SetMask of number type. Or retains the min, and retains the max"""
+
+    @staticmethod
+    def empty(size: int):
+        """Create an empty setmask of a given length"""
+        data = sp.csr_matrix((1, size))
+        return NumberSetMask(data)
+
+    @staticmethod
+    def from_list(lst):
+        data = sp.csr_matrix(lst)
+        return NumberSetMask(data)
+
+    def __or__(self, other):
+        if isinstance(other, NumberSetMask):
+            # take min (!= 0)
+            tmp_max = (
+                self.data.maximum(other.data)
+                .multiply(self.data > 0)
+                .multiply(other.data > 0)
+            )
+            return NumberSetMask(self.data + other.data - tmp_max)
+        else:
+            return NotImplemented
+
+    def __and__(self, other):
+        if isinstance(other, NumberSetMask):
+            return NumberSetMask(
+                self.data.maximum(other.data)
+                .multiply(self.data > 0)
+                .multiply(other.data > 0)
+            )
+        else:
+            return NotImplemented
 
 
-# TODO remove nan_dist
 class DoubleLookupNeighborFinder:
-    def __init__(self, feature_table: pd.DataFrame, *, nan_dist: float = np.nan):
+    def __init__(self, feature_table: pd.DataFrame):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -115,14 +147,8 @@ class DoubleLookupNeighborFinder:
             A data frame with features in columns. Rows must be unique.
             In our case, rows are clonotypes, and features can be CDR3 sequences,
             v genes, etc.
-        nan_dist
-            Distance between two "nan" labels. Currently, a label is
-            considered "nan" if it is the literal string "nan". This might change
-            in the future. `np.nan` is the universal neutral element for both
-            `np.nanmin` and `np.nanmax`.
         """
         self.feature_table = feature_table
-        self.nan_dist = nan_dist
 
         # n_feature x n_feature sparse, symmetric distance matrices
         self.distance_matrices: Dict[str, sp.csr_matrix] = dict()
@@ -139,7 +165,7 @@ class DoubleLookupNeighborFinder:
         object_id: int,
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
-    ) -> Union[set, SetDict]:
+    ) -> SetMask:
         """Get ids of neighboring objects from a lookup table.
 
         Performs the following lookup:
@@ -147,8 +173,8 @@ class DoubleLookupNeighborFinder:
             clonotype_id -> dist_mat -> neighboring features -> neighboring object.
 
         "nan"s are not looked up via the distance matrix. Instead they have
-        a special entry in the lookup tables and yield the distance predefined in
-        `self.nan_dist`.
+        a special entry in the lookup tables and yield only a BooleanMask that
+        works as neutral element.
 
         Parameters
         ----------
@@ -177,18 +203,31 @@ class DoubleLookupNeighborFinder:
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
-
-            return reverse.get("nan", set())
+            try:
+                return BoolSetMask(reverse["nan"])
+            except KeyError:
+                return NumberSetMask.empty(self.feature_table.shape[0])
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
+
             # ... and get column indices directly from sparse row
-            return SetDict(
-                itertools.chain.from_iterable(
-                    # if no entry found (e.g. because of cross-table lookup)
-                    # return nothing (-> empty iterator)
-                    zip(reverse.get(i, iter(())), itertools.repeat(distance))
-                    for i, distance in zip(row.indices, row.data)  # type: ignore
+            #
+            # the individual sparse masks obtained from the reverse lookup
+            # table are not overlapping because each row in the feature table
+            # has only one sequence. Simple sum is therefore enough.
+            return NumberSetMask(
+                # TODO possibly more efficient using either dense or coo_matrices here.
+                # vstack + sum densifies.
+                reduce(
+                    add,
+                    (
+                        # if no entry found (e.g. because of cross-table lookup)
+                        # return nothing (-> empty iterator)
+                        reverse.get(i, sp.csr_matrix((1, self.feature_table.shape[0])))
+                        * distance
+                        for i, distance in zip(row.indices, row.data)  # type: ignore
+                    ),
                 )
             )
 
@@ -249,7 +288,7 @@ class DoubleLookupNeighborFinder:
 
     def _build_reverse_lookup_table(
         self, feature_col: str, distance_matrix: str
-    ) -> Mapping[float, set]:
+    ) -> Mapping[float, csr_matrix]:
         """Create a reverse-lookup dict that maps each (numeric) index
         of a feature distance matric to a list of associated numeric clonotype indices."""
         tmp_reverse_lookup = dict()
@@ -266,4 +305,32 @@ class DoubleLookupNeighborFinder:
         # convert all of them to sets. In particular nan needs to be a set
         # nan can be quite large and like that it doesn't have to be re-initalized
         # all over.
-        return {k: set(v) for k, v in tmp_reverse_lookup.items()}
+        return {
+            k: self._list_to_sparse_row(v, self.feature_table.shape[0])
+            for k, v in tmp_reverse_lookup.items()
+        }
+
+    @staticmethod
+    def _list_to_sparse_row(index_list: Sequence[int], row_len: int) -> sp.csr_matrix:
+        """Efficient way to convert a list of indexes to a sparse 1 x n mask"""
+        sparse_row = sp.csr_matrix((1, row_len))
+        sparse_row.data = np.ones(len(index_list))
+        sparse_row.indices = np.array(index_list)
+        sparse_row.indptr = np.array([0, len(index_list)])
+        return sparse_row
+
+    @staticmethod
+    def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
+        """Efficient way of converting a key, value dictionary to a
+        1 x n sparse row in CSR format"""
+        sparse_row = sp.csr_matrix((1, row_len))
+
+        sparse_row.data = np.fromiter(
+            (x if np.isfinite(x) else 0 for x in row_dict.values()),
+            int,
+            len(row_dict),
+        )
+        sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
+        sparse_row.indptr = np.array([0, len(row_dict)])
+
+        return sparse_row

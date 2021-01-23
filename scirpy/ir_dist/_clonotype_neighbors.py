@@ -6,11 +6,12 @@ from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp
 import itertools
-from ._util import SetDict, DoubleLookupNeighborFinder
+from ._util import DoubleLookupNeighborFinder
 from multiprocessing import Pool
 from ..util import _is_na, _is_true
 from functools import reduce
 from operator import and_, or_
+from tqdm.contrib import tmap
 
 
 class ClonotypeNeighbors:
@@ -129,7 +130,7 @@ class ClonotypeNeighbors:
         #             total=n_clonotypes,
         #         )
         #     )
-        dist_rows = map(self._dist_for_clonotype, range(n_clonotypes))
+        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
@@ -172,21 +173,5 @@ class ClonotypeNeighbors:
         operator = and_ if self.receptor_arms == "all" else or_
         res = reduce(operator, res)
 
-        row = self._dict_to_sparse_row(res, self.clonotypes.shape[0])
+        row = res.data
         return row
-
-    @staticmethod
-    def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
-        """Efficient way of converting a SetDict to a 1 x n sparse row in CSR format"""
-        sparse_row = sp.csr_matrix((1, row_len))
-        if isinstance(row_dict, SetDict):
-            # if it is only a set (equivalent to all nan dists), just return an empty row
-            sparse_row.data = np.fromiter(
-                (x if np.isfinite(x) else 0 for x in row_dict.values()),
-                int,
-                len(row_dict),
-            )
-            sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
-            sparse_row.indptr = np.array([0, len(row_dict)])
-
-        return sparse_row
