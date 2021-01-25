@@ -64,6 +64,49 @@ _common_doc = """\
 """
 
 
+def _validate_parameters(
+    adata,
+    receptor_arms,
+    dual_ir,
+    within_group,
+    distance_key,
+    sequence,
+    metric,
+    key_added,
+):
+    """Validate an sanitze parameters for `define_clonotypes`"""
+    if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
+        raise ValueError(
+            "Invalid value for `receptor_arms`. Note that starting with v0.5 "
+            "`TRA` and `TRB` are not longer valid values."
+        )
+
+    if dual_ir not in ["primary_only", "all", "any"]:
+        raise ValueError("Invalid value for `dual_ir")
+
+    if within_group is not None:
+        if isinstance(within_group, str):
+            within_group = [within_group]
+        for group_col in within_group:
+            if group_col not in adata.obs.columns:
+                msg = f"column `{within_group}` not found in `adata.obs`. "
+                if group_col in ("receptor_type", "receptor_subtype"):
+                    msg += "Did you run `tl.chain_qc`? "
+                raise ValueError(msg)
+
+    if distance_key is None:
+        distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
+    if distance_key not in adata.uns:
+        raise ValueError(
+            "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
+        )
+
+    if key_added is None:
+        key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
+
+    return within_group, distance_key, key_added
+
+
 @_doc_params(common_doc=_common_doc)
 def define_clonotype_clusters(
     adata: AnnData,
@@ -107,11 +150,11 @@ def define_clonotype_clusters(
         The column name under which the clonotype clusters and cluster sizes
         will be stored in `adata.obs` and under which the clonotype network will be
         stored in `adata.uns`.
-            * Defaults to `cc_{sequence}_{metric}`, e.g. `cc_aa_levenshtein`,
+            * Defaults to `cc_{{sequence}}_{{metric}}`, e.g. `cc_aa_levenshtein`,
               where `cc` stands for "clonotype cluster".
-            * The clonotype sizes will be stored in `{key_added}_size`,
+            * The clonotype sizes will be stored in `{{key_added}}_size`,
               e.g. `cc_aa_levenshtein_size`.
-            * The clonotype x clonotype network will be stored in `{key_added}_dist`,
+            * The clonotype x clonotype network will be stored in `{{key_added}}_dist`,
               e.g. `cc_aa_levenshtein_dist`.
 
     partitions
@@ -128,7 +171,7 @@ def define_clonotype_clusters(
         `n_iterations` parameter for the leiden algorithm.
     distance_key
         Key in `adata.uns` where the sequence distances are stored. This defaults
-        to `ir_dist_{sequence}_{metric}`.
+        to `ir_dist_{{sequence}}_{{metric}}`.
     inplace
         If `True`, adds the results to anndata, otherwise returns them.
 
@@ -142,31 +185,16 @@ def define_clonotype_clusters(
     distances
         a pairwise distance matrix between unique rows of adata.obs
     """
-    if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
-        raise ValueError(
-            "Invalid value for `receptor_arms`. Note that starting with v0.5 "
-            "`TRA` and `TRB` are not longer valid values."
-        )
-
-    if dual_ir not in ["primary_only", "all", "any"]:
-        raise ValueError("Invalid value for `dual_ir")
-
-    if within_group is not None:
-        if isinstance(within_group, str):
-            within_group = [within_group]
-        for group_col in within_group:
-            if group_col not in adata.obs.columns:
-                msg = f"column `{within_group}` not found in `adata.obs`. "
-                if group_col in ("receptor_type", "receptor_subtype"):
-                    msg += "Did you run `tl.chain_qc`? "
-                raise ValueError(msg)
-
-    if distance_key is None:
-        distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
-    if distance_key not in adata.uns:
-        raise ValueError(
-            "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
-        )
+    within_group, distance_key, key_added = _validate_parameters(
+        adata,
+        receptor_arms,
+        dual_ir,
+        within_group,
+        distance_key,
+        sequence,
+        metric,
+        key_added,
+    )
 
     ctn = ClonotypeNeighbors(
         adata,
@@ -203,9 +231,6 @@ def define_clonotype_clusters(
     ).transform("count")
 
     # Return or store results
-    if key_added is None:
-        key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
-
     clonotype_distance_res = {
         "distances": clonotype_dist,
         "distance_keys": ctn.cell_indices,
