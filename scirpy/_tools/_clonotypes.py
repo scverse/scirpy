@@ -120,6 +120,7 @@ def define_clonotype_clusters(
     n_iterations: int = 5,
     distance_key: Union[str, None] = None,
     inplace: bool = True,
+    n_jobs: Union[int, None] = None,
 ) -> Union[Tuple[pd.Series, pd.Series, Dict], None]:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
@@ -171,6 +172,8 @@ def define_clonotype_clusters(
         to `ir_dist_{{sequence}}_{{metric}}`.
     inplace
         If `True`, adds the results to anndata, otherwise returns them.
+    n_jobs
+        Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
 
     Returns
     -------
@@ -220,6 +223,7 @@ def define_clonotype_clusters(
     )
 
     # clonotype cluster = graph partition
+    # TODO this is likely inefficient.
     for ct_id, clonotype_cluster in enumerate(part.membership):
         clonotype_cluster_series[ctn.cell_indices[ct_id]] = str(clonotype_cluster)
 

@@ -1,6 +1,7 @@
+from multiprocessing import cpu_count
 import parasail
 from scipy.sparse.csr import csr_matrix
-from ..util._multiprocessing import EnhancedPool as Pool
+from tqdm.contrib.concurrent import process_map
 import itertools
 from typing import Union, Sequence, Tuple, Optional
 import numpy as np
@@ -210,10 +211,12 @@ class ParallelDistanceCalculator(DistanceCalculator):
         # precompute blocks as list to have total number of blocks for progressbar
         blocks = list(self._block_iter(seqs, seqs2, self.block_size))
 
-        with Pool(self.n_jobs) as p:
-            block_results = p.starmap_progress(
-                self._compute_block, blocks, total=len(blocks)
-            )
+        block_results = process_map(
+            self._compute_block,
+            *zip(*blocks),
+            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+            chunksize=50,
+        )
 
         try:
             dists, rows, cols = zip(*itertools.chain(*block_results))

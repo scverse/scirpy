@@ -1,3 +1,4 @@
+from multiprocessing import cpu_count
 from typing import Union, Sequence
 from anndata import AnnData
 from scanpy import logging
@@ -7,12 +8,11 @@ import numpy as np
 import scipy.sparse as sp
 import itertools
 from ._util import DoubleLookupNeighborFinder, BoolSetMask, SetMask
-from multiprocessing import Pool
 from ..util import _is_na, _is_true
 from functools import reduce
 from operator import and_, or_
-from tqdm.contrib import tmap
 import pandas as pd
+from tqdm.contrib.concurrent import process_map
 
 
 class ClonotypeNeighbors:
@@ -26,6 +26,7 @@ class ClonotypeNeighbors:
         within_group: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
+        n_jobs: Union[int, None] = None,
     ):
         """Compute distances between clonotypes"""
         self.same_v_gene = same_v_gene
@@ -34,6 +35,7 @@ class ClonotypeNeighbors:
         self.dual_ir = dual_ir
         self.distance_dict = adata.uns[distance_key]
         self.sequence_key = sequence_key
+        self.n_jobs = n_jobs
 
         # will be filled in self._prepare
         self.neighbor_finder = None  # instance of DoubleLookupNeighborFinder
@@ -166,17 +168,15 @@ class ClonotypeNeighbors:
         distance matrix."""
         start = logging.info("Computing clonotype x clonotype distances. ")
         n_clonotypes = self.clonotypes.shape[0]
-        # TODO niceer progressbar
-        # with Pool() as p:
-        #     dist_rows = list(
-        #         tqdm(
-        #             p.imap(
-        #                 self._dist_for_clonotype, range(n_clonotypes), chunksize=5000
-        #             ),
-        #             total=n_clonotypes,
-        #         )
-        #     )
-        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        dist_rows = process_map(
+            self._dist_for_clonotype,
+            range(n_clonotypes),
+            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+            chunksize=2000,
+        )
+        # For debugging: single-threaded version
+        # from tqdm.contrib import tmap
+        # dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)

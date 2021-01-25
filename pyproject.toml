@@ -37,7 +37,7 @@ requires = [
     'networkx',
     'squarify',
     'airr',
-    'tqdm>=4.29.1', # See https://github.com/icbi-lab/scirpy/issues/128#issuecomment-632646608
+    'tqdm>=4.42.0', # required for process_map
     # for getting the version
     'setuptools_scm',
     'pytoml',

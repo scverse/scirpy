@@ -16,6 +16,8 @@ from .fixtures import (
 import random
 import pytest
 
+# TODO test clonotype definition with v_genes and within_group
+
 
 @pytest.mark.parametrize(
     "same_v_gene,within_group,ct_expected,ct_size_expected",
