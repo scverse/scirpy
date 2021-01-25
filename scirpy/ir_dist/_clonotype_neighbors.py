@@ -13,6 +13,7 @@ from ..util import _is_na, _is_true
 from functools import reduce
 from operator import and_, or_
 from tqdm.contrib import tmap
+import pandas as pd
 
 
 class ClonotypeNeighbors:
@@ -42,6 +43,12 @@ class ClonotypeNeighbors:
         )
         self._dual_ir_cols = ["1"] if self.dual_ir == "primary_only" else ["1", "2"]
 
+        self._cdr3_cols, self._v_gene_cols = list(), list()
+        for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
+            self._cdr3_cols.append(f"IR_{arm}_{i}_{self.sequence_key}")
+            if same_v_gene:
+                self._v_gene_cols.append(f"IR_{arm}_{i}_v_gene")
+
         self._prepare(adata)
 
     def _prepare(self, adata: AnnData):
@@ -49,17 +56,15 @@ class ClonotypeNeighbors:
         start = logging.info("Initializing lookup tables. ")
         self._make_clonotype_table(adata)
         self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
-        self._add_distance_matrices()
+        self._add_distance_matrices(adata)
         self._add_lookup_tables()
         logging.hint("Done initializing lookup tables.", time=start)
 
     def _make_clonotype_table(self, adata):
-        """Define clonotypes based identical IR features"""
-        # Define clonotypes. TODO v-genes, within_group
-        clonotype_cols = [
-            f"IR_{arm}_{i}_{self.sequence_key}"
-            for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols)
-        ]
+        """Define 'preliminary' clonotypes based identical IR features. """
+        clonotype_cols = self._cdr3_cols + self._v_gene_cols
+        if self.within_group is not None:
+            clonotype_cols += list(self.within_group)
 
         clonotypes = (
             adata.obs.loc[_is_true(adata.obs["has_ir"]), clonotype_cols]
@@ -73,14 +78,25 @@ class ClonotypeNeighbors:
                 "No cells with IR information found (`adata.obs['has_ir'] == True`)"
             )
 
+        # make 'within group' a single column of tuples (-> only one distance
+        # matrix instead of one per column.)
+        if self.within_group is not None:
+            within_group_col = list(
+                clonotypes.loc[:, self.within_group].itertuples(index=False, name=None)
+            )
+            for tmp_col in self.within_group:
+                del clonotypes[tmp_col]
+            clonotypes["within_group"] = within_group_col
+
         # make sure all nans are consistent "nan"
         # This workaround will be made obsolete by #190.
         for col in clonotypes.columns:
             clonotypes.loc[_is_na(clonotypes[col]), col] = "nan"
         self.clonotypes = clonotypes
 
-    def _add_distance_matrices(self):
+    def _add_distance_matrices(self, adata):
         """Add all required distance matrices to the DLNF"""
+        # sequence distance matrices
         for chain_type in self._receptor_arm_cols:
             self.neighbor_finder.add_distance_matrix(
                 name=chain_type,
@@ -88,23 +104,28 @@ class ClonotypeNeighbors:
                 labels=self.distance_dict[chain_type]["seqs"],
             )
 
-        # # store v gene distances
-        # v_genes = np.unique(
-        #     np.concatenate(
-        #         [
-        #             self.adata.obs[c].values
-        #             for c in [
-        #                 "IR_VJ_1_v_gene",
-        #                 "IR_VJ_2_v_gene",
-        #                 "IR_VDJ_1_v_gene",
-        #                 "IR_VDJ_2_v_gene",
-        #             ]
-        #         ]
-        #     )
-        # )
-        # self.neighbor_finder.add_distance_matrix(
-        #     "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
-        # )
+        if self.same_v_gene:
+            # V gene distance matrix (ID mat)
+            v_genes = self._unique_values_in_multiple_columns(
+                adata.obs, self._v_gene_cols
+            )
+            self.neighbor_finder.add_distance_matrix(
+                "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
+            )
+
+        if self.within_group is not None:
+            within_group_values = np.unique(self.clonotypes["within_group"].values)
+            self.neighbor_finder.add_distance_matrix(
+                "within_group",
+                sp.identity(len(within_group_values), dtype=bool, format="csr"),  # type: ignore
+                within_group_values,
+            )
+
+    @staticmethod
+    def _unique_values_in_multiple_columns(
+        df: pd.DataFrame, columns: Sequence[str]
+    ) -> np.ndarray:
+        return np.unique(np.concatenate([df[c].values for c in columns]))  # type: ignore
 
     def _add_lookup_tables(self):
         """Add all required lookup tables to the DLNF"""
@@ -112,9 +133,15 @@ class ClonotypeNeighbors:
             self.neighbor_finder.add_lookup_table(
                 f"{arm}_{i}", f"IR_{arm}_{i}_{self.sequence_key}", arm
             )
+            if self.same_v_gene:
+                self.neighbor_finder.add_lookup_table(
+                    f"{arm}_{i}_v_gene", f"IR_{arm}_{i}_v_gene", "v_gene"
+                )
 
-        # self.neighbor_finder.add_lookup_table("VJ_v", "IR_VJ_1_v_gene", "v_gene")
-        # self.neighbor_finder.add_lookup_table("VDJ_v", "IR_VDJ_1_v_gene", "v_gene")
+        if self.within_group is not None:
+            self.neighbor_finder.add_lookup_table(
+                "within_group", "within_group", "within_group"
+            )
 
     def compute_distances(self) -> sp.csr_matrix:
         """Compute the distances between clonotypes. `prepare` must have
@@ -122,11 +149,12 @@ class ClonotypeNeighbors:
         distance matrix."""
         start = logging.info("Computing clonotype x clonotype distances. ")
         n_clonotypes = self.clonotypes.shape[0]
+        # TODO niceer progressbar
         # with Pool() as p:
         #     dist_rows = list(
         #         tqdm(
         #             p.imap(
-        #                 self._dist_for_clonotype, range(n_clonotypes), chunksize=500
+        #                 self._dist_for_clonotype, range(n_clonotypes), chunksize=5000
         #             ),
         #             total=n_clonotypes,
         #         )
@@ -176,6 +204,6 @@ class ClonotypeNeighbors:
 
         # if it's a bool set masks it corresponds to all nan
         if isinstance(res, BoolSetMask):
-            return csr_matrix((1, len(res)))
+            return csr_matrix((1, len(res)), dtype=int)
         else:
             return res.data

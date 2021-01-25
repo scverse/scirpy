@@ -3,6 +3,7 @@ import abc
 from functools import reduce
 from operator import add
 import numpy as np
+from numpy.core.fromnumeric import shape
 import pandas as pd
 import itertools
 from typing import Dict, Sequence, Tuple, Iterable, Union, Mapping
@@ -11,32 +12,35 @@ from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
 
 # TODO document the set masks
-class SetMask(abc.ABC):
+class SetMask(cabc.Sequence):
     """A sparse mask vector that supports set operations"""
 
-    def __init__(self, data: csr_matrix):
-        if not isinstance(data, csr_matrix):
-            raise ValueError("data must be a csr_matrix")
+    def __init__(self, data: Union[sp.spmatrix, np.ndarray]):
         self.data = data
         pass
 
     def __repr__(self):
         try:
-            return f"1x{len(self)} {type(self).__name__} with {self.data.nzz} elements"
+            if sp.issparse(self.data):
+                return (
+                    f"1x{len(self)} {type(self).__name__} with {self.data.nnz} elements"
+                )
+            else:
+                return f"1x{len(self)} {type(self).__name__} {self.data.__repr__()}"
         except AttributeError:
             return f"uninitalized {type(self).__name__}"
 
     def __len__(self):
         return self.data.shape[1]
 
-    def __getitem__(self, key):
-        return self.data[0, key]
-
     def __eq__(self, other) -> bool:
         """Not very efficient, mainly for testing"""
-        return type(self) == type(other) and np.array_equal(
-            self.data.toarray(), other.data.toarray()
-        )
+        if type(self) == type(other):
+            self_data = self.data.toarray() if sp.issparse(self.data) else self.data
+            other_data = other.data.toarray() if sp.issparse(other.data) else other.data
+            return np.array_equal(self_data, other_data)
+        else:
+            return False
 
 
 class BoolSetMask(SetMask):
@@ -49,17 +53,17 @@ class BoolSetMask(SetMask):
     @staticmethod
     def empty(size: int):
         """Create an empty setmask of a given length"""
-        data = sp.csr_matrix((1, size))
+        data = np.zeros((1, size), dtype=np.bool)
         return BoolSetMask(data)
 
     @staticmethod
     def from_list(lst):
-        data = sp.csr_matrix(lst)
+        data = np.array([lst], dtype=np.bool)
         return BoolSetMask(data)
 
     def __or__(self, other):
         if isinstance(other, BoolSetMask):
-            return BoolSetMask(self.data.maximum(other.data))
+            return BoolSetMask(self.data | other.data)
         if isinstance(other, NumberSetMask):
             # neutral element! valuese that are 1 in the BoolSetMask and 0 in the
             # NumberSetMask will stay 0.
@@ -67,14 +71,17 @@ class BoolSetMask(SetMask):
         else:
             return NotImplemented
 
+    def __getitem__(self, key):
+        return self.data[0, key]
+
     def __ror__(self, other):
         return self.__or__(other)
 
     def __and__(self, other):
         if isinstance(other, BoolSetMask):
-            return BoolSetMask(self.data.multiply(other.data))
+            return BoolSetMask(self.data & other.data)
         elif isinstance(other, NumberSetMask):
-            return NumberSetMask(self.data.multiply(other.data))
+            return NumberSetMask(other.data.multiply(self.data))
         else:
             return NotImplemented
 
@@ -88,13 +95,28 @@ class NumberSetMask(SetMask):
     @staticmethod
     def empty(size: int):
         """Create an empty setmask of a given length"""
-        data = sp.csr_matrix((1, size))
+        data = sp.coo_matrix((1, size), dtype=np.uint8)
         return NumberSetMask(data)
 
     @staticmethod
     def from_list(lst):
-        data = sp.csr_matrix(lst)
+        data = sp.coo_matrix(lst, dtype=np.uint8)
         return NumberSetMask(data)
+
+    @staticmethod
+    def merge(set_masks, multipliers):
+        """Merge NumberSetMasks by adding them in COO space. """
+        # the individual sparse masks obtained from the reverse lookup
+        # table are not overlapping because each row in the feature table
+        # has only one sequence. Simple sum is therefore enough.
+        tmp_data = np.concatenate(
+            [set_mask.data.data * m for set_mask, m in zip(set_masks, multipliers)]
+        )
+        tmp_row = np.concatenate([set_mask.data.row for set_mask in set_masks])
+        tmp_col = np.concatenate([set_mask.data.col for set_mask in set_masks])
+        return NumberSetMask(
+            sp.coo_matrix((tmp_data, (tmp_row, tmp_col)), shape=set_masks[0].data.shape)
+        )
 
     def __or__(self, other):
         if isinstance(other, NumberSetMask):
@@ -117,6 +139,12 @@ class NumberSetMask(SetMask):
             )
         else:
             return NotImplemented
+
+    def __getitem__(self, key):
+        return self.data.tocsr()[0, key]
+
+    def __iter__(self):
+        return iter(self.data.toarray()[0, :])
 
 
 class DoubleLookupNeighborFinder:
@@ -159,6 +187,10 @@ class DoubleLookupNeighborFinder:
         # forward: clonotype -> feature_index lookups
         # reverse: feature_index -> clonotype lookups
         self.lookups: Dict[str, Tuple[str, np.ndarray, Mapping]] = dict()
+
+    @property
+    def n_rows(self):
+        return self.feature_table.shape[0]
 
     def lookup(
         self,
@@ -204,31 +236,17 @@ class DoubleLookupNeighborFinder:
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
             try:
-                return BoolSetMask(reverse["nan"])
+                return reverse["nan"]
             except KeyError:
-                return NumberSetMask.empty(self.feature_table.shape[0])
+                return NumberSetMask.empty(self.n_rows)
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
 
             # ... and get column indices directly from sparse row
-            #
-            # the individual sparse masks obtained from the reverse lookup
-            # table are not overlapping because each row in the feature table
-            # has only one sequence. Simple sum is therefore enough.
-            return NumberSetMask(
-                # TODO possibly more efficient using either dense or coo_matrices here.
-                # vstack + sum densifies.
-                reduce(
-                    add,
-                    (
-                        # if no entry found (e.g. because of cross-table lookup)
-                        # return nothing (-> empty iterator)
-                        reverse.get(i, sp.csr_matrix((1, self.feature_table.shape[0])))
-                        * distance
-                        for i, distance in zip(row.indices, row.data)  # type: ignore
-                    ),
-                )
+            return NumberSetMask.merge(
+                [reverse.get(i, NumberSetMask.empty(self.n_rows)) for i in row.indices],  # type: ignore
+                row.data,  # type: ignore
             )
 
     def add_distance_matrix(
@@ -258,7 +276,14 @@ class DoubleLookupNeighborFinder:
         # The label "nan" does not have an index in the matrix
         self.distance_matrix_labels[name]["nan"] = np.nan
 
-    def add_lookup_table(self, name: str, feature_col: str, distance_matrix: str):
+    def add_lookup_table(
+        self,
+        name: str,
+        feature_col: str,
+        distance_matrix: str,
+        *,
+        dist_type: Literal["bool", "number"] = "number",
+    ):
         """Build a pair of forward- and reverse-lookup tables.
 
         Parameters
@@ -270,7 +295,9 @@ class DoubleLookupNeighborFinder:
         name
             unique identifier of the lookup table"""
         forward = self._build_forward_lookup_table(feature_col, distance_matrix)
-        reverse = self._build_reverse_lookup_table(feature_col, distance_matrix)
+        reverse = self._build_reverse_lookup_table(
+            feature_col, distance_matrix, dist_type=dist_type
+        )
         self.lookups[name] = (distance_matrix, forward, reverse)
 
     def _build_forward_lookup_table(
@@ -287,12 +314,21 @@ class DoubleLookupNeighborFinder:
         )
 
     def _build_reverse_lookup_table(
-        self, feature_col: str, distance_matrix: str
+        self,
+        feature_col: str,
+        distance_matrix: str,
+        *,
+        dist_type: Literal["bool", "number"],
     ) -> Mapping[float, csr_matrix]:
         """Create a reverse-lookup dict that maps each (numeric) index
-        of a feature distance matric to a list of associated numeric clonotype indices."""
+        of a feature distance matric to a SetMask. If the dist_type is numeric,
+        will use a sparse NumberSetMask. If the dist_type is boolean, use a
+        dense boolean set mask.
+        """
         tmp_reverse_lookup = dict()
         tmp_index_lookup = self.distance_matrix_labels[distance_matrix]
+
+        # Build reverse lookup
         for i, k in enumerate(self.feature_table[feature_col]):
             tmp_key = tmp_index_lookup[k]
             if np.isnan(tmp_key):
@@ -302,35 +338,22 @@ class DoubleLookupNeighborFinder:
             except KeyError:
                 tmp_reverse_lookup[tmp_key] = [i]
 
-        # convert all of them to sets. In particular nan needs to be a set
-        # nan can be quite large and like that it doesn't have to be re-initalized
-        # all over.
-        return {
-            k: self._list_to_sparse_row(v, self.feature_table.shape[0])
-            for k, v in tmp_reverse_lookup.items()
-        }
+        # convert into setMasks
+        for k, v in tmp_reverse_lookup.items():
+            # nan will also be a boolean mask
+            if dist_type == "bool" or k == "nan":
+                tmp_array = np.zeros(shape=(1, self.n_rows), dtype=np.bool)
+                tmp_array[0, v] = True
+                tmp_reverse_lookup[k] = BoolSetMask(tmp_array)
+            else:
+                tmp_reverse_lookup[k] = NumberSetMask(
+                    sp.coo_matrix(
+                        (
+                            np.ones(len(v), dtype=np.uint8),
+                            (np.zeros(len(v), dtype=np.int), v),
+                        ),
+                        shape=(1, self.n_rows),
+                    )
+                )
 
-    @staticmethod
-    def _list_to_sparse_row(index_list: Sequence[int], row_len: int) -> sp.csr_matrix:
-        """Efficient way to convert a list of indexes to a sparse 1 x n mask"""
-        sparse_row = sp.csr_matrix((1, row_len))
-        sparse_row.data = np.ones(len(index_list))
-        sparse_row.indices = np.array(index_list)
-        sparse_row.indptr = np.array([0, len(index_list)])
-        return sparse_row
-
-    @staticmethod
-    def _dict_to_sparse_row(row_dict: Mapping, row_len: int) -> sp.csr_matrix:
-        """Efficient way of converting a key, value dictionary to a
-        1 x n sparse row in CSR format"""
-        sparse_row = sp.csr_matrix((1, row_len))
-
-        sparse_row.data = np.fromiter(
-            (x if np.isfinite(x) else 0 for x in row_dict.values()),
-            int,
-            len(row_dict),
-        )
-        sparse_row.indices = np.fromiter(row_dict.keys(), int, len(row_dict))
-        sparse_row.indptr = np.array([0, len(row_dict)])
-
-        return sparse_row
+        return tmp_reverse_lookup
