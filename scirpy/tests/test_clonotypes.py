@@ -22,13 +22,13 @@ import pytest
     [
         (False, None, ["0", "0", "0", "1"], [3, 3, 3, 1]),
         (
-            "primary_only",
+            True,
             None,
             ["0_av1_bv1", "0_av1_bv1", "0_av2_bv2", "1_av1_bv1"],
             [2, 2, 1, 1],
         ),
         (
-            "all",
+            True,
             None,
             [
                 "0_av1_bv1_a2v1_b2v1",
@@ -40,7 +40,7 @@ import pytest
         ),
         (False, "receptor_type", ["0_TCR", "0_BCR", "0_BCR", "1_BCR"], [1, 2, 2, 1]),
         (
-            "primary_only",
+            True,
             "receptor_type",
             ["0_av1_bv1_TCR", "0_av1_bv1_BCR", "0_av2_bv2_BCR", "1_av1_bv1_BCR"],
             [1, 1, 1, 1],
@@ -50,6 +50,7 @@ import pytest
 def test_define_clonotype_clusters(
     adata_conn, same_v_gene, within_group, ct_expected, ct_size_expected
 ):
+    ir.pp.ir_dist(adata_conn)
     clonotype, clonotype_size = ir.tl.define_clonotype_clusters(
         adata_conn,
         metric="alignment",
@@ -79,7 +80,7 @@ def test_define_clonotype_clusters(
     # Test with higher leiden resolution
     ir.tl.define_clonotype_clusters(
         adata_conn,
-        neighbors_key="ir_neighbors_aa_alignment",
+        neighbors_key="ir_dist_aa_alignment",
         within_group=None,
         same_v_gene=False,
         key_added="ct2",
@@ -93,109 +94,82 @@ def test_define_clonotype_clusters(
 
 def test_clonotypes_end_to_end1(adata_define_clonotypes):
     # default parameters of ir-neighbors should yield nt-identity
-    ir.pp.ir_neighbors(adata_define_clonotypes, receptor_arms="all", dual_ir="all")
-    clonotypes, _ = ir.tl.define_clonotypes(
-        adata_define_clonotypes, inplace=False, within_group=None
-    )
+    ir.pp.ir_dist(adata_define_clonotypes)
+    clonotypes, clonotype_size, _ = ir.tl.define_clonotypes(
+        adata_define_clonotypes,
+        inplace=False,
+        within_group=None,
+        receptor_arms="all",
+        dual_ir="all",
+    )  # type: ignore
     print(clonotypes)
     expected = [0, 0, 1, 2, 3]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
+    expected_size = [2, 2, 1, 1, 1]
+    npt.assert_equal(clonotypes.values, [str(x) for x in expected])
+    npt.assert_equal(clonotype_size.values, expected_size)
 
 
-def test_clonotype_clusters_end_to_end1(adata_define_clonotype_clusters):
-    ir.pp.ir_neighbors(
+@pytest.mark.parametrize(
+    "receptor_arms,dual_ir,expected,expected_size",
+    [
+        (
+            "all",
+            "all",
+            [0, 0, 1, 2, 3, np.nan, 4, 5, 6, 7, 8],
+            [2, 2, 1, 1, 1, np.nan, 1, 1, 1, 1, 1],
+        ),
+        (
+            "any",
+            "any",
+            [0, 0, 0, 0, 0, np.nan, 0, 0, 0, 0, 1],
+            [9, 9, 9, 9, 9, np.nan, 9, 9, 9, 9, 1],
+        ),
+        (
+            "all",
+            "any",
+            [0, 0, 0, 0, 0, np.nan, 0, 1, 0, 2, 3],
+            [7, 7, 7, 7, 7, np.nan, 7, 1, 7, 1, 1],
+        ),
+        (
+            "any",
+            "all",
+            [0, 0, 0, 0, 0, np.nan, 0, 0, 0, 0, 1],
+            [9, 9, 9, 9, 9, np.nan, 9, 9, 9, 9, 1],
+        ),
+        (
+            "all",
+            "primary_only",
+            [0, 0, 1, 2, 0, np.nan, 0, 3, 4, 5, 6],
+            [4, 4, 1, 1, 4, np.nan, 4, 1, 1, 1, 1],
+        ),
+        (
+            "VDJ",
+            "primary_only",
+            [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 4, 5],
+            [5, 5, 5, 1, 5, np.nan, 5, 1, 1, 1, 1],
+        ),
+    ],
+)
+def test_clonotype_clusters_end_to_end(
+    adata_define_clonotype_clusters, receptor_arms, dual_ir, expected, expected_size
+):
+    ir.pp.ir_dist(
         adata_define_clonotype_clusters,
         cutoff=0,
-        receptor_arms="all",
-        dual_ir="all",
         sequence="aa",
     )
-    clonotypes, _ = ir.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False, within_group=None
-    )
-    print(clonotypes)
-    expected = [0, 0, 1, 2, 3, 4, 5, 6, 7, 8]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
-
-
-def test_clonotype_clusters_end_to_end2(adata_define_clonotype_clusters):
-    ir.pp.ir_neighbors(
+    clonotypes, clonotype_size, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters,
-        cutoff=0,
-        receptor_arms="any",
-        dual_ir="any",
-        sequence="aa",
-    )
-    clonotypes, _ = ir.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False, within_group=None
-    )
+        inplace=False,
+        within_group=None,
+        receptor_arms=receptor_arms,
+        dual_ir=dual_ir,
+    )  # type: ignore
     print(clonotypes)
-    expected = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
-
-
-def test_clonotype_clusters_end_to_end3(adata_define_clonotype_clusters):
-    ir.pp.ir_neighbors(
-        adata_define_clonotype_clusters,
-        cutoff=0,
-        receptor_arms="all",
-        dual_ir="any",
-        sequence="aa",
+    npt.assert_equal(
+        list(clonotypes.values), [str(x) if not np.isnan(x) else x for x in expected]
     )
-    clonotypes, _ = ir.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False, within_group=None
-    )
-    print(clonotypes)
-    expected = [0, 0, 0, 0, 0, 0, 1, 0, 2, 3]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
-
-
-def test_clonotype_clusters_end_to_end4(adata_define_clonotype_clusters):
-    ir.pp.ir_neighbors(
-        adata_define_clonotype_clusters,
-        cutoff=0,
-        receptor_arms="any",
-        dual_ir="all",
-        sequence="aa",
-    )
-    clonotypes, _ = ir.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False, within_group=None
-    )
-    print(clonotypes)
-    expected = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
-
-
-def test_clonotype_clusters_end_to_end5(adata_define_clonotype_clusters):
-    ir.pp.ir_neighbors(
-        adata_define_clonotype_clusters,
-        cutoff=0,
-        receptor_arms="all",
-        dual_ir="primary_only",
-        sequence="aa",
-    )
-    clonotypes, _ = ir.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False, within_group=None
-    )
-    print(clonotypes)
-    expected = [0, 0, 1, 2, 0, 0, 3, 4, 5, 6]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
-
-
-def test_clonotype_clusters_end_to_end6(adata_define_clonotype_clusters):
-    ir.pp.ir_neighbors(
-        adata_define_clonotype_clusters,
-        cutoff=0,
-        receptor_arms="VDJ",
-        dual_ir="primary_only",
-        sequence="aa",
-    )
-    clonotypes, _ = ir.tl.define_clonotype_clusters(
-        adata_define_clonotype_clusters, inplace=False, within_group=None
-    )
-    print(clonotypes)
-    expected = [0, 0, 0, 1, 0, 0, 2, 3, 4, 5]
-    npt.assert_equal(clonotypes, [str(x) for x in expected])
+    npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
 def test_clonotype_network(adata_conn):

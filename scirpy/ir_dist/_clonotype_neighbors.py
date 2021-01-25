@@ -92,11 +92,11 @@ class ClonotypeNeighbors:
                 "No cells with IR information found (`adata.obs['has_ir'] == True`)"
             )
 
-        # groupby.indices gets us a index -> array of row indices mapping.
-        # It has the same order as `clonotypes` (derived from the same groupby) object.
-        # Therefore, we can use `.values()` to obtain a clonotype_id -> cell_id mapping.
+        # groupby.indices gets us a (index -> array of row indices) mapping.
+        # It doesn't necessarily have the same order as `clonotypes`.
         self.cell_indices = [
-            obs_filtered.index[idx].values for idx in clonotype_groupby.indices.values()
+            obs_filtered.index[clonotype_groupby.indices.get(ct_tuple, [])].values
+            for ct_tuple in clonotypes.itertuples(index=False, name=None)
         ]
 
         # make 'within group' a single column of tuples (-> only one distance

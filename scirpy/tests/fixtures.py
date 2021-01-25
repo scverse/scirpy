@@ -136,6 +136,7 @@ def adata_define_clonotypes():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
+    obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     return adata
 
@@ -149,6 +150,7 @@ def adata_define_clonotype_clusters():
             ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
             ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
             ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
+            ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
             ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
             ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
             ["cell8", "AAA", "nan", "nan", "KKK", "TRA", "nan", "nan", "TRB"],
@@ -167,6 +169,7 @@ def adata_define_clonotype_clusters():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
+    obs["has_ir"] = ["True"] * 5 + ["False"] + ["True"] * 5
     adata = AnnData(obs=obs)
     return adata
 
