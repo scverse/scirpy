@@ -7,7 +7,7 @@ from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp
 import itertools
-from ._util import DoubleLookupNeighborFinder, BoolSetMask
+from ._util import DoubleLookupNeighborFinder, BoolSetMask, SetMask
 from multiprocessing import Pool
 from ..util import _is_na, _is_true
 from functools import reduce
@@ -181,12 +181,20 @@ class ClonotypeNeighbors:
         res = []
         for tmp_receptor_arm in self._receptor_arm_cols:
 
-            def _lookup(tmp_chain1, tmp_chain2):
-                return self.neighbor_finder.lookup(
+            def _lookup(tmp_chain1, tmp_chain2) -> SetMask:
+                cdr3 = self.neighbor_finder.lookup(
                     ct_id,
                     f"{tmp_receptor_arm}_{tmp_chain1}",
                     f"{tmp_receptor_arm}_{tmp_chain2}",
                 )
+                if self.same_v_gene:
+                    return cdr3 & self.neighbor_finder.lookup(
+                        ct_id,
+                        f"{tmp_receptor_arm}_{tmp_chain1}_v_gene",
+                        f"{tmp_receptor_arm}_{tmp_chain2}_v_gene",
+                    )
+                else:
+                    return cdr3
 
             if self.dual_ir == "primary_only":
                 tmp_res = _lookup(1, 1)
@@ -201,6 +209,11 @@ class ClonotypeNeighbors:
 
         operator = and_ if self.receptor_arms == "all" else or_
         res = reduce(operator, res)
+
+        if self.within_group is not None:
+            res = res & self.neighbor_finder.lookup(
+                ct_id, "within_group", "within_group"
+            )
 
         # if it's a bool set masks it corresponds to all nan
         if isinstance(res, BoolSetMask):

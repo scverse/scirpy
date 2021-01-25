@@ -42,6 +42,14 @@ class SetMask(cabc.Sequence):
         else:
             return False
 
+    @abc.abstractmethod
+    def __or__(self, other) -> "SetMask":
+        pass
+
+    @abc.abstractmethod
+    def __and__(self, other) -> "SetMask":
+        pass
+
 
 class BoolSetMask(SetMask):
     """A SetMask of boolean type. I.e. it does not contain values, only 1/0.
