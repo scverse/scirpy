@@ -36,6 +36,11 @@ class ClonotypeNeighbors:
         self.distance_dict = adata.uns[distance_key]
         self.sequence_key = sequence_key
 
+        # will be filled in self._prepare
+        self.neighbor_finder = None  # instance of DoubleLookupNeighborFinder
+        self.clonotypes = None  # pandas data frame with unique receptor configurations
+        self.cell_indices = None  # a mapping row index from self.clonotypes -> obs name
+
         self._receptor_arm_cols = (
             ["VJ", "VDJ"]
             if self.receptor_arms in ["all", "any"]
@@ -62,21 +67,38 @@ class ClonotypeNeighbors:
 
     def _make_clonotype_table(self, adata):
         """Define 'preliminary' clonotypes based identical IR features. """
+        if not adata.obs_names.is_unique:
+            raise ValueError("Obs names need to be unique!")
+
         clonotype_cols = self._cdr3_cols + self._v_gene_cols
         if self.within_group is not None:
             clonotype_cols += list(self.within_group)
 
-        clonotypes = (
-            adata.obs.loc[_is_true(adata.obs["has_ir"]), clonotype_cols]
-            .drop_duplicates()
-            .reset_index(drop=True)
+        obs_filtered = adata.obs.loc[lambda df: _is_true(df["has_ir"]), clonotype_cols]
+        # make sure all nans are consistent "nan"
+        # This workaround will be made obsolete by #190.
+        for col in obs_filtered.columns:
+            obs_filtered[col] = obs_filtered[col].astype(str)
+            obs_filtered.loc[_is_na(obs_filtered[col]), col] = "nan"
+
+        clonotype_groupby = obs_filtered.groupby(
+            clonotype_cols, sort=False, observed=True
         )
+        # This only gets the unique_values (the groupby index)
+        clonotypes = clonotype_groupby.size().index.to_frame(index=False)
 
         if clonotypes.shape[0] == 0:
             raise ValueError(
                 "Error computing clonotypes. "
                 "No cells with IR information found (`adata.obs['has_ir'] == True`)"
             )
+
+        # groupby.indices gets us a index -> array of row indices mapping.
+        # It has the same order as `clonotypes` (derived from the same groupby) object.
+        # Therefore, we can use `.values()` to obtain a clonotype_id -> cell_id mapping.
+        self.cell_indices = [
+            obs_filtered.index[idx].values for idx in clonotype_groupby.indices.values()
+        ]
 
         # make 'within group' a single column of tuples (-> only one distance
         # matrix instead of one per column.)
@@ -88,10 +110,6 @@ class ClonotypeNeighbors:
                 del clonotypes[tmp_col]
             clonotypes["within_group"] = within_group_col
 
-        # make sure all nans are consistent "nan"
-        # This workaround will be made obsolete by #190.
-        for col in clonotypes.columns:
-            clonotypes.loc[_is_na(clonotypes[col]), col] = "nan"
         self.clonotypes = clonotypes
 
     def _add_distance_matrices(self, adata):
@@ -175,8 +193,6 @@ class ClonotypeNeighbors:
         that our hypotheis is that a receptor recognizes the same antigen if it
         has a sequence dist < threshold. If we require both receptors to
         match ("and"), the higher one should count.
-
-        TODO add this to the docs where necessary.
         """
         res = []
         for tmp_receptor_arm in self._receptor_arm_cols:

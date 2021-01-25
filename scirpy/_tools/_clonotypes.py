@@ -1,9 +1,12 @@
+import itertools
+
+from scipy.sparse.csr import csr_matrix
 from scirpy import ir_dist
 from scirpy.ir_dist import MetricType, _get_metric_key
 from anndata import AnnData
 import igraph as ig
 from .._compat import Literal
-from typing import Union, Tuple, Sequence
+from typing import Dict, Union, Tuple, Sequence
 from ..util import _doc_params
 from ..util.graph import (
     _get_igraph_from_adjacency,
@@ -16,41 +19,20 @@ import pandas as pd
 import random
 from scanpy import logging
 
-
-# TODO define default values
-def define_clonotype_clusters(
-    adata: AnnData,
-    *,
-    sequence: Literal["aa", "nt"] = "aa",
-    metric: MetricType = "identity",
-    receptor_arms=Literal["VJ", "VDJ", "all", "any"],
-    dual_ir=Literal["primary_only", "all", "any"],
-    same_v_gene: bool = False,
-    within_group: Union[Sequence[str], str, None] = "receptor_type",
-    key_added: str = None,
-    partitions: Literal["connected", "leiden"] = "connected",
-    resolution: float = 1,
-    n_iterations: int = 5,
-    distance_key: Union[str, None] = None,
-    inplace: bool = True,
-) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    """
-    Define :term:`clonotype clusters<Clonotype cluster>`.
-
-    Parameters:
-    -----------
-    adata
-        Annotated data matrix
-    sequence
-        The sequence parameter used when running :func:scirpy.pp.ir_dist`
-    metric
-        The metric parameter used when running :func:`scirpy.pp.ir_dist`
-
+_common_doc = """\
     receptor_arms
          * `"TRA"` - only consider TRA sequences
          * `"TRB"` - only consider TRB sequences
          * `"all"` - both TRA and TRB need to match
          * `"any"` - either TRA or TRB need to match
+
+        If `"any"`, two distances are combined by taking their minimum. If `"all"`,
+        two distances are combined by taking their maximum. This is motivated
+        by the hypothesis that a receptor recognizes the same antigen if it
+        has a distance smaller than a certain cutoff. If we require only one
+        of the receptors to match (`"any"`) the smaller distance is relevant.
+        If we require both receptors to match (`"all"`), the larger distance is
+        relevant.
 
     dual_ir
          * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
@@ -58,6 +40,8 @@ def define_clonotype_clusters(
            cutoff for any of the chains.
          * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
            cutoff for all of the chains.
+
+        Distances are combined as for `receptor_arms`.
 
         See also :term:`Dual IR`.
 
@@ -77,6 +61,47 @@ def define_clonotype_clusters(
         be shared across e.g. gamma-delta and alpha-beta T-cells.
         You can also set this to any other column in `adata.obs` that contains
         a grouping, or to `None`, if you want no constraints.
+"""
+
+
+@_doc_params(common_doc=_common_doc)
+def define_clonotype_clusters(
+    adata: AnnData,
+    *,
+    sequence: Literal["aa", "nt"] = "aa",
+    metric: MetricType = "identity",
+    receptor_arms=Literal["VJ", "VDJ", "all", "any"],
+    dual_ir=Literal["primary_only", "all", "any"],
+    same_v_gene: bool = False,
+    within_group: Union[Sequence[str], str, None] = "receptor_type",
+    key_added: str = None,
+    partitions: Literal["connected", "leiden"] = "connected",
+    resolution: float = 1,
+    n_iterations: int = 5,
+    distance_key: Union[str, None] = None,
+    inplace: bool = True,
+) -> Union[Tuple[pd.Series, pd.Series, Dict], None]:
+    """
+    Define :term:`clonotype clusters<Clonotype cluster>`.
+
+    As opposed to :func:`~scirpy.tl.define_clonotypes()` which employs a more stringent
+    definition of :term:`clonotypes <Clonotype>`, this function flexibly defines
+    clonotype clusters based on amino acid or nucleic acid sequence identity or
+    similarity.
+
+    Requires running :func:`~scirpy.pp.ir_dist` with the same `sequence` and
+    `metric` values first.
+
+    Parameters:
+    -----------
+    adata
+        Annotated data matrix
+    sequence
+        The sequence parameter used when running :func:scirpy.pp.ir_dist`
+    metric
+        The metric parameter used when running :func:`scirpy.pp.ir_dist`
+
+    {common_doc}
 
     key_added
         The column name under which the clonotype clusters and cluster sizes
@@ -114,6 +139,8 @@ def define_clonotype_clusters(
     clonotype_size
         an array containing the number of cells in the respective clonotype
         for each cell.
+    distances
+        a pairwise distance matrix between unique rows of adata.obs
     """
     if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
         raise ValueError(
@@ -137,19 +164,9 @@ def define_clonotype_clusters(
     if distance_key is None:
         distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
     if distance_key not in adata.uns:
-        if distance_key == "ir_dist_nt_identity":
-            # For the case of "clonotypes" we want to compute the distance automatically
-            # if it doesn't exist yet. Since it's just a sparse ID matrix, this
-            # should be instant.
-            logging.info(
-                "ir_dist for sequence='nt' and metric='identity' not found. "
-                "Computing with default parameters."
-            )  # type: ignore
-            ir_dist(adata, metric="identity", sequence="nt", key_added=distance_key)
-        else:
-            raise ValueError(
-                "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
-            )
+        raise ValueError(
+            "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
+        )
 
     ctn = ClonotypeNeighbors(
         adata,
@@ -172,23 +189,48 @@ def define_clonotype_clusters(
     else:
         part = g.clusters(mode="weak")
 
-    # clonotype = graph partition
-    clonotype = [str(x) for x in part.membership]
-    clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
+    clonotype_cluster_series = pd.Series(data=None, index=adata.obs_names, dtype=str)
+    clonotype_cluster_size_series = pd.Series(
+        data=None, index=adata.obs_names, dtype=int
+    )
 
-    adata.obs[key_added]
-    adata.obs[key_added + "_size"]
-    adata.uns[key_added + "_distances"] = clonotype_dist
+    # clonotype cluster = graph partition
+    for ct_id, clonotype_cluster in enumerate(part.membership):
+        clonotype_cluster_series[ctn.cell_indices[ct_id]] = str(clonotype_cluster)
 
-    # TODO store clonotype distance in uns
-    # TODO store clonotypes in obs
+    clonotype_cluster_size_series = clonotype_cluster_series.groupby(
+        clonotype_cluster_series
+    ).transform("count")
+
+    # Return or store results
+    if key_added is None:
+        key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
+
+    clonotype_distance_res = {
+        "distances": clonotype_dist,
+        "distance_keys": ctn.cell_indices,
+    }
+    if inplace:
+        adata.obs[key_added] = clonotype_cluster_series
+        adata.obs[key_added + "_size"] = clonotype_cluster_size_series
+        adata.uns[key_added] = clonotype_distance_res
+    else:
+        return (
+            clonotype_cluster_series,
+            clonotype_cluster_size_series,
+            clonotype_distance_res,
+        )
 
 
-# TODO update
+@_doc_params(common_doc=_common_doc)
 def define_clonotypes(
-    adata: AnnData, *, key_added: str = "clonotype", **kwargs
-) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    """\
+    adata: AnnData,
+    *,
+    key_added: str = "clonotype",
+    distance_key: Union[str, None] = None,
+    **kwargs,
+) -> Union[Tuple[pd.Series, pd.Series, Dict], None]:
+    """
     Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
     sequence identity.
 
@@ -198,100 +240,39 @@ def define_clonotypes(
     identity. Technically, this function is an alias to :func:`~scirpy.tl.define_clonotype_clusters`
     with different default parameters.
 
-    Requires running :func:`scirpy.pp.ir_neighbors` with `sequence='nt'` and
-    `metric='identity` first (which are the default parameters).
-
     Parameters
     ----------
     adata
         Annotated data matrix
-    key_added
-        Name of the columns which will be added to `adata.obs` if inplace is `True`.
-        Will create the columns `{{key_added}}` and `{{key_added}}_size`.
     {common_doc}
+    key_added
+        The column name under which the clonotype clusters and cluster sizes
+        will be stored in `adata.obs` and under which the clonotype network will be
+        stored in `adata.uns`
+    inplace
+        If `True`, adds the results to anndata, otherwise return them.
     """
     if "neighbors_key" not in kwargs:
         kwargs["neighbors_key"] = "ir_neighbors_nt_identity"
-    return _define_clonotypes(adata, key_added=key_added, **kwargs)
 
+    if distance_key is None and "ir_dist_nt_identity" not in adata.uns:
+        # For the case of "clonotypes" we want to compute the distance automatically
+        # if it doesn't exist yet. Since it's just a sparse ID matrix, this
+        # should be instant.
+        logging.info(
+            "ir_dist for sequence='nt' and metric='identity' not found. "
+            "Computing with default parameters."
+        )  # type: ignore
+        ir_dist(adata, metric="identity", sequence="nt", key_added=distance_key)
 
-def _define_clonotypes(
-    adata: AnnData,
-    *,
-    same_v_gene: Union[bool, Literal["primary_only", "all"]] = False,
-    within_group: Union[str, None] = "receptor_type",
-    partitions: Literal["connected", "leiden"] = "connected",
-    resolution: float = 1,
-    n_iterations: int = 5,
-    neighbors_key: str = "ir_neighbors",
-    key_added: str = "clonotype",
-    inplace: bool = True,
-) -> Union[Tuple[np.ndarray, np.ndarray], None]:
-    if within_group is not None and within_group not in adata.obs.columns:
-        msg = f"column `{within_group}` not found in `adata.obs`. "
-        if within_group in ("receptor_type", "receptor_subtype"):
-            msg += "Did you run `tl.chain_qc`? "
-        raise ValueError(msg)
-
-    if same_v_gene is not False and same_v_gene not in ("all", "primary_only"):
-        raise ValueError("Invalid value for `same_v_gene`.")
-
-    try:
-        conn = adata.uns[neighbors_key]["connectivities"]
-    except KeyError:
-        raise ValueError(
-            "Connectivities were not found. Did you run `pp.ir_neighbors`?"
-        )
-    g = _get_igraph_from_adjacency(conn)
-
-    if partitions == "leiden":
-        part = g.community_leiden(
-            objective_function="modularity",
-            resolution_parameter=resolution,
-            n_iterations=n_iterations,
-        )
-    else:
-        part = g.clusters(mode="weak")
-
-    # basic clonotype = graph partition
-    clonotype = [str(x) for x in part.membership]
-
-    # add v gene to definition
-    if same_v_gene == "primary_only":
-        clonotype = [
-            f"{x}_{tra1_v_gene}_{trb1_v_gene}"
-            for x, tra1_v_gene, trb1_v_gene in zip(
-                clonotype,
-                adata.obs["IR_VJ_1_v_gene"],
-                adata.obs["IR_VDJ_1_v_gene"],
-            )
-        ]
-    elif same_v_gene == "all":
-        clonotype = [
-            f"{x}_{tra1_v_gene}_{trb1_v_gene}_{tra2_v_gene}_{trb2_v_gene}"
-            for x, tra1_v_gene, trb1_v_gene, tra2_v_gene, trb2_v_gene in zip(
-                clonotype,
-                adata.obs["IR_VJ_1_v_gene"],
-                adata.obs["IR_VDJ_1_v_gene"],
-                adata.obs["IR_VJ_2_v_gene"],
-                adata.obs["IR_VDJ_2_v_gene"],
-            )
-        ]
-
-    # add receptor_type to definition
-    if within_group is not None:
-        clonotype = [
-            f"{x}_{group}" for x, group in zip(clonotype, adata.obs[within_group])
-        ]
-
-    clonotype_size = pd.Series(clonotype).groupby(clonotype).transform("count").values
-    assert len(clonotype) == len(clonotype_size) == adata.obs.shape[0]
-
-    if not inplace:
-        return clonotype, clonotype_size
-    else:
-        adata.obs[key_added] = clonotype
-        adata.obs[key_added + "_size"] = clonotype_size
+    return define_clonotype_clusters(
+        adata,
+        key_added=key_added,
+        sequence="nt",
+        metric="identity",
+        partitions="connected",
+        **kwargs,
+    )
 
 
 def clonotype_network(
