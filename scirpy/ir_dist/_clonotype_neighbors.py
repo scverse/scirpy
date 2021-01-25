@@ -1,8 +1,7 @@
-from typing import Mapping, Union, Sequence
+from typing import Union, Sequence
 from anndata import AnnData
 from scanpy import logging
 from scipy.sparse.csr import csr_matrix
-from tqdm.std import tqdm
 from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp

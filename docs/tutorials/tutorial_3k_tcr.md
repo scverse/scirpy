@@ -158,18 +158,18 @@ about the T cell receptor compositions to `adata.obs`. We can visualize it using
 
 .. note:: **receptor type and receptor subtype**
 
-    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains 
-      are labelled as `ambiguous`. 
-    - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations. 
-    
-    For more details, see :func:`scirpy.tl.chain_qc`. 
+    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains
+      are labelled as `ambiguous`.
+    - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations.
+
+    For more details, see :func:`scirpy.tl.chain_qc`.
 <!-- #endraw -->
 
 ```python
 ir.tl.chain_qc(adata)
 ```
 
-As expected, the dataset contains only α/β T-cell receptors: 
+As expected, the dataset contains only α/β T-cell receptors:
 
 ```python
 ir.pl.group_abundance(adata, groupby="receptor_subtype", target_col="source")
@@ -206,6 +206,9 @@ adata = adata[adata.obs["multi_chain"] != "True", :].copy()
 ```
 
 ## Define clonotypes and clonotype clusters
+
+<!-- TODO explain that there are different values for dual_ir -->
+
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 
@@ -338,8 +341,8 @@ ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
 ```
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
-For instance, we can find out that clonotype `233` does not have any detected :term:`VJ-chain<V(D)J>`. 
-In this context, the VJ-chain refers to a TCR-alpha chain. 
+For instance, we can find out that clonotype `233` does not have any detected :term:`VJ-chain<V(D)J>`.
+In this context, the VJ-chain refers to a TCR-alpha chain.
 
 ```python
 adata.obs.loc[

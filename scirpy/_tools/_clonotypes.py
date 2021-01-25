@@ -1,7 +1,4 @@
-import itertools
-
-from scipy.sparse.csr import csr_matrix
-from scirpy import ir_dist
+from .._preprocessing import ir_dist
 from scirpy.ir_dist import MetricType, _get_metric_key
 from anndata import AnnData
 import igraph as ig
@@ -113,8 +110,8 @@ def define_clonotype_clusters(
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
-    receptor_arms=Literal["VJ", "VDJ", "all", "any"],
-    dual_ir=Literal["primary_only", "all", "any"],
+    receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
+    dual_ir: Literal["primary_only", "all", "any"] = "any",
     same_v_gene: bool = False,
     within_group: Union[Sequence[str], str, None] = "receptor_type",
     key_added: str = None,
@@ -277,9 +274,6 @@ def define_clonotypes(
     inplace
         If `True`, adds the results to anndata, otherwise return them.
     """
-    if "neighbors_key" not in kwargs:
-        kwargs["neighbors_key"] = "ir_neighbors_nt_identity"
-
     if distance_key is None and "ir_dist_nt_identity" not in adata.uns:
         # For the case of "clonotypes" we want to compute the distance automatically
         # if it doesn't exist yet. Since it's just a sparse ID matrix, this
