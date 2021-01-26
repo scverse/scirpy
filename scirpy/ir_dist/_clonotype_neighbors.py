@@ -166,7 +166,11 @@ class ClonotypeNeighbors:
         """Compute the distances between clonotypes. `prepare` must have
         been ran previously. Returns a clonotype x clonotype sparse
         distance matrix."""
-        start = logging.info("Computing clonotype x clonotype distances. ")
+        start = logging.info(
+            "Computing clonotype x clonotype distances. \n"
+            "NB: Computation happens in chunks. The progressbar only advances "
+            "when a chunk has finished. "
+        )  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
         dist_rows = process_map(
             self._dist_for_clonotype,
