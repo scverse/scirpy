@@ -14,6 +14,8 @@ from operator import and_, or_
 import pandas as pd
 from tqdm.contrib.concurrent import process_map
 
+# TODO set tqdm class as specified here: https://github.com/theislab/scanpy/pull/1130/files
+
 
 class ClonotypeNeighbors:
     def __init__(
