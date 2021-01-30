@@ -25,6 +25,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 api_dir = HERE / "_static" / "api"
 api_rel_dir = "_static/api"
+bibtex_bibfiles = ["references.bib"]
 
 
 nitpicky = True  # Warn about broken links

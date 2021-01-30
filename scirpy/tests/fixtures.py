@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 from anndata import AnnData
 import numpy as np
+from scipy.sparse.csr import csr_matrix
 from scirpy.util import _is_symmetric
 
 
@@ -194,11 +195,36 @@ def adata_conn():
         .set_index("cell_id")
     )
     adata.uns["ir_neighbors_aa_alignment"] = {
-        "connectivities": np.array(
+        "connectivities": csr_matrix(
             [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
         )
     }
     assert _is_symmetric(adata.uns["ir_neighbors_aa_alignment"]["connectivities"])
+    return adata
+
+
+@pytest.fixture
+def adata_conn_diagonal():
+    """Adata with connectivities computed"""
+    adata = AnnData(
+        obs=pd.DataFrame()
+        .assign(
+            cell_id=["cell1", "cell2", "cell3", "cell4"],
+            IR_VJ_1_v_gene=["av1", "av1", "av2", "av1"],
+            IR_VDJ_1_v_gene=["bv1", "bv1", "bv2", "bv1"],
+            IR_VJ_2_v_gene=["a2v1", "a2v2", "a2v2", "a2v1"],
+            IR_VDJ_2_v_gene=["b2v1", "b2v2", "b2v2", "b2v1"],
+            IR_VJ_1_LOCUS=["TRA", "IGL", "IGL", "IGK"],
+            IR_VDJ_1_LOCUS=["TRB", "IGH", "IGH", "IGH"],
+            IR_VJ_2_LOCUS=["TRA", "IGL", "IGL", "IGK"],
+            IR_VDJ_2_LOCUS=["TRB", "IGH", "IGH", "IGH"],
+            receptor_type=["TCR", "BCR", "BCR", "BCR"],
+        )
+        .set_index("cell_id")
+    )
+    adata.uns["ir_neighbors_aa_alignment"] = {
+        "connectivities": csr_matrix(np.identity(4))
+    }
     return adata
 
 

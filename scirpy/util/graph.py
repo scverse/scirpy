@@ -87,6 +87,9 @@ def _get_igraph_from_adjacency(adj: csr_matrix):
     weights = adj[sources, targets]
     if isinstance(weights, np.matrix):
         weights = weights.A1
+    if isinstance(weights, csr_matrix):
+        # this is the case when len(sources) == len(targets) == 0, see #236
+        weights = weights.toarray()
 
     g = ig.Graph(directed=False)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
