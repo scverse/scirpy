@@ -64,4 +64,6 @@ def spectratype(
         value=0.0
     )
 
+    cdr3_lengths.sort_index(axis=1, inplace=True)
+
     return cdr3_lengths
