@@ -8,6 +8,7 @@ import numpy as np
 from scirpy.util import _is_symmetric
 from .fixtures import (
     adata_conn,
+    adata_conn_diagonal,
     adata_define_clonotypes,
     adata_define_clonotype_clusters,
     adata_clonotype_network,
@@ -15,6 +16,19 @@ from .fixtures import (
 )
 import random
 import pytest
+
+
+def test_define_clonotypes_diagonal_connectivities(adata_conn_diagonal):
+    clonotype, clonotype_size = st.tl.define_clonotype_clusters(
+        adata_conn_diagonal,
+        metric="alignment",
+        within_group=None,
+        sequence="aa",
+        same_v_gene=False,
+        inplace=False,
+        partitions="connected",
+    )
+    print(clonotype)
 
 
 @pytest.mark.parametrize(

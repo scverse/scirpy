@@ -1,4 +1,4 @@
-import scipy
+import scipy.sparse
 from scanpy import logging
 import igraph as ig
 import numpy as np
@@ -26,6 +26,9 @@ def _get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = No
 
     if isinstance(weights, np.matrix):
         weights = weights.A1
+    if isinstance(weights, scipy.sparse.csr_matrix):
+        # this is the case when len(sources) == len(targets) == 0, see #236
+        weights = weights.toarray()
 
     g.es["weight"] = weights
     if edge_type is not None:
