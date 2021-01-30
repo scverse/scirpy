@@ -11,13 +11,21 @@ try:
     proj = pytoml.loads((here.parent / "pyproject.toml").read_text())
     metadata = proj["tool"]["flit"]["metadata"]
 
+    # The `split` removes the "local" version part (PEP440), e.g. from
+    # 0.6.1.dev5+ga652c20.d20210130. Leaving the local part, results in the following
+    # error message:
+    #    WARNING: Built wheel for scirpy is invalid: Wheel has unexpected file name:
+    #    expected '0.6.1.dev5+ga652c20.d20210130', got '0.6.1.dev5-ga652c20.d20210130'
+    #
+    # TODO I expect this to be a temporary issue with either flit or wheel, as
+    # this has worked before.
     __version__ = get_version(
         # Allegedly, the parameters from pyproject.toml should be passed automatically.
         # However, this didn't work, so I pass them explicitly here.
         root="..",
         relative_to=__file__,
         **proj["tool"]["setuptools_scm"]
-    )
+    ).split("+")[0]
     __author__ = metadata["author"]
     __email__ = metadata["author-email"]
 
