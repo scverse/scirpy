@@ -128,14 +128,19 @@ def merge_with_ir(
             IR_OBS_COLS, axis="columns", errors="ignore"
         )
 
+    non_ir_obs_left.index.name = "obs_names"
+    non_ir_obs_right.index.name = "obs_names"
+    ir_obs.index.name = "obs_names"
+    if on is None:
+        on = list()
+    on.insert(0, "obs_names")
+
     adata.obs = non_ir_obs_left.merge(
         non_ir_obs_right,
         how="left",
         on=on,
-        left_index=True,
-        right_index=True,
         validate="one_to_one",
-        **kwargs
+        **kwargs,
     ).merge(
         ir_obs,
         how="left",
