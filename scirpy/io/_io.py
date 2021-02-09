@@ -528,9 +528,12 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
     return from_ir_objs(bcr_cells.values())
 
-def read_dandelion(Dandelion):
+def read_dandelion(Dandelion, import_all = False):
     try:
         import dandelion as ddl
     except:
         raise ImportError('Please install dandelion: pip install sc-dandelion.')
-    return ddl.Dandelion(read_airr(Dandelion.data))
+    adata = read_airr(Dandelion.data)
+    if import_all:
+        ddl.tl.transfer(adata, Dandelion) # need to make a version that is not so verbose?    
+    return adata
