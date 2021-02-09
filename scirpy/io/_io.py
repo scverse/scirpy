@@ -324,42 +324,126 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
     """
     ir_objs = {}
 
-    if isinstance(path, str) or isinstance(path, Path):
+    if isinstance(path, str) or isinstance(path, Path) or isinstance(path, pd.DataFrame):
         path = [path]
 
     for tmp_path in path:
-        tmp_path = str(tmp_path)
-        reader = airr.read_rearrangement(tmp_path)
-        for row in reader:
-            cell_id = row["cell_id"]
-            try:
-                tmp_cell = ir_objs[cell_id]
-            except KeyError:
-                tmp_cell = IrCell(cell_id=cell_id)
-                ir_objs[cell_id] = tmp_cell
+        if not isinstance(tmp_path, pd.DataFrame):
+            tmp_path = str(tmp_path)
+            reader = airr.read_rearrangement(tmp_path)
+            for row in reader:
+                cell_id = row["cell_id"]
+                try:
+                    tmp_cell = ir_objs[cell_id]
+                except KeyError:
+                    tmp_cell = IrCell(cell_id=cell_id)
+                    ir_objs[cell_id] = tmp_cell
 
-            try:
-                # this is not an official field
-                expr = row["umi_count"]
-                expr_raw = row["consensus_count"]
-            except KeyError:
-                expr = row["consensus_count"]
-                expr_raw = None
+                try:
+                    try:# this is not an official field
+                        expr = row["umi_count"]
+                    except:
+                        expr = row["duplicate_count"]
+                    expr_raw = row["consensus_count"]
+                except KeyError:
+                    expr = row["consensus_count"]
+                    expr_raw = None
 
-            tmp_cell.add_chain(
-                IrChain(
-                    is_productive=row["productive"],
-                    locus=row["locus"],
-                    v_gene=row["v_call"] if "v_call" in row else None,
-                    d_gene=row["d_call"] if "d_call" in row else None,
-                    j_gene=row["j_call"] if "j_call" in row else None,
-                    c_gene=row["c_call"] if "c_call" in row else None,
-                    cdr3=row["junction_aa"] if "junction_aa" in row else None,
-                    cdr3_nt=row["junction"] if "junction" in row else None,
-                    expr=expr,
-                    expr_raw=expr_raw,
+                if 'locus' not in row:                    
+                    tmp = [row['v_call'], row['d_call'], row['j_call'], row['c_call']]
+                    for t in tmp:
+                        if t == '' or t is None or t != t:
+                            tmp.remove(t)                    
+                    if all('tra' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRA'
+                    elif all('trb' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRB'
+                    elif all('trd' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRD'
+                    elif all('trg' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRG'
+                    elif all('igh' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'IGH'
+                    elif all('igk' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'IGK'
+                    elif all('igl' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'IGL'
+                    else:
+                        locus = None
+                    row['locus'] = locus                    
+
+                tmp_cell.add_chain(
+                    IrChain(
+                        is_productive=row["productive"],
+                        locus=row["locus"] if "locus" in row else None,
+                        v_gene=row["v_call"] if "v_call" in row else None,
+                        d_gene=row["d_call"] if "d_call" in row else None,
+                        j_gene=row["j_call"] if "j_call" in row else None,
+                        c_gene=row["c_call"] if "c_call" in row else None,
+                        cdr3=row["junction_aa"] if "junction_aa" in row else None,
+                        cdr3_nt=row["junction"] if "junction" in row else None,
+                        expr=expr,
+                        expr_raw=expr_raw,
+                    )
                 )
-            )
+        else:
+            reader = tmp_path.copy()            
+            for index, row in reader.iterrows():
+                cell_id = row["cell_id"]
+                try:
+                    tmp_cell = ir_objs[cell_id]
+                except KeyError:
+                    tmp_cell = IrCell(cell_id=cell_id)
+                    ir_objs[cell_id] = tmp_cell
+
+                try:
+                    try:# this is not an official field
+                        expr = row["umi_count"]
+                    except:
+                        expr = row["duplicate_count"]
+                    expr_raw = row["consensus_count"]
+                except KeyError:
+                    expr = row["consensus_count"]
+                    expr_raw = None
+
+                if 'locus' not in row:                    
+                    tmp = [row['v_call'], row['d_call'], row['j_call'], row['c_call']]
+                    for t in tmp:
+                        if t == '' or t is None or t != t:
+                            tmp.remove(t)                    
+                    if all('tra' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRA'
+                    elif all('trb' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRB'
+                    elif all('trd' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRD'
+                    elif all('trg' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'TRG'
+                    elif all('igh' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'IGH'
+                    elif all('igk' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'IGK'
+                    elif all('igl' in x.lower() for x in tmp if x == x and x is not None):
+                        locus = 'IGL'
+                    else:
+                        locus = None
+                    row['locus'] = locus
+
+                tmp_cell.add_chain(
+                    IrChain(
+                        is_productive=row["productive"],
+                        locus=row["locus"],
+                        v_gene=row["v_call"] if "v_call" in row else None,
+                        d_gene=row["d_call"] if "d_call" in row else None,
+                        j_gene=row["j_call"] if "j_call" in row else None,
+                        c_gene=row["c_call"] if "c_call" in row else None,
+                        cdr3=row["junction_aa"] if "junction_aa" in row else None,
+                        cdr3_nt=row["junction"] if "junction" in row else None,
+                        expr=expr,
+                        expr_raw=expr_raw,
+                    )
+                )
+
 
     return from_ir_objs(ir_objs.values())
 
@@ -443,3 +527,10 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
         tmp_ir_cell.add_chain(tmp_chain)
 
     return from_ir_objs(bcr_cells.values())
+
+def read_dandelion(Dandelion):
+    try:
+        import dandelion as ddl
+    except:
+        raise ImportError('Please install dandelion: pip install sc-dandelion.')
+    return ddl.Dandelion(read_airr(Dandelion.data))
