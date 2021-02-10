@@ -342,7 +342,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 ir_objs[cell_id] = tmp_cell
             try:
                 try:
-                    expr = row["umi_count"] # this is not an official field
+                    expr = row["umi_count"]  # this is not an official field
                 except KeyError:
                     expr = row["duplicate_count"]
                 expr_raw = row["consensus_count"]
