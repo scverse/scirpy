@@ -329,14 +329,11 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
 
     for tmp_path in path:
         if isinstance(tmp_path, pd.DataFrame):
-            rows = []
-            iterator = tmp_path.copy().iterrows()
-            for i in iterator:
-                rows.append(i[1])
+            idxiter, iterator = zip(*tmp_path.copy().iterrows())
         else:
-            rows = airr.read_rearrangement(str(tmp_path))
+            iterator = airr.read_rearrangement(str(tmp_path))
 
-        for row in rows:
+        for row in iterator:
             cell_id = row["cell_id"]
             try:
                 tmp_cell = ir_objs[cell_id]
