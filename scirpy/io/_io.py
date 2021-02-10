@@ -329,7 +329,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
 
     for tmp_path in path:
         if isinstance(tmp_path, pd.DataFrame):
-            idxiter, iterator = zip(*tmp_path.copy().iterrows())
+            _, iterator = zip(*tmp_path.copy().iterrows())
         else:
             iterator = airr.read_rearrangement(str(tmp_path))
 
@@ -341,9 +341,9 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 tmp_cell = IrCell(cell_id=cell_id)
                 ir_objs[cell_id] = tmp_cell
             try:
-                try:  # this is not an official field
-                    expr = row["umi_count"]
-                except:
+                try:
+                    expr = row["umi_count"] # this is not an official field
+                except KeyError:
                     expr = row["duplicate_count"]
                 expr_raw = row["consensus_count"]
             except KeyError:
