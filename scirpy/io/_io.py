@@ -354,19 +354,19 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 for t in tmp:
                     if t == "" or t is None or t != t:
                         tmp.remove(t)
-                if all("tra" in x.lower() for x in tmp if x == x and x is not None):
+                if all("tra" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "TRA"
-                elif all("trb" in x.lower() for x in tmp if x == x and x is not None):
+                elif all("trb" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "TRB"
-                elif all("trd" in x.lower() for x in tmp if x == x and x is not None):
+                elif all("trd" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "TRD"
-                elif all("trg" in x.lower() for x in tmp if x == x and x is not None):
+                elif all("trg" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "TRG"
-                elif all("igh" in x.lower() for x in tmp if x == x and x is not None):
+                elif all("igh" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "IGH"
-                elif all("igk" in x.lower() for x in tmp if x == x and x is not None):
+                elif all("igk" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "IGK"
-                elif all("igl" in x.lower() for x in tmp if x == x and x is not None):
+                elif all("igl" in x.lower() for x in tmp if not pd.isnull(x)):
                     locus = "IGL"
                 else:
                     locus = None
