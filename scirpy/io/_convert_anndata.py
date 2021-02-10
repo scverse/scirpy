@@ -200,10 +200,11 @@ def to_ir_objs(adata: AnnData) -> List[IrCell]:
 
     return cells
 
+
 def to_dandelion(adata):
     """
     Convert a scirpy-initialized AnnData object to Dandelion format using `to_ir_objs`.
-    
+
     Parameters
     ----------
     adata
@@ -217,18 +218,32 @@ def to_dandelion(adata):
     try:
         import dandelion as ddl
     except:
-        raise ImportError('Please install dandelion: pip install sc-dandelion.')
+        raise ImportError("Please install dandelion: pip install sc-dandelion.")
     ircelllist = to_ir_objs(adata)
     data = pd.DataFrame()
+    contig_dicts = {}
     for ix in ircelllist:
-        contig_dict ={}
-        counter = 1
-    
-        for c in ix.chains:
+        contig_dict = {}
+
+        for counter, c in enumerate(ix.chains, start=1):
             cell_id = ix.cell_id
-            sequence_id = cell_id +'_contig_' + str(counter)
-            contig_dict.update({'cell_id':cell_id,'sequence_id':sequence_id,'locus':c.locus,'junction_aa':c.cdr3,'junction':c.cdr3_nt,'umi_count':c.expr,'productive':c.is_productive,'v_call':c.v_gene,'d_call':c.d_gene,'j_call':c.j_gene,'c_call':c.c_gene})
-            counter += 1
-            data = data.append(pd.DataFrame.from_dict(contig_dict, orient = 'index').T)
-    data.reset_index(inplace = True, drop = True)
+            sequence_id = cell_id + "_contig_" + str(counter)
+            contig_dict.update(
+                {
+                    "cell_id": cell_id,
+                    "sequence_id": sequence_id,
+                    "locus": c.locus,
+                    "junction_aa": c.cdr3,
+                    "junction": c.cdr3_nt,
+                    "umi_count": c.expr,
+                    "productive": c.is_productive,
+                    "v_call": c.v_gene,
+                    "d_call": c.d_gene,
+                    "j_call": c.j_gene,
+                    "c_call": c.c_gene,
+                }
+            )
+            contig_dicts[sequence_id] = contig_dict
+
+    data = pd.DataFrame.from_dict(contig_dicts, orient="index")
     return ddl.Dandelion(data)
