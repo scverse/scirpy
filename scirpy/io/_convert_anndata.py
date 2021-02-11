@@ -220,12 +220,11 @@ def to_dandelion(adata):
     except:
         raise ImportError("Please install dandelion: pip install sc-dandelion.")
     ircelllist = to_ir_objs(adata)
-    data = pd.DataFrame()
+    
     contig_dicts = {}
-    for ix in ircelllist:
-        contig_dict = {}
-
+    for ix in ircelllist:        
         for counter, c in enumerate(ix.chains, start=1):
+            contig_dict = {}
             cell_id = ix.cell_id
             sequence_id = cell_id + "_contig_" + str(counter)
             contig_dict.update(
@@ -244,6 +243,6 @@ def to_dandelion(adata):
                 }
             )
             contig_dicts[sequence_id] = contig_dict
-
+            
     data = pd.DataFrame.from_dict(contig_dicts, orient="index")
-    return ddl.Dandelion(data)
+    return ddl.Dandelion(ddl.load_data(data))
