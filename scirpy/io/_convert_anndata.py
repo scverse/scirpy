@@ -181,8 +181,12 @@ def to_ir_objs(adata: AnnData) -> List[IrCell]:
         for cell_id, row in adata.obs.iterrows():
             tmp_ir_cell = IrCell(cell_id, multi_chain=row["multi_chain"])
             for chain_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"]):
+                # expr_raw is optional
+                keys = IR_OBS_KEYS[:]
+                if f"IR_{chain_type}_{chain_id}_expr_raw" not in row:
+                    keys.remove("expr_raw")
                 chain_dict = {
-                    key: row[f"IR_{chain_type}_{chain_id}_{key}"] for key in IR_OBS_KEYS
+                    key: row[f"IR_{chain_type}_{chain_id}_{key}"] for key in keys
                 }
                 # per definition, we currently only have productive chains in adata.
                 chain_dict["is_productive"] = True

@@ -22,7 +22,8 @@ from . import TESTDATA
         TESTDATA / "10x/filtered_contig_annotations.csv",
     ],
 )
-def test_read_and_convert_10x_example(path):
+@pytest.mark.parametrize("omit_cols", [True, False])
+def test_read_and_convert_10x_example(path, omit_cols):
     """Test that a full 10x CSV table can be imported without errors.
 
     Additionally test that the round-trip conversion using `to_ir_objs` and
@@ -34,6 +35,8 @@ def test_read_and_convert_10x_example(path):
     under CC-BY-4.0
     """
     anndata = read_10x_vdj(path)
+    if omit_cols:
+        del adata.obs["IR_VJ_1_expr_raw"]
     assert anndata.shape[0] > 0
 
     # Test that round-trip conversion succeeds
