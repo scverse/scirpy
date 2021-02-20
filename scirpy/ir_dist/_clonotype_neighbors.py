@@ -113,6 +113,21 @@ class ClonotypeNeighbors:
                 del clonotypes[tmp_col]
             clonotypes["within_group"] = within_group_col
 
+        # consistency check: there must not be a secondary chain if there is no
+        # primary one:
+        # TODO add a test for this
+        if "2" in self._dual_ir_cols:
+            for tmp_arm in self._receptor_arm_cols:
+                primary_is_nan = (
+                    clonotypes[f"IR_{tmp_arm}_1_{self.sequence_key}"] == "nan"
+                )
+                secondary_is_nan = (
+                    clonotypes[f"IR_{tmp_arm}_2_{self.sequence_key}"] == "nan"
+                )
+                assert not np.sum(
+                    ~secondary_is_nan[primary_is_nan]
+                ), "There must not be a secondary chain if there is no primary one"
+
         self.clonotypes = clonotypes
 
     def _add_distance_matrices(self, adata):
@@ -174,15 +189,16 @@ class ClonotypeNeighbors:
             "when a chunk has finished. "
         )  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
-        dist_rows = process_map(
-            self._dist_for_clonotype,
-            range(n_clonotypes),
-            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-            chunksize=2000,
-        )
+        # dist_rows = process_map(
+        #     self._dist_for_clonotype,
+        #     range(n_clonotypes),
+        #     max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+        #     chunksize=2000,
+        # )
         # For debugging: single-threaded version
-        # from tqdm.contrib import tmap
-        # dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        from tqdm.contrib import tmap
+
+        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
@@ -200,44 +216,116 @@ class ClonotypeNeighbors:
         match ("and"), the higher one should count.
         """
         res = []
-        for tmp_receptor_arm in self._receptor_arm_cols:
-
-            def _lookup(tmp_chain1, tmp_chain2) -> SetMask:
-                cdr3 = self.neighbor_finder.lookup(
+        lookup = dict()
+        for tmp_arm in self._receptor_arm_cols:
+            chain_ids = (
+                [(1, 1)]
+                if self.dual_ir == "primary_only"
+                else [(1, 1), (2, 2), (1, 2), (2, 1)]
+            )
+            for c1, c2 in chain_ids:
+                lookup[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
                     ct_id,
-                    f"{tmp_receptor_arm}_{tmp_chain1}",
-                    f"{tmp_receptor_arm}_{tmp_chain2}",
+                    f"{tmp_arm}_{c1}",
+                    f"{tmp_arm}_{c2}",
                 )
-                if self.same_v_gene:
-                    return cdr3 & self.neighbor_finder.lookup(
-                        ct_id,
-                        f"{tmp_receptor_arm}_{tmp_chain1}_v_gene",
-                        f"{tmp_receptor_arm}_{tmp_chain2}_v_gene",
-                    )
-                else:
-                    return cdr3
 
+        # need to loop through all coordinates that have at least one distance
+        has_distance = sp.csr_matrix(reduce(or_, lookup.values()))
+
+        for x in lookup.values():
+            x.data = sp.csr_matrix(x.data)
+
+        def make_tmp_res(tmp_arm, c1, c2):
+            # ct_col1 = self.clonotypes[f"IR_{tmp_arm}_{c1}_{self.sequence_key}"].values
+            ct_col2 = self.clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
+            return np.array(
+                [
+                    lookup[(tmp_arm, c1, c2)].data[0, i]
+                    if ct_col2[i] != "nan"
+                    else np.nan
+                    for i in has_distance.indices
+                ],
+                dtype=float,
+            )
+
+        def reduce_and(*args, cols):
+            """Take maximum, ignore nans"""
+            chain_count = np.sum(
+                self.clonotypes.loc[:, cols].iloc[ct_id, :].values == "nan"
+            )
+            tmp_array = np.vstack(args)
+            tmp_array[tmp_array == 0] = np.inf
+            same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
+            tmp_array = np.nanmax(tmp_array, axis=0)
+            tmp_array[np.isinf(tmp_array)] = 0
+            return np.multiply(tmp_array, same_count_mask)
+
+        def reduce_or(*args, cols=None):
+            """Take minimum, ignore 0s and nans"""
+            tmp_array = np.vstack(args)
+            tmp_array[tmp_array == 0] = np.inf
+            tmp_array = np.nanmin(tmp_array, axis=0)
+            tmp_array[np.isinf(tmp_array)] = 0
+            return tmp_array
+
+        res = []
+        for tmp_arm in self._receptor_arm_cols:
             if self.dual_ir == "primary_only":
-                tmp_res = _lookup(1, 1)
+                tmp_res = make_tmp_res(tmp_arm, 1, 1)
             elif self.dual_ir == "all":
-                tmp_res = (_lookup(1, 1) & _lookup(2, 2)) | (
-                    _lookup(1, 2) & _lookup(2, 1)
+                tmp_res = reduce_or(
+                    reduce_and(
+                        make_tmp_res(tmp_arm, 1, 1),
+                        make_tmp_res(tmp_arm, 2, 2),
+                        cols=[f"IR_{tmp_arm}_{c}_{self.sequence_key}" for c in [1, 2]],
+                    ),
+                    reduce_and(
+                        make_tmp_res(tmp_arm, 1, 2),
+                        make_tmp_res(tmp_arm, 2, 1),
+                        cols=[f"IR_{tmp_arm}_{c}_{self.sequence_key}" for c in [1, 2]],
+                    ),
                 )
             else:  # "any"
-                tmp_res = _lookup(1, 1) | _lookup(2, 2) | _lookup(1, 2) | _lookup(2, 1)
+                tmp_res = reduce_or(
+                    make_tmp_res(tmp_arm, 1, 1),
+                    make_tmp_res(tmp_arm, 1, 2),
+                    make_tmp_res(tmp_arm, 2, 2),
+                    make_tmp_res(tmp_arm, 2, 1),
+                )
 
             res.append(tmp_res)
 
-        operator = and_ if self.receptor_arms == "all" else or_
-        res = reduce(operator, res)
+        reduce_fun = reduce_and if self.receptor_arms == "all" else reduce_or
 
-        if self.within_group is not None:
-            res = res & self.neighbor_finder.lookup(
-                ct_id, "within_group", "within_group"
-            )
+        # checking only the chain=1 columns here is enough, as there must not
+        # be a secondary chain if there is no first one.
+        res = reduce_fun(
+            np.vstack(res),
+            cols=[f"IR_{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols],
+        )
+
+        #     if self.dual_ir == "primary_only":
+        #         tmp_res = _lookup(1, 1)
+        #     elif self.dual_ir == "all":
+        #         tmp_res = (_lookup(1, 1) & _lookup(2, 2)) | (
+        #             _lookup(1, 2) & _lookup(2, 1)
+        #         )
+        #     else:  # "any"
+        #         tmp_res = _lookup(1, 1) | _lookup(2, 2) | _lookup(1, 2) | _lookup(2, 1)
+
+        #     res.append(tmp_res)
+
+        # operator = and_ if self.receptor_arms == "all" else or_
+        # res = reduce(operator, res)
+
+        # TODO within_group + v_genes!
+        # if self.within_group is not None:
+        #     res = res & self.neighbor_finder.lookup(
+        #         ct_id, "within_group", "within_group"
+        #     )
 
         # if it's a bool set masks it corresponds to all nan
-        if isinstance(res, BoolSetMask):
-            return csr_matrix((1, len(res)), dtype=int)
-        else:
-            return res.data
+        final_res = has_distance.copy()
+        final_res.data = res
+        return final_res

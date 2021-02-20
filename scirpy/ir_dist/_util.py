@@ -243,10 +243,10 @@ class DoubleLookupNeighborFinder:
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
-            try:
-                return reverse["nan"]
-            except KeyError:
-                return NumberSetMask.empty(self.n_rows)
+            return NumberSetMask.empty(self.n_rows)
+            # try:
+            #     return reverse["nan"]
+            # except KeyError:
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]

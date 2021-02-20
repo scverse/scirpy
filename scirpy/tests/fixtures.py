@@ -60,12 +60,10 @@ def adata_cdr3():
                 "TRA",
                 "TRB",
             ],
-            # this row is in inconsistent state (on purpose). There should never
-            # be a clonotype with a secondary and no primary chain.
             [
                 "cell5",
-                "nan",
                 "AAA",
+                "nan",
                 "LLL",
                 "nan",
                 "nan",

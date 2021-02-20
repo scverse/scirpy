@@ -199,8 +199,8 @@ def test_compute_distances2(adata_cdr3):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -263,8 +263,8 @@ def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -298,8 +298,8 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -333,8 +333,8 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA"],
+                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL"],
             }
         ),
     )
@@ -344,11 +344,10 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dist,
         np.array(
             [
-                [1, 10, 0, 0, 0],
-                [10, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 1],
+                [1, 10, 0, 0],
+                [10, 1, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 1],
             ]
         ),
     )
@@ -414,8 +413,8 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA"],
+                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL"],
             }
         ),
     )
@@ -425,11 +424,10 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator):
         dist,
         np.array(
             [
-                [1, 4, 0, 1, 0],
-                [4, 1, 0, 4, 0],
-                [0, 0, 0, 0, 0],
-                [1, 4, 0, 1, 1],
-                [0, 0, 0, 1, 1],
+                [1, 4, 0, 1],
+                [4, 1, 0, 4],
+                [0, 0, 0, 0],
+                [1, 4, 0, 1],
             ]
         ),
     )
@@ -448,8 +446,8 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
                 "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
                 "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
@@ -484,8 +482,8 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
                 "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
                 "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
@@ -519,14 +517,15 @@ def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
                 "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
                 "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
         ),
     )
     dist = cn.compute_distances().toarray()
+    print(dist)
     npt.assert_equal(
         dist,
         np.array(
@@ -554,8 +553,8 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "nan"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "AAA"],
+                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
                 "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
                 "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
