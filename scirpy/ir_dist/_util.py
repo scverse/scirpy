@@ -4,155 +4,36 @@ from functools import reduce
 from operator import add
 import numpy as np
 from numpy.core.fromnumeric import shape
+from numpy.core.numeric import indices
 import pandas as pd
 import itertools
 from typing import Dict, Sequence, Tuple, Iterable, Union, Mapping
 import scipy.sparse as sp
+from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
 
-# TODO document the set masks
-class SetMask(cabc.Sequence):
-    """A sparse mask vector that supports set operations"""
 
-    def __init__(self, data: Union[sp.spmatrix, np.ndarray]):
-        self.data = data
-        pass
-
-    def __repr__(self):
-        try:
-            if sp.issparse(self.data):
-                return (
-                    f"1x{len(self)} {type(self).__name__} with {self.data.nnz} elements"
-                )
-            else:
-                return f"1x{len(self)} {type(self).__name__} {self.data.__repr__()}"
-        except AttributeError:
-            return f"uninitalized {type(self).__name__}"
-
-    def __len__(self):
-        return self.data.shape[1]
-
-    def __eq__(self, other) -> bool:
-        """Not very efficient, mainly for testing"""
-        if type(self) == type(other):
-            self_data = self.data.toarray() if sp.issparse(self.data) else self.data
-            other_data = other.data.toarray() if sp.issparse(other.data) else other.data
-            return np.array_equal(self_data, other_data)
-        else:
-            return False
-
-    @abc.abstractmethod
-    def __or__(self, other) -> "SetMask":
-        pass
-
-    @abc.abstractmethod
-    def __and__(self, other) -> "SetMask":
-        pass
+def reduce_and(*args, chain_count):
+    """Take maximum, ignore nans"""
+    # TODO stay int!
+    tmp_array = np.vstack(args).astype(float)
+    tmp_array[tmp_array == 0] = np.inf
+    same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
+    tmp_array = np.nanmax(tmp_array, axis=0)
+    tmp_array[np.isinf(tmp_array)] = 0
+    tmp_array.astype(np.uint8)
+    return np.multiply(tmp_array, same_count_mask)
 
 
-class BoolSetMask(SetMask):
-    """A SetMask of boolean type. I.e. it does not contain values, only 1/0.
-
-    There are no guard rails regarding the actual values. If you store values
-    different than 0/1 in the bool set mask strange things may happen.
-    """
-
-    @staticmethod
-    def empty(size: int):
-        """Create an empty setmask of a given length"""
-        data = np.zeros((1, size), dtype=np.bool)
-        return BoolSetMask(data)
-
-    @staticmethod
-    def from_list(lst):
-        data = np.array([lst], dtype=np.bool)
-        return BoolSetMask(data)
-
-    def __or__(self, other):
-        if isinstance(other, BoolSetMask):
-            return BoolSetMask(self.data | other.data)
-        if isinstance(other, NumberSetMask):
-            # neutral element! valuese that are 1 in the BoolSetMask and 0 in the
-            # NumberSetMask will stay 0.
-            return other
-        else:
-            return NotImplemented
-
-    def __getitem__(self, key):
-        return self.data[0, key]
-
-    def __ror__(self, other):
-        return self.__or__(other)
-
-    def __and__(self, other):
-        if isinstance(other, BoolSetMask):
-            return BoolSetMask(self.data & other.data)
-        elif isinstance(other, NumberSetMask):
-            return NumberSetMask(other.data.multiply(self.data))
-        else:
-            return NotImplemented
-
-    def __rand__(self, other):
-        return self.__and__(other)
-
-
-class NumberSetMask(SetMask):
-    """A SetMask of number type. Or retains the min, and retains the max"""
-
-    @staticmethod
-    def empty(size: int):
-        """Create an empty setmask of a given length"""
-        data = sp.coo_matrix((1, size), dtype=np.uint8)
-        return NumberSetMask(data)
-
-    @staticmethod
-    def from_list(lst):
-        data = sp.coo_matrix(lst, dtype=np.uint8)
-        return NumberSetMask(data)
-
-    @staticmethod
-    def merge(set_masks, multipliers):
-        """Merge NumberSetMasks by adding them in COO space. """
-        # the individual sparse masks obtained from the reverse lookup
-        # table are not overlapping because each row in the feature table
-        # has only one sequence. Simple sum is therefore enough.
-        tmp_data = np.concatenate(
-            [set_mask.data.data * m for set_mask, m in zip(set_masks, multipliers)]
-        )
-        tmp_row = np.concatenate([set_mask.data.row for set_mask in set_masks])
-        tmp_col = np.concatenate([set_mask.data.col for set_mask in set_masks])
-        return NumberSetMask(
-            sp.coo_matrix((tmp_data, (tmp_row, tmp_col)), shape=set_masks[0].data.shape)
-        )
-
-    def __or__(self, other):
-        if isinstance(other, NumberSetMask):
-            # take min (!= 0)
-            tmp_max = (
-                self.data.maximum(other.data)
-                .multiply(self.data > 0)
-                .multiply(other.data > 0)
-            )
-            return NumberSetMask(self.data + other.data - tmp_max)
-        else:
-            return NotImplemented
-
-    def __and__(self, other):
-        if isinstance(other, NumberSetMask):
-            return NumberSetMask(
-                self.data.maximum(other.data)
-                .multiply(self.data > 0)
-                .multiply(other.data > 0)
-            )
-        else:
-            return NotImplemented
-
-    def __getitem__(self, key):
-        return self.data.tocsr()[0, key]
-
-    def __iter__(self):
-        return iter(self.data.toarray()[0, :])
+def reduce_or(*args, chain_count=None):
+    """Take minimum, ignore 0s and nans"""
+    tmp_array = np.vstack(args).astype(float)
+    tmp_array[tmp_array == 0] = np.inf
+    tmp_array = np.nanmin(tmp_array, axis=0)
+    tmp_array[np.isinf(tmp_array)] = 0
+    tmp_array.astype(np.uint8)
+    return tmp_array
 
 
 class DoubleLookupNeighborFinder:
@@ -205,16 +86,15 @@ class DoubleLookupNeighborFinder:
         object_id: int,
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
-    ) -> SetMask:
+    ) -> coo_matrix:
         """Get ids of neighboring objects from a lookup table.
 
         Performs the following lookup:
 
             clonotype_id -> dist_mat -> neighboring features -> neighboring object.
 
-        "nan"s are not looked up via the distance matrix. Instead they have
-        a special entry in the lookup tables and yield only a BooleanMask that
-        works as neutral element.
+        "nan"s are not looked up via the distance matrix, they return a row of zeros
+        instead.
 
         Parameters
         ----------
@@ -243,19 +123,19 @@ class DoubleLookupNeighborFinder:
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
         if np.isnan(idx_in_dist_mat):
-            return NumberSetMask.empty(self.n_rows)
-            # try:
-            #     return reverse["nan"]
-            # except KeyError:
+            return sp.coo_matrix((1, self.n_rows))
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
 
             # ... and get column indices directly from sparse row
-            return NumberSetMask.merge(
-                [reverse.get(i, NumberSetMask.empty(self.n_rows)) for i in row.indices],  # type: ignore
-                row.data,  # type: ignore
-            )
+            # sum concatenates coo matrices
+            return sum(
+                (
+                    reverse.get(i, sp.coo_matrix((1, self.n_rows))) * multiplier
+                    for i, multiplier in zip(row.indices, row.data)  # type: ignore
+                )
+            )  # type: ignore
 
     def add_distance_matrix(
         self, name: str, distance_matrix: sp.csr_matrix, labels: Sequence
@@ -327,11 +207,11 @@ class DoubleLookupNeighborFinder:
         distance_matrix: str,
         *,
         dist_type: Literal["bool", "number"],
-    ) -> Mapping[float, csr_matrix]:
+    ) -> Mapping[int, coo_matrix]:
         """Create a reverse-lookup dict that maps each (numeric) index
-        of a feature distance matric to a SetMask. If the dist_type is numeric,
-        will use a sparse NumberSetMask. If the dist_type is boolean, use a
-        dense boolean set mask.
+        of a feature distance matrix to a numeric or boolean mask.
+        If the dist_type is numeric, will use a sparse numeric matrix.
+        If the dist_type is boolean, use a dense boolean.
         """
         tmp_reverse_lookup = dict()
         tmp_index_lookup = self.distance_matrix_labels[distance_matrix]
@@ -340,28 +220,26 @@ class DoubleLookupNeighborFinder:
         for i, k in enumerate(self.feature_table[feature_col]):
             tmp_key = tmp_index_lookup[k]
             if np.isnan(tmp_key):
-                tmp_key = "nan"
+                continue
             try:
                 tmp_reverse_lookup[tmp_key].append(i)
             except KeyError:
                 tmp_reverse_lookup[tmp_key] = [i]
 
-        # convert into setMasks
+        # convert into coo matrices (numeric distances) or numpy boolean arrays.
         for k, v in tmp_reverse_lookup.items():
             # nan will also be a boolean mask
-            if dist_type == "bool" or k == "nan":
-                tmp_array = np.zeros(shape=(1, self.n_rows), dtype=np.bool)
+            if dist_type == "bool":
+                tmp_array = np.zeros(shape=(1, self.n_rows), dtype=bool)
                 tmp_array[0, v] = True
-                tmp_reverse_lookup[k] = BoolSetMask(tmp_array)
+                tmp_reverse_lookup[k] = tmp_array
             else:
-                tmp_reverse_lookup[k] = NumberSetMask(
-                    sp.coo_matrix(
-                        (
-                            np.ones(len(v), dtype=np.uint8),
-                            (np.zeros(len(v), dtype=np.int), v),
-                        ),
-                        shape=(1, self.n_rows),
-                    )
+                tmp_reverse_lookup[k] = sp.coo_matrix(
+                    (
+                        np.ones(len(v), dtype=np.uint8),
+                        (np.zeros(len(v), dtype=int), v),
+                    ),
+                    shape=(1, self.n_rows),
                 )
 
         return tmp_reverse_lookup
