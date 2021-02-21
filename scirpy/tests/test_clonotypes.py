@@ -23,7 +23,7 @@ import pytest
 
 
 def test_define_clonotypes_diagonal_connectivities(adata_conn_diagonal):
-    clonotype, clonotype_size = st.tl.define_clonotype_clusters(
+    clonotype, clonotype_size = ir.tl.define_clonotype_clusters(
         adata_conn_diagonal,
         metric="alignment",
         within_group=None,
@@ -163,8 +163,8 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
         (
             "VDJ",
             "primary_only",
-            [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 4, 5],
-            [5, 5, 5, 1, 5, np.nan, 5, 1, 1, 1, 1],
+            [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 3, 4],
+            [5, 5, 5, 1, 5, np.nan, 5, 1, 2, 2, 1],
         ),
     ],
 )

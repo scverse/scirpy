@@ -1,34 +1,11 @@
 """Test ir_dist._util utility functions"""
 
-from scirpy.ir_dist._util import BoolSetMask, NumberSetMask, DoubleLookupNeighborFinder
+from scirpy.ir_dist._util import DoubleLookupNeighborFinder
 import pytest
 import numpy as np
 import scipy.sparse as sp
 import pandas as pd
 import numpy.testing as npt
-
-NSM = NumberSetMask.from_list
-BSM = BoolSetMask.from_list
-
-
-@pytest.fixture
-def set_mask():
-    return NumberSetMask(sp.csr_matrix([1, 0, 0, 4, 0, 9]))
-
-
-@pytest.fixture
-def bool_set_mask():
-    return BoolSetMask(sp.csr_matrix([1, 0, 0, 1, 0, 1]))
-
-
-@pytest.fixture
-def set_mask_empty():
-    return NumberSetMask.empty(6)
-
-
-@pytest.fixture
-def bool_set_mask_empty():
-    return BoolSetMask.empty(6)
 
 
 @pytest.fixture
@@ -60,72 +37,6 @@ def dlnf_with_lookup(dlnf):
     dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
     dlnf.add_lookup_table(feature_col="VDJ", distance_matrix="test", name="VDJ_test")
     return dlnf
-
-
-def test_set_mask_init():
-    data = sp.csr_matrix([1, 0, 0, 4, 0, 9])
-    nsm = NumberSetMask(data)
-    bsm = NumberSetMask(data)
-
-    assert nsm.data is data
-    assert bsm.data is data
-    npt.assert_equal(
-        NumberSetMask.from_list([1, 0, 0, 4, 0, 9]).data.toarray(), data.toarray()
-    )
-
-    npt.assert_equal(NumberSetMask.empty(4).data.toarray(), np.zeros((1, 4)))
-
-    with pytest.raises(ValueError):
-        NumberSetMask(np.array([1, 0, 4, 0]))
-
-
-def test_set_mask_len(set_mask):
-    assert len(set_mask) == 6
-
-
-def test_set_mask_id(set_mask, set_mask_empty, bool_set_mask, bool_set_mask_empty):
-    assert set_mask | set_mask == set_mask
-    assert set_mask | set_mask_empty == set_mask
-    assert set_mask_empty | set_mask == set_mask
-    assert set_mask_empty | set_mask_empty == set_mask_empty
-
-    assert set_mask & set_mask == set_mask
-    assert set_mask & set_mask_empty == set_mask_empty
-    assert set_mask_empty & set_mask == set_mask_empty
-    assert set_mask & bool_set_mask_empty == set_mask_empty
-    assert bool_set_mask_empty & set_mask == set_mask_empty
-    assert set_mask_empty & set_mask_empty == set_mask_empty
-
-
-@pytest.mark.parametrize(
-    "o1,o2,expected",
-    [
-        (NSM([0, 2, 4, 0]), NSM([0, 0, 0, 5]), NSM([0, 2, 4, 5])),
-        (NSM([0, 2, 4, 0]), BSM([0, 0, 0, 1]), NSM([0, 2, 4, 0])),
-        (NSM([0, 2, 4, 0]), BSM([0, 1, 0, 0]), NSM([0, 2, 4, 0])),
-        (NSM([0, 2, 4, 0]), NSM([0, 1, 5, 0]), NSM([0, 1, 4, 0])),
-        (NSM([0, 2, 4, 0]), NSM([0, 1, 0, 5]), NSM([0, 1, 4, 5])),
-        (BSM([1, 1, 0, 0]), BSM([0, 1, 1, 0]), BSM([1, 1, 1, 0])),
-    ],
-)
-def test_set_mask_or(o1, o2, expected):
-    assert o1 | o2 == expected
-
-
-@pytest.mark.parametrize(
-    "o1,o2,expected",
-    [
-        (NSM([0, 2, 4, 0]), NSM([0, 0, 0, 5]), NSM([0, 0, 0, 0])),
-        (NSM([0, 2, 4, 0]), BSM([0, 0, 0, 1]), NSM([0, 0, 0, 0])),
-        (NSM([0, 2, 4, 0]), BSM([0, 0, 1, 0]), NSM([0, 0, 4, 0])),
-        (BSM([0, 0, 1, 0]), NSM([0, 2, 4, 0]), NSM([0, 0, 4, 0])),
-        (NSM([0, 2, 4, 0]), NSM([0, 1, 5, 0]), NSM([0, 2, 5, 0])),
-        (NSM([0, 2, 4, 0]), NSM([0, 1, 0, 5]), NSM([0, 2, 0, 0])),
-        (BSM([1, 1, 0, 0]), BSM([0, 1, 1, 0]), BSM([0, 1, 0, 0])),
-    ],
-)
-def test_set_mask_and(o1, o2, expected):
-    assert o1 & o2 == expected
 
 
 def test_dlnf_lookup_table(dlnf):
@@ -175,16 +86,16 @@ def test_dlnf_lookup(dlnf_with_lookup):
 
 
 def test_dlnf_lookup_nan(dlnf_with_lookup):
-    assert dlnf_with_lookup.lookup(0, "VDJ_test") == NSM([1, 0, 0, 0, 0, 0, 0, 0])
+    assert dlnf_with_lookup.lookup(0, "VDJ_test") == np.array([1, 0, 0, 0, 0, 0, 0, 0])
     assert (
         dlnf_with_lookup.lookup(3, "VDJ_test")
         == dlnf_with_lookup.lookup(5, "VDJ_test")
-        == NSM([0, 0, 4, 3, 0, 3, 0, 0])
+        == [0, 0, 4, 3, 0, 3, 0, 0]
     )
     assert (
         dlnf_with_lookup.lookup(4, "VDJ_test")
         == dlnf_with_lookup.lookup(6, "VDJ_test")
-        == BSM([0, 0, 0, 0, 1, 0, 1, 0])
+        == [0, 0, 0, 0, 1, 0, 1, 0]
     )
 
 

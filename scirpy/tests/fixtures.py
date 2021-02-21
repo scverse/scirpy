@@ -152,8 +152,8 @@ def adata_define_clonotype_clusters():
             ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
             ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
             ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
-            ["cell8", "AAA", "nan", "nan", "KKK", "TRA", "nan", "nan", "TRB"],
-            ["cell9", "nan", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB"],
+            ["cell8", "AAA", "nan", "KKK", "nan", "TRA", "nan", "TRB", "nan"],
+            ["cell9", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB", "nan"],
             ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
         ],
         columns=[

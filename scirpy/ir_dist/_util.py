@@ -16,7 +16,7 @@ from .._compat import Literal
 
 def reduce_and(*args, chain_count):
     """Take maximum, ignore nans"""
-    # TODO stay int!
+    # TODO stay int and test!
     tmp_array = np.vstack(args).astype(float)
     tmp_array[tmp_array == 0] = np.inf
     same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count

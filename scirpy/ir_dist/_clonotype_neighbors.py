@@ -97,7 +97,13 @@ class ClonotypeNeighbors:
         # groupby.indices gets us a (index -> array of row indices) mapping.
         # It doesn't necessarily have the same order as `clonotypes`.
         self.cell_indices = [
-            obs_filtered.index[clonotype_groupby.indices.get(ct_tuple, [])].values
+            obs_filtered.index[
+                clonotype_groupby.indices.get(
+                    # indices is not a tuple if it's just a single value.
+                    ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
+                    [],
+                )
+            ].values
             for ct_tuple in clonotypes.itertuples(index=False, name=None)
         ]
 
@@ -299,7 +305,6 @@ class ClonotypeNeighbors:
         #         ct_id, "within_group", "within_group"
         #     )
 
-        # if it's a bool set masks it corresponds to all nan
         final_res = has_distance.copy()
         final_res.data = res
         return final_res
