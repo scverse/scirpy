@@ -68,7 +68,6 @@ def test_define_clonotypes_diagonal_connectivities(adata_conn_diagonal):
 def test_define_clonotype_clusters(
     adata_conn, same_v_gene, within_group, ct_expected, ct_size_expected
 ):
-    ir.pp.ir_dist(adata_conn)
     clonotype, clonotype_size = ir.tl.define_clonotype_clusters(
         adata_conn,
         metric="alignment",

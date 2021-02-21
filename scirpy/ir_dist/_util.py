@@ -14,16 +14,19 @@ from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
 
 
-def reduce_and(*args, chain_count):
+def reduce_and(*args, chain_count=None):
     """Take maximum, ignore nans"""
     # TODO stay int and test!
     tmp_array = np.vstack(args).astype(float)
     tmp_array[tmp_array == 0] = np.inf
-    same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
+    if chain_count is not None:
+        same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
     tmp_array = np.nanmax(tmp_array, axis=0)
     tmp_array[np.isinf(tmp_array)] = 0
     tmp_array.astype(np.uint8)
-    return np.multiply(tmp_array, same_count_mask)
+    if chain_count is not None:
+        tmp_array = np.multiply(tmp_array, same_count_mask)
+    return tmp_array
 
 
 def reduce_or(*args, chain_count=None):
@@ -86,7 +89,7 @@ class DoubleLookupNeighborFinder:
         object_id: int,
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
-    ) -> coo_matrix:
+    ) -> Union[coo_matrix, np.ndarray]:
         """Get ids of neighboring objects from a lookup table.
 
         Performs the following lookup:
@@ -207,7 +210,7 @@ class DoubleLookupNeighborFinder:
         distance_matrix: str,
         *,
         dist_type: Literal["bool", "number"],
-    ) -> Mapping[int, coo_matrix]:
+    ) -> Mapping[int, Union[coo_matrix, np.ndarray]]:
         """Create a reverse-lookup dict that maps each (numeric) index
         of a feature distance matrix to a numeric or boolean mask.
         If the dist_type is numeric, will use a sparse numeric matrix.

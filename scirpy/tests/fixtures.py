@@ -203,7 +203,7 @@ def adata_conn():
 
 @pytest.fixture
 def adata_conn_diagonal():
-    """Adata with connectivities computed"""
+    """Adata with connectivities computed. Regression test for #236."""
     adata = AnnData(
         obs=pd.DataFrame()
         .assign(

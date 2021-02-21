@@ -238,6 +238,7 @@ class ClonotypeNeighbors:
 
         # Lookup distances for current row
         lookup = dict()
+        lookup_v = dict()
         for tmp_arm in self._receptor_arm_cols:
             chain_ids = (
                 [(1, 1)]
@@ -250,6 +251,12 @@ class ClonotypeNeighbors:
                     f"{tmp_arm}_{c1}",
                     f"{tmp_arm}_{c2}",
                 )
+                if self.same_v_gene:
+                    lookup_v[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
+                        ct_id,
+                        f"{tmp_arm}_{c1}_v_gene",
+                        f"{tmp_arm}_{c2}_v_gene",
+                    )
 
         # need to loop through all coordinates that have at least one distance
         has_distance = sum(lookup.values()).tocsr()  # type: ignore
@@ -264,6 +271,9 @@ class ClonotypeNeighbors:
                 .A1.astype(float)
             )
             tmp_array[ct_col2[has_distance.indices] == "nan"] = np.nan
+            if self.same_v_gene:
+                mask_v_gene = lookup_v[(tmp_arm, c1, c2)][has_distance.indices]
+                tmp_array = tmp_array.multiply(mask_v_gene)
             return tmp_array
 
         res = []
@@ -300,10 +310,11 @@ class ClonotypeNeighbors:
         res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
 
         # TODO within_group + v_genes!
-        # if self.within_group is not None:
-        #     res = res & self.neighbor_finder.lookup(
-        #         ct_id, "within_group", "within_group"
-        #     )
+        if self.within_group is not None:
+            within_group_mask = self.neighbor_finder.lookup(
+                ct_id, "within_group", "within_group"
+            )
+            res = reduce_and(res, within_group_mask[has_distance.indices])
 
         final_res = has_distance.copy()
         final_res.data = res
