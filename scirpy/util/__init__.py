@@ -6,6 +6,13 @@ from scipy.sparse import issparse
 import scipy.sparse
 import warnings
 
+# Determine the right tqdm version, see https://github.com/tqdm/tqdm/issues/1082
+try:
+    import ipywidgets  # type: ignore # NOQA
+    from tqdm.auto import tqdm
+except ModuleNotFoundError:
+    from tqdm import tqdm  # NOQA
+
 
 def _allclose_sparse(A, B, atol=1e-8):
     """Check if two sparse matrices are almost equal.

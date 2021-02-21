@@ -14,18 +14,16 @@ from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
 
 
-def reduce_and(*args, chain_count=None):
+def reduce_and(*args, chain_count):
     """Take maximum, ignore nans"""
     # TODO stay int and test!
     tmp_array = np.vstack(args).astype(float)
     tmp_array[tmp_array == 0] = np.inf
-    if chain_count is not None:
-        same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
+    same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
     tmp_array = np.nanmax(tmp_array, axis=0)
     tmp_array[np.isinf(tmp_array)] = 0
     tmp_array.astype(np.uint8)
-    if chain_count is not None:
-        tmp_array = np.multiply(tmp_array, same_count_mask)
+    tmp_array = np.multiply(tmp_array, same_count_mask)
     return tmp_array
 
 
@@ -113,6 +111,9 @@ class DoubleLookupNeighborFinder:
             different columns of the feature table.
         """
         distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
+        # TODO store type in reverse directly somehow
+        reverse_is_boolean = isinstance(next(iter(reverse.values())), np.ndarray)
+
         if reverse_lookup_table is not None:
             distance_matrix_name_reverse, _, reverse = self.lookups[
                 reverse_lookup_table
@@ -125,20 +126,33 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
+        # TODO can we do that simpler?
         if np.isnan(idx_in_dist_mat):
-            return sp.coo_matrix((1, self.n_rows))
+            if reverse_is_boolean:
+                return np.zeros((1, self.n_rows), dtype=bool)
+            else:
+                return sp.coo_matrix((1, self.n_rows))
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
 
-            # ... and get column indices directly from sparse row
-            # sum concatenates coo matrices
-            return sum(
-                (
-                    reverse.get(i, sp.coo_matrix((1, self.n_rows))) * multiplier
-                    for i, multiplier in zip(row.indices, row.data)  # type: ignore
+            if reverse_is_boolean:
+                assert (
+                    len(row.indices) == 1  # type: ignore
+                ), "Boolean reverse lookup only works for identity distance matrices."
+                return reverse.get(
+                    row.indices[0], np.zeros((1, self.n_rows), dtype=bool)  # type: ignore
                 )
-            )  # type: ignore
+
+            else:
+                # ... and get column indices directly from sparse row
+                # sum concatenates coo matrices
+                return sum(
+                    (
+                        reverse.get(i, sp.coo_matrix((1, self.n_rows))) * multiplier
+                        for i, multiplier in zip(row.indices, row.data)  # type: ignore
+                    )
+                )  # type: ignore
 
     def add_distance_matrix(
         self, name: str, distance_matrix: sp.csr_matrix, labels: Sequence
@@ -231,7 +245,6 @@ class DoubleLookupNeighborFinder:
 
         # convert into coo matrices (numeric distances) or numpy boolean arrays.
         for k, v in tmp_reverse_lookup.items():
-            # nan will also be a boolean mask
             if dist_type == "bool":
                 tmp_array = np.zeros(shape=(1, self.n_rows), dtype=bool)
                 tmp_array[0, v] = True

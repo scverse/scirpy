@@ -11,7 +11,7 @@ from Levenshtein import hamming as hamming_dist
 import scipy.spatial
 import scipy.sparse
 from scipy.sparse import coo_matrix
-from ..util import _doc_params
+from ..util import _doc_params, tqdm
 
 
 _doc_params_parallel_distance_calculator = """\
@@ -216,6 +216,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
             *zip(*blocks),
             max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
             chunksize=50,
+            tqdm_class=tqdm,
         )
 
         try:

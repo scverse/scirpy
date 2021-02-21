@@ -7,11 +7,9 @@ import numpy as np
 import scipy.sparse as sp
 import itertools
 from ._util import DoubleLookupNeighborFinder, reduce_and, reduce_or
-from ..util import _is_na, _is_true
+from ..util import _is_na, _is_true, tqdm
 import pandas as pd
 from tqdm.contrib.concurrent import process_map
-
-# TODO set tqdm class as specified here: https://github.com/theislab/scanpy/pull/1130/files
 
 
 class ClonotypeNeighbors:
@@ -175,12 +173,15 @@ class ClonotypeNeighbors:
             )
             if self.same_v_gene:
                 self.neighbor_finder.add_lookup_table(
-                    f"{arm}_{i}_v_gene", f"IR_{arm}_{i}_v_gene", "v_gene"
+                    f"{arm}_{i}_v_gene",
+                    f"IR_{arm}_{i}_v_gene",
+                    "v_gene",
+                    dist_type="bool",
                 )
 
         if self.within_group is not None:
             self.neighbor_finder.add_lookup_table(
-                "within_group", "within_group", "within_group"
+                "within_group", "within_group", "within_group", dist_type="bool"
             )
 
     def _make_chain_count(self) -> None:
@@ -212,6 +213,7 @@ class ClonotypeNeighbors:
         #     range(n_clonotypes),
         #     max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
         #     chunksize=2000,
+        #     tqdm_class=tqdm
         # )
         # For debugging: single-threaded version
         from tqdm.contrib import tmap
@@ -272,8 +274,8 @@ class ClonotypeNeighbors:
             )
             tmp_array[ct_col2[has_distance.indices] == "nan"] = np.nan
             if self.same_v_gene:
-                mask_v_gene = lookup_v[(tmp_arm, c1, c2)][has_distance.indices]
-                tmp_array = tmp_array.multiply(mask_v_gene)
+                mask_v_gene = lookup_v[(tmp_arm, c1, c2)][0, has_distance.indices]
+                tmp_array = np.multiply(tmp_array, mask_v_gene)
             return tmp_array
 
         res = []
@@ -314,7 +316,7 @@ class ClonotypeNeighbors:
             within_group_mask = self.neighbor_finder.lookup(
                 ct_id, "within_group", "within_group"
             )
-            res = reduce_and(res, within_group_mask[has_distance.indices])
+            res = np.multiply(res, within_group_mask[0, has_distance.indices])
 
         final_res = has_distance.copy()
         final_res.data = res
