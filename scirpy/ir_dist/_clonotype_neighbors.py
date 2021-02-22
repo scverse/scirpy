@@ -311,7 +311,6 @@ class ClonotypeNeighbors:
         # be a secondary chain if there is no first one.
         res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
 
-        # TODO within_group + v_genes!
         if self.within_group is not None:
             within_group_mask = self.neighbor_finder.lookup(
                 ct_id, "within_group", "within_group"

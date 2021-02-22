@@ -3,7 +3,7 @@ from scirpy.ir_dist import MetricType, _get_metric_key
 from anndata import AnnData
 import igraph as ig
 from .._compat import Literal
-from typing import Dict, Union, Tuple, Sequence
+from typing import Dict, Union, Tuple, Sequence, Optional
 from ..util import _doc_params
 from ..util.graph import (
     _get_igraph_from_adjacency,
@@ -121,7 +121,7 @@ def define_clonotype_clusters(
     distance_key: Union[str, None] = None,
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
-) -> Union[Tuple[pd.Series, pd.Series, Dict], None]:
+) -> Optional[Tuple[pd.Series, pd.Series, Dict]]:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
 

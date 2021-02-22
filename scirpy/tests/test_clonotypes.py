@@ -7,7 +7,7 @@ from anndata import AnnData
 import numpy as np
 from scirpy.util import _is_symmetric
 from .fixtures import (
-    adata_conn,
+    adata_define_clonotype_clusters_singletons,
     adata_conn_diagonal,
     adata_define_clonotypes,
     adata_define_clonotype_clusters,
@@ -19,20 +19,25 @@ import pytest
 
 # TODO test clonotype definition with v_genes and within_group
 
-# TODO add regression test for #236.
 
-
-def test_define_clonotypes_diagonal_connectivities(adata_conn_diagonal):
-    clonotype, clonotype_size = ir.tl.define_clonotype_clusters(
-        adata_conn_diagonal,
-        metric="alignment",
-        within_group=None,
+@pytest.mark.parametrize("receptor_arms", ["VJ", "VDJ", "all", "any"])
+@pytest.mark.parametrize("dual_ir", ["primary_only", "all", "any"])
+def test_define_clonotypes_diagonal_connectivities(
+    adata_define_clonotype_clusters_singletons, receptor_arms, dual_ir
+):
+    """Regression test for #236. Computing the clonotypes when
+    no cells are connected in the clonotype neighborhood graph should not fail."""
+    clonotype, clonotype_size, _ = ir.tl.define_clonotype_clusters(
+        adata_define_clonotype_clusters_singletons,
+        receptor_arms=receptor_arms,
+        dual_ir=dual_ir,
+        metric="identity",
         sequence="aa",
-        same_v_gene=False,
+        same_v_gene=True,
         inplace=False,
-        partitions="connected",
-    )
-    print(clonotype)
+    )  # type: ignore
+    npt.assert_equal(clonotype, np.array([0, 1, 2, 3]).astype(str))
+    npt.assert_equal(clonotype_size, np.array([1, 1, 1, 1]))
 
 
 @pytest.mark.parametrize(
