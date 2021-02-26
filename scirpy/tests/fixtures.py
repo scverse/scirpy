@@ -143,33 +143,61 @@ def adata_define_clonotypes():
 
 @pytest.fixture
 def adata_define_clonotype_clusters():
-    obs = pd.DataFrame(
-        [
-            ["cell1", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell2", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
-            ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-            ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
-            ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
-            ["cell8", "AAA", "nan", "KKK", "nan", "TRA", "nan", "TRB", "nan"],
-            ["cell9", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB", "nan"],
-            ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-        ],
-        columns=[
-            "cell_id",
-            "IR_VJ_1_cdr3",
-            "IR_VJ_2_cdr3",
-            "IR_VDJ_1_cdr3",
-            "IR_VDJ_2_cdr3",
-            "IR_VJ_1_locus",
-            "IR_VJ_2_locus",
-            "IR_VDJ_1_locus",
-            "IR_VDJ_2_locus",
-        ],
-    ).set_index("cell_id")
-    obs["has_ir"] = ["True"] * 5 + ["False"] + ["True"] * 5
+    obs = (
+        pd.DataFrame(
+            [
+                ["cell1", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell2", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
+                ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+                ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
+                ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
+                ["cell8", "AAA", "nan", "KKK", "nan", "TRA", "nan", "TRB", "nan"],
+                ["cell9", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB", "nan"],
+                ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            ],
+            columns=[
+                "cell_id",
+                "IR_VJ_1_cdr3",
+                "IR_VJ_2_cdr3",
+                "IR_VDJ_1_cdr3",
+                "IR_VDJ_2_cdr3",
+                "IR_VJ_1_locus",
+                "IR_VJ_2_locus",
+                "IR_VDJ_1_locus",
+                "IR_VDJ_2_locus",
+            ],
+        )
+        .set_index("cell_id")
+        .join(
+            pd.DataFrame(
+                [
+                    ["cell1", "A", "B", "A", "B", "TCR", "True"],
+                    ["cell2", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell3", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell4", "C", "C", "C", "C", "BCR", "True"],
+                    ["cell5", "A", "A", "A", "A", "BCR", "True"],
+                    ["cell5.noir", "A", "A", "A", "A", "nan", "False"],
+                    ["cell6", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell7", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell8", "A", "A", "X", "A", "TCR", "True"],
+                    ["cell9", "A", "A", "A", "A", "BCR", "True"],
+                    ["cell10", "A", "A", "A", "A", "BCR", "True"],
+                ],
+                columns=[
+                    "cell_id",
+                    "IR_VJ_1_v_gene",
+                    "IR_VJ_2_v_gene",
+                    "IR_VDJ_1_v_gene",
+                    "IR_VDJ_2_v_gene",
+                    "receptor_type",
+                    "has_ir",
+                ],
+            ).set_index("cell_id")
+        )
+    )
     adata = AnnData(obs=obs)
     return adata
 
@@ -203,6 +231,7 @@ def adata_define_clonotype_clusters_singletons():
 @pytest.fixture
 def adata_clonotype_network():
     """Adata with clonotype network computed"""
+    assert False, "needs updating"
     adata = AnnData(
         obs=pd.DataFrame()
         .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])

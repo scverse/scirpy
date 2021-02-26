@@ -231,6 +231,7 @@ def define_clonotype_clusters(
         clonotype_cluster_series
     ).transform("count")
 
+    # TODO am I returning distances or connectivities? Is distance_keys a suitable return format?
     # Return or store results
     clonotype_distance_res = {
         "distances": clonotype_dist,

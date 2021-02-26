@@ -215,7 +215,7 @@ class ClonotypeNeighbors:
         #     chunksize=2000,
         #     tqdm_class=tqdm
         # )
-        # For debugging: single-threaded version
+        # TODO For debugging: single-threaded version
         from tqdm.contrib import tmap
 
         dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
