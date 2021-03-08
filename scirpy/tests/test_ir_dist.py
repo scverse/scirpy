@@ -11,8 +11,6 @@ from scirpy.util import _is_symmetric
 import pandas.testing as pdt
 import pandas as pd
 
-# TODO test clontype distance with v_genes and within_group
-
 
 def _assert_frame_equal(left, right):
     """alias to pandas.testing.assert_frame_equal configured for the tests in this file"""

@@ -25,7 +25,8 @@ class ClonotypeNeighbors:
         sequence_key: str,
         n_jobs: Union[int, None] = None,
     ):
-        """Compute distances between clonotypes"""
+        """Computes pairwise distances between cells with identical
+        receptor configuration and calls clonotypes from this distance matrix"""
         self.same_v_gene = same_v_gene
         self.within_group = within_group
         self.receptor_arms = receptor_arms
@@ -97,7 +98,7 @@ class ClonotypeNeighbors:
         self.cell_indices = [
             obs_filtered.index[
                 clonotype_groupby.indices.get(
-                    # indices is not a tuple if it's just a single value.
+                    # indices is not a tuple if it's just a single column.
                     ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
                     [],
                 )
@@ -166,7 +167,7 @@ class ClonotypeNeighbors:
         return np.unique(np.concatenate([df[c].values for c in columns]))  # type: ignore
 
     def _add_lookup_tables(self):
-        """Add all required lookup tables to the DLNF"""
+        """Add all required lookup tables to the DoubleLookupNeighborFinder"""
         for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
             self.neighbor_finder.add_lookup_table(
                 f"{arm}_{i}", f"IR_{arm}_{i}_{self.sequence_key}", arm
@@ -176,12 +177,12 @@ class ClonotypeNeighbors:
                     f"{arm}_{i}_v_gene",
                     f"IR_{arm}_{i}_v_gene",
                     "v_gene",
-                    dist_type="bool",
+                    dist_type="boolean",
                 )
 
         if self.within_group is not None:
             self.neighbor_finder.add_lookup_table(
-                "within_group", "within_group", "within_group", dist_type="bool"
+                "within_group", "within_group", "within_group", dist_type="boolean"
             )
 
     def _make_chain_count(self) -> None:

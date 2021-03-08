@@ -1,13 +1,6 @@
-import collections.abc as cabc
-import abc
-from functools import reduce
-from operator import add
 import numpy as np
-from numpy.core.fromnumeric import shape
-from numpy.core.numeric import indices
 import pandas as pd
-import itertools
-from typing import Dict, Sequence, Tuple, Iterable, Union, Mapping
+from typing import Dict, Hashable, Sequence, Tuple, Union, Mapping
 import scipy.sparse as sp
 from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
@@ -15,7 +8,12 @@ from .._compat import Literal
 
 
 def reduce_and(*args, chain_count):
-    """Take maximum, ignore nans"""
+    """Reduce two or more (sparse) masks by AND as if they were boolean:
+    Take maximum, ignore nans.
+
+    Only entries that have the same chain count (e.g. both TRA_1 and TRA_2) are
+    comparable.
+    """
     # TODO stay int and test!
     tmp_array = np.vstack(args).astype(float)
     tmp_array[tmp_array == 0] = np.inf
@@ -28,13 +26,94 @@ def reduce_and(*args, chain_count):
 
 
 def reduce_or(*args, chain_count=None):
-    """Take minimum, ignore 0s and nans"""
+    """Reduce two or more (sparse) masys by OR as if they were boolean:
+    Take minimum, ignore 0s and nans"""
     tmp_array = np.vstack(args).astype(float)
     tmp_array[tmp_array == 0] = np.inf
     tmp_array = np.nanmin(tmp_array, axis=0)
     tmp_array[np.isinf(tmp_array)] = 0
     tmp_array.astype(np.uint8)
     return tmp_array
+
+
+class ReverseLookupTable:
+    def __init__(self, dist_type: Literal["boolean", "numeric"], size: int):
+        """Reverse lookup table holds a mask that indicates which objects
+        are neighbors of an object with a given index `i`.
+
+        It respects two types:
+            * boolean -> dense boolean mask
+            * numeric -> sparse integer row
+
+        The boolean mask is the more efficient option for features with many
+        neighbors per value (e.g. most of the cells may be of receptor_type TCR).
+        The numeric mask is more efficient for features with few neighbors
+        per value (e.g. there are likely only few neighbors for a specific CDR3
+        sequence).
+
+        Parameters
+        ----------
+        dist_type
+            Either `boolean` or `numeric`
+        size
+            The size of the masks.
+        """
+        if dist_type not in ["booean", "numeric"]:
+            raise ValueError("invalid dist_type")
+        self.dist_type = dist_type
+        self.size = size
+        self.lookup: Dict[Hashable, sp.coo_matrix] = dict()
+
+    @staticmethod
+    def from_dict_of_indices(
+        dict_of_indices: Mapping,
+        dist_type: Literal["boolean", "numeric"],
+        size: int,
+    ):
+        """Convert a dict of indices to a ReverseLookupTable of row masks.
+
+        Parameters
+        ----------
+        dict_of_indices
+            Dictionary mapping each index to a list of indices.
+        dist_type
+            Either `boolean` or `numeric`
+        size
+            The size of the masks
+        """
+        rlt = ReverseLookupTable(dist_type, size)
+
+        # convert into coo matrices (numeric distances) or numpy boolean arrays.
+        for k, v in dict_of_indices.items():
+            if rlt.is_boolean:
+                tmp_array = np.zeros(shape=(1, size), dtype=bool)
+                tmp_array[0, v] = True
+                rlt.lookup[k] = tmp_array
+            else:
+                rlt.lookup[k] = sp.coo_matrix(
+                    (
+                        np.ones(len(v), dtype=np.uint8),
+                        (np.zeros(len(v), dtype=int), v),
+                    ),
+                    shape=(1, size),
+                )
+        return rlt
+
+    @property
+    def is_boolean(self):
+        return self.dist_type == "boolean"
+
+    def empty(self):
+        """Create an empty row with same dimensions as those stored
+        in the lookup. Respects the distance type"""
+        if self.is_boolean:
+            return np.zeros((1, self.size), dtype=bool)
+        else:
+            return sp.coo_matrix((1, self.size))
+
+    def __getitem__(self, i):
+        """Get mask for index `i`"""
+        return self.lookup.get(i, self.empty())
 
 
 class DoubleLookupNeighborFinder:
@@ -76,7 +155,7 @@ class DoubleLookupNeighborFinder:
         # dist_mat: name of associated distance matrix
         # forward: clonotype -> feature_index lookups
         # reverse: feature_index -> clonotype lookups
-        self.lookups: Dict[str, Tuple[str, np.ndarray, Mapping]] = dict()
+        self.lookups: Dict[str, Tuple[str, np.ndarray, ReverseLookupTable]] = dict()
 
     @property
     def n_rows(self):
@@ -111,8 +190,6 @@ class DoubleLookupNeighborFinder:
             different columns of the feature table.
         """
         distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
-        # TODO store type in reverse directly somehow
-        reverse_is_boolean = isinstance(next(iter(reverse.values())), np.ndarray)
 
         if reverse_lookup_table is not None:
             distance_matrix_name_reverse, _, reverse = self.lookups[
@@ -126,30 +203,23 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
-        # TODO can we do that simpler?
         if np.isnan(idx_in_dist_mat):
-            if reverse_is_boolean:
-                return np.zeros((1, self.n_rows), dtype=bool)
-            else:
-                return sp.coo_matrix((1, self.n_rows))
+            return reverse.empty()
         else:
             # get distances from the distance matrix...
             row = distance_matrix[idx_in_dist_mat, :]
 
-            if reverse_is_boolean:
+            if reverse.is_boolean:
                 assert (
                     len(row.indices) == 1  # type: ignore
                 ), "Boolean reverse lookup only works for identity distance matrices."
-                return reverse.get(
-                    row.indices[0], np.zeros((1, self.n_rows), dtype=bool)  # type: ignore
-                )
-
+                return reverse[row.indices[0]]  # type: ignore
             else:
                 # ... and get column indices directly from sparse row
                 # sum concatenates coo matrices
                 return sum(
                     (
-                        reverse.get(i, sp.coo_matrix((1, self.n_rows))) * multiplier
+                        reverse[i] * multiplier
                         for i, multiplier in zip(row.indices, row.data)  # type: ignore
                     )
                 )  # type: ignore
@@ -187,7 +257,7 @@ class DoubleLookupNeighborFinder:
         feature_col: str,
         distance_matrix: str,
         *,
-        dist_type: Literal["bool", "number"] = "number",
+        dist_type: Literal["boolean", "numeric"] = "numeric",
     ):
         """Build a pair of forward- and reverse-lookup tables.
 
@@ -223,8 +293,8 @@ class DoubleLookupNeighborFinder:
         feature_col: str,
         distance_matrix: str,
         *,
-        dist_type: Literal["bool", "number"],
-    ) -> Mapping[int, Union[coo_matrix, np.ndarray]]:
+        dist_type: Literal["boolean", "numberic"],
+    ) -> ReverseLookupTable:
         """Create a reverse-lookup dict that maps each (numeric) index
         of a feature distance matrix to a numeric or boolean mask.
         If the dist_type is numeric, will use a sparse numeric matrix.
@@ -243,19 +313,6 @@ class DoubleLookupNeighborFinder:
             except KeyError:
                 tmp_reverse_lookup[tmp_key] = [i]
 
-        # convert into coo matrices (numeric distances) or numpy boolean arrays.
-        for k, v in tmp_reverse_lookup.items():
-            if dist_type == "bool":
-                tmp_array = np.zeros(shape=(1, self.n_rows), dtype=bool)
-                tmp_array[0, v] = True
-                tmp_reverse_lookup[k] = tmp_array
-            else:
-                tmp_reverse_lookup[k] = sp.coo_matrix(
-                    (
-                        np.ones(len(v), dtype=np.uint8),
-                        (np.zeros(len(v), dtype=int), v),
-                    ),
-                    shape=(1, self.n_rows),
-                )
-
-        return tmp_reverse_lookup
+        return ReverseLookupTable.from_dict_of_indices(
+            tmp_reverse_lookup, dist_type, self.n_rows
+        )
