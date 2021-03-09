@@ -134,7 +134,7 @@ class ClonotypeNeighbors:
         self.clonotypes = clonotypes
 
     def _add_distance_matrices(self, adata):
-        """Add all required distance matrices to the DLNF"""
+        """Add all required distance matrices to the DoubleLookupNeighborFinder"""
         # sequence distance matrices
         for chain_type in self._receptor_arm_cols:
             self.neighbor_finder.add_distance_matrix(
@@ -144,7 +144,7 @@ class ClonotypeNeighbors:
             )
 
         if self.same_v_gene:
-            # V gene distance matrix (ID mat)
+            # V gene distance matrix (identity mat)
             v_genes = self._unique_values_in_multiple_columns(
                 adata.obs, self._v_gene_cols
             )
@@ -164,6 +164,7 @@ class ClonotypeNeighbors:
     def _unique_values_in_multiple_columns(
         df: pd.DataFrame, columns: Sequence[str]
     ) -> np.ndarray:
+        """Return the Union of unique values of multiple columns of a dataframe"""
         return np.unique(np.concatenate([df[c].values for c in columns]))  # type: ignore
 
     def _add_lookup_tables(self):
@@ -214,9 +215,9 @@ class ClonotypeNeighbors:
         #     range(n_clonotypes),
         #     max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
         #     chunksize=2000,
-        #     tqdm_class=tqdm
+        #     tqdm_class=tqdm,
         # )
-        # TODO For debugging: single-threaded version
+        # for debugging: single-threaded version
         from tqdm.contrib import tmap
 
         dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
@@ -240,8 +241,8 @@ class ClonotypeNeighbors:
         # coordinates.
 
         # Lookup distances for current row
-        lookup = dict()
-        lookup_v = dict()
+        lookup = dict()  # CDR3 distances
+        lookup_v = dict()  # V-gene distances
         for tmp_arm in self._receptor_arm_cols:
             chain_ids = (
                 [(1, 1)]
@@ -261,17 +262,26 @@ class ClonotypeNeighbors:
                         f"{tmp_arm}_{c2}_v_gene",
                     )
 
-        # need to loop through all coordinates that have at least one distance
+        # need to loop through all coordinates that have at least one distance.
+        # sum 'merges' coo matrices.
         has_distance = sum(lookup.values()).tocsr()  # type: ignore
         # convert to csc matrices to iterate over indices
         lookup = {k: v.tocsc() for k, v in lookup.items()}
 
-        def make_tmp_res(tmp_arm, c1, c2):
+        def _lookup_dist_for_chains(
+            tmp_arm: Literal["VJ", "VDJ"], c1: Literal[1, 2], c2: Literal[1, 2]
+        ):
+            """Lookup the distance between two chains of a given receptor
+            arm. Only considers those columns in the current row that
+            have an entry in `has_distance`. Returns a dense
+            array with dimensions (1, n) where n equals the number
+            of entries in `has_distance`.
+            """
             ct_col2 = self.clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
             tmp_array = (
                 lookup[(tmp_arm, c1, c2)][0, has_distance.indices]
                 .todense()
-                .A1.astype(float)
+                .A1.astype(np.float16)
             )
             tmp_array[ct_col2[has_distance.indices] == "nan"] = np.nan
             if self.same_v_gene:
@@ -279,35 +289,36 @@ class ClonotypeNeighbors:
                 tmp_array = np.multiply(tmp_array, mask_v_gene)
             return tmp_array
 
+        # Merge the distances of chains
         res = []
         for tmp_arm in self._receptor_arm_cols:
             if self.dual_ir == "primary_only":
-                tmp_res = make_tmp_res(tmp_arm, 1, 1)
+                tmp_res = _lookup_dist_for_chains(tmp_arm, 1, 1)
             elif self.dual_ir == "all":
                 tmp_res = reduce_or(
                     reduce_and(
-                        make_tmp_res(tmp_arm, 1, 1),
-                        make_tmp_res(tmp_arm, 2, 2),
+                        _lookup_dist_for_chains(tmp_arm, 1, 1),
+                        _lookup_dist_for_chains(tmp_arm, 2, 2),
                         chain_count=self._chain_count[tmp_arm][ct_id],
                     ),
                     reduce_and(
-                        make_tmp_res(tmp_arm, 1, 2),
-                        make_tmp_res(tmp_arm, 2, 1),
+                        _lookup_dist_for_chains(tmp_arm, 1, 2),
+                        _lookup_dist_for_chains(tmp_arm, 2, 1),
                         chain_count=self._chain_count[tmp_arm][ct_id],
                     ),
                 )
             else:  # "any"
                 tmp_res = reduce_or(
-                    make_tmp_res(tmp_arm, 1, 1),
-                    make_tmp_res(tmp_arm, 1, 2),
-                    make_tmp_res(tmp_arm, 2, 2),
-                    make_tmp_res(tmp_arm, 2, 1),
+                    _lookup_dist_for_chains(tmp_arm, 1, 1),
+                    _lookup_dist_for_chains(tmp_arm, 1, 2),
+                    _lookup_dist_for_chains(tmp_arm, 2, 2),
+                    _lookup_dist_for_chains(tmp_arm, 2, 1),
                 )
 
             res.append(tmp_res)
 
+        # Merge the distances of arms.
         reduce_fun = reduce_and if self.receptor_arms == "all" else reduce_or
-
         # checking only the chain=1 columns here is enough, as there must not
         # be a secondary chain if there is no first one.
         res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
@@ -319,5 +330,5 @@ class ClonotypeNeighbors:
             res = np.multiply(res, within_group_mask[0, has_distance.indices])
 
         final_res = has_distance.copy()
-        final_res.data = res
+        final_res.data = res.astype(np.uint8)
         return final_res

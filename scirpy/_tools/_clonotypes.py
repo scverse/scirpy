@@ -3,7 +3,7 @@ from scirpy.ir_dist import MetricType, _get_metric_key
 from anndata import AnnData
 import igraph as ig
 from .._compat import Literal
-from typing import Dict, Union, Tuple, Sequence, Optional
+from typing import Dict, Union, Tuple, Sequence, Optional, List
 from ..util import _doc_params
 from ..util.graph import (
     _get_igraph_from_adjacency,
@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import random
 from scanpy import logging
+import itertools
 
 _common_doc = """\
     receptor_arms
@@ -70,7 +71,7 @@ def _validate_parameters(
     sequence,
     metric,
     key_added,
-):
+) -> Tuple[Optional[List[str]], str, str]:
     """Validate an sanitze parameters for `define_clonotypes`"""
     if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
         raise ValueError(
@@ -223,10 +224,13 @@ def define_clonotype_clusters(
     )
 
     # clonotype cluster = graph partition
-    # TODO this is likely inefficient.
-    for ct_id, clonotype_cluster in enumerate(part.membership):
-        clonotype_cluster_series[ctn.cell_indices[ct_id]] = str(clonotype_cluster)
-
+    idx, values = zip(
+        *itertools.chain.from_iterable(
+            zip(ctn.cell_indices[ct_id], itertools.repeat(str(clonotype_cluster)))
+            for ct_id, clonotype_cluster in enumerate(part.membership)
+        )
+    )
+    clonotype_cluster_series = pd.Series(values, index=idx).reindex(adata.obs_names)
     clonotype_cluster_size_series = clonotype_cluster_series.groupby(
         clonotype_cluster_series
     ).transform("count")

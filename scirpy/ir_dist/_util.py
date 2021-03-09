@@ -11,28 +11,35 @@ def reduce_and(*args, chain_count):
     """Reduce two or more (sparse) masks by AND as if they were boolean:
     Take maximum, ignore nans.
 
+    All arrays must be of a float dtype (to support nan and inf)
+
     Only entries that have the same chain count (e.g. both TRA_1 and TRA_2) are
     comparable.
     """
-    # TODO stay int and test!
-    tmp_array = np.vstack(args).astype(float)
+    # TODO test!
+    tmp_array = np.vstack(args)
+    assert np.issubdtype(tmp_array.dtype, np.floating)
     tmp_array[tmp_array == 0] = np.inf
     same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
     tmp_array = np.nanmax(tmp_array, axis=0)
     tmp_array[np.isinf(tmp_array)] = 0
-    tmp_array.astype(np.uint8)
+    # tmp_array.astype(np.uint8)
     tmp_array = np.multiply(tmp_array, same_count_mask)
     return tmp_array
 
 
 def reduce_or(*args, chain_count=None):
     """Reduce two or more (sparse) masys by OR as if they were boolean:
-    Take minimum, ignore 0s and nans"""
-    tmp_array = np.vstack(args).astype(float)
+    Take minimum, ignore 0s and nans.
+
+    All arrays must be of a float dtype (to support nan and inf)
+    """
+    tmp_array = np.vstack(args)
+    assert np.issubdtype(tmp_array.dtype, np.floating)
     tmp_array[tmp_array == 0] = np.inf
     tmp_array = np.nanmin(tmp_array, axis=0)
     tmp_array[np.isinf(tmp_array)] = 0
-    tmp_array.astype(np.uint8)
+    # tmp_array.astype(np.uint8)
     return tmp_array
 
 
@@ -58,7 +65,7 @@ class ReverseLookupTable:
         size
             The size of the masks.
         """
-        if dist_type not in ["booean", "numeric"]:
+        if dist_type not in ["boolean", "numeric"]:
             raise ValueError("invalid dist_type")
         self.dist_type = dist_type
         self.size = size
