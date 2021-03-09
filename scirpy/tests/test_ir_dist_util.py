@@ -1,6 +1,6 @@
 """Test ir_dist._util utility functions"""
 
-from scirpy.ir_dist._util import DoubleLookupNeighborFinder
+from scirpy.ir_dist._util import DoubleLookupNeighborFinder, reduce_and, reduce_or
 import pytest
 import numpy as np
 import scipy.sparse as sp
@@ -37,6 +37,52 @@ def dlnf_with_lookup(dlnf):
     dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
     dlnf.add_lookup_table(feature_col="VDJ", distance_matrix="test", name="VDJ_test")
     return dlnf
+
+
+@pytest.mark.parametrize(
+    "args,expected",
+    [
+        ([[0, 2, 4, 0], [0, 0, 0, 5]], [0, 2, 4, 5]),
+        ([[0, 2, 4, 0], [0, 1, 5, 0]], [0, 1, 4, 0]),
+        ([[0, 2, 4, 0], [0, 1, 0, 5]], [0, 1, 4, 5]),
+        ([[1, 1, 0, 0], [0, 1, 1, 0]], [1, 1, 1, 0]),
+        ([[1, 1, 0, 0], [0, 1, 1, 0], [1, 1, 0, 0], [0, 1, 1, 0]], [1, 1, 1, 0]),
+        ([[0, 2, np.nan, 0], [0, 1, 0, 5], [7, 0, 0, 3]], [7, 1, 0, 3]),
+        ([[np.nan, 2, 4, np.nan], [0, np.nan, 0, 5]], [0, 2, 4, 5]),
+        ([[np.nan, 2, 4, np.nan], [np.nan, np.nan, 0, 5]], [np.nan, 2, 4, 5]),
+    ],
+)
+def test_reduce_or(args, expected):
+    args = [np.array(a, dtype=np.float16) for a in args]
+    expected = np.array(expected, dtype=np.float16)
+    npt.assert_equal(reduce_or(*args), expected)
+
+
+@pytest.mark.parametrize(
+    "args,chain_count,expected",
+    [
+        ([[0, 2, 4, 0], [0, 0, 0, 5]], [2, 2, 2, 2], [0, 0, 0, 0]),
+        ([[0, 2, 4, 0], [0, 0, 1, 0]], [2, 2, 2, 2], [0, 0, 4, 0]),
+        ([[0, 0, 1, 0], [0, 2, 4, 0]], [2, 2, 2, 2], [0, 0, 4, 0]),
+        ([[0, 2, 4, 0], [0, 1, 5, 0]], [2, 2, 2, 2], [0, 2, 5, 0]),
+        ([[3, 2, 4, 1], [3, 1, 5, 1]], [0, 1, 2, 3], [0, 0, 5, 0]),
+        (
+            [[0, 2, 4, 0], [0, 1, 5, 0], [0, 2, 4, 0], [0, 1, 7, 0]],
+            [4, 4, 4, 4],
+            [0, 2, 7, 0],
+        ),
+        (
+            [[np.nan, np.nan, 4, np.nan], [0, 1, np.nan, np.nan]],
+            [1, 1, 1, 0],
+            [0, 1, 4, np.nan],
+        ),
+    ],
+)
+def test_reduce_and(args, chain_count, expected):
+    args = [np.array(a, dtype=np.float16) for a in args]
+    expected = np.array(expected, dtype=np.float16)
+    chain_count = np.array(chain_count, dtype=int)
+    npt.assert_equal(reduce_and(*args, chain_count=chain_count), expected)
 
 
 def test_dlnf_lookup_table(dlnf):

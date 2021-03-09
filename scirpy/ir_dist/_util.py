@@ -5,27 +5,7 @@ import scipy.sparse as sp
 from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
-
-
-def reduce_and(*args, chain_count):
-    """Reduce two or more (sparse) masks by AND as if they were boolean:
-    Take maximum, ignore nans.
-
-    All arrays must be of a float dtype (to support nan and inf)
-
-    Only entries that have the same chain count (e.g. both TRA_1 and TRA_2) are
-    comparable.
-    """
-    # TODO test!
-    tmp_array = np.vstack(args)
-    assert np.issubdtype(tmp_array.dtype, np.floating)
-    tmp_array[tmp_array == 0] = np.inf
-    same_count_mask = np.sum(np.isnan(tmp_array), axis=0) == chain_count
-    tmp_array = np.nanmax(tmp_array, axis=0)
-    tmp_array[np.isinf(tmp_array)] = 0
-    # tmp_array.astype(np.uint8)
-    tmp_array = np.multiply(tmp_array, same_count_mask)
-    return tmp_array
+import warnings
 
 
 def reduce_or(*args, chain_count=None):
@@ -34,13 +14,39 @@ def reduce_or(*args, chain_count=None):
 
     All arrays must be of a float dtype (to support nan and inf)
     """
-    tmp_array = np.vstack(args)
-    assert np.issubdtype(tmp_array.dtype, np.floating)
-    tmp_array[tmp_array == 0] = np.inf
-    tmp_array = np.nanmin(tmp_array, axis=0)
-    tmp_array[np.isinf(tmp_array)] = 0
-    # tmp_array.astype(np.uint8)
-    return tmp_array
+    # ignore runtime warnings due to NAN-slices
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+        tmp_array = np.vstack(args)
+        assert np.issubdtype(tmp_array.dtype, np.floating)
+        tmp_array[tmp_array == 0] = np.inf
+        tmp_array = np.nanmin(tmp_array, axis=0)
+        tmp_array[np.isinf(tmp_array)] = 0
+        return tmp_array
+
+
+def reduce_and(*args, chain_count):
+    """Reduce two or more (sparse) masks by AND as if they were boolean:
+    Take maximum, ignore nans.
+
+    All arrays must be of a float dtype (to support nan and inf)
+
+    Only entries that have the same chain count (e.g. clonotypes with both TRA_1
+    and TRA_2) are comparable.
+    """
+    # ignore runtime warnings due to NAN-slices
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+        tmp_array = np.vstack(args)
+        assert np.issubdtype(tmp_array.dtype, np.floating)
+        tmp_array[tmp_array == 0] = np.inf
+        same_count_mask = np.sum(~np.isnan(tmp_array), axis=0) == chain_count
+        tmp_array = np.nanmax(tmp_array, axis=0)
+        tmp_array[np.isinf(tmp_array)] = 0
+        tmp_array = np.multiply(tmp_array, same_count_mask)
+        return tmp_array
 
 
 class ReverseLookupTable:

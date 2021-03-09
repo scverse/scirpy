@@ -196,7 +196,7 @@ class ClonotypeNeighbors:
             f"IR_{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols
         ]
         self._chain_count = {
-            step: np.sum(self.clonotypes.loc[:, cols].values == "nan", axis=1)
+            step: np.sum(self.clonotypes.loc[:, cols].values != "nan", axis=1)
             for step, cols in cols.items()
         }
 
@@ -210,17 +210,16 @@ class ClonotypeNeighbors:
             "when a chunk has finished. "
         )  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
-        # dist_rows = process_map(
-        #     self._dist_for_clonotype,
-        #     range(n_clonotypes),
-        #     max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-        #     chunksize=2000,
-        #     tqdm_class=tqdm,
-        # )
+        dist_rows = process_map(
+            self._dist_for_clonotype,
+            range(n_clonotypes),
+            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+            chunksize=2000,
+            tqdm_class=tqdm,
+        )
         # for debugging: single-threaded version
-        from tqdm.contrib import tmap
-
-        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        # from tqdm.contrib import tmap
+        # dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
@@ -237,9 +236,6 @@ class ClonotypeNeighbors:
         has a sequence dist < threshold. If we require both receptors to
         match ("and"), the higher one should count.
         """
-        # TODO maybe its faster to work only on the upper triangle and yield
-        # coordinates.
-
         # Lookup distances for current row
         lookup = dict()  # CDR3 distances
         lookup_v = dict()  # V-gene distances
