@@ -6,6 +6,33 @@ from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
 from .._compat import Literal
 import warnings
+from functools import reduce
+from operator import mul
+
+
+def merge_coo_matrices(mats):
+    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster. """
+    mats = list(mats)
+
+    # special case: empty list - sum returns 0
+    if not len(mats):
+        return 0
+
+    # check that shapes are consistent
+    shape = mats[0].shape
+    for mat in mats:
+        if mat.shape != shape:
+            raise ValueError("Incompatible shapes")
+
+    # return empty matrix if one dimension is of length 0
+    if reduce(mul, shape) == 0:
+        return sp.coo_matrix(shape)
+
+    data, row, col = zip(*((x.data, x.row, x.col) for x in mats))
+
+    return sp.coo_matrix(
+        (np.hstack(data), (np.hstack(row), np.hstack(col))), shape=shape
+    )
 
 
 def reduce_or(*args, chain_count=None):
@@ -230,7 +257,7 @@ class DoubleLookupNeighborFinder:
             else:
                 # ... and get column indices directly from sparse row
                 # sum concatenates coo matrices
-                return sum(
+                return merge_coo_matrices(
                     (
                         reverse[i] * multiplier
                         for i, multiplier in zip(row.indices, row.data)  # type: ignore

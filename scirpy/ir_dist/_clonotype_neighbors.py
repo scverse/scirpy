@@ -6,7 +6,7 @@ from .._compat import Literal
 import numpy as np
 import scipy.sparse as sp
 import itertools
-from ._util import DoubleLookupNeighborFinder, reduce_and, reduce_or
+from ._util import DoubleLookupNeighborFinder, reduce_and, reduce_or, merge_coo_matrices
 from ..util import _is_na, _is_true, tqdm
 import pandas as pd
 from tqdm.contrib.concurrent import process_map
@@ -210,16 +210,18 @@ class ClonotypeNeighbors:
             "when a chunk has finished. "
         )  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
-        dist_rows = process_map(
-            self._dist_for_clonotype,
-            range(n_clonotypes),
-            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-            chunksize=2000,
-            tqdm_class=tqdm,
-        )
+        # dist_rows = process_map(
+        #     self._dist_for_clonotype,
+        #     range(n_clonotypes),
+        #     max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+        #     chunksize=2000,
+        #     tqdm_class=tqdm,
+        # )
         # for debugging: single-threaded version
-        # from tqdm.contrib import tmap
-        # dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        from tqdm.contrib import tmap
+
+        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
@@ -260,9 +262,9 @@ class ClonotypeNeighbors:
 
         # need to loop through all coordinates that have at least one distance.
         # sum 'merges' coo matrices.
-        has_distance = sum(lookup.values()).tocsr()  # type: ignore
+        has_distance = merge_coo_matrices(lookup.values()).tocsr()  # type: ignore
         # convert to csc matrices to iterate over indices
-        lookup = {k: v.tocsc() for k, v in lookup.items()}
+        lookup = {k: v.tocsr() for k, v in lookup.items()}
 
         def _lookup_dist_for_chains(
             tmp_arm: Literal["VJ", "VDJ"], c1: Literal[1, 2], c2: Literal[1, 2]

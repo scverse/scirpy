@@ -1,6 +1,11 @@
 """Test ir_dist._util utility functions"""
 
-from scirpy.ir_dist._util import DoubleLookupNeighborFinder, reduce_and, reduce_or
+from scirpy.ir_dist._util import (
+    DoubleLookupNeighborFinder,
+    reduce_and,
+    reduce_or,
+    merge_coo_matrices,
+)
 import pytest
 import numpy as np
 import scipy.sparse as sp
@@ -37,6 +42,27 @@ def dlnf_with_lookup(dlnf):
     dlnf.add_lookup_table(feature_col="VJ", distance_matrix="test", name="VJ_test")
     dlnf.add_lookup_table(feature_col="VDJ", distance_matrix="test", name="VDJ_test")
     return dlnf
+
+
+@pytest.mark.parametrize(
+    "mats",
+    [
+        ([1, 2, 3], [1, 2, 3]),
+        ([1, 2, 3, 4], [0, 0, 0, 0]),
+        ([1, 2, 3, 4], [8, 8, 8, 8], [4, 4, 4, 4]),
+        ([0, 0, 0, 0]),
+        ([]),
+    ],
+)
+def test_merge_coo_matrices(mats):
+    """Test that the fast sum equals the builtin sum"""
+    mats = [sp.coo_matrix(m) for m in mats]
+    res = merge_coo_matrices(mats)
+    expected = sum(mats)
+    try:
+        npt.assert_equal(res.toarray(), expected.toarray())
+    except AttributeError:
+        assert res == expected
 
 
 @pytest.mark.parametrize(
@@ -90,7 +116,7 @@ def test_dlnf_lookup_table(dlnf):
     dist_mat, forward, reverse = dlnf.lookups["VJ_test"]
     assert dist_mat == "test"
     npt.assert_array_equal(forward, np.array([0, 1, 2, 3, 0, 2, 3, 4]))
-    assert reverse == {
+    assert reverse.lookup == {
         0: [0, 4],
         1: [1],
         2: [2, 5],
