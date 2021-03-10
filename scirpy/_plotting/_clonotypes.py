@@ -2,7 +2,7 @@ import scanpy as sc
 import pandas as pd
 from anndata import AnnData
 import numpy as np
-from typing import Union, Collection, Sequence, Tuple, List
+from typing import Union, Collection, Sequence, Tuple, List, Optional
 from contextlib import contextmanager
 import collections.abc as cabc
 import warnings
@@ -15,66 +15,15 @@ import matplotlib.pyplot as plt
 from ..util.graph import _distance_to_connectivity
 import networkx as nx
 import itertools
+from matplotlib import rcParams, patheffects
+from matplotlib.colors import is_color_like
+import scipy.sparse as sp
+from pandas.api.types import is_categorical_dtype
+from .styling import _get_colors
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#DDDDDD", "#000000"]
 )
-
-
-@contextmanager
-def _patch_plot_edges(neighbors_key, edges_cmap=None):
-    """Monkey-patch scanpy's plot_edges to take our adjacency matrices"""
-    scanpy_plot_edges = sc.plotting._utils.plot_edges
-
-    def plot_edges(*args, **kwargs):
-        return _plot_edges(*args, edges_cmap=edges_cmap, **kwargs)
-
-    sc.plotting._utils.plot_edges = plot_edges
-    try:
-        yield
-    finally:
-        sc.plotting._utils.plot_edges = scanpy_plot_edges
-
-
-def _plot_edges(
-    axs, adata, basis, edges_width, edges_color, neighbors_key, edges_cmap=None
-):
-    """Add edges from a scatterplot.
-
-    Adapted from https://github.com/theislab/scanpy/blob/master/scanpy/plotting/_tools/scatterplots.py
-    """
-    import networkx as nx
-
-    if not isinstance(axs, cabc.Sequence):
-        axs = [axs]
-
-    if neighbors_key is None:
-        neighbors_key = "neighbors"
-    if neighbors_key not in adata.uns:
-        raise ValueError("`edges=True` requires `pp.neighbors` to be run before.")
-    neighbors = adata.uns[neighbors_key]
-    idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
-    g = nx.Graph(neighbors["connectivities"]).subgraph(idx)
-
-    if edges_color is None:
-        if edges_cmap is not None:
-            edges_color = [g.get_edge_data(*x)["weight"] for x in g.edges]
-        else:
-            edges_color = "grey"
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        for ax in axs:
-            edge_collection = nx.draw_networkx_edges(
-                g,
-                adata.obsm["X_" + basis],
-                ax=ax,
-                width=edges_width,
-                edge_color=edges_color,
-                edge_cmap=edges_cmap,
-            )
-            edge_collection.set_zorder(-2)
-            edge_collection.set_rasterized(settings._vector_friendly)
 
 
 def _decide_legend_pos(adata, color):
@@ -92,11 +41,16 @@ def _decide_legend_pos(adata, color):
 def clonotype_network(
     adata: AnnData,
     *,
-    color: Union[str, Collection[str], None] = None,
+    colors: Union[str, Collection[str], None] = None,
+    basis: str = "clonotype_network",
+    show_labels: bool = True,
+    label_fontsize: Optional[int] = None,
+    label_fontweight: str = "bold",
+    label_fontoutline: int = 3,
+    use_raw: Optional[bool] = None,
     panel_size: Tuple[float, float] = (10, 10),
     legend_loc: str = None,
     palette: Union[str, Sequence[str], Cycler, None] = None,
-    basis: str = "clonotype_network",
     edges_color: Union[str, None] = None,
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
     edges: Union[bool, None] = None,
@@ -161,18 +115,23 @@ def clonotype_network(
     --------
     :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
+    # The plotting code borrows a lot from scanpy.plotting._tools.paga._paga_graph.
     try:
         clonotype_key = adata.uns[basis]["clonotype_key"]
     except KeyError:
         raise KeyError(
             f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
         )
-    color = [color] if isinstance(color, str) or color is None else list(color)
-
     if f"X_{basis}" not in adata.obsm_keys():
         raise KeyError(
             f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
         )
+    if clonotype_key not in adata.obs.columns:
+        raise KeyError(f"{clonotype_key} not found in adata.obs.")
+    if clonotype_key not in adata.uns:
+        raise KeyError(f"{clonotype_key} not found in adata.uns.")
+
+    # color = [color] if isinstance(color, str) or color is None else list(color)
 
     clonotype_res = adata.uns[clonotype_key]
 
@@ -183,32 +142,90 @@ def clonotype_network(
             for i, obs_names in enumerate(clonotype_res["cell_indices"])
         )
     )
-
     dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
+    clonotype_label_lookup = adata.obs.loc[:, [clonotype_key]].rename(
+        columns={clonotype_key: "label"}
+    )
 
+    # Retrieve coordinates and reduce them to one coordinate per node
     coords = (
         adata.obsm["X_clonotype_network"]
         .dropna(axis=0, how="any")
         .join(dist_idx_lookup)
-        .groupby(by=["dist_idx", "x", "y"])
+        .join(clonotype_label_lookup)
+        .groupby(by=["label", "dist_idx", "x", "y"], observed=True)
         .size()
         .reset_index(name="size")
     )
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.scatter(coords["x"], coords["y"], s=coords["size"])
+    # Networkx graph object for plotting edges
+    adj_mat = clonotype_res["distances"][coords["dist_idx"].values, :][
+        :, coords["dist_idx"].values
+    ]
+    graph = nx.Graph(_distance_to_connectivity(adj_mat))
 
-    # TODO inefficient slicing!
-    graph = nx.Graph(
-        _distance_to_connectivity(
-            # clonotype_res["distances"][coords["node_id"].values.astype(int), :][
-            #     :, coords["node_id"].values.astype(int)
-            # ]
-            clonotype_res["distances"][coords["dist_idx"].values, :][
-                :, coords["dist_idx"].values
-            ]
-        )
-    )
+    # uniform color
+    if isinstance(colors, str) and is_color_like(colors):
+        colors = [colors for c in range(coords.shape[0])]
+
+    def _aggregate_per_dot_continuous(values):
+        x_color = []
+        for dist_idx in coords["dist_idx"]:
+            cell_ids = clonotype_res["cell_indices"][dist_idx]
+            x_color.append(np.mean(values[adata.obs_names.isin(cell_ids)]))
+        return x_color
+
+    def _aggregate_per_dot_categorical(values):
+        for dist_idx in coords["dist_idx"]:
+            cell_ids = clonotype_res["cell_indices"][dist_idx]
+            unique, counts = np.unique(
+                values[adata.obs_names.isin(cell_ids)], return_counts=True
+            )
+
+    # plot gene expression
+    if use_raw is None:
+        use_raw = adata.raw is not None
+    var_names = adata.raw.var_names if use_raw else adata.var_names
+    if isinstance(colors, str) and colors in var_names:
+        x_color = []
+        tmp_expr = (adata.raw if use_raw else adata)[:, colors].X
+        # densify expression vector - less expensive than slicing sparse every iteration.
+        if sp.issparse(tmp_expr):
+            tmp_expr = tmp_expr.todense().A1
+        else:
+            tmp_expr = np.ravel(tmp_expr)
+
+        colors = _aggregate_per_dot_continuous(tmp_expr)
+
+    # plot continuous values
+    if (
+        isinstance(colors, str)
+        and colors in adata.obs
+        and not is_categorical_dtype(adata.obs[colors])
+    ):
+        colors = _aggregate_per_dot_continuous(adata.obs[colors])
+
+    # plot categorical variables
+    pie = False
+    if (
+        isinstance(colors, str)
+        and colors in adata.obs
+        and is_categorical_dtype(adata.obs[colors])
+    ):
+        cat_colors = _get_colors(adata, obs_key=colors)
+        pie = True
+
+    # Generate plot
+    if not pie:
+        # standard scatter
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.scatter(coords["x"], coords["y"], s=coords["size"], c=colors)
+    else:
+        for ix, (xx, yy) in enumerate(zip(coords["x"], coords["y"])):
+            # TODO
+            pass
+
+    # plot edges
     edge_collection = nx.draw_networkx_edges(
         graph,
         coords.loc[:, ["x", "y"]].values,
@@ -217,40 +234,52 @@ def clonotype_network(
     edge_collection.set_zorder(-1)
     edge_collection.set_rasterized(sc.settings._vector_friendly)
 
+    # add clonotype labels
+    if show_labels:
+        text_kwds = dict()
+        if label_fontsize is None:
+            label_fontsize = rcParams["legend.fontsize"]
+        if label_fontoutline is not None:
+            text_kwds["path_effects"] = [
+                patheffects.withStroke(linewidth=label_fontoutline, foreground="w")
+            ]
+        for label, group_df in coords.groupby("label"):
+            # add label at centroid
+            ax.text(
+                np.mean(group_df["x"]),
+                np.mean(group_df["y"]),
+                label,
+                verticalalignment="center",
+                horizontalalignment="center",
+                size=label_fontsize,
+                fontweight=label_fontweight,
+                **text_kwds,
+            )
+
     return coords
-    return graph
-    return
 
-    # for clonotype, use "on data" as default
-    if legend_loc is None:
-        try:
-            legend_loc = [_decide_legend_pos(adata, c) for c in color]
-        except KeyError:
-            raise KeyError(f"column '{color}' not found in `adata.obs`. ")
+    # TODO legend
+    # TODO size legend
+    # TODO categorical variables (pie chart)
+    # TODO continuous variables (mean)
+    # TODO axis labels and title
+    # TODO respect settings, frameon/off
+    # TODO base size and override size
 
-    if isinstance(edges_cmap, str):
-        edges_cmap = matplotlib.cm.get_cmap(edges_cmap)
+    # # for clonotype, use "on data" as default
+    # if legend_loc is None:
+    #     try:
+    #         legend_loc = [_decide_legend_pos(adata, c) for c in color]
+    #     except KeyError:
+    #         raise KeyError(f"column '{color}' not found in `adata.obs`. ")
 
-    n_displayed_cells = np.sum(~np.any(np.isnan(adata.obsm[f"X_{basis}"]), axis=1))
+    # if isinstance(edges_cmap, str):
+    #     edges_cmap = matplotlib.cm.get_cmap(edges_cmap)
 
-    if edges is None:
-        edges = n_displayed_cells < 1000
+    # n_displayed_cells = np.sum(~np.any(np.isnan(adata.obsm[f"X_{basis}"]), axis=1))
 
-    if size is None:
-        size = 24000 / n_displayed_cells
+    # if edges is None:
+    #     edges = n_displayed_cells < 1000
 
-    with _patch_plot_edges(edges_cmap):
-        return base.embedding(
-            adata,
-            basis=basis,
-            panel_size=panel_size,
-            color=color,
-            legend_loc=legend_loc,
-            palette=palette,
-            edges_color=edges_color,
-            edges_width=edges_width,
-            edges=edges,
-            size=size,
-            neighbors_key=neighbors_key,
-            **kwargs,
-        )
+    # if size is None:
+    #     size = 24000 / n_displayed_cells

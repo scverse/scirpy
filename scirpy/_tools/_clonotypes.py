@@ -62,6 +62,17 @@ _common_doc = """\
         a grouping, or to `None`, if you want no constraints.
 """
 
+_common_doc_parallelism = """\
+    n_jobs
+        Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
+        If the number of cells is smaller than `2 * chunksize` a single
+        worker thread will be used to avoid overhead.
+    chunksize
+        Number of objects to process per chunk. Each worker thread receives
+        data in chunks. Smaller chunks result in a more meaningful progressbar,
+        but more overhead.
+"""
+
 _common_doc_return_values = """\
     Returns
     -------
@@ -125,7 +136,11 @@ def _validate_parameters(
     return within_group, distance_key, key_added
 
 
-@_doc_params(common_doc=_common_doc, return_values=_common_doc_return_values)
+@_doc_params(
+    common_doc=_common_doc,
+    return_values=_common_doc_return_values,
+    paralellism=_common_doc_parallelism,
+)
 def define_clonotype_clusters(
     adata: AnnData,
     *,
@@ -142,6 +157,7 @@ def define_clonotype_clusters(
     distance_key: Union[str, None] = None,
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
+    chunksize: int = 2000,
 ) -> Optional[Tuple[pd.Series, pd.Series, Dict]]:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
@@ -193,8 +209,7 @@ def define_clonotype_clusters(
         to `ir_dist_{{sequence}}_{{metric}}`.
     inplace
         If `True`, adds the results to anndata, otherwise returns them.
-    n_jobs
-        Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
+    {paralellism}
 
     {return_values}
     """
@@ -218,6 +233,7 @@ def define_clonotype_clusters(
         distance_key=distance_key,
         sequence_key="cdr3" if sequence == "aa" else "cdr3_nt",
         n_jobs=n_jobs,
+        chunksize=chunksize,
     )
     clonotype_dist = ctn.compute_distances()
     g = igraph_from_sparse_matrix(clonotype_dist, matrix_type="distance")
@@ -265,7 +281,11 @@ def define_clonotype_clusters(
         )
 
 
-@_doc_params(common_doc=_common_doc, return_values=_common_doc_return_values)
+@_doc_params(
+    common_doc=_common_doc,
+    return_values=_common_doc_return_values,
+    paralellism=_common_doc_parallelism,
+)
 def define_clonotypes(
     adata: AnnData,
     *,
@@ -294,8 +314,7 @@ def define_clonotypes(
         stored in `adata.uns`
     inplace
         If `True`, adds the results to anndata, otherwise return them.
-    n_jobs
-        Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
+    {paralellism}
 
     {return_values}
     """

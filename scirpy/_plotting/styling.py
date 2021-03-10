@@ -125,7 +125,7 @@ def _get_colors(
     If colors are not stored, new ones are assigned.
 
     Since we currently don't plot expression values, only keys from `obs`
-    are supportet, while in scanpy `values_to_plot` (used instead of `obs_key`)
+    are supported, while in scanpy `values_to_plot` (used instead of `obs_key`)
     can be a key from either `obs` or `var`.
 
     TODO: This makes use of private scanpy functions. This is Evil and
