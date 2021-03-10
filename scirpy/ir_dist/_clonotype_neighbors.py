@@ -1,6 +1,7 @@
 from multiprocessing import cpu_count
 from typing import Union, Sequence, Tuple, Dict
 from anndata import AnnData
+from tqdm.contrib import tmap
 from scanpy import logging
 from .._compat import Literal
 import numpy as np
@@ -24,6 +25,7 @@ class ClonotypeNeighbors:
         distance_key: str,
         sequence_key: str,
         n_jobs: Union[int, None] = None,
+        chunksize: int = 2000,
     ):
         """Computes pairwise distances between cells with identical
         receptor configuration and calls clonotypes from this distance matrix"""
@@ -34,6 +36,7 @@ class ClonotypeNeighbors:
         self.distance_dict = adata.uns[distance_key]
         self.sequence_key = sequence_key
         self.n_jobs = n_jobs
+        self.chunksize = chunksize
 
         # will be filled in self._prepare
         self.neighbor_finder = None  # instance of DoubleLookupNeighborFinder
@@ -205,22 +208,27 @@ class ClonotypeNeighbors:
         been ran previously. Returns a clonotype x clonotype sparse
         distance matrix."""
         start = logging.info(
-            "Computing clonotype x clonotype distances. \n"
-            "NB: Computation happens in chunks. The progressbar only advances "
-            "when a chunk has finished. "
+            "Computing clonotype x clonotype distances."
         )  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
-        dist_rows = process_map(
-            self._dist_for_clonotype,
-            range(n_clonotypes),
-            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-            chunksize=2000,
-            tqdm_class=tqdm,
-        )
-        # # for debugging: single-threaded version
-        # from tqdm.contrib import tmap
 
-        # dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        # only use multiprocessing for sufficiently large datasets
+        # for small datasets the overhead is too large for a benefit
+        if self.n_jobs == 1 or n_clonotypes <= 2 * self.chunksize:
+            dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        else:
+            logging.info(
+                "NB: Computation happens in chunks. The progressbar only advances "
+                "when a chunk has finished. "
+            )  # type: ignore
+
+            dist_rows = process_map(
+                self._dist_for_clonotype,
+                range(n_clonotypes),
+                max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+                chunksize=2000,
+                tqdm_class=tqdm,
+            )
 
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()
