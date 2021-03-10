@@ -163,12 +163,15 @@ def layout_components(
     for i, v in enumerate(graph.vs):
         v["id"] = i
     components = np.array(graph.decompose(mode="weak"))
-    component_sizes = np.array([component.vcount() for component in components])
+    component_sizes = np.array([sum(component.vs["size"]) for component in components])
     order = np.argsort(component_sizes)
     components = components[order]
     component_sizes = component_sizes[order]
     vertex_ids = [v["id"] for comp in components for v in comp.vs]
     vertex_sorter = np.argsort(vertex_ids)
+
+    print([list(x.vs["size"]) for x in components[-10:]])
+    print(component_sizes[-10:])
 
     bbox_fun = {"rpack": _bbox_rpack, "size": _bbox_sorted, "squarify": _bbox_squarify}[
         arrange_boxes

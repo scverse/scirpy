@@ -210,17 +210,17 @@ class ClonotypeNeighbors:
             "when a chunk has finished. "
         )  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
-        # dist_rows = process_map(
-        #     self._dist_for_clonotype,
-        #     range(n_clonotypes),
-        #     max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-        #     chunksize=2000,
-        #     tqdm_class=tqdm,
-        # )
-        # for debugging: single-threaded version
-        from tqdm.contrib import tmap
+        dist_rows = process_map(
+            self._dist_for_clonotype,
+            range(n_clonotypes),
+            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+            chunksize=2000,
+            tqdm_class=tqdm,
+        )
+        # # for debugging: single-threaded version
+        # from tqdm.contrib import tmap
 
-        dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+        # dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
 
         dist = sp.vstack(dist_rows)
         dist.eliminate_zeros()

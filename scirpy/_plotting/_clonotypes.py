@@ -1,4 +1,5 @@
 import scanpy as sc
+import pandas as pd
 from anndata import AnnData
 import numpy as np
 from typing import Union, Collection, Sequence, Tuple, List
@@ -11,7 +12,9 @@ from cycler import Cycler
 import matplotlib
 from . import base
 import matplotlib.pyplot as plt
-
+from ..util.graph import _distance_to_connectivity
+import networkx as nx
+import itertools
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#DDDDDD", "#000000"]
@@ -104,62 +107,62 @@ def clonotype_network(
     """\
     Plot the :term:`Clonotype` network.
 
-    Requires running :func:`scirpy.tl.clonotype_network` before, to 
-    compute the layout. 
+    Requires running :func:`scirpy.tl.clonotype_network` before, to
+    compute the layout.
 
     Parameters
     ----------
-    adata 
-        Annotated data matrix. 
+    adata
+        Annotated data matrix.
     color
         Keys for annotations of observations/cells or variables/genes, e.g.,
         `'ann1'` or `['ann1', 'ann2']`.
     panel_size
-        Size tuple (`width`, `height`) of a single panel in inches. 
+        Size tuple (`width`, `height`) of a single panel in inches.
     legend_loc
         Location of legend, either `'on data'`, `'right margin'` or a valid keyword
         for the `loc` parameter of :class:`~matplotlib.legend.Legend`.
         When set to `None` automatically determines the legend position based on the
-        following criteria: (1) `'on data'` when coloring by `clonotype`, 
-        (2) `'right margin'` if the number of categories < 50, and 
-        (3) and `'none'` otherwise. 
+        following criteria: (1) `'on data'` when coloring by `clonotype`,
+        (2) `'right margin'` if the number of categories < 50, and
+        (3) and `'none'` otherwise.
     palette
         Colors to use for plotting categorical annotation groups.
         The palette can be a valid :class:`~matplotlib.colors.ListedColormap` name
-        (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object. 
-        It is possible to specify a list of the same size as `color` to choose 
-        a different color map for each panel. 
+        (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object.
+        It is possible to specify a list of the same size as `color` to choose
+        a different color map for each panel.
     basis
         Key under which the graph layout coordinates are stored in `adata.obsm`
     edges_color
-        Color of the edges. Set to `None` to color by connectivity and use the 
-        color map provided by `edges_cmap`. 
-    edges_cmap  
+        Color of the edges. Set to `None` to color by connectivity and use the
+        color map provided by `edges_cmap`.
+    edges_cmap
         Colors to use for coloring edges by connectivity
     edges
         Whether to show the edges or not. Defaults to True for < 1000 displayed
-        cells, to False otherwise. 
+        cells, to False otherwise.
     edges_width
         width of the edges
     size
-        Point size. If `None` it is automatically computed as 24000 / `n_cells`. 
-        Can be a sequence containing the size for each cell. The order should be the 
+        Point size. If `None` it is automatically computed as 24000 / `n_cells`.
+        Can be a sequence containing the size for each cell. The order should be the
         same as in adata.obs. Other than in the default `scanpy` implementation
-        this respects that some cells might not be shown in the plot. 
-    **kwargs  
-        Additional arguments which are passed to :func:`scirpy.pl.embedding`. 
+        this respects that some cells might not be shown in the plot.
+    **kwargs
+        Additional arguments which are passed to :func:`scirpy.pl.embedding`.
 
     Returns
     -------
     A list of axes objects, containing one
-    element for each `color`, or None if `show == True`. 
+    element for each `color`, or None if `show == True`.
 
     See also
     --------
     :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
     try:
-        neighbors_key = adata.uns[basis]["neighbors_key"]
+        clonotype_key = adata.uns[basis]["clonotype_key"]
     except KeyError:
         raise KeyError(
             f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
@@ -170,6 +173,53 @@ def clonotype_network(
         raise KeyError(
             f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
         )
+
+    clonotype_res = adata.uns[clonotype_key]
+
+    # map the cell-id to the corresponding row/col in the clonotype distance matrix
+    dist_idx, obs_names = zip(
+        *itertools.chain.from_iterable(
+            zip(itertools.repeat(i), obs_names)
+            for i, obs_names in enumerate(clonotype_res["cell_indices"])
+        )
+    )
+
+    dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
+
+    coords = (
+        adata.obsm["X_clonotype_network"]
+        .dropna(axis=0, how="any")
+        .join(dist_idx_lookup)
+        .groupby(by=["dist_idx", "x", "y"])
+        .size()
+        .reset_index(name="size")
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.scatter(coords["x"], coords["y"], s=coords["size"])
+
+    # TODO inefficient slicing!
+    graph = nx.Graph(
+        _distance_to_connectivity(
+            # clonotype_res["distances"][coords["node_id"].values.astype(int), :][
+            #     :, coords["node_id"].values.astype(int)
+            # ]
+            clonotype_res["distances"][coords["dist_idx"].values, :][
+                :, coords["dist_idx"].values
+            ]
+        )
+    )
+    edge_collection = nx.draw_networkx_edges(
+        graph,
+        coords.loc[:, ["x", "y"]].values,
+        ax=ax,
+    )
+    edge_collection.set_zorder(-1)
+    edge_collection.set_rasterized(sc.settings._vector_friendly)
+
+    return coords
+    return graph
+    return
 
     # for clonotype, use "on data" as default
     if legend_loc is None:

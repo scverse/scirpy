@@ -6,7 +6,6 @@ from .._compat import Literal
 from typing import Dict, Union, Tuple, Sequence, Optional, List
 from ..util import _doc_params
 from ..util.graph import (
-    _get_igraph_from_adjacency,
     igraph_from_sparse_matrix,
     layout_components,
 )
@@ -16,6 +15,8 @@ import pandas as pd
 import random
 from scanpy import logging
 import itertools
+import warnings
+from collections import Counter
 
 _common_doc = """\
     receptor_arms
@@ -59,6 +60,25 @@ _common_doc = """\
         be shared across e.g. gamma-delta and alpha-beta T-cells.
         You can also set this to any other column in `adata.obs` that contains
         a grouping, or to `None`, if you want no constraints.
+"""
+
+_common_doc_return_values = """\
+    Returns
+    -------
+    clonotype
+        A Series containing the clonotype id for each cell. Will be stored in
+        `adata.obs[key_added]` if `inplace` is `True`
+    clonotype_size
+        A Series containing the number of cells in the respective clonotype
+        for each cell. Will be stored in `adata.obs[f"{key_added}_size"]` if `inplace`
+        is `True`.
+    distance_result
+        A dictionary containing
+            * `distances`: A sparse, pairwise distance matrix between unique
+            receptor configurations
+            * `cell_indices`: An array of arrays, containing the adata.obs_names
+            (cell indices) for each row in the distance matrix.
+        If `inplace` is `True`, this is added to `adata.uns[key_added]`.
 """
 
 
@@ -105,7 +125,7 @@ def _validate_parameters(
     return within_group, distance_key, key_added
 
 
-@_doc_params(common_doc=_common_doc)
+@_doc_params(common_doc=_common_doc, return_values=_common_doc_return_values)
 def define_clonotype_clusters(
     adata: AnnData,
     *,
@@ -176,15 +196,7 @@ def define_clonotype_clusters(
     n_jobs
         Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
 
-    Returns
-    -------
-    clonotype
-        an array containing the clonotype id for each cell
-    clonotype_size
-        an array containing the number of cells in the respective clonotype
-        for each cell.
-    distances
-        a pairwise distance matrix between unique rows of adata.obs
+    {return_values}
     """
     within_group, distance_key, key_added = _validate_parameters(
         adata,
@@ -205,6 +217,7 @@ def define_clonotype_clusters(
         within_group=within_group,
         distance_key=distance_key,
         sequence_key="cdr3" if sequence == "aa" else "cdr3_nt",
+        n_jobs=n_jobs,
     )
     clonotype_dist = ctn.compute_distances()
     g = igraph_from_sparse_matrix(clonotype_dist, matrix_type="distance")
@@ -235,11 +248,10 @@ def define_clonotype_clusters(
         clonotype_cluster_series
     ).transform("count")
 
-    # TODO am I returning distances or connectivities? Is distance_keys a suitable return format?
     # Return or store results
     clonotype_distance_res = {
         "distances": clonotype_dist,
-        "distance_keys": ctn.cell_indices,
+        "cell_indices": ctn.cell_indices,
     }
     if inplace:
         adata.obs[key_added] = clonotype_cluster_series
@@ -253,7 +265,7 @@ def define_clonotype_clusters(
         )
 
 
-@_doc_params(common_doc=_common_doc)
+@_doc_params(common_doc=_common_doc, return_values=_common_doc_return_values)
 def define_clonotypes(
     adata: AnnData,
     *,
@@ -282,6 +294,10 @@ def define_clonotypes(
         stored in `adata.uns`
     inplace
         If `True`, adds the results to anndata, otherwise return them.
+    n_jobs
+        Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
+
+    {return_values}
     """
     if distance_key is None and "ir_dist_nt_identity" not in adata.uns:
         # For the case of "clonotypes" we want to compute the distance automatically
@@ -310,15 +326,16 @@ def clonotype_network(
     metric: Literal[
         "identity", "alignment", "levenshtein", "hamming", "custom"
     ] = "identity",
-    min_size: int = 1,
+    min_cells: int = 1,
+    min_nodes: int = 1,
     layout: str = "components",
     layout_kwargs: Union[dict, None] = None,
-    neighbors_key: Union[str, None] = None,
-    key_clonotype_size: Union[str, None] = None,
+    clonotype_key: Union[str, None] = None,
     key_added: str = "clonotype_network",
     inplace: bool = True,
     random_state=42,
-) -> Union[None, np.ndarray]:
+    **kwargs,
+) -> Union[None, pd.DataFrame]:
     """Layouts the clonotype network for plotting.
 
     Other than with transcriptomics data, this network usually consists
@@ -327,7 +344,8 @@ def clonotype_network(
 
     Singleton clonotypes can be filtered out with the `min_size` parameter.
 
-    Requires running :func:`scirpy.pp.ir_neighbors` first.
+    Requires running :func:`scirpy.tl.define_clonotypes` or
+    :func:`scirpy.tl.define_clonotype_clusters` first.
 
     Stores coordinates of the clonotype network in `adata.obsm`.
 
@@ -337,8 +355,11 @@ def clonotype_network(
         The `sequence` parameter :func:`scirpy.pp.ir_neighbors` was ran with.
     metric
         The `metric` parameter :func:`scirpy.pp.ir_neighbors` was ran with.
-    min_size
-        Only show clonotypes with at least `min_size` cells.
+    min_cells
+        Only show clonotypes consisting of at least `min_cells` cells
+    min_nodes
+        Only show clonotypes consisting of at lesat `min_nodes` nodes (i.e.
+        non-identical receptor configurations)
     layout
         The layout algorithm to use. Can be anything supported by
         `igraph.Graph.layout`  or "components" to layout all connected components
@@ -364,40 +385,59 @@ def clonotype_network(
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates.
     """
-    if neighbors_key is None:
-        neighbors_key = f"ir_neighbors_{sequence}_{metric}"
-    if key_clonotype_size is None:
-        if sequence == "nt" and metric == "identity":
-            key_clonotype_size = "clonotype_size"
-        else:
-            key_clonotype_size = f"ct_cluster_{sequence}_{metric}_size"
     random.seed(random_state)
-    try:
-        conn = adata.uns[neighbors_key]["connectivities"]
-    except KeyError:
-        raise ValueError("Connectivity data not found. Did you run `pp.ir_neighbors`?")
-
-    try:
-        clonotype_size = adata.obs[key_clonotype_size].values
-    except KeyError:
-        raise ValueError(
-            "Clonotype size information not found. Did you run `tl.define_clonotypes`?"
+    # legacy API
+    if "min_size" in kwargs:
+        min_cells = kwargs["min_size"]
+        warnings.warn(
+            category=FutureWarning,
+            message=(
+                "The `min_size` parameter has been replaced by `min_cells`"
+                "and `min_edges` and will be removed in the future. "
+            ),
         )
 
-    if not adata.n_obs == conn.shape[0] == conn.shape[0]:
+    if clonotype_key is None:
+        if metric == "identity" and sequence == "nt":
+            clonotype_key = "clonotype"
+        else:
+            clonotype_key = f"cc_{sequence}_{metric}"
+
+    try:
+        clonotype_res = adata.uns[clonotype_key]
+    except KeyError:
         raise ValueError(
-            "Dimensions of connectivity matrix and AnnData do not match. Maybe you "
-            "need to re-run `pp.ir_neighbors?"
+            "Connectivity data not found. Did you run `tl.define_clonotypes` "
+            "or `tl.define_clonotype_clusters`, respectively?"
         )
 
-    graph = _get_igraph_from_adjacency(conn)
+    graph = igraph_from_sparse_matrix(
+        clonotype_res["distances"], matrix_type="distance"
+    )
+    # explicitly annotate node ids to keep them after subsetting
+    graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
-    # remove singletons/small subgraphs
-    subgraph_idx = np.where(clonotype_size >= min_size)[0]
+    # store size in graph to be accessed by layout algorithms
+    clonotype_size = np.array([idx.size for idx in clonotype_res["cell_indices"]])
+    graph.vs["size"] = clonotype_size
+    components = np.array(graph.decompose("weak"))
+    component_nodes = np.array([len(component.vs) for component in components])
+    component_sizes = np.array([sum(component.vs["size"]) for component in components])
+
+    # Filter subgraph by `min_cells` and `min_nodes`
+    subgraph_idx = list(
+        itertools.chain.from_iterable(
+            comp.vs["node_id"]
+            for comp in components[
+                (component_nodes >= min_nodes) & (component_sizes >= min_cells)
+            ]
+        )
+    )
     if len(subgraph_idx) == 0:
-        raise ValueError("No subgraphs with size >= {} found.".format(min_size))
+        raise ValueError("No subgraphs with size >= {} found.".format(min_cells))
     graph = graph.subgraph(subgraph_idx)
 
+    # Compute layout
     default_layout_kwargs = {"weights": "weight"} if layout == "fr" else dict()
     layout_kwargs = default_layout_kwargs if layout_kwargs is None else layout_kwargs
     if layout == "components":
@@ -405,14 +445,23 @@ def clonotype_network(
     else:
         coords = graph.layout(layout, **layout_kwargs).coords
 
-    coordinates = np.full((adata.n_obs, 2), fill_value=np.nan)
-    coordinates[subgraph_idx, :] = coords
+    # Expand to cell coordinates to store in adata.obsm
+    idx, coords = zip(
+        *itertools.chain.from_iterable(
+            zip(clonotype_res["cell_indices"][node_id], itertools.repeat(coord))
+            for node_id, coord in zip(graph.vs["node_id"], coords)  # type: ignore
+        )
+    )
+    coord_df = pd.DataFrame(data=coords, index=idx, columns=["x", "y"]).reindex(
+        adata.obs_names
+    )
 
+    # Store results or return
     if inplace:
-        adata.obsm[f"X_{key_added}"] = coordinates
-        adata.uns[key_added] = {"neighbors_key": neighbors_key}
+        adata.obsm[f"X_{key_added}"] = coord_df
+        adata.uns[key_added] = {"clonotype_key": clonotype_key}
     else:
-        return coordinates
+        return coord_df
 
 
 def clonotype_network_igraph(
@@ -440,6 +489,7 @@ def clonotype_network_igraph(
     """
     from ..util.graph import _get_igraph_from_adjacency
 
+    # TODO
     try:
         neighbors_key = adata.uns[basis]["neighbors_key"]
     except KeyError:
