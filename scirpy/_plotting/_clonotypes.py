@@ -46,9 +46,10 @@ def clonotype_network(
     palette: Union[str, Sequence[str], Cycler, None] = None,
     edges_color: Union[str, None] = None,
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
-    edges: Union[bool, None] = None,
+    edges: bool = True,
     edges_width: float = 0.4,
-    size: Union[float, Sequence[float], None] = None,
+    node_size: bool = True,
+    cmap: Union[str, Colormap] = None,
     base_size: float = None,
     size_power: float = 0.5,
     ax: Optional[Axes] = None,
@@ -166,6 +167,8 @@ def clonotype_network(
         .size()
         .reset_index(name="size")
     )
+    if not node_size:
+        coords["size"] = 1
 
     if base_size is None:
         base_size = 2000 / coords.shape[0]
@@ -205,6 +208,11 @@ def clonotype_network(
         legend_fontsize=legend_fontsize,
         base_size=base_size,
         size_power=size_power,
+        cmap=cmap,
+        edges=edges,
+        edges_width=edges_width,
+        edges_color=edges_color,
+        edges_cmap=edges_cmap,
     )
 
 
@@ -226,6 +234,11 @@ def _plot_clonotype_network_panel(
     legend_fontsize,
     base_size,
     size_power,
+    cmap,
+    edges_color,
+    edges_cmap,
+    edges_width,
+    edges,
 ):
     pie_colors = None
     cat_colors = None
@@ -286,7 +299,7 @@ def _plot_clonotype_network_panel(
     sizes = coords["size"] ** size_power * base_size
     if pie_colors is None:
         # standard scatter
-        sct = ax.scatter(coords["x"], coords["y"], s=sizes, c=color)
+        sct = ax.scatter(coords["x"], coords["y"], s=sizes, c=color, cmap=cmap)
 
         if colorbar and legend_loc != "none":
             if cax is None:
@@ -322,13 +335,24 @@ def _plot_clonotype_network_panel(
                 )
 
     # plot edges
-    edge_collection = nx.draw_networkx_edges(
-        nx_graph,
-        coords.loc[:, ["x", "y"]].values,
-        ax=ax,
-    )
-    edge_collection.set_zorder(-1)
-    edge_collection.set_rasterized(sc.settings._vector_friendly)
+    if edges:
+        if edges_color is None:
+            if edges_cmap is not None:
+                edges_color = [
+                    nx_graph.get_edge_data(*x)["weight"] for x in nx_graph.edges
+                ]
+            else:
+                edges_color = "grey"
+        edge_collection = nx.draw_networkx_edges(
+            nx_graph,
+            coords.loc[:, ["x", "y"]].values,
+            ax=ax,
+            width=edges_width,
+            edge_color=edges_color,
+            edge_cmap=edges_cmap,
+        )
+        edge_collection.set_zorder(-1)
+        edge_collection.set_rasterized(sc.settings._vector_friendly)
 
     # add clonotype labels
     if show_labels:
