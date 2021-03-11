@@ -23,11 +23,9 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
-import sys
 import warnings
 
-sys.path.insert(0, "../..")
-warnings.filterwarnings("ignore", category=FutureWarning)
+# warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -36,6 +34,8 @@ import pandas as pd
 import scanpy as sc
 import scirpy as ir
 from matplotlib import pyplot as plt
+
+sc.set_figure_params(figsize=(4, 4))
 ```
 
 ```python
@@ -136,7 +136,7 @@ sc.pl.umap(
     adata,
     color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"],
     ncols=2,
-    wspace=0.5,
+    wspace=0.7,
 )
 ```
 
@@ -266,9 +266,9 @@ in the graph and annotate them as clonotypes. This will add a `clonotype` and
 <!-- #endraw -->
 
 ```python
-# using default parameters, `ir_neighbors` will compute nucleotide sequence identity
-ir.pp.ir_neighbors(adata, receptor_arms="all", dual_ir="primary_only")
-ir.tl.define_clonotypes(adata)
+# using default parameters, `ir_dist` will compute nucleotide sequence identity
+ir.pp.ir_dist(adata)
+ir.tl.define_clonotypes(adata, receptor_arms="all", dual_ir="primary_only")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -278,8 +278,13 @@ We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend
 <!-- #endraw -->
 
 ```python
-ir.tl.clonotype_network(adata, min_size=2)
-ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
+ir.tl.clonotype_network(adata, min_cells=2)
+```
+
+```python
+ir.pl.clonotype_network(
+    adata, color="clonotype", base_size=20, label_fontsize=9, panel_size=(7, 7)
+)
 ```
 
 ### Re-compute CDR3 neighborhood graph and define clonotype clusters
@@ -301,34 +306,25 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.ir_neighbors(
+ir.pp.ir_dist(
     adata,
     metric="alignment",
     sequence="aa",
     cutoff=15,
-    receptor_arms="all",
-    dual_ir="all",
 )
 ir.tl.define_clonotype_clusters(
-    adata, partitions="connected", sequence="aa", metric="alignment", within_group=None
+    adata, sequence="aa", metric="alignment", receptor_arms="all", dual_ir="all"
 )
 ```
 
 ```python
-ir.tl.clonotype_network(adata, min_size=4, sequence="aa", metric="alignment")
+ir.tl.clonotype_network(adata, min_cells=3, sequence="aa", metric="alignment")
 ```
 
 Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more.
 
 ```python
-ir.pl.clonotype_network(
-    adata,
-    color="ct_cluster_aa_alignment",
-    legend_fontoutline=3,
-    size=80,
-    panel_size=(6, 6),
-    legend_loc="on data",
-)
+ir.pl.clonotype_network(adata, color="cc_aa_alignment", label_fontsize=9, panel_size=(7, 7), base_size=20)
 ```
 
 Now we show the same graph, colored by patient.
@@ -337,7 +333,7 @@ a single sample only. On the other hand, for instance clonotype 233 (top-left) i
 it is shared across patients _Lung5_ and _Lung1_ and _Lung3_.
 
 ```python
-ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
+ir.pl.clonotype_network(adata, color="patient", panel_size=(7, 7), base_size=20, label_fontsize=9)
 ```
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
@@ -346,7 +342,7 @@ In this context, the VJ-chain refers to a TCR-alpha chain.
 
 ```python
 adata.obs.loc[
-    adata.obs["ct_cluster_aa_alignment"] == "233",
+    adata.obs["cc_aa_alignment"] == "233",
     [
         "IR_VJ_1_cdr3",
         "IR_VJ_2_cdr3",
@@ -370,15 +366,15 @@ ir.tl.define_clonotype_clusters(
     adata,
     sequence="aa",
     metric="alignment",
-    same_v_gene="primary_only",
-    key_added="ct_cluster_aa_alignment_same_v",
+    same_v_gene=True,
+    key_added="cc_aa_alignment_same_v",
 )
 ```
 
 ```python
 # find clonotypes with more than one `clonotype_same_v`
-ct_different_v = adata.obs.groupby("ct_cluster_aa_alignment").apply(
-    lambda x: x["ct_cluster_aa_alignment_same_v"].unique().size > 1
+ct_different_v = adata.obs.groupby("cc_aa_alignment").apply(
+    lambda x: x["cc_aa_alignment_same_v"].unique().size > 1
 )
 ct_different_v = ct_different_v[ct_different_v].index.values
 ct_different_v
@@ -387,14 +383,14 @@ ct_different_v
 ```python
 # Display the first 2 clonotypes with different v genes
 adata.obs.loc[
-    adata.obs["ct_cluster_aa_alignment"].isin(ct_different_v[:2]),
+    adata.obs["cc_aa_alignment"].isin(ct_different_v[:2]),
     [
-        "ct_cluster_aa_alignment",
-        "ct_cluster_aa_alignment_same_v",
+        "cc_aa_alignment",
+        "cc_aa_alignment_same_v",
         "IR_VJ_1_v_gene",
         "IR_VDJ_1_v_gene",
     ],
-].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
+].sort_values("cc_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
 
 ## Clonotype analysis
@@ -688,7 +684,11 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clonotype", groups=["163_TCR"], reference="277_TCR", method="wilcoxon"
+    adata, "clonotype", groups=["163"], reference="277", method="wilcoxon"
 )
-sc.pl.rank_genes_groups_violin(adata, groups="163_TCR", n_genes=15)
+sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
+```
+
+```python
+
 ```
