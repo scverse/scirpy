@@ -1,8 +1,9 @@
+from matplotlib.axes import Axes
 import scanpy as sc
 import pandas as pd
 from anndata import AnnData
 import numpy as np
-from typing import Union, Collection, Sequence, Tuple, List, Optional
+from typing import Sized, Union, Collection, Sequence, Tuple, List, Optional, Mapping
 from contextlib import contextmanager
 import collections.abc as cabc
 import warnings
@@ -15,33 +16,25 @@ import matplotlib.pyplot as plt
 from ..util.graph import _distance_to_connectivity
 import networkx as nx
 import itertools
-from matplotlib import rcParams, patheffects
+from matplotlib import rcParams, patheffects, ticker
+import matplotlib.patches as mpatches
 from matplotlib.colors import is_color_like
 import scipy.sparse as sp
 from pandas.api.types import is_categorical_dtype
-from .styling import _get_colors
+from .styling import _get_colors, _init_ax
+from scanpy.plotting._utils import setup_axes, ticks_formatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#DDDDDD", "#000000"]
 )
 
 
-def _decide_legend_pos(adata, color):
-    """Decide about the default legend position"""
-    if color is None:
-        return "none"
-    elif color == "clonotype":
-        return "on data"
-    elif adata.obs[color].unique().size <= 50:
-        return "right margin"
-    else:
-        return "none"
-
-
 def clonotype_network(
     adata: AnnData,
     *,
-    colors: Union[str, Collection[str], None] = None,
+    color: Union[str, Sequence[str], None] = None,
     basis: str = "clonotype_network",
     show_labels: bool = True,
     label_fontsize: Optional[int] = None,
@@ -56,7 +49,14 @@ def clonotype_network(
     edges: Union[bool, None] = None,
     edges_width: float = 0.4,
     size: Union[float, Sequence[float], None] = None,
-    **kwargs,
+    base_size: float = None,
+    size_power: float = 0.5,
+    ax: Optional[Axes] = None,
+    cax: Optional[Axes] = None,
+    frameon: Optional[bool] = None,
+    title: Optional[str] = None,
+    fig_kws: Optional[dict] = None,
+    legend_fontsize=None,
 ) -> List[plt.Axes]:
     """\
     Plot the :term:`Clonotype` network.
@@ -116,6 +116,7 @@ def clonotype_network(
     :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
     # The plotting code borrows a lot from scanpy.plotting._tools.paga._paga_graph.
+    adata._sanitize()
     try:
         clonotype_key = adata.uns[basis]["clonotype_key"]
     except KeyError:
@@ -131,7 +132,15 @@ def clonotype_network(
     if clonotype_key not in adata.uns:
         raise KeyError(f"{clonotype_key} not found in adata.uns.")
 
-    # color = [color] if isinstance(color, str) or color is None else list(color)
+    if use_raw is None:
+        use_raw = adata.raw is not None
+
+    if frameon is None:
+        frameon = settings._frameon
+
+    if legend_loc is None:
+        if color in adata.obs.columns and is_categorical_dtype(adata.obs[color]):
+            legend_loc = "right margin" if adata.obs[color].nunique() < 50 else "none"
 
     clonotype_res = adata.uns[clonotype_key]
 
@@ -158,76 +167,163 @@ def clonotype_network(
         .reset_index(name="size")
     )
 
+    if base_size is None:
+        base_size = 2000 / coords.shape[0]
+
     # Networkx graph object for plotting edges
     adj_mat = clonotype_res["distances"][coords["dist_idx"].values, :][
         :, coords["dist_idx"].values
     ]
-    graph = nx.Graph(_distance_to_connectivity(adj_mat))
 
+    nx_graph = nx.Graph(_distance_to_connectivity(adj_mat))
+
+    # Prepare figure
+    if ax is None:
+        fig_kws = dict() if fig_kws is None else fig_kws
+        fig_kws.update({"figsize": panel_size})
+        ax = _init_ax(fig_kws)
+
+    if title is not None:
+        ax.set_title(title)
+    ax.set_frame_on(frameon)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    sct = _plot_clonotype_network_panel(
+        adata,
+        ax,
+        cax,
+        color=color,
+        coords=coords,
+        use_raw=use_raw,
+        cell_indices=clonotype_res["cell_indices"],
+        nx_graph=nx_graph,
+        legend_loc=legend_loc,
+        show_labels=show_labels,
+        label_fontsize=label_fontsize,
+        label_fontoutline=label_fontoutline,
+        label_fontweight=label_fontweight,
+        legend_fontsize=legend_fontsize,
+        base_size=base_size,
+        size_power=size_power,
+    )
+
+
+def _plot_clonotype_network_panel(
+    adata,
+    ax,
+    cax,
+    *,
+    color,
+    coords,
+    use_raw,
+    cell_indices,
+    legend_loc,
+    nx_graph,
+    show_labels,
+    label_fontsize,
+    label_fontoutline,
+    label_fontweight,
+    legend_fontsize,
+    base_size,
+    size_power,
+):
+    pie_colors = None
+    cat_colors = None
+    colorbar = False
     # uniform color
-    if isinstance(colors, str) and is_color_like(colors):
-        colors = [colors for c in range(coords.shape[0])]
+    if isinstance(color, str) and is_color_like(color):
+        color = [color for c in range(coords.shape[0])]
 
     def _aggregate_per_dot_continuous(values):
         x_color = []
         for dist_idx in coords["dist_idx"]:
-            cell_ids = clonotype_res["cell_indices"][dist_idx]
+            cell_ids = cell_indices[dist_idx]
             x_color.append(np.mean(values[adata.obs_names.isin(cell_ids)]))
         return x_color
 
-    def _aggregate_per_dot_categorical(values):
-        for dist_idx in coords["dist_idx"]:
-            cell_ids = clonotype_res["cell_indices"][dist_idx]
-            unique, counts = np.unique(
-                values[adata.obs_names.isin(cell_ids)], return_counts=True
-            )
-
     # plot gene expression
-    if use_raw is None:
-        use_raw = adata.raw is not None
     var_names = adata.raw.var_names if use_raw else adata.var_names
-    if isinstance(colors, str) and colors in var_names:
+    if isinstance(color, str) and color in var_names:
         x_color = []
-        tmp_expr = (adata.raw if use_raw else adata)[:, colors].X
+        tmp_expr = (adata.raw if use_raw else adata)[:, color].X
         # densify expression vector - less expensive than slicing sparse every iteration.
         if sp.issparse(tmp_expr):
             tmp_expr = tmp_expr.todense().A1
         else:
             tmp_expr = np.ravel(tmp_expr)
 
-        colors = _aggregate_per_dot_continuous(tmp_expr)
+        color = _aggregate_per_dot_continuous(tmp_expr)
+        colorbar = True
 
     # plot continuous values
     if (
-        isinstance(colors, str)
-        and colors in adata.obs
-        and not is_categorical_dtype(adata.obs[colors])
+        isinstance(color, str)
+        and color in adata.obs
+        and not is_categorical_dtype(adata.obs[color])
     ):
-        colors = _aggregate_per_dot_continuous(adata.obs[colors])
+        color = _aggregate_per_dot_continuous(adata.obs[color])
+        colorbar = True
 
     # plot categorical variables
-    pie = False
     if (
-        isinstance(colors, str)
-        and colors in adata.obs
-        and is_categorical_dtype(adata.obs[colors])
+        isinstance(color, str)
+        and color in adata.obs
+        and is_categorical_dtype(adata.obs[color])
     ):
-        cat_colors = _get_colors(adata, obs_key=colors)
-        pie = True
+        pie_colors = []
+        values = adata.obs[color].values
+        cat_colors = _get_colors(adata, obs_key=color)
+        for dist_idx in coords["dist_idx"]:
+            cell_ids = cell_indices[dist_idx]
+            unique, counts = np.unique(
+                values[adata.obs_names.isin(cell_ids)], return_counts=True
+            )
+            fracs = counts / np.sum(counts)
+            pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs)})
 
     # Generate plot
-    if not pie:
+    sct = None
+    sizes = coords["size"] ** size_power * base_size
+    if pie_colors is None:
         # standard scatter
-        fig, ax = plt.subplots(figsize=(8, 8))
-        ax.scatter(coords["x"], coords["y"], s=coords["size"], c=colors)
+        sct = ax.scatter(coords["x"], coords["y"], s=sizes, c=color)
+
+        if colorbar and legend_loc != "none":
+            if cax is None:
+                fig = ax.get_figure()
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes("right", size="3%", pad=0.05)
+
+            cb = plt.colorbar(
+                sct,
+                format=ticker.FuncFormatter(ticks_formatter),
+                cax=cax,
+            )
+
     else:
-        for ix, (xx, yy) in enumerate(zip(coords["x"], coords["y"])):
-            # TODO
-            pass
+        for xx, yy, tmp_size, tmp_color in zip(
+            coords["x"], coords["y"], sizes, pie_colors
+        ):
+            # tmp_color is a mapping (color) -> (fraction)
+            cumsum = np.cumsum(list(tmp_color.values()))
+            cumsum = cumsum / cumsum[-1]
+            cumsum = [0] + cumsum.tolist()
+
+            for r1, r2, color in zip(cumsum[:-1], cumsum[1:], tmp_color.keys()):
+                angles = np.linspace(2 * np.pi * r1, 2 * np.pi * r2, 20)
+                x = [0] + np.cos(angles).tolist()
+                y = [0] + np.sin(angles).tolist()
+
+                xy = np.column_stack([x, y])
+                s = np.abs(xy).max()
+
+                sct = ax.scatter(
+                    [xx], [yy], marker=xy, color=color, s=s ** 2 * tmp_size
+                )
 
     # plot edges
     edge_collection = nx.draw_networkx_edges(
-        graph,
+        nx_graph,
         coords.loc[:, ["x", "y"]].values,
         ax=ax,
     )
@@ -243,7 +339,7 @@ def clonotype_network(
             text_kwds["path_effects"] = [
                 patheffects.withStroke(linewidth=label_fontoutline, foreground="w")
             ]
-        for label, group_df in coords.groupby("label"):
+        for label, group_df in coords.groupby("label", observed=True):
             # add label at centroid
             ax.text(
                 np.mean(group_df["x"]),
@@ -256,30 +352,18 @@ def clonotype_network(
                 **text_kwds,
             )
 
-    return coords
+    # add legend for categorical colors
+    if cat_colors is not None and legend_loc == "right margin":
+        for cat, color in cat_colors.items():
+            # use empty scatter to set labels
+            ax.scatter([], [], c=color, label=cat)
+        legend1 = ax.legend(
+            frameon=False,
+            loc="center left",
+            bbox_to_anchor=(1, 0.5),
+            fontsize=legend_fontsize,
+            ncol=(1 if len(cat_colors) <= 14 else 2 if len(cat_colors) <= 30 else 3),
+        )
+        ax.add_artist(legend1)
 
-    # TODO legend
-    # TODO size legend
-    # TODO categorical variables (pie chart)
-    # TODO continuous variables (mean)
-    # TODO axis labels and title
-    # TODO respect settings, frameon/off
-    # TODO base size and override size
-
-    # # for clonotype, use "on data" as default
-    # if legend_loc is None:
-    #     try:
-    #         legend_loc = [_decide_legend_pos(adata, c) for c in color]
-    #     except KeyError:
-    #         raise KeyError(f"column '{color}' not found in `adata.obs`. ")
-
-    # if isinstance(edges_cmap, str):
-    #     edges_cmap = matplotlib.cm.get_cmap(edges_cmap)
-
-    # n_displayed_cells = np.sum(~np.any(np.isnan(adata.obsm[f"X_{basis}"]), axis=1))
-
-    # if edges is None:
-    #     edges = n_displayed_cells < 1000
-
-    # if size is None:
-    #     size = 24000 / n_displayed_cells
+    return sct
