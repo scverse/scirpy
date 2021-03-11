@@ -242,6 +242,7 @@ def vdj_usage(
 
     ax.set_xticks(range(1, len(vdj_cols) + 1))
     ax.set_xticklabels([x.replace("IR_", "").replace("_gene", "") for x in vdj_cols])
+    ax.grid(False)
 
     return ax
 

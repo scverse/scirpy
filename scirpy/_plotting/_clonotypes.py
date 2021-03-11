@@ -24,10 +24,11 @@ from pandas.api.types import is_categorical_dtype
 from .styling import _get_colors, _init_ax
 from scanpy.plotting._utils import setup_axes, ticks_formatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from .._compat import Literal
 
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
-    "grey2", ["#DDDDDD", "#000000"]
+    "grey2", ["#CCCCCC", "#000000"]
 )
 
 
@@ -36,28 +37,31 @@ def clonotype_network(
     *,
     color: Union[str, Sequence[str], None] = None,
     basis: str = "clonotype_network",
+    color_by_n_cells: bool = False,
+    scale_by_n_cells: bool = True,
+    base_size: Optional[float] = None,
+    size_power: Optional[float] = None,
+    use_raw: Optional[bool] = None,
     show_labels: bool = True,
+    panel_size: Tuple[float, float] = (10, 10),
     label_fontsize: Optional[int] = None,
     label_fontweight: str = "bold",
     label_fontoutline: int = 3,
-    use_raw: Optional[bool] = None,
-    panel_size: Tuple[float, float] = (10, 10),
+    label_alpha: float = 0.6,
+    label_y_offset: float = 2,
     legend_loc: str = None,
+    legend_fontsize=None,
     palette: Union[str, Sequence[str], Cycler, None] = None,
+    cmap: Union[str, Colormap] = None,
     edges_color: Union[str, None] = None,
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
     edges: bool = True,
     edges_width: float = 0.4,
-    node_size: bool = True,
-    cmap: Union[str, Colormap] = None,
-    base_size: float = None,
-    size_power: float = 0.5,
-    ax: Optional[Axes] = None,
-    cax: Optional[Axes] = None,
     frameon: Optional[bool] = None,
     title: Optional[str] = None,
+    ax: Optional[Axes] = None,
+    cax: Optional[Axes] = None,
     fig_kws: Optional[dict] = None,
-    legend_fontsize=None,
 ) -> List[plt.Axes]:
     """\
     Plot the :term:`Clonotype` network.
@@ -120,6 +124,10 @@ def clonotype_network(
     adata._sanitize()
     try:
         clonotype_key = adata.uns[basis]["clonotype_key"]
+        base_size = adata.uns[basis]["base_size"] if base_size is None else base_size
+        size_power = (
+            adata.uns[basis]["size_power"] if size_power is None else size_power
+        )
     except KeyError:
         raise KeyError(
             f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
@@ -167,11 +175,6 @@ def clonotype_network(
         .size()
         .reset_index(name="size")
     )
-    if not node_size:
-        coords["size"] = 1
-
-    if base_size is None:
-        base_size = 2000 / coords.shape[0]
 
     # Networkx graph object for plotting edges
     adj_mat = clonotype_res["distances"][coords["dist_idx"].values, :][
@@ -214,6 +217,10 @@ def clonotype_network(
         edges_color=edges_color,
         edges_cmap=edges_cmap,
         palette=palette,
+        label_alpha=label_alpha,
+        label_y_offset=label_y_offset,
+        scale_by_n_cells=scale_by_n_cells,
+        color_by_n_cells=color_by_n_cells,
     )
 
 
@@ -241,6 +248,10 @@ def _plot_clonotype_network_panel(
     edges_width,
     edges,
     palette,
+    label_alpha,
+    label_y_offset,
+    scale_by_n_cells,
+    color_by_n_cells,
 ):
     pie_colors = None
     cat_colors = None
@@ -269,6 +280,10 @@ def _plot_clonotype_network_panel(
             tmp_expr = np.ravel(tmp_expr)
 
         color = _aggregate_per_dot_continuous(tmp_expr)
+        colorbar = True
+
+    if color_by_n_cells:
+        color = coords["size"]
         colorbar = True
 
     # plot continuous values
@@ -304,7 +319,10 @@ def _plot_clonotype_network_panel(
 
     # Generate plot
     sct = None
-    sizes = coords["size"] ** size_power * base_size
+    if scale_by_n_cells:
+        sizes = coords["size"] ** size_power * base_size
+    else:
+        sizes = np.full(coords["size"].values.shape, fill_value=base_size)
     if pie_colors is None:
         # standard scatter
         sct = ax.scatter(coords["x"], coords["y"], s=sizes, c=color, cmap=cmap)
@@ -375,12 +393,13 @@ def _plot_clonotype_network_panel(
             # add label at centroid
             ax.text(
                 np.mean(group_df["x"]),
-                np.mean(group_df["y"]),
+                np.mean(group_df["y"]) + label_y_offset,
                 label,
                 verticalalignment="center",
                 horizontalalignment="center",
                 size=label_fontsize,
                 fontweight=label_fontweight,
+                alpha=label_alpha,
                 **text_kwds,
             )
 

@@ -17,12 +17,12 @@ from matplotlib import rcParams, cycler, patheffects
 _common_doc = """\
 style
     Style to apply to the axes. Currently supported are `None` (disable styling)
-    and default (default style). 
+    and default (default style).
 style_kws
     Parameters passed to :func:`scirpy.pl.styling.style_axes`
 fig_kws
-    Parameters passed to the :func:`matplotlib.pyplot.figure` call 
-    if no `ax` is specified. Defaults to `{}` if None. 
+    Parameters passed to the :func:`matplotlib.pyplot.figure` call
+    if no `ax` is specified. Defaults to `{}` if None.
 """.format(
     str(DEFAULT_FIG_KWS)
 )
@@ -42,7 +42,7 @@ def bar(
     """\
     Basic plotting function built on top of bar plot in Pandas.
 
-    Draws bars without stdev. 
+    Draws bars without stdev.
 
     Parameters
     ----------
@@ -51,16 +51,18 @@ def bar(
     ax
         Plot into this axes object
     stacked
-        Determines if the vars should be stacked.  
+        Determines if the vars should be stacked.
     {common_doc}
-    
+
     Returns
     -------
-    Axes object 
+    Axes object
     """
 
     if ax is None:
         ax = _init_ax(fig_kws)
+    if "grid" not in kwargs:
+        kwargs["grid"] = False
     ax = data.plot.bar(ax=ax, stacked=stacked, **kwargs)
 
     # Remove excess x label
@@ -94,13 +96,15 @@ def line(
     ax
         Plot into this axes object
     {common_doc}
-    
+
     Returns
     -------
     Axes object
     """
     if ax is None:
         ax = _init_ax(fig_kws)
+    if "grid" not in kwargs:
+        kwargs["grid"] = False
     ax = data.plot.line(ax=ax, **kwargs)
     if style_kws is None:
         style_kws = dict()
@@ -122,14 +126,14 @@ def barh(
     """\
     Basic plotting function built on top of bar plot in Pandas.
 
-    Draws a horizontal bar plot. 
+    Draws a horizontal bar plot.
 
     Parameters
     ----------
     data
         Data to show (wide format).
     ax
-        Custom axis if needed.  
+        Custom axis if needed.
     {common_doc}
 
     Returns
@@ -138,6 +142,8 @@ def barh(
     """
     if ax is None:
         ax = _init_ax(fig_kws)
+    if "grid" not in kwargs:
+        kwargs["grid"] = False
     ax = data.plot.barh(ax=ax, **kwargs)
     apply_style_to_axes(ax, style, style_kws)
     return ax
@@ -160,10 +166,10 @@ def curve(
     **kwargs,
 ) -> plt.Axes:
     """\
-    Basic plotting function for drawing KDE-smoothed curves. 
+    Basic plotting function for drawing KDE-smoothed curves.
 
     Primarily designed for the :func:`scirpy.pl.spectratype` plotting
-    function. 
+    function.
 
     Parameters
     ----------
@@ -172,22 +178,22 @@ def curve(
     ax
         Custom axis if needed.
     curve_layout
-        if the KDE-based curves should be stacked or shifted vetrically. 
+        if the KDE-based curves should be stacked or shifted vetrically.
     kde_norm
-        KDE curves are by default normalized to a sum of 1. Set to False in order to keep normalized cell weights. 
+        KDE curves are by default normalized to a sum of 1. Set to False in order to keep normalized cell weights.
     kernel_kws
-        Parameters that should be passed to `KernelDensity` function of sklearn.  
+        Parameters that should be passed to `KernelDensity` function of sklearn.
     order
-        Specifies the order of groups.  
+        Specifies the order of groups.
     shade
         If True, draw a shade between curves
-    color 
+    color
         List of colors for each curve
     {common_doc}
-    
+
     Returns
     -------
-    Axes object. 
+    Axes object.
     """
     if ax is None:
         ax = _init_ax(fig_kws)
@@ -259,7 +265,7 @@ def curve(
         ax.spines["right"].set_visible(False)
         ax.get_yaxis().set_tick_params(length=0)
     apply_style_to_axes(ax, style, style_kws)
-
+    ax.grid(False)
     return ax
 
 
@@ -275,7 +281,7 @@ def ol_scatter(
     """\
     Scatterplot where dot size is proportional to group size.
 
-    Draws bars without stdev. 
+    Draws bars without stdev.
 
     Parameters
     ----------
@@ -284,10 +290,10 @@ def ol_scatter(
     ax
         Plot into this axes object
     {common_doc}
-    
+
     Returns
     -------
-    Axes object 
+    Axes object
     """
 
     if ax is None:
@@ -317,7 +323,7 @@ def volcano(
     """\
     Volcano plot (special case of scatter plot)
 
-    Draws bars without stdev. 
+    Draws bars without stdev.
 
     Parameters
     ----------
@@ -326,10 +332,10 @@ def volcano(
     ax
         Plot into this axes object
     {common_doc}
-    
+
     Returns
     -------
-    Axes object 
+    Axes object
     """
 
     if ax is None:

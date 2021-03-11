@@ -8,6 +8,7 @@ from ..util import _doc_params
 from ..util.graph import (
     igraph_from_sparse_matrix,
     layout_components,
+    layout_fr_size_aware,
 )
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
@@ -353,6 +354,9 @@ def clonotype_network(
     key_added: str = "clonotype_network",
     inplace: bool = True,
     random_state=42,
+    size_aware: bool = True,
+    base_size: Optional[float] = None,
+    size_power: float = 0.5,
     **kwargs,
 ) -> Union[None, pd.DataFrame]:
     """Layouts the clonotype network for plotting.
@@ -377,12 +381,14 @@ def clonotype_network(
     min_cells
         Only show clonotypes consisting of at least `min_cells` cells
     min_nodes
-        Only show clonotypes consisting of at lesat `min_nodes` nodes (i.e.
+        Only show clonotypes consisting of at least `min_nodes` nodes (i.e.
         non-identical receptor configurations)
     layout
         The layout algorithm to use. Can be anything supported by
-        `igraph.Graph.layout`  or "components" to layout all connected components
-        individually. See :func:`scirpy.util.graph.layout_components` for more details.
+        `igraph.Graph.layout`,  or "components" to layout all connected
+        components individually.
+        See :func:`scirpy.until.graph.layout_fr_size_aware` and
+        :func:`scirpy.util.graph.layout_components` for more details.
     layout_kwargs
         Will be passed to the layout function
     neighbors_key
@@ -404,6 +410,11 @@ def clonotype_network(
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates.
     """
+    if size_aware and layout != "components":
+        raise ValueError(
+            "The `size_aware` option is only compatible with the `components` layout."
+        )
+    params_dict = dict()
     random.seed(random_state)
     # legacy API
     if "min_size" in kwargs:
@@ -433,6 +444,8 @@ def clonotype_network(
     graph = igraph_from_sparse_matrix(
         clonotype_res["distances"], matrix_type="distance"
     )
+    if base_size is None:
+        base_size = 240000 / len(graph.vs)
     # explicitly annotate node ids to keep them after subsetting
     graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
@@ -457,12 +470,27 @@ def clonotype_network(
     graph = graph.subgraph(subgraph_idx)
 
     # Compute layout
-    default_layout_kwargs = {"weights": "weight"} if layout == "fr" else dict()
-    layout_kwargs = default_layout_kwargs if layout_kwargs is None else layout_kwargs
+    if layout_kwargs is None:
+        layout_kwargs = dict()
     if layout == "components":
-        coords = layout_components(graph, **layout_kwargs)
+        tmp_layout_kwargs = dict()
+        tmp_layout_kwargs["component_layout"] = "fr_size_aware" if size_aware else "fr"
+        if size_aware:
+            # layout kwargs for the fr_size_aware layout used for each component
+            tmp_layout_kwargs["layout_kwargs"] = {
+                "base_node_size": base_size / 2000,
+                "size_power": size_power,
+            }
+            pad = 3
+            tmp_layout_kwargs["pad_x"] = pad
+            tmp_layout_kwargs["pad_y"] = pad
+
+        tmp_layout_kwargs.update(layout_kwargs)
+        coords = layout_components(graph, **tmp_layout_kwargs)
     else:
-        coords = graph.layout(layout, **layout_kwargs).coords
+        tmp_layout_kwargs = {"weights": "weight"} if layout == "fr" else dict()
+        tmp_layout_kwargs.update(layout_kwargs)
+        coords = graph.layout(layout, **tmp_layout_kwargs).coords
 
     # Expand to cell coordinates to store in adata.obsm
     idx, coords = zip(
@@ -478,7 +506,10 @@ def clonotype_network(
     # Store results or return
     if inplace:
         adata.obsm[f"X_{key_added}"] = coord_df
-        adata.uns[key_added] = {"clonotype_key": clonotype_key}
+        params_dict["clonotype_key"] = clonotype_key
+        params_dict["base_size"] = base_size
+        params_dict["size_power"] = size_power
+        adata.uns[key_added] = params_dict
     else:
         return coord_df
 

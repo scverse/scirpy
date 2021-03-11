@@ -1,136 +1,17 @@
-from scanpy import logging
+from typing import Optional
 import igraph as ig
 import numpy as np
-from .._compat import Literal
-from scipy.sparse import spmatrix, csr_matrix
-
-
-def igraph_from_sparse_matrix(
-    matrix: spmatrix,
-    *,
-    matrix_type: Literal["connectivity", "distance"] = "distance",
-    max_value: float = None,
-) -> ig.Graph:
-    """
-    Get an igraph object from an adjacency or distance matrix.
-
-    Parameters:
-    -----------
-    matrix
-        A sparse matrix that represents the connectivity or distance matrix for the graph.
-        Zero-entries mean "no edge between the two nodes".
-    matrix_type
-        Whether the `sparse_matrix` represents connectivities (higher value = smaller distance)
-        or distances (higher value = higher distance). Distance matrices will be
-        converted into connectivities. A connectivity matrix is also known as
-        weighted adjacency matrix.
-    max_value
-        When converting distances to connectivities, this will be considered the
-        maximum distance. This defaults to `numpy.max(sparse_matrix)`.
-
-    Returns
-    -------
-    igraph object
-    """
-    matrix = matrix.tocsr()
-
-    if matrix_type == "distance":
-        matrix = _distance_to_connectivity(matrix, max_value=max_value)
-
-    return _get_igraph_from_adjacency(matrix)
-
-
-def _distance_to_connectivity(distances: csr_matrix, *, max_value=None) -> csr_matrix:
-    """Get a weighted adjacency matrix from a distance matrix.
-
-    A distance of 1 (in the sparse matrix) corresponds to an actual distance of 0.
-    An actual distance of 0 corresponds to a connectivity of 1.
-
-    A distance of 0 (in the sparse matrix) corresponds to an actual distance of
-    infinity. An actual distance of infinity corresponds to a connectivity of 0.
-
-    Parameters
-    ----------
-    distances
-        sparse distance matrix
-    max_value
-        The max_value is used to normalize the distances, i.e. distances
-        are divided by this value. If not specified it will
-        be the max. of the input matrix.
-    """
-    if not isinstance(distances, csr_matrix):
-        raise ValueError("Distance matrix must be in CSR format.")
-
-    if max_value is None:
-        max_value = np.max(distances)
-
-    connectivities = distances.copy()
-    d = connectivities.data - 1
-
-    # structure of the matrix stays the same, we can safely change the data only
-    connectivities.data = (max_value - d) / max_value
-    connectivities.eliminate_zeros()
-
-    return connectivities
-
-
-def _get_igraph_from_adjacency(adj: csr_matrix):
-    """Get an undirected igraph graph from adjacency matrix.
-    Better than Graph.Adjacency for sparse matrices.
-
-    Parameters
-    ----------
-    adj
-        sparse, weighted, symmetrical adjacency matrix.
-    """
-    sources, targets = adj.nonzero()
-    weights = adj[sources, targets]
-    if isinstance(weights, np.matrix):
-        weights = weights.A1
-    if isinstance(weights, csr_matrix):
-        # this is the case when len(sources) == len(targets) == 0, see #236
-        weights = weights.toarray()
-
-    g = ig.Graph(directed=False)
-    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
-    g.add_edges(list(zip(sources, targets)))
-
-    g.es["weight"] = weights
-
-    if g.vcount() != adj.shape[0]:
-        logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. "
-            "Your adjacency matrix contained redundant nodes."
-        )  # type: ignore
-
-    # since we start from a symmetrical matrix, and the graph is undirected,
-    # it is fine to take either of the two edges when simplifying.
-    # g.simplify(combine_edges="first")
-
-    return g
-
-
-def _get_sparse_from_igraph(graph, weight_attr=None):
-    # TODO remove unless I end up using this for testing.
-    edges = graph.get_edgelist()
-    if weight_attr is None:
-        weights = [1] * len(edges)
-    else:
-        weights = graph.es[weight_attr]
-    shape = graph.vcount()
-    shape = (shape, shape)
-    if len(edges) > 0:
-        return csr_matrix((weights, zip(*edges)), shape=shape)
-    else:
-        return csr_matrix(shape)
+from ..._compat import Literal
+from ._fr_size_aware_layout import layout_fr_size_aware
 
 
 def layout_components(
     graph: ig.Graph,
-    component_layout: str = "fr",
+    component_layout: str = "fr_size_aware",
     arrange_boxes: Literal["size", "rpack", "squarify"] = "squarify",
     pad_x: float = 1.0,
     pad_y: float = 1.0,
+    layout_kwargs: Optional[dict] = None,
 ) -> np.ndarray:
     """
     Compute a graph layout by layouting all connected components individually.
@@ -141,9 +22,12 @@ def layout_components(
     ----------
     graph
         The igraph object to plot.
+        Requires the vertex attribute "size", corresponding to the node size.
     component_layout
         Layout function used to layout individual components.
-        Can be anything that can be passed to `igraph.Graph.layout`
+        Can be anything that can be passed to `igraph.Graph.layout` or `
+        `fr_size_aware` for a modified Fruchterman-Rheingold layouting
+        algorithm that respects node sizes.
     arrange_boxes
         How to arrange the individual components. Can be "size"
         to arange them by the component size, or "rpack" to pack them as densly
@@ -152,6 +36,8 @@ def layout_components(
         Padding between subgraphs in the x dimension.
     pad_y
         Padding between subgraphs in the y dimension.
+    layout_kwargs
+        Additional arguments passed to the layouting algorithm used for each component.
 
     Returns
     -------
@@ -159,6 +45,8 @@ def layout_components(
         n_nodes x dim array containing the layout coordinates
 
     """
+    if layout_kwargs is None:
+        layout_kwargs = dict()
     # assign the original vertex id, it will otherwise get lost by decomposition
     for i, v in enumerate(graph.vs):
         v["id"] = i
@@ -170,16 +58,13 @@ def layout_components(
     vertex_ids = [v["id"] for comp in components for v in comp.vs]
     vertex_sorter = np.argsort(vertex_ids)
 
-    print([list(x.vs["size"]) for x in components[-10:]])
-    print(component_sizes[-10:])
-
     bbox_fun = {"rpack": _bbox_rpack, "size": _bbox_sorted, "squarify": _bbox_squarify}[
         arrange_boxes
     ]
     bboxes = bbox_fun(component_sizes, pad_x, pad_y)
 
     component_layouts = [
-        _layout_component(component, bbox, component_layout)
+        _layout_component(component, bbox, component_layout, layout_kwargs)
         for component, bbox in zip(components, bboxes)
     ]
     # get vertexes back into their original order
@@ -286,10 +171,15 @@ def _get_bbox_dimensions(n, power=0.5):
     return (n ** power, n ** power)
 
 
-def _layout_component(component, bbox, component_layout_func):
+def _layout_component(component, bbox, component_layout_func, layout_kwargs):
     """Compute layout for an individual component"""
-    layout = component.layout(component_layout_func)
-    rescaled_pos = _rescale_layout(np.array(layout.coords), bbox)
+    if component_layout_func == "fr_size_aware":
+        coords = layout_fr_size_aware(component, **layout_kwargs)
+    else:
+        coords = np.array(
+            component.layout(component_layout_func, **layout_kwargs).coords
+        )
+    rescaled_pos = _rescale_layout(coords, bbox)
     return rescaled_pos
 
 
