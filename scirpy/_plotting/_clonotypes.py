@@ -9,7 +9,7 @@ import collections.abc as cabc
 import warnings
 from scanpy import settings
 from matplotlib.colors import Colormap
-from cycler import Cycler
+from cycler import Cycler, cycler
 import matplotlib
 from . import base
 import matplotlib.pyplot as plt
@@ -213,6 +213,7 @@ def clonotype_network(
         edges_width=edges_width,
         edges_color=edges_color,
         edges_cmap=edges_cmap,
+        palette=palette,
     )
 
 
@@ -239,10 +240,12 @@ def _plot_clonotype_network_panel(
     edges_cmap,
     edges_width,
     edges,
+    palette,
 ):
     pie_colors = None
     cat_colors = None
     colorbar = False
+
     # uniform color
     if isinstance(color, str) and is_color_like(color):
         color = [color for c in range(coords.shape[0])]
@@ -285,7 +288,12 @@ def _plot_clonotype_network_panel(
     ):
         pie_colors = []
         values = adata.obs[color].values
-        cat_colors = _get_colors(adata, obs_key=color)
+        # cycle colors for categories with many values instead of
+        # coloring them in grey
+        if palette is None:
+            if adata.obs[color].nunique() > len(sc.pl.palettes.default_102):
+                palette = cycler(color=sc.pl.palettes.default_102)
+        cat_colors = _get_colors(adata, obs_key=color, palette=palette)
         for dist_idx in coords["dist_idx"]:
             cell_ids = cell_indices[dist_idx]
             unique, counts = np.unique(

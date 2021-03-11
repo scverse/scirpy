@@ -135,7 +135,7 @@ def _get_colors(
     adata._sanitize()
     values = adata.obs[obs_key].values
     color_key = f"{obs_key}_colors"
-    if palette:
+    if palette is not None:
         _set_colors_for_categorical_obs(adata, obs_key, palette)
     elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
         values.categories
