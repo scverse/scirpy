@@ -64,7 +64,6 @@ def layout_fr_size_aware(
     --------
     node_positions
         n_nodex - dim array containing the layout positions
-
     """
 
     # This is just a wrapper around `_fruchterman_reingold` (which implements (the loop body of) the algorithm proper).
@@ -72,6 +71,10 @@ def layout_fr_size_aware(
     # and checks inputs for self-consistency.
 
     edge_list = graph.get_edgelist()
+
+    # special case when only one node is in the graph
+    if len(graph.vs) == 1:
+        return np.array([[0.5, 0.5]])
 
     if origin is None:
         if node_positions:

@@ -356,7 +356,7 @@ def clonotype_network(
     random_state=42,
     size_aware: bool = True,
     base_size: Optional[float] = None,
-    size_power: float = 0.5,
+    size_power: float = 1,
     **kwargs,
 ) -> Union[None, pd.DataFrame]:
     """Layouts the clonotype network for plotting.
