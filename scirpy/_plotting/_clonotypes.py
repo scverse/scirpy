@@ -1,31 +1,27 @@
-from matplotlib.axes import Axes
-import scanpy as sc
-import pandas as pd
-from anndata import AnnData
-import numpy as np
-from typing import Sized, Union, Collection, Sequence, Tuple, List, Optional, Mapping
-from contextlib import contextmanager
-import collections.abc as cabc
-import warnings
-from scanpy import settings
-from matplotlib.colors import Colormap
-from cycler import Cycler, cycler
-import matplotlib
-from . import base
-import matplotlib.pyplot as plt
-from ..util.graph import _distance_to_connectivity
-import networkx as nx
 import itertools
-from matplotlib import rcParams, patheffects, ticker
-import matplotlib.patches as mpatches
-from matplotlib.colors import is_color_like
-import scipy.sparse as sp
-from pandas.api.types import is_categorical_dtype
-from .styling import _get_colors, _init_ax
-from scanpy.plotting._utils import setup_axes, ticks_formatter
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from .._compat import Literal
+from typing import List, Optional, Sequence, Tuple, Union
 
+import matplotlib
+import matplotlib.colors
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
+import scanpy as sc
+import scipy.sparse as sp
+from anndata import AnnData
+from cycler import Cycler, cycler
+from matplotlib import patheffects, rcParams, ticker
+from matplotlib.axes import Axes
+from matplotlib.colors import Colormap, is_color_like
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from pandas.api.types import is_categorical_dtype
+from scanpy import settings
+from scanpy.plotting._utils import ticks_formatter
+
+from ..util.graph import _distance_to_connectivity
+from .styling import _get_colors, _init_ax
+from .._compat import Literal
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#CCCCCC", "#000000"]
@@ -37,19 +33,19 @@ def clonotype_network(
     *,
     color: Union[str, Sequence[str], None] = None,
     basis: str = "clonotype_network",
+    panel_size: Tuple[float, float] = (10, 10),
     color_by_n_cells: bool = False,
     scale_by_n_cells: bool = True,
     base_size: Optional[float] = None,
     size_power: Optional[float] = None,
     use_raw: Optional[bool] = None,
     show_labels: bool = True,
-    panel_size: Tuple[float, float] = (10, 10),
     label_fontsize: Optional[int] = None,
     label_fontweight: str = "bold",
     label_fontoutline: int = 3,
     label_alpha: float = 0.6,
     label_y_offset: float = 2,
-    legend_loc: str = None,
+    legend_loc: Optional[Literal["right margin", "none"]] = None,
     legend_fontsize=None,
     palette: Union[str, Sequence[str], Cycler, None] = None,
     cmap: Union[str, Colormap] = None,
@@ -62,7 +58,7 @@ def clonotype_network(
     ax: Optional[Axes] = None,
     cax: Optional[Axes] = None,
     fig_kws: Optional[dict] = None,
-) -> List[plt.Axes]:
+) -> plt.Axes:
     """\
     Plot the :term:`Clonotype` network.
 
@@ -74,51 +70,83 @@ def clonotype_network(
     adata
         Annotated data matrix.
     color
-        Keys for annotations of observations/cells or variables/genes, e.g.,
-        `'ann1'` or `['ann1', 'ann2']`.
+        Keys for annotations of observations/cells or variables/genes,
+        e.g. `patient` or `CD8A`.
+    basis
+        Key under which the graph layout coordinates are stored in `adata.obsm`.
     panel_size
-        Size tuple (`width`, `height`) of a single panel in inches.
+        Size of the main figure panel in inches.
+    color_by_n_cells
+        Color the nodes by the number of cells they represent. This overrides
+        the `color` option.
+    scale_by_n_cells
+        Scale the nodes by the number of cells they represent. If this is
+        set to `True`, we recommend using a "size-aware" layout in
+        :func:`scirpy.tl.clonotype_network` to avoid overlapping nodes (default).
+    base_size
+        Size of a point representing 1 cell. Per default, the value provided
+        to :func:`scirpy.tl.clonotype_network` is used. This option allows to
+        override this value without recomputing the layout.
+    size_power
+        Point sizes are raised to the power of this value. Per default, the
+        value provided to :func:`scirpy.tl.clonotype_network` is used. This option
+        allows to override this value without recomputing the layout.
+    use_raw
+        Use `adata.raw` for plotting gene expression values. Default: Use `adata.raw`
+        if it exists, and `adata` otherwise.
+    show_labels
+        If `True` plot clonotype ids on top of the subnetworks.
+    label_fontsize
+        Fontsize for the clonotype labels
+    label_fontweight
+        Fontweight for the clonotype labels
+    label_fontoutline
+        Size of the fontoutline added to the clonotype labels. Set to `None` to disable.
+    label_alpha
+        Transparency of the clonotype labels
+    label_y_offset
+        Offset the clonotype label on the y axis for better visibility of the
+        subnetworks.
     legend_loc
-        Location of legend, either `'on data'`, `'right margin'` or a valid keyword
-        for the `loc` parameter of :class:`~matplotlib.legend.Legend`.
-        When set to `None` automatically determines the legend position based on the
-        following criteria: (1) `'on data'` when coloring by `clonotype`,
-        (2) `'right margin'` if the number of categories < 50, and
-        (3) and `'none'` otherwise.
+        Position of the legend when plotting categorical variables.
+        Set to `"none"` to hide the legend. Per default, a legend is shown on
+        the right margin, if the number of categories is smaller than 50, otherwise
+        no legend is shown.
+    legend_fontsize
+        Font-size for the legend.
     palette
         Colors to use for plotting categorical annotation groups.
         The palette can be a valid :class:`~matplotlib.colors.ListedColormap` name
         (`'Set2'`, `'tab20'`, …) or a :class:`~cycler.Cycler` object.
-        It is possible to specify a list of the same size as `color` to choose
         a different color map for each panel.
-    basis
-        Key under which the graph layout coordinates are stored in `adata.obsm`
+    cmap
+        Colormap to use for plotting continuous variables.
     edges_color
         Color of the edges. Set to `None` to color by connectivity and use the
         color map provided by `edges_cmap`.
     edges_cmap
-        Colors to use for coloring edges by connectivity
+        Colormap to use for coloring edges by connectivity.
     edges
-        Whether to show the edges or not. Defaults to True for < 1000 displayed
-        cells, to False otherwise.
+        Whether to show the edges or not.
     edges_width
         width of the edges
-    size
-        Point size. If `None` it is automatically computed as 24000 / `n_cells`.
-        Can be a sequence containing the size for each cell. The order should be the
-        same as in adata.obs. Other than in the default `scanpy` implementation
-        this respects that some cells might not be shown in the plot.
-    **kwargs
-        Additional arguments which are passed to :func:`scirpy.pl.embedding`.
+    frameon
+        Whether to show a frame around the plot
+    title
+        The main plot title
+    ax
+        Add the plot to a predefined Axes object.
+    cax
+        Add the colorbar (if any) to this predefined Axes object.
+    fig_kws
+        Parameters passed to the :func:`matplotlib.pyplot.figure` call
+        if no `ax` is specified.
 
     Returns
     -------
     A list of axes objects, containing one
     element for each `color`, or None if `show == True`.
 
-    See also
-    --------
-    :func:`scirpy.pl.embedding` and :func:`scanpy.pl.embedding`
     """
     # The plotting code borrows a lot from scanpy.plotting._tools.paga._paga_graph.
     adata._sanitize()
@@ -194,7 +222,7 @@ def clonotype_network(
     ax.set_frame_on(frameon)
     ax.set_xticks([])
     ax.set_yticks([])
-    sct = _plot_clonotype_network_panel(
+    _plot_clonotype_network_panel(
         adata,
         ax,
         cax,
@@ -222,6 +250,7 @@ def clonotype_network(
         scale_by_n_cells=scale_by_n_cells,
         color_by_n_cells=color_by_n_cells,
     )
+    return ax
 
 
 def _plot_clonotype_network_panel(

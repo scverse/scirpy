@@ -342,7 +342,7 @@ In this context, the VJ-chain refers to a TCR-alpha chain.
 
 ```python
 adata.obs.loc[
-    adata.obs["cc_aa_alignment"] == "233",
+    adata.obs["cc_aa_alignment"] == "115",
     [
         "IR_VJ_1_cdr3",
         "IR_VJ_2_cdr3",

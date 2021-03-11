@@ -24,7 +24,9 @@ def layout_fr_size_aware(
     size_power: float = 0.5
 ) -> np.ndarray:
     """
-    Compute the fruchterman rheingold layout respecting node sizes.
+    Compute the Fruchterman-Reingold layout respecting node sizes.
+
+    Adapted from https://stackoverflow.com/questions/57423743/networkx-is-there-a-way-to-scale-a-position-of-nodes-in-a-graph-according-to-n/57432240#57432240
 
     Parameters:
     -----------

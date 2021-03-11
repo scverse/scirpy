@@ -25,9 +25,10 @@ def layout_components(
         Requires the vertex attribute "size", corresponding to the node size.
     component_layout
         Layout function used to layout individual components.
-        Can be anything that can be passed to `igraph.Graph.layout` or `
+        Can be anything that can be passed to `igraph.Graph.layout` or
         `fr_size_aware` for a modified Fruchterman-Rheingold layouting
-        algorithm that respects node sizes.
+        algorithm that respects node sizes. See
+        :func:`scirpy.util.graph.layout_fr_size_aware` for more details.
     arrange_boxes
         How to arrange the individual components. Can be "size"
         to arange them by the component size, or "rpack" to pack them as densly

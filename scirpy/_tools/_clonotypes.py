@@ -1,23 +1,19 @@
-from .._preprocessing import ir_dist
-from scirpy.ir_dist import MetricType, _get_metric_key
-from anndata import AnnData
+import itertools
+import random
+from typing import Dict, List, Optional, Sequence, Tuple, Union
+
 import igraph as ig
-from .._compat import Literal
-from typing import Dict, Union, Tuple, Sequence, Optional, List
-from ..util import _doc_params
-from ..util.graph import (
-    igraph_from_sparse_matrix,
-    layout_components,
-    layout_fr_size_aware,
-)
-from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
 import pandas as pd
-import random
+from anndata import AnnData
 from scanpy import logging
-import itertools
-import warnings
-from collections import Counter
+
+from .._compat import Literal
+from .._preprocessing import ir_dist
+from ..ir_dist import MetricType, _get_metric_key
+from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from ..util import _doc_params
+from ..util.graph import igraph_from_sparse_matrix, layout_components
 
 _common_doc = """\
     receptor_arms
@@ -349,23 +345,30 @@ def clonotype_network(
     min_cells: int = 1,
     min_nodes: int = 1,
     layout: str = "components",
+    size_aware: bool = True,
+    base_size: Optional[float] = None,
+    size_power: float = 1,
     layout_kwargs: Union[dict, None] = None,
     clonotype_key: Union[str, None] = None,
     key_added: str = "clonotype_network",
     inplace: bool = True,
     random_state=42,
-    size_aware: bool = True,
-    base_size: Optional[float] = None,
-    size_power: float = 1,
-    **kwargs,
 ) -> Union[None, pd.DataFrame]:
-    """Layouts the clonotype network for plotting.
+    """Computes the layout for plotting the clonotype network.
 
     Other than with transcriptomics data, this network usually consists
     of many disconnected components, each of them representing cells
-    of the same clonotype.
+    of the same clonotype. Each node represents cells with an identical
+    receptor configuration.
+
+    # TODO link to a more detailed explanation of how the new clonotype system works.
 
     Singleton clonotypes can be filtered out with the `min_size` parameter.
+
+    The `components` layout algorithm takes node sizes into account, avoiding
+    overlapping nodes. For this, we recommend specifying `base_size` and
+    `size_power` already here instead of providing them to
+    :func:`scirpy.pl.clonotype_network`.
 
     Requires running :func:`scirpy.tl.define_clonotypes` or
     :func:`scirpy.tl.define_clonotype_clusters` first.
@@ -374,10 +377,12 @@ def clonotype_network(
 
     Parameters
     ----------
+    adata
+        annotated data matrix
     sequence
-        The `sequence` parameter :func:`scirpy.pp.ir_neighbors` was ran with.
+        The `sequence` parameter :func:`scirpy.tl.define_clonotypes` was ran with.
     metric
-        The `metric` parameter :func:`scirpy.pp.ir_neighbors` was ran with.
+        The `metric` parameter :func:`scirpy.tl.define_clonotypes` was ran with.
     min_cells
         Only show clonotypes consisting of at least `min_cells` cells
     min_nodes
@@ -385,18 +390,25 @@ def clonotype_network(
         non-identical receptor configurations)
     layout
         The layout algorithm to use. Can be anything supported by
-        `igraph.Graph.layout`,  or "components" to layout all connected
+        `igraph.Graph.layout`, or "components" to layout all connected
         components individually.
-        See :func:`scirpy.until.graph.layout_fr_size_aware` and
         :func:`scirpy.util.graph.layout_components` for more details.
+    size_aware
+        If `True`, use a node-size aware layouting algorithm. This option is
+        only compatible with `layout = 'components'`.
+    base_size
+        Size of a point respresenting 1 cell. Per default, this value is a
+        automatically determined based on the number of nodes in the plot.
+    size_power
+        Sizes are raised to the power of this value. Set this to, e.g. 0.5 to
+        dampen point size.
     layout_kwargs
         Will be passed to the layout function
-    neighbors_key
-        Key under which the neighborhood graph is stored in `adata.uns`.
-        Defaults to `ir_neighbors_{sequence}_{metric}`.
-    key_clonotype_size
-        Key under which the clonotype size information is stored in `adata.obs`
-        Defaults to `ct_cluster_{sequence}_{metric}_size`.
+    clonotype_key
+        Key under which the result of :func:`scirpy.tl.define_clonotypes` or
+        :func:`scirpy.tl.define_clonotype_clusters` is stored in `adata.uns`.
+        Defaults to `clonotype` if `sequence == 'nt' and distance == 'identity'` or
+        `cc_{sequence}_{metric}` otherwise.
     key_added
         Key under which the layout coordinates will be stored in `adata.obsm` and
         parameters will be stored in `adata.uns`.
@@ -416,16 +428,6 @@ def clonotype_network(
         )
     params_dict = dict()
     random.seed(random_state)
-    # legacy API
-    if "min_size" in kwargs:
-        min_cells = kwargs["min_size"]
-        warnings.warn(
-            category=FutureWarning,
-            message=(
-                "The `min_size` parameter has been replaced by `min_cells`"
-                "and `min_edges` and will be removed in the future. "
-            ),
-        )
 
     if clonotype_key is None:
         if metric == "identity" and sequence == "nt":
@@ -444,8 +446,10 @@ def clonotype_network(
     graph = igraph_from_sparse_matrix(
         clonotype_res["distances"], matrix_type="distance"
     )
+
     if base_size is None:
         base_size = 240000 / len(graph.vs)
+
     # explicitly annotate node ids to keep them after subsetting
     graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
@@ -453,7 +457,7 @@ def clonotype_network(
     clonotype_size = np.array([idx.size for idx in clonotype_res["cell_indices"]])
     graph.vs["size"] = clonotype_size
     components = np.array(graph.decompose("weak"))
-    component_nodes = np.array([len(component.vs) for component in components])
+    component_node_count = np.array([len(component.vs) for component in components])
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
 
     # Filter subgraph by `min_cells` and `min_nodes`
@@ -461,7 +465,7 @@ def clonotype_network(
         itertools.chain.from_iterable(
             comp.vs["node_id"]
             for comp in components[
-                (component_nodes >= min_nodes) & (component_sizes >= min_cells)
+                (component_node_count >= min_nodes) & (component_sizes >= min_cells)
             ]
         )
     )
