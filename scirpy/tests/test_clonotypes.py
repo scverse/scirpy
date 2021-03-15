@@ -12,7 +12,8 @@ from .fixtures import (
     adata_define_clonotype_clusters,
     adata_clonotype_network,
     adata_clonotype,
-)
+    adata_conn,
+)  # NOQA
 import random
 import pytest
 
@@ -216,55 +217,63 @@ def test_clonotype_clusters_end_to_end(
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
-def test_clonotype_network(adata_conn):
-    ir.tl.define_clonotype_clusters(
-        adata_conn,
-        sequence="aa",
-        metric="alignment",
-        partitions="connected",
-        within_group=None,
-    )
-    random.seed(42)
+@pytest.mark.parametrize(
+    "min_cells,min_nodes,layout,size_aware,expected",
+    (
+        [
+            1,
+            1,
+            "components",
+            True,
+            [
+                [1.000000, 74.221194],
+                [1.000000, 74.221194],
+                [56.000000, 62.678581],
+                [65.742159, 53.500000],
+                [96.000000, 32.184790],
+                [np.nan, np.nan],
+                [6.536803, 76.000000],
+                [50.707573, 30.929090],
+                [15.000248, 21.000000],
+                [61.000000, 18.500000],
+                [68.500000, 76.000000],
+            ],
+        ],
+        [
+            2,
+            3,
+            "fr",
+            False,
+            [
+                [-0.430626, -1.502106],
+                [-0.430626, -1.502106],
+                [-0.344945, -0.949649],
+                [1.992660, 0.434507],
+                [1.719006, -0.215524],
+                [np.nan, np.nan],
+                [-0.988064, -1.509929],
+                [-0.804910, -0.615617],
+                [-1.210568, -0.990936],
+                [1.296429, 0.522358],
+                [np.nan, np.nan],
+            ],
+        ],
+    ),
+)
+def test_clonotype_network(
+    adata_conn, min_cells, min_nodes, layout, size_aware, expected
+):
     coords = ir.tl.clonotype_network(
         adata_conn,
         sequence="aa",
         metric="alignment",
-        min_size=1,
-        layout="fr",
+        min_cells=min_cells,
+        min_nodes=min_nodes,
+        size_aware=size_aware,
+        layout=layout,
         inplace=False,
     )
-    npt.assert_almost_equal(
-        coords,
-        np.array(
-            [
-                [5.147361, 3.1383265],
-                [3.4346971, 4.2259229],
-                [4.0405687, 3.4865629],
-                [5.2082453, 5.1293543],
-            ]
-        ),
-    )
-
-    random.seed(42)
-    ir.tl.clonotype_network(
-        adata_conn,
-        sequence="aa",
-        metric="alignment",
-        min_size=2,
-        layout="components",
-        inplace=True,
-        key_added="ctn",
-    )
-    coords = adata_conn.obsm["X_ctn"]
-    npt.assert_almost_equal(
-        coords,
-        np.array(
-            [[98.0, 1.0], [1.0, 98.0], [49.5107979, 49.4911286], [np.nan, np.nan]]
-        ),
-    )
-
-    with pytest.raises(ValueError):
-        ir.tl.clonotype_network(adata_conn[[1, 3], :])
+    npt.assert_almost_equal(coords.values, np.array(expected), decimal=5)
 
 
 def test_clonotype_network_igraph(adata_clonotype_network):

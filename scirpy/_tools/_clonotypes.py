@@ -428,6 +428,7 @@ def clonotype_network(
         )
     params_dict = dict()
     random.seed(random_state)
+    np.random.seed(random_state)
 
     if clonotype_key is None:
         if metric == "identity" and sequence == "nt":

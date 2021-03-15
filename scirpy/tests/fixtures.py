@@ -2,6 +2,8 @@ import pytest
 import pandas as pd
 from anndata import AnnData
 import numpy as np
+import scanpy
+from scipy import sparse
 from scipy.sparse.csr import csr_matrix
 from scirpy.util import _is_symmetric
 import scirpy as ir
@@ -199,6 +201,17 @@ def adata_define_clonotype_clusters():
         )
     )
     adata = AnnData(obs=obs)
+    return adata
+
+
+@pytest.fixture
+def adata_conn(adata_define_clonotype_clusters):
+    """Stub adata to test the clonotype_network functions"""
+    adata = adata_define_clonotype_clusters
+    ir.pp.ir_dist(adata, sequence="aa", metric="alignment")
+    ir.tl.define_clonotype_clusters(
+        adata, sequence="aa", metric="alignment", receptor_arms="any", dual_ir="any"
+    )
     return adata
 
 
