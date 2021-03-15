@@ -52,7 +52,12 @@ def layout_components(
     for i, v in enumerate(graph.vs):
         v["id"] = i
     components = np.array(graph.decompose(mode="weak"))
-    component_sizes = np.array([sum(component.vs["size"]) for component in components])
+    try:
+        component_sizes = np.array(
+            [sum(component.vs["size"]) for component in components]
+        )
+    except KeyError:
+        component_sizes = np.array([len(component.vs) for component in components])
     order = np.argsort(component_sizes)
     components = components[order]
     component_sizes = component_sizes[order]

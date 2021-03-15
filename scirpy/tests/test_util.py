@@ -165,7 +165,9 @@ def test_normalize_counts(group_df):
 
 
 @pytest.mark.filterwarnings("ignore:UserWarning")
-def test_layout_components():
+@pytest.mark.parametrize("arrange_boxes", ("size", "rpack", "squarify"))
+@pytest.mark.parametrize("component_layout", ("fr_size_aware", "fr"))
+def test_layout_components(arrange_boxes, component_layout):
     g = ig.Graph()
 
     # add 100 unconnected nodes
@@ -187,15 +189,15 @@ def test_layout_components():
         g.add_edges(combinations(range(n, n + ii), 2))
         n += ii
 
-    layout_components(g, arrange_boxes="size", component_layout="fr")
     try:
-        layout_components(g, arrange_boxes="rpack", component_layout="fr")
+        layout_components(
+            g, arrange_boxes=arrange_boxes, component_layout=component_layout
+        )
     except ImportError:
         warnings.warn(
-            "The 'rpack' layout-test was skipped because rectangle "
+            f"The '{component_layout}' layout-test was skipped because rectangle "
             "packer is not installed. "
         )
-    layout_components(g, arrange_boxes="squarify", component_layout="fr")
 
 
 def test_translate_dna_to_protein(adata_tra):
