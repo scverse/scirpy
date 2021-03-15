@@ -240,16 +240,48 @@ def test_dist_to_connectivities(dist, expected_conn, max_value):
     )
 
 
+@pytest.mark.parametrize("simplify", [True, False])
 @pytest.mark.parametrize(
-    "matrix",
+    "matrix,is_symmetric",
     [
-        [[1, 0, 0, 0.6], [0, 1, 0.9, 0.3], [1, 0.6, 1, 0.9], [0.1, 0, 0, 1]],
-        [[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]],
+        (
+            [
+                [1.0, 0.0, 0.0, 0.6],
+                [0.0, 1.0, 0.9, 0.3],
+                [1.0, 0.6, 1.0, 0.9],
+                [0.1, 0.0, 0.0, 1.0],
+            ],
+            False,
+        ),
+        (
+            [
+                [0.0, 1.0, 1.0, 0.6],
+                [0.0, 0.0, 0.9, 0.3],
+                [1.0, 0.6, 0.0, 0.9],
+                [0.1, 0.0, 0.0, 0.0],
+            ],
+            False,
+        ),
+        (
+            [
+                [1.0, 0.3, 0.0, 0.6],
+                [0.3, 1.0, 0.9, 0.3],
+                [0.0, 0.9, 1.0, 0.9],
+                [0.6, 0.3, 0.9, 1.0],
+            ],
+            True,
+        ),
     ],
 )
-def test_igraph_from_adjacency(matrix):
+def test_igraph_from_adjacency(matrix, is_symmetric, simplify):
     matrix = scipy.sparse.csr_matrix(matrix)
-    g = igraph_from_sparse_matrix(matrix, matrix_type="distance")
+    g = igraph_from_sparse_matrix(matrix, matrix_type="connectivity", simplify=simplify)
     assert len(list(g.vs)) == matrix.shape[0]
-    matrix_roundtrip = _get_sparse_from_igraph(g, weight_attr="weight")
-    npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())
+    matrix_roundtrip = _get_sparse_from_igraph(
+        g, simplified=simplify, weight_attr="weight"
+    )
+    if simplify and not is_symmetric:
+        with pytest.raises(AssertionError):
+            npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())
+    else:
+        npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())

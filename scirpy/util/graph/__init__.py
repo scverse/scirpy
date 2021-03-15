@@ -1,8 +1,10 @@
 from scanpy import logging
 import igraph as ig
 import numpy as np
+from scipy import sparse
 from ..._compat import Literal
 from scipy.sparse import spmatrix, csr_matrix
+import itertools
 from ._component_layout import layout_components
 from ._fr_size_aware_layout import layout_fr_size_aware
 
@@ -31,7 +33,8 @@ def igraph_from_sparse_matrix(
         When converting distances to connectivities, this will be considered the
         maximum distance. This defaults to `numpy.max(sparse_matrix)`.
     simplify
-        Make an undirected graph and remove circular edges.
+        Make an undirected graph and remove circular edges (i.e. edges from
+        a node to itself).
 
     Returns
     -------
@@ -98,7 +101,7 @@ def _get_igraph_from_adjacency(adj: csr_matrix, simplify=True):
         # this is the case when len(sources) == len(targets) == 0, see #236
         weights = weights.toarray()
 
-    g = ig.Graph(directed=False)
+    g = ig.Graph(directed=not simplify)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
     g.add_edges(list(zip(sources, targets)))
 
@@ -118,8 +121,22 @@ def _get_igraph_from_adjacency(adj: csr_matrix, simplify=True):
     return g
 
 
-def _get_sparse_from_igraph(graph, weight_attr=None):
-    # TODO remove unless I end up using this for testing.
+def _get_sparse_from_igraph(graph, *, simplified, weight_attr=None):
+    """
+    Convert an igraph back to a sparse adjacency matrix
+
+    Parameters
+    ----------
+    simplified
+        The graph was created with the `simplify` option, i.e. the graph is undirected
+        and circular edges (i.e. edges from a node to itself) are not included.
+    weight_attr
+        Edge attribute of the igraph object that contains the edge weight.
+
+    Returns
+    -------
+    Square adjacency matrix. If the graph was directed, the matrix will be symmetric.
+    """
     edges = graph.get_edgelist()
     if weight_attr is None:
         weights = [1] * len(edges)
@@ -128,6 +145,15 @@ def _get_sparse_from_igraph(graph, weight_attr=None):
     shape = graph.vcount()
     shape = (shape, shape)
     if len(edges) > 0:
-        return csr_matrix((weights, zip(*edges)), shape=shape)
+        adj_mat = csr_matrix((weights, zip(*edges)), shape=shape)
+        if simplified:
+            # make symmetrical and add diagonal
+            adj_mat = (
+                adj_mat
+                + adj_mat.T
+                - sparse.diags(adj_mat.diagonal())
+                + sparse.diags(np.ones(adj_mat.shape[0]))
+            )
+        return adj_mat
     else:
         return csr_matrix(shape)
