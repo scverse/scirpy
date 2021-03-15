@@ -528,9 +528,6 @@ def embedding(
                 if adata.obs[tmp_color].unique().size > len(sc.pl.palettes.default_102):
                     tmp_palette = cycler(color=sc.pl.palettes.default_102)
 
-        add_labels = tmp_legend_loc == "on data"
-        tmp_legend_loc = None if add_labels else tmp_legend_loc
-
         sc.pl.embedding(
             adata,
             tmp_basis,
@@ -541,19 +538,6 @@ def embedding(
             palette=tmp_palette,
             **kwargs,
         )
-
-        # manually add labels for "on data", as missing entries in `obsm` will cause
-        # a flood of matplotlib warnings.
-        # TODO: this could eventually be fixed upstream in scanpy
-        if add_labels:
-            _add_labels(
-                ax,
-                adata.obsm["X_" + tmp_basis],
-                adata.obs[tmp_color].values,
-                legend_fontweight=kwargs.get("legend_fontweight", "bold"),
-                legend_fontsize=kwargs.get("legend_fontsize", None),
-                legend_fontoutline=kwargs.get("legend_fontoutline", None),
-            ),
 
     # hide unused panels in grid
     for ax in axs[len(color) :]:

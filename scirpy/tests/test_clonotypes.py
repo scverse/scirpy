@@ -17,7 +17,7 @@ from .fixtures import (
 import random
 import pytest
 
-# TODO test distance_keys return values
+
 @pytest.mark.parametrize("key_added", [None, "my_key"])
 @pytest.mark.parametrize("inplace", [True, False])
 def test_define_clonotype_clusters_return_values(

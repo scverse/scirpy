@@ -121,7 +121,6 @@ class ClonotypeNeighbors:
 
         # consistency check: there must not be a secondary chain if there is no
         # primary one:
-        # TODO add a test for this
         if "2" in self._dual_ir_cols:
             for tmp_arm in self._receptor_arm_cols:
                 primary_is_nan = (
