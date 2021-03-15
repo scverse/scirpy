@@ -45,8 +45,10 @@ def clonotype_network(
     label_fontoutline: int = 3,
     label_alpha: float = 0.6,
     label_y_offset: float = 2,
-    legend_loc: Optional[Literal["right margin", "none"]] = None,
     legend_fontsize=None,
+    legend_width=2,
+    show_legend: Optional[bool] = None,
+    show_size_legend: bool = True,
     palette: Union[str, Sequence[str], Cycler, None] = None,
     cmap: Union[str, Colormap] = None,
     edges_color: Union[str, None] = None,
@@ -56,7 +58,6 @@ def clonotype_network(
     frameon: Optional[bool] = None,
     title: Optional[str] = None,
     ax: Optional[Axes] = None,
-    cax: Optional[Axes] = None,
     fig_kws: Optional[dict] = None,
 ) -> plt.Axes:
     """\
@@ -107,13 +108,16 @@ def clonotype_network(
     label_y_offset
         Offset the clonotype label on the y axis for better visibility of the
         subnetworks.
-    legend_loc
-        Position of the legend when plotting categorical variables.
-        Set to `"none"` to hide the legend. Per default, a legend is shown on
-        the right margin, if the number of categories is smaller than 50, otherwise
-        no legend is shown.
     legend_fontsize
         Font-size for the legend.
+    show_legend
+        Whether to show a legend (when plotting categorical variables)
+        or a colorbar (when plotting continuous variables) on the right margin.
+        Per default, a legend is shown if the number of categories is smaller than
+        50, other wise no legend is shown.
+    show_legend_size
+        Whether to show a legend for dot sizes on the right margin.
+        This option is only applicable if `scale_by_n_cells` is `True`.
     palette
         Colors to use for plotting categorical annotation groups.
         The palette can be a valid :class:`~matplotlib.colors.ListedColormap` name
@@ -175,9 +179,11 @@ def clonotype_network(
     if frameon is None:
         frameon = settings._frameon
 
-    if legend_loc is None:
+    if show_legend is None:
         if color in adata.obs.columns and is_categorical_dtype(adata.obs[color]):
-            legend_loc = "right margin" if adata.obs[color].nunique() < 50 else "none"
+            show_legend = adata.obs[color].nunique() < 50
+        else:
+            show_legend = True
 
     clonotype_res = adata.uns[clonotype_key]
 
@@ -214,24 +220,31 @@ def clonotype_network(
     # Prepare figure
     if ax is None:
         fig_kws = dict() if fig_kws is None else fig_kws
-        fig_kws.update({"figsize": panel_size})
+        fig_width = (
+            panel_size[0]
+            if not (show_legend or show_size_legend)
+            else panel_size[0] + legend_width + 0.5
+        )
+        fig_kws.update({"figsize": (fig_width, panel_size[1])})
         ax = _init_ax(fig_kws)
 
-    if title is not None:
-        ax.set_title(title)
+    if title is None and color is not None:
+        title = color
     ax.set_frame_on(frameon)
     ax.set_xticks([])
     ax.set_yticks([])
+
     _plot_clonotype_network_panel(
         adata,
         ax,
-        cax,
+        legend_width=legend_width,
         color=color,
         coords=coords,
         use_raw=use_raw,
         cell_indices=clonotype_res["cell_indices"],
         nx_graph=nx_graph,
-        legend_loc=legend_loc,
+        show_legend=show_legend,
+        show_size_legend=show_size_legend,
         show_labels=show_labels,
         label_fontsize=label_fontsize,
         label_fontoutline=label_fontoutline,
@@ -244,31 +257,77 @@ def clonotype_network(
         edges_width=edges_width,
         edges_color=edges_color,
         edges_cmap=edges_cmap,
+        title=title,
         palette=palette,
         label_alpha=label_alpha,
         label_y_offset=label_y_offset,
         scale_by_n_cells=scale_by_n_cells,
         color_by_n_cells=color_by_n_cells,
     )
-    return ax
+    # return [ax, size_legend_ax, legend_ax]
+
+
+def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_dots=4):
+    sizes = np.unique(sizes)
+    dot_sizes = sizes ** size_power * base_size
+    n_dots = min(n_dots, len(dot_sizes))
+    min_size = np.min(dot_sizes)
+    max_size = min(np.max(dot_sizes), 800)
+    diff = max_size - min_size
+    step = diff / (n_dots - 1)
+    dot_sizes = np.array(list(np.arange(min_size, max_size, step)) + [max_size])
+    sizes = (dot_sizes / base_size) ** (1 / size_power)
+
+    # plot size bar
+    x_pos = np.cumsum(dot_sizes) + 10
+    size_legend_ax.scatter(
+        x_pos,
+        np.repeat(0, n_dots),
+        s=dot_sizes,
+        color="gray",
+        edgecolor="black",
+        linewidth=0.2,
+        zorder=100,
+    )
+    size_legend_ax.set_xticks(x_pos)
+    labels = [str(int(x)) for x in np.rint(sizes)]
+    size_legend_ax.set_xticklabels(labels, fontsize="small")
+    size_legend_ax.set_xlim(-2 * base_size, max(x_pos) + max(dot_sizes))
+
+    # remove y ticks and labels
+    size_legend_ax.tick_params(axis="y", left=False, labelleft=False, labelright=False)
+
+    # remove surrounding lines
+    size_legend_ax.spines["right"].set_visible(False)
+    size_legend_ax.spines["top"].set_visible(False)
+    size_legend_ax.spines["left"].set_visible(False)
+    size_legend_ax.spines["bottom"].set_visible(False)
+    size_legend_ax.grid(False)
+
+    size_legend_ax.set_title("# cells")
+
+    xmin, xmax = size_legend_ax.get_xlim()
+    size_legend_ax.set_xlim(xmin - 0.15, xmax + 0.5)
 
 
 def _plot_clonotype_network_panel(
     adata,
     ax,
-    cax,
     *,
     color,
     coords,
     use_raw,
     cell_indices,
-    legend_loc,
+    legend_width,
     nx_graph,
     show_labels,
+    show_legend,
+    show_size_legend,
     label_fontsize,
     label_fontoutline,
     label_fontweight,
     legend_fontsize,
+    title,
     base_size,
     size_power,
     cmap,
@@ -282,6 +341,7 @@ def _plot_clonotype_network_panel(
     scale_by_n_cells,
     color_by_n_cells,
 ):
+    colorbar_title = "mean per dot"
     pie_colors = None
     cat_colors = None
     colorbar = False
@@ -314,6 +374,10 @@ def _plot_clonotype_network_panel(
     if color_by_n_cells:
         color = coords["size"]
         colorbar = True
+        colorbar_title = "# cells"
+
+    if not scale_by_n_cells:
+        show_size_legend = False
 
     # plot continuous values
     if (
@@ -346,6 +410,50 @@ def _plot_clonotype_network_panel(
             fracs = counts / np.sum(counts)
             pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs)})
 
+    # create panel for legend(s)
+    legend_ax = None
+    size_legend_ax = None
+    if show_legend or show_size_legend:
+        fig = ax.get_figure()
+        hspace = 0.5
+        colorbar_height = 0.5
+        size_legend_height = 1
+        fig_width, fig_height = fig.get_size_inches()
+        if fig_height < colorbar_height + size_legend_height:
+            raise ValueError("Figure size too small. Must be at least 3 inches high.")
+        if colorbar:
+            spacer_height = (
+                (fig_height - colorbar_height - size_legend_height) / 2 / fig_height
+            )
+            height_ratios = [
+                spacer_height * 2,
+                colorbar_height / fig_height,
+                0,
+                size_legend_height / fig_height,
+            ]
+        else:
+            # categorical labels may take up as much space as they want
+            height_ratios = [
+                0,
+                (fig_height - size_legend_height) / fig_height,
+                0,
+                size_legend_height / fig_height,
+            ]
+        ax.axis("off")
+        gs = ax.get_subplotspec().subgridspec(
+            4,  # rows = [spacer, legend/colorbar, spacer, size_legend]
+            2,  # cols = [main panel, legend panel]
+            width_ratios=[
+                (fig_width - hspace - legend_width) / fig_width,
+                legend_width / fig_width,
+            ],
+            height_ratios=height_ratios,
+        )
+        legend_ax = fig.add_subplot(gs[1, 1])
+        size_legend_ax = fig.add_subplot(gs[3, 1])
+        ax = fig.add_subplot(gs[:, 0])
+        ax.grid(False)
+
     # Generate plot
     sct = None
     if scale_by_n_cells:
@@ -356,17 +464,15 @@ def _plot_clonotype_network_panel(
         # standard scatter
         sct = ax.scatter(coords["x"], coords["y"], s=sizes, c=color, cmap=cmap)
 
-        if colorbar and legend_loc != "none":
-            if cax is None:
-                fig = ax.get_figure()
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="3%", pad=0.05)
-
-            cb = plt.colorbar(
+        if colorbar and show_legend:
+            plt.colorbar(
                 sct,
                 format=ticker.FuncFormatter(ticks_formatter),
-                cax=cax,
+                cax=legend_ax,
+                orientation="horizontal",
             )
+            legend_ax.set_title(colorbar_title)
+            legend_ax.xaxis.set_tick_params(labelsize="small")
 
     else:
         for xx, yy, tmp_size, tmp_color in zip(
@@ -433,17 +539,33 @@ def _plot_clonotype_network_panel(
             )
 
     # add legend for categorical colors
-    if cat_colors is not None and legend_loc == "right margin":
+    if cat_colors is not None and show_legend:
         for cat, color in cat_colors.items():
             # use empty scatter to set labels
-            ax.scatter([], [], c=color, label=cat)
-        legend1 = ax.legend(
+            legend_ax.scatter([], [], c=color, label=cat)
+        legend_ax.legend(
             frameon=False,
             loc="center left",
-            bbox_to_anchor=(1, 0.5),
+            # bbox_to_anchor=(1, 0.5),
             fontsize=legend_fontsize,
             ncol=(1 if len(cat_colors) <= 14 else 2 if len(cat_colors) <= 30 else 3),
         )
-        ax.add_artist(legend1)
+        legend_ax.axis("off")
+
+    if not show_legend and legend_ax is not None:
+        legend_ax.axis("off")
+
+    # add size legend
+    if show_size_legend:
+        _plot_size_legend(
+            size_legend_ax,
+            sizes=coords["size"],
+            size_power=size_power,
+            base_size=base_size,
+        )
+    elif legend_ax is not None:
+        size_legend_ax.axis("off")
+
+    ax.set_title(title)
 
     return sct
