@@ -17,7 +17,6 @@ help:
 livehtml: | clean symlink
 	sleep 1 && touch *.rst
 	sphinx-autobuild \
-	-p 0 \
         --open-browser \
         --delay 5 \
         --ignore "*.swp" \

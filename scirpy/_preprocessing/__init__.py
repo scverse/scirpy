@@ -22,5 +22,7 @@ def tcr_neighbors(*args, dual_tcr="primary_only", **kwargs):
 def ir_neighbors(*args, **kwargs):
     raise RuntimeError(
         "`ir_neighbors` has been replaced by `ir_dist` in v0.7.0 and its behaviour "
-        "has slightly changed. Please read the new docs and update your code. "
+        "has slightly changed. Also, the functions for clonotype definition and "
+        "clonotype network definition have been updated. "
+        "Please read the updated documentation and update your code! "
     )

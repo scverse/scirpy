@@ -18,9 +18,8 @@ def tcr_dist(*args, **kwargs):
     return sequence_dist(*args, **kwargs)
 
 
-# TODO: deprecated / removed exceptions for all changed public API items.
 def TcrNeighbors(*args, **kwargs):
-    raise RuntimeError("TcrNeighbors has been renamed in v0.5.0 and removed in v0.7.0")
+    raise RuntimeError("TcrNeighbors has been renamed in v0.5.0 and removed in v0.7.0.")
 
 
 def IrNeighbors(*args, **kwargs):
