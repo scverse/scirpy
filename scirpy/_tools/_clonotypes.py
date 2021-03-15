@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from scanpy import logging
+import scipy.sparse as sp
 
 from .._compat import Literal
 from .._preprocessing import ir_dist
@@ -519,6 +520,48 @@ def clonotype_network(
         return coord_df
 
 
+def _graph_from_coordinates(
+    adata: AnnData, clonotype_key: str
+) -> [pd.DataFrame, sp.spmatrix]:
+    """
+    Given an AnnData object on which `tl.clonotype_network` was ran, and
+    the corresponding `clonotype_key`, extract a data-frame
+    with x and y coordinates for each node, and an aligned adjacency matrix.
+
+    Combined, it can be used for plotting the layouted graph with igraph or networkx.
+    """
+    clonotype_res = adata.uns[clonotype_key]
+    # map the cell-id to the corresponding row/col in the clonotype distance matrix
+    dist_idx, obs_names = zip(
+        *itertools.chain.from_iterable(
+            zip(itertools.repeat(i), obs_names)
+            for i, obs_names in enumerate(clonotype_res["cell_indices"])
+        )
+    )
+    dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
+    clonotype_label_lookup = adata.obs.loc[:, [clonotype_key]].rename(
+        columns={clonotype_key: "label"}
+    )
+
+    # Retrieve coordinates and reduce them to one coordinate per node
+    coords = (
+        adata.obsm["X_clonotype_network"]
+        .dropna(axis=0, how="any")
+        .join(dist_idx_lookup)
+        .join(clonotype_label_lookup)
+        .groupby(by=["label", "dist_idx", "x", "y"], observed=True)
+        .size()
+        .reset_index(name="size")
+    )
+
+    # Networkx graph object for plotting edges
+    adj_mat = clonotype_res["distances"][coords["dist_idx"].values, :][
+        :, coords["dist_idx"].values
+    ]
+
+    return coords, adj_mat
+
+
 def clonotype_network_igraph(
     adata: AnnData, basis="clonotype_network"
 ) -> Tuple[ig.Graph, ig.Layout]:
@@ -542,18 +585,22 @@ def clonotype_network_igraph(
     layout
         corresponding igraph Layout object.
     """
-    from ..util.graph import _get_igraph_from_adjacency
+    from ..util.graph import igraph_from_sparse_matrix
 
-    # TODO
     try:
-        neighbors_key = adata.uns[basis]["neighbors_key"]
+        clonotype_key = adata.uns[basis]["clonotype_key"]
     except KeyError:
         raise KeyError(
             f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
         )
+    if f"X_{basis}" not in adata.obsm_keys():
+        raise KeyError(
+            f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
+        )
+    coords, adj_mat = _graph_from_coordinates(adata, clonotype_key)
 
-    conn = adata.uns[neighbors_key]["connectivities"]
-    idx = np.where(~np.any(np.isnan(adata.obsm["X_" + basis]), axis=1))[0]
-    g = _get_igraph_from_adjacency(conn).subgraph(idx)
-    layout = ig.Layout(coords=adata.obsm["X_" + basis][idx, :].tolist())
-    return g, layout
+    graph = igraph_from_sparse_matrix(adj_mat, matrix_type="distance")
+    # flip y axis to be consistent with networkx
+    coords["y"] = np.max(coords["y"]) - coords["y"]
+    layout = ig.Layout(coords=coords.loc[:, ["x", "y"]].values.tolist())
+    return graph, layout

@@ -12,6 +12,7 @@ def igraph_from_sparse_matrix(
     *,
     matrix_type: Literal["connectivity", "distance"] = "distance",
     max_value: float = None,
+    simplify: bool = True,
 ) -> ig.Graph:
     """
     Get an igraph object from an adjacency or distance matrix.
@@ -29,6 +30,8 @@ def igraph_from_sparse_matrix(
     max_value
         When converting distances to connectivities, this will be considered the
         maximum distance. This defaults to `numpy.max(sparse_matrix)`.
+    simplify
+        Make an undirected graph and remove circular edges.
 
     Returns
     -------
@@ -39,7 +42,7 @@ def igraph_from_sparse_matrix(
     if matrix_type == "distance":
         matrix = _distance_to_connectivity(matrix, max_value=max_value)
 
-    return _get_igraph_from_adjacency(matrix)
+    return _get_igraph_from_adjacency(matrix, simplify=simplify)
 
 
 def _distance_to_connectivity(
@@ -78,7 +81,7 @@ def _distance_to_connectivity(
     return connectivities
 
 
-def _get_igraph_from_adjacency(adj: csr_matrix):
+def _get_igraph_from_adjacency(adj: csr_matrix, simplify=True):
     """Get an undirected igraph graph from adjacency matrix.
     Better than Graph.Adjacency for sparse matrices.
 
@@ -107,9 +110,10 @@ def _get_igraph_from_adjacency(adj: csr_matrix):
             "Your adjacency matrix contained redundant nodes."
         )  # type: ignore
 
-    # since we start from a symmetrical matrix, and the graph is undirected,
-    # it is fine to take either of the two edges when simplifying.
-    # g.simplify(combine_edges="first")
+    if simplify:
+        # since we start from a symmetrical matrix, and the graph is undirected,
+        # it is fine to take either of the two edges when simplifying.
+        g.simplify(combine_edges="first")
 
     return g
 

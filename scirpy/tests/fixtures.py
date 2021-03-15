@@ -242,29 +242,26 @@ def adata_define_clonotype_clusters_singletons():
 
 
 @pytest.fixture
-def adata_clonotype_network():
-    """Adata with clonotype network computed"""
-    assert False, "needs updating"
+def adata_clonotype_network(adata_conn):
+    """Adata with clonotype network computed.
+
+    adata derived from adata_conn that also contains some gene expression data
+    for plotting.
+    """
     adata = AnnData(
-        obs=pd.DataFrame()
-        .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
-        .set_index("cell_id")
+        var=pd.DataFrame().assign(gene_symbol=["CD8A", "CD4"]).set_index("gene_symbol"),
+        X=np.array(
+            [
+                [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
+                [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
+            ]
+        ).T,
+        obs=adata_conn.obs,
+        uns=adata_conn.uns,
+        obsm=adata_conn.obsm,
     )
-    adata.uns["foo_neighbors"] = {
-        "connectivities": np.array(
-            [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-        )
-    }
-    adata.uns["clonotype_network"] = {"neighbors_key": "foo_neighbors"}
-    adata.obsm["X_clonotype_network"] = np.array(
-        [
-            [2.41359095, 0.23412465],
-            [np.nan, np.nan],
-            [1.61680611, 0.80266963],
-            [3.06104282, 2.14395562],
-        ]
-    )
-    assert _is_symmetric(adata.uns["foo_neighbors"]["connectivities"])
+    adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
+    ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
     return adata
 
 

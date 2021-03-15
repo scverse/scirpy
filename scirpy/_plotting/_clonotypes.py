@@ -22,6 +22,7 @@ from scanpy.plotting._utils import ticks_formatter
 from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
 from .._compat import Literal
+from .._tools._clonotypes import _graph_from_coordinates
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#CCCCCC", "#000000"]
@@ -186,35 +187,7 @@ def clonotype_network(
             show_legend = True
 
     clonotype_res = adata.uns[clonotype_key]
-
-    # map the cell-id to the corresponding row/col in the clonotype distance matrix
-    dist_idx, obs_names = zip(
-        *itertools.chain.from_iterable(
-            zip(itertools.repeat(i), obs_names)
-            for i, obs_names in enumerate(clonotype_res["cell_indices"])
-        )
-    )
-    dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
-    clonotype_label_lookup = adata.obs.loc[:, [clonotype_key]].rename(
-        columns={clonotype_key: "label"}
-    )
-
-    # Retrieve coordinates and reduce them to one coordinate per node
-    coords = (
-        adata.obsm["X_clonotype_network"]
-        .dropna(axis=0, how="any")
-        .join(dist_idx_lookup)
-        .join(clonotype_label_lookup)
-        .groupby(by=["label", "dist_idx", "x", "y"], observed=True)
-        .size()
-        .reset_index(name="size")
-    )
-
-    # Networkx graph object for plotting edges
-    adj_mat = clonotype_res["distances"][coords["dist_idx"].values, :][
-        :, coords["dist_idx"].values
-    ]
-
+    coords, adj_mat = _graph_from_coordinates(adata, clonotype_key)
     nx_graph = nx.Graph(_distance_to_connectivity(adj_mat))
 
     # Prepare figure
@@ -264,7 +237,7 @@ def clonotype_network(
         scale_by_n_cells=scale_by_n_cells,
         color_by_n_cells=color_by_n_cells,
     )
-    # return [ax, size_legend_ax, legend_ax]
+    return ax
 
 
 def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_dots=4):

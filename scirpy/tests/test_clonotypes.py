@@ -245,16 +245,16 @@ def test_clonotype_clusters_end_to_end(
             "fr",
             False,
             [
-                [-0.430626, -1.502106],
-                [-0.430626, -1.502106],
-                [-0.344945, -0.949649],
-                [1.992660, 0.434507],
-                [1.719006, -0.215524],
+                [-0.305474, -1.41764],
+                [-0.305474, -1.417647],
+                [-0.429337, -0.707490],
+                [2.046579, 0.273431],
+                [1.715737, -0.494373],
                 [np.nan, np.nan],
-                [-0.988064, -1.509929],
-                [-0.804910, -0.615617],
-                [-1.210568, -0.990936],
-                [1.296429, 0.522358],
+                [-0.937019, -1.652635],
+                [-1.069135, -0.476262],
+                [-1.370432, -1.102646],
+                [1.245171, 0.508397],
                 [np.nan, np.nan],
             ],
         ],
@@ -273,19 +273,28 @@ def test_clonotype_network(
         layout=layout,
         inplace=False,
     )
+    # print(coords)
     npt.assert_almost_equal(coords.values, np.array(expected), decimal=5)
 
 
 def test_clonotype_network_igraph(adata_clonotype_network):
     g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
-    assert g.vcount() == 3
+    print(lo.coords)
+    print(g.vcount())
+    assert g.vcount() == 9
     npt.assert_almost_equal(
         np.array(lo.coords),
         np.array(
             [
-                [2.41359095, 0.23412465],
-                [1.61680611, 0.80266963],
-                [3.06104282, 2.14395562],
+                [1.0, 1.7788058303717946],
+                [56.0, 13.321418780908509],
+                [6.5368033569434605, 0.0],
+                [50.70757322464207, 45.07090964878337],
+                [15.00024843741323, 55.0],
+                [65.74215886730616, 22.5],
+                [96.0, 43.81520950588598],
+                [61.0, 57.5],
+                [68.5, 0.0],
             ]
         ),
     )
