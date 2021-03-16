@@ -33,7 +33,8 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scirpy as ir
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, cm as mpl_cm
+from cycler import cycler
 
 sc.set_figure_params(figsize=(4, 4))
 ```
@@ -346,25 +347,20 @@ Compared to the previous plot, we observere several connected dots.
 Each fully connected subnetwork represents a "clonotype cluster", each dot 
 still represents cells with identical receptor configurations.
 
+The dots are colored by patient. We observe, that for instance, clonotypes `101` and `68` (left top and bottom) are *private*, i.e. they contain cells from a single patient only. On the other hand, clonotype `159` (left middle) is 
+*public*, i.e. it is shared across patients *Lung1* and *Lung3*. 
+
 ```python
 ir.pl.clonotype_network(
     adata, color="patient", label_fontsize=9, panel_size=(7, 7), base_size=20
 )
 ```
 
-Now we show the same graph, colored by patient.
-We observe that for instance clonotypes 104 and 160 (center-left) are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 233 (top-left) is _public_, i.e.
-it is shared across patients _Lung5_ and _Lung1_ and _Lung3_.
-
-
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
-For instance, we can find out that clonotype `233` does not have any detected :term:`VJ-chain<V(D)J>`.
-In this context, the VJ-chain refers to a TCR-alpha chain.
+When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph. 
 
 ```python
-adata.obs.loc[
-    adata.obs["cc_aa_alignment"] == "159",
+adata.obs.loc[adata.obs["cc_aa_alignment"] == "159", :].groupby(
     [
         "IR_VJ_1_cdr3",
         "IR_VJ_2_cdr3",
@@ -372,7 +368,8 @@ adata.obs.loc[
         "IR_VDJ_2_cdr3",
         "receptor_subtype",
     ],
-]
+    observed=True,
+).size().reset_index(name="n_cells")
 ```
 
 ### Including the V-gene in clonotype definition
@@ -398,11 +395,13 @@ ir.tl.define_clonotype_clusters(
 ```python
 # find clonotypes with more than one `clonotype_same_v`
 ct_different_v = adata.obs.groupby("cc_aa_alignment").apply(
-    lambda x: x["cc_aa_alignment_same_v"].unique().size > 1
+    lambda x: x["cc_aa_alignment_same_v"].nunique() > 1
 )
-ct_different_v = ct_different_v[ct_different_v].index.values
+ct_different_v = ct_different_v[ct_different_v].index.values.tolist()
 ct_different_v
 ```
+
+Here, we see that the clonotype clusters `280` and `765` get split into `(280, 788)` and `(765, 1071)`, respectively, when the `same_v_gene` flag is set. 
 
 ```python
 adata.obs.loc[
@@ -545,7 +544,7 @@ We can also use this plot to investigate the exact VDJ composition of one (or se
 
 ```python
 ir.pl.vdj_usage(
-    adata[adata.obs["clonotype"].isin(["274_TCR", "277_TCR", "211_TCR", "106_TCR"]), :],
+    adata[adata.obs["clonotype"].isin(["68", "101", "127", "161"]), :],
     max_ribbons=None,
     max_segments=100,
 )
@@ -670,10 +669,10 @@ freq, stat = ir.tl.clonotype_imbalance(
     control_label="CD8_Trm",
     inplace=False,
 )
-top_differential_clonotypes = stat["clonotype"].tolist()[:5]
+top_differential_clonotypes = stat["clonotype"].tolist()[:3]
 ```
 
-Showing top clonotypes on a UMAP clearly shows that clonotype 163 is featured by CD8+ tissue-resident memory T cells, while clonotype 277 by CD8+ effector T-cells.
+Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells. 
 
 ```python
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
@@ -687,6 +686,7 @@ sc.pl.umap(
     size=[
         80 if c in top_differential_clonotypes else 30 for c in adata.obs["clonotype"]
     ],
+    palette=cycler(color=mpl_cm.Dark2_r.colors)
 )
 ```
 
@@ -707,11 +707,7 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clonotype", groups=["163"], reference="277", method="wilcoxon"
+    adata, "clonotype", groups=["101"], reference="68", method="wilcoxon"
 )
-sc.pl.rank_genes_groups_violin(adata, groups="163", n_genes=15)
-```
-
-```python
-
+sc.pl.rank_genes_groups_violin(adata, groups="101", n_genes=15)
 ```

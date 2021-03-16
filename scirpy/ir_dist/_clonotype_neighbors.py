@@ -214,7 +214,9 @@ class ClonotypeNeighbors:
         # only use multiprocessing for sufficiently large datasets
         # for small datasets the overhead is too large for a benefit
         if self.n_jobs == 1 or n_clonotypes <= 2 * self.chunksize:
-            dist_rows = tmap(self._dist_for_clonotype, range(n_clonotypes))
+            dist_rows = tmap(
+                self._dist_for_clonotype, range(n_clonotypes), tqdm_class=tqdm
+            )
         else:
             logging.info(
                 "NB: Computation happens in chunks. The progressbar only advances "
