@@ -111,8 +111,9 @@ def _ir_dist(
     n_jobs: Union[int, None] = None,
 ) -> Union[dict, None]:
     """
-    Computes a sequence-distance metric between all unique VJ CDR3 sequences and
-    between all unique VDJ CDR3 sequences.
+    Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
+    :term:`CDR3` sequences and between all unique :term:`VDJ <Chain locus>`
+    :term:`CDR3` sequences.
 
     This is a required proprocessing step for clonotype definition and clonotype
     networks.

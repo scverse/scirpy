@@ -1,5 +1,4 @@
-import itertools
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import matplotlib
 import matplotlib.colors
@@ -14,21 +13,21 @@ from cycler import Cycler, cycler
 from matplotlib import patheffects, rcParams, ticker
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap, is_color_like
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from pandas.api.types import is_categorical_dtype
 from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
 
 from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
-from .._compat import Literal
-from .._tools._clonotypes import _graph_from_coordinates
+from .._tools._clonotypes import _graph_from_coordinates, _doc_clonotype_network
+from ..util import _doc_params
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#CCCCCC", "#000000"]
 )
 
 
+@_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,
     *,
@@ -64,8 +63,19 @@ def clonotype_network(
     """\
     Plot the :term:`Clonotype` network.
 
-    Requires running :func:`scirpy.tl.clonotype_network` before, to
+    Requires running :func:`scirpy.tl.clonotype_network` first, to
     compute the layout.
+
+    {clonotype_network}
+
+    When the network is colored by continuous variables (genes, or numeric columns
+    from `obs`), the average of the cells in each dot is computed. When the network
+    is colored by categorical variables (categorical columns from `obs`), different
+    categories per dot are visualized as pie chart.
+
+    The layouting algorithm of :func:`scirpy.tl.clonotype_network` takes point sizes
+    into account. For this reason, we recommend providing `base_size` and `size_power`
+    already to the tool function.
 
     Parameters
     ----------

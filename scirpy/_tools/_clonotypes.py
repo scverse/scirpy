@@ -93,6 +93,32 @@ distance_result
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
 """
 
+_doc_clonotype_definition = """\
+Definition of clonotype(-clusters) follows roughly the following procedure:
+  1. Create a list of unique receptor configurations. This is useful to
+     collapse heavily expanded clonotypes, leading to many cells with identical
+     CDR3 sequences, to a single entry.
+  2. Compute a pairwise distance matrix of unique receptor configurations.
+     Unique receptor configurations are matched based on the pre-computed
+     VJ and VDJ distance matrices and the parameters of `receptor_arms`,
+     `dual_ir`, `same_v_gene` and `within_group`.
+  3. Find connected modules in the graph defined by this distance matrix. Each
+     connected module is considered a clonotype-cluster.
+"""
+
+_doc_clonotype_network = """\
+The clonotype network usually consists of many disconnected components,
+each of them representing a clonotype. Each node represents cells with an identical
+receptor configuration (i.e. identical CDR3 sequences, and identical
+v genes if `same_v_gene` was specified during clonotype definition).
+The size of each dot refers to the number of cells with the same receptor
+configurations.
+
+For more details on the clonotype definition, see
+:func:`scirpy.tl.define_clonotype_clusters` and the respective section
+in the tutorial.
+"""
+
 
 def _validate_parameters(
     adata,
@@ -139,6 +165,7 @@ def _validate_parameters(
 
 @_doc_params(
     common_doc=_common_doc,
+    clonotype_definition=_doc_clonotype_definition,
     return_values=_common_doc_return_values,
     paralellism=_common_doc_parallelism,
 )
@@ -170,6 +197,8 @@ def define_clonotype_clusters(
 
     Requires running :func:`~scirpy.pp.ir_dist` with the same `sequence` and
     `metric` values first.
+
+    {clonotype_definition}
 
     Parameters
     ----------
@@ -285,6 +314,7 @@ def define_clonotype_clusters(
 
 @_doc_params(
     common_doc=_common_doc,
+    clonotype_definition=_doc_clonotype_definition,
     return_values=_common_doc_return_values,
     paralellism=_common_doc_parallelism,
 )
@@ -304,6 +334,8 @@ def define_clonotypes(
     this function stringently defines clonotypes based on nucleic acid sequence
     identity. Technically, this function is an alias to :func:`~scirpy.tl.define_clonotype_clusters`
     with different default parameters.
+
+    {clonotype_definition}
 
     Parameters
     ----------
@@ -341,6 +373,7 @@ def define_clonotypes(
     )
 
 
+@_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,
     *,
@@ -360,24 +393,21 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
 ) -> Union[None, pd.DataFrame]:
-    """Computes the layout for plotting the clonotype network.
-
-    Other than with transcriptomics data, this network usually consists
-    of many disconnected components, each of them representing cells
-    of the same clonotype. Each node represents cells with an identical
-    receptor configuration.
-
-    # TODO link to a more detailed explanation of how the new clonotype system works.
-
-    Singleton clonotypes can be filtered out with the `min_size` parameter.
-
-    The `components` layout algorithm takes node sizes into account, avoiding
-    overlapping nodes. For this, we recommend specifying `base_size` and
-    `size_power` already here instead of providing them to
-    :func:`scirpy.pl.clonotype_network`.
+    """
+    Computes the layout of the clonotype network.
 
     Requires running :func:`scirpy.tl.define_clonotypes` or
     :func:`scirpy.tl.define_clonotype_clusters` first.
+
+    {clonotype_network}
+
+    Singleton clonotypes can be filtered out with the `min_cells` and `min_nodes`
+    parameters.
+
+    The `components` layout algorithm takes node sizes into account, avoiding
+    overlapping nodes. Therefore, we recommend specifying `base_size` and
+    `size_power` already here instead of providing them to
+    :func:`scirpy.pl.clonotype_network`.
 
     Stores coordinates of the clonotype network in `adata.obsm`.
 
@@ -414,7 +444,7 @@ def clonotype_network(
         Key under which the result of :func:`scirpy.tl.define_clonotypes` or
         :func:`scirpy.tl.define_clonotype_clusters` is stored in `adata.uns`.
         Defaults to `clonotype` if `sequence == 'nt' and distance == 'identity'` or
-        `cc_{sequence}_{metric}` otherwise.
+        `cc_{{sequence}}_{{metric}}` otherwise.
     key_added
         Key under which the layout coordinates will be stored in `adata.obsm` and
         parameters will be stored in `adata.uns`.
