@@ -257,8 +257,12 @@ def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_d
     min_size = np.min(dot_sizes)
     max_size = min(np.max(dot_sizes), 800)
     diff = max_size - min_size
-    step = diff / (n_dots - 1)
-    dot_sizes = np.array(list(np.arange(min_size, max_size, step)) + [max_size])
+    # special case if only one dot size.
+    if n_dots <= 1:
+        dot_sizes = np.array([base_size ** size_power])
+    else:
+        step = diff / (n_dots - 1)
+        dot_sizes = np.array(list(np.arange(min_size, max_size, step)) + [max_size])
     sizes = (dot_sizes / base_size) ** (1 / size_power)
 
     # plot size bar

@@ -12,9 +12,7 @@ jupyter:
 ```python
 %load_ext autoreload
 %autoreload 2
-import sys
 
-sys.path.insert(0, "../..")
 import scirpy as ir
 import scanpy as sc
 from glob import glob
@@ -29,6 +27,8 @@ warnings.filterwarnings("ignore", category=NumbaPerformanceWarning)
 
 # suppress "storing XXX as categorical" warnings.
 anndata.logging.anndata_logger.setLevel("ERROR")
+
+sc.set_figure_params(figsize=(4, 4))
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -226,20 +226,26 @@ is more approriate.
 <!-- #endraw -->
 
 ```python
-ir.pp.ir_neighbors(
-    adata,
-    metric="alignment",
-    sequence="aa",
-    cutoff=25,
-    receptor_arms="any",
-    dual_ir="primary_only",
-)
+ir.pp.ir_dist(adata, metric="alignment", sequence="aa", cutoff=25)
 ```
 
 ```python
-ir.tl.define_clonotype_clusters(adata, metric="alignment", sequence="aa")
-ir.tl.clonotype_network(adata, layout="fr", metric="alignment", sequence="aa")
-ir.pl.clonotype_network(adata, color="ct_cluster_aa_alignment", panel_size=(4, 4))
+ir.tl.define_clonotype_clusters(
+    adata,
+    metric="alignment",
+    sequence="aa",
+    receptor_arms="any",
+    dual_ir="primary_only",
+)
+ir.tl.clonotype_network(adata, size_aware=False, metric="alignment", sequence="aa")
+ir.pl.clonotype_network(
+    adata,
+    color="cc_aa_alignment",
+    base_size=20,
+    panel_size=(6, 6),
+    show_legend=False,
+    show_size_legend=False,
+)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
