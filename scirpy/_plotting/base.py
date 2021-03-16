@@ -361,49 +361,6 @@ def volcano(
     return ax
 
 
-def _add_labels(
-    ax: plt.Axes,
-    coords: np.ndarray,
-    label_data: np.ndarray,
-    legend_fontweight,
-    legend_fontsize,
-    legend_fontoutline,
-):
-    """Add legend labels on data at centroids position"""
-    categories = np.unique(label_data)
-    nan_mask = ~np.any(np.isnan(coords), axis=1)
-    label_idx = {label: list() for label in categories}
-    for i, label in enumerate(label_data):
-        if nan_mask[i]:
-            label_idx[label].append(i)
-
-    for label, idx in label_idx.items():
-        if len(idx):
-            _scatter = coords[idx, :]
-            x_pos, y_pos = np.median(_scatter, axis=0)
-
-            if legend_fontoutline is not None:
-                path_effect = [
-                    patheffects.withStroke(
-                        linewidth=legend_fontoutline,
-                        foreground="w",
-                    )
-                ]
-            else:
-                path_effect = None
-
-            ax.text(
-                x_pos,
-                y_pos,
-                label,
-                weight=legend_fontweight,
-                verticalalignment="center",
-                horizontalalignment="center",
-                fontsize=legend_fontsize,
-                path_effects=path_effect,
-            )
-
-
 def embedding(
     adata: AnnData,
     basis: str,
