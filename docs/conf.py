@@ -122,6 +122,7 @@ qualname_overrides = {
     "scirpy.io._datastructures.IrCell": "scirpy.io.IrCell",
     "scirpy.io._datastructures.IrChain": "scirpy.io.IrChain",
     "pandas.core.arrays.categorical.Categorical": "pandas.Categorical",
+    "pandas.core.series.Series": "pandas.Series",
 }
 
 nitpick_ignore = [

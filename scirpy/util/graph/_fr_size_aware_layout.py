@@ -28,8 +28,8 @@ def layout_fr_size_aware(
 
     Adapted from https://stackoverflow.com/questions/57423743/networkx-is-there-a-way-to-scale-a-position-of-nodes-in-a-graph-according-to-n/57432240#57432240
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     graph
         igraph object to compute the layout for.
         Respects the vertex attribute "size", if available.
@@ -55,15 +55,17 @@ def layout_fr_size_aware(
         Temperature is decreased on each iteration to eventually force the algorithm
         into a particular solution. The size of the initial temperature determines how
         quickly that happens. Values should be much smaller than the values of `scale`.
-    node_positions : dict key : (float, float) or None (default None)
+    node_positions :
+        dict key : (float, float) or None (default None)
+
         Mapping of nodes to their (initial) x,y positions. If None are given,
         nodes are initially placed randomly within the bounding box defined by `origin`
         and `scale`.
     fixed_nodes
         Nodes to keep fixed at their initial positions.
 
-    Returns:
-    --------
+    Returns
+    -------
     node_positions
         n_nodex - dim array containing the layout positions
     """

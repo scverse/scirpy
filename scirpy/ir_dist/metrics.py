@@ -28,13 +28,14 @@ _doc_dist_mat = """\
 Calculates the full pairwise distance matrix.
 
 .. important::
-    * Distances are offset by 1 to allow efficient use of sparse matrices
-      (:math:`d' = d+1`).
-    * That means, a `distance > cutoff` is represented as `0`, a `distance == 0`
-      is represented as `1`, a `distance == 1` is represented as `2` and so on.
-    * Only returns distances `<= cutoff`. Larger distances are eliminated
-      from the sparse matrix.
-    * Distances are non-negative.
+  * Distances are offset by 1 to allow efficient use of sparse matrices
+    (:math:`d' = d+1`).
+  * That means, a `distance > cutoff` is represented as `0`, a `distance == 0`
+    is represented as `1`, a `distance == 1` is represented as `2` and so on.
+  * Only returns distances `<= cutoff`. Larger distances are eliminated
+    from the sparse matrix.
+  * Distances are non-negative.
+
 """
 
 

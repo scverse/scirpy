@@ -1,6 +1,6 @@
 import itertools
 import random
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import igraph as ig
 import numpy as np
@@ -17,77 +17,80 @@ from ..util import _doc_params
 from ..util.graph import igraph_from_sparse_matrix, layout_components
 
 _common_doc = """\
-    receptor_arms
-         * `"TRA"` - only consider TRA sequences
-         * `"TRB"` - only consider TRB sequences
-         * `"all"` - both TRA and TRB need to match
-         * `"any"` - either TRA or TRB need to match
+receptor_arms
+    One of the following options:
+      * `"TRA"` - only consider TRA sequences
+      * `"TRB"` - only consider TRB sequences
+      * `"all"` - both TRA and TRB need to match
+      * `"any"` - either TRA or TRB need to match
 
-        If `"any"`, two distances are combined by taking their minimum. If `"all"`,
-        two distances are combined by taking their maximum. This is motivated
-        by the hypothesis that a receptor recognizes the same antigen if it
-        has a distance smaller than a certain cutoff. If we require only one
-        of the receptors to match (`"any"`) the smaller distance is relevant.
-        If we require both receptors to match (`"all"`), the larger distance is
-        relevant.
+    If `"any"`, two distances are combined by taking their minimum. If `"all"`,
+    two distances are combined by taking their maximum. This is motivated
+    by the hypothesis that a receptor recognizes the same antigen if it
+    has a distance smaller than a certain cutoff. If we require only one
+    of the receptors to match (`"any"`) the smaller distance is relevant.
+    If we require both receptors to match (`"all"`), the larger distance is
+    relevant.
 
-    dual_ir
-         * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
-         * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
-           cutoff for any of the chains.
-         * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
-           cutoff for all of the chains.
+dual_ir
+    One of the following options:
+      * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
+      * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
+        cutoff for any of the chains.
+      * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
+        cutoff for all of the chains.
 
-        Distances are combined as for `receptor_arms`.
+    Distances are combined as for `receptor_arms`.
 
-        See also :term:`Dual IR`.
+    See also :term:`Dual IR`.
 
-    same_v_gene
-        Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
-        as the CDR1 and CDR2 regions are fully encoded in this gene.
-        See :term:`CDR` for more details.
+same_v_gene
+    Enforces clonotypes to have the same :term:`V-genes<V(D)J>`. This is useful
+    as the CDR1 and CDR2 regions are fully encoded in this gene.
+    See :term:`CDR` for more details.
 
-        v genes are matched based on the behaviour defined with `receptor_arms` and
-        `dual_ir`.
+    v genes are matched based on the behaviour defined with `receptor_arms` and
+    `dual_ir`.
 
-    within_group
-        Enforces clonotypes to have the same group defined by one or multiple grouping
-        variables. Per default, this is set to :term:`receptor_type<Receptor type>`,
-        i.e. clonotypes cannot comprise both B cells and T cells. Set this to
-        :term:`receptor_subtype<Receptor subtype>` if you don't want clonotypes to
-        be shared across e.g. gamma-delta and alpha-beta T-cells.
-        You can also set this to any other column in `adata.obs` that contains
-        a grouping, or to `None`, if you want no constraints.
+within_group
+    Enforces clonotypes to have the same group defined by one or multiple grouping
+    variables. Per default, this is set to :term:`receptor_type<Receptor type>`,
+    i.e. clonotypes cannot comprise both B cells and T cells. Set this to
+    :term:`receptor_subtype<Receptor subtype>` if you don't want clonotypes to
+    be shared across e.g. gamma-delta and alpha-beta T-cells.
+    You can also set this to any other column in `adata.obs` that contains
+    a grouping, or to `None`, if you want no constraints.
 """
 
 _common_doc_parallelism = """\
-    n_jobs
-        Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
-        If the number of cells is smaller than `2 * chunksize` a single
-        worker thread will be used to avoid overhead.
-    chunksize
-        Number of objects to process per chunk. Each worker thread receives
-        data in chunks. Smaller chunks result in a more meaningful progressbar,
-        but more overhead.
+n_jobs
+    Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
+    If the number of cells is smaller than `2 * chunksize` a single
+    worker thread will be used to avoid overhead.
+chunksize
+    Number of objects to process per chunk. Each worker thread receives
+    data in chunks. Smaller chunks result in a more meaningful progressbar,
+    but more overhead.
 """
 
 _common_doc_return_values = """\
-    Returns
-    -------
-    clonotype
-        A Series containing the clonotype id for each cell. Will be stored in
-        `adata.obs[key_added]` if `inplace` is `True`
-    clonotype_size
-        A Series containing the number of cells in the respective clonotype
-        for each cell. Will be stored in `adata.obs[f"{key_added}_size"]` if `inplace`
-        is `True`.
-    distance_result
-        A dictionary containing
-            * `distances`: A sparse, pairwise distance matrix between unique
-            receptor configurations
-            * `cell_indices`: An array of arrays, containing the adata.obs_names
-            (cell indices) for each row in the distance matrix.
-        If `inplace` is `True`, this is added to `adata.uns[key_added]`.
+Returns
+-------
+clonotype
+    A Series containing the clonotype id for each cell. Will be stored in
+    `adata.obs[key_added]` if `inplace` is `True`
+clonotype_size
+    A Series containing the number of cells in the respective clonotype
+    for each cell. Will be stored in `adata.obs[f"{key_added}_size"]` if `inplace`
+    is `True`.
+distance_result
+    A dictionary containing
+     * `distances`: A sparse, pairwise distance matrix between unique
+       receptor configurations
+     * `cell_indices`: An array of arrays, containing the adata.obs_names
+       (cell indices) for each row in the distance matrix.
+
+    If `inplace` is `True`, this is added to `adata.uns[key_added]`.
 """
 
 
@@ -156,7 +159,7 @@ def define_clonotype_clusters(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
     chunksize: int = 2000,
-) -> Optional[Tuple[pd.Series, pd.Series, Dict]]:
+) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
 
@@ -168,8 +171,8 @@ def define_clonotype_clusters(
     Requires running :func:`~scirpy.pp.ir_dist` with the same `sequence` and
     `metric` values first.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     adata
         Annotated data matrix
     sequence
@@ -183,12 +186,13 @@ def define_clonotype_clusters(
         The column name under which the clonotype clusters and cluster sizes
         will be stored in `adata.obs` and under which the clonotype network will be
         stored in `adata.uns`.
-            * Defaults to `cc_{{sequence}}_{{metric}}`, e.g. `cc_aa_levenshtein`,
-              where `cc` stands for "clonotype cluster".
-            * The clonotype sizes will be stored in `{{key_added}}_size`,
-              e.g. `cc_aa_levenshtein_size`.
-            * The clonotype x clonotype network will be stored in `{{key_added}}_dist`,
-              e.g. `cc_aa_levenshtein_dist`.
+
+          * Defaults to `cc_{{sequence}}_{{metric}}`, e.g. `cc_aa_levenshtein`,
+            where `cc` stands for "clonotype cluster".
+          * The clonotype sizes will be stored in `{{key_added}}_size`,
+            e.g. `cc_aa_levenshtein_size`.
+          * The clonotype x clonotype network will be stored in `{{key_added}}_dist`,
+            e.g. `cc_aa_levenshtein_dist`.
 
     partitions
         How to find graph partitions that define a clonotype.
@@ -290,7 +294,7 @@ def define_clonotypes(
     key_added: str = "clonotype",
     distance_key: Union[str, None] = None,
     **kwargs,
-) -> Union[Tuple[pd.Series, pd.Series, Dict], None]:
+) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
     """
     Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
     sequence identity.
@@ -315,6 +319,7 @@ def define_clonotypes(
     {paralellism}
 
     {return_values}
+
     """
     if distance_key is None and "ir_dist_nt_identity" not in adata.uns:
         # For the case of "clonotypes" we want to compute the distance automatically

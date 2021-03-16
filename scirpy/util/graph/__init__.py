@@ -19,8 +19,8 @@ def igraph_from_sparse_matrix(
     """
     Get an igraph object from an adjacency or distance matrix.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     matrix
         A sparse matrix that represents the connectivity or distance matrix for the graph.
         Zero-entries mean "no edge between the two nodes".

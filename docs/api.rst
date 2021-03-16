@@ -192,6 +192,7 @@ Utility functions: `util`
    :toctree: ./generated
 
    graph.layout_components
+   graph.layout_fr_size_aware
    graph.igraph_from_sparse_matrix
 
 

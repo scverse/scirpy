@@ -110,11 +110,14 @@ def _ir_dist(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
 ) -> Union[dict, None]:
-    """Computes a sequence-distance metric between all unique VJ CDR3 sequences and
+    """
+    Computes a sequence-distance metric between all unique VJ CDR3 sequences and
     between all unique VDJ CDR3 sequences.
 
     This is a required proprocessing step for clonotype definition and clonotype
     networks.
+
+    {dist_mat}
 
     Parameters
     ----------
@@ -127,14 +130,14 @@ def _ir_dist(
     key_added
         Dictionary key under which the results will be stored in `adata.uns` if
         `inplace=True`. Defaults to `ir_dist_{{sequence}}_{{metric}}`.
-        If `metric` is an instance of :class:`scirpy.ir_dist.metric.DistanceCalculator`,
+        If `metric` is an instance of :class:`scirpy.ir_dist.metrics.DistanceCalculator`,
         `{{metric}}` defaults to `custom`.
     inplace
         If true, store the result in `adata.uns`. Otherwise return a dictionary
         with the results.
     n_jobs
         Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metric.DistanceCalculator`.
+        :class:`scirpy.ir_dist.metrics.DistanceCalculator`.
 
     Returns
     -------
@@ -190,10 +193,16 @@ def sequence_dist(
     n_jobs: Union[None, int] = None,
     **kwargs,
 ) -> csr_matrix:
-    """\
+    """
     Calculate a sequence x sequence distance matrix.
 
     {dist_mat}
+
+    When `seqs` or `seqs2` includes non-unique values, the function internally
+    uses only unique sequences to calculate the distances. Note that, if the
+    input arrays contain large numbers of duplicated values (i.e. hundreds each),
+    this will lead to large "dense" blocks in the sparse matrix. This will result in
+    slow processing and high memory usage.
 
     Parameters
     ----------
@@ -210,14 +219,8 @@ def sequence_dist(
         paralellization.
 
         A cutoff of 0 implies the `identity` metric.
-    **kwargs
+    kwargs
         Additional parameters passed to the :class:`~scirpy.ir_dist.metrics.DistanceCalculator`.
-
-    When `seqs` or `seqs2` includes non-unique values, the function internally
-    uses only unique sequences to calculate the distances. Note that, if the
-    input arrays contain large numbers of duplicated values (i.e. hundreds each),
-    this will lead to large "dense" blocks in the sparse matrix. This will result in
-    slow processing and high memory usage.
 
     Returns
     -------
