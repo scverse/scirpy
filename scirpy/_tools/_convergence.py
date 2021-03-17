@@ -2,6 +2,7 @@ from anndata import AnnData
 from typing import Optional
 import pandas as pd
 from pandas.core.arrays.categorical import Categorical
+from ..util import _is_na
 
 
 def clonotype_convergence(
@@ -59,8 +60,9 @@ def clonotype_convergence(
     result = adata.obs[key_coarse].isin(convergent_clonotypes)
     result = pd.Categorical(
         ["convergent" if x else "not convergent" for x in result],
-        categories=["convergent", "not convergent"],
+        categories=["convergent", "not convergent", "nan"],
     )
+    result[_is_na(adata.obs[key_fine]) | _is_na(adata.obs[key_coarse])] = "nan"
     if inplace:
         adata.obs[key_added] = result
     else:
