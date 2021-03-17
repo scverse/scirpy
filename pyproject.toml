@@ -27,7 +27,7 @@ requires = [
     'anndata>=0.7.3',
     'scanpy>=1.6.0',
     'pandas>=1.0',
-    'numpy',
+    'numpy>=1.17.0',
     'scipy',
     # parasail 1.2.1 fails to be installd on MacOS
     'parasail != 1.2.1',
