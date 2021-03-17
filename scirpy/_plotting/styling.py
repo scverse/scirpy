@@ -125,7 +125,7 @@ def _get_colors(
     If colors are not stored, new ones are assigned.
 
     Since we currently don't plot expression values, only keys from `obs`
-    are supportet, while in scanpy `values_to_plot` (used instead of `obs_key`)
+    are supported, while in scanpy `values_to_plot` (used instead of `obs_key`)
     can be a key from either `obs` or `var`.
 
     TODO: This makes use of private scanpy functions. This is Evil and
@@ -135,7 +135,7 @@ def _get_colors(
     adata._sanitize()
     values = adata.obs[obs_key].values
     color_key = f"{obs_key}_colors"
-    if palette:
+    if palette is not None:
         _set_colors_for_categorical_obs(adata, obs_key, palette)
     elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
         values.categories

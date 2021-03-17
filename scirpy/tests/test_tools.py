@@ -1,13 +1,12 @@
 # pylama:ignore=W0611,W0404
 import pandas as pd
-import scirpy as st
+import scirpy as ir
 from scanpy import AnnData
 import pytest
 import numpy.testing as npt
 import pandas.testing as pdt
 import numpy as np
 import itertools
-from scirpy.util import _get_from_uns
 from .fixtures import adata_clonotype, adata_tra, adata_vdj, adata_diversity
 
 
@@ -40,7 +39,7 @@ def test_chain_pairing():
         ],
     )
     adata = AnnData(obs=obs)
-    res = st.tl.chain_pairing(adata, inplace=False)
+    res = ir.tl.chain_pairing(adata, inplace=False)
     npt.assert_equal(
         res,
         [
@@ -97,7 +96,7 @@ def test_chain_qc():
         ]
     adata = AnnData(obs=obs)
 
-    st.tl.chain_qc(adata, key_added=("rec_type", "rec_subtype", "ch_pairing"))
+    ir.tl.chain_qc(adata, key_added=("rec_type", "rec_subtype", "ch_pairing"))
 
     npt.assert_equal(
         adata.obs["rec_type"],
@@ -151,13 +150,13 @@ def test_chain_qc():
 def test_clip_and_count_clonotypes(adata_clonotype):
     adata = adata_clonotype
 
-    res = st._tools._clonal_expansion._clip_and_count(
+    res = ir._tools._clonal_expansion._clip_and_count(
         adata, groupby="group", target_col="clonotype", clip_at=2, inplace=False
     )
     npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
 
     # check without group
-    res = st._tools._clonal_expansion._clip_and_count(
+    res = ir._tools._clonal_expansion._clip_and_count(
         adata, target_col="clonotype", clip_at=5, inplace=False
     )
     npt.assert_equal(res, np.array(["4"] * 3 + ["1"] + ["4"] + ["1"] * 2 + ["2"] * 2))
@@ -166,7 +165,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     adata.obs["new_col"] = adata.obs["clonotype"]
     adata.obs.drop("clonotype", axis="columns", inplace=True)
 
-    st._tools._clonal_expansion._clip_and_count(
+    ir._tools._clonal_expansion._clip_and_count(
         adata,
         groupby="group",
         target_col="new_col",
@@ -179,7 +178,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
 
     # check if it raises value error if target_col does not exist
     with pytest.raises(ValueError):
-        st._tools._clonal_expansion._clip_and_count(
+        ir._tools._clonal_expansion._clip_and_count(
             adata,
             groupby="group",
             target_col="clonotype",
@@ -189,19 +188,19 @@ def test_clip_and_count_clonotypes(adata_clonotype):
 
 
 def test_clonal_expansion(adata_clonotype):
-    res = st.tl.clonal_expansion(
+    res = ir.tl.clonal_expansion(
         adata_clonotype, expanded_in="group", clip_at=2, inplace=False
     )
     npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
 
-    res = st.tl.clonal_expansion(adata_clonotype, clip_at=2, inplace=False)
+    res = ir.tl.clonal_expansion(adata_clonotype, clip_at=2, inplace=False)
     npt.assert_equal(
         res, np.array([">= 2"] * 3 + ["1"] + [">= 2"] + ["1"] * 2 + [">= 2"] * 2)
     )
 
 
 def test_clonal_expansion_summary(adata_clonotype):
-    res = st.tl.summarize_clonal_expansion(
+    res = ir.tl.summarize_clonal_expansion(
         adata_clonotype, "group", target_col="clonotype", clip_at=2, normalize=True
     )
     pdt.assert_frame_equal(
@@ -213,7 +212,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
 
     # test the `expanded_in` parameter.
-    res = st.tl.summarize_clonal_expansion(
+    res = ir.tl.summarize_clonal_expansion(
         adata_clonotype,
         "group",
         target_col="clonotype",
@@ -230,7 +229,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
 
     # test the `summarize_by` parameter.
-    res = st.tl.summarize_clonal_expansion(
+    res = ir.tl.summarize_clonal_expansion(
         adata_clonotype,
         "group",
         target_col="clonotype",
@@ -246,7 +245,7 @@ def test_clonal_expansion_summary(adata_clonotype):
         check_names=False,
     )
 
-    res_counts = st.tl.summarize_clonal_expansion(
+    res_counts = ir.tl.summarize_clonal_expansion(
         adata_clonotype, "group", target_col="clonotype", clip_at=2, normalize=False
     )
     print(res_counts)
@@ -261,12 +260,12 @@ def test_clonal_expansion_summary(adata_clonotype):
 
 
 def test_alpha_diversity(adata_diversity):
-    res = st.tl.alpha_diversity(
+    res = ir.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=False
     )
     assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 1.0}}
 
-    st.tl.alpha_diversity(
+    ir.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=True
     )
     npt.assert_equal(
@@ -290,7 +289,7 @@ def test_group_abundance():
     adata = AnnData(obs=obs)
 
     # Check counts
-    res = st.tl.group_abundance(
+    res = ir.tl.group_abundance(
         adata, groupby="clonotype", target_col="group", fraction=False
     )
     expected_count = pd.DataFrame.from_dict(
@@ -303,7 +302,7 @@ def test_group_abundance():
     npt.assert_equal(res.values, expected_count.values)
 
     # Check fractions
-    res = st.tl.group_abundance(
+    res = ir.tl.group_abundance(
         adata, groupby="clonotype", target_col="group", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
@@ -316,7 +315,7 @@ def test_group_abundance():
     npt.assert_equal(res.values, expected_frac.values)
 
     # Check swapped
-    res = st.tl.group_abundance(
+    res = ir.tl.group_abundance(
         adata, groupby="group", target_col="clonotype", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
@@ -331,13 +330,13 @@ def test_group_abundance():
 
 def test_spectratype(adata_tra):
     # Check numbers
-    res1 = st.tl.spectratype(
+    res1 = ir.tl.spectratype(
         adata_tra,
         groupby="IR_VJ_1_cdr3",
         target_col="sample",
         fraction=False,
     )
-    res2 = st.tl.spectratype(
+    res2 = ir.tl.spectratype(
         adata_tra,
         groupby=("IR_VJ_1_cdr3",),
         target_col="sample",
@@ -370,7 +369,7 @@ def test_spectratype(adata_tra):
     npt.assert_equal(res2.values, expected_count.values)
 
     # Check fractions
-    res = st.tl.spectratype(
+    res = ir.tl.spectratype(
         adata_tra, groupby="IR_VJ_1_cdr3", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
@@ -400,7 +399,7 @@ def test_spectratype(adata_tra):
 
 
 def test_repertoire_overlap(adata_tra):
-    res, d, l = st.tl.repertoire_overlap(adata_tra, "sample", inplace=False)
+    res, d, l = ir.tl.repertoire_overlap(adata_tra, "sample", inplace=False)
     expected_cnt = pd.DataFrame.from_dict(
         {
             1: {
@@ -458,7 +457,7 @@ def test_repertoire_overlap(adata_tra):
 
 
 def test_clonotype_imbalance(adata_tra):
-    freq, stat = st.tl.clonotype_imbalance(
+    freq, stat = ir.tl.clonotype_imbalance(
         adata_tra[
             adata_tra.obs.index.isin(
                 [

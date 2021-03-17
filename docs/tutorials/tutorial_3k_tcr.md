@@ -23,11 +23,6 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
-import sys
-import warnings
-
-sys.path.insert(0, "../..")
-warnings.filterwarnings("ignore", category=FutureWarning)
 ```
 
 ```python
@@ -35,7 +30,10 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scirpy as ir
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, cm as mpl_cm
+from cycler import cycler
+
+sc.set_figure_params(figsize=(4, 4))
 ```
 
 ```python
@@ -136,7 +134,7 @@ sc.pl.umap(
     adata,
     color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"],
     ncols=2,
-    wspace=0.5,
+    wspace=0.7,
 )
 ```
 
@@ -147,36 +145,37 @@ While most of T cell receptors have exactly one pair of α and β chains, up to 
 T cells can have *dual TCRs*, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
 Using the :func:`scirpy.tl.chain_qc` function, we can add a summary
-about the T cell receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
+about the Immune cell-receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
 
 .. note:: **chain pairing**
 
     - *Orphan chain* refers to cells that have either a single alpha or beta receptor chain.
     - *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain.
-    - *Multichain* refers to cells with more than two receptor pairs detected. These cells are likely doublets.
+    - *:term:`Multichain <Multichain-cell>`* refers to cells with more than two receptor pairs detected. 
+      These cells are likely doublets.
 
 
 .. note:: **receptor type and receptor subtype**
 
-    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains 
-      are labelled as `ambiguous`. 
-    - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations. 
-    
-    For more details, see :func:`scirpy.tl.chain_qc`. 
+    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains
+      are labelled as `ambiguous`.
+    - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations.
+
+    For more details, see :func:`scirpy.tl.chain_qc`.
 <!-- #endraw -->
 
 ```python
 ir.tl.chain_qc(adata)
 ```
 
-As expected, the dataset contains only α/β T-cell receptors: 
+As expected, the dataset contains only α/β T-cell receptors:
 
 ```python
-ir.pl.group_abundance(adata, groupby="receptor_subtype", target_col="source")
+ax = ir.pl.group_abundance(adata, groupby="receptor_subtype", target_col="source")
 ```
 
 ```python
-ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
+ax = ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
 ```
 
 Indeed, in this dataset, ~6% of cells have more than
@@ -195,38 +194,48 @@ print(
 )
 ```
 
-Next, we visualize the _Multichain_ cells on the UMAP plot and exclude them from downstream analysis:
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+Next, we visualize the :term:`Multichain-cells <Multichain-cell>` on the UMAP plot and exclude them from downstream analysis:
+<!-- #endraw -->
 
 ```python
-sc.pl.umap(adata, color="multi_chain")
+sc.pl.umap(adata, color="chain_pairing", groups="multichain")
 ```
 
 ```python
-adata = adata[adata.obs["multi_chain"] != "True", :].copy()
+adata = adata[adata.obs["chain_pairing"] != "multichain", :].copy()
+```
+
+Similarly, we can use the `chain_pairing` information to exclude all cells that don't have at least 
+one full pair of receptor sequences:
+
+```python
+adata = adata[~adata.obs["chain_pairing"].isin(["orphan VDJ", "orphan VJ"]), :].copy()
+```
+
+Finally, we re-create the chain-pairing plot to ensure that the filtering worked 
+as expected: 
+
+```python
+ax = ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
 ```
 
 ## Define clonotypes and clonotype clusters
 
+<!-- TODO explain that there are different values for dual_ir -->
+
+
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+.. warning::
+
+    **The way scirpy computes clonotypes and clonotype clusters has been changed in v0.7.0.**
+    
+    Code written based on scirpy versions prior to v0.7.0 needs to be updated. Please read the `release notes <https://github.com/icbi-lab/scirpy/releases/tag/v0.7.0>`_ and follow the description in this section. 
+    
 
 In this section, we will define and visualize :term:`clonotypes <Clonotype>` and :term:`clonotype clusters <Clonotype cluster>`.
 
 *Scirpy* implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with *scanpy*.
-
-.. list-table:: Analysis steps on transcriptomics data
-    :widths: 40 60
-    :header-rows: 1
-
-    * - scanpy function
-      - objective
-    * - :func:`scanpy.pp.neighbors`
-      - Compute a nearest-neighbor graph based on gene expression.
-    * - :func:`scanpy.tl.leiden`
-      - Cluster cells by the similarity of their transcriptional profiles.
-    * - :func:`scanpy.tl.umap`
-      - Compute positions of cells in UMAP embedding.
-    * - :func:`scanpy.pl.umap`
-      - Plot UMAP colored by different parameters.
 
 .. list-table:: Analysis steps on IR data
     :widths: 40 60
@@ -234,15 +243,16 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
 
     - - scirpy function
       - objective
-    - - :func:`scirpy.pp.ir_neighbors`
-      - Compute a neighborhood graph of CDR3-sequences.
+    - - :func:`scirpy.pp.ir_dist`
+      - Compute sequence-based distance matrices for all :term:`VJ <Chain locus>` and
+        :term:`VDJ <Chain locus>` sequences. 
     - - :func:`scirpy.tl.define_clonotypes`
       - Define :term:`clonotypes <Clonotype>` by nucleotide
         sequence identity.
     - - :func:`scirpy.tl.define_clonotype_clusters`
-      - Cluster cells by the similarity of their CDR3-sequences
+      - Cluster cells by the similarity of their CDR3-sequences.
     - - :func:`scirpy.tl.clonotype_network`
-      - Compute positions of cells in clonotype network.
+      - Compute layout of the clonotype network.
     - - :func:`scirpy.pl.clonotype_network`
       - Plot clonotype network colored by different parameters.
 
@@ -251,38 +261,52 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
 ### Compute CDR3 neighborhood graph and define clonotypes
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-:func:`scirpy.pp.ir_neighbors` computes a neighborhood graph based on :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity.
+:func:`scirpy.pp.ir_dist` computes distances between :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity. It creates two distance matrices: one for all unique :term:`VJ <Chain locus>` sequences and one for all unique :term:`VDJ <Chain locus>` sequences. The distance matrices are added to `adata.uns`. 
+
+The function :func:`scirpy.tl.define_clonotypes` matches cells based on the distances of their 
+`VJ` and `VDJ` CDR3-sequences and value of the function parameters `dual_ir` and `receptor_arms`. Finally, it
+detects connected modules in the graph and annotates them as clonotypes. This will add a `clonotype` and
+`clonotype_size` column to `adata.obs`.
 
 Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity.
 In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on
 amino-acid similarity.
-
-The function :func:`scirpy.tl.define_clonotypes` will detect connected modules
-in the graph and annotate them as clonotypes. This will add a `clonotype` and
-`clonotype_size` column to `adata.obs`.
 <!-- #endraw -->
 
 ```python
-# using default parameters, `ir_neighbors` will compute nucleotide sequence identity
-ir.pp.ir_neighbors(adata, receptor_arms="all", dual_ir="primary_only")
-ir.tl.define_clonotypes(adata)
+# using default parameters, `ir_dist` will compute nucleotide sequence identity
+ir.pp.ir_dist(adata)
+ir.tl.define_clonotypes(adata, receptor_arms="all", dual_ir="primary_only")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 To visualize the network we first call :func:`scirpy.tl.clonotype_network` to compute the layout.
 We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend setting the
-`min_size` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
+`min_cells` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
 <!-- #endraw -->
 
 ```python
-ir.tl.clonotype_network(adata, min_size=2)
-ir.pl.clonotype_network(adata, color="clonotype", legend_loc="none")
+ir.tl.clonotype_network(adata, min_cells=2)
+```
+
+<!-- #raw raw_mimetype="text/restructuredtext" -->
+The resulting plot is a network, where each dot represents cells with identical 
+receptor configurations. As we define :term:`clonotypes <Clonotype>` as cells with identical CDR3-sequences, each 
+dot is also a clonotype. For each clonotype, the numeric clonotype id is shown in the graph. 
+The size of each dot refers to the number of cells with the same receptor configurations. 
+Categorical variables can be visualized as pie charts. 
+<!-- #endraw -->
+
+```python
+ir.pl.clonotype_network(
+    adata, color="source", base_size=20, label_fontsize=9, panel_size=(7, 7)
+)
 ```
 
 ### Re-compute CDR3 neighborhood graph and define clonotype clusters
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-We can now re-compute the neighborhood graph based on amino-acid sequence similarity
+We can now re-compute the clonotype network based on amino-acid sequence similarity
 and define :term:`clonotype clusters <Clonotype cluster>`.
 
 To this end, we need to change set `metric="alignment"` and specify a `cutoff` parameter.
@@ -298,52 +322,42 @@ sc.settings.verbosity = 4
 ```
 
 ```python
-ir.pp.ir_neighbors(
+ir.pp.ir_dist(
     adata,
     metric="alignment",
     sequence="aa",
     cutoff=15,
-    receptor_arms="all",
-    dual_ir="all",
-)
-ir.tl.define_clonotype_clusters(
-    adata, partitions="connected", sequence="aa", metric="alignment", within_group=None
 )
 ```
 
 ```python
-ir.tl.clonotype_network(adata, min_size=4, sequence="aa", metric="alignment")
+ir.tl.define_clonotype_clusters(
+    adata, sequence="aa", metric="alignment", receptor_arms="all", dual_ir="any"
+)
 ```
 
-Compared to the previous plot, we observe slightly larger clusters that are not necessarily fully connected any more.
+```python
+ir.tl.clonotype_network(adata, min_cells=3, sequence="aa", metric="alignment")
+```
+
+Compared to the previous plot, we observere several connected dots. 
+Each fully connected subnetwork represents a "clonotype cluster", each dot 
+still represents cells with identical receptor configurations.
+
+The dots are colored by patient. We observe, that for instance, clonotypes `101` and `68` (left top and bottom) are *private*, i.e. they contain cells from a single patient only. On the other hand, clonotype `159` (left middle) is 
+*public*, i.e. it is shared across patients *Lung1* and *Lung3*. 
 
 ```python
 ir.pl.clonotype_network(
-    adata,
-    color="ct_cluster_aa_alignment",
-    legend_fontoutline=3,
-    size=80,
-    panel_size=(6, 6),
-    legend_loc="on data",
+    adata, color="patient", label_fontsize=9, panel_size=(7, 7), base_size=20
 )
 ```
 
-Now we show the same graph, colored by patient.
-We observe that for instance clonotypes 104 and 160 (center-left) are _private_, i.e. they contain cells from
-a single sample only. On the other hand, for instance clonotype 233 (top-left) is _public_, i.e.
-it is shared across patients _Lung5_ and _Lung1_ and _Lung3_.
-
-```python
-ir.pl.clonotype_network(adata, color="patient", size=80, panel_size=(6, 6))
-```
-
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
-For instance, we can find out that clonotype `233` does not have any detected :term:`VJ-chain<V(D)J>`. 
-In this context, the VJ-chain refers to a TCR-alpha chain. 
+When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph. 
 
 ```python
-adata.obs.loc[
-    adata.obs["ct_cluster_aa_alignment"] == "233",
+adata.obs.loc[adata.obs["cc_aa_alignment"] == "159", :].groupby(
     [
         "IR_VJ_1_cdr3",
         "IR_VJ_2_cdr3",
@@ -351,7 +365,8 @@ adata.obs.loc[
         "IR_VDJ_2_cdr3",
         "receptor_subtype",
     ],
-]
+    observed=True,
+).size().reset_index(name="n_cells")
 ```
 
 ### Including the V-gene in clonotype definition
@@ -367,31 +382,34 @@ ir.tl.define_clonotype_clusters(
     adata,
     sequence="aa",
     metric="alignment",
-    same_v_gene="primary_only",
-    key_added="ct_cluster_aa_alignment_same_v",
+    receptor_arms="all",
+    dual_ir="any",
+    same_v_gene=True,
+    key_added="cc_aa_alignment_same_v",
 )
 ```
 
 ```python
 # find clonotypes with more than one `clonotype_same_v`
-ct_different_v = adata.obs.groupby("ct_cluster_aa_alignment").apply(
-    lambda x: x["ct_cluster_aa_alignment_same_v"].unique().size > 1
+ct_different_v = adata.obs.groupby("cc_aa_alignment").apply(
+    lambda x: x["cc_aa_alignment_same_v"].nunique() > 1
 )
-ct_different_v = ct_different_v[ct_different_v].index.values
+ct_different_v = ct_different_v[ct_different_v].index.values.tolist()
 ct_different_v
 ```
 
+Here, we see that the clonotype clusters `280` and `765` get split into `(280, 788)` and `(765, 1071)`, respectively, when the `same_v_gene` flag is set. 
+
 ```python
-# Display the first 2 clonotypes with different v genes
 adata.obs.loc[
-    adata.obs["ct_cluster_aa_alignment"].isin(ct_different_v[:2]),
+    adata.obs["cc_aa_alignment"].isin(ct_different_v),
     [
-        "ct_cluster_aa_alignment",
-        "ct_cluster_aa_alignment_same_v",
+        "cc_aa_alignment",
+        "cc_aa_alignment_same_v",
         "IR_VJ_1_v_gene",
         "IR_VDJ_1_v_gene",
     ],
-].sort_values("ct_cluster_aa_alignment").drop_duplicates().reset_index(drop=True)
+].sort_values("cc_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
 
 ## Clonotype analysis
@@ -469,7 +487,7 @@ others are *public*, i.e. they are shared across different tissues.
 
 ```python
 ax = ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="source", max_cols=15, fig_kws={"dpi": 100}
+    adata, groupby="clonotype", target_col="source", max_cols=15, figsize=(5, 3)
 )
 ```
 
@@ -477,7 +495,7 @@ However, clonotypes that are shared between *patients* are rare:
 
 ```python
 ax = ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="patient", max_cols=15, fig_kws={"dpi": 100}
+    adata, groupby="clonotype", target_col="patient", max_cols=15, figsize=(5, 3)
 )
 ```
 
@@ -490,7 +508,7 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 <!-- #endraw -->
 
 ```python
-ir.pl.group_abundance(
+ax = ir.pl.group_abundance(
     adata, groupby="IR_VJ_1_v_gene", target_col="cluster", normalize=True, max_cols=10
 )
 ```
@@ -498,7 +516,7 @@ ir.pl.group_abundance(
 We can pre-select groups by filtering `adata`:
 
 ```python
-ir.pl.group_abundance(
+ax = ir.pl.group_abundance(
     adata[
         adata.obs["IR_VDJ_1_v_gene"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
@@ -516,14 +534,14 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-ir.pl.vdj_usage(adata, full_combination=False, max_segments=None, max_ribbons=30)
+ax = ir.pl.vdj_usage(adata, full_combination=False, max_segments=None, max_ribbons=30)
 ```
 
 We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes:
 
 ```python
 ir.pl.vdj_usage(
-    adata[adata.obs["clonotype"].isin(["274_TCR", "277_TCR", "211_TCR", "106_TCR"]), :],
+    adata[adata.obs["clonotype"].isin(["68", "101", "127", "161"]), :],
     max_ribbons=None,
     max_segments=100,
 )
@@ -648,10 +666,10 @@ freq, stat = ir.tl.clonotype_imbalance(
     control_label="CD8_Trm",
     inplace=False,
 )
-top_differential_clonotypes = stat["clonotype"].tolist()[:5]
+top_differential_clonotypes = stat["clonotype"].tolist()[:3]
 ```
 
-Showing top clonotypes on a UMAP clearly shows that clonotype 163 is featured by CD8+ tissue-resident memory T cells, while clonotype 277 by CD8+ effector T-cells.
+Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells. 
 
 ```python
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
@@ -665,6 +683,7 @@ sc.pl.umap(
     size=[
         80 if c in top_differential_clonotypes else 30 for c in adata.obs["clonotype"]
     ],
+    palette=cycler(color=mpl_cm.Dark2_r.colors)
 )
 ```
 
@@ -685,7 +704,7 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clonotype", groups=["163_TCR"], reference="277_TCR", method="wilcoxon"
+    adata, "clonotype", groups=["101"], reference="68", method="wilcoxon"
 )
-sc.pl.rank_genes_groups_violin(adata, groups="163_TCR", n_genes=15)
+sc.pl.rank_genes_groups_violin(adata, groups="101", n_genes=15)
 ```

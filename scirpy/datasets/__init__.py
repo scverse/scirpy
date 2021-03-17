@@ -45,8 +45,6 @@ def wu2020_3k() -> AnnData:
 
     {processing_code}
     """
-    # os.makedirs(settings.datasetdir, exist_ok=True)
-    # TODO host it on github or similar
     url = "https://github.com/icbi-lab/scirpy/releases/download/d0.1.0/wu2020_3k.h5ad"
     filename = settings.datasetdir / "wu2020_3k.h5ad"
     adata = read(filename, backup_url=url)

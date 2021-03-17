@@ -4,10 +4,14 @@ from scirpy.util import (
     _is_true,
     _normalize_counts,
     _is_symmetric,
-    _reduce_nonzero,
     _translate_dna_to_protein,
 )
-from scirpy.util.graph import layout_components
+from scirpy.util.graph import (
+    igraph_from_sparse_matrix,
+    layout_components,
+    _distance_to_connectivity,
+    _get_sparse_from_igraph,
+)
 from itertools import combinations
 import igraph as ig
 import numpy as np
@@ -20,24 +24,7 @@ from .fixtures import adata_tra
 import warnings
 
 
-def test_reduce_nonzero():
-    A = np.array([[0, 0, 3], [1, 2, 5], [7, 0, 0]])
-    B = np.array([[1, 0, 3], [2, 1, 0], [6, 0, 5]])
-    A_csr = scipy.sparse.csr_matrix(A)
-    B_csr = scipy.sparse.csr_matrix(B)
-    A_csc = scipy.sparse.csc_matrix(A)
-    B_csc = scipy.sparse.csc_matrix(B)
-
-    expected = np.array([[1, 0, 3], [1, 1, 5], [6, 0, 5]])
-
-    with pytest.raises(ValueError):
-        _reduce_nonzero(A, B)
-    npt.assert_equal(_reduce_nonzero(A_csr, B_csr).toarray(), expected)
-    npt.assert_equal(_reduce_nonzero(A_csc, B_csc).toarray(), expected)
-    npt.assert_equal(_reduce_nonzero(A_csr, A_csr.copy()).toarray(), A_csr.toarray())
-
-
-def test_is_symmatric():
+def test_is_symmetric():
     M = np.array([[1, 2, 2], [2, 1, 3], [2, 3, 1]])
     S_csr = scipy.sparse.csr_matrix(M)
     S_csc = scipy.sparse.csc_matrix(M)
@@ -177,7 +164,10 @@ def test_normalize_counts(group_df):
     )
 
 
-def test_layout_components():
+@pytest.mark.filterwarnings("ignore:UserWarning")
+@pytest.mark.parametrize("arrange_boxes", ("size", "rpack", "squarify"))
+@pytest.mark.parametrize("component_layout", ("fr_size_aware", "fr"))
+def test_layout_components(arrange_boxes, component_layout):
     g = ig.Graph()
 
     # add 100 unconnected nodes
@@ -199,17 +189,99 @@ def test_layout_components():
         g.add_edges(combinations(range(n, n + ii), 2))
         n += ii
 
-    layout_components(g, arrange_boxes="size", component_layout="fr")
     try:
-        layout_components(g, arrange_boxes="rpack", component_layout="fr")
+        layout_components(
+            g, arrange_boxes=arrange_boxes, component_layout=component_layout
+        )
     except ImportError:
         warnings.warn(
-            "The 'rpack' layout-test was skipped because rectangle "
+            f"The '{component_layout}' layout-test was skipped because rectangle "
             "packer is not installed. "
         )
-    layout_components(g, arrange_boxes="squarify", component_layout="fr")
 
 
 def test_translate_dna_to_protein(adata_tra):
     for nt, aa in zip(adata_tra.obs["IR_VJ_1_cdr3_nt"], adata_tra.obs["IR_VJ_1_cdr3"]):
         assert _translate_dna_to_protein(nt) == aa
+
+
+@pytest.mark.parametrize(
+    "dist,expected_conn,max_value",
+    [
+        (
+            [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]],
+            [[0, 1, 1, 0.6], [0, 0, 0.9, 0.3], [1, 0.6, 0, 0.9], [0.1, 0, 0, 0]],
+            None,
+        ),
+        (
+            [[0, 1, 1, 5], [0, 0, 2, 8], [1, 5, 0, 2], [10, 0, 0, 0]],
+            [
+                [0, 1, 1, 0.8],
+                [0, 0, 0.95, 0.65],
+                [1, 0.8, 0, 0.95],
+                [0.55, 0, 0, 0],
+            ],
+            20,
+        ),
+        (
+            [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
+            [[0, 1, 1, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
+            None,
+        ),
+    ],
+)
+def test_dist_to_connectivities(dist, expected_conn, max_value):
+    dist_mat = scipy.sparse.csr_matrix(dist)
+    C = _distance_to_connectivity(dist_mat, max_value=max_value)
+    assert C.nnz == dist_mat.nnz
+    npt.assert_equal(
+        C.toarray(),
+        np.array(expected_conn),
+    )
+
+
+@pytest.mark.parametrize("simplify", [True, False])
+@pytest.mark.parametrize(
+    "matrix,is_symmetric",
+    [
+        (
+            [
+                [1.0, 0.0, 0.0, 0.6],
+                [0.0, 1.0, 0.9, 0.3],
+                [1.0, 0.6, 1.0, 0.9],
+                [0.1, 0.0, 0.0, 1.0],
+            ],
+            False,
+        ),
+        (
+            [
+                [0.0, 1.0, 1.0, 0.6],
+                [0.0, 0.0, 0.9, 0.3],
+                [1.0, 0.6, 0.0, 0.9],
+                [0.1, 0.0, 0.0, 0.0],
+            ],
+            False,
+        ),
+        (
+            [
+                [1.0, 0.3, 0.0, 0.6],
+                [0.3, 1.0, 0.9, 0.3],
+                [0.0, 0.9, 1.0, 0.9],
+                [0.6, 0.3, 0.9, 1.0],
+            ],
+            True,
+        ),
+    ],
+)
+def test_igraph_from_adjacency(matrix, is_symmetric, simplify):
+    matrix = scipy.sparse.csr_matrix(matrix)
+    g = igraph_from_sparse_matrix(matrix, matrix_type="connectivity", simplify=simplify)
+    assert len(list(g.vs)) == matrix.shape[0]
+    matrix_roundtrip = _get_sparse_from_igraph(
+        g, simplified=simplify, weight_attr="weight"
+    )
+    if simplify and not is_symmetric:
+        with pytest.raises(AssertionError):
+            npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())
+    else:
+        npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())

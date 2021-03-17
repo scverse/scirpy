@@ -2,8 +2,11 @@ import pytest
 import pandas as pd
 from anndata import AnnData
 import numpy as np
+import scanpy
+from scipy import sparse
 from scipy.sparse.csr import csr_matrix
 from scirpy.util import _is_symmetric
+import scirpy as ir
 
 
 @pytest.fixture
@@ -34,7 +37,20 @@ def adata_cdr3():
                 "TRA",
                 "TRB",
             ],
-            ["cell3", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            # This row has no chains, but "has_ir" = True. That can happen if
+            # the user does not filter the data.
+            [
+                "cell3",
+                "nan",
+                "nan",
+                "nan",
+                "nan",
+                "nan",
+                "nan",
+                "nan",
+                "nan",
+                "nan",
+            ],
             [
                 "cell4",
                 "AAA",
@@ -47,7 +63,18 @@ def adata_cdr3():
                 "TRA",
                 "TRB",
             ],
-            ["cell5", "nan", "AAA", "LLL", "nan", "nan", "nan", "TRB", "TRA", "nan"],
+            [
+                "cell5",
+                "AAA",
+                "nan",
+                "LLL",
+                "nan",
+                "nan",
+                "nan",
+                "TRB",
+                "TRA",
+                "nan",
+            ],
         ],
         columns=[
             "cell_id",
@@ -62,6 +89,29 @@ def adata_cdr3():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
+    obs["has_ir"] = "True"
+    adata = AnnData(obs=obs)
+    adata._sanitize()
+    return adata
+
+
+@pytest.fixture
+def adata_cdr3_2():
+    obs = pd.DataFrame(
+        [
+            ["c1", "AAA", "AAA", "KKK", "KKK"],
+            ["c2", "AAA", "AAA", "LLL", "LLL"],
+            ["c3", "nan", "nan", "LLL", "LLL"],
+        ],
+        columns=[
+            "cell_id",
+            "IR_VJ_1_cdr3",
+            "IR_VJ_2_cdr3",
+            "IR_VDJ_1_cdr3",
+            "IR_VDJ_2_cdr3",
+        ],
+    ).set_index("cell_id")
+    obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     return adata
 
@@ -88,117 +138,130 @@ def adata_define_clonotypes():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
+    obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     return adata
 
 
 @pytest.fixture
 def adata_define_clonotype_clusters():
-    obs = pd.DataFrame(
-        [
-            ["cell1", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell2", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
-            ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
-            ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
-            ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
-            ["cell8", "AAA", "nan", "nan", "KKK", "TRA", "nan", "nan", "TRB"],
-            ["cell9", "nan", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB"],
-            ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-        ],
-        columns=[
-            "cell_id",
-            "IR_VJ_1_cdr3",
-            "IR_VJ_2_cdr3",
-            "IR_VDJ_1_cdr3",
-            "IR_VDJ_2_cdr3",
-            "IR_VJ_1_locus",
-            "IR_VJ_2_locus",
-            "IR_VDJ_1_locus",
-            "IR_VDJ_2_locus",
-        ],
-    ).set_index("cell_id")
+    obs = (
+        pd.DataFrame(
+            [
+                ["cell1", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell2", "AAA", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
+                ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
+                ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+                ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
+                ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
+                ["cell8", "AAA", "nan", "KKK", "nan", "TRA", "nan", "TRB", "nan"],
+                ["cell9", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB", "nan"],
+                ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            ],
+            columns=[
+                "cell_id",
+                "IR_VJ_1_cdr3",
+                "IR_VJ_2_cdr3",
+                "IR_VDJ_1_cdr3",
+                "IR_VDJ_2_cdr3",
+                "IR_VJ_1_locus",
+                "IR_VJ_2_locus",
+                "IR_VDJ_1_locus",
+                "IR_VDJ_2_locus",
+            ],
+        )
+        .set_index("cell_id")
+        .join(
+            pd.DataFrame(
+                [
+                    ["cell1", "A", "B", "A", "B", "TCR", "True"],
+                    ["cell2", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell3", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell4", "C", "C", "C", "C", "BCR", "True"],
+                    ["cell5", "A", "A", "A", "A", "BCR", "True"],
+                    ["cell5.noir", "A", "A", "A", "A", "nan", "False"],
+                    ["cell6", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell7", "A", "A", "A", "A", "TCR", "True"],
+                    ["cell8", "A", "A", "X", "A", "TCR", "True"],
+                    ["cell9", "A", "A", "A", "A", "BCR", "True"],
+                    ["cell10", "A", "A", "A", "A", "BCR", "True"],
+                ],
+                columns=[
+                    "cell_id",
+                    "IR_VJ_1_v_gene",
+                    "IR_VJ_2_v_gene",
+                    "IR_VDJ_1_v_gene",
+                    "IR_VDJ_2_v_gene",
+                    "receptor_type",
+                    "has_ir",
+                ],
+            ).set_index("cell_id")
+        )
+    )
     adata = AnnData(obs=obs)
     return adata
 
 
 @pytest.fixture
-def adata_conn():
-    """Adata with connectivities computed"""
-    adata = AnnData(
-        obs=pd.DataFrame()
-        .assign(
-            cell_id=["cell1", "cell2", "cell3", "cell4"],
-            IR_VJ_1_v_gene=["av1", "av1", "av2", "av1"],
-            IR_VDJ_1_v_gene=["bv1", "bv1", "bv2", "bv1"],
-            IR_VJ_2_v_gene=["a2v1", "a2v2", "a2v2", "a2v1"],
-            IR_VDJ_2_v_gene=["b2v1", "b2v2", "b2v2", "b2v1"],
-            IR_VJ_1_LOCUS=["TRA", "IGL", "IGL", "IGK"],
-            IR_VDJ_1_LOCUS=["TRB", "IGH", "IGH", "IGH"],
-            IR_VJ_2_LOCUS=["TRA", "IGL", "IGL", "IGK"],
-            IR_VDJ_2_LOCUS=["TRB", "IGH", "IGH", "IGH"],
-            receptor_type=["TCR", "BCR", "BCR", "BCR"],
-        )
-        .set_index("cell_id")
+def adata_conn(adata_define_clonotype_clusters):
+    """Stub adata to test the clonotype_network functions"""
+    adata = adata_define_clonotype_clusters
+    ir.pp.ir_dist(adata, sequence="aa", metric="alignment")
+    ir.tl.define_clonotype_clusters(
+        adata, sequence="aa", metric="alignment", receptor_arms="any", dual_ir="any"
     )
-    adata.uns["ir_neighbors_aa_alignment"] = {
-        "connectivities": csr_matrix(
-            [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-        )
-    }
-    assert _is_symmetric(adata.uns["ir_neighbors_aa_alignment"]["connectivities"])
     return adata
 
 
 @pytest.fixture
-def adata_conn_diagonal():
-    """Adata with connectivities computed"""
+def adata_define_clonotype_clusters_singletons():
+    """Adata where every cell belongs to a singleton clonotype.
+    Required for a regression test for #236.
+    """
     adata = AnnData(
         obs=pd.DataFrame()
         .assign(
             cell_id=["cell1", "cell2", "cell3", "cell4"],
-            IR_VJ_1_v_gene=["av1", "av1", "av2", "av1"],
-            IR_VDJ_1_v_gene=["bv1", "bv1", "bv2", "bv1"],
-            IR_VJ_2_v_gene=["a2v1", "a2v2", "a2v2", "a2v1"],
-            IR_VDJ_2_v_gene=["b2v1", "b2v2", "b2v2", "b2v1"],
-            IR_VJ_1_LOCUS=["TRA", "IGL", "IGL", "IGK"],
-            IR_VDJ_1_LOCUS=["TRB", "IGH", "IGH", "IGH"],
-            IR_VJ_2_LOCUS=["TRA", "IGL", "IGL", "IGK"],
-            IR_VDJ_2_LOCUS=["TRB", "IGH", "IGH", "IGH"],
-            receptor_type=["TCR", "BCR", "BCR", "BCR"],
+            IR_VJ_1_cdr3=["AAA", "BBB", "CCC", "DDD"],
+            IR_VDJ_1_cdr3=["AAA", "BBB", "CCC", "DDD"],
+            IR_VJ_2_cdr3=["AAA", "BBB", "CCC", "DDD"],
+            IR_VDJ_2_cdr3=["AAA", "BBB", "CCC", "DDD"],
+            IR_VJ_1_v_gene=["A", "B", "C", "D"],
+            IR_VDJ_1_v_gene=["A", "B", "C", "D"],
+            IR_VJ_2_v_gene=["A", "B", "C", "D"],
+            IR_VDJ_2_v_gene=["A", "B", "C", "D"],
+            receptor_type=["TCR", "TCR", "TCR", "TCR"],
+            has_ir=["True", "True", "True", "True"],
         )
         .set_index("cell_id")
     )
-    adata.uns["ir_neighbors_aa_alignment"] = {
-        "connectivities": csr_matrix(np.identity(4))
-    }
+    ir.pp.ir_dist(adata, metric="identity", sequence="aa")
     return adata
 
 
 @pytest.fixture
-def adata_clonotype_network():
-    """Adata with clonotype network computed"""
+def adata_clonotype_network(adata_conn):
+    """Adata with clonotype network computed.
+
+    adata derived from adata_conn that also contains some gene expression data
+    for plotting.
+    """
     adata = AnnData(
-        obs=pd.DataFrame()
-        .assign(cell_id=["cell1", "cell2", "cell3", "cell4"])
-        .set_index("cell_id")
+        var=pd.DataFrame().assign(gene_symbol=["CD8A", "CD4"]).set_index("gene_symbol"),
+        X=np.array(
+            [
+                [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
+                [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
+            ]
+        ).T,
+        obs=adata_conn.obs,
+        uns=adata_conn.uns,
+        obsm=adata_conn.obsm,
     )
-    adata.uns["foo_neighbors"] = {
-        "connectivities": np.array(
-            [[1, 0, 0.5, 0], [0, 1, 1, 0], [0.5, 1, 1, 0], [0, 0, 0, 1]]
-        )
-    }
-    adata.uns["clonotype_network"] = {"neighbors_key": "foo_neighbors"}
-    adata.obsm["X_clonotype_network"] = np.array(
-        [
-            [2.41359095, 0.23412465],
-            [np.nan, np.nan],
-            [1.61680611, 0.80266963],
-            [3.06104282, 2.14395562],
-        ]
-    )
-    assert _is_symmetric(adata.uns["foo_neighbors"]["connectivities"])
+    adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
+    ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
     return adata
 
 

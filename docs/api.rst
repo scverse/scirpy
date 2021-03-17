@@ -53,7 +53,7 @@ Preprocessing: `pp`
    :toctree: ./generated
 
    merge_with_ir
-   ir_neighbors
+   ir_dist
 
 
 Tools: `tl`
@@ -192,9 +192,11 @@ Utility functions: `util`
    :toctree: ./generated
 
    graph.layout_components
+   graph.layout_fr_size_aware
+   graph.igraph_from_sparse_matrix
 
 
-IR distance metrics: `ir_dist`
+IR distance utilities: `ir_dist`
 -----------------------------------
 
 .. module:: scirpy.ir_dist
@@ -203,6 +205,16 @@ IR distance metrics: `ir_dist`
    :toctree: ./generated
 
    sequence_dist
+
+
+distance metrics
+^^^^^^^^^^^^^^^^
+
+.. module:: scirpy.ir_dist.metrics
+
+.. autosummary::
+   :toctree: ./generated
+
    DistanceCalculator
    ParallelDistanceCalculator
    IdentityDistanceCalculator

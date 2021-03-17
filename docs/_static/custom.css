@@ -119,7 +119,6 @@
 /* Parameter lists */
 
 /* Mimick rubric style used for other headings */
-/* TODO: once scanpydoc adds classes, also change return types like this */
 .rst-content dl:not(.docutils) dl > dt {
   font-weight: bold;
   background: none transparent;

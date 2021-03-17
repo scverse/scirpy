@@ -1,53 +1,17 @@
-import scipy.sparse
-from scanpy import logging
+from typing import Optional
 import igraph as ig
 import numpy as np
-from .._compat import Literal
-import sys
-
-
-def _get_igraph_from_adjacency(adj: scipy.sparse.csr_matrix, edge_type: str = None):
-    """Get igraph graph from adjacency matrix.
-    Better than Graph.Adjacency for sparse matrices
-
-    Parameters
-    ----------
-    adj
-        (weighted) adjacency matrix
-    edge_type
-        A type attribute added to all edges
-    """
-    g = ig.Graph(directed=False)
-    g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
-
-    sources, targets = scipy.sparse.triu(adj, k=1).nonzero()
-    weights = adj[sources, targets].astype("float")
-    g.add_edges(list(zip(sources, targets)))
-
-    if isinstance(weights, np.matrix):
-        weights = weights.A1
-    if isinstance(weights, scipy.sparse.csr_matrix):
-        # this is the case when len(sources) == len(targets) == 0, see #236
-        weights = weights.toarray()
-
-    g.es["weight"] = weights
-    if edge_type is not None:
-        g.es["type"] = edge_type
-
-    if g.vcount() != adj.shape[0]:
-        logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. "
-            "Your adjacency matrix contained redundant nodes."
-        )
-    return g
+from ..._compat import Literal
+from ._fr_size_aware_layout import layout_fr_size_aware
 
 
 def layout_components(
     graph: ig.Graph,
-    component_layout: str = "fr",
+    component_layout: str = "fr_size_aware",
     arrange_boxes: Literal["size", "rpack", "squarify"] = "squarify",
     pad_x: float = 1.0,
     pad_y: float = 1.0,
+    layout_kwargs: Optional[dict] = None,
 ) -> np.ndarray:
     """
     Compute a graph layout by layouting all connected components individually.
@@ -57,10 +21,14 @@ def layout_components(
     Parameters
     ----------
     graph
-        The graph to plot.
+        The igraph object to plot.
+        Requires the vertex attribute "size", corresponding to the node size.
     component_layout
         Layout function used to layout individual components.
-        Can be anything that can be passed to `igraph.Graph.layout`
+        Can be anything that can be passed to `igraph.Graph.layout` or
+        `fr_size_aware` for a modified Fruchterman-Rheingold layouting
+        algorithm that respects node sizes. See
+        :func:`scirpy.util.graph.layout_fr_size_aware` for more details.
     arrange_boxes
         How to arrange the individual components. Can be "size"
         to arange them by the component size, or "rpack" to pack them as densly
@@ -69,6 +37,8 @@ def layout_components(
         Padding between subgraphs in the x dimension.
     pad_y
         Padding between subgraphs in the y dimension.
+    layout_kwargs
+        Additional arguments passed to the layouting algorithm used for each component.
 
     Returns
     -------
@@ -76,11 +46,18 @@ def layout_components(
         n_nodes x dim array containing the layout coordinates
 
     """
+    if layout_kwargs is None:
+        layout_kwargs = dict()
     # assign the original vertex id, it will otherwise get lost by decomposition
     for i, v in enumerate(graph.vs):
         v["id"] = i
     components = np.array(graph.decompose(mode="weak"))
-    component_sizes = np.array([component.vcount() for component in components])
+    try:
+        component_sizes = np.array(
+            [sum(component.vs["size"]) for component in components]
+        )
+    except KeyError:
+        component_sizes = np.array([len(component.vs) for component in components])
     order = np.argsort(component_sizes)
     components = components[order]
     component_sizes = component_sizes[order]
@@ -93,7 +70,7 @@ def layout_components(
     bboxes = bbox_fun(component_sizes, pad_x, pad_y)
 
     component_layouts = [
-        _layout_component(component, bbox, component_layout)
+        _layout_component(component, bbox, component_layout, layout_kwargs)
         for component, bbox in zip(components, bboxes)
     ]
     # get vertexes back into their original order
@@ -200,10 +177,15 @@ def _get_bbox_dimensions(n, power=0.5):
     return (n ** power, n ** power)
 
 
-def _layout_component(component, bbox, component_layout_func):
+def _layout_component(component, bbox, component_layout_func, layout_kwargs):
     """Compute layout for an individual component"""
-    layout = component.layout(component_layout_func)
-    rescaled_pos = _rescale_layout(np.array(layout.coords), bbox)
+    if component_layout_func == "fr_size_aware":
+        coords = layout_fr_size_aware(component, **layout_kwargs)
+    else:
+        coords = np.array(
+            component.layout(component_layout_func, **layout_kwargs).coords
+        )
+    rescaled_pos = _rescale_layout(coords, bbox)
     return rescaled_pos
 
 

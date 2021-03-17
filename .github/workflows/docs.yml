@@ -10,11 +10,12 @@ on:
 
 jobs:
   docs:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7]
+        python-version: [3.8]
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
@@ -71,8 +72,8 @@ jobs:
           then
             tmp_target_dir=$(echo $tmp_target_dir | sed "s/\/merge$//")
           fi
-          # when on master, we want to deploy to the root dir (-> ".")
-          target_dir=$(echo $tmp_target_dir | sed "s/heads\/master/./")
+          # when on master, we want to deploy to the 'develop' dir (-> "develop")
+          target_dir=$(echo $tmp_target_dir | sed "s/heads\/master/develop/")
           echo $target_dir
           echo "target_dir=$target_dir" >> $GITHUB_ENV
         env:
