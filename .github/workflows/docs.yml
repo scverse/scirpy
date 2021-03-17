@@ -62,7 +62,7 @@ jobs:
           cd docs && make html SPHINXOPTS="-W --keep-going"
 
       - name: Get target folder for page deploy from github ref
-        if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.7' )
+        if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.8' )
         run: |
           # get rid of "refs/"
           tmp_target_dir=$(echo $github_ref | sed "s/^refs\///")
@@ -80,7 +80,7 @@ jobs:
           github_ref: ${{ github.ref }}
 
       - name: Deploy to gh-pages
-        if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.7' )
+        if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.8' )
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
