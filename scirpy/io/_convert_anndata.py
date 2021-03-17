@@ -3,7 +3,7 @@ import itertools
 from anndata import AnnData
 from ..util import _is_na, _is_true, _doc_params
 from ._common_doc import doc_working_model
-from ._datastructures import IrCell, IrChain
+from ._datastructures import AirrCell, AirrChain
 import pandas as pd
 from typing import Collection, List
 import numpy as np
@@ -56,9 +56,9 @@ def _sanitize_anndata(adata: AnnData) -> None:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_ir_objs(ir_objs: Collection[IrCell]) -> AnnData:
+def from_ir_objs(ir_objs: Collection[AirrCell]) -> AnnData:
     """\
-    Convert a collection of :class:`IrCell` objects to an :class:`~anndata.AnnData`.
+    Convert a collection of :class:`AirrCell` objects to an :class:`~anndata.AnnData`.
 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
@@ -84,9 +84,9 @@ def from_ir_objs(ir_objs: Collection[IrCell]) -> AnnData:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def _process_ir_cell(ir_obj: IrCell) -> dict:
+def _process_ir_cell(ir_obj: AirrCell) -> dict:
     """\
-    Process a IrCell object into a dictionary according
+    Process a AirrCell object into a dictionary according
     to our working model of adaptive immune receptors.
 
     {doc_working_model}
@@ -94,7 +94,7 @@ def _process_ir_cell(ir_obj: IrCell) -> dict:
     Parameters
     ----------
     ir_obj
-        IrCell object to process
+        AirrCell object to process
 
     Returns
     -------
@@ -161,7 +161,7 @@ def _process_ir_cell(ir_obj: IrCell) -> dict:
     return res_dict
 
 
-def to_ir_objs(adata: AnnData) -> List[IrCell]:
+def to_ir_objs(adata: AnnData) -> List[AirrCell]:
     """
     Convert an adata object with IR information back to a list of IrCells.
 
@@ -179,7 +179,7 @@ def to_ir_objs(adata: AnnData) -> List[IrCell]:
     cells = []
     try:
         for cell_id, row in adata.obs.iterrows():
-            tmp_ir_cell = IrCell(cell_id, multi_chain=row["multi_chain"])
+            tmp_ir_cell = AirrCell(cell_id, multi_chain=row["multi_chain"])
             for chain_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"]):
                 # expr_raw is optional
                 keys = IR_OBS_KEYS[:]
@@ -194,7 +194,7 @@ def to_ir_objs(adata: AnnData) -> List[IrCell]:
                     # if no locus/chain specified, the correponding chain
                     # does not exists and we don't want to add this.
                     # This is also the way we can represent cells without IR.
-                    tmp_ir_cell.add_chain(IrChain(**chain_dict))
+                    tmp_ir_cell.add_chain(AirrChain(**chain_dict))
 
             cells.append(tmp_ir_cell)
     except KeyError as e:

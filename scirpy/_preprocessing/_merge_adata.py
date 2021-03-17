@@ -6,7 +6,7 @@ from ..io._convert_anndata import (
     to_ir_objs,
     from_ir_objs,
 )
-from ..io._datastructures import IrCell
+from ..io._datastructures import AirrCell
 from scanpy import logging
 import itertools
 import pandas as pd
@@ -16,7 +16,7 @@ def _merge_ir_obs(adata: AnnData, adata2: AnnData) -> pd.DataFrame:
     """
     Merge two AnnData objects with :term:`IR` information (e.g. BCR with TCR).
 
-    Decomposes the IR information back into :class:`scirpy.io.IrCell` objects
+    Decomposes the IR information back into :class:`scirpy.io.AirrCell` objects
     and merges them on a chain-level. If both objects contain the same cell-id, and
     the same chains, the corresponding row in `adata.obs` will be unchanged.
     If both objects contain the same cell-id, but different chains, the chains
@@ -39,7 +39,7 @@ def _merge_ir_obs(adata: AnnData, adata2: AnnData) -> pd.DataFrame:
     """
     ir_objs1 = to_ir_objs(adata)
     ir_objs2 = to_ir_objs(adata2)
-    cell_dict: Dict[str, IrCell] = dict()
+    cell_dict: Dict[str, AirrCell] = dict()
     for cell in itertools.chain(ir_objs1, ir_objs2):
         try:
             tmp_cell = cell_dict[cell.cell_id]

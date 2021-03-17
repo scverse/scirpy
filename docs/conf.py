@@ -119,8 +119,8 @@ def setup(app):
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
 qualname_overrides = {
     "scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix",
-    "scirpy.io._datastructures.IrCell": "scirpy.io.IrCell",
-    "scirpy.io._datastructures.IrChain": "scirpy.io.IrChain",
+    "scirpy.io._datastructures.AirrCell": "scirpy.io.AirrCell",
+    "scirpy.io._datastructures.AirrChain": "scirpy.io.AirrChain",
     "pandas.core.arrays.categorical.Categorical": "pandas.Categorical",
     "pandas.core.series.Series": "pandas.Series",
 }

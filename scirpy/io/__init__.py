@@ -2,7 +2,7 @@ from scanpy import read_h5ad
 from ._io import read_10x_vdj, read_tracer, read_airr, read_bracer
 from ._convert_anndata import from_ir_objs, to_ir_objs
 from ..util import deprecated
-from ._datastructures import IrCell, IrChain
+from ._datastructures import AirrCell, AirrChain
 
 
 @deprecated(
@@ -15,15 +15,15 @@ def from_tcr_objs(*args, **kwargs):
 
 @deprecated(
     "Due to added BCR support, this function has been renamed "
-    "to `IrCell. The old version will be removed in a future release. "
+    "to `AirrCell. The old version will be removed in a future release. "
 )
 def TcrCell(*args, **kwargs):
-    return IrCell(*args, **kwargs)
+    return AirrCell(*args, **kwargs)
 
 
 @deprecated(
     "Due to added BCR support, this function has been renamed "
-    "to `IrChain. The old version will be removed in a future release. "
+    "to `AirrChain. The old version will be removed in a future release. "
 )
 def TcrChain(*args, **kwargs):
-    return IrChain(*args, **kwargs)
+    return AirrChain(*args, **kwargs)

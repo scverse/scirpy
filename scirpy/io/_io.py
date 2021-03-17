@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from anndata import AnnData
-from ._datastructures import IrCell, IrChain
+from ._datastructures import AirrCell, AirrChain
 from typing import Sequence, Union
 import numpy as np
 from glob import iglob
@@ -32,7 +32,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             continue
         barcode = cell["barcode"]
         if barcode not in ir_objs:
-            ir_obj = IrCell(barcode)
+            ir_obj = AirrCell(barcode)
             ir_objs[barcode] = ir_obj
         else:
             ir_obj = ir_objs[barcode]
@@ -64,7 +64,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         chain_types = [g["chain"] for g in genes.values()]
         chain_type = chain_types[0] if np.unique(chain_types).size == 1 else "other"
         # for now, gamma/delta is "other" as well.
-        chain_type = chain_type if chain_type in IrChain.VALID_LOCI else "other"
+        chain_type = chain_type if chain_type in AirrChain.VALID_LOCI else "other"
 
         # compute inserted nucleotides
         # VJ junction for TRA, TRG, IGK, IGL chains
@@ -75,13 +75,17 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         # seem to be python-type indexes (i.e. the 'end' index is exclusive).
         # Therefore, no `-1` needs to be subtracted when computing the number
         # of inserted nucleotides.
-        if chain_type in IrChain.VJ_LOCI and v_gene is not None and j_gene is not None:
+        if (
+            chain_type in AirrChain.VJ_LOCI
+            and v_gene is not None
+            and j_gene is not None
+        ):
             assert (
                 d_gene is None
             ), "TRA, TRG or IG-light chains should not have a D region"
             inserted_nts = genes["j"]["start"] - genes["v"]["end"]
         elif (
-            chain_type in IrChain.VDJ_LOCI
+            chain_type in AirrChain.VDJ_LOCI
             and v_gene is not None
             and d_gene is not None
             and j_gene is not None
@@ -94,7 +98,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             inserted_nts = None
 
         ir_obj.add_chain(
-            IrChain(
+            AirrChain(
                 locus=chain_type,
                 cdr3=cell["cdr3"],
                 cdr3_nt=cell["cdr3_seq"],
@@ -120,13 +124,13 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
-        ir_obj = IrCell(barcode)
+        ir_obj = AirrCell(barcode)
         for _, chain_series in cell_df.iterrows():
             ir_obj.add_chain(
-                IrChain(
+                AirrChain(
                     locus=(
                         chain_series["chain"]
-                        if chain_series["chain"] in IrChain.VALID_LOCI
+                        if chain_series["chain"] in AirrChain.VALID_LOCI
                         else "other"
                     ),
                     cdr3=chain_series["cdr3"],
@@ -212,14 +216,14 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     def _process_chains(chains, chain_type):
         for tmp_chain in chains:
             if tmp_chain.has_D_segment:
-                assert chain_type in IrChain.VDJ_LOCI
+                assert chain_type in AirrChain.VDJ_LOCI
                 assert len(tmp_chain.junction_details) == 5
                 assert len(tmp_chain.summary) == 8
                 v_gene = tmp_chain.summary[0].split("*")[0]
                 d_gene = tmp_chain.summary[1].split("*")[0]
                 j_gene = tmp_chain.summary[2].split("*")[0]
             else:
-                assert chain_type in IrChain.VJ_LOCI
+                assert chain_type in AirrChain.VJ_LOCI
                 assert len(tmp_chain.junction_details) == 3
                 assert len(tmp_chain.summary) == 7
                 v_gene = tmp_chain.summary[0].split("*")[0]
@@ -249,7 +253,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                 # ignore chains that have no sequence
                 continue
 
-            yield IrChain(
+            yield AirrChain(
                 locus=chain_type,
                 cdr3=tmp_chain.cdr3,
                 cdr3_nt=tmp_chain.cdr3nt,
@@ -265,7 +269,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
         os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True
     ):
         cell_name = summary_file.split(os.sep)[-3]
-        tcr_obj = IrCell(cell_name)
+        tcr_obj = AirrCell(cell_name)
         try:
             with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
@@ -335,7 +339,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
             try:
                 tmp_cell = ir_objs[cell_id]
             except KeyError:
-                tmp_cell = IrCell(cell_id=cell_id)
+                tmp_cell = AirrCell(cell_id=cell_id)
                 ir_objs[cell_id] = tmp_cell
 
             try:
@@ -347,7 +351,7 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
                 expr_raw = None
 
             tmp_cell.add_chain(
-                IrChain(
+                AirrChain(
                     is_productive=row["productive"],
                     locus=row["locus"],
                     v_gene=row["v_call"] if "v_call" in row else None,
@@ -392,7 +396,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
         try:
             tmp_ir_cell = bcr_cells[cell_id]
         except KeyError:
-            tmp_ir_cell = IrCell(cell_id)
+            tmp_ir_cell = AirrCell(cell_id)
             bcr_cells[cell_id] = tmp_ir_cell
 
         v_gene = row["V_CALL"] if not pd.isnull(row["V_CALL"]) else None
@@ -402,7 +406,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
         locus = "IG" + row["LOCUS"]
 
         if (
-            locus in IrChain.VJ_LOCI
+            locus in AirrChain.VJ_LOCI
             and not pd.isnull(row["V_SEQ_START"])
             and not pd.isnull(row["J_SEQ_START"])
         ):
@@ -414,7 +418,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
             )
 
         elif (
-            locus in IrChain.VDJ_LOCI
+            locus in AirrChain.VDJ_LOCI
             and not pd.isnull(row["V_SEQ_START"])
             and not pd.isnull(row["D_SEQ_START"])
             and not pd.isnull(row["J_SEQ_START"])
@@ -428,7 +432,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
         cdr3_nt = row["JUNCTION"] if not pd.isnull(row["JUNCTION"]) else None
         cdr3_aa = _translate_dna_to_protein(cdr3_nt) if cdr3_nt is not None else None
 
-        tmp_chain = IrChain(
+        tmp_chain = AirrChain(
             locus=locus,
             cdr3=cdr3_aa,
             cdr3_nt=cdr3_nt,
@@ -443,3 +447,19 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
         tmp_ir_cell.add_chain(tmp_chain)
 
     return from_ir_objs(bcr_cells.values())
+
+
+def write_airr(adata):
+    pass
+
+
+def from_dandelion(dandelion):
+    pass
+
+
+def to_dandelion(dandelion):
+    pass
+
+
+def update_schema(adata):
+    pass

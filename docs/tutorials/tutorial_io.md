@@ -264,8 +264,8 @@ an :class:`~anndata.AnnData` object.
 .. autosummary::
    :toctree: ../generated
 
-   IrCell
-   IrChain
+   AirrCell
+   AirrChain
    from_ir_objs
 
 If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`_
@@ -297,9 +297,9 @@ tcr_table
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Our task is now to dissect the table into :class:`~scirpy.io.IrCell` and :class:`~scirpy.io.IrChain` objects.
-Each :class:`~scirpy.io.IrCell` can have an arbitrary number of chains.
-When converting the :class:`~scirpy.io.IrCell` objects into an :class:`~anndata.AnnData` object,
+Our task is now to dissect the table into :class:`~scirpy.io.AirrCell` and :class:`~scirpy.io.AirrChain` objects.
+Each :class:`~scirpy.io.AirrCell` can have an arbitrary number of chains.
+When converting the :class:`~scirpy.io.AirrCell` objects into an :class:`~anndata.AnnData` object,
 scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
 this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`receptor-model`.
 <!-- #endraw -->
@@ -307,8 +307,8 @@ this number as :term:`multichain cells <Multichain-cell>`. For more information,
 ```python
 tcr_cells = []
 for idx, row in tcr_table.iterrows():
-    cell = ir.io.IrCell(cell_id=row["cell_id"])
-    alpha_chain = ir.io.IrChain(
+    cell = ir.io.AirrCell(cell_id=row["cell_id"])
+    alpha_chain = ir.io.AirrChain(
         locus="TRA",
         cdr3=row["cdr3_alpha"],
         cdr3_nt=row["cdr3_nt_alpha"],
@@ -317,7 +317,7 @@ for idx, row in tcr_table.iterrows():
         j_gene=row["j_alpha"],
         is_productive=row["productive_alpha"],
     )
-    beta_chain = ir.io.IrChain(
+    beta_chain = ir.io.AirrChain(
         locus="TRB",
         cdr3=row["cdr3_beta"],
         cdr3_nt=row["cdr3_nt_beta"],
@@ -333,7 +333,7 @@ for idx, row in tcr_table.iterrows():
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Now, we can convert the list of :class:`~scirpy.io.IrCell` objects using :func:`scirpy.io.from_ir_objs`.
+Now, we can convert the list of :class:`~scirpy.io.AirrCell` objects using :func:`scirpy.io.from_ir_objs`.
 <!-- #endraw -->
 
 ```python

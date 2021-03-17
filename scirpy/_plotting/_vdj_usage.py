@@ -4,14 +4,14 @@ from typing import Callable, Union, Tuple, Sequence
 import numpy as np
 from ..util import _normalize_counts, _is_na
 from .styling import _init_ax
-from ..io import IrChain
+from ..io import AirrChain
 from itertools import islice
 from copy import deepcopy
 
 
 def _sanitize_gene_name(gene_text):
     """Reformat a VDJ gene name to be displayed in the plot"""
-    for tmp_chain in IrChain.VALID_LOCI:
+    for tmp_chain in AirrChain.VALID_LOCI:
         gene_text = gene_text.replace(tmp_chain, "")
     return gene_text
 

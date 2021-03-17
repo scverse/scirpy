@@ -9,8 +9,11 @@ from ..util import _is_na, _is_true
 from typing import Union
 
 
-class IrChain:
-    """Data structure for an immune cell receptor chain.
+class AirrChain:
+    """Data structure for an Adaptive Immune Receptor Repertoire Chain.
+
+    The datastructure is compliant with the AIRR rearrangement schema v1.0.
+    An instance of this class represents a single row of the AIRR rearrangement schema.
 
     Parameters
     ----------
@@ -104,7 +107,7 @@ class IrChain:
         self.junction_ins = int(junction_ins) if not _is_na(junction_ins) else None
 
     def __repr__(self):
-        return "IrChain object: " + str(self.__dict__)
+        return "AirrChain object: " + str(self.__dict__)
 
     def __eq__(self, other):
         return all(
@@ -116,10 +119,12 @@ class IrChain:
         return hash(tuple((getattr(self, attr) for attr in self._EQUALITY_ATTIBUTES)))
 
 
-class IrCell:
+class AirrCell:
     """Data structure for a Cell with immune receptors.
 
-    An IrCell can hold multiple IrChains.
+    This data structure is compliant with the AIRR rearrangement schema v1.0.
+    An AirrCell holds multiple AirrChains (i.e. rows from the rearrangement TSV)
+    which belong to the same cell.
 
     Parameters
     ----------
@@ -141,12 +146,12 @@ class IrCell:
         self.chains = list()
 
     def __repr__(self):
-        return "IrCell {} with {} chains".format(self._cell_id, len(self.chains))
+        return "AirrCell {} with {} chains".format(self._cell_id, len(self.chains))
 
     @property
     def cell_id(self):
         return self._cell_id
 
-    def add_chain(self, chain: IrChain) -> None:
-        """Add a :class:`IrChain`"""
+    def add_chain(self, chain: AirrChain) -> None:
+        """Add a :class:`AirrChain`"""
         self.chains.append(chain)

@@ -31,15 +31,15 @@ formats.
    read_airr
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
-a list of :class:`~scirpy.io.IrCell` objects first, and then converting them into
+a list of :class:`~scirpy.io.AirrCell` objects first, and then converting them into
 an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_ir_objs`.
 For more details, check the :ref:`Data loading tutorial <importing-data>`.
 
 .. autosummary::
    :toctree: ./generated
 
-   IrCell
-   IrChain
+   AirrCell
+   AirrChain
    from_ir_objs
    to_ir_objs
 
