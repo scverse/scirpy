@@ -18,6 +18,8 @@ def _clip_and_count(
 ) -> Union[None, np.ndarray]:
     """Counts the number of identical entries in `target_col`
     for each group in `group_by`.
+
+    `nan`s in the input remain `nan` in the output.
     """
     if target_col not in adata.obs.columns:
         raise ValueError("`target_col` not found in obs.")
@@ -38,6 +40,7 @@ def _clip_and_count(
     clipped_count = adata.obs.merge(clonotype_counts, how="left", on=groupby_cols)[
         "tmp_count"
     ].values
+    clipped_count[_is_na(adata.obs[target_col])] = "nan"
 
     if inplace:
         key_added = (
@@ -59,7 +62,7 @@ def clonal_expansion(
 ) -> Union[None, np.ndarray]:
     """Adds a column to `obs` recording which clonotypes are expanded.
 
-    Counts NaN values like any other value in `target_col`.
+    `nan`s in the clonotype column remain `nan` in the output.
 
     Parameters
     ----------

@@ -153,13 +153,17 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     res = ir._tools._clonal_expansion._clip_and_count(
         adata, groupby="group", target_col="clonotype", clip_at=2, inplace=False
     )
-    npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
+    npt.assert_equal(
+        res, np.array([">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2)
+    )
 
     # check without group
     res = ir._tools._clonal_expansion._clip_and_count(
         adata, target_col="clonotype", clip_at=5, inplace=False
     )
-    npt.assert_equal(res, np.array(["4"] * 3 + ["1"] + ["4"] + ["1"] * 2 + ["2"] * 2))
+    npt.assert_equal(
+        res, np.array(["4"] * 3 + ["nan"] * 2 + ["4"] + ["1"] * 2 + ["2"] * 2)
+    )
 
     # check if target_col works
     adata.obs["new_col"] = adata.obs["clonotype"]
@@ -173,7 +177,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     )
     npt.assert_equal(
         adata.obs["new_col_clipped_count"],
-        np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2),
+        np.array([">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2),
     )
 
     # check if it raises value error if target_col does not exist
@@ -187,16 +191,18 @@ def test_clip_and_count_clonotypes(adata_clonotype):
         )
 
 
-def test_clonal_expansion(adata_clonotype):
+@pytest.mark.parametrize(
+    "expanded_in,expected",
+    [
+        ("group", [">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2),
+        (None, [">= 2"] * 3 + ["nan"] * 2 + [">= 2"] + ["1"] * 2 + [">= 2"] * 2),
+    ],
+)
+def test_clonal_expansion(adata_clonotype, expanded_in, expected):
     res = ir.tl.clonal_expansion(
-        adata_clonotype, expanded_in="group", clip_at=2, inplace=False
+        adata_clonotype, expanded_in=expanded_in, clip_at=2, inplace=False
     )
-    npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
-
-    res = ir.tl.clonal_expansion(adata_clonotype, clip_at=2, inplace=False)
-    npt.assert_equal(
-        res, np.array([">= 2"] * 3 + ["1"] + [">= 2"] + ["1"] * 2 + [">= 2"] * 2)
-    )
+    npt.assert_equal(res, np.array(expected))
 
 
 def test_clonal_expansion_summary(adata_clonotype):
