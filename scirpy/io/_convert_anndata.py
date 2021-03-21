@@ -112,7 +112,7 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
             for junction_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"])
         }
         for tmp_col in ir_cols:
-            _, junction_type, chain_id, key = tmp_col.split("_")
+            _, junction_type, chain_id, key = tmp_col.split("_", maxsplit=3)
             chains[(junction_type, chain_id)][key] = row[tmp_col]
 
         for tmp_chain in chains.values():

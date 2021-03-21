@@ -38,7 +38,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             ir_obj = ir_objs[barcode]
 
         # AIRR-compliant chain dict
-        chain = dict()
+        chain = AirrCell.empty_chain_dict()
 
         genes = dict()
         mapping = {
@@ -122,27 +122,27 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     for barcode, cell_df in df.groupby("barcode"):
         ir_obj = AirrCell(barcode)
         for _, chain_series in cell_df.iterrows():
-            ir_obj.add_chain(
-                dict(
-                    locus=(
-                        chain_series["chain"]
-                        if chain_series["chain"] in AirrCell.VALID_LOCI
-                        else "other"
-                    ),
-                    junction_aa=chain_series["cdr3"],
-                    junction=chain_series["cdr3_nt"],
-                    duplicate_count=chain_series["umis"],
-                    consensus_count=chain_series["reads"],
-                    productive=chain_series["productive"],
-                    v_call=chain_series["v_gene"],
-                    d_call=chain_series["d_gene"],
-                    j_call=chain_series["j_gene"],
-                    c_call=chain_series["c_gene"],
-                    # TODO add this explicitly as cell attributes?
-                    is_cell=chain_series["is_cell"],
-                    high_confidence=chain_series["high_confidence"],
-                )
+            chain_dict = AirrCell.empty_chain_dict()
+            chain_dict.update(
+                locus=(
+                    chain_series["chain"]
+                    if chain_series["chain"] in AirrCell.VALID_LOCI
+                    else "other"
+                ),
+                junction_aa=chain_series["cdr3"],
+                junction=chain_series["cdr3_nt"],
+                duplicate_count=chain_series["umis"],
+                consensus_count=chain_series["reads"],
+                productive=_is_true(chain_series["productive"]),
+                v_call=chain_series["v_gene"],
+                d_call=chain_series["d_gene"],
+                j_call=chain_series["j_gene"],
+                c_call=chain_series["c_gene"],
+                # TODO add this explicitly as cell attributes?
+                is_cell=chain_series["is_cell"],
+                high_confidence=chain_series["high_confidence"],
             )
+            ir_obj.add_chain(chain_dict)
 
         ir_objs[barcode] = ir_obj
 
@@ -219,7 +219,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                 continue
 
             # AIRR-rearrangement compliant chain dictionary
-            chain_dict = dict()
+            chain_dict = AirrCell.empty_chain_dict()
             if tmp_chain.has_D_segment:
                 assert chain_type in AirrCell.VDJ_LOCI
                 assert len(tmp_chain.junction_details) == 5
@@ -404,7 +404,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
             tmp_ir_cell = AirrCell(cell_id)
             bcr_cells[cell_id] = tmp_ir_cell
 
-        chain_dict = dict()
+        chain_dict = AirrCell.empty_chain_dict()
 
         chain_dict["v_call"] = row["V_CALL"] if not pd.isnull(row["V_CALL"]) else None
         chain_dict["d_call"] = row["D_CALL"] if not pd.isnull(row["D_CALL"]) else None

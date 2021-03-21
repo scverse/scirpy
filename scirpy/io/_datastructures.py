@@ -73,7 +73,7 @@ class AirrCell:
         # TODO this should be `.validate_obj` but currently does not work
         # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())
-        RearrangementSchema.validate_row(chain.keys())
+        RearrangementSchema.validate_row(chain)
 
         if self._fields is None:
             self._fields = list(chain.keys())
@@ -159,6 +159,7 @@ class AirrCell:
         return json.dumps(chains)
 
     # TODO should it be `include_fields` instead?
+    # TODO auto-exclude columns that are all-null?
     @_doc_params(doc_working_model=doc_working_model)
     def to_scirpy_record(
         self, drop_fields: Collection[str] = ("sequence", "sequence_aa")
@@ -220,3 +221,9 @@ class AirrCell:
         return res_dict
 
         # TODO move .upper() to the functions that consume cdr3 sequences
+
+    @staticmethod
+    def empty_chain_dict() -> dict:
+        """Generate an empty chain dictionary, containing all required AIRR
+        columns, but set to `None`"""
+        return {field: None for field in RearrangementSchema.required}

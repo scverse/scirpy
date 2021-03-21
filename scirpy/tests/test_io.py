@@ -57,8 +57,8 @@ def test_read_10x_csv():
     assert cell1.name == "AAACCTGAGTACGCCC-1"
     assert cell1["IR_VDJ_1_junction_aa"] == "CASSLGPSTDTQYF"
     assert cell1["IR_VDJ_1_junction"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
-    assert _is_na(cell1["IR_VDJ_1_junction_ins"])
-    assert cell1["IR_VDJ_1_expr"] == 55
+    assert cell1["IR_VDJ_1_duplicate_count"] == 55
+    assert cell1["IR_VDJ_1_consensus_count"] == 18021
     assert cell1["IR_VDJ_1_v_call"] == "TRBV7-2"
     assert cell1["IR_VDJ_1_d_call"] == "TRBD2"
     assert cell1["IR_VDJ_1_j_call"] == "TRBJ2-3"
@@ -70,8 +70,8 @@ def test_read_10x_csv():
     assert cell2.name == "AAACCTGGTCCGTTAA-1"
     assert cell2["IR_VJ_1_junction_aa"] == "CALNTGGFKTIF"
     assert cell2["IR_VJ_2_junction_aa"] == "CAVILDARLMF"
-    assert cell2["IR_VJ_1_expr"] == 5
-    assert cell2["IR_VJ_2_expr"] == 5
+    assert cell2["IR_VJ_1_duplicate_count"] == 5
+    assert cell2["IR_VJ_2_duplicate_count"] == 5
     assert cell2["IR_VJ_1_locus"] == "TRA"
     assert cell2["IR_VDJ_1_locus"] == "TRB"
     assert cell2["IR_VJ_2_locus"] == "TRA"
