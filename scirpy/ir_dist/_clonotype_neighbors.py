@@ -54,7 +54,7 @@ class ClonotypeNeighbors:
         for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
             self._cdr3_cols.append(f"IR_{arm}_{i}_{self.sequence_key}")
             if same_v_gene:
-                self._v_gene_cols.append(f"IR_{arm}_{i}_v_gene")
+                self._v_gene_cols.append(f"IR_{arm}_{i}_v_call")
 
         self._prepare(adata)
 
@@ -177,8 +177,8 @@ class ClonotypeNeighbors:
             )
             if self.same_v_gene:
                 self.neighbor_finder.add_lookup_table(
-                    f"{arm}_{i}_v_gene",
-                    f"IR_{arm}_{i}_v_gene",
+                    f"{arm}_{i}_v_call",
+                    f"IR_{arm}_{i}_v_call",
                     "v_gene",
                     dist_type="boolean",
                 )
@@ -263,8 +263,8 @@ class ClonotypeNeighbors:
                 if self.same_v_gene:
                     lookup_v[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
                         ct_id,
-                        f"{tmp_arm}_{c1}_v_gene",
-                        f"{tmp_arm}_{c2}_v_gene",
+                        f"{tmp_arm}_{c1}_v_call",
+                        f"{tmp_arm}_{c2}_v_call",
                     )
 
         # need to loop through all coordinates that have at least one distance.

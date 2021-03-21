@@ -4,7 +4,7 @@ from typing import Callable, Union, Tuple, Sequence
 import numpy as np
 from ..util import _normalize_counts, _is_na
 from .styling import _init_ax
-from ..io import AirrChain
+from ..io import AirrCell
 from itertools import islice
 from copy import deepcopy
 
@@ -20,11 +20,11 @@ def vdj_usage(
     adata: AnnData,
     *,
     vdj_cols: Sequence = (
-        "IR_VJ_1_v_gene",
-        "IR_VJ_1_j_gene",
-        "IR_VDJ_1_v_gene",
-        "IR_VDJ_1_d_gene",
-        "IR_VDJ_1_j_gene",
+        "IR_VJ_1_v_call",
+        "IR_VJ_1_j_call",
+        "IR_VDJ_1_v_call",
+        "IR_VDJ_1_d_call",
+        "IR_VDJ_1_j_call",
     ),
     normalize_to: Union[bool, str, Sequence[float]] = False,
     ax: Union[plt.Axes, None] = None,

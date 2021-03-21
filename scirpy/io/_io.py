@@ -126,7 +126,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
                 dict(
                     locus=(
                         chain_series["chain"]
-                        if chain_series["chain"] in AirrChain.VALID_LOCI
+                        if chain_series["chain"] in AirrCell.VALID_LOCI
                         else "other"
                     ),
                     junction_aa=chain_series["cdr3"],
@@ -369,6 +369,8 @@ def _infer_locus_from_gene_names(chain_dict):
         locus = "IGL"
     else:
         locus = None
+
+    return locus
 
 
 @_doc_params(doc_working_model=doc_working_model)

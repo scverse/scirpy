@@ -120,7 +120,6 @@ def setup(app):
 qualname_overrides = {
     "scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix",
     "scirpy.io._datastructures.AirrCell": "scirpy.io.AirrCell",
-    "scirpy.io._datastructures.AirrChain": "scirpy.io.AirrChain",
     "pandas.core.arrays.categorical.Categorical": "pandas.Categorical",
     "pandas.core.series.Series": "pandas.Series",
 }

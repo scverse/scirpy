@@ -59,10 +59,10 @@ def test_read_10x_csv():
     assert cell1["IR_VDJ_1_junction"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
     assert _is_na(cell1["IR_VDJ_1_junction_ins"])
     assert cell1["IR_VDJ_1_expr"] == 55
-    assert cell1["IR_VDJ_1_v_gene"] == "TRBV7-2"
-    assert cell1["IR_VDJ_1_d_gene"] == "TRBD2"
-    assert cell1["IR_VDJ_1_j_gene"] == "TRBJ2-3"
-    assert cell1["IR_VDJ_1_c_gene"] == "TRBC2"
+    assert cell1["IR_VDJ_1_v_call"] == "TRBV7-2"
+    assert cell1["IR_VDJ_1_d_call"] == "TRBD2"
+    assert cell1["IR_VDJ_1_j_call"] == "TRBJ2-3"
+    assert cell1["IR_VDJ_1_c_call"] == "TRBC2"
     assert _is_false(cell1["multi_chain"])
     assert cell1["IR_VJ_1_locus"] == "TRA"
     assert cell1["IR_VDJ_1_locus"] == "TRB"
@@ -101,10 +101,10 @@ def test_read_10x():
     )
     assert cell1["IR_VDJ_1_junction_ins"] == 4 + 7
     assert cell1["IR_VDJ_1_expr"] == 1
-    assert cell1["IR_VDJ_1_v_gene"] == "TRBV18"
-    assert cell1["IR_VDJ_1_d_gene"] == "TRBD1"
-    assert cell1["IR_VDJ_1_j_gene"] == "TRBJ2-2"
-    assert cell1["IR_VDJ_1_c_gene"] == "TRBC2"
+    assert cell1["IR_VDJ_1_v_call"] == "TRBV18"
+    assert cell1["IR_VDJ_1_d_call"] == "TRBD1"
+    assert cell1["IR_VDJ_1_j_call"] == "TRBJ2-2"
+    assert cell1["IR_VDJ_1_c_call"] == "TRBC2"
     assert _is_false(cell1["multi_chain"])
     assert np.all(
         _is_na(
@@ -149,7 +149,7 @@ def test_read_tracer():
     assert cell2.name == "cell2"
     assert cell2["IR_VJ_1_junction_aa"] == "ALSEAEGGSEKLV"
     assert cell2["IR_VDJ_1_junction_aa"] == "ASSYNRGPGGTQY"
-    assert cell2["IR_VDJ_1_j_gene"] == "TRBJ2-5"
+    assert cell2["IR_VDJ_1_j_call"] == "TRBJ2-5"
 
 
 @pytest.mark.conda
@@ -168,10 +168,10 @@ def test_read_airr():
     tra_cols = [
         "IR_VJ_1_junction_aa",
         "IR_VJ_1_junction",
-        "IR_VJ_1_v_gene",
-        "IR_VJ_1_d_gene",
-        "IR_VJ_1_j_gene",
-        "IR_VJ_1_c_gene",
+        "IR_VJ_1_v_call",
+        "IR_VJ_1_d_call",
+        "IR_VJ_1_j_call",
+        "IR_VJ_1_c_call",
         "IR_VJ_1_expr",
     ]
     trb_cols = [x.replace("IR_VJ", "IR_VDJ") for x in tra_cols]
@@ -224,7 +224,7 @@ def test_read_bracer():
     assert cell1.name == "SRR10779208"
     assert cell1["IR_VJ_1_locus"] == "IGK"
     assert cell1["IR_VDJ_1_locus"] == "IGH"
-    assert cell1["IR_VDJ_1_j_gene"] == "IGHJ4"
+    assert cell1["IR_VDJ_1_j_call"] == "IGHJ4"
     assert cell1["IR_VDJ_1_junction"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
     assert cell1["IR_VDJ_1_junction_aa"] == "CATMTGGDLDYW"
     assert cell1["IR_VJ_1_junction_ins"] == 1
