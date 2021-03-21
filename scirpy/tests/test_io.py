@@ -99,8 +99,10 @@ def test_read_10x():
         cell1["IR_VDJ_1_junction"]
         == "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT"
     )
-    assert cell1["IR_VDJ_1_junction_ins"] == 4 + 7
-    assert cell1["IR_VDJ_1_expr"] == 1
+    assert cell1["IR_VDJ_1_np1_length"] == 4
+    assert cell1["IR_VDJ_1_np2_length"] == 7
+    assert cell1["IR_VDJ_1_duplicate_count"] == 1
+    assert cell1["IR_VDJ_1_consensus_count"] == 494
     assert cell1["IR_VDJ_1_v_call"] == "TRBV18"
     assert cell1["IR_VDJ_1_d_call"] == "TRBD1"
     assert cell1["IR_VDJ_1_j_call"] == "TRBJ2-2"
@@ -108,20 +110,20 @@ def test_read_10x():
     assert _is_false(cell1["multi_chain"])
     assert np.all(
         _is_na(
-            cell1[
-                ["IR_VJ_1_junction_aa", "IR_VDJ_2_junction_aa", "IR_VJ_1_junction_ins"]
-            ]
+            cell1[["IR_VJ_1_junction_aa", "IR_VDJ_2_junction_aa", "IR_VJ_1_np1_length"]]
         )
     )
 
     assert cell2.name == "AAACCTGAGTACGCCC-1"
     assert cell2["IR_VJ_1_junction_aa"] == "CAMRVGGSQGNLIF"
     assert cell2["IR_VJ_2_junction_aa"] == "CATDAKDSNYQLIW"
-    assert cell2["IR_VJ_1_expr"] == 9
-    assert cell2["IR_VJ_2_expr"] == 4
+    assert cell2["IR_VJ_1_duplicate_count"] == 9
+    assert cell2["IR_VJ_2_duplicate_count"] == 4
     assert np.all(_is_na(cell2[["IR_VDJ_1_junction_aa", "IR_VDJ_2_junction_aa"]]))
-    assert cell2["IR_VJ_1_junction_ins"] == 4
-    assert cell2["IR_VJ_2_junction_ins"] == 4
+    assert cell2["IR_VJ_1_np1_length"] == 4
+    assert _is_na(cell2["IR_VJ_1_np2_length"])
+    assert cell2["IR_VJ_2_np1_length"] == 4
+    assert _is_na(cell2["IR_VJ_2_np2_length"])
 
     assert cell3.name == "CAGGTGCTCGTGGTCG-1"
     assert cell3["IR_VJ_1_locus"] == "IGK"
