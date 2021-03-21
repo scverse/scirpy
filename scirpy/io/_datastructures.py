@@ -40,14 +40,15 @@ class AirrCell:
     #: Chains with the :term:`V-D-J<V(D)J>` junction
     VDJ_LOCI = ("TRB", "TRD", "IGH")
 
-    # TODO remove?
+    # TODO remove "other"?
     #: Valid chains are IMGT locus names or "other"
     #: see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
     VALID_LOCI = VJ_LOCI + VDJ_LOCI + ("other",)
 
     # attributes that are specific for the cell, not the chain, and should
     # be the same for all chains of the same cell.
-    _CELL_ATTRIBUTES = ("is_cell",)  # non-standard field by 10x
+    # TODO
+    _CELL_ATTRIBUTES = ("is_cell", "high_confidence")  # non-standard field by 10x
 
     def __init__(self, cell_id: str, *, multi_chain: bool = False):
 

@@ -2,7 +2,7 @@ from scanpy import read_h5ad
 from ._io import read_10x_vdj, read_tracer, read_airr, read_bracer
 from ._convert_anndata import from_ir_objs, to_ir_objs
 from ..util import deprecated
-from ._datastructures import AirrCell, AirrChain
+from ._datastructures import AirrCell
 
 
 @deprecated(
@@ -19,6 +19,13 @@ def from_tcr_objs(*args, **kwargs):
 )
 def TcrCell(*args, **kwargs):
     return AirrCell(*args, **kwargs)
+
+
+def AirrChain(*args, **kwargs):
+    raise RuntimeError(
+        "AirrChain has been removed in v0.7. "
+        "Use a AIRR-rearrangement compliant dictionary instead! "
+    )
 
 
 @deprecated(
