@@ -1,7 +1,7 @@
 """Convert IrCells to AnnData and vice-versa"""
 import itertools
 from anndata import AnnData
-from ..util import _doc_params
+from ..util import _doc_params, _is_true
 from ._common_doc import doc_working_model
 from ._datastructures import AirrCell
 import pandas as pd
@@ -39,20 +39,20 @@ def _sanitize_anndata(adata: AnnData) -> None:
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
-    # TODO
-    # CATEGORICAL_COLS = ("locus", "v_gene", "d_gene", "j_gene", "c_gene", "multichain")
+    # TODO update!
+    CATEGORICAL_COLS = ("locus", "v_call", "d_call", "j_call", "c_call", "multichain")
 
-    # # Sanitize has_ir column into categorical
-    # # This should always be a categorical with True / False
-    # has_ir_mask = _is_true(adata.obs["has_ir"])
-    # adata.obs["has_ir"] = pd.Categorical(
-    #     ["True" if x else "False" for x in has_ir_mask]
-    # )
+    # Sanitize has_ir column into categorical
+    # This should always be a categorical with True / False
+    has_ir_mask = _is_true(adata.obs["has_ir"])
+    adata.obs["has_ir"] = pd.Categorical(
+        ["True" if x else "False" for x in has_ir_mask]
+    )
 
-    # # Turn other columns into categorical
-    # for col in adata.obs.columns:
-    #     if col.endswith(CATEGORICAL_COLS):
-    #         adata.obs[col] = pd.Categorical(adata.obs[col])
+    # Turn other columns into categorical
+    for col in adata.obs.columns:
+        if col.endswith(CATEGORICAL_COLS):
+            adata.obs[col] = pd.Categorical(adata.obs[col])
 
     adata._sanitize()
 
@@ -120,6 +120,9 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
         tmp_ir_cell.add_serialized_chains(row["extra_chains"])
 
     return cells
+
+
+# TODO getter function to retrieve adata.obs without IR columns, or IR columns only.
 
 
 def to_dandelion(adata):

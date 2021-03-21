@@ -174,7 +174,7 @@ def test_read_airr():
         "IR_VJ_1_d_call",
         "IR_VJ_1_j_call",
         "IR_VJ_1_c_call",
-        "IR_VJ_1_expr",
+        "IR_VJ_1_consensus_count",
     ]
     trb_cols = [x.replace("IR_VJ", "IR_VDJ") for x in tra_cols]
     ig_cols = tra_cols + trb_cols
@@ -229,7 +229,8 @@ def test_read_bracer():
     assert cell1["IR_VDJ_1_j_call"] == "IGHJ4"
     assert cell1["IR_VDJ_1_junction"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
     assert cell1["IR_VDJ_1_junction_aa"] == "CATMTGGDLDYW"
-    assert cell1["IR_VJ_1_junction_ins"] == 1
+    assert cell1["IR_VJ_1_np1_length"] == 1
+    assert _is_na(cell1["IR_VJ_1_np2_length"])
 
     assert cell2.name == "SRR10788834"
     assert cell2["IR_VDJ_1_junction_aa"] == "CARDHIVVLEPTPKRYGMDVW"
@@ -237,4 +238,5 @@ def test_read_bracer():
         cell2["IR_VDJ_1_junction"]
         == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
     )
-    assert cell2["IR_VDJ_1_junction_ins"] == 24
+    assert cell2["IR_VDJ_1_np1_length"] == 2
+    assert cell2["IR_VDJ_1_np2_length"] == 22
