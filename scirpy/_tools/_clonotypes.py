@@ -262,7 +262,7 @@ def define_clonotype_clusters(
         same_v_gene=same_v_gene,
         within_group=within_group,
         distance_key=distance_key,
-        sequence_key="cdr3" if sequence == "aa" else "cdr3_nt",
+        sequence_key="junction_aa" if sequence == "aa" else "junction",
         n_jobs=n_jobs,
         chunksize=chunksize,
     )

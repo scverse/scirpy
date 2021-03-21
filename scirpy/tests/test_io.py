@@ -55,8 +55,8 @@ def test_read_10x_csv():
     cell3 = obs.iloc[4, :]
 
     assert cell1.name == "AAACCTGAGTACGCCC-1"
-    assert cell1["IR_VDJ_1_cdr3"] == "CASSLGPSTDTQYF"
-    assert cell1["IR_VDJ_1_cdr3_nt"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
+    assert cell1["IR_VDJ_1_junction_aa"] == "CASSLGPSTDTQYF"
+    assert cell1["IR_VDJ_1_junction"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
     assert _is_na(cell1["IR_VDJ_1_junction_ins"])
     assert cell1["IR_VDJ_1_expr"] == 55
     assert cell1["IR_VDJ_1_v_gene"] == "TRBV7-2"
@@ -68,14 +68,14 @@ def test_read_10x_csv():
     assert cell1["IR_VDJ_1_locus"] == "TRB"
 
     assert cell2.name == "AAACCTGGTCCGTTAA-1"
-    assert cell2["IR_VJ_1_cdr3"] == "CALNTGGFKTIF"
-    assert cell2["IR_VJ_2_cdr3"] == "CAVILDARLMF"
+    assert cell2["IR_VJ_1_junction_aa"] == "CALNTGGFKTIF"
+    assert cell2["IR_VJ_2_junction_aa"] == "CAVILDARLMF"
     assert cell2["IR_VJ_1_expr"] == 5
     assert cell2["IR_VJ_2_expr"] == 5
     assert cell2["IR_VJ_1_locus"] == "TRA"
     assert cell2["IR_VDJ_1_locus"] == "TRB"
     assert cell2["IR_VJ_2_locus"] == "TRA"
-    assert _is_na(cell2["IR_VDJ_2_cdr3"])
+    assert _is_na(cell2["IR_VDJ_2_junction_aa"])
 
     assert cell3.name == "AAACTTGGTCCGTTAA-1"
     assert cell3["IR_VJ_1_locus"] == "IGK"
@@ -94,9 +94,9 @@ def test_read_10x():
     cell3 = obs.iloc[2, :]
 
     assert cell1.name == "AAACCTGAGACCTTTG-2"
-    assert cell1["IR_VDJ_1_cdr3"] == "CASSPPSQGLSTGELFF"
+    assert cell1["IR_VDJ_1_junction_aa"] == "CASSPPSQGLSTGELFF"
     assert (
-        cell1["IR_VDJ_1_cdr3_nt"]
+        cell1["IR_VDJ_1_junction"]
         == "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT"
     )
     assert cell1["IR_VDJ_1_junction_ins"] == 4 + 7
@@ -107,15 +107,19 @@ def test_read_10x():
     assert cell1["IR_VDJ_1_c_gene"] == "TRBC2"
     assert _is_false(cell1["multi_chain"])
     assert np.all(
-        _is_na(cell1[["IR_VJ_1_cdr3", "IR_VDJ_2_cdr3", "IR_VJ_1_junction_ins"]])
+        _is_na(
+            cell1[
+                ["IR_VJ_1_junction_aa", "IR_VDJ_2_junction_aa", "IR_VJ_1_junction_ins"]
+            ]
+        )
     )
 
     assert cell2.name == "AAACCTGAGTACGCCC-1"
-    assert cell2["IR_VJ_1_cdr3"] == "CAMRVGGSQGNLIF"
-    assert cell2["IR_VJ_2_cdr3"] == "CATDAKDSNYQLIW"
+    assert cell2["IR_VJ_1_junction_aa"] == "CAMRVGGSQGNLIF"
+    assert cell2["IR_VJ_2_junction_aa"] == "CATDAKDSNYQLIW"
     assert cell2["IR_VJ_1_expr"] == 9
     assert cell2["IR_VJ_2_expr"] == 4
-    assert np.all(_is_na(cell2[["IR_VDJ_1_cdr3", "IR_VDJ_2_cdr3"]]))
+    assert np.all(_is_na(cell2[["IR_VDJ_1_junction_aa", "IR_VDJ_2_junction_aa"]]))
     assert cell2["IR_VJ_1_junction_ins"] == 4
     assert cell2["IR_VJ_2_junction_ins"] == 4
 
@@ -139,12 +143,12 @@ def test_read_tracer():
     cell2 = anndata.obs.loc["cell2", :]
 
     assert cell1.name == "cell1"
-    assert cell1["IR_VJ_1_cdr3"] == "AESTGTSGTYKYI"
-    assert cell1["IR_VDJ_1_cdr3"] == "ASSYSVSRSGELF"
+    assert cell1["IR_VJ_1_junction_aa"] == "AESTGTSGTYKYI"
+    assert cell1["IR_VDJ_1_junction_aa"] == "ASSYSVSRSGELF"
 
     assert cell2.name == "cell2"
-    assert cell2["IR_VJ_1_cdr3"] == "ALSEAEGGSEKLV"
-    assert cell2["IR_VDJ_1_cdr3"] == "ASSYNRGPGGTQY"
+    assert cell2["IR_VJ_1_junction_aa"] == "ALSEAEGGSEKLV"
+    assert cell2["IR_VDJ_1_junction_aa"] == "ASSYNRGPGGTQY"
     assert cell2["IR_VDJ_1_j_gene"] == "TRBJ2-5"
 
 
@@ -162,8 +166,8 @@ def test_read_airr():
         ]
     )
     tra_cols = [
-        "IR_VJ_1_cdr3",
-        "IR_VJ_1_cdr3_nt",
+        "IR_VJ_1_junction_aa",
+        "IR_VJ_1_junction",
         "IR_VJ_1_v_gene",
         "IR_VJ_1_d_gene",
         "IR_VJ_1_j_gene",
@@ -196,9 +200,9 @@ def test_read_airr():
     cell3 = anndata.obs.loc["AAACCTGCAGCGTAAG-1", :]
 
     assert cell1.name == "cell1"
-    assert cell1["IR_VJ_1_cdr3"] == "CTRPKWESPMVDAFDIW"
-    assert cell1["IR_VDJ_2_cdr3"] == "CQQYDNLQITF"
-    assert cell1["IR_VDJ_1_cdr3"] == "CQQYYHTPYSF"
+    assert cell1["IR_VJ_1_junction_aa"] == "CTRPKWESPMVDAFDIW"
+    assert cell1["IR_VDJ_2_junction_aa"] == "CQQYDNLQITF"
+    assert cell1["IR_VDJ_1_junction_aa"] == "CQQYYHTPYSF"
     assert cell1["IR_VJ_1_locus"] == "TRA"
     assert cell1["IR_VDJ_1_locus"] == "TRB"
 
@@ -221,14 +225,14 @@ def test_read_bracer():
     assert cell1["IR_VJ_1_locus"] == "IGK"
     assert cell1["IR_VDJ_1_locus"] == "IGH"
     assert cell1["IR_VDJ_1_j_gene"] == "IGHJ4"
-    assert cell1["IR_VDJ_1_cdr3_nt"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
-    assert cell1["IR_VDJ_1_cdr3"] == "CATMTGGDLDYW"
+    assert cell1["IR_VDJ_1_junction"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
+    assert cell1["IR_VDJ_1_junction_aa"] == "CATMTGGDLDYW"
     assert cell1["IR_VJ_1_junction_ins"] == 1
 
     assert cell2.name == "SRR10788834"
-    assert cell2["IR_VDJ_1_cdr3"] == "CARDHIVVLEPTPKRYGMDVW"
+    assert cell2["IR_VDJ_1_junction_aa"] == "CARDHIVVLEPTPKRYGMDVW"
     assert (
-        cell2["IR_VDJ_1_cdr3_nt"]
+        cell2["IR_VDJ_1_junction"]
         == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
     )
     assert cell2["IR_VDJ_1_junction_ins"] == 24

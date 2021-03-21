@@ -147,7 +147,7 @@ def _ir_dist(
     sequences.
     """
     obs_col = "IR_{chain_type}_{chain_id}_{key}"
-    key = "cdr3" if sequence == "aa" else "cdr3_nt"
+    key = "junction_aa" if sequence == "aa" else "junction"
     result = {
         "VJ": dict(),
         "VDJ": dict(),

@@ -13,7 +13,7 @@ def cdr_convergence(
     adata: Union[dict, AnnData],
     groupby: str,
     *,
-    target_col: str = "TRB_1_cdr3",
+    target_col: str = "TRB_1_junction_aa",
     clip_at: int = 3,
     group_order: Union[Collection, None] = None,
     top_n: int = 10,

@@ -28,10 +28,10 @@ def test_chain_pairing():
         columns=[
             "has_ir",
             "multi_chain",
-            "IR_VJ_1_cdr3",
-            "IR_VJ_2_cdr3",
-            "IR_VDJ_1_cdr3",
-            "IR_VDJ_2_cdr3",
+            "IR_VJ_1_junction_aa",
+            "IR_VJ_2_junction_aa",
+            "IR_VDJ_1_junction_aa",
+            "IR_VDJ_2_junction_aa",
             "IR_VJ_1_locus",
             "IR_VJ_2_locus",
             "IR_VDJ_1_locus",
@@ -90,7 +90,7 @@ def test_chain_qc():
     )
     # fake chains
     for chain, chain_number in itertools.product(["VJ", "VDJ"], ["1", "2"]):
-        obs[f"IR_{chain}_{chain_number}_cdr3"] = [
+        obs[f"IR_{chain}_{chain_number}_junction_aa"] = [
             "AAA" if x != "nan" else "nan"
             for x in obs[f"IR_{chain}_{chain_number}_locus"]
         ]
@@ -332,13 +332,13 @@ def test_spectratype(adata_tra):
     # Check numbers
     res1 = ir.tl.spectratype(
         adata_tra,
-        groupby="IR_VJ_1_cdr3",
+        groupby="IR_VJ_1_junction_aa",
         target_col="sample",
         fraction=False,
     )
     res2 = ir.tl.spectratype(
         adata_tra,
-        groupby=("IR_VJ_1_cdr3",),
+        groupby=("IR_VJ_1_junction_aa",),
         target_col="sample",
         fraction=False,
     )
@@ -370,7 +370,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = ir.tl.spectratype(
-        adata_tra, groupby="IR_VJ_1_cdr3", target_col="sample", fraction="sample"
+        adata_tra, groupby="IR_VJ_1_junction_aa", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {

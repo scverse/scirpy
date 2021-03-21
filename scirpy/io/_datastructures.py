@@ -194,7 +194,8 @@ class AirrCell:
         # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
         # to "at least one productive chain"
         res_dict["has_ir"] = not (
-            _is_na(res_dict["IR_VJ_1_cdr3"]) and _is_na(res_dict["IR_VDJ_1_cdr3"])
+            _is_na(res_dict["IR_VJ_1_junction_aa"])
+            and _is_na(res_dict["IR_VDJ_1_junction_aa"])
         )
 
         # if there are not chains at all, we want multi-chain to be nan
@@ -203,15 +204,15 @@ class AirrCell:
         if not len(self.chains):
             res_dict["multi_chain"] = np.nan
 
-        if _is_na(res_dict["IR_VJ_1_cdr3"]):
+        if _is_na(res_dict["IR_VJ_1_junction_aa"]):
             assert _is_na(
-                res_dict["IR_VJ_2_cdr3"]
+                res_dict["IR_VJ_2_junction_aa"]
             ), "There can't be a secondary chain if there is no primary one: {}".format(
                 res_dict
             )
-        if _is_na(res_dict["IR_VDJ_1_cdr3"]):
+        if _is_na(res_dict["IR_VDJ_1_junction_aa"]):
             assert _is_na(
-                res_dict["IR_VDJ_2_cdr3"]
+                res_dict["IR_VDJ_2_junction_aa"]
             ), "There can't be a secondary chain if there is no primary one: {}".format(
                 res_dict
             )
