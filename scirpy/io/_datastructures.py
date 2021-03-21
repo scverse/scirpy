@@ -135,8 +135,8 @@ class AirrCell:
             # only keep the (up to) two most highly expressed chains
             tmp_extra_chains = split_chains[junction_type][2:]
             # if productive chains are appended to extra chains, it's a multichain cell!
-            is_multichain |= len(tmp_extra_chains)
-            split_chains["extra"] = tmp_extra_chains
+            is_multichain = is_multichain or len(tmp_extra_chains)
+            split_chains["extra"].extend(tmp_extra_chains)
             split_chains[junction_type] = split_chains[junction_type][:2]
 
         return is_multichain, split_chains

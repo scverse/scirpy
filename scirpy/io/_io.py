@@ -238,18 +238,26 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
             for call_key in ["v_call", "d_call", "j_call"]:
                 if chain_dict[call_key] == "N/A":
                     chain_dict[call_key] = None
-                assert chain_dict[call_key][3] == call_key[0].upper()
+
+                if chain_dict[call_key] is not None:
+                    assert chain_dict[call_key][3] == call_key[0].upper()
 
             chain_dict["np1_length"] = (
                 len(tmp_chain.junction_details[1])
                 if tmp_chain.junction_details[1] != "N/A"
                 else None
             )
-            chain_dict["np2_length"](
-                len(tmp_chain.junction_details[3])
-                if tmp_chain.junction_details[3] != "N/A"
-                else np.nan
-            )
+            try:
+                # only in VDJ
+                chain_dict["np2_length"] = (
+                    len(tmp_chain.junction_details[3])
+                    if tmp_chain.junction_details[3] != "N/A"
+                    else None
+                )
+            except IndexError:
+                chain_dict["np2_length"] = None
+
+            chain_dict["locus"] = chain_type
             chain_dict["consensus_count"] = tmp_chain.TPM
             chain_dict["productive"] = tmp_chain.productive
             chain_dict["junction"] = tmp_chain.cdr3nt
@@ -272,7 +280,8 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                             chains[chain_id], f"TR{chain_id}"
                         ):
                             tcr_obj.add_chain(tmp_chain)
-        except Exception as e:
+        except ImportError as e:
+            # except Exception as e:
             raise Exception(
                 "Error loading TCR data from cell {}".format(summary_file)
             ) from e
