@@ -320,13 +320,16 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
     """
     ir_objs = {}
 
-    if isinstance(path, str) or isinstance(path, Path):
+    if isinstance(path, (str, Path, pd.DataFrame)):
         path = [path]
 
     for tmp_path in path:
-        tmp_path = str(tmp_path)
-        reader = airr.read_rearrangement(tmp_path)
-        for chain_dict in reader:
+        if isinstance(tmp_path, pd.DataFrame):
+            _, iterator = zip(*tmp_path.copy().iterrows())
+        else:
+            iterator = airr.read_rearrangement(str(tmp_path))
+
+        for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
             try:
                 tmp_cell = ir_objs[cell_id]
@@ -337,6 +340,35 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
             tmp_cell.add_chain(chain_dict)
 
     return from_ir_objs(ir_objs.values())
+
+
+# TODO: use this for AIRR and dandelion
+def _infer_locus_from_gene_names(chain_dict):
+    tmp = [
+        chain_dict["v_call"],
+        chain_dict["d_call"],
+        chain_dict["j_call"],
+        chain_dict["c_call"],
+    ]
+    for t in tmp:
+        if t == "" or t is None or t != t:
+            tmp.remove(t)
+    if all("tra" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "TRA"
+    elif all("trb" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "TRB"
+    elif all("trd" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "TRD"
+    elif all("trg" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "TRG"
+    elif all("igh" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "IGH"
+    elif all("igk" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "IGK"
+    elif all("igl" in x.lower() for x in tmp if not pd.isnull(x)):
+        locus = "IGL"
+    else:
+        locus = None
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -426,13 +458,22 @@ def write_airr(adata):
     pass
 
 
-def from_dandelion(dandelion):
-    pass
-
-
 def to_dandelion(dandelion):
     pass
 
 
 def update_schema(adata):
     pass
+
+
+def from_dandelion(dandelion, import_all=False):
+    try:
+        import dandelion as ddl
+    except ImportError:
+        raise ImportError("Please install dandelion: pip install sc-dandelion.")
+    adata = read_airr(dandelion.data)
+    if import_all:
+        ddl.tl.transfer(
+            adata, dandelion
+        )  # need to make a version that is not so verbose?
+    return adata
