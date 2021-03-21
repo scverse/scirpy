@@ -16,6 +16,7 @@ import pandas as pd
 from scirpy.util import _is_na
 import numpy as np
 from .util import _normalize_df_types
+import tempfile
 
 
 @pytest.mark.conda
@@ -45,3 +46,7 @@ def test_workflow():
     pdt.assert_frame_equal(
         adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False
     )
+
+    # test that writing works (i.e. all scirpy fields can be serialized)
+    with tempfile.TemporaryFile("w") as f:
+        adata.write_h5ad(f)

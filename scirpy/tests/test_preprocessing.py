@@ -6,7 +6,6 @@ from ..io import read_10x_vdj, read_bracer
 from . import TESTDATA
 from .._preprocessing import merge_with_ir
 from .._preprocessing._merge_adata import _merge_ir_obs
-from ..io._convert_anndata import IR_OBS_COLS
 import pandas.testing as pdt
 import numpy.testing as npt
 from ..util import _is_na

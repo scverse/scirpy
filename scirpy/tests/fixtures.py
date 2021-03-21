@@ -96,7 +96,7 @@ def adata_cdr3():
 
 
 @pytest.fixture
-def adata_junction_aa_2():
+def adata_cdr3_2():
     obs = pd.DataFrame(
         [
             ["c1", "AAA", "AAA", "KKK", "KKK"],

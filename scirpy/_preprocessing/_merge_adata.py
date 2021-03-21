@@ -2,7 +2,6 @@ from typing import Union, List, Dict
 from anndata import AnnData
 from ..io._convert_anndata import (
     _sanitize_anndata,
-    IR_OBS_COLS,
     to_ir_objs,
     from_ir_objs,
 )
