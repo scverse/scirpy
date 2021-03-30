@@ -43,13 +43,7 @@ def _is_symmetric(M) -> bool:
 def __is_na(x):
     """the non-vectorized version, to be called from a function
     that gets vectorized"""
-    return (
-        pd.isnull(x)
-        | (x == np.array("NaN"))
-        | (x == np.array("nan"))
-        | (x == np.array("None"))
-        | (x == np.array("N/A"))
-    )
+    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A")
 
 
 @np.vectorize
@@ -74,15 +68,12 @@ def _is_true(x):
     return ~_is_false(x) & ~_is_na(x)
 
 
-@np.vectorize
 def __is_false(x):
     """Vectorized helper function"""
-    return np.bool_(
-        ((x == "False") | (x == "false") | (x == "0") | ~np.bool_(x))
-        & ~np.bool_(__is_na(x))
-    )
+    return (x in ("False", "false", "0") or not bool(x)) and not __is_na(x)
 
 
+@np.vectorize
 def _is_false(x):
     """Evaluates false for bool(False) and str("false")/str("False").
     The function is vectorized over numpy arrays or pandas Series.
