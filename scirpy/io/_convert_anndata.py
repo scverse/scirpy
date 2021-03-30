@@ -1,7 +1,7 @@
 """Convert IrCells to AnnData and vice-versa"""
 import itertools
 from anndata import AnnData
-from ..util import _doc_params, _is_true
+from ..util import _doc_params, _is_true, _is_na
 from ._common_doc import doc_working_model
 from ._datastructures import AirrCell
 import pandas as pd
@@ -78,8 +78,8 @@ def from_ir_objs(ir_objs: Collection[AirrCell]) -> AnnData:
 
     """
     ir_df = pd.DataFrame.from_records(
-        (x.to_scirpy_record() for x in ir_objs), index="cell_id"
-    )
+        (x.to_scirpy_record() for x in ir_objs)
+    ).set_index("cell_id")
     adata = AnnData(obs=ir_df, X=np.empty([ir_df.shape[0], 0]))
     _sanitize_anndata(adata)
     return adata
@@ -104,8 +104,9 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
     cells = []
 
     # TODO handle missing fields more gracefully?
-    ir_cols = adata.obs.columns[adata.obs.columns.str.startswith("IR_")]
-    for cell_id, row in adata.obs.iterrows():
+    obs = adata.obs.copy()
+    ir_cols = obs.columns[obs.columns.str.startswith("IR_")]
+    for cell_id, row in obs.iterrows():
         tmp_ir_cell = AirrCell(cell_id, multi_chain=row["multi_chain"])
         chains = {
             (junction_type, chain_id): dict()
@@ -113,11 +114,17 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
         }
         for tmp_col in ir_cols:
             _, junction_type, chain_id, key = tmp_col.split("_", maxsplit=3)
-            chains[(junction_type, chain_id)][key] = row[tmp_col]
+            # TODO this is slow :( -> vectorized version?
+            chains[(junction_type, chain_id)][key] = (
+                None if _is_na(row[tmp_col]) else row[tmp_col]
+            )
 
         for tmp_chain in chains.values():
-            tmp_ir_cell.add_chain(tmp_chain)
+            # Don't add empty chains!
+            if not all([x is None for x in tmp_chain.values()]):
+                tmp_ir_cell.add_chain(tmp_chain)
         tmp_ir_cell.add_serialized_chains(row["extra_chains"])
+        cells.append(tmp_ir_cell)
 
     return cells
 

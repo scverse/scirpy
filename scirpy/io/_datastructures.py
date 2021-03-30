@@ -139,7 +139,7 @@ class AirrCell:
             split_chains["extra"].extend(tmp_extra_chains)
             split_chains[junction_type] = split_chains[junction_type][:2]
 
-        return is_multichain, split_chains
+        return bool(is_multichain), split_chains
 
     @staticmethod
     def _key_sort_chains(chain):
@@ -157,6 +157,14 @@ class AirrCell:
     def _serialize_chains(chains):
         """Serialize chains into a JSON object. This is useful for storing
         an arbitrary number of extra chains in a single column of a dataframe."""
+        # convert numpy dtypes to python types
+        # https://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types
+        for chain in chains:
+            for k, v in chain.items():
+                try:
+                    chain[k] = chain[k].item()
+                except AttributeError:
+                    pass
         return json.dumps(chains)
 
     # TODO should it be `include_fields` instead?

@@ -36,13 +36,21 @@ def test_read_and_convert_10x_example(path, omit_cols):
     """
     anndata = read_10x_vdj(path)
     if omit_cols:
-        del adata.obs["IR_VJ_1_expr_raw"]
+        # TODO more cols?
+        del anndata.obs["IR_VJ_1_expr_raw"]
     assert anndata.shape[0] > 0
 
     # Test that round-trip conversion succeeds
     ir_objs = to_ir_objs(anndata)
     anndata2 = from_ir_objs(ir_objs)
-    pdt.assert_frame_equal(anndata.obs, anndata2.obs)
+    for col in anndata.obs.columns:
+        # consistent NA handling (just for the test)
+        # Becomes obsolete with #190
+        anndata.obs.loc[_is_na(anndata.obs[col]), col] = None
+        anndata2.obs.loc[_is_na(anndata2.obs[col]), col] = None
+    pdt.assert_frame_equal(
+        anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
+    )
 
 
 @pytest.mark.conda
