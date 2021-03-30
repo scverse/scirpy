@@ -51,7 +51,9 @@ rpack = [
 ]
 test = [
     'pytest',
-    'black'
+    'black',
+    'sc-dandelion',
+    'adjusttext', # see https://github.com/zktuong/dandelion/issues/55
 ]
 doc = [
     'sphinx>=3.0.1,<3.1',
@@ -67,6 +69,8 @@ doc = [
     'pycairo',
     'jupyter_client',
     'ipykernel',
+    'sc-dandelion',
+    'adjusttext', # see https://github.com/zktuong/dandelion/issues/55
 ]
 
 [tool.flit.metadata.urls]

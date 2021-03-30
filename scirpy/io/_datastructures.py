@@ -70,6 +70,8 @@ class AirrCell:
         A chain is a dictionary following
         the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__.
         """
+        # ensure consistent ordering
+        chain = dict(sorted(chain.items()))
         # TODO this should be `.validate_obj` but currently does not work
         # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())

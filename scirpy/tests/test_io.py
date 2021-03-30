@@ -6,6 +6,8 @@ from scirpy.io import (
     read_bracer,
     from_ir_objs,
     to_ir_objs,
+    to_dandelion,
+    from_dandelion,
 )
 from scirpy.util import _is_na, _is_false
 import numpy as np
@@ -51,6 +53,32 @@ def test_read_and_convert_10x_example(path, omit_cols):
     pdt.assert_frame_equal(
         anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
     )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+    ],
+)
+def test_convert_dandelion(path):
+    """Test dandelion round-trip conversion"""
+    anndata = read_10x_vdj(path)
+    ddl = to_dandelion(anndata)
+    anndata2 = from_dandelion(ddl)
+
+    ir_objs1 = to_ir_objs(anndata)
+    ir_objs2 = to_ir_objs(anndata2)
+
+    assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
+
+    # Frame-level comparison is not possible as the "extra chains" field is different
+    for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2):
+        for tmp_chain1, tmp_chain2 in zip(ir_obj1.chains, ir_obj2.chains):
+            # this field is expected to be different
+            del tmp_chain1["sequence_id"]
+            del tmp_chain2["sequence_id"]
+            assert tmp_chain1 == tmp_chain2
 
 
 @pytest.mark.conda

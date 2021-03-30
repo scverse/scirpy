@@ -75,6 +75,7 @@ intersphinx_mapping = dict(
     seaborn=("https://seaborn.pydata.org/", None),
     sklearn=("https://scikit-learn.org/stable/", None),
     networkx=("https://networkx.github.io/documentation/networkx-1.10/", None),
+    dandelion=("https://sc-dandelion.readthedocs.io/en/latest/", None),
 )
 
 

@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _translate_dna_to_protein
-from ._convert_anndata import from_ir_objs
+from ._convert_anndata import from_ir_objs, to_ir_objs
 from ._common_doc import doc_working_model
 from .._compat import Literal
 from scanpy import logging
@@ -344,7 +344,7 @@ def read_airr(
 
     for tmp_path in path:
         if isinstance(tmp_path, pd.DataFrame):
-            _, iterator = zip(*tmp_path.to_dict(orient="records"))
+            iterator = tmp_path.to_dict(orient="records")
         else:
             iterator = airr.read_rearrangement(str(tmp_path))
 
@@ -490,24 +490,78 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
 
 def write_airr(adata):
-    pass
-
-
-def to_dandelion(dandelion):
+    # TODO
     pass
 
 
 def update_schema(adata):
+    # TODO
     pass
 
 
-def from_dandelion(dandelion, import_all=False):
+def to_dandelion(adata):
+    """
+    Convert a scirpy-initialized AnnData object to Dandelion format using `to_ir_objs`.
+
+    Parameters
+    ----------
+    adata
+        annotated data matrix with :term:`IR` annotations.
+
+    Returns
+    -------
+    `Dandelion` object.
+
+    """
+    try:
+        import dandelion as ddl
+    except:
+        raise ImportError("Please install dandelion: pip install sc-dandelion.")
+    airr_cells = to_ir_objs(adata)
+
+    contig_dicts = {}
+    for tmp_cell in airr_cells:
+        for i, tmp_chain in enumerate(tmp_cell.chains, start=1):
+            tmp_chain.update(
+                {
+                    "cell_id": tmp_cell.cell_id,
+                    "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
+                }
+            )
+            tmp_chain["umi_count"] = tmp_chain.pop("duplicate_count")
+            contig_dicts[tmp_chain["sequence_id"]] = tmp_chain
+
+    data = pd.DataFrame.from_dict(contig_dicts, orient="index")
+    return ddl.Dandelion(ddl.load_data(data))
+
+
+def from_dandelion(dandelion, transfer=False) -> AnnData:
+    """Import data from dandelion :cite:`Stephenson2021`.
+
+    Parameters
+    ----------
+    dandelion
+        a :class:`dandelion.Dandelion` instance
+    transfer
+        Whether to execute :func:`dandelion.tl.transfer` to transfer all data
+        to the :class:`anndata.AnnData` instance.
+
+    Returns
+    -------
+    A :class:`~anndata.AnnData` instance with AIRR information stored in `obs`.
+    """
     try:
         import dandelion as ddl
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.")
-    adata = read_airr(dandelion.data)
-    if import_all:
+
+    dandelion_df = dandelion.data.copy()
+    # replace "unassigned" with None
+    for col in dandelion_df.columns:
+        dandelion_df.loc[dandelion_df[col] == "unassigned", col] = None
+
+    adata = read_airr(dandelion_df)
+    if transfer:
         ddl.tl.transfer(
             adata, dandelion
         )  # need to make a version that is not so verbose?
