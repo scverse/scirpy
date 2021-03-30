@@ -121,7 +121,6 @@ class AirrCell:
         # TODO warning
         # if (
         #     "duplicate_count" not in self._fields
-        #     and "umi_count" not in self._fields
         #     and "consensus_count" not in self._fields
         # ):
         #     logging.warning(
@@ -146,8 +145,6 @@ class AirrCell:
         """Get key to sort chains by expression"""
         return (
             chain.get("duplicate_count", 0),
-            # TODO do we need special treatment of the `umi_count` field
-            # chain.get("umi_count", 0),
             chain.get("consensus_count", 0),
             chain.get("junction", ""),
             chain.get("junction_aa", ""),

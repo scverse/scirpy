@@ -14,6 +14,8 @@ import airr
 from ..util import _doc_params, _is_true, _translate_dna_to_protein
 from ._convert_anndata import from_ir_objs
 from ._common_doc import doc_working_model
+from .._compat import Literal
+from scanpy import logging
 
 
 # patch sys.modules to enable pickle import.
@@ -299,7 +301,10 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
+def read_airr(
+    path: Union[str, Sequence[str], Path, Sequence[Path]],
+    use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
+) -> AnnData:
     """\
     Read AIRR-compliant data.
 
@@ -321,6 +326,11 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
         Path to the AIRR rearrangement tsv file. If different
         chains are split up into multiple files, these can be specified
         as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
+    use_umi_count_col
+        Whether to add UMI counts from the non-strandard (but common) `umi_count`
+        column. When this column is used, the UMI counts are moved over to the
+        standard `duplicate_count` column. Default: Use `umi_count` if there is
+        no `duplicate_count` column present.
 
     Returns
     -------
@@ -334,12 +344,26 @@ def read_airr(path: Union[str, Sequence[str], Path, Sequence[Path]]) -> AnnData:
 
     for tmp_path in path:
         if isinstance(tmp_path, pd.DataFrame):
-            _, iterator = zip(*tmp_path.copy().iterrows())
+            _, iterator = zip(*tmp_path.to_dict(orient="records"))
         else:
             iterator = airr.read_rearrangement(str(tmp_path))
 
         for chain_dict in iterator:
+            if (
+                "umi_count" in chain_dict
+                and use_umi_count_col == "auto"
+                and "duplicate_count" not in chain_dict
+            ):
+                logging.warning(
+                    "Renaming the non-standard `umi_count` column to `duplicate_count`. "
+                )  # type: ignore
+                use_umi_count_col = True
+
             cell_id = chain_dict.pop("cell_id")
+
+            if use_umi_count_col is True:
+                chain_dict["duplicate_count"] = chain_dict.pop("umi_count")
+
             try:
                 tmp_cell = ir_objs[cell_id]
             except KeyError:
