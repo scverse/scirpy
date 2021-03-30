@@ -64,6 +64,9 @@ class AirrCell:
     def cell_id(self):
         return self._cell_id
 
+    # TODO warnings should only show once per import!
+    # TODO speed?
+
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain ot the cell.
 
@@ -72,6 +75,8 @@ class AirrCell:
         """
         # ensure consistent ordering
         chain = dict(sorted(chain.items()))
+        # sanitize NA values
+        chain = {k: None if _is_na(v) else v for k, v in chain.items()}
         # TODO this should be `.validate_obj` but currently does not work
         # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())

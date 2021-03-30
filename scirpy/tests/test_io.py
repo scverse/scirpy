@@ -246,6 +246,7 @@ def test_read_airr():
 
     assert cell2.name == "cell2"
 
+    # check that inferring the locus name from genes works
     assert cell3["IR_VJ_1_locus"] == "IGL"
     assert cell3["IR_VDJ_1_locus"] == "IGH"
 

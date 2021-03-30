@@ -16,6 +16,7 @@ from ._convert_anndata import from_ir_objs, to_ir_objs
 from ._common_doc import doc_working_model
 from .._compat import Literal
 from scanpy import logging
+from airr import RearrangementSchema
 
 
 # patch sys.modules to enable pickle import.
@@ -304,6 +305,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
 def read_airr(
     path: Union[str, Sequence[str], Path, Sequence[Path]],
     use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
+    infer_locus: bool = True,
 ) -> AnnData:
     """\
     Read AIRR-compliant data.
@@ -331,6 +333,8 @@ def read_airr(
         column. When this column is used, the UMI counts are moved over to the
         standard `duplicate_count` column. Default: Use `umi_count` if there is
         no `duplicate_count` column present.
+    infer_locus
+        Try to infer the `locus` column from gene names, in case it is not specified.
 
     Returns
     -------
@@ -342,6 +346,22 @@ def read_airr(
     if isinstance(path, (str, Path, pd.DataFrame)):
         path = [path]
 
+    def _decide_use_umi_count_col(chain_dict):
+        """Logic to decide whether or not to use counts form the `umi_counts` column."""
+        if (
+            "umi_count" in chain_dict
+            and use_umi_count_col == "auto"
+            and "duplicate_count" not in chain_dict
+        ):
+            logging.warning(
+                "Renaming the non-standard `umi_count` column to `duplicate_count`. "
+            )  # type: ignore
+            return True
+        elif use_umi_count_col is True:
+            return True
+        else:
+            return False
+
     for tmp_path in path:
         if isinstance(tmp_path, pd.DataFrame):
             iterator = tmp_path.to_dict(orient="records")
@@ -349,20 +369,15 @@ def read_airr(
             iterator = airr.read_rearrangement(str(tmp_path))
 
         for chain_dict in iterator:
-            if (
-                "umi_count" in chain_dict
-                and use_umi_count_col == "auto"
-                and "duplicate_count" not in chain_dict
-            ):
-                logging.warning(
-                    "Renaming the non-standard `umi_count` column to `duplicate_count`. "
-                )  # type: ignore
-                use_umi_count_col = True
-
             cell_id = chain_dict.pop("cell_id")
 
-            if use_umi_count_col is True:
-                chain_dict["duplicate_count"] = chain_dict.pop("umi_count")
+            if _decide_use_umi_count_col(chain_dict):
+                chain_dict["duplicate_count"] = RearrangementSchema.to_int(
+                    chain_dict.pop("umi_count")
+                )
+
+            if infer_locus and "locus" not in chain_dict:
+                chain_dict["locus"] = _infer_locus_from_gene_names(chain_dict)
 
             try:
                 tmp_cell = ir_objs[cell_id]
@@ -375,8 +390,8 @@ def read_airr(
     return from_ir_objs(ir_objs.values())
 
 
-# TODO: use this for AIRR and dandelion
 def _infer_locus_from_gene_names(chain_dict):
+    """Infer the IGMT locus name from VDJ calls"""
     tmp = [
         chain_dict["v_call"],
         chain_dict["d_call"],

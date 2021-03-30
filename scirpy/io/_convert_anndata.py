@@ -8,29 +8,6 @@ import pandas as pd
 from typing import Collection, List
 import numpy as np
 
-# TODO Remove
-# #: All fields available for each of the four IR chains.
-# IR_OBS_KEYS = [
-#     "locus",
-#     "cdr3",
-#     "cdr3_nt",
-#     "expr",
-#     "expr_raw",
-#     "v_gene",
-#     "d_gene",
-#     "j_gene",
-#     "c_gene",
-#     "junction_ins",
-# ]
-
-# #: All cols addedby scirpy when reading in data
-# IR_OBS_COLS = [
-#     f"IR_{chain_type}_{chain_id}_{key}"
-#     for key, chain_type, chain_id in itertools.product(
-#         IR_OBS_KEYS, ["VJ", "VDJ"], ["1", "2"]
-#     )
-# ] + ["has_ir", "multi_chain"]
-
 
 def _sanitize_anndata(adata: AnnData) -> None:
     """Sanitization and sanity checks on IR-anndata object.
