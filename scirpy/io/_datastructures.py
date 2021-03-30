@@ -4,14 +4,13 @@ Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
-from .._compat import Literal
 from ..util import _is_na, _is_true, _doc_params
-from typing import Collection, Mapping, Union
+from typing import Collection, Mapping
 from airr import RearrangementSchema
-from scanpy import logging
+import scanpy
 import json
 import numpy as np
-from ._common_doc import doc_working_model
+from ._util import doc_working_model
 
 
 class AirrCell:
@@ -26,12 +25,8 @@ class AirrCell:
     cell_id
         cell id or barcode.  Needs to match the cell id used for transcriptomics
         data (i.e. the `adata.obs_names`)
-    multi_chain
-        explicitly mark this cell as :term:`Multichain-cell`. Even if this is set to
-        `False`, :func:`scirpy.io.from_ir_objs` will consider the cell as multi chain,
-        if it has more than two :term:`VJ<V(D)J>` or :term:`VDJ<V(D)J>` chains. However,
-        if this is set to `True`, the function will consider it as multi-chain
-        regardless of the number of chains.
+    logger
+        A logger to write messages to. If not specified, use the default logger.
     """
 
     #: Chains with the :term:`V-J<V(D)J>` junction
@@ -50,10 +45,14 @@ class AirrCell:
     # TODO
     _CELL_ATTRIBUTES = ("is_cell", "high_confidence")  # non-standard field by 10x
 
-    def __init__(self, cell_id: str, *, multi_chain: bool = False):
+    def __init__(self, cell_id: str, logger=scanpy.logging, **kwargs):
 
         self._cell_id = cell_id
-        self._multi_chain = _is_true(multi_chain)
+        if "multi_chain" in kwargs:
+            # legacy argument for compatibility with old anndata schema.
+            self._multi_chain = _is_true(kwargs["multi_chain"])
+        else:
+            self._multi_chain = False
         self._fields = None
         self.chains = list()
 
@@ -64,7 +63,6 @@ class AirrCell:
     def cell_id(self):
         return self._cell_id
 
-    # TODO warnings should only show once per import!
     # TODO speed?
 
     def add_chain(self, chain: Mapping) -> None:
@@ -89,11 +87,11 @@ class AirrCell:
 
         # TODO scirpy warning
         if "locus" not in chain:
-            logging.warning(
+            self.logger.warning(
                 "`locus` field not specified, but required for most scirpy functionality. "
             )  # type: ignore
         elif chain["locus"] not in self.VALID_LOCI:
-            logging.warning("scirpy only considers valid IGMT locus names. ")  # type: ignore
+            self.logger.warning("scirpy only considers valid IGMT locus names. ")  # type: ignore
 
         self.chains.append(chain)
 
@@ -125,14 +123,13 @@ class AirrCell:
             else:
                 split_chains["extra"].append(tmp_chain)
 
-        # TODO warning
-        # if (
-        #     "duplicate_count" not in self._fields
-        #     and "consensus_count" not in self._fields
-        # ):
-        #     logging.warning(
-        #         "No expression information available. Cannot rank chains by expression. "
-        #     )  # type: ignore
+        if (
+            "duplicate_count" not in self._fields
+            and "consensus_count" not in self._fields
+        ):
+            self.logger.warning(
+                "No expression information available. Cannot rank chains by expression. "
+            )  # type: ignore
 
         for junction_type in ["VJ", "VDJ"]:
             split_chains[junction_type] = sorted(

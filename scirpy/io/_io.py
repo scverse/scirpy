@@ -13,9 +13,8 @@ from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _translate_dna_to_protein
 from ._convert_anndata import from_ir_objs, to_ir_objs
-from ._common_doc import doc_working_model
+from ._util import doc_working_model, _IOLogger
 from .._compat import Literal
-from scanpy import logging
 from airr import RearrangementSchema
 
 
@@ -26,6 +25,7 @@ sys.modules["tracerlib"] = _tracerlib
 
 def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
+    logger = _IOLogger()
     with open(path, "r") as f:
         cells = json.load(f)
 
@@ -35,7 +35,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             continue
         barcode = cell["barcode"]
         if barcode not in ir_objs:
-            ir_obj = AirrCell(barcode)
+            ir_obj = AirrCell(barcode, logger=logger)
             ir_objs[barcode] = ir_obj
         else:
             ir_obj = ir_objs[barcode]
@@ -117,13 +117,14 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
 def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """Read IR data from a 10x genomics `_contig_annotations.csv` file """
+    logger = _IOLogger()
     df = pd.read_csv(path)
 
     ir_objs = {}
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
-        ir_obj = AirrCell(barcode)
+        ir_obj = AirrCell(barcode, logger=logger)
         for _, chain_series in cell_df.iterrows():
             chain_dict = AirrCell.empty_chain_dict()
             chain_dict.update(
@@ -212,6 +213,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     AnnData object with TCR data in `obs` for each cell. For more details see
     :ref:`data-structure`.
     """
+    logger = _IOLogger()
     tcr_objs = {}
     path = str(path)
 
@@ -272,7 +274,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
         os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True
     ):
         cell_name = summary_file.split(os.sep)[-3]
-        tcr_obj = AirrCell(cell_name)
+        tcr_obj = AirrCell(cell_name, logger=logger)
         try:
             with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
@@ -342,6 +344,7 @@ def read_airr(
     :ref:`data-structure`.
     """
     ir_objs = {}
+    logger = _IOLogger()
 
     if isinstance(path, (str, Path, pd.DataFrame)):
         path = [path]
@@ -353,7 +356,7 @@ def read_airr(
             and use_umi_count_col == "auto"
             and "duplicate_count" not in chain_dict
         ):
-            logging.warning(
+            logger.warning(
                 "Renaming the non-standard `umi_count` column to `duplicate_count`. "
             )  # type: ignore
             return True
@@ -382,7 +385,7 @@ def read_airr(
             try:
                 tmp_cell = ir_objs[cell_id]
             except KeyError:
-                tmp_cell = AirrCell(cell_id=cell_id)
+                tmp_cell = AirrCell(cell_id=cell_id, logger=logger)
                 ir_objs[cell_id] = tmp_cell
 
             tmp_cell.add_chain(chain_dict)
@@ -441,6 +444,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
     AnnData object with BCR data in `obs` for each cell. For more details see
     :ref:`data-structure`.
     """
+    logger = _IOLogger()
     changeodb = pd.read_csv(path, sep="\t", na_values=["None"])
 
     bcr_cells = dict()
@@ -449,7 +453,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
         try:
             tmp_ir_cell = bcr_cells[cell_id]
         except KeyError:
-            tmp_ir_cell = AirrCell(cell_id)
+            tmp_ir_cell = AirrCell(cell_id, logger=logger)
             bcr_cells[cell_id] = tmp_ir_cell
 
         chain_dict = AirrCell.empty_chain_dict()
@@ -504,17 +508,46 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
     return from_ir_objs(bcr_cells.values())
 
 
-def write_airr(adata):
+def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
+    # TODO roundtrip test
+    """Write Immune receptor fields from adata.obs in AIRR Rearrangement TSV format.
+
+    Parameters:
+    -----------
+    adata
+        annotated data matrix
+    filename
+        destination filename
+    """
+    airr_cells = to_ir_objs(adata)
+    writer = airr.create_rearrangement(filename)
+    for tmp_cell in airr_cells:
+        for chain in tmp_cell.chains:
+            writer.write(chain)
+    writer.close()
+
+
+def update_schema(adata) -> None:
+    """Update older versions of a scirpy anndata object to the latest schema.
+
+    Modifies adata inplace.
+
+    Parameters
+    ----------
+    adata
+        annotated data matrix
+    """
     # TODO
     pass
 
 
-def update_schema(adata):
+def _update_schema_decorator(f):
+    """Decorator that checks that anndata uses the latest schema"""
     # TODO
     pass
 
 
-def to_dandelion(adata):
+def to_dandelion(adata: AnnData):
     """
     Convert a scirpy-initialized AnnData object to Dandelion format using `to_ir_objs`.
 

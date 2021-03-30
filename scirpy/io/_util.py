@@ -1,3 +1,6 @@
+from collections import Counter
+from scanpy import logging
+
 doc_working_model = """\
 
 .. note::
@@ -11,3 +14,16 @@ doc_working_model = """\
 
     For more information, see :ref:`receptor-model`.
 """
+
+
+class _IOLogger:
+    """Logger wrapper that prints identical messages only once"""
+
+    def __init__(self):
+        self._warnings = Counter()
+
+    def warning(self, message):
+        if not self._warnings[message]:
+            logging.warning(message)  # type: ignore
+        else:
+            self._warnings[message] += 1

@@ -15,8 +15,11 @@ import pandas as pd
 def test_merge_ir_obs():
     adata1 = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     adata2 = adata1.copy()
+    obs_expected = adata1.obs.copy()
     obs_merged = _merge_ir_obs(adata1, adata2)
-    pdt.assert_frame_equal(adata1.obs, obs_merged)
+    _normalize_df_types(obs_merged)
+    _normalize_df_types(obs_expected)
+    pdt.assert_frame_equal(obs_merged, obs_expected)
 
     adata_bracer = read_bracer(TESTDATA / "bracer/changeodb.tab")
     obs_merged = _merge_ir_obs(adata1, adata_bracer)

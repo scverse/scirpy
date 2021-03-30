@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 import pandas.testing as pdt
 from . import TESTDATA
+from .util import _normalize_df_types
 
 
 @pytest.mark.parametrize(
@@ -24,8 +25,7 @@ from . import TESTDATA
         TESTDATA / "10x/filtered_contig_annotations.csv",
     ],
 )
-@pytest.mark.parametrize("omit_cols", [True, False])
-def test_read_and_convert_10x_example(path, omit_cols):
+def test_read_and_convert_10x_example(path):
     """Test that a full 10x CSV table can be imported without errors.
 
     Additionally test that the round-trip conversion using `to_ir_objs` and
@@ -37,9 +37,6 @@ def test_read_and_convert_10x_example(path, omit_cols):
     under CC-BY-4.0
     """
     anndata = read_10x_vdj(path)
-    if omit_cols:
-        # TODO more cols?
-        del anndata.obs["IR_VJ_1_expr_raw"]
     assert anndata.shape[0] > 0
 
     # Test that round-trip conversion succeeds
@@ -48,8 +45,8 @@ def test_read_and_convert_10x_example(path, omit_cols):
     for col in anndata.obs.columns:
         # consistent NA handling (just for the test)
         # Becomes obsolete with #190
-        anndata.obs.loc[_is_na(anndata.obs[col]), col] = None
-        anndata2.obs.loc[_is_na(anndata2.obs[col]), col] = None
+        _normalize_df_types(anndata.obs)
+        _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(
         anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
     )

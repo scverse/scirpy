@@ -2,7 +2,7 @@
 import itertools
 from anndata import AnnData
 from ..util import _doc_params, _is_true, _is_na
-from ._common_doc import doc_working_model
+from ._util import doc_working_model, _IOLogger
 from ._datastructures import AirrCell
 import pandas as pd
 from typing import Collection, List
@@ -62,7 +62,6 @@ def from_ir_objs(ir_objs: Collection[AirrCell]) -> AnnData:
     return adata
 
 
-# TODO function should be usable to retrieve the 'extra' chains, productive or not.
 def to_ir_objs(adata: AnnData) -> List[AirrCell]:
     """
     Convert an adata object with IR information back to a list of IrCells.
@@ -79,12 +78,12 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
     List of IrCells
     """
     cells = []
+    logger = _IOLogger()
 
-    # TODO handle missing fields more gracefully?
     obs = adata.obs.copy()
     ir_cols = obs.columns[obs.columns.str.startswith("IR_")]
     for cell_id, row in obs.iterrows():
-        tmp_ir_cell = AirrCell(cell_id, multi_chain=row["multi_chain"])
+        tmp_ir_cell = AirrCell(cell_id, logger=logger, multi_chain=row["multi_chain"])
         chains = {
             (junction_type, chain_id): dict()
             for junction_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"])
@@ -106,4 +105,5 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
     return cells
 
 
+# TODO getter function to retrieve the 'extra' chains, productive or not.
 # TODO getter function to retrieve adata.obs without IR columns, or IR columns only.
