@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 import pandas.testing as pdt
 from . import TESTDATA
-from .util import _normalize_df_types
+from .util import _normalize_df_types, _read_h5ad_gz, _write_h5ad_gz
 
 
 @pytest.mark.parametrize(
@@ -39,14 +39,30 @@ def test_read_and_convert_10x_example(path):
     anndata = read_10x_vdj(path)
     assert anndata.shape[0] > 0
 
-    # Test that round-trip conversion succeeds
+    # # # Store anndata as gzipped h5ad (use this to recompute if necessary)
+    # ir_objs = to_ir_objs(anndata)
+    # _write_h5ad_gz(
+    #     anndata, TESTDATA / f"anndata/{path.stem}.h5ad.gz".replace(".csv", "")
+    # )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        TESTDATA / "anndata/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.h5ad.gz",
+        TESTDATA
+        / "anndata/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.h5ad.gz",
+        TESTDATA / "anndata/filtered_contig_annotations.h5ad.gz",
+    ],
+)
+def test_ir_objs_roundtrip_conversion(path):
+    """Check that an anndata object can be converted to ir_objs and back
+    without loss"""
+    anndata = _read_h5ad_gz(path)
     ir_objs = to_ir_objs(anndata)
     anndata2 = from_ir_objs(ir_objs)
-    for col in anndata.obs.columns:
-        # consistent NA handling (just for the test)
-        # Becomes obsolete with #190
-        _normalize_df_types(anndata.obs)
-        _normalize_df_types(anndata2.obs)
+    _normalize_df_types(anndata.obs)
+    _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(
         anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
     )
@@ -55,12 +71,13 @@ def test_read_and_convert_10x_example(path):
 @pytest.mark.parametrize(
     "path",
     [
-        TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+        TESTDATA
+        / "anndata/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.h5ad.gz",
     ],
 )
 def test_convert_dandelion(path):
     """Test dandelion round-trip conversion"""
-    anndata = read_10x_vdj(path)
+    anndata = _read_h5ad_gz(path)
     ddl = to_dandelion(anndata)
     anndata2 = from_dandelion(ddl)
 

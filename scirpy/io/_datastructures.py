@@ -85,7 +85,6 @@ class AirrCell:
         elif self._fields != list(chain.keys()):
             raise ValueError("All chains must have the same fields!")
 
-        # TODO scirpy warning
         if "locus" not in chain:
             self.logger.warning(
                 "`locus` field not specified, but required for most scirpy functionality. "
@@ -168,8 +167,8 @@ class AirrCell:
                     pass
         return json.dumps(chains)
 
-    # TODO should it be `include_fields` instead?
-    # TODO auto-exclude columns that are all-null?
+    # TODO should it be `include_fields` instead -> probably yes, only include what's used for scirpy by default. ?
+    # TODO auto-exclude columns that are all-null -> yes, to save cluttered `obs`.?
     @_doc_params(doc_working_model=doc_working_model)
     def to_scirpy_record(
         self, drop_fields: Collection[str] = ("sequence", "sequence_aa")

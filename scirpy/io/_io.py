@@ -380,6 +380,9 @@ def read_airr(
                 )
 
             if infer_locus and "locus" not in chain_dict:
+                logger.warning(
+                    "`locus` column not found in input data. The locus is being inferred from the {v,d,j,c}_call columns."
+                )
                 chain_dict["locus"] = _infer_locus_from_gene_names(chain_dict)
 
             try:
