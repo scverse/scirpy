@@ -1,7 +1,7 @@
 """Convert IrCells to AnnData and vice-versa"""
 import itertools
 from anndata import AnnData
-from ..util import _doc_params, _is_true, _is_na
+from ..util import _doc_params, _is_true
 from ._util import doc_working_model, _IOLogger
 from ._datastructures import AirrCell
 import pandas as pd
@@ -90,10 +90,7 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
         }
         for tmp_col in ir_cols:
             _, junction_type, chain_id, key = tmp_col.split("_", maxsplit=3)
-            # TODO this is slow :( -> vectorized version?
-            chains[(junction_type, chain_id)][key] = (
-                None if _is_na(row[tmp_col]) else row[tmp_col]
-            )
+            chains[(junction_type, chain_id)][key] = row[tmp_col]
 
         for tmp_chain in chains.values():
             # Don't add empty chains!

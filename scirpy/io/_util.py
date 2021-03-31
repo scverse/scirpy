@@ -25,5 +25,5 @@ class _IOLogger:
     def warning(self, message):
         if not self._warnings[message]:
             logging.warning(message)  # type: ignore
-        else:
-            self._warnings[message] += 1
+
+        self._warnings[message] += 1

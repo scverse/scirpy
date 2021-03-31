@@ -12,7 +12,6 @@ def _normalize_df_types(df: pd.DataFrame):
 
     Modifies df inplace.
     """
-    return
     for col in df.columns:
         if df[col].dtype.name == "category":
             df[col] = df[col].astype(str)
@@ -23,7 +22,7 @@ def _normalize_df_types(df: pd.DataFrame):
 
 def _write_h5ad_gz(adata, filename):
     """Write, then compress an anndata file. If only obs is stored, this results
-    in significantly smaller filese than using the `compression` flag.
+    in significantly smaller files than using the `compression` flag.
     """
     with NamedTemporaryFile() as tmpf:
         adata.write_h5ad(tmpf.name)
@@ -32,6 +31,7 @@ def _write_h5ad_gz(adata, filename):
 
 
 def _read_h5ad_gz(filename):
+    """Uncompress, then read a gzipped anndata file"""
     with NamedTemporaryFile() as tmpf:
         with open(tmpf.name, "wb") as dst, gzip.open(filename, "rb") as src:
             dst.writelines(src)

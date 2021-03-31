@@ -40,12 +40,6 @@ def _is_symmetric(M) -> bool:
         return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
 
 
-def __is_na(x):
-    """the non-vectorized version, to be called from a function
-    that gets vectorized"""
-    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A")
-
-
 @np.vectorize
 def _is_na(x):
     """Check if an object or string is NaN.
@@ -54,9 +48,10 @@ def _is_na(x):
 
     Pandas Series are converted to numpy arrays.
     """
-    return __is_na(x)
+    return _is_na2(x)
 
 
+@np.vectorize
 def _is_true(x):
     """Evaluates true for bool(x) unless _is_false(x) evaluates true.
     I.e. strings like "false" evaluate as False.
@@ -65,12 +60,7 @@ def _is_true(x):
 
     The function is vectorized over numpy arrays or pandas Series
     but also works for single values."""
-    return ~_is_false(x) & ~_is_na(x)
-
-
-def __is_false(x):
-    """Vectorized helper function"""
-    return (x in ("False", "false", "0") or not bool(x)) and not __is_na(x)
+    return _is_true2(x)
 
 
 @np.vectorize
@@ -83,7 +73,23 @@ def _is_false(x):
     but also works for single values."""
     x = np.array(x).astype(object)
 
-    return __is_false(x)
+    return _is_false2(x)
+
+
+def _is_na2(x):
+    """the non-vectorized version, to be called from a function
+    that gets vectorized"""
+    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A")
+
+
+def _is_true2(x):
+    """Non-vectorized helper function"""
+    return not _is_false2(x) and not _is_na2(x)
+
+
+def _is_false2(x):
+    """Non-vectorized helper function"""
+    return (x in ("False", "false", "0") or not bool(x)) and not _is_na2(x)
 
 
 def _normalize_counts(

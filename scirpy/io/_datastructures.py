@@ -4,7 +4,7 @@ Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
-from ..util import _is_na, _is_true, _doc_params
+from ..util import _is_na2, _is_true2, _doc_params
 from typing import Collection, Mapping
 from airr import RearrangementSchema
 import scanpy
@@ -47,10 +47,11 @@ class AirrCell:
 
     def __init__(self, cell_id: str, logger=scanpy.logging, **kwargs):
 
+        self._logger = logger
         self._cell_id = cell_id
         if "multi_chain" in kwargs:
             # legacy argument for compatibility with old anndata schema.
-            self._multi_chain = _is_true(kwargs["multi_chain"])
+            self._multi_chain = _is_true2(kwargs["multi_chain"])
         else:
             self._multi_chain = False
         self._fields = None
@@ -74,7 +75,7 @@ class AirrCell:
         # ensure consistent ordering
         chain = dict(sorted(chain.items()))
         # sanitize NA values
-        chain = {k: None if _is_na(v) else v for k, v in chain.items()}
+        chain = {k: None if _is_na2(v) else v for k, v in chain.items()}
         # TODO this should be `.validate_obj` but currently does not work
         # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())
@@ -86,11 +87,11 @@ class AirrCell:
             raise ValueError("All chains must have the same fields!")
 
         if "locus" not in chain:
-            self.logger.warning(
+            self._logger.warning(
                 "`locus` field not specified, but required for most scirpy functionality. "
             )  # type: ignore
         elif chain["locus"] not in self.VALID_LOCI:
-            self.logger.warning("scirpy only considers valid IGMT locus names. ")  # type: ignore
+            self._logger.warning(f"Non-standard locus name ignored: {chain['locus']} ")  # type: ignore
 
         self.chains.append(chain)
 
@@ -126,7 +127,7 @@ class AirrCell:
             "duplicate_count" not in self._fields
             and "consensus_count" not in self._fields
         ):
-            self.logger.warning(
+            self._logger.warning(
                 "No expression information available. Cannot rank chains by expression. "
             )  # type: ignore
 
@@ -204,8 +205,8 @@ class AirrCell:
         # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
         # to "at least one productive chain"
         res_dict["has_ir"] = not (
-            _is_na(res_dict["IR_VJ_1_junction_aa"])
-            and _is_na(res_dict["IR_VDJ_1_junction_aa"])
+            res_dict["IR_VJ_1_junction_aa"] is None
+            and res_dict["IR_VDJ_1_junction_aa"] is None
         )
 
         # if there are not chains at all, we want multi-chain to be nan
@@ -214,15 +215,15 @@ class AirrCell:
         if not len(self.chains):
             res_dict["multi_chain"] = np.nan
 
-        if _is_na(res_dict["IR_VJ_1_junction_aa"]):
-            assert _is_na(
-                res_dict["IR_VJ_2_junction_aa"]
+        if res_dict["IR_VJ_1_junction_aa"] is None:
+            assert (
+                res_dict["IR_VJ_2_junction_aa"] is None
             ), "There can't be a secondary chain if there is no primary one: {}".format(
                 res_dict
             )
-        if _is_na(res_dict["IR_VDJ_1_junction_aa"]):
-            assert _is_na(
-                res_dict["IR_VDJ_2_junction_aa"]
+        if res_dict["IR_VDJ_1_junction_aa"] is None:
+            assert (
+                res_dict["IR_VDJ_2_junction_aa"] is None
             ), "There can't be a secondary chain if there is no primary one: {}".format(
                 res_dict
             )

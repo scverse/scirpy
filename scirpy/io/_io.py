@@ -11,7 +11,7 @@ from . import _tracerlib
 import sys
 from pathlib import Path
 import airr
-from ..util import _doc_params, _is_true, _translate_dna_to_protein
+from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein
 from ._convert_anndata import from_ir_objs, to_ir_objs
 from ._util import doc_working_model, _IOLogger
 from .._compat import Literal
@@ -137,7 +137,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
                 junction=chain_series["cdr3_nt"],
                 duplicate_count=chain_series["umis"],
                 consensus_count=chain_series["reads"],
-                productive=_is_true(chain_series["productive"]),
+                productive=_is_true2(chain_series["productive"]),
                 v_call=chain_series["v_gene"],
                 d_call=chain_series["d_gene"],
                 j_call=chain_series["j_gene"],
