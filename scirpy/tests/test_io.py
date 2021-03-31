@@ -87,7 +87,9 @@ def test_convert_dandelion(path):
     assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
 
     # Frame-level comparison is not possible as the "extra chains" field is different
+    # due to 'sequence_id' being different.
     for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2):
+        assert len(ir_obj1.chains) == len(ir_obj2.chains)
         for tmp_chain1, tmp_chain2 in zip(ir_obj1.chains, ir_obj2.chains):
             # this field is expected to be different
             del tmp_chain1["sequence_id"]

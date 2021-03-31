@@ -35,10 +35,9 @@ class AirrCell:
     #: Chains with the :term:`V-D-J<V(D)J>` junction
     VDJ_LOCI = ("TRB", "TRD", "IGH")
 
-    # TODO remove "other"?
-    #: Valid chains are IMGT locus names or "other"
+    #: Valid chains are IMGT locus names
     #: see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
-    VALID_LOCI = VJ_LOCI + VDJ_LOCI + ("other",)
+    VALID_LOCI = VJ_LOCI + VDJ_LOCI
 
     # attributes that are specific for the cell, not the chain, and should
     # be the same for all chains of the same cell.
@@ -63,8 +62,6 @@ class AirrCell:
     @property
     def cell_id(self):
         return self._cell_id
-
-    # TODO speed?
 
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain ot the cell.

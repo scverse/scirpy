@@ -1,6 +1,6 @@
 """Compute distances between immune receptor sequences"""
 from anndata import AnnData
-from typing import Union
+from typing import Optional, Sequence, Union
 from .._compat import Literal
 import numpy as np
 from scanpy import logging
@@ -165,7 +165,9 @@ def _ir_dist(
                 for chain_id in ["1", "2"]
             ]
         )
-        result[chain_type]["seqs"] = np.unique(tmp_seqs[~_is_na(tmp_seqs)])  # type: ignore
+        result[chain_type]["seqs"] = [
+            x.upper() for x in np.unique(tmp_seqs[~_is_na(tmp_seqs)])  # type: ignore
+        ]
 
     # compute distance matrices
     for chain_type in ["VJ", "VDJ"]:
@@ -186,8 +188,8 @@ def _ir_dist(
 
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def sequence_dist(
-    seqs: np.ndarray,
-    seqs2: Union[None, np.ndarray] = None,
+    seqs: Sequence[str],
+    seqs2: Optional[Sequence[str]] = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[None, int] = None,
@@ -227,12 +229,14 @@ def sequence_dist(
     -------
     Symmetrical, sparse pairwise distance matrix.
     """
+    seqs = [x.upper() for x in seqs]
     seqs_unique, seqs_unique_inverse = np.unique(seqs, return_inverse=True)  # type: ignore
-    seqs2_unique, seqs2_unique_inverse = (  # type: ignore
-        np.unique(seqs2, return_inverse=True)
-        if seqs2 is not None
-        else (None, seqs_unique_inverse)
-    )
+    if seqs2 is not None:
+        seqs2 = [x.upper() for x in seqs2]
+        seqs2_unique, seqs2_unique_inverse = np.unique(seqs2, return_inverse=True)  # type: ignore
+    else:
+        seqs2_unique, seqs2_unique_inverse = None, seqs_unique_inverse
+
     dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs, **kwargs)
 
     logging.info(f"Calculating distances with metric {metric}")

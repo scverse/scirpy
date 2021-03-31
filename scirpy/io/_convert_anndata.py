@@ -1,7 +1,7 @@
 """Convert IrCells to AnnData and vice-versa"""
 import itertools
 from anndata import AnnData
-from ..util import _doc_params, _is_true
+from ..util import _doc_params, _is_true, _is_na2
 from ._util import doc_working_model, _IOLogger
 from ._datastructures import AirrCell
 import pandas as pd
@@ -94,7 +94,7 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
 
         for tmp_chain in chains.values():
             # Don't add empty chains!
-            if not all([x is None for x in tmp_chain.values()]):
+            if not all([_is_na2(x) for x in tmp_chain.values()]):
                 tmp_ir_cell.add_chain(tmp_chain)
         tmp_ir_cell.add_serialized_chains(row["extra_chains"])
         cells.append(tmp_ir_cell)
