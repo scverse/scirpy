@@ -5,7 +5,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from ..util import _is_na2, _is_true2, _doc_params
-from typing import Collection, Mapping
+from typing import Collection, Mapping, Optional
 from airr import RearrangementSchema
 import scanpy
 import json
@@ -39,12 +39,13 @@ class AirrCell:
     #: see https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names
     VALID_LOCI = VJ_LOCI + VDJ_LOCI
 
-    # attributes that are specific for the cell, not the chain, and should
-    # be the same for all chains of the same cell.
-    # TODO
-    _CELL_ATTRIBUTES = ("is_cell", "high_confidence")  # non-standard field by 10x
-
-    def __init__(self, cell_id: str, logger=scanpy.logging, **kwargs):
+    def __init__(
+        self,
+        cell_id: str,
+        logger=scanpy.logging,
+        cell_attributes: Collection[str] = (),
+        **kwargs,
+    ):
 
         self._logger = logger
         self._cell_id = cell_id
@@ -54,7 +55,13 @@ class AirrCell:
         else:
             self._multi_chain = False
         self._fields = None
-        self.chains = list()
+        # TODO implement cell_attributes logic
+        # TODO where to store cell_attributes? Make it implement dict interface?
+        self._cell_attributes = cell_attributes
+        # A list of AIRR compliant dictionaries
+        self._chains = list()
+        # attributes specific to the cell rather than the chains
+        self.cell_attrs = dict()
 
     def __repr__(self):
         return "AirrCell {} with {} chains".format(self._cell_id, len(self.chains))
@@ -62,6 +69,10 @@ class AirrCell:
     @property
     def cell_id(self):
         return self._cell_id
+
+    @property
+    def chains(self):
+        return self._chains
 
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain ot the cell.
@@ -166,11 +177,8 @@ class AirrCell:
         return json.dumps(chains)
 
     # TODO should it be `include_fields` instead -> probably yes, only include what's used for scirpy by default. ?
-    # TODO auto-exclude columns that are all-null -> yes, to save cluttered `obs`.?
     @_doc_params(doc_working_model=doc_working_model)
-    def to_scirpy_record(
-        self, drop_fields: Collection[str] = ("sequence", "sequence_aa")
-    ):
+    def to_scirpy_record(self, include_fields: Optional[Collection[str]] = None):
         """Convert the cell to a scirpy record (i.e. one row of `adata.obs`) according
         to our working model of adaptive immune receptors.
 
@@ -188,15 +196,16 @@ class AirrCell:
         res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"))
 
         for key in self._fields:
-            for junction_type, tmp_chains in chain_dict.items():
-                for i in range(2):
-                    try:
-                        tmp_chain = tmp_chains[i]
-                    except IndexError:
-                        tmp_chain = dict()
-                    res_dict[
-                        "IR_{}_{}_{}".format(junction_type, i + 1, key)
-                    ] = tmp_chain.get(key, None)
+            if key in include_fields or include_fields is None:
+                for junction_type, tmp_chains in chain_dict.items():
+                    for i in range(2):
+                        try:
+                            tmp_chain = tmp_chains[i]
+                        except IndexError:
+                            tmp_chain = dict()
+                        res_dict[
+                            "IR_{}_{}_{}".format(junction_type, i + 1, key)
+                        ] = tmp_chain.get(key, None)
 
         # in some weird reasons, it can happen that a cell has been called from
         # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
@@ -226,8 +235,6 @@ class AirrCell:
             )
 
         return res_dict
-
-        # TODO move .upper() to the functions that consume cdr3 sequences
 
     @staticmethod
     def empty_chain_dict() -> dict:

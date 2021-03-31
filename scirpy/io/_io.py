@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from anndata import AnnData
 from ._datastructures import AirrCell
-from typing import Sequence, Union
+from typing import Sequence, Union, Collection, Optional
 import numpy as np
 from glob import iglob
 import pickle
@@ -21,6 +21,20 @@ from airr import RearrangementSchema
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = _tracerlib
+
+DEFAULT_AIRR_FIELDS = (
+    "productive",
+    "locus",
+    "v_call",
+    "d_call",
+    "j_call",
+    "c_call",
+    "junction",
+    "junction_aa",
+    "consensus_count",
+    "duplicate_count",
+)
+DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence")
 
 
 def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData:
@@ -303,11 +317,17 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     return from_ir_objs(tcr_objs.values())
 
 
-@_doc_params(doc_working_model=doc_working_model)
+@_doc_params(
+    doc_working_model=doc_working_model,
+    cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
+    include_fields=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_FIELDS])})`""",
+)
 def read_airr(
     path: Union[str, Sequence[str], Path, Sequence[Path]],
     use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
     infer_locus: bool = True,
+    cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
+    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
 ) -> AnnData:
     """\
     Read AIRR-compliant data.
@@ -337,6 +357,16 @@ def read_airr(
         no `duplicate_count` column present.
     infer_locus
         Try to infer the `locus` column from gene names, in case it is not specified.
+    cell_attributes
+        Fields in the rearrangement schema that are specific for a cell rather 
+        than a chain. The values must be identical over all records belonging to a 
+        cell. This defaults to {cell_attributes}. 
+    include_fields
+        The fields to include in `adata`. The AIRR rearrangment schema contains
+        can contain a lot of columns, most of which irrelevant for most analyses. 
+        Per default, this includes a subset of columns relevant for a typical 
+        scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}. 
+        Set this to `None` to include all columns. 
 
     Returns
     -------
@@ -388,12 +418,14 @@ def read_airr(
             try:
                 tmp_cell = ir_objs[cell_id]
             except KeyError:
-                tmp_cell = AirrCell(cell_id=cell_id, logger=logger)
+                tmp_cell = AirrCell(
+                    cell_id=cell_id, logger=logger, cell_attributes=cell_attributes
+                )
                 ir_objs[cell_id] = tmp_cell
 
             tmp_cell.add_chain(chain_dict)
 
-    return from_ir_objs(ir_objs.values())
+    return from_ir_objs(ir_objs.values(), include_fields=include_fields)
 
 
 def _infer_locus_from_gene_names(chain_dict):
@@ -512,7 +544,6 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
 
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
-    # TODO roundtrip test
     """Write Immune receptor fields from adata.obs in AIRR Rearrangement TSV format.
 
     Parameters:

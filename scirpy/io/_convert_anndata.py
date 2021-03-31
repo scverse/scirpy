@@ -5,7 +5,7 @@ from ..util import _doc_params, _is_true, _is_na2
 from ._util import doc_working_model, _IOLogger
 from ._datastructures import AirrCell
 import pandas as pd
-from typing import Collection, List
+from typing import Collection, List, Optional
 import numpy as np
 
 
@@ -35,7 +35,9 @@ def _sanitize_anndata(adata: AnnData) -> None:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_ir_objs(ir_objs: Collection[AirrCell]) -> AnnData:
+def from_ir_objs(
+    ir_objs: Collection[AirrCell], include_fields: Optional[Collection[str]] = None
+) -> AnnData:
     """\
     Convert a collection of :class:`AirrCell` objects to an :class:`~anndata.AnnData`.
 
@@ -46,6 +48,7 @@ def from_ir_objs(ir_objs: Collection[AirrCell]) -> AnnData:
 
     Parameters
     ----------
+    TODO
     ir_objs
 
 
@@ -55,7 +58,7 @@ def from_ir_objs(ir_objs: Collection[AirrCell]) -> AnnData:
 
     """
     ir_df = pd.DataFrame.from_records(
-        (x.to_scirpy_record() for x in ir_objs)
+        (x.to_scirpy_record(include_fields=include_fields) for x in ir_objs)
     ).set_index("cell_id")
     adata = AnnData(obs=ir_df, X=np.empty([ir_df.shape[0], 0]))
     _sanitize_anndata(adata)

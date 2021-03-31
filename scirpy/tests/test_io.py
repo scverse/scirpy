@@ -8,6 +8,7 @@ from scirpy.io import (
     to_ir_objs,
     to_dandelion,
     from_dandelion,
+    write_airr,
 )
 from scirpy.util import _is_na, _is_false
 import numpy as np
@@ -61,6 +62,29 @@ def test_ir_objs_roundtrip_conversion(path):
     anndata = _read_h5ad_gz(path)
     ir_objs = to_ir_objs(anndata)
     anndata2 = from_ir_objs(ir_objs)
+    _normalize_df_types(anndata.obs)
+    _normalize_df_types(anndata2.obs)
+    pdt.assert_frame_equal(
+        anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
+    )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        TESTDATA / "anndata/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.h5ad.gz",
+        TESTDATA
+        / "anndata/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.h5ad.gz",
+        TESTDATA / "anndata/filtered_contig_annotations.h5ad.gz",
+    ],
+)
+def test_airr_roundtrip_conversion(path, tmp_path):
+    """Test that writing and reading to and from AIRR format results in the
+    identity"""
+    anndata = _read_h5ad_gz(path)
+    tmp_file = tmp_path / "test.airr.tsv"
+    write_airr(anndata, tmp_file)
+    anndata2 = read_airr(tmp_file)
     _normalize_df_types(anndata.obs)
     _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(
