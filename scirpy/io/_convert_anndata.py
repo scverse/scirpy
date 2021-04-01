@@ -87,12 +87,12 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
     ir_cols = obs.columns[obs.columns.str.startswith("IR_")]
     other_cols = set(adata.obs.columns) - set(ir_cols)
     for cell_id, row in obs.iterrows():
-        tmp_ir_cell = AirrCell(cell_id, logger=logger, multi_chain=row["multi_chain"])
+        tmp_ir_cell = AirrCell(cell_id, logger=logger)
 
         # add cell-level attributes
         for col in other_cols:
-            if col == "cell_id":
-                # we want to use the index
+            if col in ("cell_id", "extra_chains", "has_ir"):
+                # we want to use the index, and extra chains get added separately
                 continue
             tmp_ir_cell[col] = row[col]
 

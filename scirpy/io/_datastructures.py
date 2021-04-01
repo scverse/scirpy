@@ -59,11 +59,6 @@ class AirrCell(MutableMapping):
         **kwargs,
     ):
         self._logger = logger
-        if "multi_chain" in kwargs:
-            # legacy argument for compatibility with old anndata schema.
-            self._multi_chain = _is_true2(kwargs["multi_chain"])
-        else:
-            self._multi_chain = False
         self._chain_fields = None
         # A list of fields that are supposed to be stored at the cell level
         # rather than the chain level
@@ -73,6 +68,8 @@ class AirrCell(MutableMapping):
         # A list of AIRR compliant dictionaries
         self._chains = list()
         self["cell_id"] = cell_id
+        # legacy argument for the old AnnData scheme (when there was no `extra_chains` field)
+        self["multi_chain"] = False
 
     def __repr__(self):
         return "AirrCell {} with {} chains".format(self.cell_id, len(self.chains))
@@ -105,6 +102,8 @@ class AirrCell(MutableMapping):
         return len(self._cell_attrs)
 
     def __setitem__(self, k, v) -> None:
+        if k == "multi_chain":
+            self._cell_attrs["multi_chain"] = _is_true2(v)
         self._cell_attrs[k] = v
 
     def add_chain(self, chain: Mapping) -> None:
@@ -173,7 +172,7 @@ class AirrCell(MutableMapping):
               * `vdj_chains`: The (up to) two most highly expressed, productive VDJ chains
               * `extra_chains`: All remaining chains
         """
-        is_multichain = self._multi_chain
+        is_multichain = self["multi_chain"]
         split_chains = {"VJ": list(), "VDJ": list(), "extra": list()}
         for tmp_chain in self.chains:
             if "locus" not in tmp_chain:
