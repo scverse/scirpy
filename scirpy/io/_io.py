@@ -49,7 +49,11 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
             continue
         barcode = cell["barcode"]
         if barcode not in ir_objs:
-            ir_obj = AirrCell(barcode, logger=logger)
+            ir_obj = AirrCell(
+                barcode,
+                logger=logger,
+                cell_attribute_fields=["is_cell", "high_confidence"],
+            )
             ir_objs[barcode] = ir_obj
         else:
             ir_obj = ir_objs[barcode]
@@ -120,7 +124,6 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         chain["duplicate_count"] = cell["umi_count"]
         chain["consensus_count"] = cell["read_count"]
         chain["productive"] = cell["productive"]
-        # TODO explicitly add as cell attributes?
         chain["is_cell"] = cell["is_cell"]
         chain["high_confidence"] = cell["high_confidence"]
 
@@ -138,7 +141,9 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
-        ir_obj = AirrCell(barcode, logger=logger)
+        ir_obj = AirrCell(
+            barcode, logger=logger, cell_attribute_fields=("is_cell", "high_confidence")
+        )
         for _, chain_series in cell_df.iterrows():
             chain_dict = AirrCell.empty_chain_dict()
             chain_dict.update(
@@ -156,7 +161,6 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
                 d_call=chain_series["d_gene"],
                 j_call=chain_series["j_gene"],
                 c_call=chain_series["c_gene"],
-                # TODO add this explicitly as cell attributes?
                 is_cell=chain_series["is_cell"],
                 high_confidence=chain_series["high_confidence"],
             )
@@ -419,7 +423,9 @@ def read_airr(
                 tmp_cell = ir_objs[cell_id]
             except KeyError:
                 tmp_cell = AirrCell(
-                    cell_id=cell_id, logger=logger, cell_attributes=cell_attributes
+                    cell_id=cell_id,
+                    logger=logger,
+                    cell_attribute_fields=cell_attributes,
                 )
                 ir_objs[cell_id] = tmp_cell
 
@@ -554,9 +560,21 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
         destination filename
     """
     airr_cells = to_ir_objs(adata)
-    writer = airr.create_rearrangement(filename)
+    try:
+        fields = airr_cells[0].fields
+        for tmp_cell in airr_cells[1:]:
+            assert (
+                tmp_cell.fields == fields
+            ), "Different rows of anndata have different fields"
+    except IndexError:
+        # case of an empty output file
+        fields = None
+
+    writer = airr.create_rearrangement(filename, fields=fields)
     for tmp_cell in airr_cells:
         for chain in tmp_cell.chains:
+            # add cell-level attributes
+            chain.update(tmp_cell)
             writer.write(chain)
     writer.close()
 
@@ -604,9 +622,10 @@ def to_dandelion(adata: AnnData):
     contig_dicts = {}
     for tmp_cell in airr_cells:
         for i, tmp_chain in enumerate(tmp_cell.chains, start=1):
+            # add cell-level attributes
+            tmp_chain.update(tmp_cell)
             tmp_chain.update(
                 {
-                    "cell_id": tmp_cell.cell_id,
                     "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
                 }
             )

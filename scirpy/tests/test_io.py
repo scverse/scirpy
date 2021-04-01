@@ -16,7 +16,33 @@ import numpy as np
 import pytest
 import pandas.testing as pdt
 from . import TESTDATA
-from .util import _normalize_df_types, _read_h5ad_gz, _write_h5ad_gz
+from .util import _normalize_df_types
+from copy import deepcopy
+from functools import lru_cache
+
+
+@lru_cache(None)
+def _read_anndata_from_10x_sample(path):
+    """Read full 10x CSV table and convert it to IR objects, ready
+    to be used for roundtrip conversions.
+
+    Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
+    and https://support.10xgenomics.com/single-cell-vdj/datasets/4.0.0/sc5p_v2_hs_melanoma_10k
+    under CC-BY-4.0.
+
+    Pytest only caches one fixture at a time, i.e. it doesn't work with parametrized
+    fixtures. Therefore, we use the lru_cache instead.
+    """
+    print(f"Reading 10x file: {path}")
+    anndata = read_10x_vdj(path)
+    return anndata
+
+
+@pytest.fixture
+def anndata_from_10x_sample(request):
+    """Make a copy for each function. Using this construct saves time compared
+    to reading in the 10x files for each request to the fixture"""
+    return _read_anndata_from_10x_sample(request.param).copy()
 
 
 def test_airr_cell():
@@ -49,47 +75,35 @@ def test_airr_cell():
 
 
 @pytest.mark.parametrize(
-    "path",
+    "anndata_from_10x_sample",
     [
         TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
         TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
         TESTDATA / "10x/filtered_contig_annotations.csv",
     ],
+    indirect=True,
 )
-def test_read_and_convert_10x_example(path):
+def test_read_and_convert_10x_example(anndata_from_10x_sample):
     """Test that a full 10x CSV table can be imported without errors.
 
-    Additionally test that the round-trip conversion using `to_ir_objs` and
-    `from_ir_objs` is the identity. Doing this here to avoid loading the data twice
-    since this is already one of the longer-running tests.
-
-    Test-dataset from https://support.10xgenomics.com/single-cell-vdj/datasets/3.1.0/vdj_nextgem_hs_pbmc3
-    and https://support.10xgenomics.com/single-cell-vdj/datasets/4.0.0/sc5p_v2_hs_melanoma_10k
-    under CC-BY-4.0
+    To this end, only the fixture needs to be loaded.
     """
-    anndata = read_10x_vdj(path)
-    assert anndata.shape[0] > 0
-
-    # # # Store anndata as gzipped h5ad (use this to recompute if necessary)
-    # ir_objs = to_ir_objs(anndata)
-    # _write_h5ad_gz(
-    #     anndata, TESTDATA / f"anndata/{path.stem}.h5ad.gz".replace(".csv", "")
-    # )
+    assert anndata_from_10x_sample.shape[0] > 0
 
 
 @pytest.mark.parametrize(
-    "path",
+    "anndata_from_10x_sample",
     [
-        TESTDATA / "anndata/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.h5ad.gz",
-        TESTDATA
-        / "anndata/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.h5ad.gz",
-        TESTDATA / "anndata/filtered_contig_annotations.h5ad.gz",
+        TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/filtered_contig_annotations.csv",
     ],
+    indirect=True,
 )
-def test_ir_objs_roundtrip_conversion(path):
+def test_ir_objs_roundtrip_conversion(anndata_from_10x_sample):
     """Check that an anndata object can be converted to ir_objs and back
     without loss"""
-    anndata = _read_h5ad_gz(path)
+    anndata = anndata_from_10x_sample
     ir_objs = to_ir_objs(anndata)
     anndata2 = from_ir_objs(ir_objs)
     _normalize_df_types(anndata.obs)
@@ -100,21 +114,21 @@ def test_ir_objs_roundtrip_conversion(path):
 
 
 @pytest.mark.parametrize(
-    "path",
+    "anndata_from_10x_sample",
     [
-        TESTDATA / "anndata/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.h5ad.gz",
-        TESTDATA
-        / "anndata/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.h5ad.gz",
-        TESTDATA / "anndata/filtered_contig_annotations.h5ad.gz",
+        TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
+        TESTDATA / "10x/filtered_contig_annotations.csv",
     ],
+    indirect=True,
 )
-def test_airr_roundtrip_conversion(path, tmp_path):
+def test_airr_roundtrip_conversion(anndata_from_10x_sample, tmp_path):
     """Test that writing and reading to and from AIRR format results in the
     identity"""
-    anndata = _read_h5ad_gz(path)
+    anndata = anndata_from_10x_sample
     tmp_file = tmp_path / "test.airr.tsv"
     write_airr(anndata, tmp_file)
-    anndata2 = read_airr(tmp_file)
+    anndata2 = read_airr(tmp_file, include_fields=None)
     _normalize_df_types(anndata.obs)
     _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(
@@ -123,15 +137,15 @@ def test_airr_roundtrip_conversion(path, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path",
+    "anndata_from_10x_sample",
     [
-        TESTDATA
-        / "anndata/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.h5ad.gz",
+        TESTDATA / "10x/sc5p_v2_hs_melanoma_10k_b_filtered_contig_annotations.csv.gz",
     ],
+    indirect=True,
 )
-def test_convert_dandelion(path):
+def test_convert_dandelion(anndata_from_10x_sample):
     """Test dandelion round-trip conversion"""
-    anndata = _read_h5ad_gz(path)
+    anndata = anndata_from_10x_sample
     ddl = to_dandelion(anndata)
     anndata2 = from_dandelion(ddl)
 

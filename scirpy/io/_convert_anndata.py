@@ -85,8 +85,18 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
 
     obs = adata.obs.copy()
     ir_cols = obs.columns[obs.columns.str.startswith("IR_")]
+    other_cols = set(adata.obs.columns) - set(ir_cols)
     for cell_id, row in obs.iterrows():
         tmp_ir_cell = AirrCell(cell_id, logger=logger, multi_chain=row["multi_chain"])
+
+        # add cell-level attributes
+        for col in other_cols:
+            if col == "cell_id":
+                # we want to use the index
+                continue
+            tmp_ir_cell[col] = row[col]
+
+        # add chain level attributes
         chains = {
             (junction_type, chain_id): dict()
             for junction_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"])
@@ -99,6 +109,7 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
             # Don't add empty chains!
             if not all([_is_na2(x) for x in tmp_chain.values()]):
                 tmp_ir_cell.add_chain(tmp_chain)
+
         tmp_ir_cell.add_serialized_chains(row["extra_chains"])
         cells.append(tmp_ir_cell)
 

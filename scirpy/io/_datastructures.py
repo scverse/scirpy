@@ -5,7 +5,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from ..util import _is_na2, _is_true2, _doc_params
-from typing import Collection, Dict, List, Mapping, Optional, Iterator, Tuple
+from typing import Collection, Dict, Iterable, List, Mapping, Optional, Iterator, Tuple
 from airr import RearrangementSchema
 import scanpy
 import json
@@ -59,13 +59,12 @@ class AirrCell(MutableMapping):
         **kwargs,
     ):
         self._logger = logger
-        self._cell_id = cell_id
         if "multi_chain" in kwargs:
             # legacy argument for compatibility with old anndata schema.
             self._multi_chain = _is_true2(kwargs["multi_chain"])
         else:
             self._multi_chain = False
-        self._fields = None
+        self._chain_fields = None
         # A list of fields that are supposed to be stored at the cell level
         # rather than the chain level
         self._cell_attribute_fields = cell_attribute_fields
@@ -73,17 +72,25 @@ class AirrCell(MutableMapping):
         self._cell_attrs = dict()
         # A list of AIRR compliant dictionaries
         self._chains = list()
+        self["cell_id"] = cell_id
 
     def __repr__(self):
-        return "AirrCell {} with {} chains".format(self._cell_id, len(self.chains))
+        return "AirrCell {} with {} chains".format(self.cell_id, len(self.chains))
 
     @property
     def cell_id(self) -> str:
-        return self._cell_id
+        return self["cell_id"]
 
     @property
     def chains(self) -> List[Dict]:
         return self._chains
+
+    @property
+    def fields(self) -> List[str]:
+        """Return a list of all fields (chain-level and cell-level)"""
+        if self._chain_fields is None:
+            raise ValueError("No chains have been added yet.")
+        return list(self) + self._chain_fields
 
     def __delitem__(self, key) -> None:
         del self._cell_attrs[key]
@@ -115,11 +122,6 @@ class AirrCell(MutableMapping):
         RearrangementSchema.validate_header(chain.keys())
         RearrangementSchema.validate_row(chain)
 
-        if self._fields is None:
-            self._fields = list(chain.keys())
-        elif self._fields != list(chain.keys()):
-            raise ValueError("All chains must have the same fields!")
-
         for tmp_field in self._cell_attribute_fields:
             try:
                 new_value = chain.pop(tmp_field)
@@ -134,6 +136,11 @@ class AirrCell(MutableMapping):
                     self[tmp_field] = new_value
             except KeyError:
                 pass
+
+        if self._chain_fields is None:
+            self._chain_fields = list(chain.keys())
+        elif self._chain_fields != list(chain.keys()):
+            raise ValueError("All chains must have the same fields!")
 
         if "locus" not in chain:
             self._logger.warning(
@@ -179,8 +186,8 @@ class AirrCell(MutableMapping):
                 split_chains["extra"].append(tmp_chain)
 
         if (
-            "duplicate_count" not in self._fields
-            and "consensus_count" not in self._fields
+            "duplicate_count" not in self._chain_fields
+            and "consensus_count" not in self._chain_fields
         ):
             self._logger.warning(
                 "No expression information available. Cannot rank chains by expression. "
@@ -202,12 +209,13 @@ class AirrCell(MutableMapping):
     @staticmethod
     def _key_sort_chains(chain) -> Tuple:
         """Get key to sort chains by expression"""
-        return (
+        sort_tuple = (
             chain.get("duplicate_count", 0),
             chain.get("consensus_count", 0),
             chain.get("junction", ""),
             chain.get("junction_aa", ""),
         )
+        return tuple(-1 if x is None else x for x in sort_tuple)
 
     @staticmethod
     def _serialize_chains(chains: List[Dict]) -> str:
@@ -235,21 +243,25 @@ class AirrCell(MutableMapping):
         Parameters
         ----------
         include_fields
-            AIRR fields not to include into `adata.obs` (to save space and to not clutter
+            AIRR fields to include into `adata.obs` (to save space and to not clutter
             obs). Set to `None` to include all fields.
         """
         res_dict = dict()
-        res_dict["cell_id"] = self.cell_id
+        if include_fields is None:
+            include_fields = self.fields
+        # ensure cell_id is always added
+        include_fields = set(include_fields)
+        include_fields.add("cell_id")
         res_dict["multi_chain"], chain_dict = self._split_chains()
         res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"))
         # add cell-level attributes
         for key in self:
-            if key in include_fields or include_fields is None:
+            if key in include_fields:
                 res_dict[key] = self[key]
 
         # add chain-level attributes
-        for key in self._fields:
-            if key in include_fields or include_fields is None:
+        for key in self._chain_fields:
+            if key in include_fields:
                 for junction_type, tmp_chains in chain_dict.items():
                     for i in range(2):
                         try:
