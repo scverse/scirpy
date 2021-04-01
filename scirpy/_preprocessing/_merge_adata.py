@@ -44,7 +44,7 @@ def _merge_ir_obs(adata: AnnData, adata2: AnnData) -> pd.DataFrame:
             tmp_cell = cell_dict[cell.cell_id]
             # this is a legacy operation. With adatas generated with scirpy
             # >= 0.7 this isn't necessary anymore, as all chains are preserved.
-            tmp_cell._multi_chain |= cell._multi_chain
+            tmp_cell["multi_chain"] |= cell["multi_chain"]
             tmp_cell.chains.extend(cell.chains)
         except KeyError:
             cell_dict[cell.cell_id] = cell
@@ -52,7 +52,7 @@ def _merge_ir_obs(adata: AnnData, adata2: AnnData) -> pd.DataFrame:
     # remove duplicate chains
     # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
     for cell in cell_dict.values():
-        cell.chains = [dict(t) for t in set(tuple(d.items()) for d in cell.chains)]
+        cell._chains = [dict(t) for t in set(tuple(d.items()) for d in cell.chains)]
 
     return from_ir_objs(cell_dict.values()).obs
 
