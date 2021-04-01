@@ -9,6 +9,7 @@ from scirpy.io import (
     to_dandelion,
     from_dandelion,
     write_airr,
+    AirrCell,
 )
 from scirpy.util import _is_na, _is_false
 import numpy as np
@@ -16,6 +17,35 @@ import pytest
 import pandas.testing as pdt
 from . import TESTDATA
 from .util import _normalize_df_types, _read_h5ad_gz, _write_h5ad_gz
+
+
+def test_airr_cell():
+    """Test that an AirrCell can be properly initialized, and cell attributes
+    are stored and validated properly"""
+    ac = AirrCell("cell1", cell_attribute_fields=("fieldA", "fieldB"))
+    ac["fieldA"] = "a"
+    ac["fieldC"] = "c"
+    ac["fieldD"] = "d"
+    assert ac["fieldD"] == "d"
+    del ac["fieldD"]
+    with pytest.raises(KeyError):
+        ac["fieldD"]
+
+    chain1 = AirrCell.empty_chain_dict()
+    chain2 = AirrCell.empty_chain_dict()
+    chain1["fieldA"] = "a"
+    chain1["fieldB"] = "b"
+    chain1["fieldC"] = "c"
+    chain2["fieldA"] = "a"
+    chain2["fieldB"] = "invalid"
+    chain2["fieldC"] = "c"
+    ac.add_chain(chain1)
+    with pytest.raises(ValueError):
+        ac.add_chain(chain2)
+
+    assert ac["fieldB"] == "b"
+    assert "fieldB" not in ac.chains[0]
+    assert ac.chains[0]["fieldC"] == "c"
 
 
 @pytest.mark.parametrize(

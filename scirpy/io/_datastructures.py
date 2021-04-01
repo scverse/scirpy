@@ -5,15 +5,16 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from ..util import _is_na2, _is_true2, _doc_params
-from typing import Collection, Mapping, Optional
+from typing import Collection, Mapping, Optional, Iterator
 from airr import RearrangementSchema
 import scanpy
 import json
 import numpy as np
 from ._util import doc_working_model
+from collections.abc import MutableMapping
 
 
-class AirrCell:
+class AirrCell(MutableMapping):
     """Data structure for a Cell with immune receptors.
 
     This data structure is compliant with the AIRR rearrangement schema v1.0.
@@ -25,6 +26,12 @@ class AirrCell:
     cell_id
         cell id or barcode.  Needs to match the cell id used for transcriptomics
         data (i.e. the `adata.obs_names`)
+    cell_attribute_fields
+        List of field-names which are supposed to be stored at the cell-level
+        rather than the chain level. If a chain with these fields is added
+        to the cell, they are set on the cell-level instead. If the values already
+        exist on the cell-level, a `ValueError` is raised, if they differ from
+        the values that are already present.
     logger
         A logger to write messages to. If not specified, use the default logger.
     """
@@ -42,11 +49,11 @@ class AirrCell:
     def __init__(
         self,
         cell_id: str,
+        cell_attribute_fields: Collection[str] = (),
+        *,
         logger=scanpy.logging,
-        cell_attributes: Collection[str] = (),
         **kwargs,
     ):
-
         self._logger = logger
         self._cell_id = cell_id
         if "multi_chain" in kwargs:
@@ -55,13 +62,13 @@ class AirrCell:
         else:
             self._multi_chain = False
         self._fields = None
-        # TODO implement cell_attributes logic
-        # TODO where to store cell_attributes? Make it implement dict interface?
-        self._cell_attributes = cell_attributes
+        # A list of fields that are supposed to be stored at the cell level
+        # rather than the chain level
+        self._cell_attribute_fields = cell_attribute_fields
+        # storage for these values, accessible through MutableMapping interface
+        self._cell_attrs = dict()
         # A list of AIRR compliant dictionaries
         self._chains = list()
-        # attributes specific to the cell rather than the chains
-        self.cell_attrs = dict()
 
     def __repr__(self):
         return "AirrCell {} with {} chains".format(self._cell_id, len(self.chains))
@@ -73,6 +80,21 @@ class AirrCell:
     @property
     def chains(self):
         return self._chains
+
+    def __delitem__(self, key) -> None:
+        del self._cell_attrs[key]
+
+    def __getitem__(self, key):
+        return self._cell_attrs[key]
+
+    def __iter__(self) -> Iterator:
+        return iter(self._cell_attrs)
+
+    def __len__(self) -> int:
+        return len(self._cell_attrs)
+
+    def __setitem__(self, k, v) -> None:
+        self._cell_attrs[k] = v
 
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain ot the cell.
@@ -93,6 +115,21 @@ class AirrCell:
             self._fields = list(chain.keys())
         elif self._fields != list(chain.keys()):
             raise ValueError("All chains must have the same fields!")
+
+        for tmp_field in self._cell_attribute_fields:
+            try:
+                new_value = chain.pop(tmp_field)
+                try:
+                    existing_value = self[tmp_field]
+                    if existing_value != new_value:
+                        raise ValueError(
+                            "Cell-level attributes differ between different chains. "
+                            f"Already present: `{existing_value}`. Tried to add `{new_value}`."
+                        )
+                except KeyError:
+                    self[tmp_field] = new_value
+            except KeyError:
+                pass
 
         if "locus" not in chain:
             self._logger.warning(
