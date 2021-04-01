@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein
-from ._convert_anndata import from_ir_objs, to_ir_objs
+from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._util import doc_working_model, _IOLogger
 from .._compat import Literal
 from airr import RearrangementSchema
@@ -129,7 +129,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
         ir_obj.add_chain(chain)
 
-    return from_ir_objs(ir_objs.values())
+    return from_airr_cells(ir_objs.values())
 
 
 def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
@@ -168,7 +168,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
 
         ir_objs[barcode] = ir_obj
 
-    return from_ir_objs(ir_objs.values())
+    return from_airr_cells(ir_objs.values())
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -318,7 +318,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
             "<CELL>/filtered_TCR_seqs/*.pkl"
         )
 
-    return from_ir_objs(tcr_objs.values())
+    return from_airr_cells(tcr_objs.values())
 
 
 @_doc_params(
@@ -431,7 +431,7 @@ def read_airr(
 
             tmp_cell.add_chain(chain_dict)
 
-    return from_ir_objs(ir_objs.values(), include_fields=include_fields)
+    return from_airr_cells(ir_objs.values(), include_fields=include_fields)
 
 
 def _infer_locus_from_gene_names(chain_dict):
@@ -546,7 +546,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
         tmp_ir_cell.add_chain(chain_dict)
 
-    return from_ir_objs(bcr_cells.values())
+    return from_airr_cells(bcr_cells.values())
 
 
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
@@ -559,7 +559,7 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     filename
         destination filename
     """
-    airr_cells = to_ir_objs(adata)
+    airr_cells = to_airr_cells(adata)
     try:
         fields = airr_cells[0].fields
         for tmp_cell in airr_cells[1:]:
@@ -619,7 +619,7 @@ def to_dandelion(adata: AnnData):
         import dandelion as ddl
     except:
         raise ImportError("Please install dandelion: pip install sc-dandelion.")
-    airr_cells = to_ir_objs(adata)
+    airr_cells = to_airr_cells(adata)
 
     contig_dicts = {}
     for tmp_cell in airr_cells:

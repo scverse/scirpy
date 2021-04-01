@@ -2,8 +2,8 @@ from typing import Union, List, Dict
 from anndata import AnnData
 from ..io._convert_anndata import (
     _sanitize_anndata,
-    to_ir_objs,
-    from_ir_objs,
+    to_airr_cells,
+    from_airr_cells,
 )
 from ..io._datastructures import AirrCell
 from scanpy import logging
@@ -36,8 +36,8 @@ def _merge_ir_obs(adata: AnnData, adata2: AnnData) -> pd.DataFrame:
     -------
     Merged IR obs data frame.
     """
-    ir_objs1 = to_ir_objs(adata)
-    ir_objs2 = to_ir_objs(adata2)
+    ir_objs1 = to_airr_cells(adata)
+    ir_objs2 = to_airr_cells(adata2)
     cell_dict: Dict[str, AirrCell] = dict()
     for cell in itertools.chain(ir_objs1, ir_objs2):
         try:
@@ -54,7 +54,7 @@ def _merge_ir_obs(adata: AnnData, adata2: AnnData) -> pd.DataFrame:
     for cell in cell_dict.values():
         cell._chains = [dict(t) for t in set(tuple(d.items()) for d in cell.chains)]
 
-    return from_ir_objs(cell_dict.values()).obs
+    return from_airr_cells(cell_dict.values()).obs
 
 
 def merge_with_ir(

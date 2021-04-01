@@ -17,8 +17,17 @@ def _sanitize_anndata(adata: AnnData) -> None:
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
-    # TODO update!
-    CATEGORICAL_COLS = ("locus", "v_call", "d_call", "j_call", "c_call", "multichain")
+    CATEGORICAL_COLS = (
+        "locus",
+        "productive",
+        "v_call",
+        "d_call",
+        "j_call",
+        "c_call",
+        "multi_chain",
+        "is_cell",
+        "high_confidence",
+    )
 
     # Sanitize has_ir column into categorical
     # This should always be a categorical with True / False
@@ -36,7 +45,7 @@ def _sanitize_anndata(adata: AnnData) -> None:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_ir_objs(
+def from_airr_cells(
     ir_objs: Collection[AirrCell], include_fields: Optional[Collection[str]] = None
 ) -> AnnData:
     """\
@@ -67,7 +76,7 @@ def from_ir_objs(
     return adata
 
 
-def to_ir_objs(adata: AnnData) -> List[AirrCell]:
+def to_airr_cells(adata: AnnData) -> List[AirrCell]:
     """
     Convert an adata object with IR information back to a list of IrCells.
 
@@ -116,7 +125,3 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
         cells.append(tmp_ir_cell)
 
     return cells
-
-
-# TODO getter function to retrieve the 'extra' chains, productive or not.
-# TODO getter function to retrieve adata.obs without IR columns, or IR columns only.

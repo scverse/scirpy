@@ -4,8 +4,8 @@ from scirpy.io import (
     read_tracer,
     read_airr,
     read_bracer,
-    from_ir_objs,
-    to_ir_objs,
+    from_airr_cells,
+    to_airr_cells,
     to_dandelion,
     from_dandelion,
     write_airr,
@@ -104,8 +104,8 @@ def test_ir_objs_roundtrip_conversion(anndata_from_10x_sample):
     """Check that an anndata object can be converted to ir_objs and back
     without loss"""
     anndata = anndata_from_10x_sample
-    ir_objs = to_ir_objs(anndata)
-    anndata2 = from_ir_objs(ir_objs)
+    ir_objs = to_airr_cells(anndata)
+    anndata2 = from_airr_cells(ir_objs)
     _normalize_df_types(anndata.obs)
     _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(
@@ -149,8 +149,8 @@ def test_convert_dandelion(anndata_from_10x_sample):
     ddl = to_dandelion(anndata)
     anndata2 = from_dandelion(ddl)
 
-    ir_objs1 = to_ir_objs(anndata)
-    ir_objs2 = to_ir_objs(anndata2)
+    ir_objs1 = to_airr_cells(anndata)
+    ir_objs2 = to_airr_cells(anndata2)
 
     assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
 

@@ -8,7 +8,7 @@ from ._io import (
     to_dandelion,
     write_airr,
 )
-from ._convert_anndata import from_ir_objs, to_ir_objs
+from ._convert_anndata import from_airr_cells, to_airr_cells
 from ..util import deprecated
 from ._datastructures import AirrCell
 
@@ -18,7 +18,17 @@ from ._datastructures import AirrCell
     "to `from_ir_objs. The old version will be removed in a future release. "
 )
 def from_tcr_objs(*args, **kwargs):
-    return from_ir_objs(*args, **kwargs)
+    return from_airr_cells(*args, **kwargs)
+
+
+@deprecated("This function has been renamed to `from_airr_cells`")
+def from_ir_objs(*args, **kwargs):
+    return from_airr_cells(*args, **kwargs)
+
+
+@deprecated("This function has been renamed to `to_airr_cells`.")
+def to_ir_objs(*args, **kwargs):
+    return to_airr_cells(*args, **kwargs)
 
 
 @deprecated(
