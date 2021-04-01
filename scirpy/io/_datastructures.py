@@ -5,7 +5,7 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 from ..util import _is_na2, _is_true2, _doc_params
-from typing import Collection, Mapping, Optional, Iterator
+from typing import Collection, Dict, List, Mapping, Optional, Iterator, Tuple
 from airr import RearrangementSchema
 import scanpy
 import json
@@ -20,6 +20,10 @@ class AirrCell(MutableMapping):
     This data structure is compliant with the AIRR rearrangement schema v1.0.
     An AirrCell holds multiple AirrChains (i.e. rows from the rearrangement TSV)
     which belong to the same cell.
+
+    The AirrCell can, additionally hold cell-level attributes which can be set
+    in a dict-like fashion. Keys marked as "cell-level" with in `cell_attribute_fields`
+    will be automatically transferred to the cell-level when added through a chain.
 
     Parameters
     ----------
@@ -74,11 +78,11 @@ class AirrCell(MutableMapping):
         return "AirrCell {} with {} chains".format(self._cell_id, len(self.chains))
 
     @property
-    def cell_id(self):
+    def cell_id(self) -> str:
         return self._cell_id
 
     @property
-    def chains(self):
+    def chains(self) -> List[Dict]:
         return self._chains
 
     def __delitem__(self, key) -> None:
@@ -140,21 +144,27 @@ class AirrCell(MutableMapping):
 
         self.chains.append(chain)
 
-    def add_serialized_chains(self, serialized_chains):
+    def add_serialized_chains(self, serialized_chains) -> None:
+        """Add chains serialized as JSON.
+
+        The JSON object needs to be a list of dicts"""
         tmp_chains = json.loads(serialized_chains)
         for chain in tmp_chains:
             self.add_chain(chain)
 
-    def _split_chains(self):
+    def _split_chains(self) -> Tuple[bool, dict]:
         """
         Splits the chains into productive VJ, productive VDJ, and extra chains.
 
         Returns
         -------
+        is_multichain
+            Boolean that indicates if the current cell is a multichain
+        split_chains
             dictionary with the following entries:
               * `vj_chains`: The (up to) two most highly expressed, productive VJ-chains
-              * vdj_chains: The (up to) two most highly expressed, productive VDJ chains
-              * extra_chains: All remaining chains
+              * `vdj_chains`: The (up to) two most highly expressed, productive VDJ chains
+              * `extra_chains`: All remaining chains
         """
         is_multichain = self._multi_chain
         split_chains = {"VJ": list(), "VDJ": list(), "extra": list()}
@@ -190,7 +200,7 @@ class AirrCell(MutableMapping):
         return bool(is_multichain), split_chains
 
     @staticmethod
-    def _key_sort_chains(chain):
+    def _key_sort_chains(chain) -> Tuple:
         """Get key to sort chains by expression"""
         return (
             chain.get("duplicate_count", 0),
@@ -200,7 +210,7 @@ class AirrCell(MutableMapping):
         )
 
     @staticmethod
-    def _serialize_chains(chains):
+    def _serialize_chains(chains: List[Dict]) -> str:
         """Serialize chains into a JSON object. This is useful for storing
         an arbitrary number of extra chains in a single column of a dataframe."""
         # convert numpy dtypes to python types
@@ -213,9 +223,10 @@ class AirrCell(MutableMapping):
                     pass
         return json.dumps(chains)
 
-    # TODO should it be `include_fields` instead -> probably yes, only include what's used for scirpy by default. ?
     @_doc_params(doc_working_model=doc_working_model)
-    def to_scirpy_record(self, include_fields: Optional[Collection[str]] = None):
+    def to_scirpy_record(
+        self, include_fields: Optional[Collection[str]] = None
+    ) -> Dict:
         """Convert the cell to a scirpy record (i.e. one row of `adata.obs`) according
         to our working model of adaptive immune receptors.
 
@@ -223,15 +234,20 @@ class AirrCell(MutableMapping):
 
         Parameters
         ----------
-        drop_fields
+        include_fields
             AIRR fields not to include into `adata.obs` (to save space and to not clutter
-            obs)
+            obs). Set to `None` to include all fields.
         """
         res_dict = dict()
         res_dict["cell_id"] = self.cell_id
         res_dict["multi_chain"], chain_dict = self._split_chains()
         res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"))
+        # add cell-level attributes
+        for key in self:
+            if key in include_fields or include_fields is None:
+                res_dict[key] = self[key]
 
+        # add chain-level attributes
         for key in self._fields:
             if key in include_fields or include_fields is None:
                 for junction_type, tmp_chains in chain_dict.items():
