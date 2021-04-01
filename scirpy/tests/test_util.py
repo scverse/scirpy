@@ -77,7 +77,8 @@ def test_is_false():
     warnings.filterwarnings("error")
     assert _is_false(False)
     assert _is_false(0)
-    assert _is_false("")
+    # assert _is_false("") -> I redelacred this as nan, as read_airr results in
+    # null fields being "".
     assert _is_false("False")
     assert _is_false("false")
     assert not _is_false(42)

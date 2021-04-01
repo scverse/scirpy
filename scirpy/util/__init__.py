@@ -79,7 +79,7 @@ def _is_false(x):
 def _is_na2(x):
     """the non-vectorized version, to be called from a function
     that gets vectorized"""
-    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A")
+    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A", "")
 
 
 def _is_true2(x):

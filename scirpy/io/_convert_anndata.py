@@ -6,6 +6,7 @@ from ._util import doc_working_model, _IOLogger
 from ._datastructures import AirrCell
 import pandas as pd
 from typing import Collection, List, Optional
+from .. import __version__
 import numpy as np
 
 
@@ -23,7 +24,7 @@ def _sanitize_anndata(adata: AnnData) -> None:
     # This should always be a categorical with True / False
     has_ir_mask = _is_true(adata.obs["has_ir"])
     adata.obs["has_ir"] = pd.Categorical(
-        ["True" if x else "False" for x in has_ir_mask]
+        ["True" if x else "False" for x in has_ir_mask], categories=["True", "False"]
     )
 
     # Turn other columns into categorical
@@ -62,6 +63,7 @@ def from_ir_objs(
     ).set_index("cell_id")
     adata = AnnData(obs=ir_df, X=np.empty([ir_df.shape[0], 0]))
     _sanitize_anndata(adata)
+    adata.uns["scirpy_version"] = __version__
     return adata
 
 
@@ -98,7 +100,7 @@ def to_ir_objs(adata: AnnData) -> List[AirrCell]:
 
         # add chain level attributes
         chains = {
-            (junction_type, chain_id): dict()
+            (junction_type, chain_id): AirrCell.empty_chain_dict()
             for junction_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"])
         }
         for tmp_col in ir_cols:

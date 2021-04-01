@@ -34,7 +34,7 @@ DEFAULT_AIRR_FIELDS = (
     "consensus_count",
     "duplicate_count",
 )
-DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence")
+DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence", "multi_chain")
 
 
 def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData:
@@ -408,6 +408,16 @@ def read_airr(
         for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
 
+            try:
+                tmp_cell = ir_objs[cell_id]
+            except KeyError:
+                tmp_cell = AirrCell(
+                    cell_id=cell_id,
+                    logger=logger,
+                    cell_attribute_fields=cell_attributes,
+                )
+                ir_objs[cell_id] = tmp_cell
+
             if _decide_use_umi_count_col(chain_dict):
                 chain_dict["duplicate_count"] = RearrangementSchema.to_int(
                     chain_dict.pop("umi_count")
@@ -418,16 +428,6 @@ def read_airr(
                     "`locus` column not found in input data. The locus is being inferred from the {v,d,j,c}_call columns."
                 )
                 chain_dict["locus"] = _infer_locus_from_gene_names(chain_dict)
-
-            try:
-                tmp_cell = ir_objs[cell_id]
-            except KeyError:
-                tmp_cell = AirrCell(
-                    cell_id=cell_id,
-                    logger=logger,
-                    cell_attribute_fields=cell_attributes,
-                )
-                ir_objs[cell_id] = tmp_cell
 
             tmp_cell.add_chain(chain_dict)
 
@@ -572,9 +572,11 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
 
     writer = airr.create_rearrangement(filename, fields=fields)
     for tmp_cell in airr_cells:
-        for chain in tmp_cell.chains:
-            # add cell-level attributes
-            chain.update(tmp_cell)
+        for chain in tmp_cell.to_airr_records():
+            # workaround for AIRR library writing out int field as floats (if it happens to be a float)
+            for f in chain:
+                if RearrangementSchema.type(f) == "integer":
+                    chain[f] = int(chain[f])
             writer.write(chain)
     writer.close()
 
@@ -621,16 +623,15 @@ def to_dandelion(adata: AnnData):
 
     contig_dicts = {}
     for tmp_cell in airr_cells:
-        for i, tmp_chain in enumerate(tmp_cell.chains, start=1):
-            # add cell-level attributes
-            tmp_chain.update(tmp_cell)
-            tmp_chain.update(
+        for i, chain in enumerate(tmp_cell.to_airr_records(), start=1):
+            # dandelion-specific modifications
+            chain.update(
                 {
                     "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
                 }
             )
-            tmp_chain["umi_count"] = tmp_chain.pop("duplicate_count")
-            contig_dicts[tmp_chain["sequence_id"]] = tmp_chain
+            chain["umi_count"] = chain.pop("duplicate_count")
+            contig_dicts[chain["sequence_id"]] = chain
 
     data = pd.DataFrame.from_dict(contig_dicts, orient="index")
     return ddl.Dandelion(ddl.load_data(data))

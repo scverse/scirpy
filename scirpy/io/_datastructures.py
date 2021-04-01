@@ -103,8 +103,16 @@ class AirrCell(MutableMapping):
 
     def __setitem__(self, k, v) -> None:
         if k == "multi_chain":
-            self._cell_attrs["multi_chain"] = _is_true2(v)
-        self._cell_attrs[k] = v
+            v = _is_true2(v)
+        try:
+            existing_value = self._cell_attrs[k]
+            if existing_value != v:
+                raise ValueError(
+                    "Cell-level attributes differ between different chains. "
+                    f"Already present: `{existing_value}`. Tried to add `{v}`."
+                )
+        except KeyError:
+            self._cell_attrs[k] = v
 
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain ot the cell.
@@ -116,6 +124,7 @@ class AirrCell(MutableMapping):
         chain = dict(sorted(chain.items()))
         # sanitize NA values
         chain = {k: None if _is_na2(v) else v for k, v in chain.items()}
+
         # TODO this should be `.validate_obj` but currently does not work
         # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())
@@ -123,16 +132,7 @@ class AirrCell(MutableMapping):
 
         for tmp_field in self._cell_attribute_fields:
             try:
-                new_value = chain.pop(tmp_field)
-                try:
-                    existing_value = self[tmp_field]
-                    if existing_value != new_value:
-                        raise ValueError(
-                            "Cell-level attributes differ between different chains. "
-                            f"Already present: `{existing_value}`. Tried to add `{new_value}`."
-                        )
-                except KeyError:
-                    self[tmp_field] = new_value
+                self[tmp_field] = chain.pop(tmp_field)
             except KeyError:
                 pass
 
@@ -229,6 +229,17 @@ class AirrCell(MutableMapping):
                 except AttributeError:
                     pass
         return json.dumps(chains)
+
+    def to_airr_records(self) -> Iterable[Dict]:
+        """Iterate over chains as AIRR-Rearrangent compliant dictonaries.
+        Each dictionary will also include the cell-level information."""
+        for tmp_chain in self.chains:
+            chain = AirrCell.empty_chain_dict()
+            # add the actual data
+            chain.update(tmp_chain)
+            # add cell-level attributes
+            chain.update(self)
+            yield chain
 
     @_doc_params(doc_working_model=doc_working_model)
     def to_scirpy_record(
