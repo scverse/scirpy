@@ -122,7 +122,7 @@ def merge_with_ir(
     if "obs_names" in adata.obs.columns or "obs_names" in adata_ir.obs.columns:
         raise ValueError("This doesn't work if there's a column named 'obs_names'. ")
     adata.obs.index.name = "obs_names"
-    adata.obs.index.name = "obs_names"
+    adata_ir.obs.index.name = "obs_names"
     if on is None:
         on = list()
     on.insert(0, "obs_names")

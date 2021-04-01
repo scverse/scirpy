@@ -10,6 +10,7 @@ import pandas.testing as pdt
 import numpy.testing as npt
 from ..util import _is_na
 import pandas as pd
+import pytest
 
 
 def test_merge_airr_chains_identity():
@@ -68,29 +69,11 @@ def test_merge_adata():
     merge_with_ir(adata, adata_ir)
 
     npt.assert_array_equal(adata.obs.index, cell_ids_anndata)
-    assert np.all(np.isin(IR_OBS_COLS, adata.obs.columns))
+    assert np.all(np.isin(adata_ir.obs.columns, adata.obs.columns))
     assert "foo" in adata.obs.columns
     assert "foo_ir" in adata.obs.columns
+    assert list(adata.obs_names) == list(cell_ids_anndata)
 
-    # Check that an additional merge (will trigger merge by chains)
-    # results in the same object.
-    obs_after_first_merge = adata.obs.copy()
-    merge_with_ir(adata, adata_ir, on=["foo_ir"])
-
-    # we don't care about the order of the columns
-    obs_after_first_merge.sort_index(axis="columns", inplace=True)
-    adata.obs.sort_index(axis="columns", inplace=True)
-
-    # there's also still the problem with different representations of 'nan' values
-    # which we ignore for now.
-    # turn nans into consistent value (nan)
-    _normalize_df_types(adata.obs)
-    _normalize_df_types(obs_after_first_merge)
-
-    pdt.assert_frame_equal(
-        obs_after_first_merge,
-        adata.obs,
-        check_dtype=False,
-        check_column_type=False,
-        check_categorical=False,
-    )
+    # Check that an additional merge raises a ValueError (use merge by chain!)
+    with pytest.raises(ValueError):
+        merge_with_ir(adata, adata_ir, on=["foo_ir"])
