@@ -98,16 +98,21 @@ class ClonotypeNeighbors:
 
         # groupby.indices gets us a (index -> array of row indices) mapping.
         # It doesn't necessarily have the same order as `clonotypes`.
-        self.cell_indices = [
-            obs_filtered.index[
-                clonotype_groupby.indices.get(
-                    # indices is not a tuple if it's just a single column.
-                    ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
-                    [],
-                )
-            ].values
-            for ct_tuple in clonotypes.itertuples(index=False, name=None)
-        ]
+        # This needs to be a numpy array with dtype "object", otherwise anndata
+        # can't save it to h5ad.
+        self.cell_indices = np.array(
+            [
+                obs_filtered.index[
+                    clonotype_groupby.indices.get(
+                        # indices is not a tuple if it's just a single column.
+                        ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
+                        [],
+                    )
+                ].values
+                for ct_tuple in clonotypes.itertuples(index=False, name=None)
+            ],
+            dtype="object",
+        )
 
         # make 'within group' a single column of tuples (-> only one distance
         # matrix instead of one per column.)
