@@ -5,25 +5,37 @@ import numpy as np
 from ..io import read_10x_vdj, read_bracer
 from . import TESTDATA
 from .._preprocessing import merge_with_ir
-from .._preprocessing._merge_adata import _merge_ir_obs
+from .._preprocessing._merge_adata import merge_airr_chains
 import pandas.testing as pdt
 import numpy.testing as npt
 from ..util import _is_na
 import pandas as pd
 
 
-def test_merge_ir_obs():
+def test_merge_airr_chains_identity():
+    """Test that mergeing adata with itself results in the identity"""
     adata1 = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     adata2 = adata1.copy()
     obs_expected = adata1.obs.copy()
-    obs_merged = _merge_ir_obs(adata1, adata2)
+    merge_airr_chains(adata1, adata2)
+    obs_merged = adata1.obs
     _normalize_df_types(obs_merged)
     _normalize_df_types(obs_expected)
     pdt.assert_frame_equal(obs_merged, obs_expected)
 
+
+def test_merge_airr_chains_concat():
+    """Test that merging two unrelated ir objects (reindexing the first one) is
+    the same as concatenating the objects"""
+    adata1 = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     adata_bracer = read_bracer(TESTDATA / "bracer/changeodb.tab")
-    obs_merged = _merge_ir_obs(adata1, adata_bracer)
-    obs_expected = pd.concat([adata1.obs, adata_bracer.obs])
+    obs_expected = pd.concat([adata1.obs.copy(), adata_bracer.obs])
+
+    adata1 = AnnData(
+        obs=adata1.obs.reindex(list(adata1.obs_names) + list(adata_bracer.obs_names))
+    )
+    merge_airr_chains(adata1, adata_bracer)
+    obs_merged = adata1.obs
     _normalize_df_types(obs_merged)
     _normalize_df_types(obs_expected)
     pdt.assert_frame_equal(

@@ -86,7 +86,7 @@ class AirrCell(MutableMapping):
     def fields(self) -> List[str]:
         """Return a list of all fields (chain-level and cell-level)"""
         if self._chain_fields is None:
-            raise ValueError("No chains have been added yet.")
+            return list(self)
         return list(self) + self._chain_fields
 
     def __delitem__(self, key) -> None:
@@ -154,9 +154,10 @@ class AirrCell(MutableMapping):
         """Add chains serialized as JSON.
 
         The JSON object needs to be a list of dicts"""
-        tmp_chains = json.loads(serialized_chains)
-        for chain in tmp_chains:
-            self.add_chain(chain)
+        if not _is_na2(serialized_chains):
+            tmp_chains = json.loads(serialized_chains)
+            for chain in tmp_chains:
+                self.add_chain(chain)
 
     def _split_chains(self) -> Tuple[bool, dict]:
         """
@@ -185,8 +186,8 @@ class AirrCell(MutableMapping):
                 split_chains["extra"].append(tmp_chain)
 
         if (
-            "duplicate_count" not in self._chain_fields
-            and "consensus_count" not in self._chain_fields
+            "duplicate_count" not in self.fields
+            and "consensus_count" not in self.fields
         ):
             self._logger.warning(
                 "No expression information available. Cannot rank chains by expression. "
@@ -270,24 +271,29 @@ class AirrCell(MutableMapping):
                 res_dict[key] = self[key]
 
         # add chain-level attributes
-        for key in self._chain_fields:
-            if key in include_fields:
-                for junction_type, tmp_chains in chain_dict.items():
-                    for i in range(2):
-                        try:
-                            tmp_chain = tmp_chains[i]
-                        except IndexError:
-                            tmp_chain = dict()
-                        res_dict[
-                            "IR_{}_{}_{}".format(junction_type, i + 1, key)
-                        ] = tmp_chain.get(key, None)
+        if self._chain_fields is not None:
+            for key in self._chain_fields:
+                if key in include_fields:
+                    for junction_type, tmp_chains in chain_dict.items():
+                        for i in range(2):
+                            try:
+                                tmp_chain = tmp_chains[i]
+                            except IndexError:
+                                tmp_chain = dict()
+                            res_dict[
+                                "IR_{}_{}_{}".format(junction_type, i + 1, key)
+                            ] = tmp_chain.get(key, None)
+
+        # use this check instead of `is None`, as the fields are missing in an empty cell.
+        def _is_nan_or_missing(col):
+            return col not in res_dict or res_dict[col] is None
 
         # in some weird reasons, it can happen that a cell has been called from
         # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
         # to "at least one productive chain"
         res_dict["has_ir"] = not (
-            res_dict["IR_VJ_1_junction_aa"] is None
-            and res_dict["IR_VDJ_1_junction_aa"] is None
+            _is_nan_or_missing("IR_VJ_1_junction_aa")
+            and _is_nan_or_missing("IR_VDJ_1_junction_aa")
         )
 
         # if there are not chains at all, we want multi-chain to be nan
@@ -296,18 +302,14 @@ class AirrCell(MutableMapping):
         if not len(self.chains):
             res_dict["multi_chain"] = np.nan
 
-        if res_dict["IR_VJ_1_junction_aa"] is None:
-            assert (
-                res_dict["IR_VJ_2_junction_aa"] is None
-            ), "There can't be a secondary chain if there is no primary one: {}".format(
-                res_dict
-            )
-        if res_dict["IR_VDJ_1_junction_aa"] is None:
-            assert (
-                res_dict["IR_VDJ_2_junction_aa"] is None
-            ), "There can't be a secondary chain if there is no primary one: {}".format(
-                res_dict
-            )
+        if _is_nan_or_missing("IR_VJ_1_junction_aa"):
+            assert _is_nan_or_missing(
+                "IR_VJ_2_junction_aa"
+            ), f"There can't be a secondary chain if there is no primary one: {res_dict}"
+        if _is_nan_or_missing("IR_VDJ_1_junction_aa"):
+            assert _is_nan_or_missing(
+                "IR_VDJ_2_junction_aa"
+            ), f"There can't be a secondary chain if there is no primary one: {res_dict}"
 
         return res_dict
 

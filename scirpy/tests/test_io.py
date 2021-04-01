@@ -74,6 +74,16 @@ def test_airr_cell():
     assert ac.chains[0]["fieldC"] == "c"
 
 
+def test_airr_cell_empty():
+    """An empty airr cell should still be convertable to an airr record or a scirpy
+    record"""
+    ac = AirrCell("cell1")
+    airr_record = list(ac.to_airr_records())
+    assert airr_record == []
+
+    ac.to_scirpy_record()
+
+
 @pytest.mark.parametrize(
     "anndata_from_10x_sample",
     [
