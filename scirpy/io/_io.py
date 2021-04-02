@@ -623,11 +623,12 @@ def upgrade_schema(adata) -> None:
                 "j_gene": "j_call",
                 "c_gene": "c_call",
                 "cdr3_nt": "junction",
-                "clone_id": "clone_id",
+                "clonotype": "clone_id",
             }.items(),
         )
     }
     adata.obs.rename(columns=rename_dict, inplace=True)
+    adata.obs["extra_chains"] = None
     adata.uns["scirpy_version"] = __version__
 
 
