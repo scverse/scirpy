@@ -49,7 +49,7 @@ def from_airr_cells(
     airr_cells: Iterable[AirrCell], include_fields: Optional[Collection[str]] = None
 ) -> AnnData:
     """\
-    Convert a collection of :class:`AirrCell` objects to an :class:`~anndata.AnnData`.
+    Convert a collection of :class:`AirrCell` objects to :class:`~anndata.AnnData`.
 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
@@ -59,12 +59,11 @@ def from_airr_cells(
     Parameters
     ----------
     airr_cells
-        A List of :class:`AirrCell` objects
+        A list of :class:`AirrCell` objects
     include_fields
         A list of field names that are to be transferred to `adata`. If `None` 
         (the default), transfer all fields. Use this option to avoid cluttering
         of `adata.obs` by irrelevant columns. 
-
 
     Returns
     -------
@@ -82,7 +81,8 @@ def from_airr_cells(
 
 def to_airr_cells(adata: AnnData) -> List[AirrCell]:
     """
-    Convert an adata object with IR information back to a list of IrCells.
+    Convert an adata object with IR information back to a list of :class:`AirrCell`
+    objects.
 
     Inverse function of :func:`from_ir_objs`.
 
@@ -93,7 +93,7 @@ def to_airr_cells(adata: AnnData) -> List[AirrCell]:
 
     Returns
     -------
-    List of IrCells
+    List of :class:`AirrCell` objects.
     """
     cells = []
     logger = _IOLogger()
@@ -106,8 +106,8 @@ def to_airr_cells(adata: AnnData) -> List[AirrCell]:
 
         # add cell-level attributes
         for col in other_cols:
+            # we want to use the index as cell id, and extra chains get added separately
             if col in ("cell_id", "extra_chains", "has_ir"):
-                # we want to use the index, and extra chains get added separately
                 continue
             tmp_ir_cell[col] = row[col]
 

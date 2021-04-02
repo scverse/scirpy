@@ -2,13 +2,15 @@ from scanpy import read_h5ad
 from ._io import (
     read_10x_vdj,
     read_tracer,
-    read_airr,
     read_bracer,
+    read_airr,
+    write_airr,
     from_dandelion,
     to_dandelion,
-    write_airr,
     upgrade_schema,
     _check_upgrade_schema,
+    DEFAULT_AIRR_CELL_ATTRIBUTES,
+    DEFAULT_AIRR_FIELDS,
 )
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ..util import deprecated

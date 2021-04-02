@@ -29,19 +29,32 @@ formats.
    read_tracer
    read_bracer
    read_airr
+   write_airr
+   from_dandelion
+   to_dandelion
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
 a list of :class:`~scirpy.io.AirrCell` objects first, and then converting them into
-an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_ir_objs`.
+an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_airr_cells`.
 For more details, check the :ref:`Data loading tutorial <importing-data>`.
 
 .. autosummary::
    :toctree: ./generated
 
    AirrCell
-   AirrChain
-   from_ir_objs
-   to_ir_objs
+   from_airr_cells
+   to_airr_cells
+
+.. note::
+   In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to 
+   be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__ 
+   schema. Please use :func:`~scirpy.io.upgrade_schema` to make `AnnData` objects
+   from previous scirpy versions compatible with the most recent scirpy workflow. 
+
+.. autosummary::
+   :toctree: ./generated
+
+   upgrade_schema
 
 
 Preprocessing: `pp`
@@ -53,6 +66,7 @@ Preprocessing: `pp`
    :toctree: ./generated
 
    merge_with_ir
+   merge_airr_chains
    ir_dist
 
 

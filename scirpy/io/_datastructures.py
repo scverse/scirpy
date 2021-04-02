@@ -18,12 +18,14 @@ class AirrCell(MutableMapping):
     """Data structure for a Cell with immune receptors.
 
     This data structure is compliant with the AIRR rearrangement schema v1.0.
-    An AirrCell holds multiple AirrChains (i.e. rows from the rearrangement TSV)
-    which belong to the same cell.
+    An AirrCell holds multiple chains (i.e. rows from the rearrangement TSV)
+    which belong to the same cell. A chain is represented as a dictionary, where
+    the keys are AIRR-rearrangement fields.
 
     The AirrCell can, additionally hold cell-level attributes which can be set
-    in a dict-like fashion. Keys marked as "cell-level" with in `cell_attribute_fields`
+    in a dict-like fashion. Keys marked as "cell-level" via `cell_attribute_fields`
     will be automatically transferred to the cell-level when added through a chain.
+    They are required to have the same value for all chains.
 
     Parameters
     ----------
@@ -37,7 +39,7 @@ class AirrCell(MutableMapping):
         exist on the cell-level, a `ValueError` is raised, if they differ from
         the values that are already present.
     logger
-        A logger to write messages to. If not specified, use the default logger.
+        A logger to write messages to. If not specified, use scanpy's default logger.
     """
 
     #: Chains with the :term:`V-J<V(D)J>` junction
@@ -56,7 +58,6 @@ class AirrCell(MutableMapping):
         cell_attribute_fields: Collection[str] = (),
         *,
         logger=scanpy.logging,
-        **kwargs,
     ):
         self._logger = logger
         self._chain_fields = None
@@ -115,7 +116,7 @@ class AirrCell(MutableMapping):
             self._cell_attrs[k] = v
 
     def add_chain(self, chain: Mapping) -> None:
-        """Add a chain ot the cell.
+        """Add a chain to the cell.
 
         A chain is a dictionary following
         the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__.
@@ -131,6 +132,7 @@ class AirrCell(MutableMapping):
         RearrangementSchema.validate_row(chain)
 
         for tmp_field in self._cell_attribute_fields:
+            # It is ok if a field specified as cell attribute is not present in the chain
             try:
                 self[tmp_field] = chain.pop(tmp_field)
             except KeyError:
@@ -146,14 +148,16 @@ class AirrCell(MutableMapping):
                 "`locus` field not specified, but required for most scirpy functionality. "
             )  # type: ignore
         elif chain["locus"] not in self.VALID_LOCI:
+            # TODO seems this isn't actually ignored. Chain will just be moved to `extra chains`.
             self._logger.warning(f"Non-standard locus name ignored: {chain['locus']} ")  # type: ignore
 
         self.chains.append(chain)
 
-    def add_serialized_chains(self, serialized_chains) -> None:
+    def add_serialized_chains(self, serialized_chains: str) -> None:
         """Add chains serialized as JSON.
 
-        The JSON object needs to be a list of dicts"""
+        The JSON object needs to be a list of dicts. If `serialized_chains` is
+        a value interpreted as NA, the function passes silently and does nothing."""
         if not _is_na2(serialized_chains):
             tmp_chains = json.loads(serialized_chains)
             for chain in tmp_chains:
@@ -215,6 +219,7 @@ class AirrCell(MutableMapping):
             chain.get("junction", ""),
             chain.get("junction_aa", ""),
         )
+        # replace None by -1 to make sure it comes in last
         return tuple(-1 if x is None else x for x in sort_tuple)
 
     @staticmethod
@@ -233,7 +238,12 @@ class AirrCell(MutableMapping):
 
     def to_airr_records(self) -> Iterable[Dict]:
         """Iterate over chains as AIRR-Rearrangent compliant dictonaries.
-        Each dictionary will also include the cell-level information."""
+        Each dictionary will also include the cell-level information.
+
+        Yields
+        ------
+        Dictionary representing one row of a AIRR rearrangement table
+        """
         for tmp_chain in self.chains:
             chain = AirrCell.empty_chain_dict()
             # add the actual data
@@ -255,22 +265,29 @@ class AirrCell(MutableMapping):
         ----------
         include_fields
             AIRR fields to include into `adata.obs` (to save space and to not clutter
-            obs). Set to `None` to include all fields.
+            `obs`). Set to `None` to include all fields.
+
+        Returns
+        -------
+        Dictionary representing one row of scirpy's `adata.obs`.
         """
         res_dict = dict()
+
         if include_fields is None:
             include_fields = self.fields
         # ensure cell_id is always added
         include_fields = set(include_fields)
         include_fields.add("cell_id")
+
         res_dict["multi_chain"], chain_dict = self._split_chains()
         res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"))
+
         # add cell-level attributes
         for key in self:
             if key in include_fields:
                 res_dict[key] = self[key]
 
-        # add chain-level attributes
+        # add chain-level attributes, do nothing when cell with no chains
         if self._chain_fields is not None:
             for key in self._chain_fields:
                 if key in include_fields:
@@ -296,9 +313,9 @@ class AirrCell(MutableMapping):
             and _is_nan_or_missing("IR_VDJ_1_junction_aa")
         )
 
-        # if there are not chains at all, we want multi-chain to be nan
-        # This is to be consistent with when turning an anndata object into ir_objs
-        # and converting it back to anndata.
+        # if there are no chains at all, we want multi-chain to be nan
+        # This is to be consistent with what happens when turning an anndata object into
+        # airr_cells and converting it back to anndata.
         if not len(self.chains):
             res_dict["multi_chain"] = np.nan
 

@@ -2,7 +2,15 @@ import pandas as pd
 import json
 from anndata import AnnData
 from ._datastructures import AirrCell
-from typing import Sequence, Union, Collection, Optional
+from typing import (
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    Union,
+    Collection,
+    Optional,
+)
 import numpy as np
 from glob import iglob
 import pickle
@@ -45,20 +53,20 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
     with open(path, "r") as f:
         cells = json.load(f)
 
-    ir_objs = {}
+    airr_cells = {}
     for cell in cells:
         if filtered and not (cell["is_cell"] and cell["high_confidence"]):
             continue
         barcode = cell["barcode"]
-        if barcode not in ir_objs:
+        if barcode not in airr_cells:
             ir_obj = AirrCell(
                 barcode,
                 logger=logger,
                 cell_attribute_fields=["is_cell", "high_confidence"],
             )
-            ir_objs[barcode] = ir_obj
+            airr_cells[barcode] = ir_obj
         else:
-            ir_obj = ir_objs[barcode]
+            ir_obj = airr_cells[barcode]
 
         # AIRR-compliant chain dict
         chain = AirrCell.empty_chain_dict()
@@ -131,7 +139,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
         ir_obj.add_chain(chain)
 
-    return from_airr_cells(ir_objs.values())
+    return from_airr_cells(airr_cells.values())
 
 
 def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
@@ -139,7 +147,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
     logger = _IOLogger()
     df = pd.read_csv(path)
 
-    ir_objs = {}
+    airr_cells = {}
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
@@ -168,9 +176,9 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
             )
             ir_obj.add_chain(chain_dict)
 
-        ir_objs[barcode] = ir_obj
+        airr_cells[barcode] = ir_obj
 
-    return from_airr_cells(ir_objs.values())
+    return from_airr_cells(airr_cells.values())
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -234,7 +242,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     :ref:`data-structure`.
     """
     logger = _IOLogger()
-    tcr_objs = {}
+    airr_cells = {}
     path = str(path)
 
     def _process_chains(chains, chain_type):
@@ -294,7 +302,7 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
         os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True
     ):
         cell_name = summary_file.split(os.sep)[-3]
-        tcr_obj = AirrCell(cell_name, logger=logger)
+        airr_cell = AirrCell(cell_name, logger=logger)
         try:
             with open(summary_file, "rb") as f:
                 tracer_obj = pickle.load(f)
@@ -304,23 +312,23 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
                         for tmp_chain in _process_chains(
                             chains[chain_id], f"TR{chain_id}"
                         ):
-                            tcr_obj.add_chain(tmp_chain)
+                            airr_cell.add_chain(tmp_chain)
         except ImportError as e:
             # except Exception as e:
             raise Exception(
                 "Error loading TCR data from cell {}".format(summary_file)
             ) from e
 
-        tcr_objs[cell_name] = tcr_obj
+        airr_cells[cell_name] = airr_cell
 
-    if not len(tcr_objs):
+    if not len(airr_cells):
         raise IOError(
             "Could not find any TraCeR *.pkl files. Make sure you are "
             "using a TraCeR output folder that looks like "
             "<CELL>/filtered_TCR_seqs/*.pkl"
         )
 
-    return from_airr_cells(tcr_objs.values())
+    return from_airr_cells(airr_cells.values())
 
 
 @_doc_params(
@@ -340,13 +348,15 @@ def read_airr(
 
     Reads data organized in the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
 
-    The following columns are required:
+    The following columns are required by scirpy: 
      * `cell_id`
      * `productive`
      * `locus`
-     * `consensus_count`
+     * at least one of `consensus_count`, `duplicate_count`, or `umi_count`
      * at least one of `junction_aa` or `junction`.
 
+    Data should still import if one of these fields is missing, but they are required
+    by most of scirpy's processing functions. 
 
     {doc_working_model}
 
@@ -379,11 +389,11 @@ def read_airr(
     AnnData object with IR data in `obs` for each cell. For more details see
     :ref:`data-structure`.
     """
-    ir_objs = {}
+    airr_cells = {}
     logger = _IOLogger()
 
     if isinstance(path, (str, Path, pd.DataFrame)):
-        path = [path]
+        path: list = [path]
 
     def _decide_use_umi_count_col(chain_dict):
         """Logic to decide whether or not to use counts form the `umi_counts` column."""
@@ -411,14 +421,14 @@ def read_airr(
             cell_id = chain_dict.pop("cell_id")
 
             try:
-                tmp_cell = ir_objs[cell_id]
+                tmp_cell = airr_cells[cell_id]
             except KeyError:
                 tmp_cell = AirrCell(
                     cell_id=cell_id,
                     logger=logger,
                     cell_attribute_fields=cell_attributes,
                 )
-                ir_objs[cell_id] = tmp_cell
+                airr_cells[cell_id] = tmp_cell
 
             if _decide_use_umi_count_col(chain_dict):
                 chain_dict["duplicate_count"] = RearrangementSchema.to_int(
@@ -433,7 +443,7 @@ def read_airr(
 
             tmp_cell.add_chain(chain_dict)
 
-    return from_airr_cells(ir_objs.values(), include_fields=include_fields)
+    return from_airr_cells(airr_cells.values(), include_fields=include_fields)
 
 
 def _infer_locus_from_gene_names(chain_dict):
@@ -552,7 +562,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
 
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
-    """Write Immune receptor fields from adata.obs in AIRR Rearrangement TSV format.
+    """Write immune receptor fields from `adata.obs` in AIRR Rearrangement TSV format.
 
     Parameters:
     -----------
@@ -565,9 +575,7 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     try:
         fields = airr_cells[0].fields
         for tmp_cell in airr_cells[1:]:
-            assert (
-                tmp_cell.fields == fields
-            ), "Different rows of anndata have different fields"
+            assert tmp_cell.fields == fields, "All rows of adata have the same fields."
     except IndexError:
         # case of an empty output file
         fields = None
@@ -593,6 +601,8 @@ def upgrade_schema(adata) -> None:
     adata
         annotated data matrix
     """
+    # the scirpy_version flag was introduced in 0.7, therefore, for now,
+    # there's no need to parse the version information but just check its presence.
     if "scirpy_version" in adata.uns:
         raise ValueError(
             "Your AnnData object seems already up-to-date with scirpy v0.7"
@@ -676,7 +686,7 @@ def to_dandelion(adata: AnnData):
 
 
 def from_dandelion(dandelion, transfer=False) -> AnnData:
-    """Import data from dandelion :cite:`Stephenson2021`.
+    """Import data from dandelion (:cite:`Stephenson2021`).
 
     Parameters
     ----------
