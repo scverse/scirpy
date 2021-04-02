@@ -92,6 +92,7 @@ def adata_cdr3():
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     adata._sanitize()
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -113,6 +114,7 @@ def adata_cdr3_2():
     ).set_index("cell_id")
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -140,6 +142,7 @@ def adata_define_clonotypes():
     ).set_index("cell_id")
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -201,6 +204,7 @@ def adata_define_clonotype_clusters():
         )
     )
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -212,6 +216,7 @@ def adata_conn(adata_define_clonotype_clusters):
     ir.tl.define_clonotype_clusters(
         adata, sequence="aa", metric="alignment", receptor_arms="any", dual_ir="any"
     )
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -238,6 +243,7 @@ def adata_define_clonotype_clusters_singletons():
         .set_index("cell_id")
     )
     ir.pp.ir_dist(adata, metric="identity", sequence="aa")
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -262,6 +268,7 @@ def adata_clonotype_network(adata_conn):
     )
     adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
     ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -397,6 +404,7 @@ def adata_tra():
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -556,6 +564,7 @@ def adata_vdj():
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -576,6 +585,7 @@ def adata_clonotype():
         columns=["cell_id", "group", "clone_id", "clonotype_cluster"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -595,4 +605,5 @@ def adata_diversity():
         columns=["cell_id", "group", "clonotype_"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata

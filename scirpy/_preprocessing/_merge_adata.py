@@ -7,11 +7,13 @@ from ..io._convert_anndata import (
     from_airr_cells,
 )
 from ..io._datastructures import AirrCell
+from ..io._util import _check_upgrade_schema
 from scanpy import logging
 import itertools
 import pandas as pd
 
 
+@_check_upgrade_schema(check_args=(0, 1))
 def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     """
     Merge two AnnData objects with :term:`IR` information (e.g. BCR with TCR).
@@ -64,6 +66,7 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     adata.obs = from_airr_cells(cell_dict.values()).obs.reindex(adata.obs_names)
 
 
+@_check_upgrade_schema(check_args=(1,))
 def merge_with_ir(
     adata: AnnData, adata_ir: AnnData, on: Union[List[str], None] = None, **kwargs
 ) -> None:

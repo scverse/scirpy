@@ -21,7 +21,7 @@ from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein
 from ._convert_anndata import from_airr_cells, to_airr_cells
-from ._util import doc_working_model, _IOLogger
+from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
 from .._compat import Literal
 from airr import RearrangementSchema
 import itertools
@@ -561,6 +561,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
     return from_airr_cells(bcr_cells.values())
 
 
+@_check_upgrade_schema()
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     """Write immune receptor fields from `adata.obs` in AIRR Rearrangement TSV format.
 
@@ -630,25 +631,7 @@ def upgrade_schema(adata) -> None:
     adata.uns["scirpy_version"] = __version__
 
 
-def _check_upgrade_schema(f):
-    """Decorator that checks that anndata uses the latest schema"""
-
-    def check_wrapper(adata, *args, **kwargs):
-        if "has_ir" in adata.obs.columns:
-            if (
-                "IR_VJ_1_v_call" not in adata.obs.columns
-                and "IR_VDJ_1_v_call" not in adata.obs.columns
-            ):
-                raise ValueError(
-                    "Scirpy has updated the the format of `adata.obs` in v0.7. "
-                    "Please run `ir.io.upgrade_schema(adata)` to update your AnnData "
-                    "object to the latest version. "
-                )
-        return f(adata, *args, **kwargs)
-
-    return check_wrapper
-
-
+@_check_upgrade_schema()
 def to_dandelion(adata: AnnData):
     """
     Convert a scirpy-initialized AnnData object to Dandelion format using `to_ir_objs`.

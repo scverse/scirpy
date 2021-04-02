@@ -3,6 +3,7 @@ from anndata import AnnData
 from typing import Union, Sequence, Tuple
 import numpy as np
 from scanpy import logging
+from ..io._util import _check_upgrade_schema
 
 
 @deprecated("Use `tl.chain_qc` instead.")
@@ -35,6 +36,7 @@ def chain_pairing(
         return res[2]
 
 
+@_check_upgrade_schema()
 def chain_qc(
     adata: AnnData,
     *,

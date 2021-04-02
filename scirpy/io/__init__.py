@@ -8,7 +8,6 @@ from ._io import (
     from_dandelion,
     to_dandelion,
     upgrade_schema,
-    _check_upgrade_schema,
     DEFAULT_AIRR_CELL_ATTRIBUTES,
     DEFAULT_AIRR_FIELDS,
 )

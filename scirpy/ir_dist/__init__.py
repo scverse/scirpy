@@ -8,6 +8,7 @@ from ..util import _is_na, deprecated
 from scipy.sparse import csr_matrix
 from ..util import _doc_params
 from . import metrics
+from ..io._util import _check_upgrade_schema
 
 
 @deprecated(
@@ -99,6 +100,7 @@ def _get_distance_calculator(
     return dist_calc
 
 
+@_check_upgrade_schema()
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: AnnData,

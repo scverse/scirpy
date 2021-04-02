@@ -2,7 +2,7 @@
 import itertools
 from anndata import AnnData
 from ..util import _doc_params, _is_true, _is_na2
-from ._util import doc_working_model, _IOLogger
+from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
 from ._datastructures import AirrCell
 import pandas as pd
 from typing import Collection, Iterable, List, Optional
@@ -79,6 +79,7 @@ def from_airr_cells(
     return adata
 
 
+@_check_upgrade_schema()
 def to_airr_cells(adata: AnnData) -> List[AirrCell]:
     """
     Convert an adata object with IR information back to a list of :class:`AirrCell`

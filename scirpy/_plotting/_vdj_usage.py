@@ -7,6 +7,7 @@ from .styling import _init_ax
 from ..io import AirrCell
 from itertools import islice
 from copy import deepcopy
+from ..io._util import _check_upgrade_schema
 
 
 def _sanitize_gene_name(gene_text):
@@ -16,6 +17,7 @@ def _sanitize_gene_name(gene_text):
     return gene_text
 
 
+@_check_upgrade_schema()
 def vdj_usage(
     adata: AnnData,
     *,

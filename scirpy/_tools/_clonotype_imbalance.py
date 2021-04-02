@@ -5,8 +5,10 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from ._repertoire_overlap import repertoire_overlap
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,

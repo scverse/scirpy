@@ -4,8 +4,10 @@ from . import base
 from .. import tl
 import numpy as np
 import matplotlib.pyplot as plt
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def alpha_diversity(
     adata: AnnData,
     groupby: str,

@@ -10,16 +10,15 @@ from scirpy.io import (
     from_dandelion,
     write_airr,
     upgrade_schema,
-    _check_upgrade_schema,
     AirrCell,
 )
+from scirpy.io._util import _check_upgrade_schema
 from scirpy.util import _is_na, _is_false
 import numpy as np
 import pytest
 import pandas.testing as pdt
 from . import TESTDATA
 from .util import _normalize_df_types
-from copy import deepcopy
 from functools import lru_cache
 import scanpy as sc
 
@@ -68,7 +67,7 @@ def test_upgrade_schema(anndata_from_10x_sample):
 
 
 def test_check_upgrade_schema():
-    @_check_upgrade_schema
+    @_check_upgrade_schema()
     def dummy_fun(adata, foo, *, bar):
         assert adata.shape[0] > 0
         assert foo == "foo"

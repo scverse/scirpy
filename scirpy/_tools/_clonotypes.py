@@ -15,6 +15,7 @@ from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..util import _doc_params
 from ..util.graph import igraph_from_sparse_matrix, layout_components
+from ..io._util import _check_upgrade_schema
 
 _common_doc = """\
 receptor_arms
@@ -163,6 +164,7 @@ def _validate_parameters(
     return within_group, distance_key, key_added
 
 
+@_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
     clonotype_definition=_doc_clonotype_definition,
@@ -312,6 +314,7 @@ def define_clonotype_clusters(
         )
 
 
+@_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
     clonotype_definition=_doc_clonotype_definition,
@@ -373,6 +376,7 @@ def define_clonotypes(
     )
 
 
+@_check_upgrade_schema()
 @_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,
@@ -597,6 +601,7 @@ def _graph_from_coordinates(
     return coords, adj_mat
 
 
+@_check_upgrade_schema()
 def clonotype_network_igraph(
     adata: AnnData, basis="clonotype_network"
 ) -> Tuple[ig.Graph, ig.Layout]:

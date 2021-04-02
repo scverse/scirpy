@@ -39,6 +39,7 @@ def test_chain_pairing():
         ],
     )
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     res = ir.tl.chain_pairing(adata, inplace=False)
     npt.assert_equal(
         res,
@@ -95,6 +96,7 @@ def test_chain_qc():
             for x in obs[f"IR_{chain}_{chain_number}_locus"]
         ]
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
 
     ir.tl.chain_qc(adata, key_added=("rec_type", "rec_subtype", "ch_pairing"))
 

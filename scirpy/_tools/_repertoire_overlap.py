@@ -5,8 +5,10 @@ from scipy.cluster import hierarchy as sc_hierarchy
 import pandas as pd
 import numpy as np
 from ..util import _is_na, _normalize_counts
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def repertoire_overlap(
     adata: AnnData,
     groupby: str,

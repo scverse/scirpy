@@ -7,8 +7,10 @@ from typing import Union
 from .._compat import Literal
 from .. import tl
 from .base import volcano
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,
