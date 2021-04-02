@@ -318,8 +318,12 @@ def test_clonotype_convergence(adata_clonotype):
     pdt.assert_extension_array_equal(
         res,
         pd.Categorical(
-            ["not convergent"] * 5 + ["convergent"] * 2 + ["not convergent"] * 2,
-            categories=["convergent", "not convergent"],
+            ["not convergent"] * 3
+            + ["nan"] * 2
+            + ["not convergent"]
+            + ["convergent"] * 2
+            + ["not convergent"] * 2,
+            categories=["convergent", "not convergent", "nan"],
         ),
     )
 
@@ -332,7 +336,7 @@ def test_clonotype_convergence(adata_clonotype):
     pdt.assert_extension_array_equal(
         res,
         pd.Categorical(
-            ["not convergent"] * 9,
-            categories=["convergent", "not convergent"],
+            ["not convergent"] * 3 + ["nan"] * 2 + ["not convergent"] * 5,
+            categories=["convergent", "not convergent", "nan"],
         ),
     )
