@@ -17,16 +17,34 @@ from scirpy.util import _is_na
 import numpy as np
 from .util import _normalize_df_types
 import tempfile
+import scanpy as sc
 
 
 @pytest.mark.conda
-def test_workflow():
-    adata = ir.io.read_10x_vdj(
-        TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz"
-    )
-    adata_obs_expected = pd.read_pickle(
-        TESTDATA / "test_workflow/adata.obs.expected.pkl.gz"
-    )
+@pytest.mark.parametrize(
+    "adata_path,upgrade_schema,obs_expected",
+    [
+        (
+            TESTDATA / "10x/vdj_nextgem_hs_pbmc3_t_filtered_contig_annotations.csv.gz",
+            False,
+            TESTDATA / "test_workflow/adata_10x_pbmc3_t.obs.expected.pkl.gz",
+        ),
+        (
+            TESTDATA / "wu2020_200_old_schema.h5ad",
+            True,
+            TESTDATA / "test_workflow/adata_wu_200_old_schema.obs.expected.pkl.gz",
+        ),
+    ],
+)
+def test_workflow(adata_path, upgrade_schema, obs_expected):
+    if upgrade_schema:
+        adata = sc.read_h5ad(adata_path)
+        ir.io.upgrade_schema(adata)
+    else:
+        adata = ir.io.read_10x_vdj(adata_path)
+
+    adata_obs_expected = pd.read_pickle(obs_expected)
+
     ir.tl.chain_qc(adata)
     ir.pp.ir_dist(adata)
     ir.tl.define_clonotypes(adata)
@@ -43,9 +61,7 @@ def test_workflow():
     _normalize_df_types(adata.obs)
 
     # # Use this code to re-generate the "expected file", if necessary.
-    # adata.obs.to_pickle(
-    #     TESTDATA / "test_workflow/adata.obs.expected.pkl.gz", protocol=4
-    # )
+    # adata.obs.to_pickle(obs_expected, protocol=4)
 
     pdt.assert_frame_equal(
         adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False

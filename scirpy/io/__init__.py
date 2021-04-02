@@ -7,6 +7,8 @@ from ._io import (
     from_dandelion,
     to_dandelion,
     write_airr,
+    upgrade_schema,
+    _check_upgrade_schema,
 )
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ..util import deprecated

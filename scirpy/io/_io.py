@@ -16,6 +16,8 @@ from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._util import doc_working_model, _IOLogger
 from .._compat import Literal
 from airr import RearrangementSchema
+import itertools
+from .. import __version__
 
 
 # patch sys.modules to enable pickle import.
@@ -581,7 +583,7 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     writer.close()
 
 
-def update_schema(adata) -> None:
+def upgrade_schema(adata) -> None:
     """Update older versions of a scirpy anndata object to the latest schema.
 
     Modifies adata inplace.
@@ -591,14 +593,53 @@ def update_schema(adata) -> None:
     adata
         annotated data matrix
     """
-    # TODO
-    pass
+    # TODO workflow test  with downsampled old version of wu2020_3k
+    if "scirpy_version" in adata.uns:
+        raise ValueError(
+            "Your AnnData object seems already up-to-date with scirpy v0.7"
+        )
+    # junction_ins is not exactly np1, therefore we just leave it as is
+    rename_dict = {
+        f"IR_{arm}_{i}_{key_old}": f"IR_{arm}_{i}_{key_new}"
+        for arm, i, (key_old, key_new) in itertools.product(
+            ["VJ", "VDJ"],
+            ["1", "2"],
+            {
+                "cdr3": "junction_aa",
+                "expr": "duplicate_count",
+                "expr_raw": "consensus_count",
+                "v_gene": "v_call",
+                "d_gene": "d_call",
+                "j_gene": "j_call",
+                "c_gene": "c_call",
+                "cdr3_nt": "junction",
+                "clonotype": "clone_id",
+            }.items(),
+        )
+    }
+    adata.obs.rename(columns=rename_dict, inplace=True)
+    adata.uns["scirpy_version"] = __version__
 
 
-def _update_schema_decorator(f):
+def _check_upgrade_schema(f):
     """Decorator that checks that anndata uses the latest schema"""
-    # TODO
-    pass
+
+    # TODO unit test with subsampled version of wu2020_3k
+
+    def check_wrapper(adata, *args, **kwargs):
+        if "has_ir" in adata.obs.columns:
+            if (
+                "IR_VJ_1_v_call" not in adata.obs.columns
+                and "IR_VDJ_1_v_call" not in adata.obs.columns
+            ):
+                raise ValueError(
+                    "Scirpy has updated the the format of `adata.obs` in v0.7. "
+                    "Please run `ir.io.upgrade_schema(adata)` to update your AnnData "
+                    "object to the latest version. "
+                )
+        return f(adata, *args, **kwargs)
+
+    return check_wrapper
 
 
 def to_dandelion(adata: AnnData):

@@ -9,6 +9,8 @@ from scirpy.io import (
     to_dandelion,
     from_dandelion,
     write_airr,
+    upgrade_schema,
+    _check_upgrade_schema,
     AirrCell,
 )
 from scirpy.util import _is_na, _is_false
@@ -19,6 +21,7 @@ from . import TESTDATA
 from .util import _normalize_df_types
 from copy import deepcopy
 from functools import lru_cache
+import scanpy as sc
 
 
 @lru_cache(None)
@@ -43,6 +46,42 @@ def anndata_from_10x_sample(request):
     """Make a copy for each function. Using this construct saves time compared
     to reading in the 10x files for each request to the fixture"""
     return _read_anndata_from_10x_sample(request.param).copy()
+
+
+@pytest.mark.parametrize(
+    "anndata_from_10x_sample",
+    [
+        TESTDATA / "10x/filtered_contig_annotations.csv",
+    ],
+    indirect=True,
+)
+def test_upgrade_schema(anndata_from_10x_sample):
+    adata = sc.read_h5ad(TESTDATA / "wu2020_200_old_schema.h5ad")
+    upgrade_schema(adata)
+
+    # should raise error if already upgraded
+    with pytest.raises(ValueError):
+        upgrade_schema(adata)
+
+    with pytest.raises(ValueError):
+        upgrade_schema(anndata_from_10x_sample)
+
+
+def test_check_upgrade_schema():
+    @_check_upgrade_schema
+    def dummy_fun(adata, foo, *, bar):
+        assert adata.shape[0] > 0
+        assert foo == "foo"
+        assert bar == "bar"
+        return True
+
+    adata = sc.read_h5ad(TESTDATA / "wu2020_200_old_schema.h5ad")
+    with pytest.raises(ValueError):
+        dummy_fun(adata, "foo", bar="bar")
+
+    upgrade_schema(adata)
+
+    assert dummy_fun(adata, "foo", bar="bar") is True
 
 
 def test_airr_cell():
