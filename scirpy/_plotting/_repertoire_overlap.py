@@ -15,7 +15,7 @@ def repertoire_overlap(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     pair_to_plot: Union[None, Sequence[str]] = None,
     heatmap_cats: Union[None, Sequence[str]] = None,
     dendro_only: bool = False,

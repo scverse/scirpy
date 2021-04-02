@@ -321,7 +321,7 @@ def define_clonotype_clusters(
 def define_clonotypes(
     adata: AnnData,
     *,
-    key_added: str = "clonotype",
+    key_added: str = "clone_id",
     distance_key: Union[str, None] = None,
     **kwargs,
 ) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
@@ -468,7 +468,7 @@ def clonotype_network(
 
     if clonotype_key is None:
         if metric == "identity" and sequence == "nt":
-            clonotype_key = "clonotype"
+            clonotype_key = "clone_id"
         else:
             clonotype_key = f"cc_{sequence}_{metric}"
 

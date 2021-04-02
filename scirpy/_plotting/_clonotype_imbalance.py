@@ -16,7 +16,7 @@ def clonotype_imbalance(
     case_label: str,
     *,
     control_label: Union[None, str] = None,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     additional_hue: Union[None, str, bool] = None,
     top_n: int = 10,
     fraction: Union[None, str, bool] = None,

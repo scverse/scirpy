@@ -10,7 +10,7 @@ def alpha_diversity(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     vistype: Literal["bar"] = "bar",
     **kwargs
 ) -> plt.Axes:

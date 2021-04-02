@@ -151,19 +151,19 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     adata = adata_clonotype
 
     res = ir._tools._clonal_expansion._clip_and_count(
-        adata, groupby="group", target_col="clonotype", clip_at=2, inplace=False
+        adata, groupby="group", target_col="clone_id", clip_at=2, inplace=False
     )
     npt.assert_equal(res, np.array([">= 2"] * 3 + ["1"] * 4 + [">= 2"] * 2))
 
     # check without group
     res = ir._tools._clonal_expansion._clip_and_count(
-        adata, target_col="clonotype", clip_at=5, inplace=False
+        adata, target_col="clone_id", clip_at=5, inplace=False
     )
     npt.assert_equal(res, np.array(["4"] * 3 + ["1"] + ["4"] + ["1"] * 2 + ["2"] * 2))
 
     # check if target_col works
-    adata.obs["new_col"] = adata.obs["clonotype"]
-    adata.obs.drop("clonotype", axis="columns", inplace=True)
+    adata.obs["new_col"] = adata.obs["clone_id"]
+    adata.obs.drop("clone_id", axis="columns", inplace=True)
 
     ir._tools._clonal_expansion._clip_and_count(
         adata,
@@ -181,7 +181,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
         ir._tools._clonal_expansion._clip_and_count(
             adata,
             groupby="group",
-            target_col="clonotype",
+            target_col="clone_id",
             clip_at=2,
             fraction=False,
         )
@@ -201,7 +201,7 @@ def test_clonal_expansion(adata_clonotype):
 
 def test_clonal_expansion_summary(adata_clonotype):
     res = ir.tl.summarize_clonal_expansion(
-        adata_clonotype, "group", target_col="clonotype", clip_at=2, normalize=True
+        adata_clonotype, "group", target_col="clone_id", clip_at=2, normalize=True
     )
     pdt.assert_frame_equal(
         res,
@@ -215,7 +215,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     res = ir.tl.summarize_clonal_expansion(
         adata_clonotype,
         "group",
-        target_col="clonotype",
+        target_col="clone_id",
         clip_at=2,
         normalize=True,
         expanded_in="group",
@@ -232,10 +232,10 @@ def test_clonal_expansion_summary(adata_clonotype):
     res = ir.tl.summarize_clonal_expansion(
         adata_clonotype,
         "group",
-        target_col="clonotype",
+        target_col="clone_id",
         clip_at=2,
         normalize=True,
-        summarize_by="clonotype",
+        summarize_by="clone_id",
     )
     pdt.assert_frame_equal(
         res,
@@ -246,7 +246,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
 
     res_counts = ir.tl.summarize_clonal_expansion(
-        adata_clonotype, "group", target_col="clonotype", clip_at=2, normalize=False
+        adata_clonotype, "group", target_col="clone_id", clip_at=2, normalize=False
     )
     print(res_counts)
     pdt.assert_frame_equal(
@@ -284,13 +284,13 @@ def test_group_abundance():
             ["cell4", "B", "ct1"],
             ["cell5", "B", "ct2"],
         ],
-        columns=["cell_id", "group", "clonotype"],
+        columns=["cell_id", "group", "clone_id"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
 
     # Check counts
     res = ir.tl.group_abundance(
-        adata, groupby="clonotype", target_col="group", fraction=False
+        adata, groupby="clone_id", target_col="group", fraction=False
     )
     expected_count = pd.DataFrame.from_dict(
         {
@@ -303,7 +303,7 @@ def test_group_abundance():
 
     # Check fractions
     res = ir.tl.group_abundance(
-        adata, groupby="clonotype", target_col="group", fraction=True
+        adata, groupby="clone_id", target_col="group", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
         {
@@ -316,7 +316,7 @@ def test_group_abundance():
 
     # Check swapped
     res = ir.tl.group_abundance(
-        adata, groupby="group", target_col="clonotype", fraction=True
+        adata, groupby="group", target_col="clone_id", fraction=True
     )
     expected_frac = pd.DataFrame.from_dict(
         {
@@ -477,175 +477,175 @@ def test_clonotype_imbalance(adata_tra):
     expected_freq = pd.DataFrame.from_dict(
         {
             0: {
-                "clonotype": "clonotype_330",
+                "clone_id": "clonotype_330",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 0.0,
             },
             1: {
-                "clonotype": "clonotype_330",
+                "clone_id": "clonotype_330",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 0.0,
             },
             2: {
-                "clonotype": "clonotype_330",
+                "clone_id": "clonotype_330",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "3",
                 "Normalized abundance": 1.0,
             },
             3: {
-                "clonotype": "clonotype_330",
+                "clone_id": "clonotype_330",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "1",
                 "Normalized abundance": 0.0,
             },
             4: {
-                "clonotype": "clonotype_330",
+                "clone_id": "clonotype_330",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "3",
                 "Normalized abundance": 1.0,
             },
             5: {
-                "clonotype": "clonotype_458",
+                "clone_id": "clonotype_458",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 0.0,
             },
             6: {
-                "clonotype": "clonotype_458",
+                "clone_id": "clonotype_458",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 0.0,
             },
             7: {
-                "clonotype": "clonotype_458",
+                "clone_id": "clonotype_458",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "3",
                 "Normalized abundance": 1.0,
             },
             8: {
-                "clonotype": "clonotype_458",
+                "clone_id": "clonotype_458",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "1",
                 "Normalized abundance": 0.0,
             },
             9: {
-                "clonotype": "clonotype_458",
+                "clone_id": "clonotype_458",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "3",
                 "Normalized abundance": 1.0,
             },
             10: {
-                "clonotype": "clonotype_739",
+                "clone_id": "clonotype_739",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             11: {
-                "clonotype": "clonotype_739",
+                "clone_id": "clonotype_739",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             12: {
-                "clonotype": "clonotype_739",
+                "clone_id": "clonotype_739",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "3",
                 "Normalized abundance": 0.0,
             },
             13: {
-                "clonotype": "clonotype_739",
+                "clone_id": "clonotype_739",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             14: {
-                "clonotype": "clonotype_739",
+                "clone_id": "clonotype_739",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "3",
                 "Normalized abundance": 0.0,
             },
             15: {
-                "clonotype": "clonotype_986",
+                "clone_id": "clonotype_986",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             16: {
-                "clonotype": "clonotype_986",
+                "clone_id": "clonotype_986",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             17: {
-                "clonotype": "clonotype_986",
+                "clone_id": "clonotype_986",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "3",
                 "Normalized abundance": 0.0,
             },
             18: {
-                "clonotype": "clonotype_986",
+                "clone_id": "clonotype_986",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             19: {
-                "clonotype": "clonotype_986",
+                "clone_id": "clonotype_986",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "3",
                 "Normalized abundance": 0.0,
             },
             20: {
-                "clonotype": "clonotype_987",
+                "clone_id": "clonotype_987",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             21: {
-                "clonotype": "clonotype_987",
+                "clone_id": "clonotype_987",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             22: {
-                "clonotype": "clonotype_987",
+                "clone_id": "clonotype_987",
                 None: "All",
                 "chain_pairing": "Background",
                 "sample": "3",
                 "Normalized abundance": 0.0,
             },
             23: {
-                "clonotype": "clonotype_987",
+                "clone_id": "clonotype_987",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "1",
                 "Normalized abundance": 1.0,
             },
             24: {
-                "clonotype": "clonotype_987",
+                "clone_id": "clonotype_987",
                 None: "All",
                 "chain_pairing": "Single pair",
                 "sample": "3",
@@ -654,7 +654,7 @@ def test_clonotype_imbalance(adata_tra):
         },
         orient="index",
     )
-    freq = freq.sort_values(by=["clonotype", "chain_pairing", "sample"])
+    freq = freq.sort_values(by=["clone_id", "chain_pairing", "sample"])
     freq = freq.reset_index().iloc[:, 1:6]
     print(freq)
     print(stat)
@@ -662,31 +662,31 @@ def test_clonotype_imbalance(adata_tra):
     expected_stat = pd.DataFrame.from_dict(
         {
             0: {
-                "clonotype": "clonotype_330",
+                "clone_id": "clonotype_330",
                 "pValue": 1.0,
                 "logpValue": -0.0,
                 "logFC": 0.5849625007211562,
             },
             1: {
-                "clonotype": "clonotype_458",
+                "clone_id": "clonotype_458",
                 "pValue": 1.0,
                 "logpValue": -0.0,
                 "logFC": 0.5849625007211562,
             },
             2: {
-                "clonotype": "clonotype_739",
+                "clone_id": "clonotype_739",
                 "pValue": 1.0,
                 "logpValue": -0.0,
                 "logFC": -0.4150374992788438,
             },
             3: {
-                "clonotype": "clonotype_986",
+                "clone_id": "clonotype_986",
                 "pValue": 1.0,
                 "logpValue": -0.0,
                 "logFC": -0.4150374992788438,
             },
             4: {
-                "clonotype": "clonotype_987",
+                "clone_id": "clonotype_987",
                 "pValue": 1.0,
                 "logpValue": -0.0,
                 "logFC": -0.4150374992788438,
@@ -694,6 +694,6 @@ def test_clonotype_imbalance(adata_tra):
         },
         orient="index",
     )
-    stat = stat.sort_values(by="clonotype")
+    stat = stat.sort_values(by="clone_id")
     stat = stat.reset_index().iloc[:, 1:5]
     pdt.assert_frame_equal(stat, expected_stat, check_names=False, check_dtype=False)

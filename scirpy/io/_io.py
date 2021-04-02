@@ -593,7 +593,6 @@ def upgrade_schema(adata) -> None:
     adata
         annotated data matrix
     """
-    # TODO workflow test  with downsampled old version of wu2020_3k
     if "scirpy_version" in adata.uns:
         raise ValueError(
             "Your AnnData object seems already up-to-date with scirpy v0.7"
@@ -613,7 +612,7 @@ def upgrade_schema(adata) -> None:
                 "j_gene": "j_call",
                 "c_gene": "c_call",
                 "cdr3_nt": "junction",
-                "clonotype": "clone_id",
+                "clone_id": "clone_id",
             }.items(),
         )
     }
@@ -623,8 +622,6 @@ def upgrade_schema(adata) -> None:
 
 def _check_upgrade_schema(f):
     """Decorator that checks that anndata uses the latest schema"""
-
-    # TODO unit test with subsampled version of wu2020_3k
 
     def check_wrapper(adata, *args, **kwargs):
         if "has_ir" in adata.obs.columns:

@@ -274,7 +274,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CALSDPNTNAGKSTF",
             "IR_VJ_1_junction": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
             "sample": "3",
-            "clonotype": "clonotype_458",
+            "clone_id": "clonotype_458",
             "chain_pairing": "Extra alpha",
         },
         "ACTATCTAGGGCTTCC-1": {
@@ -283,7 +283,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAVDGGTSYGKLTF",
             "IR_VJ_1_junction": "TGTGCCGTGGACGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "1",
-            "clonotype": "clonotype_739",
+            "clone_id": "clonotype_739",
             "chain_pairing": "Extra alpha",
         },
         "CAGTAACAGGCATGTG-1": {
@@ -292,7 +292,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAVRDSNYQLIW",
             "IR_VJ_1_junction": "TGTGCTGTGAGAGATAGCAACTATCAGTTAATCTGG",
             "sample": "1",
-            "clonotype": "clonotype_986",
+            "clone_id": "clonotype_986",
             "chain_pairing": "Two full chains",
         },
         "CCTTACGGTCATCCCT-1": {
@@ -301,7 +301,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAVRDSNYQLIW",
             "IR_VJ_1_junction": "TGTGCTGTGAGGGATAGCAACTATCAGTTAATCTGG",
             "sample": "1",
-            "clonotype": "clonotype_987",
+            "clone_id": "clonotype_987",
             "chain_pairing": "Single pair",
         },
         "CGTCCATTCATAACCG-1": {
@@ -310,7 +310,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAASRNAGGTSYGKLTF",
             "IR_VJ_1_junction": "TGTGCAGCAAGTCGCAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "5",
-            "clonotype": "clonotype_158",
+            "clone_id": "clonotype_158",
             "chain_pairing": "Single pair",
         },
         "CTTAGGAAGGGCATGT-1": {
@@ -319,7 +319,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CALSDPNTNAGKSTF",
             "IR_VJ_1_junction": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
             "sample": "1",
-            "clonotype": "clonotype_459",
+            "clone_id": "clonotype_459",
             "chain_pairing": "Single pair",
         },
         "GCAAACTGTTGATTGC-1": {
@@ -328,7 +328,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAVDGGTSYGKLTF",
             "IR_VJ_1_junction": "TGTGCCGTGGATGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "1",
-            "clonotype": "clonotype_738",
+            "clone_id": "clonotype_738",
             "chain_pairing": "Single pair",
         },
         "GCTCCTACAAATTGCC-1": {
@@ -337,7 +337,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CALSDPNTNAGKSTF",
             "IR_VJ_1_junction": "TGTGCTCTGAGTGATCCCAACACCAATGCAGGCAAATCAACCTTT",
             "sample": "3",
-            "clonotype": "clonotype_460",
+            "clone_id": "clonotype_460",
             "chain_pairing": "Two full chains",
         },
         "GGAATAATCCGATATG-1": {
@@ -346,7 +346,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAASRNAGGTSYGKLTF",
             "IR_VJ_1_junction": "TGTGCAGCAAGTAGGAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "5",
-            "clonotype": "clonotype_157",
+            "clone_id": "clonotype_157",
             "chain_pairing": "Single pair",
         },
         "AAACCTGAGATAGCAT-1": {
@@ -355,7 +355,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAGGGSGTYKYIF",
             "IR_VJ_1_junction": "TGTGCAGGGGGGGGCTCAGGAACCTACAAATACATCTTT",
             "sample": "3",
-            "clonotype": "clonotype_330",
+            "clone_id": "clonotype_330",
             "chain_pairing": "Single pair",
         },
         "AAACCTGAGTACGCCC-1": {
@@ -364,7 +364,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAMRVGGSQGNLIF",
             "IR_VJ_1_junction": "TGTGCAATGAGGGTCGGAGGAAGCCAAGGAAATCTCATCTTT",
             "sample": "5",
-            "clonotype": "clonotype_592",
+            "clone_id": "clonotype_592",
             "chain_pairing": "Two full chains",
         },
         "AAACCTGCATAGAAAC-1": {
@@ -373,7 +373,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CAFMKPFTAGNQFYF",
             "IR_VJ_1_junction": "TGTGCTTTCATGAAGCCTTTTACCGCCGGTAACCAGTTCTATTTT",
             "sample": "5",
-            "clonotype": "clonotype_284",
+            "clone_id": "clonotype_284",
             "chain_pairing": "Extra alpha",
         },
         "AAACCTGGTCCGTTAA-1": {
@@ -382,7 +382,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CALNTGGFKTIF",
             "IR_VJ_1_junction": "TGTGCTCTCAATACTGGAGGCTTCAAAACTATCTTT",
             "sample": "3",
-            "clonotype": "clonotype_425",
+            "clone_id": "clonotype_425",
             "chain_pairing": "Extra alpha",
         },
         "AAACCTGGTTTGTGTG-1": {
@@ -391,7 +391,7 @@ def adata_tra():
             "IR_VJ_1_junction_aa": "CALRGGRDDKIIF",
             "IR_VJ_1_junction": "TGTGCTCTGAGAGGGGGTAGAGATGACAAGATCATCTTT",
             "sample": "3",
-            "clonotype": "clonotype_430",
+            "clone_id": "clonotype_430",
             "chain_pairing": "Single pair",
         },
     }
@@ -573,7 +573,7 @@ def adata_clonotype():
             ["cell7", "B", "ct4", "cc3"],
             ["cell8", "B", "ct4", "cc3"],
         ],
-        columns=["cell_id", "group", "clonotype", "clonotype_cluster"],
+        columns=["cell_id", "group", "clone_id", "clonotype_cluster"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
     return adata

@@ -9,7 +9,7 @@ def alpha_diversity(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     inplace: bool = True,
     key_added: Union[None, str] = None
 ) -> pd.DataFrame:

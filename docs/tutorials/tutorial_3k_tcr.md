@@ -469,7 +469,7 @@ ten largest clonotypes across the cell-type clusters.
 <!-- #endraw -->
 
 ```python
-ir.pl.group_abundance(adata, groupby="clonotype", target_col="cluster", max_cols=10)
+ir.pl.group_abundance(adata, groupby="clone_id", target_col="cluster", max_cols=10)
 ```
 
 It might be beneficial to normalize the counts
@@ -477,7 +477,7 @@ to the number of cells per sample to mitigate biases due to different sample siz
 
 ```python
 ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="cluster", max_cols=10, normalize="sample"
+    adata, groupby="clone_id", target_col="cluster", max_cols=10, normalize="sample"
 )
 ```
 
@@ -487,7 +487,7 @@ others are *public*, i.e. they are shared across different tissues.
 
 ```python
 ax = ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="source", max_cols=15, figsize=(5, 3)
+    adata, groupby="clone_id", target_col="source", max_cols=15, figsize=(5, 3)
 )
 ```
 
@@ -495,7 +495,7 @@ However, clonotypes that are shared between *patients* are rare:
 
 ```python
 ax = ir.pl.group_abundance(
-    adata, groupby="clonotype", target_col="patient", max_cols=15, figsize=(5, 3)
+    adata, groupby="clone_id", target_col="patient", max_cols=15, figsize=(5, 3)
 )
 ```
 
@@ -541,7 +541,7 @@ We can also use this plot to investigate the exact VDJ composition of one (or se
 
 ```python
 ir.pl.vdj_usage(
-    adata[adata.obs["clonotype"].isin(["68", "101", "127", "161"]), :],
+    adata[adata.obs["clone_id"].isin(["68", "101", "127", "161"]), :],
     max_ribbons=None,
     max_segments=100,
 )
@@ -666,7 +666,7 @@ freq, stat = ir.tl.clonotype_imbalance(
     control_label="CD8_Trm",
     inplace=False,
 )
-top_differential_clonotypes = stat["clonotype"].tolist()[:3]
+top_differential_clonotypes = stat["clone_id"].tolist()[:3]
 ```
 
 Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells. 
@@ -676,12 +676,12 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6
 sc.pl.umap(adata, color="cluster", ax=ax1, show=False)
 sc.pl.umap(
     adata,
-    color="clonotype",
+    color="clone_id",
     groups=top_differential_clonotypes,
     ax=ax2,
     # increase size of highlighted dots
     size=[
-        80 if c in top_differential_clonotypes else 30 for c in adata.obs["clonotype"]
+        80 if c in top_differential_clonotypes else 30 for c in adata.obs["clone_id"]
     ],
     palette=cycler(color=mpl_cm.Dark2_r.colors)
 )
@@ -704,7 +704,7 @@ Gene expression of cells belonging to individual clonotypes can also be compared
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clonotype", groups=["101"], reference="68", method="wilcoxon"
+    adata, "clone_id", groups=["101"], reference="68", method="wilcoxon"
 )
 sc.pl.rank_genes_groups_violin(adata, groups="101", n_genes=15)
 ```
