@@ -51,7 +51,9 @@ rpack = [
 ]
 test = [
     'pytest',
-    'black',
+    'black'
+]
+dandelion = [
     'sc-dandelion',
     'adjusttext', # see https://github.com/zktuong/dandelion/issues/55
 ]
