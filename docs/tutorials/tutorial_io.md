@@ -380,7 +380,7 @@ Combining multiple samples
 
 It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
-in this document. Then, we combine them using :meth:`anndata.AnnData.concatenate`.
+in this document. Then, we combine them using :func:`anndata.concat`.
 
 Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
 <!-- #endraw -->
@@ -412,7 +412,7 @@ for sample, sample_meta in samples.items():
 
 ```python
 # Merge anndata objects
-adata = adatas[0].concatenate(adatas[1:])
+adata = anndata.concat(adatas)
 ```
 
 The data is now integrated in a single object.
