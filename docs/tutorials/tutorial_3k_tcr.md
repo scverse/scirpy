@@ -34,6 +34,7 @@ from matplotlib import pyplot as plt, cm as mpl_cm
 from cycler import cycler
 
 sc.set_figure_params(figsize=(4, 4))
+sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hints (3)
 ```
 
 ```python
@@ -49,10 +50,18 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-`adata` is a regular :class:`~anndata.AnnData` object with additional, :term:`IR`-specific columns in `obs`.
-For more information, check the page about Scirpy's :ref:`data structure <data-structure>`.
+.. note:: 
 
-.. note:: For more information about our T-cell receptor model, see :ref:`receptor-model`.
+    `adata` is a regular :class:`~anndata.AnnData` object with additional, :term:`Immune Receptor (IR)`-specific columns in `obs` that are named according to the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. For more information, check the page about 
+
+     * Scirpy's :ref:`data structure <data-structure>`, and
+     * Scirpy's :ref:`working model of immune receptors <receptor-model>`.
+     
+.. warning::
+
+    **scirpy's data structure has updated in v0.7.0 to be fully AIRR-compliant.**
+    
+    `AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy. 
 <!-- #endraw -->
 
 ```python
@@ -151,13 +160,13 @@ about the Immune cell-receptor compositions to `adata.obs`. We can visualize it 
 
     - *Orphan chain* refers to cells that have either a single alpha or beta receptor chain.
     - *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain.
-    - *:term:`Multichain <Multichain-cell>`* refers to cells with more than two receptor pairs detected. 
+    - :term:`Multichain <Multichain-cell>` refers to cells with more than two receptor pairs detected. 
       These cells are likely doublets.
 
 
 .. note:: **receptor type and receptor subtype**
 
-    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells both `BCR` and `TCR` chains
+    - `receptor_type` refers to a coarse classification into `BCR` and `TCR`. Cells with both `BCR` and `TCR` chains
       are labelled as `ambiguous`.
     - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations.
 
@@ -265,8 +274,8 @@ In this section, we will define and visualize :term:`clonotypes <Clonotype>` and
 
 The function :func:`scirpy.tl.define_clonotypes` matches cells based on the distances of their 
 `VJ` and `VDJ` CDR3-sequences and value of the function parameters `dual_ir` and `receptor_arms`. Finally, it
-detects connected modules in the graph and annotates them as clonotypes. This will add a `clonotype` and
-`clonotype_size` column to `adata.obs`.
+detects connected modules in the graph and annotates them as clonotypes. This will add a `clone_id` and
+`clone_id_size` column to `adata.obs`.
 
 Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity.
 In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on
@@ -318,10 +327,6 @@ All cells with a distance between their CDR3 sequences lower than `cutoff` will 
 <!-- #endraw -->
 
 ```python
-sc.settings.verbosity = 4
-```
-
-```python
 ir.pp.ir_dist(
     adata,
     metric="alignment",
@@ -359,10 +364,10 @@ When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five 
 ```python
 adata.obs.loc[adata.obs["cc_aa_alignment"] == "159", :].groupby(
     [
-        "IR_VJ_1_cdr3",
-        "IR_VJ_2_cdr3",
-        "IR_VDJ_1_cdr3",
-        "IR_VDJ_2_cdr3",
+        "IR_VJ_1_junction_aa",
+        "IR_VJ_2_junction_aa",
+        "IR_VDJ_1_junction_aa",
+        "IR_VDJ_2_junction_aa",
         "receptor_subtype",
     ],
     observed=True,
@@ -406,8 +411,8 @@ adata.obs.loc[
     [
         "cc_aa_alignment",
         "cc_aa_alignment_same_v",
-        "IR_VJ_1_v_gene",
-        "IR_VDJ_1_v_gene",
+        "IR_VJ_1_v_call",
+        "IR_VDJ_1_v_call",
     ],
 ].sort_values("cc_aa_alignment").drop_duplicates().reset_index(drop=True)
 ```
@@ -430,7 +435,7 @@ ir.tl.clonal_expansion(adata)
 The `clonotype_size` refers to the absolute number of cells in a clonotype.
 
 ```python
-sc.pl.umap(adata, color=["clonal_expansion", "clonotype_size"])
+sc.pl.umap(adata, color=["clonal_expansion", "clone_id_size"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -509,7 +514,7 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 
 ```python
 ax = ir.pl.group_abundance(
-    adata, groupby="IR_VJ_1_v_gene", target_col="cluster", normalize=True, max_cols=10
+    adata, groupby="IR_VJ_1_v_call", target_col="cluster", normalize=True, max_cols=10
 )
 ```
 
@@ -518,13 +523,13 @@ We can pre-select groups by filtering `adata`:
 ```python
 ax = ir.pl.group_abundance(
     adata[
-        adata.obs["IR_VDJ_1_v_gene"].isin(
+        adata.obs["IR_VDJ_1_v_call"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
         ),
         :,
     ],
     groupby="cluster",
-    target_col="IR_VDJ_1_v_gene",
+    target_col="IR_VDJ_1_v_call",
     normalize=True,
 )
 ```
@@ -575,13 +580,13 @@ A spectratype-plot by gene usage. To pre-select specific genes, we can simply fi
 ```python
 ir.pl.spectratype(
     adata[
-        adata.obs["IR_VDJ_1_v_gene"].isin(
+        adata.obs["IR_VDJ_1_v_call"].isin(
             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
         ),
         :,
     ],
-    cdr3_col="IR_VDJ_1_cdr3",
-    color="IR_VDJ_1_v_gene",
+    cdr3_col="IR_VDJ_1_junction_aa",
+    color="IR_VDJ_1_v_call",
     normalize="sample",
     fig_kws={"dpi": 120},
 )
