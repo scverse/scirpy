@@ -96,8 +96,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
         # check if chain type is consistent
         chain_types = [g["chain"] for g in genes.values()]
-        chain_type = chain_types[0] if np.unique(chain_types).size == 1 else "other"
-        chain_type = chain_type if chain_type in AirrCell.VALID_LOCI else "other"
+        chain_type = chain_types[0] if np.unique(chain_types).size == 1 else None
 
         # compute inserted nucleotides
         # VJ junction for TRA, TRG, IGK, IGL chains
@@ -157,11 +156,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
         for _, chain_series in cell_df.iterrows():
             chain_dict = AirrCell.empty_chain_dict()
             chain_dict.update(
-                locus=(
-                    chain_series["chain"]
-                    if chain_series["chain"] in AirrCell.VALID_LOCI
-                    else "other"
-                ),
+                locus=chain_series["chain"],
                 junction_aa=chain_series["cdr3"],
                 junction=chain_series["cdr3_nt"],
                 duplicate_count=chain_series["umis"],

@@ -192,6 +192,7 @@ class AirrCell(MutableMapping):
         if (
             "duplicate_count" not in self.fields
             and "consensus_count" not in self.fields
+            and len(self.chains)  # don't warn for empty cells
         ):
             self._logger.warning(
                 "No expression information available. Cannot rank chains by expression. "

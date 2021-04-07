@@ -52,7 +52,7 @@ adata = ir.datasets.wu2020_3k()
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: 
 
-    `adata` is a regular :class:`~anndata.AnnData` object with additional, :term:`Immune Receptor (IR)`-specific columns in `obs` that are named according to the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. For more information, check the page about 
+    `adata` is a regular :class:`~anndata.AnnData` object with additional, Immune Receptor (IR)-specific columns in `obs` that are named according to the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. For more information, check the page about 
 
      * Scirpy's :ref:`data structure <data-structure>`, and
      * Scirpy's :ref:`working model of immune receptors <receptor-model>`.
