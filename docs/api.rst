@@ -146,14 +146,6 @@ when calling the plotting function or need to be precomputed and stored in
 .. autosummary::
    :toctree: ./generated
 
-   alpha_diversity
-   clonal_expansion
-   group_abundance
-   spectratype
-   vdj_usage
-   repertoire_overlap
-   clonotype_imbalance
-   clonotype_network
 
 
 

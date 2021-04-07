@@ -80,7 +80,7 @@ class AirrCell(MutableMapping):
         return self["cell_id"]
 
     @property
-    def chains(self) -> List[Dict]:
+    def chains(self) -> List[dict]:
         return self._chains
 
     @property
@@ -223,7 +223,7 @@ class AirrCell(MutableMapping):
         return tuple(-1 if x is None else x for x in sort_tuple)
 
     @staticmethod
-    def _serialize_chains(chains: List[Dict]) -> str:
+    def _serialize_chains(chains: List[MutableMapping]) -> str:
         """Serialize chains into a JSON object. This is useful for storing
         an arbitrary number of extra chains in a single column of a dataframe."""
         # convert numpy dtypes to python types
@@ -236,7 +236,7 @@ class AirrCell(MutableMapping):
                     pass
         return json.dumps(chains)
 
-    def to_airr_records(self) -> Iterable[Dict]:
+    def to_airr_records(self) -> Iterable[dict]:
         """Iterate over chains as AIRR-Rearrangent compliant dictonaries.
         Each dictionary will also include the cell-level information.
 
@@ -255,8 +255,9 @@ class AirrCell(MutableMapping):
     @_doc_params(doc_working_model=doc_working_model)
     def to_scirpy_record(
         self, include_fields: Optional[Collection[str]] = None
-    ) -> Dict:
-        """Convert the cell to a scirpy record (i.e. one row of `adata.obs`) according
+    ) -> dict:
+        """\
+        Convert the cell to a scirpy record (i.e. one row of `adata.obs`) according
         to our working model of adaptive immune receptors.
 
         {doc_working_model}
