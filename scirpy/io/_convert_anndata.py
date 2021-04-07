@@ -1,7 +1,7 @@
 """Convert IrCells to AnnData and vice-versa"""
 import itertools
 from anndata import AnnData
-from ..util import _doc_params, _is_true, _is_na2
+from ..util import _doc_params, _is_true, _is_na2, _is_true2, _is_false2
 from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
 from ._datastructures import AirrCell
 import pandas as pd
@@ -17,26 +17,23 @@ def _sanitize_anndata(adata: AnnData) -> None:
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
-    CATEGORICAL_COLS = (
-        "locus",
-        "productive",
-        "v_call",
-        "d_call",
-        "j_call",
-        "c_call",
-        "multi_chain",
-        "is_cell",
-        "high_confidence",
-    )
+    CATEGORICAL_COLS = ("locus", "v_call", "d_call", "j_call", "c_call")
+
+    # Pending updates to anndata to properly handle boolean columns.
+    # For now, let's turn them into a categorical with "True/False"
+    BOOLEAN_COLS = ("has_ir", "is_cell", "multi_chain", "high_confidence", "productive")
 
     # Sanitize has_ir column into categorical
     # This should always be a categorical with True / False
-    if "has_ir" in adata.obs.columns:
-        has_ir_mask = _is_true(adata.obs["has_ir"])
-        adata.obs["has_ir"] = pd.Categorical(
-            ["True" if x else "False" for x in has_ir_mask],
-            categories=["True", "False"],
-        )
+    for col in adata.obs.columns:
+        if col.endswith(BOOLEAN_COLS):
+            adata.obs[col] = pd.Categorical(
+                [
+                    "True" if _is_true2(x) else "False" if _is_false2(x) else "None"
+                    for x in adata.obs[col]
+                ],
+                categories=["True", "False", "None"],
+            )
 
     # Turn other columns into categorical
     for col in adata.obs.columns:

@@ -88,7 +88,7 @@ distance_result
     A dictionary containing
      * `distances`: A sparse, pairwise distance matrix between unique
        receptor configurations
-     * `cell_indices`: An array of arrays, containing the adata.obs_names
+     * `cell_indices`: A dict of arrays, containing the adata.obs_names
        (cell indices) for each row in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
@@ -496,7 +496,9 @@ def clonotype_network(
     graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
     # store size in graph to be accessed by layout algorithms
-    clonotype_size = np.array([idx.size for idx in clonotype_res["cell_indices"]])
+    clonotype_size = np.array(
+        [idx.size for idx in clonotype_res["cell_indices"].values()]
+    )
     graph.vs["size"] = clonotype_size
     components = np.array(graph.decompose("weak"))
     component_node_count = np.array([len(component.vs) for component in components])
@@ -575,7 +577,7 @@ def _graph_from_coordinates(
     dist_idx, obs_names = zip(
         *itertools.chain.from_iterable(
             zip(itertools.repeat(i), obs_names)
-            for i, obs_names in enumerate(clonotype_res["cell_indices"])
+            for i, obs_names in clonotype_res["cell_indices"].items()
         )
     )
     dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
