@@ -26,6 +26,10 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      - name: Install Ubuntu system dependencies
+        if: matrix.os == "ubuntu-latest"
+        run: |
+          sudo apt-get install libhdf5-serial-dev
       - name: Install macOS system dependencies
         if: matrix.os == 'macos-latest'
         run: |
@@ -35,7 +39,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        # TODO this is to workaround an issue with dandelion's skbio dependency
+        # TODO the separate numpy installation is to workaround an issue with dandelion's skbio dependency
         run: |
           pip install numpy
           pip install .[test,rpack,dandelion]
