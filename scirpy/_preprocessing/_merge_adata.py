@@ -32,7 +32,8 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     be discarded. Of `adata2` the function only retains information from `obs`.
 
     To simply add IR information onto an existing `AnnData` object with transcriptomics
-    data, see :func:`~scirpy.pp.merge_with_ir`.
+    data, see :func:`~scirpy.pp.merge_with_ir` (this function can do this, too, but
+    `merge_with_ir` is more efficient).
 
     Modifies `adata` inplace.
 
@@ -54,6 +55,8 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
             tmp_cell["multi_chain"] |= cell["multi_chain"]
             for tmp_chain in cell.chains:
                 tmp_cell.add_chain(tmp_chain)
+            # add cell-level attributes
+            tmp_cell.update(cell)
         except KeyError:
             cell_dict[cell.cell_id] = cell
 

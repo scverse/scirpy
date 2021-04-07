@@ -36,7 +36,7 @@ import scanpy as sc
         ),
     ],
 )
-def test_workflow(adata_path, upgrade_schema, obs_expected):
+def test_workflow(adata_path, upgrade_schema, obs_expected, tmp_path):
     if upgrade_schema:
         adata = sc.read_h5ad(adata_path)
         ir.io.upgrade_schema(adata)
@@ -54,8 +54,7 @@ def test_workflow(adata_path, upgrade_schema, obs_expected):
     ir.pl.clonotype_network(adata)
 
     # test that writing works (i.e. all scirpy fields can be serialized)
-    with tempfile.NamedTemporaryFile("w") as f:
-        adata.write_h5ad(f.name)
+    adata.write_h5ad(tmp_path / "adata.h5ad")
 
     # turn nans into consistent value (nan)
     _normalize_df_types(adata.obs)

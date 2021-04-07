@@ -31,10 +31,12 @@ def _sanitize_anndata(adata: AnnData) -> None:
 
     # Sanitize has_ir column into categorical
     # This should always be a categorical with True / False
-    has_ir_mask = _is_true(adata.obs["has_ir"])
-    adata.obs["has_ir"] = pd.Categorical(
-        ["True" if x else "False" for x in has_ir_mask], categories=["True", "False"]
-    )
+    if "has_ir" in adata.obs.columns:
+        has_ir_mask = _is_true(adata.obs["has_ir"])
+        adata.obs["has_ir"] = pd.Categorical(
+            ["True" if x else "False" for x in has_ir_mask],
+            categories=["True", "False"],
+        )
 
     # Turn other columns into categorical
     for col in adata.obs.columns:
@@ -72,7 +74,9 @@ def from_airr_cells(
     """
     ir_df = pd.DataFrame.from_records(
         (x.to_scirpy_record(include_fields=include_fields) for x in airr_cells)
-    ).set_index("cell_id")
+    )
+    if ir_df.shape[0] > 0:
+        ir_df.set_index("cell_id", inplace=True)
     adata = AnnData(obs=ir_df, X=np.empty([ir_df.shape[0], 0]))
     _sanitize_anndata(adata)
     adata.uns["scirpy_version"] = __version__
@@ -107,7 +111,8 @@ def to_airr_cells(adata: AnnData) -> List[AirrCell]:
 
         # add cell-level attributes
         for col in other_cols:
-            # we want to use the index as cell id, and extra chains get added separately
+            # skip these columns: we want to use the index as cell id,
+            # extra_chains and has_ir get added separately
             if col in ("cell_id", "extra_chains", "has_ir"):
                 continue
             tmp_ir_cell[col] = row[col]
@@ -126,7 +131,10 @@ def to_airr_cells(adata: AnnData) -> List[AirrCell]:
             if not all([_is_na2(x) for x in tmp_chain.values()]):
                 tmp_ir_cell.add_chain(tmp_chain)
 
-        tmp_ir_cell.add_serialized_chains(row["extra_chains"])
+        try:
+            tmp_ir_cell.add_serialized_chains(row["extra_chains"])
+        except KeyError:
+            pass
         cells.append(tmp_ir_cell)
 
     return cells

@@ -48,7 +48,38 @@ def test_merge_airr_chains_concat():
     )
 
 
+def test_merge_airr_chains_no_ir():
+    """Test that merging an IR anndata with a non-IR anndata
+    also works with `merge_airr_chains`."""
+    cell_ids_anndata = np.array(
+        [
+            "AAACCTGAGATAGCAT-1",
+            "AAACCTGAGTACGCCC-1",
+            "AAACCTGCATAGAAAC-1",
+            "AAACCTGGTCCGTTAA-1",
+            "AAACTTGGTCCGTTAA-1",
+            "cell_without_tcr",
+        ]
+    )
+    # X with 6 cells and 2 genes
+    adata = AnnData(X=np.ones((6, 2)))
+    adata.obs_names = cell_ids_anndata
+    adata.obs["foo"] = "bar"
+    adata_ir = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
+    adata_ir.obs["foo_ir"] = "bar_ir"
+
+    merge_airr_chains(adata, adata_ir)
+
+    npt.assert_array_equal(adata.obs.index, cell_ids_anndata)
+    assert np.all(np.isin(adata_ir.obs.columns, adata.obs.columns))
+    assert "foo" in adata.obs.columns
+    assert "foo_ir" in adata.obs.columns
+    assert list(adata.obs_names) == list(cell_ids_anndata)
+
+
 def test_merge_adata():
+    """Test that merging of an IR anndata with a non-IR anndata works
+    with `merge_with_ir`"""
     cell_ids_anndata = np.array(
         [
             "AAACCTGAGATAGCAT-1",

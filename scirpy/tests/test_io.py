@@ -21,6 +21,7 @@ from . import TESTDATA
 from .util import _normalize_df_types
 from functools import lru_cache
 import scanpy as sc
+import pandas as pd
 
 
 @lru_cache(None)
@@ -158,6 +159,29 @@ def test_ir_objs_roundtrip_conversion(anndata_from_10x_sample):
     _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(
         anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
+    )
+
+
+@pytest.mark.parametrize(
+    "anndata",
+    [
+        sc.AnnData(),
+        sc.AnnData(obs=pd.DataFrame().assign(a=["a", "b", "c"], x=["x", "y", "z"])),
+    ],
+)
+def test_ir_objs_roundtrip_conversion_no_ir(anndata):
+    """Check that an anndata object that does not contain IR information
+    can still be converted to ir_objs and back"""
+    ir_objs = to_airr_cells(anndata)
+    anndata2 = from_airr_cells(ir_objs)
+    _normalize_df_types(anndata.obs)
+    # these extra columns are expected.
+    obs2 = anndata2.obs.drop(
+        columns=["extra_chains", "has_ir", "multi_chain"], errors="ignore"
+    )
+    _normalize_df_types(obs2)
+    pdt.assert_frame_equal(
+        anndata.obs, obs2, check_dtype=False, check_categorical=False, check_names=False
     )
 
 
