@@ -351,6 +351,10 @@ Now, we can convert the list of :class:`~scirpy.io.AirrCell` objects using :func
 <!-- #endraw -->
 
 ```python
+adata_tcr.obs
+```
+
+```python
 adata_tcr = ir.io.from_airr_cells(tcr_cells)
 ```
 

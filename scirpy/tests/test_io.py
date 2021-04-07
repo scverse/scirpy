@@ -184,6 +184,7 @@ def test_airr_roundtrip_conversion(anndata_from_10x_sample, tmp_path):
     )
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "anndata_from_10x_sample",
     [

@@ -15,14 +15,14 @@ from collections.abc import MutableMapping
 
 
 class AirrCell(MutableMapping):
-    """Data structure for a Cell with immune receptors.
+    """Data structure for a Cell with immune receptors. Represents one row of `adata.obs`.
 
     This data structure is compliant with the AIRR rearrangement schema v1.0.
-    An AirrCell holds multiple chains (i.e. rows from the rearrangement TSV)
+    An AirrCell can hold multiple chains (i.e. rows from the rearrangement TSV)
     which belong to the same cell. A chain is represented as a dictionary, where
     the keys are AIRR-rearrangement fields.
 
-    The AirrCell can, additionally hold cell-level attributes which can be set
+    The AirrCell can, additionally, hold cell-level attributes which can be set
     in a dict-like fashion. Keys marked as "cell-level" via `cell_attribute_fields`
     will be automatically transferred to the cell-level when added through a chain.
     They are required to have the same value for all chains.
@@ -42,10 +42,10 @@ class AirrCell(MutableMapping):
         A logger to write messages to. If not specified, use scanpy's default logger.
     """
 
-    #: Chains with the :term:`V-J<V(D)J>` junction
+    #: Identifiers of loci with a :term:`V-J<V(D)J>` junction
     VJ_LOCI = ("TRA", "TRG", "IGK", "IGL")
 
-    #: Chains with the :term:`V-D-J<V(D)J>` junction
+    #: Identifiers of loci with a :term:`V-D-J<V(D)J>` junction
     VDJ_LOCI = ("TRB", "TRD", "IGH")
 
     #: Valid chains are IMGT locus names
@@ -77,10 +77,12 @@ class AirrCell(MutableMapping):
 
     @property
     def cell_id(self) -> str:
+        """Unique identifier (barcode) of the cell. """
         return self["cell_id"]
 
     @property
     def chains(self) -> List[dict]:
+        """List of chain-dictionaries added to the cell. """
         return self._chains
 
     @property
