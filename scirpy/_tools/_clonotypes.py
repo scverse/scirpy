@@ -306,6 +306,7 @@ def define_clonotype_clusters(
         adata.obs[key_added] = clonotype_cluster_series
         adata.obs[key_added + "_size"] = clonotype_cluster_size_series
         adata.uns[key_added] = clonotype_distance_res
+        logging.info(f'Stored clonal assignments in `adata.obs["{key_added}"]`.')
     else:
         return (
             clonotype_cluster_series,

@@ -1,7 +1,6 @@
 from multiprocessing import cpu_count
-from typing import Union, Sequence, Tuple, Dict
+from typing import Union, Sequence
 from anndata import AnnData
-from tqdm.contrib import tmap
 from scanpy import logging
 from .._compat import Literal
 import numpy as np
@@ -219,7 +218,10 @@ class ClonotypeNeighbors:
         # only use multiprocessing for sufficiently large datasets
         # for small datasets the overhead is too large for a benefit
         if self.n_jobs == 1 or n_clonotypes <= 2 * self.chunksize:
-            dist_rows = tqdm(self._dist_for_clonotype(i) for i in range(n_clonotypes))
+            dist_rows = tqdm(
+                (self._dist_for_clonotype(i) for i in range(n_clonotypes)),
+                total=n_clonotypes,
+            )
         else:
             logging.info(
                 "NB: Computation happens in chunks. The progressbar only advances "
