@@ -77,7 +77,8 @@ def test_is_false():
     warnings.filterwarnings("error")
     assert _is_false(False)
     assert _is_false(0)
-    assert _is_false("")
+    # assert _is_false("") -> I redelacred this as nan, as read_airr results in
+    # null fields being "".
     assert _is_false("False")
     assert _is_false("false")
     assert not _is_false(42)
@@ -201,7 +202,9 @@ def test_layout_components(arrange_boxes, component_layout):
 
 
 def test_translate_dna_to_protein(adata_tra):
-    for nt, aa in zip(adata_tra.obs["IR_VJ_1_cdr3_nt"], adata_tra.obs["IR_VJ_1_cdr3"]):
+    for nt, aa in zip(
+        adata_tra.obs["IR_VJ_1_junction"], adata_tra.obs["IR_VJ_1_junction_aa"]
+    ):
         assert _translate_dna_to_protein(nt) == aa
 
 

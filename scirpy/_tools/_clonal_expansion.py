@@ -4,6 +4,7 @@ import numpy as np
 from typing import Union, List
 from .._compat import Literal
 import pandas as pd
+from ..io._util import _check_upgrade_schema
 
 
 def _clip_and_count(
@@ -51,10 +52,11 @@ def _clip_and_count(
         return clipped_count
 
 
+@_check_upgrade_schema()
 def clonal_expansion(
     adata: AnnData,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     expanded_in: Union[str, None] = None,
     clip_at: int = 3,
     key_added: str = "clonal_expansion",
@@ -99,12 +101,13 @@ def clonal_expansion(
     )
 
 
+@_check_upgrade_schema()
 def summarize_clonal_expansion(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
-    summarize_by: Literal["cell", "clonotype"] = "cell",
+    target_col: str = "clone_id",
+    summarize_by: Literal["cell", "clone_id"] = "cell",
     normalize: Union[bool] = False,
     **kwargs,
 ) -> pd.DataFrame:
@@ -123,7 +126,7 @@ def summarize_clonal_expansion(
         column in obs which holds the clonotype information
     summarize_by
         Can be either `cell` to count cells belonging to a clonotype (the default),
-        or "clonotype" to count clonotypes. The former leads to a over-representation
+        or "clone_id" to count clonotypes. The former leads to a over-representation
         of expanded clonotypes but better represents the fraction of expanded cells.
     normalize
         If `False`, plot absolute cell counts. If `True`, scale each group to 1.
@@ -134,7 +137,7 @@ def summarize_clonal_expansion(
     -------
     A DataFrame with one row for each unique value in `groupby`.
     """
-    if summarize_by not in ["clonotype", "cell"]:
+    if summarize_by not in ["clone_id", "cell"]:
         raise ValueError("Invalue value for `summarize_by`. ")
 
     expansion = clonal_expansion(adata, target_col=target_col, inplace=False, **kwargs)
@@ -148,7 +151,7 @@ def summarize_clonal_expansion(
     # filter NA values
     obs = obs.loc[~_is_na(obs[target_col]), :]
 
-    if summarize_by == "clonotype":
+    if summarize_by == "clone_id":
         obs.drop_duplicates(inplace=True)
 
     # add normalization vector

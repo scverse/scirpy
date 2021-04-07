@@ -20,15 +20,17 @@ import pandas as pd
 import tarfile
 import anndata
 import warnings
-from numba import NumbaPerformanceWarning
 
-# ignore numba performance warnings
-warnings.filterwarnings("ignore", category=NumbaPerformanceWarning)
+# from numba import NumbaPerformanceWarning
+
+# # ignore numba performance warnings
+# warnings.filterwarnings("ignore", category=NumbaPerformanceWarning)
 
 # suppress "storing XXX as categorical" warnings.
 anndata.logging.anndata_logger.setLevel("ERROR")
 
 sc.set_figure_params(figsize=(4, 4))
+sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hints (3)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -39,7 +41,7 @@ Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
 
 In this notebook, we demonstrate how single-cell :term:`IR`-data can be imported into
 an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
-AnnData and how Scirpy makes use of it, check out the :ref:`data-structure` section.
+AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data-structure>` section.
 
 The example data used in this notebook are available from the
 `Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
@@ -95,6 +97,7 @@ Moreover, we support importing data in the community-standard
    read_tracer
    read_bracer
    read_airr
+   from_dandelion
 
 Read 10x data
 ^^^^^^^^^^^^^
@@ -176,6 +179,10 @@ expr_chung = pd.read_csv("example_data/chung-park-2017/counts.tsv", sep="\t")
 expr_chung = expr_chung.set_index("Geneid").T
 adata = sc.AnnData(expr_chung)
 adata.shape
+```
+
+```python
+adata_tcr.obs
 ```
 
 ```python
@@ -264,9 +271,8 @@ an :class:`~anndata.AnnData` object.
 .. autosummary::
    :toctree: ../generated
 
-   IrCell
-   IrChain
-   from_ir_objs
+   AirrCell
+   from_airr_cells
 
 If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`_
 for a `read_XXX` function.
@@ -297,9 +303,11 @@ tcr_table
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Our task is now to dissect the table into :class:`~scirpy.io.IrCell` and :class:`~scirpy.io.IrChain` objects.
-Each :class:`~scirpy.io.IrCell` can have an arbitrary number of chains.
-When converting the :class:`~scirpy.io.IrCell` objects into an :class:`~anndata.AnnData` object,
+Our task is now to dissect the table into :class:`~scirpy.io.AirrCell` objects.
+Each :class:`~scirpy.io.AirrCell` can have an arbitrary number of chains. A chain is simply represented as a Python
+dictionary following the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
+
+When converting the :class:`~scirpy.io.AirrCell` objects into an :class:`~anndata.AnnData` object,
 scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
 this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`receptor-model`.
 <!-- #endraw -->
@@ -307,25 +315,31 @@ this number as :term:`multichain cells <Multichain-cell>`. For more information,
 ```python
 tcr_cells = []
 for idx, row in tcr_table.iterrows():
-    cell = ir.io.IrCell(cell_id=row["cell_id"])
-    alpha_chain = ir.io.IrChain(
-        locus="TRA",
-        cdr3=row["cdr3_alpha"],
-        cdr3_nt=row["cdr3_nt_alpha"],
-        expr=row["count_alpha"],
-        v_gene=row["v_alpha"],
-        j_gene=row["j_alpha"],
-        is_productive=row["productive_alpha"],
+    cell = ir.io.AirrCell(cell_id=row["cell_id"])
+    alpha_chain = ir.io.AirrCell.empty_chain_dict()
+    beta_chain = ir.io.AirrCell.empty_chain_dict()
+    alpha_chain.update(
+        {
+            "locus": "TRA",
+            "junction_aa": row["cdr3_alpha"],
+            "junction": row["cdr3_nt_alpha"],
+            "consensus_count": row["count_alpha"],
+            "v_call": row["v_alpha"],
+            "j_call": row["j_alpha"],
+            "productive": row["productive_alpha"],
+        }
     )
-    beta_chain = ir.io.IrChain(
-        locus="TRB",
-        cdr3=row["cdr3_beta"],
-        cdr3_nt=row["cdr3_nt_beta"],
-        expr=row["count_beta"],
-        v_gene=row["v_beta"],
-        d_gene=row["d_beta"],
-        j_gene=row["j_beta"],
-        is_productive=row["productive_beta"],
+    beta_chain.update(
+        {
+            "locus": "TRB",
+            "junction_aa": row["cdr3_beta"],
+            "junction": row["cdr3_nt_beta"],
+            "consensus_count": row["count_beta"],
+            "v_call": row["v_beta"],
+            "d_call": row["d_beta"],
+            "j_call": row["j_beta"],
+            "productive": row["productive_beta"],
+        }
     )
     cell.add_chain(alpha_chain)
     cell.add_chain(beta_chain)
@@ -333,11 +347,15 @@ for idx, row in tcr_table.iterrows():
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Now, we can convert the list of :class:`~scirpy.io.IrCell` objects using :func:`scirpy.io.from_ir_objs`.
+Now, we can convert the list of :class:`~scirpy.io.AirrCell` objects using :func:`scirpy.io.from_airr_cells`.
 <!-- #endraw -->
 
 ```python
-adata_tcr = ir.io.from_ir_objs(tcr_cells)
+adata_tcr.obs
+```
+
+```python
+adata_tcr = ir.io.from_airr_cells(tcr_cells)
 ```
 
 ```python
@@ -362,7 +380,7 @@ Combining multiple samples
 
 It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
-in this document. Then, we combine them using :meth:`anndata.AnnData.concatenate`.
+in this document. Then, we combine them using :func:`anndata.concat`.
 
 Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
 <!-- #endraw -->
@@ -394,7 +412,7 @@ for sample, sample_meta in samples.items():
 
 ```python
 # Merge anndata objects
-adata = adatas[0].concatenate(adatas[1:])
+adata = anndata.concat(adatas)
 ```
 
 The data is now integrated in a single object.

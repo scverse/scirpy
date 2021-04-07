@@ -1,7 +1,6 @@
 from multiprocessing import cpu_count
-from typing import Union, Sequence, Tuple, Dict
+from typing import Union, Sequence
 from anndata import AnnData
-from tqdm.contrib import tmap
 from scanpy import logging
 from .._compat import Literal
 import numpy as np
@@ -54,7 +53,7 @@ class ClonotypeNeighbors:
         for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
             self._cdr3_cols.append(f"IR_{arm}_{i}_{self.sequence_key}")
             if same_v_gene:
-                self._v_gene_cols.append(f"IR_{arm}_{i}_v_gene")
+                self._v_gene_cols.append(f"IR_{arm}_{i}_v_call")
 
         self._prepare(adata)
 
@@ -98,16 +97,18 @@ class ClonotypeNeighbors:
 
         # groupby.indices gets us a (index -> array of row indices) mapping.
         # It doesn't necessarily have the same order as `clonotypes`.
-        self.cell_indices = [
-            obs_filtered.index[
+        # This needs to be a dict of arrays, otherwiswe anndata
+        # can't save it to h5ad.
+        self.cell_indices = {
+            i: obs_filtered.index[
                 clonotype_groupby.indices.get(
                     # indices is not a tuple if it's just a single column.
                     ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
                     [],
                 )
             ].values
-            for ct_tuple in clonotypes.itertuples(index=False, name=None)
-        ]
+            for i, ct_tuple in enumerate(clonotypes.itertuples(index=False, name=None))
+        }
 
         # make 'within group' a single column of tuples (-> only one distance
         # matrix instead of one per column.)
@@ -177,8 +178,8 @@ class ClonotypeNeighbors:
             )
             if self.same_v_gene:
                 self.neighbor_finder.add_lookup_table(
-                    f"{arm}_{i}_v_gene",
-                    f"IR_{arm}_{i}_v_gene",
+                    f"{arm}_{i}_v_call",
+                    f"IR_{arm}_{i}_v_call",
                     "v_gene",
                     dist_type="boolean",
                 )
@@ -214,7 +215,10 @@ class ClonotypeNeighbors:
         # only use multiprocessing for sufficiently large datasets
         # for small datasets the overhead is too large for a benefit
         if self.n_jobs == 1 or n_clonotypes <= 2 * self.chunksize:
-            dist_rows = tqdm(self._dist_for_clonotype(i) for i in range(n_clonotypes))
+            dist_rows = tqdm(
+                (self._dist_for_clonotype(i) for i in range(n_clonotypes)),
+                total=n_clonotypes,
+            )
         else:
             logging.info(
                 "NB: Computation happens in chunks. The progressbar only advances "
@@ -263,8 +267,8 @@ class ClonotypeNeighbors:
                 if self.same_v_gene:
                     lookup_v[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
                         ct_id,
-                        f"{tmp_arm}_{c1}_v_gene",
-                        f"{tmp_arm}_{c2}_v_gene",
+                        f"{tmp_arm}_{c1}_v_call",
+                        f"{tmp_arm}_{c2}_v_call",
                     )
 
         # need to loop through all coordinates that have at least one distance.

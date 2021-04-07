@@ -7,8 +7,10 @@ from typing import Union
 from .._compat import Literal
 from .. import tl
 from .base import volcano
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,
@@ -16,7 +18,7 @@ def clonotype_imbalance(
     case_label: str,
     *,
     control_label: Union[None, str] = None,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     additional_hue: Union[None, str, bool] = None,
     top_n: int = 10,
     fraction: Union[None, str, bool] = None,

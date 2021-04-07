@@ -75,6 +75,7 @@ intersphinx_mapping = dict(
     seaborn=("https://seaborn.pydata.org/", None),
     sklearn=("https://scikit-learn.org/stable/", None),
     networkx=("https://networkx.github.io/documentation/networkx-1.10/", None),
+    dandelion=("https://sc-dandelion.readthedocs.io/en/latest/", None),
 )
 
 
@@ -119,8 +120,7 @@ def setup(app):
 # See https://github.com/agronholm/sphinx-autodoc-typehints/issues/38 for more details.
 qualname_overrides = {
     "scipy.sparse.coo.coo_matrix": "scipy.sparse.coo_matrix",
-    "scirpy.io._datastructures.IrCell": "scirpy.io.IrCell",
-    "scirpy.io._datastructures.IrChain": "scirpy.io.IrChain",
+    "scirpy.io._datastructures.AirrCell": "scirpy.io.AirrCell",
     "pandas.core.arrays.categorical.Categorical": "pandas.Categorical",
     "pandas.core.series.Series": "pandas.Series",
 }
@@ -129,4 +129,15 @@ nitpick_ignore = [
     ("py:class", "igraph.Graph"),
     ("py:class", "igraph.Layout"),
     ("py:class", "igraph.layout.Layout"),
+    # the following entries are because the `MutableMapping` base class does not
+    # use type hints.
+    ("py:class", "None.  Remove all items from D."),
+    ("py:class", "D[k] if k in D, else d.  d defaults to None."),
+    ("py:class", "a set-like object providing a view on D's items"),
+    ("py:class", "a set-like object providing a view on D's keys"),
+    ("py:class", "v, remove specified key and return the corresponding value."),
+    ("py:class", "(k, v), remove and return some (key, value) pair"),
+    ("py:class", "D.get(k,d), also set D[k]=d if k not in D"),
+    ("py:class", "None.  Update D from mapping/iterable E and F."),
+    ("py:class", "an object providing a view on D's values"),
 ]

@@ -78,11 +78,11 @@ def adata_cdr3():
         ],
         columns=[
             "cell_id",
-            "IR_VJ_1_cdr3",
-            "IR_VJ_2_cdr3",
-            "IR_VDJ_1_cdr3",
-            "IR_VDJ_2_cdr3",
-            "IR_VJ_1_cdr3_nt",
+            "IR_VJ_1_junction_aa",
+            "IR_VJ_2_junction_aa",
+            "IR_VDJ_1_junction_aa",
+            "IR_VDJ_2_junction_aa",
+            "IR_VJ_1_junction",
             "IR_VJ_1_locus",
             "IR_VJ_2_locus",
             "IR_VDJ_1_locus",
@@ -92,6 +92,7 @@ def adata_cdr3():
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     adata._sanitize()
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -105,14 +106,15 @@ def adata_cdr3_2():
         ],
         columns=[
             "cell_id",
-            "IR_VJ_1_cdr3",
-            "IR_VJ_2_cdr3",
-            "IR_VDJ_1_cdr3",
-            "IR_VDJ_2_cdr3",
+            "IR_VJ_1_junction_aa",
+            "IR_VJ_2_junction_aa",
+            "IR_VDJ_1_junction_aa",
+            "IR_VDJ_2_junction_aa",
         ],
     ).set_index("cell_id")
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -128,10 +130,10 @@ def adata_define_clonotypes():
         ],
         columns=[
             "cell_id",
-            "IR_VJ_1_cdr3_nt",
-            "IR_VJ_2_cdr3_nt",
-            "IR_VDJ_1_cdr3_nt",
-            "IR_VDJ_2_cdr3_nt",
+            "IR_VJ_1_junction",
+            "IR_VJ_2_junction",
+            "IR_VDJ_1_junction",
+            "IR_VDJ_2_junction",
             "IR_VJ_1_locus",
             "IR_VJ_2_locus",
             "IR_VDJ_1_locus",
@@ -140,6 +142,7 @@ def adata_define_clonotypes():
     ).set_index("cell_id")
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -162,10 +165,10 @@ def adata_define_clonotype_clusters():
             ],
             columns=[
                 "cell_id",
-                "IR_VJ_1_cdr3",
-                "IR_VJ_2_cdr3",
-                "IR_VDJ_1_cdr3",
-                "IR_VDJ_2_cdr3",
+                "IR_VJ_1_junction_aa",
+                "IR_VJ_2_junction_aa",
+                "IR_VDJ_1_junction_aa",
+                "IR_VDJ_2_junction_aa",
                 "IR_VJ_1_locus",
                 "IR_VJ_2_locus",
                 "IR_VDJ_1_locus",
@@ -190,10 +193,10 @@ def adata_define_clonotype_clusters():
                 ],
                 columns=[
                     "cell_id",
-                    "IR_VJ_1_v_gene",
-                    "IR_VJ_2_v_gene",
-                    "IR_VDJ_1_v_gene",
-                    "IR_VDJ_2_v_gene",
+                    "IR_VJ_1_v_call",
+                    "IR_VJ_2_v_call",
+                    "IR_VDJ_1_v_call",
+                    "IR_VDJ_2_v_call",
                     "receptor_type",
                     "has_ir",
                 ],
@@ -201,6 +204,7 @@ def adata_define_clonotype_clusters():
         )
     )
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -212,6 +216,7 @@ def adata_conn(adata_define_clonotype_clusters):
     ir.tl.define_clonotype_clusters(
         adata, sequence="aa", metric="alignment", receptor_arms="any", dual_ir="any"
     )
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -224,20 +229,21 @@ def adata_define_clonotype_clusters_singletons():
         obs=pd.DataFrame()
         .assign(
             cell_id=["cell1", "cell2", "cell3", "cell4"],
-            IR_VJ_1_cdr3=["AAA", "BBB", "CCC", "DDD"],
-            IR_VDJ_1_cdr3=["AAA", "BBB", "CCC", "DDD"],
-            IR_VJ_2_cdr3=["AAA", "BBB", "CCC", "DDD"],
-            IR_VDJ_2_cdr3=["AAA", "BBB", "CCC", "DDD"],
-            IR_VJ_1_v_gene=["A", "B", "C", "D"],
-            IR_VDJ_1_v_gene=["A", "B", "C", "D"],
-            IR_VJ_2_v_gene=["A", "B", "C", "D"],
-            IR_VDJ_2_v_gene=["A", "B", "C", "D"],
+            IR_VJ_1_junction_aa=["AAA", "BBB", "CCC", "DDD"],
+            IR_VDJ_1_junction_aa=["AAA", "BBB", "CCC", "DDD"],
+            IR_VJ_2_junction_aa=["AAA", "BBB", "CCC", "DDD"],
+            IR_VDJ_2_junction_aa=["AAA", "BBB", "CCC", "DDD"],
+            IR_VJ_1_v_call=["A", "B", "C", "D"],
+            IR_VDJ_1_v_call=["A", "B", "C", "D"],
+            IR_VJ_2_v_call=["A", "B", "C", "D"],
+            IR_VDJ_2_v_call=["A", "B", "C", "D"],
             receptor_type=["TCR", "TCR", "TCR", "TCR"],
             has_ir=["True", "True", "True", "True"],
         )
         .set_index("cell_id")
     )
     ir.pp.ir_dist(adata, metric="identity", sequence="aa")
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -262,6 +268,7 @@ def adata_clonotype_network(adata_conn):
     )
     adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
     ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -269,134 +276,135 @@ def adata_clonotype_network(adata_conn):
 def adata_tra():
     obs = {
         "AAGGTTCCACCCAGTG-1": {
-            "IR_VJ_1_cdr3_len": 15.0,
+            "IR_VJ_1_junction_aa_length": 15.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CALSDPNTNAGKSTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
+            "IR_VJ_1_junction_aa": "CALSDPNTNAGKSTF",
+            "IR_VJ_1_junction": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
             "sample": "3",
-            "clonotype": "clonotype_458",
+            "clone_id": "clonotype_458",
             "chain_pairing": "Extra alpha",
         },
         "ACTATCTAGGGCTTCC-1": {
-            "IR_VJ_1_cdr3_len": 14.0,
+            "IR_VJ_1_junction_aa_length": 14.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAVDGGTSYGKLTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCCGTGGACGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "IR_VJ_1_junction_aa": "CAVDGGTSYGKLTF",
+            "IR_VJ_1_junction": "TGTGCCGTGGACGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "1",
-            "clonotype": "clonotype_739",
+            "clone_id": "clonotype_739",
             "chain_pairing": "Extra alpha",
         },
         "CAGTAACAGGCATGTG-1": {
-            "IR_VJ_1_cdr3_len": 12.0,
+            "IR_VJ_1_junction_aa_length": 12.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAVRDSNYQLIW",
-            "IR_VJ_1_cdr3_nt": "TGTGCTGTGAGAGATAGCAACTATCAGTTAATCTGG",
+            "IR_VJ_1_junction_aa": "CAVRDSNYQLIW",
+            "IR_VJ_1_junction": "TGTGCTGTGAGAGATAGCAACTATCAGTTAATCTGG",
             "sample": "1",
-            "clonotype": "clonotype_986",
+            "clone_id": "clonotype_986",
             "chain_pairing": "Two full chains",
         },
         "CCTTACGGTCATCCCT-1": {
-            "IR_VJ_1_cdr3_len": 12.0,
+            "IR_VJ_1_junction_aa_length": 12.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAVRDSNYQLIW",
-            "IR_VJ_1_cdr3_nt": "TGTGCTGTGAGGGATAGCAACTATCAGTTAATCTGG",
+            "IR_VJ_1_junction_aa": "CAVRDSNYQLIW",
+            "IR_VJ_1_junction": "TGTGCTGTGAGGGATAGCAACTATCAGTTAATCTGG",
             "sample": "1",
-            "clonotype": "clonotype_987",
+            "clone_id": "clonotype_987",
             "chain_pairing": "Single pair",
         },
         "CGTCCATTCATAACCG-1": {
-            "IR_VJ_1_cdr3_len": 17.0,
+            "IR_VJ_1_junction_aa_length": 17.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAASRNAGGTSYGKLTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCAGCAAGTCGCAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "IR_VJ_1_junction_aa": "CAASRNAGGTSYGKLTF",
+            "IR_VJ_1_junction": "TGTGCAGCAAGTCGCAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "5",
-            "clonotype": "clonotype_158",
+            "clone_id": "clonotype_158",
             "chain_pairing": "Single pair",
         },
         "CTTAGGAAGGGCATGT-1": {
-            "IR_VJ_1_cdr3_len": 15.0,
+            "IR_VJ_1_junction_aa_length": 15.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CALSDPNTNAGKSTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
+            "IR_VJ_1_junction_aa": "CALSDPNTNAGKSTF",
+            "IR_VJ_1_junction": "TGTGCTCTGAGTGACCCTAACACCAATGCAGGCAAATCAACCTTT",
             "sample": "1",
-            "clonotype": "clonotype_459",
+            "clone_id": "clonotype_459",
             "chain_pairing": "Single pair",
         },
         "GCAAACTGTTGATTGC-1": {
-            "IR_VJ_1_cdr3_len": 14.0,
+            "IR_VJ_1_junction_aa_length": 14.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAVDGGTSYGKLTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCCGTGGATGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "IR_VJ_1_junction_aa": "CAVDGGTSYGKLTF",
+            "IR_VJ_1_junction": "TGTGCCGTGGATGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "1",
-            "clonotype": "clonotype_738",
+            "clone_id": "clonotype_738",
             "chain_pairing": "Single pair",
         },
         "GCTCCTACAAATTGCC-1": {
-            "IR_VJ_1_cdr3_len": 15.0,
+            "IR_VJ_1_junction_aa_length": 15.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CALSDPNTNAGKSTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCTCTGAGTGATCCCAACACCAATGCAGGCAAATCAACCTTT",
+            "IR_VJ_1_junction_aa": "CALSDPNTNAGKSTF",
+            "IR_VJ_1_junction": "TGTGCTCTGAGTGATCCCAACACCAATGCAGGCAAATCAACCTTT",
             "sample": "3",
-            "clonotype": "clonotype_460",
+            "clone_id": "clonotype_460",
             "chain_pairing": "Two full chains",
         },
         "GGAATAATCCGATATG-1": {
-            "IR_VJ_1_cdr3_len": 17.0,
+            "IR_VJ_1_junction_aa_length": 17.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAASRNAGGTSYGKLTF",
-            "IR_VJ_1_cdr3_nt": "TGTGCAGCAAGTAGGAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
+            "IR_VJ_1_junction_aa": "CAASRNAGGTSYGKLTF",
+            "IR_VJ_1_junction": "TGTGCAGCAAGTAGGAATGCTGGTGGTACTAGCTATGGAAAGCTGACATTT",
             "sample": "5",
-            "clonotype": "clonotype_157",
+            "clone_id": "clonotype_157",
             "chain_pairing": "Single pair",
         },
         "AAACCTGAGATAGCAT-1": {
-            "IR_VJ_1_cdr3_len": 13.0,
+            "IR_VJ_1_junction_aa_length": 13.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAGGGSGTYKYIF",
-            "IR_VJ_1_cdr3_nt": "TGTGCAGGGGGGGGCTCAGGAACCTACAAATACATCTTT",
+            "IR_VJ_1_junction_aa": "CAGGGSGTYKYIF",
+            "IR_VJ_1_junction": "TGTGCAGGGGGGGGCTCAGGAACCTACAAATACATCTTT",
             "sample": "3",
-            "clonotype": "clonotype_330",
+            "clone_id": "clonotype_330",
             "chain_pairing": "Single pair",
         },
         "AAACCTGAGTACGCCC-1": {
-            "IR_VJ_1_cdr3_len": 14.0,
+            "IR_VJ_1_junction_aa_length": 14.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAMRVGGSQGNLIF",
-            "IR_VJ_1_cdr3_nt": "TGTGCAATGAGGGTCGGAGGAAGCCAAGGAAATCTCATCTTT",
+            "IR_VJ_1_junction_aa": "CAMRVGGSQGNLIF",
+            "IR_VJ_1_junction": "TGTGCAATGAGGGTCGGAGGAAGCCAAGGAAATCTCATCTTT",
             "sample": "5",
-            "clonotype": "clonotype_592",
+            "clone_id": "clonotype_592",
             "chain_pairing": "Two full chains",
         },
         "AAACCTGCATAGAAAC-1": {
-            "IR_VJ_1_cdr3_len": 15.0,
+            "IR_VJ_1_junction_aa_length": 15.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CAFMKPFTAGNQFYF",
-            "IR_VJ_1_cdr3_nt": "TGTGCTTTCATGAAGCCTTTTACCGCCGGTAACCAGTTCTATTTT",
+            "IR_VJ_1_junction_aa": "CAFMKPFTAGNQFYF",
+            "IR_VJ_1_junction": "TGTGCTTTCATGAAGCCTTTTACCGCCGGTAACCAGTTCTATTTT",
             "sample": "5",
-            "clonotype": "clonotype_284",
+            "clone_id": "clonotype_284",
             "chain_pairing": "Extra alpha",
         },
         "AAACCTGGTCCGTTAA-1": {
-            "IR_VJ_1_cdr3_len": 12.0,
+            "IR_VJ_1_junction_aa_length": 12.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CALNTGGFKTIF",
-            "IR_VJ_1_cdr3_nt": "TGTGCTCTCAATACTGGAGGCTTCAAAACTATCTTT",
+            "IR_VJ_1_junction_aa": "CALNTGGFKTIF",
+            "IR_VJ_1_junction": "TGTGCTCTCAATACTGGAGGCTTCAAAACTATCTTT",
             "sample": "3",
-            "clonotype": "clonotype_425",
+            "clone_id": "clonotype_425",
             "chain_pairing": "Extra alpha",
         },
         "AAACCTGGTTTGTGTG-1": {
-            "IR_VJ_1_cdr3_len": 13.0,
+            "IR_VJ_1_junction_aa_length": 13.0,
             "IR_VJ_1_locus": "TRA",
-            "IR_VJ_1_cdr3": "CALRGGRDDKIIF",
-            "IR_VJ_1_cdr3_nt": "TGTGCTCTGAGAGGGGGTAGAGATGACAAGATCATCTTT",
+            "IR_VJ_1_junction_aa": "CALRGGRDDKIIF",
+            "IR_VJ_1_junction": "TGTGCTCTGAGAGGGGGTAGAGATGACAAGATCATCTTT",
             "sample": "3",
-            "clonotype": "clonotype_430",
+            "clone_id": "clonotype_430",
             "chain_pairing": "Single pair",
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -404,151 +412,151 @@ def adata_tra():
 def adata_vdj():
     obs = {
         "LT1_ACGGCCATCCGAGCCA-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ42",
-            "IR_VJ_1_v_gene": "TRAV26-2",
-            "IR_VDJ_1_v_gene": "TRBV7-2",
-            "IR_VDJ_1_d_gene": "TRBD1",
-            "IR_VDJ_1_j_gene": "TRBJ2-5",
+            "IR_VJ_1_j_call": "TRAJ42",
+            "IR_VJ_1_v_call": "TRAV26-2",
+            "IR_VDJ_1_v_call": "TRBV7-2",
+            "IR_VDJ_1_d_call": "TRBD1",
+            "IR_VDJ_1_j_call": "TRBJ2-5",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_CGCTTCACAAGGTGTG-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ45",
-            "IR_VJ_1_v_gene": "None",
-            "IR_VDJ_1_v_gene": "None",
-            "IR_VDJ_1_d_gene": "None",
-            "IR_VDJ_1_j_gene": "TRBJ2-3",
+            "IR_VJ_1_j_call": "TRAJ45",
+            "IR_VJ_1_v_call": "None",
+            "IR_VDJ_1_v_call": "None",
+            "IR_VDJ_1_d_call": "None",
+            "IR_VDJ_1_j_call": "TRBJ2-3",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_AGGGAGTTCCCAAGAT-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ29",
-            "IR_VJ_1_v_gene": "TRAV12-1",
-            "IR_VDJ_1_v_gene": "TRBV20-1",
-            "IR_VDJ_1_d_gene": "TRBD2",
-            "IR_VDJ_1_j_gene": "TRBJ1-1",
+            "IR_VJ_1_j_call": "TRAJ29",
+            "IR_VJ_1_v_call": "TRAV12-1",
+            "IR_VDJ_1_v_call": "TRBV20-1",
+            "IR_VDJ_1_d_call": "TRBD2",
+            "IR_VDJ_1_j_call": "TRBJ1-1",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_ATTACTCGTTGGACCC-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ4",
-            "IR_VJ_1_v_gene": "TRAV12-1",
-            "IR_VDJ_1_v_gene": "TRBV7-2",
-            "IR_VDJ_1_d_gene": "None",
-            "IR_VDJ_1_j_gene": "TRBJ2-6",
+            "IR_VJ_1_j_call": "TRAJ4",
+            "IR_VJ_1_v_call": "TRAV12-1",
+            "IR_VDJ_1_v_call": "TRBV7-2",
+            "IR_VDJ_1_d_call": "None",
+            "IR_VDJ_1_j_call": "TRBJ2-6",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_GCAATCACAATGAATG-1-24": {
-            "IR_VJ_1_j_gene": "TRAJ52",
-            "IR_VJ_1_v_gene": "TRAV8-6",
-            "IR_VDJ_1_v_gene": "TRBV30",
-            "IR_VDJ_1_d_gene": "TRBD1",
-            "IR_VDJ_1_j_gene": "TRBJ2-2",
+            "IR_VJ_1_j_call": "TRAJ52",
+            "IR_VJ_1_v_call": "TRAV8-6",
+            "IR_VDJ_1_v_call": "TRBV30",
+            "IR_VDJ_1_d_call": "TRBD1",
+            "IR_VDJ_1_j_call": "TRBJ2-2",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_TCTCTAATCCACTGGG-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ43",
-            "IR_VJ_1_v_gene": "TRAV8-3",
-            "IR_VDJ_1_v_gene": "TRBV30",
-            "IR_VDJ_1_d_gene": "TRBD1",
-            "IR_VDJ_1_j_gene": "TRBJ1-2",
+            "IR_VJ_1_j_call": "TRAJ43",
+            "IR_VJ_1_v_call": "TRAV8-3",
+            "IR_VDJ_1_v_call": "TRBV30",
+            "IR_VDJ_1_d_call": "TRBD1",
+            "IR_VDJ_1_j_call": "TRBJ1-2",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_TATTACCTCAACGGCC-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ45",
-            "IR_VJ_1_v_gene": "TRAV20",
-            "IR_VDJ_1_v_gene": "TRBV4-1",
-            "IR_VDJ_1_d_gene": "None",
-            "IR_VDJ_1_j_gene": "TRBJ1-3",
+            "IR_VJ_1_j_call": "TRAJ45",
+            "IR_VJ_1_v_call": "TRAV20",
+            "IR_VDJ_1_v_call": "TRBV4-1",
+            "IR_VDJ_1_d_call": "None",
+            "IR_VDJ_1_j_call": "TRBJ1-3",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_CGTCAGGTCGAACTGT-1-24": {
-            "IR_VJ_1_j_gene": "TRAJ15",
-            "IR_VJ_1_v_gene": "TRAV17",
-            "IR_VDJ_1_v_gene": "TRBV5-1",
-            "IR_VDJ_1_d_gene": "TRBD1",
-            "IR_VDJ_1_j_gene": "TRBJ1-1",
+            "IR_VJ_1_j_call": "TRAJ15",
+            "IR_VJ_1_v_call": "TRAV17",
+            "IR_VDJ_1_v_call": "TRBV5-1",
+            "IR_VDJ_1_d_call": "TRBD1",
+            "IR_VDJ_1_j_call": "TRBJ1-1",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_GGGAATGGTTGCGTTA-2-24": {
-            "IR_VJ_1_j_gene": "None",
-            "IR_VJ_1_v_gene": "None",
-            "IR_VDJ_1_v_gene": "TRBV30",
-            "IR_VDJ_1_d_gene": "TRBD1",
-            "IR_VDJ_1_j_gene": "TRBJ2-2",
+            "IR_VJ_1_j_call": "None",
+            "IR_VJ_1_v_call": "None",
+            "IR_VDJ_1_v_call": "TRBV30",
+            "IR_VDJ_1_d_call": "TRBD1",
+            "IR_VDJ_1_j_call": "TRBJ2-2",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_AGCTCCTGTAATCGTC-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ13",
-            "IR_VJ_1_v_gene": "TRAV13-1",
-            "IR_VDJ_1_v_gene": "TRBV18",
-            "IR_VDJ_1_d_gene": "TRBD2",
-            "IR_VDJ_1_j_gene": "TRBJ2-2",
+            "IR_VJ_1_j_call": "TRAJ13",
+            "IR_VJ_1_v_call": "TRAV13-1",
+            "IR_VDJ_1_v_call": "TRBV18",
+            "IR_VDJ_1_d_call": "TRBD2",
+            "IR_VDJ_1_j_call": "TRBJ2-2",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_CAGCTGGTCCGCGGTA-1-24": {
-            "IR_VJ_1_j_gene": "TRAJ30",
-            "IR_VJ_1_v_gene": "TRAV21",
-            "IR_VDJ_1_v_gene": "TRBV30",
-            "IR_VDJ_1_d_gene": "TRBD2",
-            "IR_VDJ_1_j_gene": "TRBJ2-1",
+            "IR_VJ_1_j_call": "TRAJ30",
+            "IR_VJ_1_v_call": "TRAV21",
+            "IR_VDJ_1_v_call": "TRBV30",
+            "IR_VDJ_1_d_call": "TRBD2",
+            "IR_VDJ_1_j_call": "TRBJ2-1",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_CCTTTCTCAGCAGTTT-1-24": {
-            "IR_VJ_1_j_gene": "TRAJ23",
-            "IR_VJ_1_v_gene": "TRAV9-2",
-            "IR_VDJ_1_v_gene": "TRBV3-1",
-            "IR_VDJ_1_d_gene": "None",
-            "IR_VDJ_1_j_gene": "TRBJ1-2",
+            "IR_VJ_1_j_call": "TRAJ23",
+            "IR_VJ_1_v_call": "TRAV9-2",
+            "IR_VDJ_1_v_call": "TRBV3-1",
+            "IR_VDJ_1_d_call": "None",
+            "IR_VDJ_1_j_call": "TRBJ1-2",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_GTATCTTGTATATGAG-1-24": {
-            "IR_VJ_1_j_gene": "TRAJ40",
-            "IR_VJ_1_v_gene": "TRAV36DV7",
-            "IR_VDJ_1_v_gene": "TRBV6-3",
-            "IR_VDJ_1_d_gene": "TRBD1",
-            "IR_VDJ_1_j_gene": "TRBJ2-5",
+            "IR_VJ_1_j_call": "TRAJ40",
+            "IR_VJ_1_v_call": "TRAV36DV7",
+            "IR_VDJ_1_v_call": "TRBV6-3",
+            "IR_VDJ_1_d_call": "TRBD1",
+            "IR_VDJ_1_j_call": "TRBJ2-5",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_TGCGCAGAGGGCATGT-1-24": {
-            "IR_VJ_1_j_gene": "TRAJ39",
-            "IR_VJ_1_v_gene": "TRAV12-3",
-            "IR_VDJ_1_v_gene": "TRBV11-2",
-            "IR_VDJ_1_d_gene": "None",
-            "IR_VDJ_1_j_gene": "TRBJ2-7",
+            "IR_VJ_1_j_call": "TRAJ39",
+            "IR_VJ_1_v_call": "TRAV12-3",
+            "IR_VDJ_1_v_call": "TRBV11-2",
+            "IR_VDJ_1_d_call": "None",
+            "IR_VDJ_1_j_call": "TRBJ2-7",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
         },
         "LT1_CAGCAGCAGCGCTCCA-2-24": {
-            "IR_VJ_1_j_gene": "TRAJ32",
-            "IR_VJ_1_v_gene": "TRAV38-2DV8",
-            "IR_VDJ_1_v_gene": "None",
-            "IR_VDJ_1_d_gene": "None",
-            "IR_VDJ_1_j_gene": "TRBJ2-3",
+            "IR_VJ_1_j_call": "TRAJ32",
+            "IR_VJ_1_v_call": "TRAV38-2DV8",
+            "IR_VDJ_1_v_call": "None",
+            "IR_VDJ_1_d_call": "None",
+            "IR_VDJ_1_j_call": "TRBJ2-3",
             "IR_VJ_1_locus": "TRA",
             "IR_VDJ_1_locus": "TRB",
             "sample": "LT1",
@@ -556,6 +564,7 @@ def adata_vdj():
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -574,9 +583,10 @@ def adata_clonotype():
             ["cell7", "B", "ct4", "cc3"],
             ["cell8", "B", "ct4", "cc3"],
         ],
-        columns=["cell_id", "group", "clonotype", "clonotype_cluster"],
+        columns=["cell_id", "group", "clone_id", "clonotype_cluster"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -596,4 +606,5 @@ def adata_diversity():
         columns=["cell_id", "group", "clonotype_"],
     ).set_index("cell_id")
     adata = AnnData(obs=obs)
+    adata.uns["scirpy_version"] = "0.7"
     return adata

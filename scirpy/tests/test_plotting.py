@@ -30,7 +30,7 @@ def test_alpha_diversity(adata_diversity):
 
 
 def test_group_abundance(adata_clonotype):
-    p = pl.group_abundance(adata_clonotype, groupby="clonotype", target_col="group")
+    p = pl.group_abundance(adata_clonotype, groupby="clone_id", target_col="group")
     assert isinstance(p, plt.Axes)
 
 

@@ -3,6 +3,7 @@ from anndata import AnnData
 from typing import Union, Sequence, Tuple
 import numpy as np
 from scanpy import logging
+from ..io._util import _check_upgrade_schema
 
 
 @deprecated("Use `tl.chain_qc` instead.")
@@ -35,6 +36,7 @@ def chain_pairing(
         return res[2]
 
 
+@_check_upgrade_schema()
 def chain_qc(
     adata: AnnData,
     *,
@@ -184,15 +186,15 @@ def _chain_pairing(
 
     logging.debug("Done initalizing")
 
-    mask_has_vj1 = ~_is_na(x["IR_VJ_1_cdr3"].values)
-    mask_has_vdj1 = ~_is_na(x["IR_VDJ_1_cdr3"].values)
-    mask_has_vj2 = ~_is_na(x["IR_VJ_2_cdr3"].values)
-    mask_has_vdj2 = ~_is_na(x["IR_VDJ_2_cdr3"].values)
+    mask_has_vj1 = ~_is_na(x["IR_VJ_1_junction_aa"].values)
+    mask_has_vdj1 = ~_is_na(x["IR_VDJ_1_junction_aa"].values)
+    mask_has_vj2 = ~_is_na(x["IR_VJ_2_junction_aa"].values)
+    mask_has_vdj2 = ~_is_na(x["IR_VDJ_2_junction_aa"].values)
 
     logging.debug("Done with masks")
 
     for m in [mask_has_vj1, mask_has_vdj1, mask_has_vj2, mask_has_vdj2]:
-        # no cell can have a cdr3 sequence but no TCR
+        # no cell can have a junction_aa sequence but no TCR
         assert np.setdiff1d(np.where(m)[0], np.where(mask_has_ir)[0]).size == 0
 
     results[~mask_has_ir] = "no IR"

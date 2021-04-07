@@ -304,13 +304,13 @@ def test_clonotype_convergence(adata_clonotype):
     res = ir.tl.clonotype_convergence(
         adata_clonotype,
         key_coarse="clonotype_cluster",
-        key_fine="clonotype",
+        key_fine="clone_id",
         inplace=False,
     )
     ir.tl.clonotype_convergence(
         adata_clonotype,
         key_coarse="clonotype_cluster",
-        key_fine="clonotype",
+        key_fine="clone_id",
         inplace=True,
         key_added="is_convergent_",
     )
@@ -330,7 +330,7 @@ def test_clonotype_convergence(adata_clonotype):
     res = ir.tl.clonotype_convergence(
         adata_clonotype,
         key_fine="clonotype_cluster",
-        key_coarse="clonotype",
+        key_coarse="clone_id",
         inplace=False,
     )
     pdt.assert_extension_array_equal(

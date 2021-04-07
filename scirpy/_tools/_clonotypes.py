@@ -15,6 +15,7 @@ from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..util import _doc_params
 from ..util.graph import igraph_from_sparse_matrix, layout_components
+from ..io._util import _check_upgrade_schema
 
 _common_doc = """\
 receptor_arms
@@ -87,7 +88,7 @@ distance_result
     A dictionary containing
      * `distances`: A sparse, pairwise distance matrix between unique
        receptor configurations
-     * `cell_indices`: An array of arrays, containing the adata.obs_names
+     * `cell_indices`: A dict of arrays, containing the adata.obs_names
        (cell indices) for each row in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
@@ -163,6 +164,7 @@ def _validate_parameters(
     return within_group, distance_key, key_added
 
 
+@_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
     clonotype_definition=_doc_clonotype_definition,
@@ -262,7 +264,7 @@ def define_clonotype_clusters(
         same_v_gene=same_v_gene,
         within_group=within_group,
         distance_key=distance_key,
-        sequence_key="cdr3" if sequence == "aa" else "cdr3_nt",
+        sequence_key="junction_aa" if sequence == "aa" else "junction",
         n_jobs=n_jobs,
         chunksize=chunksize,
     )
@@ -304,6 +306,7 @@ def define_clonotype_clusters(
         adata.obs[key_added] = clonotype_cluster_series
         adata.obs[key_added + "_size"] = clonotype_cluster_size_series
         adata.uns[key_added] = clonotype_distance_res
+        logging.info(f'Stored clonal assignments in `adata.obs["{key_added}"]`.')
     else:
         return (
             clonotype_cluster_series,
@@ -312,6 +315,7 @@ def define_clonotype_clusters(
         )
 
 
+@_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
     clonotype_definition=_doc_clonotype_definition,
@@ -321,7 +325,7 @@ def define_clonotype_clusters(
 def define_clonotypes(
     adata: AnnData,
     *,
-    key_added: str = "clonotype",
+    key_added: str = "clone_id",
     distance_key: Union[str, None] = None,
     **kwargs,
 ) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
@@ -373,6 +377,7 @@ def define_clonotypes(
     )
 
 
+@_check_upgrade_schema()
 @_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,
@@ -468,7 +473,7 @@ def clonotype_network(
 
     if clonotype_key is None:
         if metric == "identity" and sequence == "nt":
-            clonotype_key = "clonotype"
+            clonotype_key = "clone_id"
         else:
             clonotype_key = f"cc_{sequence}_{metric}"
 
@@ -491,7 +496,9 @@ def clonotype_network(
     graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
     # store size in graph to be accessed by layout algorithms
-    clonotype_size = np.array([idx.size for idx in clonotype_res["cell_indices"]])
+    clonotype_size = np.array(
+        [idx.size for idx in clonotype_res["cell_indices"].values()]
+    )
     graph.vs["size"] = clonotype_size
     components = np.array(graph.decompose("weak"))
     component_node_count = np.array([len(component.vs) for component in components])
@@ -570,7 +577,7 @@ def _graph_from_coordinates(
     dist_idx, obs_names = zip(
         *itertools.chain.from_iterable(
             zip(itertools.repeat(i), obs_names)
-            for i, obs_names in enumerate(clonotype_res["cell_indices"])
+            for i, obs_names in clonotype_res["cell_indices"].items()
         )
     )
     dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
@@ -597,6 +604,7 @@ def _graph_from_coordinates(
     return coords, adj_mat
 
 
+@_check_upgrade_schema()
 def clonotype_network_igraph(
     adata: AnnData, basis="clonotype_network"
 ) -> Tuple[ig.Graph, ig.Layout]:

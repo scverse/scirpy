@@ -21,12 +21,14 @@ from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
 from .._tools._clonotypes import _graph_from_coordinates, _doc_clonotype_network
 from ..util import _doc_params
+from ..io._util import _check_upgrade_schema
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#CCCCCC", "#000000"]
 )
 
 
+@_check_upgrade_schema()
 @_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,

@@ -5,13 +5,15 @@ from scipy.cluster import hierarchy as sc_hierarchy
 import pandas as pd
 import numpy as np
 from ..util import _is_na, _normalize_counts
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def repertoire_overlap(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,

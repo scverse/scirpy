@@ -1,4 +1,4 @@
-from ._merge_adata import merge_with_ir
+from ._merge_adata import merge_with_ir, merge_airr_chains
 from ..util import deprecated
 from ..ir_dist import _ir_dist as ir_dist  # NOQA
 

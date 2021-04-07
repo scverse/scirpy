@@ -52,15 +52,21 @@ for single-cell transcriptomics data.
 
 Scirpy adds the following :term:`IR`-related columns to `AnnData.obs`:
 
- * `has_ir`: `True` for all cells with an adaptive immune receptor
  * `IR_VJ_1_<attr>`/`IR_VJ_2_<attr>`: columns related to the primary and secondary
    :term:`VJ<V(D)J>`-chain of a receptor (`TRA`, `TRG`, `IGK`, or `IGL`)
  * `IR_VDJ_1_<attr>`/`IR_VDJ_2_<attr>`: columns related to the primary and secondary
    :term:`VDJ<V(D)J>`-chain of a receptor (`TRB`, `TRD`, or `IGH`)
+ * `has_ir`: `True` for all cells with an adaptive immune receptor
+ * `extra_chains`: Contains non-productive chains (if not filtered out), and extra chains
+   that do not fit into the 2 `VJ` + 2 `VDJ` chain model encoded as JSON. Scirpy does
+   not use this information except for writing it back to AIRR format using 
+   :func:`scirpy.io.write_airr`. 
+ * `multi_chain`: `True` for all cells with more than two productive `VJ` cells or 
+   two or more productive `VDJ` cells. 
 
-Where `<attr>` is any of:
+Where `<attr>` can be any field of the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
+For Scirpy the following fields are relevant: 
 
  * `locus`: The :term:`IGMT locus name<Chain locus>` of the chain (`TRA`, `IGH`, etc.)
- * `c_gene`, `v_gene`, `d_gene`, `j_gene`: The gene symbols of the respective genes
- * `cdr3` and `cdr3_nt`: The amino acoid and nucleotide sequences of the CDR3 regions
- * `junction_ins`: The number of nucleotides inserted in the `VD` + `DJ` junctions or the `VJ` junction, respectively.
+ * `c_call`, `v_call`, `d_call`, `j_call`: The gene symbols of the respective genes
+ * `junction_aa` and `junction`: The amino acid and nucleotide sequences of the CDR3 regions

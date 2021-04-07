@@ -5,8 +5,10 @@ from .. import tl
 from . import base
 from typing import Union, Sequence
 from .styling import _get_colors
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def group_abundance(
     adata: Union[dict, AnnData],
     groupby: str,

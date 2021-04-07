@@ -9,13 +9,15 @@ from typing import Union, Sequence
 from .. import tl
 from .styling import _init_ax, _get_colors
 from .base import ol_scatter
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def repertoire_overlap(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     pair_to_plot: Union[None, Sequence[str]] = None,
     heatmap_cats: Union[None, Sequence[str]] = None,
     dendro_only: bool = False,

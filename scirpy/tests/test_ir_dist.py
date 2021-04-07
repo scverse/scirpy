@@ -166,12 +166,12 @@ def test_compute_distances1(adata_cdr3, n_jobs):
         receptor_arms="VJ",
         dual_ir="primary_only",
         distance_key="ir_dist_aa_identity",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
     _assert_frame_equal(
-        cn.clonotypes, pd.DataFrame({"IR_VJ_1_cdr3": ["AAA", "AHA", "nan"]})
+        cn.clonotypes, pd.DataFrame({"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]})
     )
     dist = cn.compute_distances()
     npt.assert_equal(
@@ -195,7 +195,7 @@ def test_compute_distances2(adata_cdr3, n_jobs):
         receptor_arms="VJ",
         dual_ir="any",
         distance_key="ir_dist_aa_identity",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -203,8 +203,8 @@ def test_compute_distances2(adata_cdr3, n_jobs):
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -233,12 +233,12 @@ def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="VJ",
         dual_ir="primary_only",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
     _assert_frame_equal(
-        cn.clonotypes, pd.DataFrame({"IR_VJ_1_cdr3": ["AAA", "AHA", "nan"]})
+        cn.clonotypes, pd.DataFrame({"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]})
     )
     dist = cn.compute_distances()
     assert dist.nnz == 4
@@ -265,7 +265,7 @@ def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="VJ",
         dual_ir="any",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -273,8 +273,8 @@ def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -303,7 +303,7 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="VJ",
         dual_ir="all",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -311,8 +311,8 @@ def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -341,7 +341,7 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="all",
         dual_ir="primary_only",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -349,8 +349,8 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
             }
         ),
     )
@@ -415,7 +415,7 @@ def test_compute_distances6_2(
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -432,7 +432,7 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="any",
         dual_ir="primary_only",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -440,8 +440,8 @@ def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
             }
         ),
     )
@@ -468,7 +468,7 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="any",
         dual_ir="all",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -476,10 +476,10 @@ def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -507,7 +507,7 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         receptor_arms="any",
         dual_ir="any",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -515,10 +515,10 @@ def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -545,7 +545,7 @@ def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator, n_
         receptor_arms="all",
         dual_ir="any",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -553,10 +553,10 @@ def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator, n_
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -584,7 +584,7 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator, n_
         receptor_arms="all",
         dual_ir="all",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
         n_jobs=n_jobs,
         chunksize=1,
     )
@@ -592,10 +592,10 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator, n_
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_cdr3": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_cdr3": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_cdr3": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
             }
         ),
     )
@@ -617,8 +617,8 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator, n_
 
 def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are no distances. """
-    adata_cdr3.obs["IR_VJ_1_cdr3"] = np.nan
-    adata_cdr3.obs["IR_VDJ_1_cdr3"] = np.nan
+    adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
+    adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     cn = ClonotypeNeighbors(
@@ -626,14 +626,14 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
         receptor_arms="all",
         dual_ir="primary_only",
         distance_key="ir_dist_aa_custom",
-        sequence_key="cdr3",
+        sequence_key="junction_aa",
     )
     _assert_frame_equal(
         cn.clonotypes,
         pd.DataFrame(
             {
-                "IR_VJ_1_cdr3": ["nan"],
-                "IR_VDJ_1_cdr3": ["nan"],
+                "IR_VJ_1_junction_aa": ["nan"],
+                "IR_VDJ_1_junction_aa": ["nan"],
             }
         ),
     )
@@ -643,8 +643,8 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are IR. """
-    adata_cdr3.obs["IR_VJ_1_cdr3"] = np.nan
-    adata_cdr3.obs["IR_VDJ_1_cdr3"] = np.nan
+    adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
+    adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["has_ir"] = "False"
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
@@ -654,5 +654,5 @@ def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
             receptor_arms="all",
             dual_ir="primary_only",
             distance_key="ir_dist_aa_custom",
-            sequence_key="cdr3",
+            sequence_key="junction_aa",
         )

@@ -4,11 +4,13 @@ import numpy as np
 import pandas as pd
 from ._group_abundance import _group_abundance
 from ..util import _is_na
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def spectratype(
     adata: AnnData,
-    groupby: Union[str, Collection[str]] = "IR_VJ_1_cdr3",
+    groupby: Union[str, Collection[str]] = "IR_VJ_1_junction_aa",
     *,
     target_col: str,
     combine_fun: Callable = np.sum,

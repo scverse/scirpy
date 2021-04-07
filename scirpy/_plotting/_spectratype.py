@@ -6,11 +6,13 @@ from .. import tl
 from . import base
 from typing import Union, List, Collection, Callable
 from .styling import _get_colors
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def spectratype(
     adata: Union[dict, AnnData],
-    cdr3_col: Union[str, Collection[str]] = ["IR_VJ_1_cdr3"],
+    cdr3_col: Union[str, Collection[str]] = ["IR_VJ_1_junction_aa"],
     *,
     color: str,
     combine_fun: Callable = np.sum,

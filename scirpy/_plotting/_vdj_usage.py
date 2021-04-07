@@ -4,27 +4,29 @@ from typing import Callable, Union, Tuple, Sequence
 import numpy as np
 from ..util import _normalize_counts, _is_na
 from .styling import _init_ax
-from ..io import IrChain
+from ..io import AirrCell
 from itertools import islice
 from copy import deepcopy
+from ..io._util import _check_upgrade_schema
 
 
 def _sanitize_gene_name(gene_text):
     """Reformat a VDJ gene name to be displayed in the plot"""
-    for tmp_chain in IrChain.VALID_LOCI:
+    for tmp_chain in AirrCell.VALID_LOCI:
         gene_text = gene_text.replace(tmp_chain, "")
     return gene_text
 
 
+@_check_upgrade_schema()
 def vdj_usage(
     adata: AnnData,
     *,
     vdj_cols: Sequence = (
-        "IR_VJ_1_v_gene",
-        "IR_VJ_1_j_gene",
-        "IR_VDJ_1_v_gene",
-        "IR_VDJ_1_d_gene",
-        "IR_VDJ_1_j_gene",
+        "IR_VJ_1_v_call",
+        "IR_VJ_1_j_call",
+        "IR_VDJ_1_v_call",
+        "IR_VDJ_1_d_call",
+        "IR_VDJ_1_j_call",
     ),
     normalize_to: Union[bool, str, Sequence[float]] = False,
     ax: Union[plt.Axes, None] = None,

@@ -3,16 +3,18 @@ from anndata import AnnData
 from . import base
 from typing import Union
 from .._compat import Literal
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def clonal_expansion(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     clip_at: int = 3,
     expanded_in: Union[str, None] = None,
-    summarize_by: Literal["cell", "clonotype"] = "cell",
+    summarize_by: Literal["cell", "clone_id"] = "cell",
     normalize: bool = True,
     show_nonexpanded: bool = True,
     viztype: Literal["bar", "barh"] = "bar",
@@ -23,7 +25,7 @@ def clonal_expansion(
     Plots the fraction of cells that belong to an expanded :term:`Clonotype` by
     a categorical variable.
 
-    If `summarize_by` is set to "clonotype" it plots the fraction
+    If `summarize_by` is set to "clone_id" it plots the fraction
     of clonotypes instead of the fraction of cells.
 
     Removes all entries with `NaN` in `target_col` prior to plotting.

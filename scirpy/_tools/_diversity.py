@@ -3,13 +3,15 @@ from ..util import _is_na
 from anndata import AnnData
 import pandas as pd
 from typing import Union
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 def alpha_diversity(
     adata: AnnData,
     groupby: str,
     *,
-    target_col: str = "clonotype",
+    target_col: str = "clone_id",
     inplace: bool = True,
     key_added: Union[None, str] = None
 ) -> pd.DataFrame:

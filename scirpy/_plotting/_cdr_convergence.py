@@ -6,14 +6,16 @@ from .. import tl
 from . import _base as base
 from typing import Union, List, Collection
 from ..util import _doc_params
+from ..io._util import _check_upgrade_schema
 
 
+@_check_upgrade_schema()
 @_doc_params(common_doc=base._common_doc)
 def cdr_convergence(
     adata: Union[dict, AnnData],
     groupby: str,
     *,
-    target_col: str = "TRB_1_cdr3",
+    target_col: str = "TRB_1_junction_aa",
     clip_at: int = 3,
     group_order: Union[Collection, None] = None,
     top_n: int = 10,
