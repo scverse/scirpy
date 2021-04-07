@@ -78,7 +78,7 @@ def merge_with_ir(
     it with another :class:`~anndata.AnnData` containing transcriptomics data.
     To add additional IR data on top of on top of an :class:`~anndata.AnnData`
     object that already contains IR information (e.g. :term:`BCR` on top of
-    :term:`TCR` data.), see :func:`~ir.pp.merge_airr_chains`.
+    :term:`TCR` data.), see :func:`~scirpy.pp.merge_airr_chains`.
 
     Merging keeps all objects (e.g. `neighbors`, `umap`) from `adata` and integrates
     `obs` from `adata_ir` into `adata`. Everything other than `.obs` from `adata_ir`

@@ -16,6 +16,13 @@ as closely as possible.
 Input/Output: `io`
 ------------------
 
+.. note::
+   In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to 
+   be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__ 
+   schema. Please use :func:`~scirpy.io.upgrade_schema` to make `AnnData` objects
+   from previous scirpy versions compatible with the most recent scirpy workflow. 
+
+
 The following functions allow to import :term:`V(D)J` information from various
 formats.
 
@@ -44,16 +51,6 @@ For more details, check the :ref:`Data loading tutorial <importing-data>`.
    AirrCell
    from_airr_cells
    to_airr_cells
-
-.. note::
-   In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to 
-   be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__ 
-   schema. Please use :func:`~scirpy.io.upgrade_schema` to make `AnnData` objects
-   from previous scirpy versions compatible with the most recent scirpy workflow. 
-
-.. autosummary::
-   :toctree: ./generated
-
    upgrade_schema
 
 
@@ -146,6 +143,14 @@ when calling the plotting function or need to be precomputed and stored in
 .. autosummary::
    :toctree: ./generated
 
+   alpha_diversity
+   clonal_expansion
+   group_abundance
+   spectratype
+   vdj_usage
+   repertoire_overlap
+   clonotype_imbalance
+   clonotype_network
 
 
 

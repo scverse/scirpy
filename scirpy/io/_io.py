@@ -565,8 +565,8 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     """Write immune receptor fields from `adata.obs` in AIRR Rearrangement TSV format.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     adata
         annotated data matrix
     filename
@@ -675,9 +675,9 @@ def from_dandelion(dandelion, transfer=False) -> AnnData:
     Parameters
     ----------
     dandelion
-        a :class:`dandelion.Dandelion` instance
+        a `dandelion.Dandelion` instance
     transfer
-        Whether to execute :func:`dandelion.tl.transfer` to transfer all data
+        Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
 
     Returns

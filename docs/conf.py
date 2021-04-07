@@ -129,4 +129,15 @@ nitpick_ignore = [
     ("py:class", "igraph.Graph"),
     ("py:class", "igraph.Layout"),
     ("py:class", "igraph.layout.Layout"),
+    # the following entries are because the `MutableMapping` base class does not
+    # use type hints.
+    ("py:class", "None.  Remove all items from D."),
+    ("py:class", "D[k] if k in D, else d.  d defaults to None."),
+    ("py:class", "a set-like object providing a view on D's items"),
+    ("py:class", "a set-like object providing a view on D's keys"),
+    ("py:class", "v, remove specified key and return the corresponding value."),
+    ("py:class", "(k, v), remove and return some (key, value) pair"),
+    ("py:class", "D.get(k,d), also set D[k]=d if k not in D"),
+    ("py:class", "None.  Update D from mapping/iterable E and F."),
+    ("py:class", "an object providing a view on D's values"),
 ]

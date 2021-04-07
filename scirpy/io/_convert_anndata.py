@@ -85,7 +85,7 @@ def to_airr_cells(adata: AnnData) -> List[AirrCell]:
     Convert an adata object with IR information back to a list of :class:`AirrCell`
     objects.
 
-    Inverse function of :func:`from_ir_objs`.
+    Inverse function of :func:`from_airr_cells`.
 
     Parameters
     ----------

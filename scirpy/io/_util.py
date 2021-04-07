@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import Callable
 from scanpy import logging
+from functools import wraps
 
 doc_working_model = """\
 
@@ -55,6 +56,7 @@ def _check_upgrade_schema(check_args=(0,)) -> Callable:
     """Decorator that checks that anndata uses the latest schema"""
 
     def check_upgrade_schema_decorator(f):
+        @wraps(f)
         def check_wrapper(*args, **kwargs):
             for i in check_args:
                 _check_anndata_upgrade_schema(args[i])
