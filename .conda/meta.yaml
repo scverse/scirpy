@@ -27,8 +27,8 @@ requirements:
   run:
     - python >=3.7
     - anndata >=0.7.3
-    - scanpy>=1.5.1
-    - pandas>=0.21
+    - scanpy>=1.6.0
+    - pandas>=1.0
     - numpy
     - scipy
     - parasail-python
@@ -37,7 +37,7 @@ requirements:
     - python-igraph
     - networkx
     - squarify
-    - tqdm>=4.29.1
+    - tqdm>=4.42.0
     - airr>=1.2
 
 test:
@@ -54,7 +54,7 @@ test:
   imports:
     - scirpy
   commands:
-    - pytest --pyargs scirpy
+    - pytest --pyargs scirpy -m "not extra"
     - cd docs && jupytext --execute tutorials/tutorial_3k_tcr.md
 
 about:

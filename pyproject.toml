@@ -36,7 +36,7 @@ requires = [
     'python-igraph',
     'networkx',
     'squarify',
-    'airr',
+    'airr>=1.2',
     'tqdm>=4.42.0', # required for process_map
     # for getting the version
     'setuptools_scm',
@@ -80,7 +80,8 @@ Documentation = 'https://icbi-lab.github.io/scirpy/'
 
 [tool.pytest.ini_options]
 markers = [
-    "conda: marks a subset of tests to be ran on the Bioconda CI."
+    "conda: marks a subset of tests to be ran on the Bioconda CI.",
+    "extra: marks tests that require extra dependencies."
 ]
 minversion = 6.0
 testpaths = 'scirpy/tests'
