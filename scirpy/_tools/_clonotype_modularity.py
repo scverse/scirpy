@@ -1,56 +1,82 @@
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Dict, Optional, Sequence
 import numpy as np
 from ..util.graph import _get_igraph_from_adjacency
 from ..util._negative_binomial import fit_nbinom
 from .._compat import Literal
 import scipy.stats
 from collections import Counter
+import scipy.sparse
+from statsmodels.stats.multitest import fdrcorrection
 
 # TODO better name!
 def clonotype_connectivity(
     adata,
     target_col="clone_id",
+    connectivity_key="connectivities",
     permutation_test: Literal["approx", "exact"] = "approx",
     n_permutations: Optional[int] = None,
     key_added: str = "clonotype_connectivity",
     inplace: bool = True,
+    fdr_correction: bool = True,
+    random_state: int = 0,
 ):
     if n_permutations is None:
         n_permutations = 200 if permutation_test == "approx" else 10000
-    # compute_pvalue = _pvalue_approx if permutation_test == "approx" else _pvalue_exact
 
-    # connectivity = adata.obsp["connectivities"]
-    # g = _get_igraph_from_adjacency(connectivity)
+    clonotype_per_cell = adata.obs[target_col]
 
-    # degree_per_cell = np.sum(connectivity > 0, axis=1).A1
-    # clonotype_per_cell = adata.obs[target_col].values
-    # clonotypes = np.unique(clonotype_per_cell)
-    # clonotype_sizes = set(Counter(clonotype_per_cell).values())
+    cm = _ClonotypeModularity(
+        clonotype_per_cell, adata.obsp[connectivity_key], random_state=random_state
+    )
 
-    # connectivity_scores = {}
-    # connectivity_pvalues = {}
-    # for clonotype in clonotypes:
-    #     clonotype_mask = clonotype_per_cell == clonotype
-    #     clonotype_subgraph = g.subgraph(np.flatnonzero(clonotype_mask))
-    #     connectivity_scores[clonotype] = _connectivity_score(
-    #         clonotype_subgraph, degree_per_cell[clonotype_mask]
-    #     )
-    #     connectivity_pvalues[clonotype] = compute_pvalue(
-    #         g, clonotype_subgraph, n_permutations
-    #     )
+    connectivity_scores = cm.get_scores()
+    connectivity_pvalues = (
+        cm.get_approx_pvalues(n_permutations)
+        if permutation_test == "approx"
+        else cm.get_exact_pvalues(n_permutations)
+    )
 
-    # if inplace:
-    #     adata.obs[key_added] = [connectivity_scores[ct] for ct in clonotype_per_cell]
-    #     adata.obs[f"{key_added}_pvalue"] = [
-    #         connectivity_pvalues[ct] for ct in clonotype_per_cell
-    #     ]
-    # else:
-    #     return connectivity_scores, connectivity_pvalues
+    if fdr_correction:
+        connectivity_pvalues = {
+            k: v
+            for k, v in zip(
+                connectivity_pvalues.keys(),
+                fdrcorrection(connectivity_pvalues.values()),
+            )
+        }
+
+    if inplace:
+        adata.obs[key_added] = [connectivity_scores[ct] for ct in clonotype_per_cell]
+        suffix = "fdr" if not fdr_correction else "pvalue"
+        adata.obs[f"{key_added}_{suffix}"] = [
+            connectivity_pvalues[ct] for ct in clonotype_per_cell
+        ]
+    else:
+        return connectivity_scores, connectivity_pvalues
 
 
 class _ClonotypeModularity:
-    def __init__(self, clonotype_per_cell, connectivity, *, random_state=0):
+    def __init__(
+        self,
+        clonotype_per_cell: Sequence[str],
+        connectivity: scipy.sparse.spmatrix,
+        *,
+        random_state: int = 0,
+    ):
+        """Class to compute the clonotype modularity.
+
+        Parameters
+        ----------
+        clonotype_per_cell
+            Array containing the clonotype for each cell (usually a column from
+            adata.obs)
+        connectivity
+            pairwise connectivity matrix of the transcriptomics neighborhood graph.
+            Must be aligned with `clonotype_per_cell`
+        random_state
+            Random seed for permutation tests
+        """
         assert len(clonotype_per_cell) == connectivity.shape[0]
         self.graph = _get_igraph_from_adjacency(connectivity)
         clonotypes = np.unique(clonotype_per_cell)
@@ -70,7 +96,7 @@ class _ClonotypeModularity:
         }
         # Unique clonotype sizes
         self._clonotype_sizes = np.unique(
-            [g.vcount() for g in self._clonotype_subgraphs]
+            [g.vcount() for g in self._clonotype_subgraphs.values()]
         )
         self.random_state = random_state
 
