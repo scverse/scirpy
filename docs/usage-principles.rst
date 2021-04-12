@@ -22,7 +22,7 @@ Scirpy is an extension to `Scanpy <https://scanpy.readthedocs.io>`_ and adheres 
  * The :class:`~anndata.AnnData` instance is modified inplace, unless the functions
    is called with the keyword argument `inplace=False`.
 
-We decided to handle a few minor points differenlty to Scanpy:
+We decided to handle a few minor points differently to Scanpy:
 
  * Plotting functions with inexpensive computations (e.g. :func:`scirpy.pl.clonal_expansion`)
    call the corresponding tool (:func:`scirpy.tl.clonal_expansion`) on-the-fly and

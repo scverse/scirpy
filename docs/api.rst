@@ -16,17 +16,22 @@ as closely as possible.
 Input/Output: `io`
 ------------------
 
+.. module:: scirpy.io
+
 .. note::
    In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to 
    be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__ 
    schema. Please use :func:`~scirpy.io.upgrade_schema` to make `AnnData` objects
    from previous scirpy versions compatible with the most recent scirpy workflow. 
 
+   .. autosummary::
+      :toctree: ./generated
+      
+      upgrade_schema
+
 
 The following functions allow to import :term:`V(D)J` information from various
 formats.
-
-.. module:: scirpy.io
 
 .. autosummary::
    :toctree: ./generated
@@ -36,8 +41,14 @@ formats.
    read_tracer
    read_bracer
    read_airr
-   write_airr
    from_dandelion
+
+Scirpy can export data to the following formats:
+
+.. autosummary::
+   :toctree: ./generated
+
+   write_airr
    to_dandelion
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
@@ -51,7 +62,6 @@ For more details, check the :ref:`Data loading tutorial <importing-data>`.
    AirrCell
    from_airr_cells
    to_airr_cells
-   upgrade_schema
 
 
 Preprocessing: `pp`

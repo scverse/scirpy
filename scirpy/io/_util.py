@@ -7,13 +7,13 @@ doc_working_model = """\
 
 .. note::
     Reading data into *Scirpy* has the following constraints:
-     * each cell can have up to four productive chains chains (:term:`Dual IR`):
+     * Each cell can have up to four productive chains chains (:term:`Dual IR`):
        two :term:`VJ<V(D)J>` and two :term:`VDJ<V(D)J>` chains. 
      * Excess chains are ignored (those with lowest read count/:term:`UMI` count)
        and cells flagged as :term:`Multichain-cell`.
-     * non-productive chains are ignored. 
-     * chain loci must be valid :term:`IGMT locus names<Chain locus>`.
-     * excess chains, non-productive chains, or chains with invalid loci
+     * Non-productive chains are ignored. 
+     * Chain loci must be valid :term:`IGMT locus names<Chain locus>`.
+     * Excess chains, non-productive chains, or chains with invalid loci
        are serialized to JSON and stored in the `extra_chains` column. They are not 
        used by scirpy except when exporting the `AnnData` object to AIRR format. 
 
