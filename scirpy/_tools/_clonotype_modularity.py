@@ -42,7 +42,7 @@ def clonotype_connectivity(
             k: v
             for k, v in zip(
                 connectivity_pvalues.keys(),
-                fdrcorrection(connectivity_pvalues.values()),
+                fdrcorrection(list(connectivity_pvalues.values()))[1],
             )
         }
 
@@ -116,11 +116,24 @@ class _ClonotypeModularity:
         -------
         Dictionary clonotype -> score
         """
+        # TODO consider using the difference compared to the expected number
+        # of edges instead. (as implemented here as an inefficient proof of concept).
+        # Potentially need to clean up the old code (using number of possible edges)
+        # instead.
+        distributions_per_size = {}
+        for tmp_size in self._clonotype_sizes:
+            bg = self._background_edge_count(tmp_size, 200)
+            distributions_per_size[tmp_size] = np.mean(bg)
+
         score_dict = dict()
         for clonotype, subgraph in self._clonotype_subgraphs.items():
             if subgraph.vcount() == 1:
                 score_dict[clonotype] = 0
             else:
+                score_dict[clonotype] = (
+                    subgraph.ecount() - distributions_per_size[subgraph.vcount()]
+                ) / subgraph.vcount()
+                continue
                 max_edges = (
                     min(
                         # in theory, the maximum numer of edges is the full adjacency matrix
