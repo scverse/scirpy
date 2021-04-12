@@ -665,7 +665,7 @@ def to_dandelion(adata: AnnData):
 
 
 def from_dandelion(dandelion, transfer=False) -> AnnData:
-    """Import data from dandelion (:cite:`Stephenson2021`).
+    """Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters
     ----------

@@ -12,7 +12,22 @@ jupyter:
 ```python
 %load_ext autoreload
 %autoreload 2
+import anndata
+import logging
 
+
+class NoCategoricalWarningFilter(logging.Filter):
+    """suppress "storing XXX as categorical" warnings."""
+
+    def filter(self, record):
+        m = record.getMessage()
+        return not m.startswith("storing") and m.endswith("as categorical.")
+
+
+anndata.logging.anndata_logger.addFilter(NoCategoricalWarningFilter)
+```
+
+```python
 import scirpy as ir
 import scanpy as sc
 from glob import glob
@@ -20,14 +35,6 @@ import pandas as pd
 import tarfile
 import anndata
 import warnings
-
-# from numba import NumbaPerformanceWarning
-
-# # ignore numba performance warnings
-# warnings.filterwarnings("ignore", category=NumbaPerformanceWarning)
-
-# suppress "storing XXX as categorical" warnings.
-anndata.logging.anndata_logger.setLevel("ERROR")
 
 sc.set_figure_params(figsize=(4, 4))
 sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hints (3)
@@ -46,21 +53,23 @@ AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data
 The example data used in this notebook are available from the
 `Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
 
-.. TODO update!!
-
 .. important:: **The Scirpy data model**
 
     Currently, the Scirpy data model has the following constraints:
 
      * BCR and TCR chains are supported. Chain loci must be valid :term:`Chain locus`,
        i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or
-       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). Other chains are discarded.
-     * Non-productive chains are removed. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
+       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). 
+     * Each cell can contain up to two `VJ` and two `VDJ` chains (:term:`Dual IR`).
+       Excess chains are ignored (those with lowest read count/:term:`UMI` count)
+       and cells flagged as :term:`Multichain-cell`.
+     * Non-productive chains are ignored. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
-     * Each chain can contain up to two `VJ` and two `VDJ` chains (:term:`Dual IR`).
-       Excess chains are removed (those with lowest read count/:term:`UMI` count)
-       and cells flagged as :term:`Multichain-cell`.
+     * Excess chains, non-productive chains, or chains with invalid loci
+       are serialized to JSON and stored in the `extra_chains` column. They are not 
+       used by scirpy except when exporting the `AnnData` object to :term:`AIRR` format. 
+     
 
     For more information, see :ref:`receptor-model`.
 
