@@ -231,9 +231,6 @@ ax = ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
 
 ## Define clonotypes and clonotype clusters
 
-<!-- TODO explain that there are different values for dual_ir -->
-
-
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. warning::
 
@@ -276,6 +273,8 @@ The function :func:`scirpy.tl.define_clonotypes` matches cells based on the dist
 `VJ` and `VDJ` CDR3-sequences and value of the function parameters `dual_ir` and `receptor_arms`. Finally, it
 detects connected modules in the graph and annotates them as clonotypes. This will add a `clone_id` and
 `clone_id_size` column to `adata.obs`.
+
+The `dual_ir` parameter defines how scirpy handles cells with :term:`more than one pair of receptors <Dual IR>`. The default value is `any` which implies that cells with any of their primary or secondary receptor chain matching will be considered to be of the same clonotype. 
 
 Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity.
 In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on

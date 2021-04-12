@@ -206,10 +206,12 @@ Glossary
         page about our :ref:`IR model<receptor-model>`.
 
     AIRR
-        Adaptive Immune Receptor Repertoire.
-        See also the `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_.
+        Adaptive Immune Receptor Repertoire. Within the Scirpy documentation, we simply 
+        speak of :term:`immune receptors (IR)<IR>`.
 
-        Within the Scirpy documentation, we simply speak of :term:`immune receptors (IR)<IR>`.
+        The `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_ 
+        defines standards around AIRR data. Scirpy supports the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_
+        schema and complies with the `AIRR Software Guidelines <https://docs.airr-community.org/en/latest/swtools/airr_swtools_standard.html>`_.
 
     Chain locus
         Scirpy supports all valid `IGMT locus names <http://www.imgt.org/IMGTScientificChart/Nomenclature/IMGTnomenclature.html>`_:

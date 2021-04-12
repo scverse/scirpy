@@ -339,9 +339,7 @@ def read_airr(
     include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
 ) -> AnnData:
     """\
-    Read AIRR-compliant data.
-
-    Reads data organized in the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
+    Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
 
     The following columns are required by scirpy: 
      * `cell_id`
@@ -558,7 +556,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
 @_check_upgrade_schema()
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
-    """Write immune receptor fields from `adata.obs` in AIRR Rearrangement TSV format.
+    """Export :term:`IR` data to :term:`AIRR` Rearrangement `tsv` format.
 
     Parameters
     ----------
@@ -618,10 +616,10 @@ def upgrade_schema(adata) -> None:
                 "j_gene": "j_call",
                 "c_gene": "c_call",
                 "cdr3_nt": "junction",
-                "clonotype": "clone_id",
             }.items(),
         )
     }
+    rename_dict["clonotype"] = "clone_id"
     adata.obs.rename(columns=rename_dict, inplace=True)
     adata.obs["extra_chains"] = None
     adata.uns["scirpy_version"] = __version__
@@ -629,8 +627,7 @@ def upgrade_schema(adata) -> None:
 
 @_check_upgrade_schema()
 def to_dandelion(adata: AnnData):
-    """
-    Convert a scirpy-initialized AnnData object to Dandelion format using `to_ir_objs`.
+    """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters
     ----------
@@ -640,7 +637,6 @@ def to_dandelion(adata: AnnData):
     Returns
     -------
     `Dandelion` object.
-
     """
     try:
         import dandelion as ddl
@@ -664,8 +660,12 @@ def to_dandelion(adata: AnnData):
     return ddl.Dandelion(ddl.load_data(data))
 
 
+@_doc_params(doc_working_model=doc_working_model)
 def from_dandelion(dandelion, transfer=False) -> AnnData:
-    """Import data from dandelion (:cite:`Stephenson2021`).
+    """\
+    Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
+
+    {doc_working_model}
 
     Parameters
     ----------
