@@ -9,12 +9,18 @@ on:
 jobs:
   test:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        config:
+          - { python-version: 3.7, os: ubuntu-latest }
+          - { python-version: 3.8, os: ubuntu-latest }
+          - { python-version: 3.9, os: ubuntu-latest }
+          # 3.8 is enough for macos and linux. For 3.9 essential wheels are still missing and building
+          # from source is very painful, especially on windows.
+          - { python-version: 3.8, os: macos-latest }
+          - { python-version: 3.8, os: windows-latest }
 
     steps:
       - uses: actions/checkout@v2
@@ -26,18 +32,19 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      # The HDF5 system requirements are necessary until pytables provides a wheel for python 3.9
       - name: Install Ubuntu system dependencies
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-latest'
         run: |
           sudo apt-get install libhdf5-serial-dev
       - name: Install macOS system dependencies
-        if: matrix.os == 'macos-latest'
+        if: matrix.config.os == 'macos-latest'
         run: |
           brew install cairo pkg-config autoconf automake libtool
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.config.python-version }}
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.config.python-version }}
       - name: Install dependencies
         # TODO the separate numpy installation is to workaround an issue with dandelion's skbio dependency
         run: |
