@@ -13,18 +13,11 @@ jupyter:
 %load_ext autoreload
 %autoreload 2
 import anndata
-import logging
 
-
-class NoCategoricalWarningFilter(logging.Filter):
-    """suppress "storing XXX as categorical" warnings."""
-
-    def filter(self, record):
-        m = record.getMessage()
-        return not m.startswith("storing") and m.endswith("as categorical.")
-
-
-anndata.logging.anndata_logger.addFilter(NoCategoricalWarningFilter)
+anndata.logging.anndata_logger.addFilter(
+    lambda r: not r.getMessage().startswith("storing")
+    and r.getMessage().endswith("as categorical.")
+)
 ```
 
 ```python
