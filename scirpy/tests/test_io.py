@@ -375,16 +375,19 @@ def test_read_airr():
         anndata.obs.loc[anndata.obs["IR_VJ_1_locus"] == "TRA", tra_cols],
         anndata_tra.obs.loc[:, tra_cols],
         check_categorical=False,  # categories differ, obviously
+        check_dtype=False,
     )
     pdt.assert_frame_equal(
         anndata.obs.loc[anndata.obs["IR_VDJ_1_locus"] == "TRB", trb_cols],
         anndata_trb.obs.loc[:, trb_cols],
         check_categorical=False,  # categories differ, obviously
+        check_dtype=False,
     )
     pdt.assert_frame_equal(
         anndata.obs.loc[anndata.obs["IR_VDJ_1_locus"] == "IGH", ig_cols],
         anndata_ig.obs.loc[:, ig_cols],
         check_categorical=False,  # categories differ, obviously
+        check_dtype=False,
     )
 
     # test some fundamental values
