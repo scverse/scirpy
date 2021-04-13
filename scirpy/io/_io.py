@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein
-from ._convert_anndata import from_airr_cells, to_airr_cells
+from ._convert_anndata import from_airr_cells, to_airr_cells, _sanitize_anndata
 from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
 from .._compat import Literal
 from airr import RearrangementSchema
@@ -623,6 +623,7 @@ def upgrade_schema(adata) -> None:
     adata.obs.rename(columns=rename_dict, inplace=True)
     adata.obs["extra_chains"] = None
     adata.uns["scirpy_version"] = __version__
+    _sanitize_anndata(adata)
 
 
 @_check_upgrade_schema()

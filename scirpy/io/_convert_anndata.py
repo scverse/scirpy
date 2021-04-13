@@ -8,6 +8,7 @@ import pandas as pd
 from typing import Collection, Iterable, List, Optional
 from .. import __version__
 import numpy as np
+from pandas.api.types import is_object_dtype
 
 
 def _sanitize_anndata(adata: AnnData) -> None:
@@ -17,11 +18,13 @@ def _sanitize_anndata(adata: AnnData) -> None:
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
 
-    CATEGORICAL_COLS = ("locus", "v_call", "d_call", "j_call", "c_call")
-
     # Pending updates to anndata to properly handle boolean columns.
     # For now, let's turn them into a categorical with "True/False"
     BOOLEAN_COLS = ("has_ir", "is_cell", "multi_chain", "high_confidence", "productive")
+
+    # explicitly convert those to categoricals. All IR_ columns that are strings
+    # will be converted to categoricals, too
+    CATEGORICAL_COLS = ("extra_chains",)
 
     # Sanitize has_ir column into categorical
     # This should always be a categorical with True / False
@@ -34,13 +37,14 @@ def _sanitize_anndata(adata: AnnData) -> None:
                 ],
                 categories=["True", "False", "None"],
             )
-
-    # Turn other columns into categorical
-    for col in adata.obs.columns:
-        if col.endswith(CATEGORICAL_COLS):
+        elif col.endswith(CATEGORICAL_COLS) or (
+            col.startswith("IR_") and is_object_dtype(adata.obs[col])
+        ):
+            # Turn all IR_VJ columns that are of type string or object to categoricals
+            # otherwise saving anndata doesn't work.
             adata.obs[col] = pd.Categorical(adata.obs[col])
 
-    adata._sanitize()
+    adata.strings_to_categoricals()
 
 
 @_doc_params(doc_working_model=doc_working_model)
