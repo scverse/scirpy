@@ -77,12 +77,12 @@ class AirrCell(MutableMapping):
 
     @property
     def cell_id(self) -> str:
-        """Unique identifier (barcode) of the cell. """
+        """Unique identifier (barcode) of the cell."""
         return self["cell_id"]
 
     @property
     def chains(self) -> List[dict]:
-        """List of chain-dictionaries added to the cell. """
+        """List of chain-dictionaries added to the cell."""
         return self._chains
 
     @property

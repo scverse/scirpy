@@ -24,7 +24,7 @@ def cdr_convergence(
     sizeprofile: Union[Literal["small"], None] = None,
     no_singles: bool = False,
     fraction: Union[None, str, bool] = None,
-    **kwds
+    **kwds,
 ) -> Union[List[plt.Axes], AnnData]:
     """how many nucleotide versions a single CDR3 amino acid sequence typically has in a given group
     cells belong to each clonotype within a certain sample.

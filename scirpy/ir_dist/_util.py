@@ -11,7 +11,7 @@ from operator import mul
 
 
 def merge_coo_matrices(mats):
-    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster. """
+    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster."""
     mats = list(mats)
 
     # special case: empty list - sum returns 0

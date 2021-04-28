@@ -14,7 +14,7 @@ def alpha_diversity(
     *,
     target_col: str = "clone_id",
     vistype: Literal["bar"] = "bar",
-    **kwargs
+    **kwargs,
 ) -> plt.Axes:
     """Plot the alpha diversity per group.
 

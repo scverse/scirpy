@@ -616,7 +616,7 @@ def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator, n_
 
 
 def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    """Test for #174. Gracefully handle the case when there are no distances. """
+    """Test for #174. Gracefully handle the case when there are no distances."""
     adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     # test both receptor arms, primary chain only
@@ -642,7 +642,7 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
 
 
 def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    """Test for #174. Gracefully handle the case when there are IR. """
+    """Test for #174. Gracefully handle the case when there are IR."""
     adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["has_ir"] = "False"
