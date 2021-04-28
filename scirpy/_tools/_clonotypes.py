@@ -20,10 +20,10 @@ from ..io._util import _check_upgrade_schema
 _common_doc = """\
 receptor_arms
     One of the following options:
-      * `"TRA"` - only consider TRA sequences
-      * `"TRB"` - only consider TRB sequences
-      * `"all"` - both TRA and TRB need to match
-      * `"any"` - either TRA or TRB need to match
+      * `"VJ"` - only consider :term:`VJ<V(D)J>` sequences
+      * `"VDJ"` - only consider :term:`VDJ<V(D)J>` sequences
+      * `"all"` - both VJ and VDJ need to match
+      * `"any"` - either VJ or VDJ need to match
 
     If `"any"`, two distances are combined by taking their minimum. If `"all"`,
     two distances are combined by taking their maximum. This is motivated
@@ -35,10 +35,10 @@ receptor_arms
 
 dual_ir
     One of the following options:
-      * `"primary_only"` - only consider most abundant pair of TRA/TRB chains
-      * `"any"` - consider both pairs of TRA/TRB sequences. Distance must be below
+      * `"primary_only"` - only consider most abundant pair of :term:`VJ/VDJ<V(D)J>` chains
+      * `"any"` - consider both pairs of :term:`VJ/VDJ<V(D)J>` sequences. Distance must be below
         cutoff for any of the chains.
-      * `"all"` - consider both pairs of TRA/TRB sequences. Distance must be below
+      * `"all"` - consider both pairs of :term:`VJ/VDJ<V(D)J>` sequences. Distance must be below
         cutoff for all of the chains.
 
     Distances are combined as for `receptor_arms`.
