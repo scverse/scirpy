@@ -13,7 +13,7 @@ def clonotype_convergence(
     key_coarse: str,
     key_fine: str,
     key_added: str = "is_convergent",
-    inplace=True
+    inplace=True,
 ) -> Optional[Categorical]:
     """
     Finds evidence for :term:`Convergent evolution of clonotypes`.

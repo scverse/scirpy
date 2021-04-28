@@ -68,7 +68,7 @@ class ClonotypeNeighbors:
         logging.hint("Done initializing lookup tables.", time=start)
 
     def _make_clonotype_table(self, adata):
-        """Define 'preliminary' clonotypes based identical IR features. """
+        """Define 'preliminary' clonotypes based identical IR features."""
         if not adata.obs_names.is_unique:
             raise ValueError("Obs names need to be unique!")
 

@@ -142,7 +142,7 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
 
 def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
-    """Read IR data from a 10x genomics `_contig_annotations.csv` file """
+    """Read IR data from a 10x genomics `_contig_annotations.csv` file"""
     logger = _IOLogger()
     df = pd.read_csv(path)
 

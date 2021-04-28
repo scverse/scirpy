@@ -13,7 +13,7 @@ def alpha_diversity(
     *,
     target_col: str = "clone_id",
     inplace: bool = True,
-    key_added: Union[None, str] = None
+    key_added: Union[None, str] = None,
 ) -> pd.DataFrame:
     """Computes the alpha diversity of clonotypes within a group.
 
