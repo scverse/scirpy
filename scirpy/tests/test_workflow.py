@@ -44,9 +44,8 @@ def test_workflow(
         """If save_intermediates is True, save the anndata to a temporary location
         and re-load it from disk."""
         if save_intermediates:
-            with tempfile.NamedTemporaryFile() as f:
-                adata.write_h5ad(f.name)
-                return sc.read_h5ad(f.name)
+            adata.write_h5ad(tmp_path / "tmp_adata.h5ad")
+            return sc.read_h5ad(tmp_path / "tmp_adata.h5ad")
         else:
             return adata
 
