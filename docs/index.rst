@@ -8,4 +8,6 @@
    api
    ir-biology
    glossary
+   versions
    zzz_bibliography
+
