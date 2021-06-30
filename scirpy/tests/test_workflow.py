@@ -21,6 +21,7 @@ import scanpy as sc
 
 
 @pytest.mark.conda
+@pytest.mark.parametrize("save_intermediates", [False, True])
 @pytest.mark.parametrize(
     "adata_path,upgrade_schema,obs_expected",
     [
@@ -36,7 +37,19 @@ import scanpy as sc
         ),
     ],
 )
-def test_workflow(adata_path, upgrade_schema, obs_expected, tmp_path):
+def test_workflow(
+    adata_path, save_intermediates, upgrade_schema, obs_expected, tmp_path
+):
+    def _save_and_load(adata):
+        """If save_intermediates is True, save the anndata to a temporary location
+        and re-load it from disk."""
+        if save_intermediates:
+            with tempfile.NamedTemporaryFile() as f:
+                adata.write_h5ad(f.name)
+                return sc.read_h5ad(f.name)
+        else:
+            return adata
+
     if upgrade_schema:
         adata = sc.read_h5ad(adata_path)
         ir.io.upgrade_schema(adata)
@@ -46,15 +59,17 @@ def test_workflow(adata_path, upgrade_schema, obs_expected, tmp_path):
     adata_obs_expected = pd.read_pickle(obs_expected)
 
     ir.tl.chain_qc(adata)
+    adata = _save_and_load(adata)
     ir.pp.ir_dist(adata)
+    adata = _save_and_load(adata)
     ir.tl.define_clonotypes(adata)
+    adata = _save_and_load(adata)
     ir.tl.clonotype_network(adata)
+    adata = _save_and_load(adata)
     ir.tl.clonal_expansion(adata)
-
+    adata = _save_and_load(adata)
     ir.pl.clonotype_network(adata)
-
-    # test that writing works (i.e. all scirpy fields can be serialized)
-    adata.write_h5ad(tmp_path / "adata.h5ad")
+    adata = _save_and_load(adata)
 
     # turn nans into consistent value (nan)
     _normalize_df_types(adata.obs)

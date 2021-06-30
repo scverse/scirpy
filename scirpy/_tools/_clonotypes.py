@@ -288,7 +288,7 @@ def define_clonotype_clusters(
     # clonotype cluster = graph partition
     idx, values = zip(
         *itertools.chain.from_iterable(
-            zip(ctn.cell_indices[ct_id], itertools.repeat(str(clonotype_cluster)))
+            zip(ctn.cell_indices[str(ct_id)], itertools.repeat(str(clonotype_cluster)))
             for ct_id, clonotype_cluster in enumerate(part.membership)
         )
     )
@@ -543,7 +543,7 @@ def clonotype_network(
     # Expand to cell coordinates to store in adata.obsm
     idx, coords = zip(
         *itertools.chain.from_iterable(
-            zip(clonotype_res["cell_indices"][node_id], itertools.repeat(coord))
+            zip(clonotype_res["cell_indices"][str(node_id)], itertools.repeat(coord))
             for node_id, coord in zip(graph.vs["node_id"], coords)  # type: ignore
         )
     )
@@ -597,8 +597,8 @@ def _graph_from_coordinates(
     )
 
     # Networkx graph object for plotting edges
-    adj_mat = clonotype_res["distances"][coords["dist_idx"].values, :][
-        :, coords["dist_idx"].values
+    adj_mat = clonotype_res["distances"][coords["dist_idx"].values.astype(int), :][
+        :, coords["dist_idx"].values.astype(int)
     ]
 
     return coords, adj_mat
