@@ -99,8 +99,10 @@ class ClonotypeNeighbors:
         # It doesn't necessarily have the same order as `clonotypes`.
         # This needs to be a dict of arrays, otherwiswe anndata
         # can't save it to h5ad.
+        # Also the dict keys need to be of type `str`, or they'll get converted
+        # implicitly.
         self.cell_indices = {
-            i: obs_filtered.index[
+            str(i): obs_filtered.index[
                 clonotype_groupby.indices.get(
                     # indices is not a tuple if it's just a single column.
                     ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
