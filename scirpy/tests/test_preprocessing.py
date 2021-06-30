@@ -48,9 +48,15 @@ def test_merge_airr_chains_concat():
     )
 
 
-def test_merge_airr_chains_no_ir():
+@pytest.mark.parametrize("is_cell,result", [("None", None), ("foo", ValueError)])
+def test_merge_airr_chains_no_ir(is_cell, result: BaseException):
     """Test that merging an IR anndata with a non-IR anndata
-    also works with `merge_airr_chains`."""
+    also works with `merge_airr_chains`.
+
+    When a cell-level attribute (`is_cell`) is present, and an inconsistent value
+    gets merged, the function should fail with a ValueError. However, if `is_cell` is
+    "None", merging should still be possible.
+    """
     cell_ids_anndata = np.array(
         [
             "AAACCTGAGATAGCAT-1",
@@ -65,16 +71,21 @@ def test_merge_airr_chains_no_ir():
     adata = AnnData(X=np.ones((6, 2)))
     adata.obs_names = cell_ids_anndata
     adata.obs["foo"] = "bar"
+    adata.obs["is_cell"] = is_cell
     adata_ir = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
     adata_ir.obs["foo_ir"] = "bar_ir"
 
-    merge_airr_chains(adata, adata_ir)
+    if result is not None:
+        with pytest.raises(result):
+            merge_airr_chains(adata, adata_ir)
+    else:
+        merge_airr_chains(adata, adata_ir)
 
-    npt.assert_array_equal(adata.obs.index, cell_ids_anndata)
-    assert np.all(np.isin(adata_ir.obs.columns, adata.obs.columns))
-    assert "foo" in adata.obs.columns
-    assert "foo_ir" in adata.obs.columns
-    assert list(adata.obs_names) == list(cell_ids_anndata)
+        npt.assert_array_equal(adata.obs.index, cell_ids_anndata)
+        assert np.all(np.isin(adata_ir.obs.columns, adata.obs.columns))
+        assert "foo" in adata.obs.columns
+        assert "foo_ir" in adata.obs.columns
+        assert list(adata.obs_names) == list(cell_ids_anndata)
 
 
 def test_merge_adata():

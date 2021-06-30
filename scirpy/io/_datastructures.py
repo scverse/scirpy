@@ -109,7 +109,7 @@ class AirrCell(MutableMapping):
             v = _is_true2(v)
         try:
             existing_value = self._cell_attrs[k]
-            if existing_value != v:
+            if existing_value != v and not _is_na2(existing_value):
                 raise ValueError(
                     "Cell-level attributes differ between different chains. "
                     f"Already present: `{existing_value}`. Tried to add `{v}`."
