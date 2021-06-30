@@ -654,7 +654,6 @@ def to_dandelion(adata: AnnData):
                     "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
                 }
             )
-            chain["umi_count"] = chain.pop("duplicate_count")
             contig_dicts[chain["sequence_id"]] = chain
 
     data = pd.DataFrame.from_dict(contig_dicts, orient="index")

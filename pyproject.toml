@@ -54,7 +54,7 @@ test = [
     'black'
 ]
 dandelion = [
-    'sc-dandelion',
+    'sc-dandelion>=0.1.3',
     'adjusttext', # see https://github.com/zktuong/dandelion/issues/55
 ]
 doc = [
