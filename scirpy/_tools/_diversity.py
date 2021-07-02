@@ -4,6 +4,7 @@ from anndata import AnnData
 import pandas as pd
 from typing import Union
 from ..io._util import _check_upgrade_schema
+import skbio
 
 
 @_check_upgrade_schema()
@@ -12,11 +13,17 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
+    method: str = "normalized shannon entropy",
     inplace: bool = True,
     key_added: Union[None, str] = None,
 ) -> pd.DataFrame:
     """Computes the alpha diversity of clonotypes within a group.
 
+    Use a method out of normalized shannon entropy, D50, and `scikit-bio’s alpha diversity metrics 
+    <http://scikit-bio.org/docs/0.4.2/generated/skbio.diversity.alpha.html#module-skbio.diversity.alpha >`,
+    
+
+    Normalized shannon entropy:
     Uses the `Shannon Entropy <https://mathworld.wolfram.com/Entropy.html>`__ as
     diversity measure. The Entrotpy gets
     `normalized to group size <https://math.stackexchange.com/a/945172>`__.
@@ -31,6 +38,9 @@ def alpha_diversity(
         Column of `obs` by which the grouping will be performed.
     target_col
         Column on which to compute the alpha diversity
+    method
+        a method used for diversity estimation out of normalized shannon entropy, D50,
+        and scikit-bio’s alpha diversity metrics
     inplace
         If `True`, add a column to `obs`. Otherwise return a DataFrame
         with the alpha diversities.
@@ -48,12 +58,28 @@ def alpha_diversity(
         """Normalized shannon entropy according to
         https://math.stackexchange.com/a/945172
         """
-        np.testing.assert_almost_equal(np.sum(freq), 1)
         if len(freq) == 1:
             # the formula below is not defined for n==1
             return 0
         else:
             return -np.sum((freq * np.log(freq)) / np.log(len(freq)))
+    
+    def _dxx(freq, perc, normalize=True):
+        """
+        DXX: minimum number of clonotypes that account for XX% of the cell population.
+        If normalize, further divided by the total number of unique clonotypes
+        """
+        freq = np.sort(freq)[::-1]
+        prop, i = 0, 0
+        
+        while (prop < perc):
+            prop += freq[i]
+            i += 1
+
+        if normalize:
+            i /= len(freq)
+
+        return i
 
     ir_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clono_counts = (
@@ -65,8 +91,20 @@ def alpha_diversity(
     diversity = dict()
     for k in sorted(ir_obs[groupby].unique()):
         tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
-        tmp_freqs = tmp_counts / np.sum(tmp_counts)
-        diversity[k] = _shannon_entropy(tmp_freqs)
+        
+        if method in ["normalized shannon entropy", "D50"]:
+            # calculate frequencies for these two metrics
+            tmp_freqs = tmp_counts / np.sum(tmp_counts)
+            np.testing.assert_almost_equal(np.sum(tmp_freqs), 1)
+
+            if method == "normalized shannon entropy":
+                diversity[k] = _shannon_entropy(tmp_freqs)
+            else:
+                diversity[k] = _dxx(tmp_freqs, perc=0.5)
+        
+        else:
+            # skbio.diversity takes count vectors as input
+            diversity[k] = skbio.diversity.alpha_diversity(method, tmp_counts)
 
     if inplace:
         key_added = "alpha_diversity_" + target_col if key_added is None else key_added
