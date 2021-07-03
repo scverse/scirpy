@@ -102,9 +102,13 @@ def alpha_diversity(
             else:
                 diversity[k] = _dxx(tmp_freqs, perc=0.5)
         
-        else:
+        elif method in skbio.diversity.get_alpha_diversity_metrics():
             # skbio.diversity takes count vectors as input
             diversity[k] = skbio.diversity.alpha_diversity(method, tmp_counts)
+        
+        else:
+            # raise if method is not supported
+            raise ValueError(f"{method} diversity metric is not supported")
 
     if inplace:
         key_added = "alpha_diversity_" + target_col if key_added is None else key_added
