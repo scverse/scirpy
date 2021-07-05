@@ -13,7 +13,7 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    method: str = "normalized shannon entropy",
+    metric: str = "normalized_shannon_entropy",
     vistype: Literal["bar"] = "bar",
     **kwargs,
 ) -> plt.Axes:
@@ -29,19 +29,19 @@ def alpha_diversity(
         Column of `obs` by which the grouping will be performed
     target_col
         Column on which to compute the alpha diversity
-    method
-        a method used for diversity estimation out of normalized shannon entropy, D50,
+    metric
+        a metric used for diversity estimation out of normalized shannon entropy, D50, DXX,
         and scikit-bio’s alpha diversity metrics
     vistype
         Visualization type. Currently only 'bar' is supported.
     **kwargs
         Additional parameters passed to :func:`scirpy.pl.base.bar`
     """
-    diversity = tl.alpha_diversity(adata, groupby, target_col=target_col, method=method, inplace=False)
+    diversity = tl.alpha_diversity(adata, groupby, target_col=target_col, metric=metric, inplace=False)
     default_style_kws = {
         "title": "Alpha diversity of {} by {}".format(target_col, groupby),
         # convert snake case to title case
-        "ylab": method.replace("_", " ").title(),
+        "ylab": metric.replace("_", " ").title(),
     }
     if "style_kws" in kwargs:
         default_style_kws.update(kwargs["style_kws"])

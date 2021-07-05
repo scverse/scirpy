@@ -268,17 +268,44 @@ def test_clonal_expansion_summary(adata_clonotype):
 
 
 def test_alpha_diversity(adata_diversity):
+    # normalized_shannon_entropy by default
     res = ir.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=False
     )
     assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 1.0}}
 
+    # D50
+    res = ir.tl.alpha_diversity(
+        adata_diversity, groupby="group", target_col="clonotype_", metric = "D50", inplace=False
+    )
+    assert res.to_dict(orient="index") == {"A": {0: 100}, "B": {0: 75}}
+
+    # observed_otus from skbio.diversity.alpha that calculates the number of distinct OTUs.
+    res = ir.tl.alpha_diversity(
+        adata_diversity, groupby="group", target_col="clonotype_", metric = "observed_otus", inplace=False
+    )
+    assert res.to_dict(orient="index") == {"A": {0: 1}, "B": {0: 4}}
+
     ir.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=True
     )
+    ir.tl.alpha_diversity(
+        adata_diversity, groupby="group", target_col="clonotype_", metric = "D50", inplace=True
+    )
+    ir.tl.alpha_diversity(
+        adata_diversity, groupby="group", target_col="clonotype_", metric = "observed_otus", inplace=True
+    )
+    npt.assert_equal(
+        adata_diversity.obs["alpha_diversity_clonotype__normalized_shannon_entropy"].values,
+        np.array([0.0] * 4 + [1.0] * 4),
+    )
+    npt.assert_equal(
+        adata_diversity.obs["alpha_diversity_clonotype__D50"].values,
+        np.array([100] * 4 + [75] * 4),
+    )
     npt.assert_equal(
         adata_diversity.obs["alpha_diversity_clonotype_"].values,
-        np.array([0.0] * 4 + [1.0] * 4),
+        np.array([1] * 4 + [4] * 4),
     )
 
 
