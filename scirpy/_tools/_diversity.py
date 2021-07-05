@@ -124,7 +124,7 @@ def alpha_diversity(
                     )
             else:
                 # skbio.diversity takes count vectors as input and takes care of unknown metrics
-                diversity[k] = skbio.diversity.alpha_diversity(metric, tmp_counts)
+                diversity[k] = skbio.diversity.alpha_diversity(metric, tmp_counts).values[0]
 
     if inplace:
         key_added = f"alpha_diversity_{target_col}_{metric}" if key_added is None else key_added

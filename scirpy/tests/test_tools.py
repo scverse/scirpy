@@ -278,7 +278,7 @@ def test_alpha_diversity(adata_diversity):
     res = ir.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", metric = "D50", inplace=False
     )
-    assert res.to_dict(orient="index") == {"A": {0: 100}, "B": {0: 75}}
+    assert res.to_dict(orient="index") == {"A": {0: 100.0}, "B": {0: 50.0}}
 
     # observed_otus from skbio.diversity.alpha that calculates the number of distinct OTUs.
     res = ir.tl.alpha_diversity(
@@ -301,10 +301,10 @@ def test_alpha_diversity(adata_diversity):
     )
     npt.assert_equal(
         adata_diversity.obs["alpha_diversity_clonotype__D50"].values,
-        np.array([100] * 4 + [75] * 4),
+        np.array([100.0] * 4 + [50.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["alpha_diversity_clonotype_"].values,
+        adata_diversity.obs["alpha_diversity_clonotype__observed_otus"].values,
         np.array([1] * 4 + [4] * 4),
     )
 
