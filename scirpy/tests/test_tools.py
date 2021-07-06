@@ -313,17 +313,15 @@ def test_alpha_diversity(adata_diversity):
         inplace=True,
     )
     npt.assert_equal(
-        adata_diversity.obs[
-            "alpha_diversity_clonotype__normalized_shannon_entropy"
-        ].values,
+        adata_diversity.obs["normalized_shannon_entropy_clonotype_"].values,
         np.array([0.0] * 4 + [1.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["alpha_diversity_clonotype__D50"].values,
+        adata_diversity.obs["D50_clonotype_"].values,
         np.array([100.0] * 4 + [50.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["alpha_diversity_clonotype__observed_otus"].values,
+        adata_diversity.obs["observed_otus_clonotype_"].values,
         np.array([1] * 4 + [4] * 4),
     )
 
