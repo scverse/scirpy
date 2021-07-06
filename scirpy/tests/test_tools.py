@@ -267,6 +267,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
 
 
+@pytest.mark.extra
 def test_alpha_diversity(adata_diversity):
     # normalized_shannon_entropy by default
     res = ir.tl.alpha_diversity(
