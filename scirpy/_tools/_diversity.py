@@ -19,9 +19,9 @@ def alpha_diversity(
 ) -> pd.DataFrame:
     """Computes the alpha diversity of clonotypes within a group.
 
-    Use a metric out of normalized shannon entropy, D50, DXX, and `scikit-bio’s alpha diversity metrics 
+    Use a metric out of normalized shannon entropy, D50, DXX, and `scikit-bio’s alpha diversity metrics
     <http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html#module-skbio.diversity.alpha>`__.
-    
+
 
     Normalized shannon entropy:
     Uses the `Shannon Entropy <https://mathworld.wolfram.com/Entropy.html>`__ as
@@ -30,7 +30,7 @@ def alpha_diversity(
 
     D50:
     The diversity index (D50) is a measure of the diversity of an immune repertoire of J individual cells
-    (the total number of CDR3s) composed of S distinct CDR3s in a ranked dominance configuration where ri 
+    (the total number of CDR3s) composed of S distinct CDR3s in a ranked dominance configuration where ri
     is the abundance of the ith most abundant CDR3, r1 is the abundance of the most abundant CDR3, r2 is the
     abundance of the second most abundant CDR3, and so on. C is the minimum number of distinct CDR3s,
     amounting to >50% of the total sequencing reads. D50 therefore is given by C/S x 100.
@@ -76,18 +76,18 @@ def alpha_diversity(
             return 0
         else:
             return -np.sum((freq * np.log(freq)) / np.log(len(freq)))
-    
+
     def _dxx(freq, perc=0.5):
         """
         D50/DXX according to https://patents.google.com/patent/WO2012097374A1/en
         """
         freq = np.sort(freq)[::-1]
         prop, i = 0, 0
-        
-        while (prop < perc):
+
+        while prop < perc:
             prop += freq[i]
             i += 1
-        
+
         return i / len(freq) * 100
 
     ir_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
@@ -100,7 +100,7 @@ def alpha_diversity(
     diversity = dict()
     for k in sorted(ir_obs[groupby].unique()):
         tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
-        
+
         if metric in ["normalized_shannon_entropy", "D50", "DXX"]:
             # calculate frequencies for these two metrics
             tmp_freqs = tmp_counts / np.sum(tmp_counts)
@@ -111,23 +111,26 @@ def alpha_diversity(
             elif metric == "D50":
                 diversity[k] = _dxx(tmp_freqs)
             else:
-                diversity[k] = _dxx(tmp_freqs, perc=perc)   
+                diversity[k] = _dxx(tmp_freqs, perc=perc)
         else:
             # make skbio an optional dependency
             try:
                 import skbio
             except ImportError:
                 raise ImportError(
-                    "Using scikit-bio’s alpha diversity metrics requires the installation of "
-                    "`scikit-bio`. You can install it with "
+                    "Using scikit-bio’s alpha diversity metrics requires the "
+                    "installation of `scikit-bio`. You can install it with "
                     "`pip install scikit-bio`."
-                    )
+                )
             else:
-                # skbio.diversity takes count vectors as input and takes care of unknown metrics
-                diversity[k] = skbio.diversity.alpha_diversity(metric, tmp_counts).values[0]
+                # skbio.diversity takes count vectors as input and
+                # takes care of unknown metrics
+                diversity[k] = skbio.diversity.alpha_diversity(
+                    metric, tmp_counts
+                ).values[0]
 
     if inplace:
-        key_added = f"alpha_diversity_{target_col}_{metric}" if key_added is None else key_added
+        key_added = f"{metric}_{target_col}" if key_added is None else key_added
         adata.obs[key_added] = adata.obs[groupby].map(diversity)
     else:
         return pd.DataFrame().from_dict(diversity, orient="index")
