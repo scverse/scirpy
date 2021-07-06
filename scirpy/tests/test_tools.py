@@ -267,6 +267,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
 
 
+@pytest.mark.extra
 def test_alpha_diversity(adata_diversity):
     # normalized_shannon_entropy by default
     res = ir.tl.alpha_diversity(
@@ -276,13 +277,21 @@ def test_alpha_diversity(adata_diversity):
 
     # D50
     res = ir.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_", metric = "D50", inplace=False
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric="D50",
+        inplace=False,
     )
     assert res.to_dict(orient="index") == {"A": {0: 100.0}, "B": {0: 50.0}}
 
     # observed_otus from skbio.diversity.alpha that calculates the number of distinct OTUs.
     res = ir.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_", metric = "observed_otus", inplace=False
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric="observed_otus",
+        inplace=False,
     )
     assert res.to_dict(orient="index") == {"A": {0: 1}, "B": {0: 4}}
 
@@ -290,13 +299,23 @@ def test_alpha_diversity(adata_diversity):
         adata_diversity, groupby="group", target_col="clonotype_", inplace=True
     )
     ir.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_", metric = "D50", inplace=True
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric="D50",
+        inplace=True,
     )
     ir.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_", metric = "observed_otus", inplace=True
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric="observed_otus",
+        inplace=True,
     )
     npt.assert_equal(
-        adata_diversity.obs["alpha_diversity_clonotype__normalized_shannon_entropy"].values,
+        adata_diversity.obs[
+            "alpha_diversity_clonotype__normalized_shannon_entropy"
+        ].values,
         np.array([0.0] * 4 + [1.0] * 4),
     )
     npt.assert_equal(
