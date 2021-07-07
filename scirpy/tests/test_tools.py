@@ -295,6 +295,20 @@ def test_alpha_diversity(adata_diversity):
     )
     assert res.to_dict(orient="index") == {"A": {0: 1}, "B": {0: 4}}
 
+    # custom metric function simply returns the # of unique clonotypes,
+    # same as the observed_otus function
+    def metric_func(counts):
+        return len(counts)
+
+    res = ir.tl.alpha_diversity(
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric=metric_func,
+        inplace=False,
+    )
+    assert res.to_dict(orient="index") == {"A": {0: 1}, "B": {0: 4}}
+
     ir.tl.alpha_diversity(
         adata_diversity, groupby="group", target_col="clonotype_", inplace=True
     )
@@ -312,6 +326,23 @@ def test_alpha_diversity(adata_diversity):
         metric="observed_otus",
         inplace=True,
     )
+
+    ir.tl.alpha_diversity(
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric="observed_otus",
+        inplace=True,
+    )
+
+    ir.tl.alpha_diversity(
+        adata_diversity,
+        groupby="group",
+        target_col="clonotype_",
+        metric=metric_func,
+        inplace=True,
+    )
+
     npt.assert_equal(
         adata_diversity.obs["normalized_shannon_entropy_clonotype_"].values,
         np.array([0.0] * 4 + [1.0] * 4),
@@ -322,6 +353,10 @@ def test_alpha_diversity(adata_diversity):
     )
     npt.assert_equal(
         adata_diversity.obs["observed_otus_clonotype_"].values,
+        np.array([1] * 4 + [4] * 4),
+    )
+    npt.assert_equal(
+        adata_diversity.obs["metric_func_clonotype_"].values,
         np.array([1] * 4 + [4] * 4),
     )
 

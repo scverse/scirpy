@@ -5,6 +5,7 @@ from .. import tl
 import numpy as np
 import matplotlib.pyplot as plt
 from ..io._util import _check_upgrade_schema
+from typing import Union, Callable
 
 
 @_check_upgrade_schema()
@@ -13,7 +14,9 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: str = "normalized_shannon_entropy",
+    metric: Union[
+        str, Callable[[np.array], Union[int, float]]
+    ] = "normalized_shannon_entropy",
     vistype: Literal["bar"] = "bar",
     **kwargs,
 ) -> plt.Axes:
@@ -31,7 +34,7 @@ def alpha_diversity(
         Column on which to compute the alpha diversity
     metric
         a metric used for diversity estimation out of normalized shannon entropy, D50,
-        DXX, and scikit-bio’s alpha diversity metrics
+        DXX, and scikit-bio’s alpha diversity metrics or a custom function
     vistype
         Visualization type. Currently only 'bar' is supported.
     **kwargs

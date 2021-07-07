@@ -2,7 +2,7 @@ import numpy as np
 from ..util import _is_na
 from anndata import AnnData
 import pandas as pd
-from typing import Union
+from typing import Union, Callable
 from ..io._util import _check_upgrade_schema
 
 
@@ -12,7 +12,9 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: str = "normalized_shannon_entropy",
+    metric: Union[
+        str, Callable[[np.array], Union[int, float]]
+    ] = "normalized_shannon_entropy",
     perc: float = 0.5,
     inplace: bool = True,
     key_added: Union[None, str] = None,
@@ -21,7 +23,8 @@ def alpha_diversity(
 
     Use a metric out of normalized shannon entropy, D50, DXX, and `scikit-bio’s alpha diversity metrics
     <http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html#module-skbio.diversity.alpha>`__.
-
+    Alternatively, provide a custom function to calculate the diversity based on count vectors
+    as explained here `<http://scikit-bio.org/docs/latest/diversity.html>`__
 
     Normalized shannon entropy:
     Uses the `Shannon Entropy <https://mathworld.wolfram.com/Entropy.html>`__ as
@@ -51,7 +54,7 @@ def alpha_diversity(
         Column on which to compute the alpha diversity
     metric
         A metric used for diversity estimation out of normalized shannon entropy, D50, DXX,
-        and scikit-bio’s alpha diversity metrics
+        and scikit-bio’s alpha diversity metrics or a custom function
     perc
         Desired percent for the DXX metric
     inplace
@@ -67,28 +70,34 @@ def alpha_diversity(
     for each group or adds a column to `adata.obs`.
     """
     # Could rely on skbio.math if more variants are required.
-    def _shannon_entropy(freq):
+    def _shannon_entropy(counts):
         """Normalized shannon entropy according to
         https://math.stackexchange.com/a/945172
         """
-        if len(freq) == 1:
+        freqs = counts / np.sum(counts)
+        np.testing.assert_almost_equal(np.sum(freqs), 1)
+
+        if len(freqs) == 1:
             # the formula below is not defined for n==1
             return 0
         else:
-            return -np.sum((freq * np.log(freq)) / np.log(len(freq)))
+            return -np.sum((freqs * np.log(freqs)) / np.log(len(freqs)))
 
-    def _dxx(freq, perc=0.5):
+    def _dxx(counts, perc=0.5):
         """
         D50/DXX according to https://patents.google.com/patent/WO2012097374A1/en
         """
-        freq = np.sort(freq)[::-1]
+        freqs = counts / np.sum(counts)
+        np.testing.assert_almost_equal(np.sum(freqs), 1)
+
+        freqs = np.sort(freqs)[::-1]
         prop, i = 0, 0
 
         while prop < perc:
-            prop += freq[i]
+            prop += freqs[i]
             i += 1
 
-        return i / len(freq) * 100
+        return i / len(freqs) * 100
 
     ir_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clono_counts = (
@@ -101,36 +110,36 @@ def alpha_diversity(
     for k in sorted(ir_obs[groupby].unique()):
         tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
 
-        if metric in ["normalized_shannon_entropy", "D50", "DXX"]:
-            # calculate frequencies for these two metrics
-            tmp_freqs = tmp_counts / np.sum(tmp_counts)
-            np.testing.assert_almost_equal(np.sum(tmp_freqs), 1)
-
+        if isinstance(metric, str):
             if metric == "normalized_shannon_entropy":
-                diversity[k] = _shannon_entropy(tmp_freqs)
+                diversity[k] = _shannon_entropy(tmp_counts)
             elif metric == "D50":
-                diversity[k] = _dxx(tmp_freqs)
+                diversity[k] = _dxx(tmp_counts)
+            elif metric == "DXX":
+                diversity[k] = _dxx(tmp_counts, perc=perc)
             else:
-                diversity[k] = _dxx(tmp_freqs, perc=perc)
+                # make skbio an optional dependency
+                try:
+                    import skbio
+                except ImportError:
+                    raise ImportError(
+                        "Using scikit-bio’s alpha diversity metrics requires the "
+                        "installation of `scikit-bio`. You can install it with "
+                        "`pip install scikit-bio`."
+                    )
+                else:
+                    # skbio.diversity takes count vectors as input and
+                    # takes care of unknown metrics
+                    diversity[k] = skbio.diversity.alpha_diversity(
+                        metric, tmp_counts
+                    ).values[0]
         else:
-            # make skbio an optional dependency
-            try:
-                import skbio
-            except ImportError:
-                raise ImportError(
-                    "Using scikit-bio’s alpha diversity metrics requires the "
-                    "installation of `scikit-bio`. You can install it with "
-                    "`pip install scikit-bio`."
-                )
-            else:
-                # skbio.diversity takes count vectors as input and
-                # takes care of unknown metrics
-                diversity[k] = skbio.diversity.alpha_diversity(
-                    metric, tmp_counts
-                ).values[0]
+            # calculate diversity using custom function
+            diversity[k] = metric(tmp_counts)
 
     if inplace:
-        key_added = f"{metric}_{target_col}" if key_added is None else key_added
+        metric_name = metric if isinstance(metric, str) else metric.__name__
+        key_added = f"{metric_name}_{target_col}" if key_added is None else key_added
         adata.obs[key_added] = adata.obs[groupby].map(diversity)
     else:
         return pd.DataFrame().from_dict(diversity, orient="index")
