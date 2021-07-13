@@ -58,7 +58,7 @@ dandelion = [
     'adjusttext', # see https://github.com/zktuong/dandelion/issues/55
 ]
 diversity = [
-    'skbio>=0.5'
+    'scikit-bio>=0.5'
 ]
 doc = [
     'sphinx>=3.0.1,<3.1',

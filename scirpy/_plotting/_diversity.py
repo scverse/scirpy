@@ -5,7 +5,7 @@ from .. import tl
 import numpy as np
 import matplotlib.pyplot as plt
 from ..io._util import _check_upgrade_schema
-from typing import Union, Callable
+from typing import Union, Callable, Mapping
 
 
 @_check_upgrade_schema()
@@ -15,8 +15,9 @@ def alpha_diversity(
     *,
     target_col: str = "clone_id",
     metric: Union[
-        str, Callable[[np.array], Union[int, float]]
+        str, Callable[[np.ndarray], Union[int, float]]
     ] = "normalized_shannon_entropy",
+    metric_kwargs: Mapping = None,
     vistype: Literal["bar"] = "bar",
     **kwargs,
 ) -> plt.Axes:
@@ -33,15 +34,23 @@ def alpha_diversity(
     target_col
         Column on which to compute the alpha diversity
     metric
-        a metric used for diversity estimation out of normalized shannon entropy, D50,
-        DXX, and scikit-bio’s alpha diversity metrics or a custom function
+        A metric used for diversity estimation out of `normalized_shannon_entropy`,
+        `D50`, `DXX`, any of scikit-bio’s alpha diversity metrics, or a custom function.
+        For more details, see :func:`scirpy.tl.alpha_diversity`.
+    metric_kwargs
+        Dictionary of additional parameters passed to the metric function.
     vistype
         Visualization type. Currently only 'bar' is supported.
     **kwargs
         Additional parameters passed to :func:`scirpy.pl.base.bar`
     """
     diversity = tl.alpha_diversity(
-        adata, groupby, target_col=target_col, metric=metric, inplace=False
+        adata,
+        groupby,
+        target_col=target_col,
+        metric=metric,
+        inplace=False,
+        **(dict() if metric_kwargs is None else metric_kwargs),
     )
     default_style_kws = {
         "title": "Alpha diversity of {} by {}".format(target_col, groupby),
