@@ -125,7 +125,13 @@ def alpha_diversity(
             elif metric == "D50":
                 diversity[k] = _dxx(tmp_counts, percentage=50)
             elif metric == "DXX":
-                diversity[k] = _dxx(tmp_counts, **kwargs)
+                if "percentage" in kwargs:
+                    diversity[k] = _dxx(tmp_counts, percentage=kwargs.get("percentage"))
+                else:
+                    raise ValueError(
+                        "DXX requires the `percentage` keyword argument, which can "
+                        "range from 0 to 100."
+                    )
             else:
                 # make skbio an optional dependency
                 try:
