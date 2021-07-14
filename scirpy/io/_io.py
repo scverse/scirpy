@@ -349,7 +349,9 @@ def read_airr(
      * at least one of `junction_aa` or `junction`.
 
     Data should still import if one of these fields is missing, but they are required
-    by most of scirpy's processing functions. 
+    by most of scirpy's processing functions. All chains for which the field
+    `junction_aa` is missing or empty, will be considered as non-productive and 
+    will be moved to the `extra_chains` column.   
 
     {doc_working_model}
 

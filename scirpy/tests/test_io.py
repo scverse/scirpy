@@ -351,6 +351,8 @@ def test_read_tracer():
 def test_read_airr_issue280():
     """Test that reading the example shown in issue #280 works."""
     anndata = read_airr(TESTDATA / "airr" / "tra_issue_280.tsv")
+    assert anndata.obs["IR_VDJ_1_junction_aa"][0] == "CASSLGGESQNTLYF"
+    assert anndata.obs["IR_VJ_1_junction_aa"][0] == "CAARGNRIFF"
 
 
 @pytest.mark.conda

@@ -184,9 +184,17 @@ class AirrCell(MutableMapping):
         for tmp_chain in self.chains:
             if "locus" not in tmp_chain:
                 split_chains["extra"].append(tmp_chain)
-            elif tmp_chain["locus"] in self.VJ_LOCI and tmp_chain["productive"]:
+            elif (
+                tmp_chain["locus"] in self.VJ_LOCI
+                and tmp_chain["productive"]
+                and not _is_na2(tmp_chain["junction_aa"])
+            ):
                 split_chains["VJ"].append(tmp_chain)
-            elif tmp_chain["locus"] in self.VDJ_LOCI and tmp_chain["productive"]:
+            elif (
+                tmp_chain["locus"] in self.VDJ_LOCI
+                and tmp_chain["productive"]
+                and not _is_na2(tmp_chain["junction_aa"])
+            ):
                 split_chains["VDJ"].append(tmp_chain)
             else:
                 split_chains["extra"].append(tmp_chain)
