@@ -13,9 +13,10 @@ doc_working_model = """\
        and cells flagged as :term:`Multichain-cell`.
      * Non-productive chains are ignored. 
      * Chain loci must be valid :term:`IGMT locus names<Chain locus>`.
-     * Excess chains, non-productive chains, or chains with invalid loci
-       are serialized to JSON and stored in the `extra_chains` column. They are not 
-       used by scirpy except when exporting the `AnnData` object to AIRR format. 
+     * Excess chains, non-productive chains, chains without a CDR3 sequence, 
+       or chains with invalid loci are serialized to JSON and stored in the 
+       `extra_chains` column. They are not used by scirpy except when exporting 
+       the `AnnData` object to AIRR format. 
 
     For more information, see :ref:`receptor-model`.
 """
