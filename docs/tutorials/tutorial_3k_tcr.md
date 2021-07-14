@@ -461,7 +461,7 @@ Consistent with this observation, they have the lowest :func:`scirpy.pl.alpha_di
 <!-- #endraw -->
 
 ```python
-ax = ir.pl.alpha_diversity(adata, groupby="cluster")
+ax = ir.pl.alpha_diversity(adata, metric="normalized_shannon_entropy", groupby="cluster")
 ```
 
 ### Clonotype abundance
