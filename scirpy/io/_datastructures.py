@@ -243,18 +243,17 @@ class AirrCell(MutableMapping):
         # https://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types
         for chain in chains:
             for k, v in chain.items():
-                if include_fields is not None:
-                    if k in include_fields:
-                        try:
-                            chain[k] = chain[k].item()
-                        except AttributeError:
-                            pass
-                else:
-                    try:
-                        chain[k] = chain[k].item()
-                    except AttributeError:
-                        pass
-        return json.dumps(chains)
+                try:
+                    chain[k] = chain[k].item()
+                except AttributeError:
+                    pass
+
+        # Filter chains for `include_fields`
+        chains_filtered = [
+            {k: v for k, v in chain.items() if k in include_fields} for chain in chains
+        ]
+
+        return json.dumps(chains_filtered)
 
     def to_airr_records(self) -> Iterable[dict]:
         """Iterate over chains as AIRR-Rearrangent compliant dictonaries.
