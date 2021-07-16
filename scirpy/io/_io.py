@@ -663,7 +663,9 @@ def to_dandelion(adata: AnnData):
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_dandelion(dandelion, transfer=False) -> AnnData:
+def from_dandelion(
+    dandelion, transfer: bool = False, include_fields: Optional[Collection[str]] = None
+) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
@@ -691,7 +693,14 @@ def from_dandelion(dandelion, transfer=False) -> AnnData:
     for col in dandelion_df.columns:
         dandelion_df.loc[dandelion_df[col] == "unassigned", col] = None
 
-    adata = read_airr(dandelion_df)
+    if include_fields is None:
+        if RearrangementSchema.validate_header(dandelion_df.columns):
+            adata = read_airr(dandelion_df, include_fields=None)
+        else:
+            adata = read_airr(dandelion_df)
+    else:
+        adata = read_airr(dandelion_df, include_fields=include_fields)
+
     if transfer:
         ddl.tl.transfer(
             adata, dandelion
