@@ -163,7 +163,9 @@ class AirrCell(MutableMapping):
         if not _is_na2(serialized_chains):
             tmp_chains = json.loads(serialized_chains)
             for chain in tmp_chains:
-                self.add_chain(chain)
+                tmp_chain = AirrCell.empty_chain_dict()
+                tmp_chain.update(chain)
+                self.add_chain(tmp_chain)
 
     def _split_chains(self) -> Tuple[bool, dict]:
         """
