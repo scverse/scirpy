@@ -251,8 +251,6 @@ class AirrCell(MutableMapping):
                             chain[k] = chain[k].item()
                         except AttributeError:
                             pass
-                    else:
-                        pass
                 else:
                     try:
                         chain[k] = chain[k].item()
