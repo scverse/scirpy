@@ -236,17 +236,26 @@ class AirrCell(MutableMapping):
         return tuple(-1 if x is None else x for x in sort_tuple)
 
     @staticmethod
-    def _serialize_chains(chains: List[MutableMapping]) -> str:
+    def _serialize_chains(chains: List[MutableMapping], include_fields: Optional[Collection[str]] = None) -> str:
         """Serialize chains into a JSON object. This is useful for storing
         an arbitrary number of extra chains in a single column of a dataframe."""
         # convert numpy dtypes to python types
         # https://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types
         for chain in chains:
             for k, v in chain.items():
-                try:
-                    chain[k] = chain[k].item()
-                except AttributeError:
-                    pass
+                if include_fields is not None:
+                    if k in include_fields:
+                        try:
+                            chain[k] = chain[k].item()
+                        except AttributeError:
+                            pass
+                    else:
+                        pass
+                else:
+                    try:
+                        chain[k] = chain[k].item()
+                    except AttributeError:
+                        pass
         return json.dumps(chains)
 
     def to_airr_records(self) -> Iterable[dict]:
@@ -294,7 +303,7 @@ class AirrCell(MutableMapping):
         include_fields.add("cell_id")
 
         res_dict["multi_chain"], chain_dict = self._split_chains()
-        res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"))
+        res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"), include_fields = include_fields)
 
         # add cell-level attributes
         for key in self:
