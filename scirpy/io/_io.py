@@ -667,6 +667,8 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
+    Internally calls :func:`scirpy.io.read_airr`. 
+
     {doc_working_model}
 
     Parameters
@@ -676,6 +678,8 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     transfer
         Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
+    **kwargs
+        Additional arguments passed to :func:`scirpy.io.read_airr`. 
 
     Returns
     -------
