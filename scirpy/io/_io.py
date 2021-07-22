@@ -663,9 +663,11 @@ def to_dandelion(adata: AnnData):
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_dandelion(dandelion, transfer=False) -> AnnData:
+def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
+
+    Internally calls :func:`scirpy.io.read_airr`. 
 
     {doc_working_model}
 
@@ -676,6 +678,8 @@ def from_dandelion(dandelion, transfer=False) -> AnnData:
     transfer
         Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
+    **kwargs
+        Additional arguments passed to :func:`scirpy.io.read_airr`. 
 
     Returns
     -------
@@ -691,7 +695,8 @@ def from_dandelion(dandelion, transfer=False) -> AnnData:
     for col in dandelion_df.columns:
         dandelion_df.loc[dandelion_df[col] == "unassigned", col] = None
 
-    adata = read_airr(dandelion_df)
+    adata = read_airr(dandelion_df, **kwargs)
+
     if transfer:
         ddl.tl.transfer(
             adata, dandelion

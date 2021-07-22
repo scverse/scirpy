@@ -163,7 +163,9 @@ class AirrCell(MutableMapping):
         if not _is_na2(serialized_chains):
             tmp_chains = json.loads(serialized_chains)
             for chain in tmp_chains:
-                self.add_chain(chain)
+                tmp_chain = AirrCell.empty_chain_dict()
+                tmp_chain.update(chain)
+                self.add_chain(tmp_chain)
 
     def _split_chains(self) -> Tuple[bool, dict]:
         """
@@ -234,7 +236,9 @@ class AirrCell(MutableMapping):
         return tuple(-1 if x is None else x for x in sort_tuple)
 
     @staticmethod
-    def _serialize_chains(chains: List[MutableMapping]) -> str:
+    def _serialize_chains(
+        chains: List[MutableMapping], include_fields: Optional[Collection[str]] = None
+    ) -> str:
         """Serialize chains into a JSON object. This is useful for storing
         an arbitrary number of extra chains in a single column of a dataframe."""
         # convert numpy dtypes to python types
@@ -245,7 +249,13 @@ class AirrCell(MutableMapping):
                     chain[k] = chain[k].item()
                 except AttributeError:
                     pass
-        return json.dumps(chains)
+
+        # Filter chains for `include_fields`
+        chains_filtered = [
+            {k: v for k, v in chain.items() if k in include_fields} for chain in chains
+        ]
+
+        return json.dumps(chains_filtered)
 
     def to_airr_records(self) -> Iterable[dict]:
         """Iterate over chains as AIRR-Rearrangent compliant dictonaries.
@@ -292,7 +302,9 @@ class AirrCell(MutableMapping):
         include_fields.add("cell_id")
 
         res_dict["multi_chain"], chain_dict = self._split_chains()
-        res_dict["extra_chains"] = self._serialize_chains(chain_dict.pop("extra"))
+        res_dict["extra_chains"] = self._serialize_chains(
+            chain_dict.pop("extra"), include_fields=include_fields
+        )
 
         # add cell-level attributes
         for key in self:
