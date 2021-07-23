@@ -7,7 +7,7 @@ Scirpy: A Scanpy extension for analyzing single-cell immune-cell receptor sequen
     :alt: Build Status
 
 .. |docs| image::  https://github.com/icbi-lab/scirpy/workflows/docs/badge.svg
-    :target: https://icbi-lab.github.io/scirpy
+    :target: https://icbi-lab.github.io/scirpy/latest
     :alt: Documentation Status
 
 .. |pypi| image:: https://img.shields.io/pypi/v/scirpy?logo=PyPI
@@ -37,12 +37,12 @@ provides various modules for data import, analysis and visualization.
 
 Getting started
 ^^^^^^^^^^^^^^^
-Please refer to the `documentation <https://icbi-lab.github.io/scirpy>`_. In particular, the
+Please refer to the `documentation <https://icbi-lab.github.io/latest/scirpy>`_. In particular, the
 
-- `Tutorial <https://icbi-lab.github.io/scirpy/tutorials/tutorial_3k_tcr.html>`_, and the
-- `API documentation <https://icbi-lab.github.io/scirpy/api.html>`_.
+- `Tutorial <https://icbi-lab.github.io/scirpy/latest/tutorials/tutorial_3k_tcr.html>`_, and the
+- `API documentation <https://icbi-lab.github.io/scirpy/latest/api.html>`_.
 
-In the documentation, you can also learn more about our `immune-cell receptor model <https://icbi-lab.github.io/scirpy/tcr-biology.html>`_.
+In the documentation, you can also learn more about our `immune-cell receptor model <https://icbi-lab.github.io/scirpy/latest/ir-biology.html>`_.
 
 Case-study
 ~~~~~~~~~~
