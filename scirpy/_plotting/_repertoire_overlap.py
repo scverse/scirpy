@@ -40,7 +40,7 @@ def repertoire_overlap(
     groupby
         Column with group labels (e.g. samples, tissue source, diagnosis, etc).
     target_col
-        Category that overlaps among groups (`clonotype` by default, but can
+        Category that overlaps among groups (`clone_id` by default, but can
         in principle be any group or cluster)
     pair_to_plot
         A tuple of two sample names that should be plotted on an IR overlap scatterplot.

@@ -448,7 +448,7 @@ def clonotype_network(
     clonotype_key
         Key under which the result of :func:`scirpy.tl.define_clonotypes` or
         :func:`scirpy.tl.define_clonotype_clusters` is stored in `adata.uns`.
-        Defaults to `clonotype` if `sequence == 'nt' and distance == 'identity'` or
+        Defaults to `clone_id` if `sequence == 'nt' and distance == 'identity'` or
         `cc_{{sequence}}_{{metric}}` otherwise.
     key_added
         Key under which the layout coordinates will be stored in `adata.obsm` and

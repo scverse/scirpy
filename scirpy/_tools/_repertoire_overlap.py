@@ -35,7 +35,7 @@ def repertoire_overlap(
     groupby
         Column with group labels (e.g. samples, tussue source, diagnosis, etc).
     target_col
-        Category that overlaps among groups (`clonotype` by default, but can
+        Category that overlaps among groups (`clone_id` by default, but can
         in principle be any group or cluster)
     overlap_measure
         Any distance measure accepted by `scipy.spatial.distance`; by default it is `jaccard`.
