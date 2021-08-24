@@ -8,7 +8,7 @@ from .._compat import Literal
 import scipy.stats
 import scipy.sparse
 from statsmodels.stats.multitest import fdrcorrection
-from ..util import tqdm
+from ..util import tqdm, _is_na
 from scanpy import logging
 
 
@@ -99,10 +99,13 @@ def clonotype_modularity(
         n_permutations = 1000 if permutation_test == "approx" else 10000
 
     clonotype_per_cell = adata.obs[target_col]
+    na_mask = ~_is_na(clonotype_per_cell.values)
 
     logging.info("Initalizing clonotype subgraphs...")  # type: ignore
     cm = _ClonotypeModularity(
-        clonotype_per_cell, adata.obsp[connectivity_key], random_state=random_state
+        clonotype_per_cell[na_mask],
+        adata.obsp[connectivity_key][na_mask, :][:, na_mask],
+        random_state=random_state,
     )
     start = logging.info("Computing background distributions...")  # type: ignore
     cm.estimate_edges_background_distribution(n_permutations=n_permutations)
@@ -129,7 +132,9 @@ def clonotype_modularity(
         }
 
     if inplace:
-        adata.obs[key_added] = [modularity_scores[ct] for ct in clonotype_per_cell]
+        adata.obs[key_added] = [
+            modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell
+        ]
         # remove the entries from previous run, should they exist
         # results can be inconsisten otherwise (old dangling "fdr" values when only
         # pvalues are calculated)
@@ -141,7 +146,7 @@ def clonotype_modularity(
 
         suffix = "fdr" if fdr_correction else "pvalue"
         adata.obs[f"{key_added}_{suffix}"] = [
-            modularity_pvalues[ct] for ct in clonotype_per_cell
+            modularity_pvalues.get(ct, np.nan) for ct in clonotype_per_cell
         ]
     else:
         return modularity_scores, modularity_pvalues
