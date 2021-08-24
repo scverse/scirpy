@@ -1,19 +1,15 @@
-from concurrent.futures import process
 from logging import log
 from multiprocessing import cpu_count
 from typing import Dict, Optional, Sequence, Tuple
-import igraph
 import numpy as np
 from ..util.graph import _get_igraph_from_adjacency
 from ..util._negative_binomial import fit_nbinom
 from .._compat import Literal
 import scipy.stats
 import scipy.sparse
-from collections import Counter
 from statsmodels.stats.multitest import fdrcorrection
 from ..util import tqdm
 from scanpy import logging
-from tqdm.contrib.concurrent import process_map
 
 
 def clonotype_modularity(
@@ -31,23 +27,20 @@ def clonotype_modularity(
     Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance.
 
-    .. warning::
-        This is an experimental function that may change in the future
-
     For each clonotype, we compare the number of edges connecting the cells belonging
     to that clonotype in the transcriptomics neighborhood graph with
     the number of edges expeced by chance in a subgraph of the same size.
 
-    We define the _connectivity score_ as the log2 of the ratio of actual to
+    We define the *connectivity score* as the log2 of the ratio of actual to
     expected edges. A pseudocount of 1 is added to cope with small subgraphs with 0
     expected edges.
 
     .. math::
 
-        \text{connectivity score} = \log 2 \frac{
-                                                    |E|_{\text{actual}} + 1
+        \\text{connectivity score} = \\log_2 \\frac{
+                                                    |E|_{\\text{actual}} + 1
                                                 }{
-                                                    |E|_{\text{expected}} + 1
+                                                    |E|_{\\text{expected}} + 1
                                                 }
 
     For each unique clonotype size, the expected number of edges is derived by
@@ -63,6 +56,8 @@ def clonotype_modularity(
     predefined clonotype clusters and checks if within those clusters, the transcriptomics
     neighborhood graph is more connected than expected by chance.
 
+    .. warning::
+        This is an experimental function that may change in the future
 
     Parameters
     ----------
@@ -95,9 +90,10 @@ def clonotype_modularity(
     a single modularity score and p-value per clonotype. Otherwise, adds two columns
     to `adata.obs`:
 
-       * "{key_added}": the modularity scores for each cell
-       * "{key_added}_pvalue" or "{key_added}_fdr" with the raw p-values or false
-         discovery rates, respectively, depending on the value of `fdr_correction`.
+       * `adata.obs["{key_added}"]`: the modularity scores for each cell
+       * `adata.obs["{key_added}_pvalue"]` or `adata.obs["{key_added}_fdr"]` with the
+         raw p-values or false discovery rates, respectively, depending on the value
+         of `fdr_correction`.
     """
     if n_permutations is None:
         n_permutations = 1000 if permutation_test == "approx" else 10000
@@ -134,6 +130,15 @@ def clonotype_modularity(
 
     if inplace:
         adata.obs[key_added] = [modularity_scores[ct] for ct in clonotype_per_cell]
+        # remove the entries from previous run, should they exist
+        # results can be inconsisten otherwise (old dangling "fdr" values when only
+        # pvalues are calculated)
+        for suffix in ["fdr", "pvalue"]:
+            try:
+                del adata.obs[f"{key_added}_{suffix}"]
+            except:
+                pass
+
         suffix = "fdr" if fdr_correction else "pvalue"
         adata.obs[f"{key_added}_{suffix}"] = [
             modularity_pvalues[ct] for ct in clonotype_per_cell
