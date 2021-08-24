@@ -16,11 +16,14 @@ def _rand_jitter(arr):
 def clonotype_modularity(
     adata,
     ax=None,
-    score_col="clonotype_connectivity",
+    score_col="clonotype_modularity",
     style: Union[Literal["default"], None] = "default",
     style_kws: Union[dict, None] = None,
     fig_kws: Union[dict, None] = None,
 ):
+    """
+    TODO docs
+    """
     if ax is None:
         ax = _init_ax(fig_kws)
 
