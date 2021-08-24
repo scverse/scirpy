@@ -37,7 +37,7 @@ def clonotype_convergence(
         `ct_cluster_aa_identity`.
     key_fine
         Key in adata.obs holding the "fine" clonotype/clonotype cluster definition.
-        E.g. `clonotype`
+        E.g. `clone_id`
     key_added
         Key under which the result is stored in `adata.obs`.
     inplace

@@ -48,7 +48,7 @@ def clonal_expansion(
         same clonotype across the entire dataset. See also :term:`Public clonotype`.
     summarize_by
         Can be either `cell` to count cells belonging to a clonotype (the default),
-        or `clonotype` to count clonotypes. The former leads to a over-representation
+        or `clone_id` to count clonotypes. The former leads to a over-representation
         of expanded clonotypes but better represents the fraction of expanded cells.
     normalize
         If True, compute fractions rather than reporting
