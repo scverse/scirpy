@@ -27,7 +27,7 @@ def clonotype_modularity(
     if ax is None:
         ax = _init_ax(fig_kws)
 
-    apply_style_to_axes(ax, style, style_kws)
+    # apply_style_to_axes(ax, style, style_kws)
 
     if f"{score_col}_fdr" in adata.obs.columns:
         pvalue_col = f"{score_col}_fdr"

@@ -1,3 +1,6 @@
+from concurrent.futures import process
+from logging import log
+from multiprocessing import cpu_count
 from typing import Dict, Optional, Sequence, Tuple
 import igraph
 import numpy as np
@@ -9,6 +12,8 @@ import scipy.sparse
 from collections import Counter
 from statsmodels.stats.multitest import fdrcorrection
 from ..util import tqdm
+from scanpy import logging
+from tqdm.contrib.concurrent import process_map
 
 
 def clonotype_modularity(
@@ -23,16 +28,41 @@ def clonotype_modularity(
     random_state: int = 0,
 ) -> Optional[Tuple[Dict[str, float], Dict[str, float]]]:
     """
-    Identifies clonotypes or clonotype clusters that consist of cells that are
+    Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance.
 
-    TODO explain graph approach
+    .. warning::
+        This is an experimental function that may change in the future
 
-    This is loosely inspired by CoNGA [TODO cite], however, while CoNGA creates
-    "conga clusters" based on cells that share edges in the TCR and transcriptomics
-    neighborhood graph, `clonotype_modularity` uses given clonotype clusters
-    and checks if the transcriptomics neighborhood graph is more connected than expected
-    by chance.
+    For each clonotype, we compare the number of edges connecting the cells belonging
+    to that clonotype in the transcriptomics neighborhood graph with
+    the number of edges expeced by chance in a subgraph of the same size.
+
+    We define the _connectivity score_ as the log2 of the ratio of actual to
+    expected edges. A pseudocount of 1 is added to cope with small subgraphs with 0
+    expected edges.
+
+    .. math::
+
+        \text{connectivity score} = \log 2 \frac{
+                                                    |E|_{\text{actual}} + 1
+                                                }{
+                                                    |E|_{\text{expected}} + 1
+                                                }
+
+    For each unique clonotype size, the expected number of edges is derived by
+    randomly sampling `n_permutation` subgraphs from the transcriptomics neighborhood
+    graph. This background distribution is also used to calculate p-values for the
+    connectivity scores. By choosing `permutation_test="approx"`, a negative
+    binomial distribution is fitted to the background distribution and used to
+    calculate p-values.
+
+    The `clonotype_modularity` function inspired by CoNGA :cite:`Schattgen2021`,
+    however, while CoNGA creates "conga clusters" based on cells that share edges in
+    the TCR and transcriptomics neighborhood graph, `clonotype_modularity` uses
+    predefined clonotype clusters and checks if within those clusters, the transcriptomics
+    neighborhood graph is more connected than expected by chance.
+
 
     Parameters
     ----------
@@ -46,12 +76,11 @@ def clonotype_modularity(
     permutation_test
         Whether to perform an approximate or exact permutation test. If the approximate
         permutation test is used, the result of fewer permutations is used to fit
-        a negative binomial distribution, from which p-values are derived. TODO
+        a negative binomial distribution, from which p-values are derived.
     n_permutations
-        Number of permutations used for the permutations test. Defaults to `200` for
+        Number of permutations used for the permutations test. Defaults to `1000` for
         the approx test, and to `10000` for the exact test. Note that for the exact
-        test, the minimum p-values achievable is 1/n, therefore, a lot of permutations
-        are required.
+        test, the minimum achievable p-values is `1/n`.
     key_added
         Key under which the result will be stored in `adata.obs` if inplace is `True`.
     fdr_correction
@@ -71,20 +100,27 @@ def clonotype_modularity(
          discovery rates, respectively, depending on the value of `fdr_correction`.
     """
     if n_permutations is None:
-        n_permutations = 200 if permutation_test == "approx" else 10000
+        n_permutations = 1000 if permutation_test == "approx" else 10000
 
     clonotype_per_cell = adata.obs[target_col]
 
+    logging.info("Initalizing clonotype subgraphs...")  # type: ignore
     cm = _ClonotypeModularity(
         clonotype_per_cell, adata.obsp[connectivity_key], random_state=random_state
     )
+    start = logging.info("Computing background distributions...")  # type: ignore
     cm.estimate_edges_background_distribution(n_permutations=n_permutations)
+    logging.debug(
+        "Finished computing background distributions", time=start
+    )  # type:ignore
 
+    logging.debug("Computing modularity scores")  # type: ignore
     modularity_scores = cm.get_scores()
+    logging.debug("Computing modularity pvalues")  # type: ignore
     modularity_pvalues = (
-        cm.get_approx_pvalues(n_permutations)
+        cm.get_approx_pvalues()
         if permutation_test == "approx"
-        else cm.get_exact_pvalues(n_permutations)
+        else cm.get_exact_pvalues()
     )
 
     if fdr_correction:
@@ -98,7 +134,7 @@ def clonotype_modularity(
 
     if inplace:
         adata.obs[key_added] = [modularity_scores[ct] for ct in clonotype_per_cell]
-        suffix = "fdr" if not fdr_correction else "pvalue"
+        suffix = "fdr" if fdr_correction else "pvalue"
         adata.obs[f"{key_added}_{suffix}"] = [
             modularity_pvalues[ct] for ct in clonotype_per_cell
         ]
@@ -130,6 +166,18 @@ class _ClonotypeModularity:
         assert len(clonotype_per_cell) == connectivity.shape[0]
         self.graph = _get_igraph_from_adjacency(connectivity)
         self.clonotype_per_cell = clonotype_per_cell
+        clonotypes = np.unique(clonotype_per_cell)
+        # Dissect the connectivity graph into one subgraph per clonotype.
+        self._clonotype_subgraphs = {
+            clonotype: self.graph.subgraph(
+                np.flatnonzero(clonotype_per_cell == clonotype)
+            )
+            for clonotype in tqdm(clonotypes)
+        }
+        # Unique clonotype sizes
+        self._clonotype_sizes = np.unique(
+            [g.vcount() for g in self._clonotype_subgraphs.values()]
+        )
         self.random_state = random_state
         self.edges_background_distribution = None
 
@@ -138,113 +186,84 @@ class _ClonotypeModularity:
         """The number of cells in the graph created from the connectivity matrix"""
         return self.graph.vcount()
 
-    def estimate_edges_background_distribution(self, n_permutations=200):
-        """Get the distribution of #edges per clonotype under a random model"""
-        np.random.seed(self.random_state)
-        clonotype_sizes = Counter(self.clonotype_per_cell)
-        self.edges_background_distribution = {ct: [] for ct in clonotype_sizes}
-        for i in tqdm(range(n_permutations)):
-            # Potentially `Degree_Sequence` and `rewire are` options here to generate
-            # random graphs with the same degree distribution. Sequence_Game creates
-            # a new graph with a given degree distribution.  When using rewire, the
-            # number of rewiring trials must be large enough that the original graph
-            # structure becomes irrelevant. 10*|E| seems to be commonly considered "enough"
-            #
-            # My tests have shown that for the graph structure we expect here,
-            # `Degree_Sequence` is about 10 times faster than rewiring with 10*|E|
-            # trials.
-            #
-            # See also the discussion here:
-            # https://igraph-help.nongnu.narkive.com/LJfvfzKz/rewire-vs-degree-sequence-game
-            g = igraph.Graph.Degree_Sequence(self.graph.degree(), method="no_multiple")
-            for subgraph_size in clonotype_sizes:
-                subgraph = g.subgraph(
-                    np.random.choice(self.n_cells, subgraph_size, replace=False)
+    def _get_background_distribution(self, i):
+        """Helper function to get random background distribution for a single iteration"""
+        res = []
+        np.random.seed(self.random_state + i)
+        for subgraph_size in self._clonotype_sizes:
+            subgraph = self.graph.subgraph(
+                np.random.choice(self.n_cells, subgraph_size, replace=False)
+            )
+            res.append(subgraph.ecount())
+        return np.array(res)
+
+    def estimate_edges_background_distribution(self, n_permutations=1000):
+        """Compute the distribution of #edges per subgraph under a random model.
+
+        The calculation needs to be performed for each subgraph with a given size.
+        """
+        self.n_permutations = n_permutations
+
+        # TODO parallelize. Need to do this more cleverly, currelty the memory
+        # consumption is too high as everything is copied to each worker.
+        # This is also the bottleneck of the process, s.t. naively parallelizing
+        # does not lead to a speed gain.
+
+        # logging.info(
+        #     "NB: Computation happens in chunks. The progressbar only advances "
+        #     "when a chunk has finished. "
+        # )  # type: ignore
+        background_distribution = np.vstack(
+            list(
+                map(
+                    self._get_background_distribution,
+                    tqdm(range(n_permutations)),
+                    # chunksize=chunksize,
+                    # max_workers=n_jobs if n_jobs is not None else cpu_count(),
+                    # tqdm_class=tqdm,
                 )
-                self.edges_background_distribution[subgraph_size].append(
-                    subgraph.ecount()
-                )
+            )
+        )
+
+        # convert n_iter x clonotype_sizes array to dictionary
+        self.edges_background_distribution = {
+            s: background_distribution[:, i]
+            for i, s in enumerate(self._clonotype_sizes)
+        }
 
     def get_scores(self) -> Dict[str, float]:
         """Return the connectivity score for all clonotypes.
 
-        The connectivity score is defined as the number of actual edges
-        in the clonotype subgraph, divided by the maximum number of possible
-        edges in the subgraph.
+        The connectivity score is ispired by network modularity and
+        defined as the ratio of actual edges in a subgraph to the expected number
+        of edges according to the background distribution.
+
+        The classical definition of network modularity does not work as it always
+        depends on a partitioning. Using clonotype vs. rest of network as a partitioning
+        does not make sense since the value would also depend on the connectivity
+        of the rest of the network rather than the clonotype only.
+
+        See also
+         * https://stats.stackexchange.com/questions/508577/given-a-graph-test-if-some-vertices-are-more-connected-than-the-background
+         * https://en.wikipedia.org/wiki/Modularity_(networks)
 
         Returns
         -------
         Dictionary clonotype -> score
         """
-        # TODO consider using the difference compared to the expected number
-        # of edges instead. (as implemented here as an inefficient proof of concept).
-        # Potentially need to clean up the old code (using number of possible edges)
-        # instead.
-        # --> https://stats.stackexchange.com/questions/508577/given-a-graph-test-if-some-vertices-are-more-connected-than-the-background
-        # --> https://en.wikipedia.org/wiki/Modularity_(networks)
-
         if self.edges_background_distribution is None:
             raise ValueError("Need to run `estimate_background_distribution` first. ")
 
         score_dict = {}
-        for clonotype in np.unique(self.clonotype_per_cell):
-            score_dict[clonotype] = (
-                self.graph.subgraph(
-                    np.flatnonzero(self.clonotype_per_cell == clonotype)
-                ).ecount()
-                + 1
-            ) / (np.mean(self.edges_background_distribution[clonotype]) + 1)
-
-        # distributions_per_size = {}
-        # for tmp_size in self._clonotype_sizes:
-        #     bg = self._background_edge_count(tmp_size, 200)
-        #     distributions_per_size[tmp_size] = np.mean(bg)
-
-        # score_dict = dict()
-        # for clonotype, subgraph in self._clonotype_subgraphs.items():
-        #     if subgraph.vcount() == 1:
-        #         score_dict[clonotype] = 0
-        #     else:
-        #         score_dict[clonotype] = (
-        #             subgraph.ecount() - distributions_per_size[subgraph.vcount()]
-        #         ) / subgraph.vcount()
-        #         continue
-        #         max_edges = (
-        #             min(
-        #                 # in theory, the maximum numer of edges is the full adjacency matrix
-        #                 # minus the diagonal
-        #                 subgraph.vcount() * (subgraph.vcount() - 1),
-        #                 # however, for larger subnetworks, the number of edges is actually
-        #                 # limited by the number of nearest neighbors. We take the actual
-        #                 # edges per cell from the connectivity matrix.
-        #                 self._max_edges[clonotype],
-        #             )
-        #             / 2
-        #         )
-        #         score_dict[clonotype] = subgraph.ecount() / max_edges
+        for clonotype, subgraph in self._clonotype_subgraphs.items():
+            score_dict[clonotype] = np.log2(
+                (subgraph.ecount() + 1)
+                / (np.mean(self.edges_background_distribution[subgraph.vcount()]) + 1)
+            )
 
         return score_dict
 
-    def _background_edge_count(self, subgraph_size, n) -> np.ndarray:
-        """Sample `n` random subgraphs of size `subgraph_size` from `graph` and
-        return their edge count.
-        """
-        np.random.seed(self.random_state)
-        if subgraph_size == 1:
-            return np.zeros(n)
-
-        return np.fromiter(
-            (
-                self.graph.subgraph(
-                    np.random.choice(self.n_cells, subgraph_size, replace=False)
-                ).ecount()
-                for _ in range(n)
-            ),
-            dtype=int,
-            count=n,
-        )
-
-    def get_approx_pvalues(self, n_permutations: int = 200) -> Dict[str, float]:
+    def get_approx_pvalues(self) -> Dict[str, float]:
         """Compute pvalue for clonotype being more connected than random.
 
         Approximate permutation test.
@@ -257,10 +276,13 @@ class _ClonotypeModularity:
         -------
         Dictionary clonotype -> pvalue
         """
+        if self.edges_background_distribution is None:
+            raise ValueError("Need to run `estimate_background_distribution` first. ")
+
         distributions_per_size = {}
         for tmp_size in self._clonotype_sizes:
-            bg = self._background_edge_count(tmp_size, n_permutations)
-            n, p = fit_nbinom(bg)
+            bg = self.edges_background_distribution[tmp_size]
+            n, p = fit_nbinom(np.array(bg))
             distributions_per_size[tmp_size] = scipy.stats.nbinom(n, p)
 
         pvalue_dict = dict()
@@ -269,11 +291,14 @@ class _ClonotypeModularity:
                 pvalue_dict[clonotype] = 1.0
             else:
                 nb_dist = distributions_per_size[subgraph.vcount()]
-                pvalue_dict[clonotype] = 1 - nb_dist.cdf(subgraph.ecount() - 1)
+                # restrict pvalues to float precision
+                pvalue_dict[clonotype] = max(
+                    1 - nb_dist.cdf(subgraph.ecount() - 1), np.finfo(np.float32).tiny
+                )
 
         return pvalue_dict
 
-    def get_exact_pvalues(self, n_permutations: int = 10000) -> Dict[str, float]:
+    def get_exact_pvalues(self) -> Dict[str, float]:
         """Compute pvalue for clonotype being more connected than random.
 
         Exact permutation test, see http://rasbt.github.io/mlxtend/user_guide/evaluate/permutation_test/
@@ -285,21 +310,21 @@ class _ClonotypeModularity:
         -------
         Dictionary clonotype -> pvalue
         """
-        distributions_per_size = {}
-        for tmp_size in self._clonotype_sizes:
-            distributions_per_size[tmp_size] = self._background_edge_count(
-                tmp_size, n_permutations
-            )
+        if self.edges_background_distribution is None:
+            raise ValueError("Need to run `estimate_background_distribution` first. ")
 
         pvalue_dict = dict()
         for clonotype, subgraph in self._clonotype_subgraphs.items():
             p = (
-                np.sum(distributions_per_size[subgraph.vcount()] >= subgraph.ecount())
-                / n_permutations
+                np.sum(
+                    np.array(self.edges_background_distribution[subgraph.vcount()])
+                    >= subgraph.ecount()
+                )
+                / self.n_permutations
             )
             # If the pvalue is 0 return 1 / n_permutations instead (the minimal "resolution")
             if p == 0:
-                p = 1 / n_permutations
+                p = 1 / self.n_permutations
             pvalue_dict[clonotype] = p
 
         return pvalue_dict
