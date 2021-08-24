@@ -305,4 +305,4 @@ def test_igraph_from_adjacency(matrix, is_symmetric, simplify):
     ],
 )
 def test_fit_negative_binomial(X, expected):
-    npt.assert_almost_equal(fit_nbinom(X), expected)
+    npt.assert_almost_equal(fit_nbinom(X), expected, decimal=5)
