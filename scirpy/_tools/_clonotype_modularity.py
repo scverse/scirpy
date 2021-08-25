@@ -25,7 +25,8 @@ def clonotype_modularity(
 ) -> Optional[Tuple[Dict[str, float], Dict[str, float]]]:
     """
     Identifies clonotypes or clonotype clusters consisting of cells that are
-    more transcriptionally related than expected by chance.
+    more transcriptionally related than expected by chance by computing the
+    :term:`Clonotype modularity`.
 
     For each clonotype, we compare the number of edges connecting the cells belonging
     to that clonotype in the transcriptomics neighborhood graph with
@@ -33,7 +34,8 @@ def clonotype_modularity(
 
     We define the *connectivity score* as the log2 of the ratio of actual to
     expected edges. A pseudocount of 1 is added to cope with small subgraphs with 0
-    expected edges.
+    expected edges. Intuitively, a clonotype modularity of `1` means that there are
+    twice as many edges in the neighborhood graph than expected by chance.
 
     .. math::
 
@@ -88,12 +90,17 @@ def clonotype_modularity(
     -------
     If `inplace` is False, returns two dictionaries mapping the clonotype id onto
     a single modularity score and p-value per clonotype. Otherwise, adds two columns
-    to `adata.obs`:
+    to `adata.obs`
 
        * `adata.obs["{key_added}"]`: the modularity scores for each cell
        * `adata.obs["{key_added}_pvalue"]` or `adata.obs["{key_added}_fdr"]` with the
          raw p-values or false discovery rates, respectively, depending on the value
          of `fdr_correction`.
+
+    and a dictionary to `adata.uns`
+
+       * `adata.uns["{key_added}]`: A dictionary holding the parameters this
+         function was called with.
     """
     if n_permutations is None:
         n_permutations = 1000 if permutation_test == "approx" else 10000
@@ -148,6 +155,12 @@ def clonotype_modularity(
         adata.obs[f"{key_added}_{suffix}"] = [
             modularity_pvalues.get(ct, np.nan) for ct in clonotype_per_cell
         ]
+        adata.uns[key_added] = {
+            "target_col": target_col,
+            "permutation_test": permutation_test,
+            "n_permutations": n_permutations,
+            "fdr_correction": fdr_correction,
+        }
     else:
         return modularity_scores, modularity_pvalues
 
