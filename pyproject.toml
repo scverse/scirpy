@@ -68,6 +68,7 @@ doc = [
     'sphinx_rtd_theme>=0.4,<0.5',
     'typing_extensions; python_version < "3.8"',  # for `Literal`
     # for tutorial
+    'scikit-misc',
     'leidenalg',
     'nbsphinx>=0.6.0',
     'jupytext',
