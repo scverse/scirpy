@@ -590,8 +590,8 @@ def test_clonotype_modularity(
         fdr_correction=fdr_correction,
         inplace=False,
     )  # type: ignore
-    assert scores == pytest.approx(expected_scores, rel=0.01)
-    assert pvalues == pytest.approx(expected_pvalues, rel=0.01)
+    assert scores == pytest.approx(expected_scores, abs=0.02)
+    assert pvalues == pytest.approx(expected_pvalues, abs=0.02)
 
 
 def test_clonotype_imbalance(adata_tra):
