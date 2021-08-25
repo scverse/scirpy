@@ -139,7 +139,7 @@ def test_airr_cell_empty():
         (
             {
                 "v_call": "TRAV36/DV7*01",
-                "d_call": "nan",
+                "d_call": "TRDD1*01",
                 "j_call": "TRDJ2*01",
                 "c_call": "TRDC",
             },
@@ -149,10 +149,10 @@ def test_airr_cell_empty():
             {
                 "v_call": "TRAV36/DV7*01",
                 "d_call": "nan",
-                "j_call": "TRDJ2*01",
-                "c_call": "TRDC",
+                "j_call": "TRAJ2*01",
+                "c_call": "TRAC",
             },
-            "TRD",
+            "TRA",
         ),
         (
             {
