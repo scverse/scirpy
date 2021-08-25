@@ -96,9 +96,9 @@ sc.pp.filter_cells(adata, min_genes=100)
 ```
 
 ```python
-sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=5000)
 sc.pp.normalize_per_cell(adata, counts_per_cell_after=1000)
 sc.pp.log1p(adata)
+sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=5000)
 sc.tl.pca(adata)
 sc.pp.neighbors(adata)
 ```

@@ -52,7 +52,6 @@ test:
     - jupyter_client
     - ipykernel
     - nbconvert
-    - scikit-misc
   imports:
     - scirpy
   commands:
