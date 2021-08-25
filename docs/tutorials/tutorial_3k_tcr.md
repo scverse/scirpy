@@ -6,8 +6,8 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.2'
-      jupytext_version: 1.5.0.rc1
+      format_version: '1.3'
+      jupytext_version: 1.11.4
 ---
 
 # Analysis of 3k T cells from cancer
@@ -96,8 +96,11 @@ sc.pp.filter_cells(adata, min_genes=100)
 ```
 
 ```python
+sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=5000)
 sc.pp.normalize_per_cell(adata, counts_per_cell_after=1000)
 sc.pp.log1p(adata)
+sc.tl.pca(adata)
+sc.pp.neighbors(adata)
 ```
 
 For the _Wu2020_ dataset, the authors already provide clusters and UMAP coordinates.
@@ -461,7 +464,9 @@ Consistent with this observation, they have the lowest :func:`scirpy.pl.alpha_di
 <!-- #endraw -->
 
 ```python
-ax = ir.pl.alpha_diversity(adata, metric="normalized_shannon_entropy", groupby="cluster")
+ax = ir.pl.alpha_diversity(
+    adata, metric="normalized_shannon_entropy", groupby="cluster"
+)
 ```
 
 ### Clonotype abundance
@@ -619,47 +624,84 @@ ir.pl.repertoire_overlap(
 )
 ```
 
-### Clonotypes preferentially occuring in a group
+## Integrating gene expression data
+
+Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized alongside immune receptor data.
+
+### Clonotype modularity
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Clonotypes associated with an experimental group (a given cell type, samle or diagnosis) might be important candidates as biomarkers or disease drivers. Scirpy offers :func:`~scirpy.tl.clonotype_imbalance` to rank clonotypes based on Fisher's exact test comparing the fractional presence of a given clonotype in two groups.
+Using the :term:`Clonotype modularity` we can identify clonotypes consisting of 
+cells that are transcriptionally more similar than expected by random. 
+
+The clonotype modularity score represents the log2 fold change of the 
+number of edges in the cell-cell neighborhood graph compared to 
+the random background model. Clonotypes (or clonotype clusters) with 
+a high modularity score consist of cells that have a similar molecular phenotype. 
 <!-- #endraw -->
 
-A possible grouping criterion could be Tumor vs. Control, separately for distinct tumor types. The site of the tumor can be extracted from patient metadata.
+```python
+ir.tl.clonotype_modularity(adata, target_col="cc_aa_alignment")
+```
+
+We can plot the clonotype modularity on top of a umap of clonotype network plot
 
 ```python
-adata.obs["site"] = adata.obs["patient"].str.slice(stop=-1)
+sc.pl.umap(adata, color="clonotype_modularity")
 ```
 
 ```python
-ir.pl.clonotype_imbalance(
+ir.pl.clonotype_network(
     adata,
-    replicate_col="sample",
-    groupby="source",
-    case_label="Tumor",
-    additional_hue="site",
-    plot_type="strip",
+    color="clonotype_modularity",
+    label_fontsize=9,
+    panel_size=(6, 6),
+    base_size=20,
 )
 ```
 
-To get an idea how the above, top-ranked clonotypes compare to the bulk of all clonotypes, a Volcano plot is genereated, showing the `-log10 p-value` of the Fisher's test as a function of `log2(fold-change)` of the normalized proportion of a given clonotype in the test group compared to the control group. To avoid zero division, `0.01*(global minimum proportion)` was added to every normalized clonotype proportions.
+We can also visualize the clonotype modularity together with the associated
+FDR as a sort of "one sided volcano plot":
 
 ```python
-ir.pl.clonotype_imbalance(
-    adata,
-    replicate_col="sample",
-    groupby="source",
-    case_label="Tumor",
-    additional_hue="diagnosis",
-    plot_type="volcano",
-    fig_kws={"dpi": 120},
+ir.pl.clonotype_modularity(adata, base_size=20)
+```
+
+Let's further inspect the two top scoring candidates. We can extract that information from `adata.obs["clonotype_modularity"]`. 
+
+```python
+clonotypes_top_modularity = list(
+    adata.obs.set_index("cc_aa_alignment")["clonotype_modularity"]
+    .sort_values(ascending=False)
+    .index.unique().values[:2]
 )
 ```
 
-## Integrating gene expression
+```python
+sc.pl.umap(
+    adata,
+    color="cc_aa_alignment",
+    groups=clonotypes_top_modularity,
+    palette=cycler(color=mpl_cm.Dark2_r.colors),
+)
+```
+
+We observe that they are (mostly) restricted to a single cluster. By leveraging
+scanpy's differential expression module, we can compare the gene expression 
+of the cells in the two clonotypes to the rest. 
+
+```python
+sc.tl.rank_genes_groups(
+    adata, "clone_id", groups=clonotypes_top_modularity, reference="rest", method="wilcoxon"
+)
+fig, axs = plt.subplots(1, 2, figsize=(8, 4))
+for ct, ax in zip(clonotypes_top_modularity, axs):
+    sc.pl.rank_genes_groups_violin(adata, groups=[ct], n_genes=15, ax=ax, show=False, strip=False)
+```
+
 ### Clonotype imbalance among cell clusters
 
-Leveraging the opportunity offered by close integeration with scanpy, transcriptomics-based data can be utilized directly. Using cell type annotation inferred from gene expression clusters, for example, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, can be compared.
+Using cell type annotation inferred from gene expression clusters, for example, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, can be compared.
 
 ```python
 freq, stat = ir.tl.clonotype_imbalance(
@@ -687,7 +729,7 @@ sc.pl.umap(
     size=[
         80 if c in top_differential_clonotypes else 30 for c in adata.obs["clone_id"]
     ],
-    palette=cycler(color=mpl_cm.Dark2_r.colors)
+    palette=cycler(color=mpl_cm.Dark2_r.colors),
 )
 ```
 
