@@ -157,9 +157,7 @@ def clonotype_modularity(
 
     if show_labels:
         if labels is None:
-            qm = np.quantile(
-                score_df["clonotype_modularity"].unique(), labels_quantile_cutoff[0]
-            )
+            qm = np.quantile(score_df[target_col].unique(), labels_quantile_cutoff[0])
             qp = np.quantile(score_df["log_p"].unique(), labels_quantile_cutoff[1])
             labels = score_df[clonotype_col][
                 (score_df[target_col] >= qm) & (score_df["log_p"] >= qp)

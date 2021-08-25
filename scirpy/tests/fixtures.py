@@ -209,6 +209,19 @@ def adata_define_clonotype_clusters():
 
 
 @pytest.fixture
+def adata_clonotype_modularity(adata_define_clonotypes):
+    adata = adata_define_clonotypes
+    adata.obs["clone_id"] = ["0", "1", "2", "2", "nan"]
+    adata.obs["clonotype_modularity_x"] = [0, 0, 4, 4, np.nan]
+    adata.obs["clonotype_modularity_x_fdr"] = [1, 1, 1e-6, 1e-6, np.nan]
+    adata.uns["clonotype_modularity_x"] = {
+        "target_col": "clone_id",
+        "fdr_correction": True,
+    }
+    return adata
+
+
+@pytest.fixture
 def adata_conn(adata_define_clonotype_clusters):
     """Stub adata to test the clonotype_network functions"""
     adata = adata_define_clonotype_clusters
