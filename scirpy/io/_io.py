@@ -174,9 +174,9 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
             fwrs = [f"fwr_{i}" if i < 5 else f"fwr_{i-4}_nt" for i in range(1, 9)]
             cdrs = [f"cdr_{i}" if i < 3 else f"fwr_{i-2}_nt" for i in range(1, 5)]
 
-            print(fwrs.extend(cdrs))
-            for col in fwrs.extend(cdrs):
-                chain_dict[col] = chain_series[col]
+            for col in fwrs + cdrs:
+                if col in chain_series:
+                    chain_dict[col] = chain_series[col]
 
             ir_obj.add_chain(chain_dict)
 
