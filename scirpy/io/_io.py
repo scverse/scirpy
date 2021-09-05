@@ -169,6 +169,14 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
                 is_cell=chain_series["is_cell"],
                 high_confidence=chain_series["high_confidence"],
             )
+
+            # additional cols from CR6 outputs: fwr_{1,2,3,4}{,_nt} and cdr_{1,2}{,_nt}
+            fwrs = [f"fwr_{i}" if i < 5 else f"fwr_{i-4}_nt" for i in range(1, 9)]
+            cdrs = [f"cdr_{i}" if i < 3 else f"fwr_{i-2}_nt" for i in range(1, 5)]
+
+            for col in fwrs.extend(cdrs):
+                chain_dict[col] = chain_series[col]
+
             ir_obj.add_chain(chain_dict)
 
         airr_cells[barcode] = ir_obj
