@@ -174,6 +174,7 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
             fwrs = [f"fwr_{i}" if i < 5 else f"fwr_{i-4}_nt" for i in range(1, 9)]
             cdrs = [f"cdr_{i}" if i < 3 else f"fwr_{i-2}_nt" for i in range(1, 5)]
 
+            print(fwrs.extend(cdrs))
             for col in fwrs.extend(cdrs):
                 chain_dict[col] = chain_series[col]
 
@@ -349,7 +350,7 @@ def read_airr(
     """\
     Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
 
-    The following columns are required by scirpy: 
+    The following columns are required by scirpy:
      * `cell_id`
      * `productive`
      * `locus`
@@ -358,8 +359,8 @@ def read_airr(
 
     Data should still import if one of these fields is missing, but they are required
     by most of scirpy's processing functions. All chains for which the field
-    `junction_aa` is missing or empty, will be considered as non-productive and 
-    will be moved to the `extra_chains` column.   
+    `junction_aa` is missing or empty, will be considered as non-productive and
+    will be moved to the `extra_chains` column.
 
     {doc_working_model}
 
@@ -377,15 +378,15 @@ def read_airr(
     infer_locus
         Try to infer the `locus` column from gene names, in case it is not specified.
     cell_attributes
-        Fields in the rearrangement schema that are specific for a cell rather 
-        than a chain. The values must be identical over all records belonging to a 
-        cell. This defaults to {cell_attributes}. 
+        Fields in the rearrangement schema that are specific for a cell rather
+        than a chain. The values must be identical over all records belonging to a
+        cell. This defaults to {cell_attributes}.
     include_fields
         The fields to include in `adata`. The AIRR rearrangment schema contains
-        can contain a lot of columns, most of which irrelevant for most analyses. 
-        Per default, this includes a subset of columns relevant for a typical 
-        scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}. 
-        Set this to `None` to include all columns. 
+        can contain a lot of columns, most of which irrelevant for most analyses.
+        Per default, this includes a subset of columns relevant for a typical
+        scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
+        Set this to `None` to include all columns.
 
     Returns
     -------
@@ -675,7 +676,7 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
-    Internally calls :func:`scirpy.io.read_airr`. 
+    Internally calls :func:`scirpy.io.read_airr`.
 
     {doc_working_model}
 
@@ -687,7 +688,7 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
         Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
     **kwargs
-        Additional arguments passed to :func:`scirpy.io.read_airr`. 
+        Additional arguments passed to :func:`scirpy.io.read_airr`.
 
     Returns
     -------
