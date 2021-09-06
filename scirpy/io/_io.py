@@ -136,6 +136,14 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         chain["is_cell"] = cell["is_cell"]
         chain["high_confidence"] = cell["high_confidence"]
 
+        # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
+        fwrs = [f"fwr{i}" for i in range(1, 5)]
+        cdrs = [f"cdr{i}" for i in range(1, 3)]
+        for col in fwrs + cdrs:
+            record = cell.get(col)
+            chain[col + "_nt"] = record["nt_seq"] if record else None
+            chain[col] = record["aa_seq"] if record else None
+
         ir_obj.add_chain(chain)
 
     return from_airr_cells(airr_cells.values())
@@ -170,13 +178,11 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
                 high_confidence=chain_series["high_confidence"],
             )
 
-            # additional cols from CR6 outputs: fwr_{1,2,3,4}{,_nt} and cdr_{1,2}{,_nt}
-            fwrs = [f"fwr_{i}" if i < 5 else f"fwr_{i-4}_nt" for i in range(1, 9)]
-            cdrs = [f"cdr_{i}" if i < 3 else f"fwr_{i-2}_nt" for i in range(1, 5)]
-
+            # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
+            fwrs = [f"fwr{i}" if i < 5 else f"fwr{i-4}_nt" for i in range(1, 9)]
+            cdrs = [f"cdr{i}" if i < 3 else f"cdr{i-2}_nt" for i in range(1, 5)]
             for col in fwrs + cdrs:
-                if col in chain_series:
-                    chain_dict[col] = chain_series[col]
+                chain_dict[col] = chain_series.get(col)
 
             ir_obj.add_chain(chain_dict)
 
