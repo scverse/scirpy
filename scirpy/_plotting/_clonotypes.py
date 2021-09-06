@@ -48,7 +48,7 @@ def clonotype_network(
     label_alpha: float = 0.6,
     label_y_offset: float = 2,
     legend_fontsize=None,
-    legend_width=2,
+    legend_width: float = 2,
     show_legend: Optional[bool] = None,
     show_size_legend: bool = True,
     palette: Union[str, Sequence[str], Cycler, None] = None,

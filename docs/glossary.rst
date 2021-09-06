@@ -232,3 +232,10 @@ Glossary
 
     Alellically included B-cells
         A B cell with two pairs of :term:`IG` chains. See :term:`Dual IR`.
+
+    Clonotype modularity
+        The clonotype modularity measures how densly connected the transcriptomics 
+        neighborhood graph underlying the cells in a clonotype is. Clonotypes with
+        a high modularity consist of cells that are transcriptionally more similar 
+        than that of a clonotype with a low modularity. 
+        See also :func:`scirpy.tl.clonotype_modularity`

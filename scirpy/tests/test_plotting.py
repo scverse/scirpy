@@ -9,6 +9,8 @@ from .fixtures import (
     adata_conn,
     adata_define_clonotype_clusters,
     adata_clonotype_network,
+    adata_define_clonotypes,
+    adata_clonotype_modularity,
 )
 import matplotlib.pyplot as plt
 import pytest
@@ -74,6 +76,23 @@ def test_clonotype_network_gene(adata_clonotype_network, matrix_type, use_raw, c
         adata.X = sparse.csc_matrix(adata.X)
     p = pl.clonotype_network(adata, color="CD8A", use_raw=use_raw, cmap=cmap)
     assert isinstance(p, plt.Axes)
+
+
+@pytest.mark.parametrize("jitter", [None, 0.02])
+@pytest.mark.parametrize("show_size_legend", [True, False])
+@pytest.mark.parametrize("show_labels", [True, False])
+@pytest.mark.parametrize("labels", [None, ["2"]])
+def test_clonotype_modularity(
+    adata_clonotype_modularity, jitter, show_size_legend, show_labels, labels
+):
+    pl.clonotype_modularity(
+        adata_clonotype_modularity,
+        target_col="clonotype_modularity_x",
+        jitter=jitter,
+        show_size_legend=show_size_legend,
+        show_labels=show_labels,
+        labels=labels,
+    )
 
 
 @pytest.mark.parametrize("color_by_n_cells", [True, False])
