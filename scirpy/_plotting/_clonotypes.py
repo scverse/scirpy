@@ -201,6 +201,9 @@ def clonotype_network(
     clonotype_res = adata.uns[clonotype_key]
     coords, adj_mat = _graph_from_coordinates(adata, clonotype_key)
     nx_graph = nx.Graph(_distance_to_connectivity(adj_mat))
+    # in 2.6 networkx added functionality to draw self-loops. We don't want
+    # them plotted, so we remove them here
+    nx_graph.remove_edges_from(nx.selfloop_edges(nx_graph))
 
     # Prepare figure
     if ax is None:
