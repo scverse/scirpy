@@ -504,8 +504,9 @@ def _plot_clonotype_network_panel(
             edge_color=edges_color,
             edge_cmap=edges_cmap,
         )
-        edge_collection.set_zorder(-1)
-        edge_collection.set_rasterized(sc.settings._vector_friendly)
+        if edge_collection != []:
+            edge_collection.set_zorder(-1)
+            edge_collection.set_rasterized(sc.settings._vector_friendly)
 
     # add clonotype labels
     if show_labels:
