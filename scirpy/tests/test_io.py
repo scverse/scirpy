@@ -276,6 +276,122 @@ def test_read_10x_csv():
 
 
 @pytest.mark.conda
+def test_read_10x_csv_cr6():
+    """Test additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}"""
+
+    anndata = read_10x_vdj(
+        TESTDATA
+        / "10x/10k_BMMNC_5pv2_nextgem_Multiplex_vdj_t_all_contig_annotations_small.csv"
+    )
+    obs = anndata.obs
+    assert obs.shape[0] == 2
+    cell1 = obs.iloc[0, :]
+
+    assert cell1.name == "AAACCTGCACAGGTTT-1"
+    assert cell1["IR_VDJ_1_fwr1"] == "KAGVTQTPRYLIKTRGQQVTLSCSPI"
+    assert (
+        cell1["IR_VDJ_1_fwr1_nt"]
+        == "AAGGCTGGAGTCACTCAAACTCCAAGATATCTGATCAAAACGAGAGGACAGCAAGTGACACTGAGCTGCTCCCCTATC"
+    )
+    assert cell1["IR_VDJ_1_cdr1"] == "SGHRS"
+    assert cell1["IR_VDJ_1_cdr1_nt"] == "TCTGGGCATAGGAGT"
+    assert cell1["IR_VDJ_1_fwr2"] == "VSWYQQTPGQGLQFLFE"
+    assert (
+        cell1["IR_VDJ_1_fwr2_nt"]
+        == "GTATCCTGGTACCAACAGACCCCAGGACAGGGCCTTCAGTTCCTCTTTGAA"
+    )
+    assert cell1["IR_VDJ_1_cdr2"] == "YFSETQ"
+    assert cell1["IR_VDJ_1_cdr2_nt"] == "TACTTCAGTGAGACACAG"
+    assert cell1["IR_VDJ_1_fwr3"] == "RNKGNFPGRFSGRQFSNSRSEMNVSTLELGDSALYL"
+    assert (
+        cell1["IR_VDJ_1_fwr3_nt"]
+        == "AGAAACAAAGGAAACTTCCCTGGTCGATTCTCAGGGCGCCAGTTCTCTAACTCTCGCTCTGAGATGAATGTGAGCACCTTGGAGCTGGGGGACTCGGCCCTTTATCTT"
+    )
+    assert cell1["IR_VDJ_1_fwr4"] == "GQGTRLTVV"
+    assert cell1["IR_VDJ_1_fwr4_nt"] == "GGACAAGGCACCAGACTCACAGTTGTAG"
+
+    assert cell1["IR_VJ_1_fwr1"] == "AQTVTQSQPEMSVQEAETVTLSCTYD"
+    assert (
+        cell1["IR_VJ_1_fwr1_nt"]
+        == "GCTCAGACAGTCACTCAGTCTCAACCAGAGATGTCTGTGCAGGAGGCAGAGACCGTGACCCTGAGCTGCACATATGAC"
+    )
+    assert cell1["IR_VJ_1_cdr1"] == "TSESDYY"
+    assert cell1["IR_VJ_1_cdr1_nt"] == "ACCAGTGAGAGTGATTATTAT"
+    assert cell1["IR_VJ_1_fwr2"] == "LFWYKQPPSRQMILVIR"
+    assert (
+        cell1["IR_VJ_1_fwr2_nt"]
+        == "TTATTCTGGTACAAGCAGCCTCCCAGCAGGCAGATGATTCTCGTTATTCGC"
+    )
+    assert cell1["IR_VJ_1_cdr2"] == "QEAYKQQN"
+    assert cell1["IR_VJ_1_cdr2_nt"] == "CAAGAAGCTTATAAGCAACAGAAT"
+    assert cell1["IR_VJ_1_fwr3"] == "ATENRFSVNFQKAAKSFSLKISDSQLGDAAMYF"
+    assert (
+        cell1["IR_VJ_1_fwr3_nt"]
+        == "GCAACAGAGAATCGTTTCTCTGTGAACTTCCAGAAAGCAGCCAAATCCTTCAGTCTCAAGATCTCAGACTCACAGCTGGGGGATGCCGCGATGTATTTC"
+    )
+    assert cell1["IR_VJ_1_fwr4"] == "GTGTSLTVIP"
+    assert cell1["IR_VJ_1_fwr4_nt"] == "GGGACAGGGACAAGTTTGACGGTCATTCCAA"
+
+
+@pytest.mark.conda
+def test_read_10x_cr6():
+    """Test additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}"""
+
+    anndata = read_10x_vdj(
+        TESTDATA
+        / "10x/10k_BMMNC_5pv2_nextgem_Multiplex_vdj_t_all_contig_annotations_small.json"
+    )
+    obs = anndata.obs
+    assert obs.shape[0] == 2
+    cell1 = obs.iloc[0, :]
+
+    assert cell1.name == "AAACCTGCACAGGTTT-1"
+    assert cell1["IR_VDJ_1_fwr1"] == "KAGVTQTPRYLIKTRGQQVTLSCSPI"
+    assert (
+        cell1["IR_VDJ_1_fwr1_nt"]
+        == "AAGGCTGGAGTCACTCAAACTCCAAGATATCTGATCAAAACGAGAGGACAGCAAGTGACACTGAGCTGCTCCCCTATC"
+    )
+    assert cell1["IR_VDJ_1_cdr1"] == "SGHRS"
+    assert cell1["IR_VDJ_1_cdr1_nt"] == "TCTGGGCATAGGAGT"
+    assert cell1["IR_VDJ_1_fwr2"] == "VSWYQQTPGQGLQFLFE"
+    assert (
+        cell1["IR_VDJ_1_fwr2_nt"]
+        == "GTATCCTGGTACCAACAGACCCCAGGACAGGGCCTTCAGTTCCTCTTTGAA"
+    )
+    assert cell1["IR_VDJ_1_cdr2"] == "YFSETQ"
+    assert cell1["IR_VDJ_1_cdr2_nt"] == "TACTTCAGTGAGACACAG"
+    assert cell1["IR_VDJ_1_fwr3"] == "RNKGNFPGRFSGRQFSNSRSEMNVSTLELGDSALYL"
+    assert (
+        cell1["IR_VDJ_1_fwr3_nt"]
+        == "AGAAACAAAGGAAACTTCCCTGGTCGATTCTCAGGGCGCCAGTTCTCTAACTCTCGCTCTGAGATGAATGTGAGCACCTTGGAGCTGGGGGACTCGGCCCTTTATCTT"
+    )
+    assert cell1["IR_VDJ_1_fwr4"] == "GQGTRLTVV"
+    assert cell1["IR_VDJ_1_fwr4_nt"] == "GGACAAGGCACCAGACTCACAGTTGTAG"
+
+    assert cell1["IR_VJ_1_fwr1"] == "AQTVTQSQPEMSVQEAETVTLSCTYD"
+    assert (
+        cell1["IR_VJ_1_fwr1_nt"]
+        == "GCTCAGACAGTCACTCAGTCTCAACCAGAGATGTCTGTGCAGGAGGCAGAGACCGTGACCCTGAGCTGCACATATGAC"
+    )
+    assert cell1["IR_VJ_1_cdr1"] == "TSESDYY"
+    assert cell1["IR_VJ_1_cdr1_nt"] == "ACCAGTGAGAGTGATTATTAT"
+    assert cell1["IR_VJ_1_fwr2"] == "LFWYKQPPSRQMILVIR"
+    assert (
+        cell1["IR_VJ_1_fwr2_nt"]
+        == "TTATTCTGGTACAAGCAGCCTCCCAGCAGGCAGATGATTCTCGTTATTCGC"
+    )
+    assert cell1["IR_VJ_1_cdr2"] == "QEAYKQQN"
+    assert cell1["IR_VJ_1_cdr2_nt"] == "CAAGAAGCTTATAAGCAACAGAAT"
+    assert cell1["IR_VJ_1_fwr3"] == "ATENRFSVNFQKAAKSFSLKISDSQLGDAAMYF"
+    assert (
+        cell1["IR_VJ_1_fwr3_nt"]
+        == "GCAACAGAGAATCGTTTCTCTGTGAACTTCCAGAAAGCAGCCAAATCCTTCAGTCTCAAGATCTCAGACTCACAGCTGGGGGATGCCGCGATGTATTTC"
+    )
+    assert cell1["IR_VJ_1_fwr4"] == "GTGTSLTVIP"
+    assert cell1["IR_VJ_1_fwr4_nt"] == "GGGACAGGGACAAGTTTGACGGTCATTCCAA"
+
+
+@pytest.mark.conda
 def test_read_10x():
     anndata = read_10x_vdj(TESTDATA / "10x/all_contig_annotations.json")
     obs = anndata.obs

@@ -139,10 +139,11 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
         # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
         fwrs = [f"fwr{i}" for i in range(1, 5)]
         cdrs = [f"cdr{i}" for i in range(1, 3)]
+
         for col in fwrs + cdrs:
-            record = cell.get(col)
-            chain[col + "_nt"] = record["nt_seq"] if record else None
-            chain[col] = record["aa_seq"] if record else None
+            if col in cell.keys():
+                chain[col] = cell[col].get("aa_seq") if cell[col] else None
+                chain[col + "_nt"] = cell[col].get("nt_seq") if cell[col] else None
 
         ir_obj.add_chain(chain)
 
@@ -179,10 +180,14 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
             )
 
             # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
-            fwrs = [f"fwr{i}" if i < 5 else f"fwr{i-4}_nt" for i in range(1, 9)]
-            cdrs = [f"cdr{i}" if i < 3 else f"cdr{i-2}_nt" for i in range(1, 5)]
+            fwrs = [f"fwr{i}" for i in range(1, 5)]
+            cdrs = [f"cdr{i}" for i in range(1, 3)]
+
             for col in fwrs + cdrs:
-                chain_dict[col] = chain_series.get(col)
+                if col in chain_series.index:
+                    chain_dict[col] = chain_series.get(col)
+                if col + "_nt" in chain_series.index:
+                    chain_dict[col + "_nt"] = chain_series.get(col + "_nt")
 
             ir_obj.add_chain(chain_dict)
 
