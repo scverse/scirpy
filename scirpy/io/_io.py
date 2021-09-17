@@ -48,7 +48,11 @@ DEFAULT_AIRR_FIELDS = (
 DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence", "multi_chain")
 
 
-def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData:
+def _read_10x_vdj_json(
+    path: Union[str, Path],
+    filtered: bool = True,
+    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+) -> AnnData:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
     logger = _IOLogger()
     with open(path, "r") as f:
@@ -143,15 +147,29 @@ def _read_10x_vdj_json(path: Union[str, Path], filtered: bool = True) -> AnnData
 
         for col in fwrs + cdrs:
             if col in cell.keys():
-                chain[col] = cell[col].get("aa_seq") if cell[col] else None
-                chain[col + "_nt"] = cell[col].get("nt_seq") if cell[col] else None
+                chain[col] = cell[col].get("nt_seq") if cell[col] else None
+                chain[col + "_aa"] = cell[col].get("aa_seq") if cell[col] else None
+
+        # trim cdr3 if starts with "C" and ends with W/F
+        chain["cdr3_aa"] = (
+            chain["junction_aa"][1:-1]
+            if chain["junction_aa"] is not None
+            and chain["junction_aa"][0] == "C"
+            and chain["junction_aa"][-1] in "WF"
+            else None
+        )
+        chain["cdr3"] = chain["junction"][3:-3] if chain["cdr3_aa"] else None
 
         ir_obj.add_chain(chain)
 
-    return from_airr_cells(airr_cells.values())
+    return from_airr_cells(airr_cells.values(), include_fields=include_fields)
 
 
-def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
+def _read_10x_vdj_csv(
+    path: Union[str, Path],
+    filtered: bool = True,
+    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+) -> AnnData:
     """Read IR data from a 10x genomics `_contig_annotations.csv` file"""
     logger = _IOLogger()
     df = pd.read_csv(path)
@@ -186,19 +204,35 @@ def _read_10x_vdj_csv(path: Union[str, Path], filtered: bool = True) -> AnnData:
 
             for col in fwrs + cdrs:
                 if col in chain_series.index:
-                    chain_dict[col] = chain_series.get(col)
+                    chain_dict[col + "_aa"] = chain_series.get(col)
                 if col + "_nt" in chain_series.index:
-                    chain_dict[col + "_nt"] = chain_series.get(col + "_nt")
+                    chain_dict[col] = chain_series.get(col + "_nt")
+
+            # trim cdr3 if starts with "C" and ends with W/F
+            chain_dict["cdr3_aa"] = (
+                chain_dict["junction_aa"][1:-1]
+                if not pd.isna(chain_dict["junction_aa"])
+                and chain_dict["junction_aa"][0] == "C"
+                and chain_dict["junction_aa"][-1] in "WF"
+                else None
+            )
+            chain_dict["cdr3"] = (
+                chain_dict["junction"][3:-3] if chain_dict["cdr3_aa"] else None
+            )
 
             ir_obj.add_chain(chain_dict)
 
         airr_cells[barcode] = ir_obj
 
-    return from_airr_cells(airr_cells.values())
+    return from_airr_cells(airr_cells.values(), include_fields=include_fields)
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj(path: Union[str, Path], filtered: bool = True) -> AnnData:
+def read_10x_vdj(
+    path: Union[str, Path],
+    filtered: bool = True,
+    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+) -> AnnData:
     """\
     Read :term:`IR` data from 10x Genomics cell-ranger output.
 
@@ -228,9 +262,9 @@ def read_10x_vdj(path: Union[str, Path], filtered: bool = True) -> AnnData:
     """
     path = Path(path)
     if path.suffix == ".json":
-        return _read_10x_vdj_json(path, filtered)
+        return _read_10x_vdj_json(path, filtered, include_fields)
     else:
-        return _read_10x_vdj_csv(path, filtered)
+        return _read_10x_vdj_csv(path, filtered, include_fields)
 
 
 @_doc_params(doc_working_model=doc_working_model)
