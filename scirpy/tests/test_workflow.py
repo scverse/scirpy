@@ -53,7 +53,7 @@ def test_workflow(
         adata = sc.read_h5ad(adata_path)
         ir.io.upgrade_schema(adata)
     else:
-        adata = ir.io.read_10x_vdj(adata_path)
+        adata = ir.io.read_10x_vdj(adata_path, include_fields=None)
 
     adata_obs_expected = pd.read_pickle(obs_expected)
 
