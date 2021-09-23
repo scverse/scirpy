@@ -12,7 +12,7 @@ from scirpy.io import (
     upgrade_schema,
     AirrCell,
 )
-from scirpy.io._io import _infer_locus_from_gene_names
+from scirpy.io._io import _infer_locus_from_gene_names, _cdr3_from_junction
 from scirpy.io._util import _check_upgrade_schema
 from scirpy.util import _is_na, _is_false
 import numpy as np
@@ -47,6 +47,23 @@ def anndata_from_10x_sample(request):
     """Make a copy for each function. Using this construct saves time compared
     to reading in the 10x files for each request to the fixture"""
     return _read_anndata_from_10x_sample(request.param).copy()
+
+
+@pytest.mark.parametrize(
+    "junction_aa,junction_nt,cdr3_aa,cdr3_nt",
+    [
+        (
+            "CQQYGSSLTWTF",
+            "TGTCAGCAGTATGGTAGCTCACTTACGTGGACGTTC",
+            "QQYGSSLTWT",
+            "CAGCAGTATGGTAGCTCACTTACGTGGACG",
+        ),
+        ("CYSHSPTSMWVS", "TGCTACTCACATTCACCTACTAGCATGTGGGTGTCC", None, None),
+        (None, None, None, None),
+    ],
+)
+def test_cdr3_from_junction(junction_aa, junction_nt, cdr3_aa, cdr3_nt):
+    assert _cdr3_from_junction(junction_aa, junction_nt) == (cdr3_aa, cdr3_nt)
 
 
 @pytest.mark.parametrize(
