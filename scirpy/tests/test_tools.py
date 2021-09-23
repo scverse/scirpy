@@ -6,8 +6,17 @@ import pytest
 import numpy.testing as npt
 import pandas.testing as pdt
 import numpy as np
+import scanpy as sc
 import itertools
-from .fixtures import adata_clonotype, adata_tra, adata_vdj, adata_diversity
+from .fixtures import (
+    adata_clonotype,
+    adata_tra,
+    adata_vdj,
+    adata_diversity,
+    adata_conn,
+    adata_clonotype_network,
+    adata_define_clonotype_clusters,
+)
 
 
 def test_chain_pairing():
@@ -541,6 +550,48 @@ def test_repertoire_overlap(adata_tra):
         orient="index",
     )
     npt.assert_equal(res.values, expected_cnt.values)
+
+
+@pytest.mark.parametrize(
+    "permutation_test,fdr_correction,expected_scores,expected_pvalues",
+    [
+        (
+            "approx",
+            True,
+            {"0": -0.12942433525186176, "1": -0.2258918616903405, "2": 0.0},
+            {"0": 1.0, "1": 1.0, "2": 1.0},
+        ),
+        (
+            "approx",
+            False,
+            {"0": -0.12942433525186176, "1": -0.2258918616903405, "2": 0.0},
+            {"0": 0.6508188059730626, "1": 0.736430451770643, "2": 1.0},
+        ),
+        (
+            "exact",
+            False,
+            {"0": -0.1302531239444782, "1": -0.22422553993839395, "2": 0.0},
+            {"0": 0.9223, "1": 0.9481, "2": 1.0},
+        ),
+    ],
+)
+def test_clonotype_modularity(
+    adata_clonotype_network,
+    permutation_test,
+    fdr_correction,
+    expected_scores,
+    expected_pvalues,
+):
+    sc.pp.neighbors(adata_clonotype_network)
+    scores, pvalues = ir.tl.clonotype_modularity(
+        adata_clonotype_network,
+        target_col="cc_aa_alignment",
+        permutation_test=permutation_test,
+        fdr_correction=fdr_correction,
+        inplace=False,
+    )  # type: ignore
+    assert scores == pytest.approx(expected_scores, abs=0.02)
+    assert pvalues == pytest.approx(expected_pvalues, abs=0.02)
 
 
 def test_clonotype_imbalance(adata_tra):

@@ -19,12 +19,13 @@ from . import _tracerlib
 import sys
 from pathlib import Path
 import airr
-from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein
+from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein, _is_na2
 from ._convert_anndata import from_airr_cells, to_airr_cells, _sanitize_anndata
 from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
 from .._compat import Literal
 from airr import RearrangementSchema
 import itertools
+import re
 from .. import __version__
 
 
@@ -497,28 +498,34 @@ def read_airr(
 
 def _infer_locus_from_gene_names(chain_dict):
     """Infer the IGMT locus name from VDJ calls"""
-    tmp = [
-        chain_dict["v_call"],
-        chain_dict["d_call"],
-        chain_dict["j_call"],
-        chain_dict["c_call"],
-    ]
-    for t in tmp:
-        if t == "" or t is None or t != t:
-            tmp.remove(t)
-    if all("tra" in x.lower() for x in tmp if not pd.isnull(x)):
+    keys = ["v_call", "d_call", "j_call", "c_call"]
+
+    # TRAV.*/DV is misleading as it actually points to a delta locus
+    # See #285
+    if re.search("TRAV.*/DV", chain_dict["v_call"]):
+        keys.remove("v_call")
+
+    genes = []
+    for k in keys:
+        gene = chain_dict[k]
+        if not _is_na2(gene):
+            genes.append(gene.lower())
+
+    if not len(genes):
+        locus = None
+    elif all("tra" in x for x in genes):
         locus = "TRA"
-    elif all("trb" in x.lower() for x in tmp if not pd.isnull(x)):
+    elif all("trb" in x for x in genes):
         locus = "TRB"
-    elif all("trd" in x.lower() for x in tmp if not pd.isnull(x)):
+    elif all("trd" in x for x in genes):
         locus = "TRD"
-    elif all("trg" in x.lower() for x in tmp if not pd.isnull(x)):
+    elif all("trg" in x for x in genes):
         locus = "TRG"
-    elif all("igh" in x.lower() for x in tmp if not pd.isnull(x)):
+    elif all("igh" in x for x in genes):
         locus = "IGH"
-    elif all("igk" in x.lower() for x in tmp if not pd.isnull(x)):
+    elif all("igk" in x for x in genes):
         locus = "IGK"
-    elif all("igl" in x.lower() for x in tmp if not pd.isnull(x)):
+    elif all("igl" in x for x in genes):
         locus = "IGL"
     else:
         locus = None

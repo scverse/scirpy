@@ -48,7 +48,7 @@ def clonotype_network(
     label_alpha: float = 0.6,
     label_y_offset: float = 2,
     legend_fontsize=None,
-    legend_width=2,
+    legend_width: float = 2,
     show_legend: Optional[bool] = None,
     show_size_legend: bool = True,
     palette: Union[str, Sequence[str], Cycler, None] = None,
@@ -201,6 +201,9 @@ def clonotype_network(
     clonotype_res = adata.uns[clonotype_key]
     coords, adj_mat = _graph_from_coordinates(adata, clonotype_key)
     nx_graph = nx.Graph(_distance_to_connectivity(adj_mat))
+    # in 2.6 networkx added functionality to draw self-loops. We don't want
+    # them plotted, so we remove them here
+    nx_graph.remove_edges_from(nx.selfloop_edges(nx_graph))
 
     # Prepare figure
     if ax is None:
@@ -501,8 +504,9 @@ def _plot_clonotype_network_panel(
             edge_color=edges_color,
             edge_cmap=edges_cmap,
         )
-        edge_collection.set_zorder(-1)
-        edge_collection.set_rasterized(sc.settings._vector_friendly)
+        if edge_collection != []:
+            edge_collection.set_zorder(-1)
+            edge_collection.set_rasterized(sc.settings._vector_friendly)
 
     # add clonotype labels
     if show_labels:

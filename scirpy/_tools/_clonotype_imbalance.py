@@ -6,9 +6,15 @@ import pandas as pd
 import scanpy as sc
 from ._repertoire_overlap import repertoire_overlap
 from ..io._util import _check_upgrade_schema
+from ..util import deprecated
 
 
 @_check_upgrade_schema()
+@deprecated(
+    "Consider using `tl.clonotype_modularity` instead. If `clonotype_modularity` "
+    "does not cover your use-case, please create an issue on GitHub to let us know "
+    "such that we can take it into account! (https://github.com/icbi-lab/scirpy/issues)"
+)
 def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,

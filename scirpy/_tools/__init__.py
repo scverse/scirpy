@@ -12,3 +12,4 @@ from ._clonotypes import (
     clonotype_network_igraph,
 )
 from ._convergence import clonotype_convergence
+from ._clonotype_modularity import clonotype_modularity

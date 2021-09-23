@@ -9,5 +9,6 @@ from ._spectratype import spectratype
 from ._vdj_usage import vdj_usage
 from ._repertoire_overlap import repertoire_overlap
 from ._clonotype_imbalance import clonotype_imbalance
+from ._clonotype_modularity import clonotype_modularity
 
 from ._clonotypes import clonotype_network, COLORMAP_EDGES

@@ -119,6 +119,7 @@ Analyse clonal diversity
    summarize_clonal_expansion
    alpha_diversity
    repertoire_overlap
+   clonotype_modularity
    clonotype_imbalance
 
 V(D)J gene usage
@@ -159,8 +160,9 @@ when calling the plotting function or need to be precomputed and stored in
    spectratype
    vdj_usage
    repertoire_overlap
-   clonotype_imbalance
+   clonotype_modularity
    clonotype_network
+   clonotype_imbalance
 
 
 

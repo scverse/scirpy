@@ -12,6 +12,7 @@ from scirpy.io import (
     upgrade_schema,
     AirrCell,
 )
+from scirpy.io._io import _infer_locus_from_gene_names
 from scirpy.io._util import _check_upgrade_schema
 from scirpy.util import _is_na, _is_false
 import numpy as np
@@ -121,6 +122,60 @@ def test_airr_cell_empty():
     assert airr_record == []
 
     ac.to_scirpy_record()
+
+
+@pytest.mark.parametrize(
+    "chain_dict,expected",
+    [
+        (
+            {
+                "v_call": "nan",
+                "d_call": "nan",
+                "j_call": "nan",
+                "c_call": "nan",
+            },
+            None,
+        ),
+        (
+            {
+                "v_call": "TRAV36/DV7*01",
+                "d_call": "TRDD1*01",
+                "j_call": "TRDJ2*01",
+                "c_call": "TRDC",
+            },
+            "TRD",
+        ),
+        (
+            {
+                "v_call": "TRAV36/DV7*01",
+                "d_call": "nan",
+                "j_call": "TRAJ2*01",
+                "c_call": "TRAC",
+            },
+            "TRA",
+        ),
+        (
+            {
+                "v_call": "TRAV12-1*01",
+                "d_call": "nan",
+                "j_call": "TRAJ23*01",
+                "c_call": "TRAC",
+            },
+            "TRA",
+        ),
+        (
+            {
+                "v_call": "TRAV12-1*01",
+                "d_call": "nan",
+                "j_call": "TRBJ1-3*01",
+                "c_call": "TRAC",
+            },
+            None,
+        ),
+    ],
+)
+def test_infer_locus_from_gene_name(chain_dict, expected):
+    assert expected is _infer_locus_from_gene_names(chain_dict)
 
 
 @pytest.mark.parametrize(
