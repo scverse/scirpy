@@ -49,6 +49,29 @@ DEFAULT_10X_FIELDS = DEFAULT_AIRR_FIELDS + ("is_cell", "high_confidence")
 DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence", "multi_chain")
 
 
+def _cdr3_from_junction(junction_aa, junction_nt):
+    """CDR3 euqals junction without the conserved residues C and W/F, respectively.
+    Should the conserved residues not equal to C and W/F, then the chain
+    is non-productive and we set CDR3 to None.
+
+    See also https://github.com/icbi-lab/scirpy/pull/290.
+    """
+    cdr3_aa, cdr3_nt = None, None
+    if (
+        junction_aa is not None
+        and junction_aa[0] == "C"
+        and junction_aa[-1] in ("W", "F")
+    ):
+        cdr3_aa = junction_aa[1:-1]
+    if (
+        junction_nt is not None
+        and _translate_dna_to_protein(junction_nt[:3]) == "C"
+        and _translate_dna_to_protein(junction_nt[-3:]) in ("W", "F")
+    ):
+        cdr3_nt = junction_nt[3:-3]
+    return cdr3_aa, cdr3_nt
+
+
 def _read_10x_vdj_json(
     path: Union[str, Path],
     filtered: bool = True,
@@ -151,15 +174,9 @@ def _read_10x_vdj_json(
                 chain[col] = cell[col].get("nt_seq") if cell[col] else None
                 chain[col + "_aa"] = cell[col].get("aa_seq") if cell[col] else None
 
-        # trim cdr3 if starts with "C" and ends with W/F
-        chain["cdr3_aa"] = (
-            chain["junction_aa"][1:-1]
-            if chain["junction_aa"] is not None
-            and chain["junction_aa"][0] == "C"
-            and chain["junction_aa"][-1] in "WF"
-            else None
+        chain["cdr3_aa"], chain["cdr3"] = _cdr3_from_junction(
+            chain["junction_aa"], chain["junction"]
         )
-        chain["cdr3"] = chain["junction"][3:-3] if chain["cdr3_aa"] else None
 
         ir_obj.add_chain(chain)
 
@@ -209,16 +226,8 @@ def _read_10x_vdj_csv(
                 if col + "_nt" in chain_series.index:
                     chain_dict[col] = chain_series.get(col + "_nt")
 
-            # trim cdr3 if starts with "C" and ends with W/F
-            chain_dict["cdr3_aa"] = (
-                chain_dict["junction_aa"][1:-1]
-                if not pd.isna(chain_dict["junction_aa"])
-                and chain_dict["junction_aa"][0] == "C"
-                and chain_dict["junction_aa"][-1] in "WF"
-                else None
-            )
-            chain_dict["cdr3"] = (
-                chain_dict["junction"][3:-3] if chain_dict["cdr3_aa"] else None
+            chain_dict["cdr3_aa"], chain_dict["cdr3"] = _cdr3_from_junction(
+                chain_dict["junction_aa"], chain_dict["junction"]
             )
 
             ir_obj.add_chain(chain_dict)
@@ -254,12 +263,12 @@ def read_10x_vdj(
     filtered
         Only keep filtered contig annotations (i.e. `is_cell` and `high_confidence`).
         If using `filtered_contig_annotations.csv` already, this option
-	include_fields
-	    The fields to include in `adata`. The AIRR rearrangment schema contains
-	    can contain a lot of columns, most of which irrelevant for most analyses.
-	    Per default, this includes a subset of columns relevant for a typical
-	    scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
-	    Set this to `None` to include all columns.
+    include_fields
+        The fields to include in `adata`. The AIRR rearrangment schema contains
+        can contain a lot of columns, most of which irrelevant for most analyses.
+        Per default, this includes a subset of columns relevant for a typical
+        scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
+        Set this to `None` to include all columns.
         is futile.
     
 
