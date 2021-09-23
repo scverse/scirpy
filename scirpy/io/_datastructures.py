@@ -70,7 +70,7 @@ class AirrCell(MutableMapping):
         self._chains = list()
         self["cell_id"] = cell_id
         # legacy argument for the old AnnData scheme (when there was no `extra_chains` field)
-        self["multi_chain"] = False
+        self._cell_attrs["multi_chain"] = None
 
     def __repr__(self):
         return "AirrCell {} with {} chains".format(self.cell_id, len(self.chains))
@@ -301,15 +301,17 @@ class AirrCell(MutableMapping):
         include_fields = set(include_fields)
         include_fields.add("cell_id")
 
-        res_dict["multi_chain"], chain_dict = self._split_chains()
-        res_dict["extra_chains"] = self._serialize_chains(
-            chain_dict.pop("extra"), include_fields=include_fields
-        )
-
         # add cell-level attributes
         for key in self:
             if key in include_fields:
                 res_dict[key] = self[key]
+
+        # this will overwrite the fields, should the already be included as cell-level
+        # attributes.
+        res_dict["multi_chain"], chain_dict = self._split_chains()
+        res_dict["extra_chains"] = self._serialize_chains(
+            chain_dict.pop("extra"), include_fields=include_fields
+        )
 
         # add chain-level attributes, do nothing when cell with no chains
         if self._chain_fields is not None:
