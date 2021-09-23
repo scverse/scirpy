@@ -52,7 +52,9 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
             tmp_cell = cell_dict[cell.cell_id]
             # this is a legacy operation. With adatas generated with scirpy
             # >= 0.7 this isn't necessary anymore, as all chains are preserved.
-            tmp_cell["multi_chain"] |= cell["multi_chain"]
+            tmp_cell["multi_chain"] = bool(tmp_cell["multi_chain"]) | bool(
+                cell["multi_chain"]
+            )
             for tmp_chain in cell.chains:
                 tmp_cell.add_chain(tmp_chain)
             # add cell-level attributes
