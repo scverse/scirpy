@@ -263,13 +263,13 @@ def read_10x_vdj(
     filtered
         Only keep filtered contig annotations (i.e. `is_cell` and `high_confidence`).
         If using `filtered_contig_annotations.csv` already, this option
+        is futile.
     include_fields
         The fields to include in `adata`. The AIRR rearrangment schema contains
         can contain a lot of columns, most of which irrelevant for most analyses.
         Per default, this includes a subset of columns relevant for a typical
         scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
         Set this to `None` to include all columns.
-        is futile.
     
 
     Returns
