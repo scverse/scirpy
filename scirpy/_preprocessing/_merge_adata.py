@@ -46,10 +46,20 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     """
     ir_objs1 = to_airr_cells(adata)
     ir_objs2 = to_airr_cells(adata2)
+    # Compute `include_fields` to avoid including fields that are part of
+    # empty airr cells as part of the rearrangement standard, but not included
+    # in the original anndata object.
+    include_fields = set(
+        x.split("_", maxsplit=3)[-1] if x.startswith("IR_") else x
+        for x in itertools.chain(adata.obs.columns, adata2.obs.columns)
+    )
     cell_dict: Dict[str, AirrCell] = dict()
     for cell in itertools.chain(ir_objs1, ir_objs2):
         try:
             tmp_cell = cell_dict[cell.cell_id]
+        except KeyError:
+            cell_dict[cell.cell_id] = cell
+        else:
             # this is a legacy operation. With adatas generated with scirpy
             # >= 0.7 this isn't necessary anymore, as all chains are preserved.
             tmp_cell["multi_chain"] = bool(tmp_cell["multi_chain"]) | bool(
@@ -59,8 +69,6 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
                 tmp_cell.add_chain(tmp_chain)
             # add cell-level attributes
             tmp_cell.update(cell)
-        except KeyError:
-            cell_dict[cell.cell_id] = cell
 
     # remove duplicate chains
     # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
@@ -68,7 +76,9 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
         cell._chains = [dict(t) for t in set(tuple(d.items()) for d in cell.chains)]
 
     # only keep entries that are in `adata` and ensure consistent ordering
-    adata.obs = from_airr_cells(cell_dict.values()).obs.reindex(adata.obs_names)
+    adata.obs = from_airr_cells(
+        cell_dict.values(), include_fields=include_fields
+    ).obs.reindex(adata.obs_names)
 
 
 @_check_upgrade_schema(check_args=(1,))

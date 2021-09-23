@@ -45,13 +45,14 @@ DEFAULT_AIRR_FIELDS = (
     "consensus_count",
     "duplicate_count",
 )
+DEFAULT_10X_FIELDS = DEFAULT_AIRR_FIELDS + ("is_cell", "high_confidence")
 DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence", "multi_chain")
 
 
 def _read_10x_vdj_json(
     path: Union[str, Path],
     filtered: bool = True,
-    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+    include_fields: Optional[Collection[str]] = None,
 ) -> AnnData:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
     logger = _IOLogger()
@@ -168,7 +169,7 @@ def _read_10x_vdj_json(
 def _read_10x_vdj_csv(
     path: Union[str, Path],
     filtered: bool = True,
-    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+    include_fields: Optional[Collection[str]] = None,
 ) -> AnnData:
     """Read IR data from a 10x genomics `_contig_annotations.csv` file"""
     logger = _IOLogger()
@@ -227,11 +228,11 @@ def _read_10x_vdj_csv(
     return from_airr_cells(airr_cells.values(), include_fields=include_fields)
 
 
-@_doc_params(doc_working_model=doc_working_model)
+@_doc_params(doc_working_model=doc_working_model, include_fields=DEFAULT_10X_FIELDS)
 def read_10x_vdj(
     path: Union[str, Path],
     filtered: bool = True,
-    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+    include_fields: Optional[Collection[str]] = DEFAULT_10X_FIELDS,
 ) -> AnnData:
     """\
     Read :term:`IR` data from 10x Genomics cell-ranger output.
@@ -253,7 +254,14 @@ def read_10x_vdj(
     filtered
         Only keep filtered contig annotations (i.e. `is_cell` and `high_confidence`).
         If using `filtered_contig_annotations.csv` already, this option
+	include_fields
+	    The fields to include in `adata`. The AIRR rearrangment schema contains
+	    can contain a lot of columns, most of which irrelevant for most analyses.
+	    Per default, this includes a subset of columns relevant for a typical
+	    scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
+	    Set this to `None` to include all columns.
         is futile.
+    
 
     Returns
     -------
