@@ -40,8 +40,9 @@ def test_merge_airr_chains_concat():
     _normalize_df_types(obs_merged)
     _normalize_df_types(obs_expected)
     pdt.assert_frame_equal(
-        obs_expected,
-        obs_merged,
+        # extra chains will be different (since the two DFs have different keys)
+        obs_expected.drop("extra_chains", axis=1),
+        obs_merged.drop("extra_chains", axis=1),
         check_dtype=False,
         check_column_type=False,
         check_categorical=False,
