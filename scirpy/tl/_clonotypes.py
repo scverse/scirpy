@@ -52,7 +52,9 @@ same_v_gene
 
     v genes are matched based on the behaviour defined with `receptor_arms` and
     `dual_ir`.
+"""
 
+_common_doc_within_group = """\
 within_group
     Enforces clonotypes to have the same group defined by one or multiple grouping
     variables. Per default, this is set to :term:`receptor_type<Receptor type>`,
@@ -167,6 +169,7 @@ def _validate_parameters(
 @_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
+    within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
     return_values=_common_doc_return_values,
     paralellism=_common_doc_parallelism,
@@ -180,7 +183,7 @@ def define_clonotype_clusters(
     dual_ir: Literal["primary_only", "all", "any"] = "any",
     same_v_gene: bool = False,
     within_group: Union[Sequence[str], str, None] = "receptor_type",
-    key_added: str = None,
+    key_added: Optional[str] = None,
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
@@ -207,11 +210,13 @@ def define_clonotype_clusters(
     adata
         Annotated data matrix
     sequence
-        The sequence parameter used when running :func:scirpy.pp.ir_dist`
+        The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
 
     {common_doc}
+
+    {within_group}
 
     key_added
         The column name under which the clonotype clusters and cluster sizes
@@ -318,6 +323,7 @@ def define_clonotype_clusters(
 @_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
+    within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
     return_values=_common_doc_return_values,
     paralellism=_common_doc_parallelism,
@@ -346,6 +352,7 @@ def define_clonotypes(
     adata
         Annotated data matrix
     {common_doc}
+    {within_group}
     key_added
         The column name under which the clonotype clusters and cluster sizes
         will be stored in `adata.obs` and under which the clonotype network will be

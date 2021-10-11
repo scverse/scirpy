@@ -104,6 +104,7 @@ def _get_distance_calculator(
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: AnnData,
+    adata2: AnnData = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,
@@ -126,6 +127,11 @@ def _ir_dist(
     ----------
     adata
         annotated data matrix
+    adata2
+        TODO
+        Reference dataset. If specified, will compute distances between the sequences
+        in `adata` and the sequences in `adata2`. Otherwise compute pairwise distances
+        of the sequences in `adata`.
     {metric}
     {cutoff}
     sequence

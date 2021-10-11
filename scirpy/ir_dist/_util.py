@@ -172,7 +172,7 @@ class DoubleLookupNeighborFinder:
               constructed via `add_lookup_table`.
 
         For each object `o`, all neighbors `N` with a distance != 0 can be retrieved
-        in `O(|N|))` via double-lookup. The forward lookup-step retrieves
+        in `O(|N|)` via double-lookup. The forward lookup-step retrieves
         the row/col index in the distance matrix for the entry associated with `o`.
         From the spare matrix we directly obtain the indices in the distance matrix
         with distance != 0. The reverse lookup-step retrieves all neighbors `N` from
