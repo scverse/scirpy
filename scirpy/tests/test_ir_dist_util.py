@@ -14,27 +14,56 @@ import numpy.testing as npt
 
 
 @pytest.fixture
-def dlnf():
-    clonotypes = pd.DataFrame().assign(
-        VJ=["A", "B", "C", "D", "A", "C", "D", "G"],
-        VDJ=["A", "B", "C", "D", "nan", "D", "nan", "F"],
-    )
-    dlnf = DoubleLookupNeighborFinder(feature_table=clonotypes)
-    dlnf.add_distance_matrix(
-        name="test",
-        distance_matrix=sp.csr_matrix(
-            [
-                [1, 0, 0, 0, 0, 0],
-                [0, 2, 0, 0, 1, 0],
-                [0, 0, 3, 4, 0, 0],
-                [0, 0, 4, 3, 0, 0],
-                [0, 1, 0, 0, 5, 0],
-                [0, 0, 0, 0, 0, 6],
-            ]
-        ),
-        labels=np.array(["A", "B", "C", "D", "G", "F"]),
-    )
-    return dlnf
+def dlnf(request):
+    if request.param == "dlnf_square":
+        clonotypes = pd.DataFrame().assign(
+            VJ=["A", "B", "C", "D", "A", "C", "D", "G"],
+            VDJ=["A", "B", "C", "D", "nan", "D", "nan", "F"],
+        )
+        dlnf = DoubleLookupNeighborFinder(feature_table=clonotypes)
+        dlnf.add_distance_matrix(
+            name="test",
+            distance_matrix=sp.csr_matrix(
+                [
+                    [1, 0, 0, 0, 0, 0],
+                    [0, 2, 0, 0, 1, 0],
+                    [0, 0, 3, 4, 0, 0],
+                    [0, 0, 4, 3, 0, 0],
+                    [0, 1, 0, 0, 5, 0],
+                    [0, 0, 0, 0, 0, 6],
+                ]
+            ),
+            labels=np.array(["A", "B", "C", "D", "G", "F"]),
+        )
+        return dlnf
+    elif request.param == "dlnf_rectangle":
+        clonotypes = pd.DataFrame().assign(
+            VJ=["A", "B", "C", "D", "A", "C", "D", "G"],
+            VDJ=["A", "B", "C", "D", "nan", "D", "nan", "F"],
+        )
+        clonotypes2 = pd.DataFrame().assign(
+            VJ=["A", "B", "B", "D", "A"],
+            VDJ=["A", "B", "nan", "A", "E"],
+        )
+        dlnf = DoubleLookupNeighborFinder(
+            feature_table=clonotypes, feature_table2=clonotypes2
+        )
+        dlnf.add_distance_matrix(
+            name="test",
+            distance_matrix=sp.csr_matrix(
+                [
+                    [1, 0, 0, 0],
+                    [0, 2, 0, 1],
+                    [0, 0, 0, 0],
+                    [0, 0, 3, 0],
+                    [0, 1, 0, 5],
+                    [0, 0, 0, 6],
+                ]
+            ),
+            labels=np.array(["A", "B", "C", "D", "G", "F"]),
+            labels2=np.array(["A", "B", "D", "E"]),
+        )
+        return dlnf
 
 
 @pytest.fixture
@@ -112,9 +141,10 @@ def test_reduce_and(args, chain_count, expected):
 
 
 @pytest.mark.parametrize(
-    "feature_col,name,forward_expected,reverse_expected",
+    "dlnf,feature_col,name,forward_expected,reverse_expected",
     [
         (
+            "dlnf_square",
             "VJ",
             "VJ_test",
             np.array([0, 1, 2, 3, 0, 2, 3, 4]),
@@ -127,6 +157,7 @@ def test_reduce_and(args, chain_count, expected):
             },
         ),
         (
+            "dlnf_square",
             "VDJ",
             "VDJ_test",
             np.array([0, 1, 2, 3, np.nan, 3, np.nan, 5]),
@@ -138,7 +169,30 @@ def test_reduce_and(args, chain_count, expected):
                 5: [0, 0, 0, 0, 0, 0, 0, 1],
             },
         ),
+        (
+            "dlnf_rectangle",
+            "VJ",
+            "VJ_test",
+            np.array([0, 1, 2, 3, 0, 2, 3, 4]),
+            {
+                0: [1, 0, 0, 0, 1],
+                1: [0, 1, 1, 0, 0],
+                2: [0, 0, 0, 1, 0],
+            },
+        ),
+        (
+            "dlnf_rectangle",
+            "VDJ",
+            "VDJ_test",
+            np.array([0, 1, 2, 3, np.nan, 3, np.nan, 5]),
+            {
+                0: [1, 0, 0, 1, 0],
+                1: [0, 1, 0, 0, 0],
+                3: [0, 0, 0, 0, 1],
+            },
+        ),
     ],
+    indirect=["dlnf"],
 )
 def test_dlnf_lookup_table(dlnf, feature_col, name, forward_expected, reverse_expected):
     dlnf.add_lookup_table(feature_col=feature_col, distance_matrix="test", name=name)

@@ -386,5 +386,5 @@ class DoubleLookupNeighborFinder:
                 tmp_reverse_lookup[tmp_key] = [i]
 
         return ReverseLookupTable.from_dict_of_indices(
-            tmp_reverse_lookup, dist_type, self.n_rows
+            tmp_reverse_lookup, dist_type, self.n_cols
         )
