@@ -16,6 +16,8 @@ def merge_coo_matrices(mats):
 
     # special case: empty list - sum returns 0
     if not len(mats):
+        # TODO do I really want a 0 here? or rather a row of zeros?
+        # In the latter case I need to share the shape somehow.
         return 0
 
     # check that shapes are consistent
