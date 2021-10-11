@@ -12,6 +12,7 @@ import pandas.testing as pdt
 import pandas as pd
 
 
+# TODO NEXT add test-cases for ClonotypeNeighbors with two anndata objects.
 def _assert_frame_equal(left, right):
     """alias to pandas.testing.assert_frame_equal configured for the tests in this file"""
     pdt.assert_frame_equal(left, right, check_dtype=False, check_categorical=False)
