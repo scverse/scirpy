@@ -37,7 +37,7 @@ requires = [
     'networkx>=2.5',
     'squarify',
     'airr>=1.2',
-    'tqdm>=4.42.0', # required for process_map
+    'tqdm>=4.44.1', # required for process_map
     'adjustText>=0.7',
     # for getting the version
     'setuptools_scm',
