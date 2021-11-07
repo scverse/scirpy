@@ -60,11 +60,11 @@ def repertoire_overlap(
 
     # Remove NA rows
     na_mask = _is_na(adata.obs[groupby]) | _is_na(adata.obs[target_col])
-    df = adata.obs.loc[~na_mask, :]
+    df = adata.obs.loc[~na_mask, :].copy()
 
     # Normalize to fractions
-    df = df.assign(
-        cell_weights=_normalize_counts(adata.obs, fraction)
+    df["cell_weights"] = (
+        _normalize_counts(df, fraction)
         if isinstance(fraction, (bool, str)) or fraction is None
         else fraction
     )

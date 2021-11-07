@@ -1,3 +1,4 @@
+sinfo-requirements.txt
 *.code-workspace
 .vscode/*
 !.vscode/settings.json.default
