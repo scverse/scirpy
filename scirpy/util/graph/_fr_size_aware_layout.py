@@ -21,7 +21,7 @@ def layout_fr_size_aware(
     node_positions: Optional[Mapping[int, Tuple[float, float]]] = None,
     fixed_nodes: Optional[Sequence] = None,
     base_node_size: float = 1e-2,
-    size_power: float = 0.5
+    size_power: float = 0.5,
 ) -> np.ndarray:
     """
     Compute the Fruchterman-Reingold layout respecting node sizes.

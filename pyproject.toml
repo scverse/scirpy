@@ -34,10 +34,10 @@ requires = [
     'scikit-learn',
     'python-levenshtein',
     'python-igraph',
-    'networkx',
+    'networkx>=2.5',
     'squarify',
     'airr>=1.2',
-    'tqdm>=4.42.0', # required for process_map
+    'tqdm>=4.44.1', # required for process_map
     'adjustText>=0.7',
     # for getting the version
     'setuptools_scm',
@@ -92,3 +92,6 @@ norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 
 [tool.setuptools_scm]
 git_describe_command = "git describe --dirty --tags --long --match v*.*.*"
+
+[tool.black]
+target-version = ['py37']

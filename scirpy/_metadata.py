@@ -24,7 +24,7 @@ try:
         # However, this didn't work, so I pass them explicitly here.
         root="..",
         relative_to=__file__,
-        **proj["tool"]["setuptools_scm"]
+        **proj["tool"]["setuptools_scm"],
     ).split("+")[0]
     __author__ = metadata["author"]
     __email__ = metadata["author-email"]
