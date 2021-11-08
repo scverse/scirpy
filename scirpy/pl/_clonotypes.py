@@ -19,7 +19,7 @@ from scanpy.plotting._utils import ticks_formatter
 
 from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
-from .._tools._clonotypes import _graph_from_coordinates, _doc_clonotype_network
+from ..tl._clonotypes import _graph_from_coordinates, _doc_clonotype_network
 from ..util import _doc_params
 from ..io._util import _check_upgrade_schema
 

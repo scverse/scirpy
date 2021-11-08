@@ -56,6 +56,7 @@ jobs:
 
       - name: Install dependencies
         # TODO this is to workaround an issue with dandelion's skbio dependency
+        # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1690
         run: |
           pip install numpy
           pip install .[doc,test,rpack,dandelion]
@@ -85,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: docs
-          path: docs/_build/html 
+          path: docs/_build/html
 
       - name: Deploy to gh-pages
         if: ( matrix.os == 'ubuntu-latest' ) && ( matrix.python-version == '3.8' ) && ( github.event_name != 'pull_request' )
