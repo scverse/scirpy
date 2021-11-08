@@ -161,7 +161,7 @@ def test_chain_qc():
 def test_clip_and_count_clonotypes(adata_clonotype):
     adata = adata_clonotype
 
-    res = ir._tools._clonal_expansion._clip_and_count(
+    res = ir.tl._clonal_expansion._clip_and_count(
         adata, groupby="group", target_col="clone_id", clip_at=2, inplace=False
     )
     npt.assert_equal(
@@ -169,7 +169,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     )
 
     # check without group
-    res = ir._tools._clonal_expansion._clip_and_count(
+    res = ir.tl._clonal_expansion._clip_and_count(
         adata, target_col="clone_id", clip_at=5, inplace=False
     )
     npt.assert_equal(
@@ -180,7 +180,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     adata.obs["new_col"] = adata.obs["clone_id"]
     adata.obs.drop("clone_id", axis="columns", inplace=True)
 
-    ir._tools._clonal_expansion._clip_and_count(
+    ir.tl._clonal_expansion._clip_and_count(
         adata,
         groupby="group",
         target_col="new_col",
@@ -193,7 +193,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
 
     # check if it raises value error if target_col does not exist
     with pytest.raises(ValueError):
-        ir._tools._clonal_expansion._clip_and_count(
+        ir.tl._clonal_expansion._clip_and_count(
             adata,
             groupby="group",
             target_col="clone_id",

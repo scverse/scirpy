@@ -36,9 +36,9 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",
     "sphinxcontrib.bibtex",
     "nbsphinx",
+    "sphinx_autodoc_typehints",
     "scanpydoc",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
@@ -121,6 +121,7 @@ qualname_overrides = {
     "scirpy.io._datastructures.AirrCell": "scirpy.io.AirrCell",
     "pandas.core.arrays.categorical.Categorical": "pandas.Categorical",
     "pandas.core.series.Series": "pandas.Series",
+    "scirpy.pp": "scirpy.pp",
 }
 
 nitpick_ignore = [
