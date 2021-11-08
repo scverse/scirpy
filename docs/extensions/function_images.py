@@ -38,7 +38,7 @@ def insert_function_images(
     # This, ultimately, is a hack and a cleaner solution would be welcome.
     function_description = _strip_roles(lines[0])
     lines[0:0] = [
-        f""":raw:html:`{function_description}<br />`<img src="{app.config.api_rel_dir}/{path.name}" style="width: 300px" />`""",
+        f""":rawhtml:`{function_description}<br />`<img src="{app.config.api_rel_dir}/{path.name}" style="width: 300px" />`""",
         "",
     ]
 

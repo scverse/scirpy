@@ -198,6 +198,9 @@ Plot styling: `pl.styling`
 Datasets: `datasets`
 --------------------
 
+.. module:: scirpy.datasets
+.. currentmodule:: scirpy
+
 .. autosummary::
    :toctree: ./generated
 
