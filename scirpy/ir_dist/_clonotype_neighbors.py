@@ -170,7 +170,7 @@ class ClonotypeNeighbors:
         df: pd.DataFrame, columns: Sequence[str]
     ) -> np.ndarray:
         """Return the Union of unique values of multiple columns of a dataframe"""
-        return np.unique(np.concatenate([df[c].values for c in columns]))  # type: ignore
+        return np.unique(np.concatenate([df[c].values.astype(str) for c in columns]))  # type: ignore
 
     def _add_lookup_tables(self):
         """Add all required lookup tables to the DoubleLookupNeighborFinder"""
