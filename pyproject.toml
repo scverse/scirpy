@@ -62,16 +62,16 @@ diversity = [
     'scikit-bio>=0.5'
 ]
 doc = [
-    'sphinx>=3.0.1,<3.1',
-    'sphinx_autodoc_typehints>=1.8.0',
-    'scanpydoc>=0.6',
-    'sphinx_rtd_theme>=0.4,<0.5',
-    'typing_extensions; python_version < "3.8"',  # for `Literal`
+    'sphinx>=4.2',
+    'sphinx-rtd-theme>=0.3.1',
+    'scanpydoc>=0.7.3',
+    'typing_extensions; python_version < "3.8"',  # for `Literal`,
+    'sphinx-autodoc-typehints',
+    'sphinxcontrib-bibtex>=1.0.0',
     # for tutorial
     'leidenalg',
     'nbsphinx>=0.6.0',
     'jupytext',
-    'sphinxcontrib-bibtex>=1.0.0',
     'pycairo',
     'jupyter_client',
     'ipykernel',

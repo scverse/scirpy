@@ -4,8 +4,8 @@ from anndata import AnnData
 import numpy as np
 from ..io import read_10x_vdj, read_bracer
 from . import TESTDATA
-from .._preprocessing import merge_with_ir
-from .._preprocessing._merge_adata import merge_airr_chains
+from ..pp import merge_with_ir
+from ..pp._merge_adata import merge_airr_chains
 import pandas.testing as pdt
 import numpy.testing as npt
 from ..util import _is_na

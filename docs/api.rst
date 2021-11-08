@@ -17,17 +17,18 @@ Input/Output: `io`
 ------------------
 
 .. module:: scirpy.io
+.. currentmodule:: scirpy
 
 .. note::
-   In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to 
-   be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__ 
+   In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to
+   be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__
    schema. Please use :func:`~scirpy.io.upgrade_schema` to make `AnnData` objects
-   from previous scirpy versions compatible with the most recent scirpy workflow. 
+   from previous scirpy versions compatible with the most recent scirpy workflow.
 
    .. autosummary::
       :toctree: ./generated
-      
-      upgrade_schema
+
+      io.upgrade_schema
 
 
 The following functions allow to import :term:`V(D)J` information from various
@@ -36,20 +37,20 @@ formats.
 .. autosummary::
    :toctree: ./generated
 
-   read_h5ad
-   read_10x_vdj
-   read_tracer
-   read_bracer
-   read_airr
-   from_dandelion
+   io.read_h5ad
+   io.read_10x_vdj
+   io.read_tracer
+   io.read_bracer
+   io.read_airr
+   io.from_dandelion
 
 Scirpy can export data to the following formats:
 
 .. autosummary::
    :toctree: ./generated
 
-   write_airr
-   to_dandelion
+   io.write_airr
+   io.to_dandelion
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
 a list of :class:`~scirpy.io.AirrCell` objects first, and then converting them into
@@ -59,75 +60,77 @@ For more details, check the :ref:`Data loading tutorial <importing-data>`.
 .. autosummary::
    :toctree: ./generated
 
-   AirrCell
-   from_airr_cells
-   to_airr_cells
+   io.AirrCell
+   io.from_airr_cells
+   io.to_airr_cells
 
 
 Preprocessing: `pp`
 -------------------
 
 .. module:: scirpy.pp
+.. currentmodule:: scirpy
 
 .. autosummary::
    :toctree: ./generated
 
-   merge_with_ir
-   merge_airr_chains
-   ir_dist
+   pp.merge_with_ir
+   pp.merge_airr_chains
+   pp.ir_dist
 
 
 Tools: `tl`
 -----------
 
+.. module:: scirpy.tl
+.. currentmodule:: scirpy
+
 Tools add an interpretable annotation to the :class:`~anndata.AnnData` object
 which usually can be visualized by a corresponding plotting function.
-
-.. module:: scirpy.tl
 
 Generic
 ^^^^^^^
 .. autosummary::
    :toctree: ./generated
 
-   group_abundance
+   tl.group_abundance
 
 Quality control
 ^^^^^^^^^^^^^^^
 .. autosummary::
    :toctree: ./generated
 
-   chain_qc
+   tl.chain_qc
 
 Define and visualize clonotypes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
    :toctree: ./generated
 
-   define_clonotypes
-   define_clonotype_clusters
-   clonotype_convergence
-   clonotype_network
-   clonotype_network_igraph
+   tl.define_clonotypes
+   tl.define_clonotype_clusters
+   tl.clonotype_convergence
+   tl.clonotype_network
+   tl.clonotype_network_igraph
 
 Analyse clonal diversity
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
    :toctree: ./generated
 
-   clonal_expansion
-   summarize_clonal_expansion
-   alpha_diversity
-   repertoire_overlap
-   clonotype_modularity
-   clonotype_imbalance
+   tl.clonal_expansion
+   tl.summarize_clonal_expansion
+   tl.alpha_diversity
+   tl.repertoire_overlap
+   tl.clonotype_modularity
+   tl.clonotype_imbalance
 
 V(D)J gene usage
 ^^^^^^^^^^^^^^^^
 .. autosummary::
    :toctree: ./generated
 
-   spectratype
+   tl.spectratype
 
 
 
@@ -135,13 +138,15 @@ Plotting: `pl`
 --------------
 
 .. module:: scirpy.pl
+.. currentmodule:: scirpy
+
 
 Generic
 ^^^^^^^
 .. autosummary::
    :toctree: ./generated
 
-   embedding
+   pl.embedding
 
 
 Tools
@@ -154,55 +159,54 @@ when calling the plotting function or need to be precomputed and stored in
 .. autosummary::
    :toctree: ./generated
 
-   alpha_diversity
-   clonal_expansion
-   group_abundance
-   spectratype
-   vdj_usage
-   repertoire_overlap
-   clonotype_modularity
-   clonotype_network
-   clonotype_imbalance
+   pl.alpha_diversity
+   pl.clonal_expansion
+   pl.group_abundance
+   pl.spectratype
+   pl.vdj_usage
+   pl.repertoire_overlap
+   pl.clonotype_modularity
+   pl.clonotype_network
+   pl.clonotype_imbalance
 
 
 
 Base plotting functions: `pl.base`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. module:: scirpy.pl.base
 
 .. autosummary::
    :toctree: ./generated
 
-   bar
-   line
-   barh
-   curve
+   pl.base.bar
+   pl.base.line
+   pl.base.barh
+   pl.base.curve
 
 
 Plot styling: `pl.styling`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. module:: scirpy.pl.styling
 
 .. autosummary::
    :toctree: ./generated
 
-   apply_style_to_axes
-   style_axes
+   pl.styling.apply_style_to_axes
+   pl.styling.style_axes
 
 
 Datasets: `datasets`
 --------------------
 
 .. module:: scirpy.datasets
+.. currentmodule:: scirpy
 
 .. autosummary::
    :toctree: ./generated
 
-   wu2020
-   wu2020_3k
-   maynard2020
+   datasets.wu2020
+   datasets.wu2020_3k
+   datasets.maynard2020
 
 
 
@@ -210,38 +214,39 @@ Utility functions: `util`
 -------------------------
 
 .. module:: scirpy.util
+.. currentmodule:: scirpy
 
 .. autosummary::
    :toctree: ./generated
 
-   graph.layout_components
-   graph.layout_fr_size_aware
-   graph.igraph_from_sparse_matrix
+   util.graph.layout_components
+   util.graph.layout_fr_size_aware
+   util.graph.igraph_from_sparse_matrix
 
 
 IR distance utilities: `ir_dist`
 -----------------------------------
 
 .. module:: scirpy.ir_dist
+.. currentmodule:: scirpy
 
 .. autosummary::
    :toctree: ./generated
 
-   sequence_dist
+   ir_dist.sequence_dist
 
 
 distance metrics
 ^^^^^^^^^^^^^^^^
 
-.. module:: scirpy.ir_dist.metrics
 
 .. autosummary::
    :toctree: ./generated
 
-   DistanceCalculator
-   ParallelDistanceCalculator
-   IdentityDistanceCalculator
-   LevenshteinDistanceCalculator
-   HammingDistanceCalculator
-   AlignmentDistanceCalculator
+   ir_dist.metrics.DistanceCalculator
+   ir_dist.metrics.ParallelDistanceCalculator
+   ir_dist.metrics.IdentityDistanceCalculator
+   ir_dist.metrics.LevenshteinDistanceCalculator
+   ir_dist.metrics.HammingDistanceCalculator
+   ir_dist.metrics.AlignmentDistanceCalculator
 

@@ -52,7 +52,7 @@ def from_airr_cells(
     airr_cells: Iterable[AirrCell], include_fields: Optional[Collection[str]] = None
 ) -> AnnData:
     """\
-    Convert a collection of :class:`AirrCell` objects to :class:`~anndata.AnnData`.
+    Convert a collection of :class:`~scirpy.io.AirrCell` objects to :class:`~anndata.AnnData`.
 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
@@ -62,11 +62,11 @@ def from_airr_cells(
     Parameters
     ----------
     airr_cells
-        A list of :class:`AirrCell` objects
+        A list of :class:`~scirpy.io.AirrCell` objects
     include_fields
-        A list of field names that are to be transferred to `adata`. If `None` 
+        A list of field names that are to be transferred to `adata`. If `None`
         (the default), transfer all fields. Use this option to avoid cluttering
-        of `adata.obs` by irrelevant columns. 
+        of `adata.obs` by irrelevant columns.
 
     Returns
     -------
@@ -87,7 +87,7 @@ def from_airr_cells(
 @_check_upgrade_schema()
 def to_airr_cells(adata: AnnData) -> List[AirrCell]:
     """
-    Convert an adata object with IR information back to a list of :class:`AirrCell`
+    Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
     objects.
 
     Inverse function of :func:`from_airr_cells`.
@@ -99,7 +99,7 @@ def to_airr_cells(adata: AnnData) -> List[AirrCell]:
 
     Returns
     -------
-    List of :class:`AirrCell` objects.
+    List of :class:`~scirpy.io.AirrCell` objects.
     """
     cells = []
     logger = _IOLogger()
