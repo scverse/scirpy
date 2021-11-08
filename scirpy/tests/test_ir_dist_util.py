@@ -95,7 +95,8 @@ def test_merge_coo_matrices(mats):
     """Test that the fast sum equals the builtin sum"""
     mats = [sp.coo_matrix(m) for m in mats]
     res = merge_coo_matrices(mats)
-    expected = sum(mats)
+    # empty lists stay empty list
+    expected = sum(mats) if len(mats) else sp.coo_matrix((0, 0))
     try:
         npt.assert_equal(res.toarray(), expected.toarray())
     except AttributeError:
@@ -246,9 +247,9 @@ def test_dlnf_lookup_rect(dlnf_with_lookup):
     )
     assert list(dlnf_with_lookup.lookup(1, "VJ_test").todense().A1) == [0, 2, 2, 0, 0]
     assert (
-        dlnf_with_lookup.lookup(2, "VJ_test")
-        == dlnf_with_lookup.lookup(5, "VJ_test")
-        == 0  # TODO, do I really want a 0 here instead of a row of zeros?
+        list(dlnf_with_lookup.lookup(2, "VJ_test"))
+        == list(dlnf_with_lookup.lookup(5, "VJ_test"))
+        == []  # TODO, do I really want a 0 here instead of a row of zeros?
     )
     assert (
         list(dlnf_with_lookup.lookup(3, "VJ_test").todense().A1)
@@ -343,12 +344,10 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup)
 @pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_rectangle"], indirect=True)
 def test_dlnf_lookup_with_different_forward_and_reverse_tables_rect(dlnf_with_lookup):
     # if entries don't exist the the other lookup table, should return empty iterator.
-    assert list(dlnf_with_lookup.lookup(7, "VDJ_test", "VJ_test").todense().A1) == (
-        [0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(7, "VDJ_test", "VJ_test").todense().A1) == []
 
     assert list(dlnf_with_lookup.lookup(7, "VJ_test", "VDJ_test").todense().A1) == (
-        [0, 1, 1, 5, 0]
+        [0, 1, 0, 0, 5]
     )
     assert (
         list(dlnf_with_lookup.lookup(0, "VJ_test", "VDJ_test").todense().A1)
@@ -360,11 +359,9 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables_rect(dlnf_with_lo
         == list(dlnf_with_lookup.lookup(6, "VJ_test", "VDJ_test").todense().A1)
         == [0, 0, 0, 0, 0]
     )
-    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test").todense().A1) == (
-        [0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test").todense().A1) == ([])
     assert (
         list(dlnf_with_lookup.lookup(4, "VDJ_test", "VJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(6, "VDJ_test", "VJ_test").todense().A1)
-        == [0, 0, 0, 1, 0]
+        == [0, 0, 0, 0, 0]
     )

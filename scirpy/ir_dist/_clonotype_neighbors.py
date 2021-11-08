@@ -254,7 +254,7 @@ class ClonotypeNeighbors:
         """Compute neighboring clonotypes for a given clonotype.
 
         Or operations use the min dist of two matching entries.
-        And operations use the max dist of two matchin entries.
+        And operations use the max dist of two matching entries.
 
         The motivation for using the max instead of sum/average is
         that our hypotheis is that a receptor recognizes the same antigen if it
