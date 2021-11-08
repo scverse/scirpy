@@ -249,7 +249,7 @@ def test_dlnf_lookup_rect(dlnf_with_lookup):
     assert (
         list(dlnf_with_lookup.lookup(2, "VJ_test"))
         == list(dlnf_with_lookup.lookup(5, "VJ_test"))
-        == []  # TODO, do I really want a 0 here instead of a row of zeros?
+        == []
     )
     assert (
         list(dlnf_with_lookup.lookup(3, "VJ_test").todense().A1)

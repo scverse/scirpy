@@ -128,7 +128,7 @@ def _get_colors(
     are supported, while in scanpy `values_to_plot` (used instead of `obs_key`)
     can be a key from either `obs` or `var`.
 
-    TODO: This makes use of private scanpy functions. This is Evil and
+    TODO: This makes use of private scanpy functions. This is evil and
     should be changed in the future.
     """
     # required to turn into categoricals

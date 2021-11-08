@@ -11,13 +11,16 @@ from operator import mul
 
 
 def merge_coo_matrices(mats):
-    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster."""
+    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster.
+
+    There's one exception: the builtin `sum` returns 0 for an empty list. This
+    function returns an empty coo matrix with shape (0, 0) instead. This makes
+    downstream operations work more consistently.
+    """
     mats = list(mats)
 
-    # special case: empty list - sum returns 0
+    # special case: empty list - return empty coo matrix.
     if not len(mats):
-        # TODO do I really want a 0 here? or rather a row of zeros?
-        # In the latter case I need to share the shape somehow.
         return sp.coo_matrix((0, 0))
 
     # check that shapes are consistent
