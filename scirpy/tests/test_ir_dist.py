@@ -488,6 +488,7 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
         )
 
 
+@pytest.mark.parametrize("swap_query_reference", [True, False])
 @pytest.mark.parametrize(
     "comment,metric,ctn_kwargs,expected_clonotype_df,expected_clonotype_df2,expected_dist",
     (
@@ -557,26 +558,45 @@ def test_compute_distances_second_anndata(
     expected_clonotype_df,
     expected_clonotype_df2,
     expected_dist,
+    swap_query_reference,
 ):
     f"""
     Test that the distance calculation works with two different anndata objects
     {comment}
     """
+    query = adata_cdr3 if not swap_query_reference else adata_cdr3_2
+    reference = adata_cdr3_2 if not swap_query_reference else adata_cdr3
     distance_key = f"ir_dist_aa_{metric}"
     expected_dist = np.array(expected_dist)
     ir.pp.ir_dist(
-        adata_cdr3, adata_cdr3_2, metric=metric, sequence="aa", key_added=distance_key
+        query, reference, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3,
-        adata_cdr3_2,
+        query,
+        reference,
         distance_key=distance_key,
         sequence_key="junction_aa",
         **ctn_kwargs,
     )
-    _assert_frame_equal(cn.clonotypes, pd.DataFrame(expected_clonotype_df))
-    _assert_frame_equal(cn.clonotypes2, pd.DataFrame(expected_clonotype_df2))
+    _assert_frame_equal(
+        cn.clonotypes,
+        pd.DataFrame(
+            expected_clonotype_df
+            if not swap_query_reference
+            else expected_clonotype_df2
+        ),
+    )
+    _assert_frame_equal(
+        cn.clonotypes2,
+        pd.DataFrame(
+            expected_clonotype_df2
+            if not swap_query_reference
+            else expected_clonotype_df
+        ),
+    )
     dist = cn.compute_distances()
     dist = dist.toarray()
     print(dist)
-    npt.assert_equal(dist, expected_dist)
+    npt.assert_equal(
+        dist, expected_dist if not swap_query_reference else expected_dist.T
+    )

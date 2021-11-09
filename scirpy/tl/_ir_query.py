@@ -7,6 +7,7 @@ import pandas as pd
 from ._clonotypes import _common_doc, _common_doc_parallelism, _validate_parameters
 from ..util import _doc_params
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from scanpy import logging
 
 
 @_doc_params(common_doc=_common_doc, paralellism=_common_doc_parallelism)
@@ -25,7 +26,7 @@ def ir_query(
     inplace: bool = True,
     n_jobs: Optional[int] = None,
     chunksize: int = 2000,
-) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
+) -> dict:
     """
     Query a referece database for matching immune cell receptors.
 
@@ -67,6 +68,7 @@ def ir_query(
     """
     match_columns, distance_key, key_added = _validate_parameters(
         adata,
+        reference,
         receptor_arms,
         dual_ir,
         match_columns,
@@ -82,15 +84,13 @@ def ir_query(
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
-        # TODO would this work, maybe rename argument
-        within_group=match_columns,
+        match_columns=match_columns,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",
         n_jobs=n_jobs,
         chunksize=chunksize,
     )
     clonotype_dist = ctn.compute_distances()
-    # TODO this looks as I could re-use basically all the code to call clonotypes here.
 
     # Return or store results
     clonotype_distance_res = {
@@ -98,16 +98,10 @@ def ir_query(
         "cell_indices": ctn.cell_indices,
     }
     if inplace:
-        adata.obs[key_added] = clonotype_cluster_series
-        adata.obs[key_added + "_size"] = clonotype_cluster_size_series
         adata.uns[key_added] = clonotype_distance_res
-        logging.info(f'Stored clonal assignments in `adata.obs["{key_added}"]`.')
+        logging.info(f'Stored IR distance matrix in `adata.uns["{key_added}"]`.')  # type: ignore
     else:
-        return (
-            clonotype_cluster_series,
-            clonotype_cluster_size_series,
-            clonotype_distance_res,
-        )
+        return clonotype_distance_res
 
 
 def annotate_with_reference(

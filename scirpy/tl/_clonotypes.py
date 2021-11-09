@@ -125,6 +125,7 @@ in the tutorial.
 
 def _validate_parameters(
     adata,
+    reference,
     receptor_arms,
     dual_ir,
     match_columns,
@@ -134,6 +135,16 @@ def _validate_parameters(
     key_added,
 ) -> Tuple[Optional[List[str]], str, str]:
     """Validate an sanitze parameters for `define_clonotypes`"""
+
+    def _get_db_name():
+        try:
+            return reference.uns["DB"]["name"]
+        except KeyError:
+            raise ValueError(
+                'If reference does not contain a `.uns["DB"]["name"]` entry, '
+                "you need to manually specify `distance_key` and `key_added`."
+            )
+
     if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
         raise ValueError(
             "Invalid value for `receptor_arms`. Note that starting with v0.5 "
@@ -154,14 +165,24 @@ def _validate_parameters(
                 raise ValueError(msg)
 
     if distance_key is None:
-        distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
+        if reference is not None:
+            distance_key = (
+                f"ir_dist_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
+            )
+        else:
+            distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
     if distance_key not in adata.uns:
         raise ValueError(
             "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
         )
 
     if key_added is None:
-        key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
+        if reference is not None:
+            key_added = (
+                f"ir_query_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
+            )
+        else:
+            key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
 
     return match_columns, distance_key, key_added
 
@@ -253,6 +274,7 @@ def define_clonotype_clusters(
     """
     within_group, distance_key, key_added = _validate_parameters(
         adata,
+        None,
         receptor_arms,
         dual_ir,
         within_group,

@@ -261,6 +261,9 @@ class ClonotypeNeighbors:
         match ("and"), the higher one should count.
         """
         # Lookup distances for current row
+        tmp_clonotypes = (
+            self.clonotypes2 if self.clonotypes2 is not None else self.clonotypes
+        )
         lookup = dict()  # CDR3 distances
         lookup_v = dict()  # V-gene distances
         for tmp_arm in self._receptor_arm_cols:
@@ -296,7 +299,7 @@ class ClonotypeNeighbors:
             array with dimensions (1, n) where n equals the number
             of entries in `has_distance`.
             """
-            ct_col2 = self.clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
+            ct_col2 = tmp_clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
             tmp_array = (
                 lookup[(tmp_arm, c1, c2)][0, has_distance.indices]
                 .todense()
