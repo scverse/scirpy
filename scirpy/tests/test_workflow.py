@@ -79,10 +79,3 @@ def test_workflow(
     pdt.assert_frame_equal(
         adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False
     )
-
-
-def test_ir_query():
-    adata = ir.datasets.wu2020_3k()
-    vdjdb = ir.datasets.vdjdb()
-    ir.pp.ir_dist(adata, vdjdb, sequence="aa", metric="identity")
-    ir.tl.ir_query(adata, vdjdb, n_jobs=1)
