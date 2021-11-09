@@ -105,7 +105,7 @@ def _get_distance_calculator(
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: AnnData,
-    adata2: AnnData = None,
+    reference: AnnData = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,
@@ -128,9 +128,11 @@ def _ir_dist(
     ----------
     adata
         annotated data matrix
-    adata2
-        Reference dataset. If specified, will compute distances between the sequences
-        in `adata` and the sequences in `adata2`. Otherwise computes pairwise distances
+    reference
+        Another :class:`~anndata.AnnData` object, can be either a second dataset with
+        :term:`IR` information or a epitope database.
+        If specified, will compute distances between the sequences in `adata` and the
+        sequences in `reference`. Otherwise computes pairwise distances
         of the sequences in `adata`.
     {metric}
     {cutoff}
@@ -139,10 +141,10 @@ def _ir_dist(
     key_added
         Dictionary key under which the results will be stored in `adata.uns` if
         `inplace=True`. Defaults to `ir_dist_{{sequence}}_{{metric}}` or
-        `ir_dist_{{name}}_{{sequence}}_{{metric}}` if `adata2` is specified.
+        `ir_dist_{{name}}_{{sequence}}_{{metric}}` if `reference` is specified.
         If `metric` is an instance of :class:`scirpy.ir_dist.metrics.DistanceCalculator`,
         `{{metric}}` defaults to `custom`.
-        `{{name}}` is taken from `adata2.uns["DB"]["name"]`. If `adata2` does not have a
+        `{{name}}` is taken from `reference.uns["DB"]["name"]`. If `reference` does not have a
         `"DB"` entry, `key_added` needs to be specified manually.
     inplace
         If true, store the result in `adata.uns`. Otherwise return a dictionary
@@ -164,22 +166,22 @@ def _ir_dist(
         "params": {"metric": str(metric), "sequence": sequence, "cutoff": cutoff},
     }
     if inplace and key_added is None:
-        if adata2 is not None:
+        if reference is not None:
             try:
-                db_info = adata2.uns["DB"]
+                db_info = reference.uns["DB"]
                 key_added = (
                     f"ir_dist_{db_info['name']}_{sequence}_{_get_metric_key(metric)}"
                 )
             except KeyError:
                 raise ValueError(
-                    'If adata2 does not contain a `.uns["DB"]["name"]` entry, '
+                    'If reference does not contain a `.uns["DB"]["name"]` entry, '
                     "you need to manually specify `key_added`."
                 )
         else:
             key_added = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
-    if adata2 is not None:
+    if reference is not None:
         try:
-            result["params"]["DB"] = adata2.uns["DB"]
+            result["params"]["DB"] = reference.uns["DB"]
         except KeyError:
             result["params"]["DB"] = "AnnData without `.uns['DB'] metadata."
 
@@ -197,7 +199,7 @@ def _ir_dist(
         )
         return np.unique([x.upper() for x in tmp_seqs[~_is_na(tmp_seqs)]])
 
-    for i, tmp_adata in enumerate([adata, adata2]):
+    for i, tmp_adata in enumerate([adata, reference]):
         if tmp_adata is not None:
             for chain_type in ["VJ", "VDJ"]:
                 result[chain_type]["seqs2" if i == 1 else "seqs"] = _get_unique_seqs(

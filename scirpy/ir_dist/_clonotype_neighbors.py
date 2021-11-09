@@ -21,9 +21,7 @@ class ClonotypeNeighbors:
         receptor_arms=Literal["VJ", "VDJ", "all", "any"],
         dual_ir=Literal["primary_only", "all", "any"],
         same_v_gene: bool = False,
-        # TODO rename within_group to more generic name as this can now be used
-        # across datasets
-        within_group: Union[None, Sequence[str]] = None,
+        match_columns: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
         n_jobs: Union[int, None] = None,
@@ -32,7 +30,7 @@ class ClonotypeNeighbors:
         """Computes pairwise distances between cells with identical
         receptor configuration and calls clonotypes from this distance matrix"""
         self.same_v_gene = same_v_gene
-        self.within_group = within_group
+        self.match_columns = match_columns
         self.receptor_arms = receptor_arms
         self.dual_ir = dual_ir
         self.distance_dict = adata.uns[distance_key]
@@ -77,8 +75,8 @@ class ClonotypeNeighbors:
             raise ValueError("Obs names need to be unique!")
 
         clonotype_cols = self._cdr3_cols + self._v_gene_cols
-        if self.within_group is not None:
-            clonotype_cols += list(self.within_group)
+        if self.match_columns is not None:
+            clonotype_cols += list(self.match_columns)
 
         obs_filtered = adata.obs.loc[lambda df: _is_true(df["has_ir"]), clonotype_cols]
         # make sure all nans are consistent "nan"
@@ -118,13 +116,13 @@ class ClonotypeNeighbors:
 
         # make 'within group' a single column of tuples (-> only one distance
         # matrix instead of one per column.)
-        if self.within_group is not None:
-            within_group_col = list(
-                clonotypes.loc[:, self.within_group].itertuples(index=False, name=None)
+        if self.match_columns is not None:
+            match_columns_col = list(
+                clonotypes.loc[:, self.match_columns].itertuples(index=False, name=None)
             )
-            for tmp_col in self.within_group:
+            for tmp_col in self.match_columns:
                 del clonotypes[tmp_col]
-            clonotypes["within_group"] = within_group_col
+            clonotypes["match_columns"] = match_columns_col
 
         # consistency check: there must not be a secondary chain if there is no
         # primary one:
@@ -167,14 +165,14 @@ class ClonotypeNeighbors:
                 "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
             )
 
-        if self.within_group is not None:
-            within_group_values = set(self.clonotypes["within_group"].values)
+        if self.match_columns is not None:
+            match_columns_values = set(self.clonotypes["match_columns"].values)
             if self.clonotypes2 is not None:
-                within_group_values |= set(self.clonotypes2["within_group"].values)
+                match_columns_values |= set(self.clonotypes2["match_columns"].values)
             self.neighbor_finder.add_distance_matrix(
-                "within_group",
-                sp.identity(len(within_group_values), dtype=bool, format="csr"),  # type: ignore
-                list(within_group_values),
+                "match_columns",
+                sp.identity(len(match_columns_values), dtype=bool, format="csr"),  # type: ignore
+                list(match_columns_values),
             )
 
     @staticmethod
@@ -198,9 +196,9 @@ class ClonotypeNeighbors:
                     dist_type="boolean",
                 )
 
-        if self.within_group is not None:
+        if self.match_columns is not None:
             self.neighbor_finder.add_lookup_table(
-                "within_group", "within_group", "within_group", dist_type="boolean"
+                "match_columns", "match_columns", "match_columns", dist_type="boolean"
             )
 
     def _make_chain_count(self, clonotype_table) -> Dict[str, int]:
@@ -344,11 +342,11 @@ class ClonotypeNeighbors:
         # be a secondary chain if there is no first one.
         res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
 
-        if self.within_group is not None:
-            within_group_mask = self.neighbor_finder.lookup(
-                ct_id, "within_group", "within_group"
+        if self.match_columns is not None:
+            match_columns_mask = self.neighbor_finder.lookup(
+                ct_id, "match_columns", "match_columns"
             )
-            res = np.multiply(res, within_group_mask[0, has_distance.indices])
+            res = np.multiply(res, match_columns_mask[0, has_distance.indices])
 
         final_res = has_distance.copy()
         final_res.data = res.astype(np.uint8)

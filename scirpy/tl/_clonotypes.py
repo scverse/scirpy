@@ -127,7 +127,7 @@ def _validate_parameters(
     adata,
     receptor_arms,
     dual_ir,
-    within_group,
+    match_columns,
     distance_key,
     sequence,
     metric,
@@ -143,12 +143,12 @@ def _validate_parameters(
     if dual_ir not in ["primary_only", "all", "any"]:
         raise ValueError("Invalid value for `dual_ir")
 
-    if within_group is not None:
-        if isinstance(within_group, str):
-            within_group = [within_group]
-        for group_col in within_group:
+    if match_columns is not None:
+        if isinstance(match_columns, str):
+            match_columns = [match_columns]
+        for group_col in match_columns:
             if group_col not in adata.obs.columns:
-                msg = f"column `{within_group}` not found in `adata.obs`. "
+                msg = f"column `{match_columns}` not found in `adata.obs`. "
                 if group_col in ("receptor_type", "receptor_subtype"):
                     msg += "Did you run `tl.chain_qc`? "
                 raise ValueError(msg)
@@ -163,7 +163,7 @@ def _validate_parameters(
     if key_added is None:
         key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
 
-    return within_group, distance_key, key_added
+    return match_columns, distance_key, key_added
 
 
 @_check_upgrade_schema()
@@ -267,7 +267,7 @@ def define_clonotype_clusters(
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
-        within_group=within_group,
+        match_columns=within_group,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",
         n_jobs=n_jobs,

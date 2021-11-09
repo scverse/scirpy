@@ -10,7 +10,7 @@ from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 
 
 @_doc_params(common_doc=_common_doc, paralellism=_common_doc_parallelism)
-def query_reference(
+def ir_query(
     adata: AnnData,
     reference: AnnData,
     *,
@@ -27,26 +27,33 @@ def query_reference(
     chunksize: int = 2000,
 ) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
     """
-    Annotate epitopes based on a reference database.
+    Query a referece database for matching immune cell receptors.
 
-    Matches
+    Requires funning :func:`~scirpy.pp.ir_dist` with the same values for `reference`,
+    `sequence` and `metric` first.
+
+    This function is essentially an extension of :func:`~scirpy.tl.define_clonotype_clusters`
+    to two :class:`~anndata.AnnData` objects and follows the same logic.
 
     Parameters
     ----------
     adata
         annotated data matrix
     reference
-        Another adata object, can be either a second dataset with :term:`IR` information
-        or a epitope database. Must be the same object used when running
-        :func:`scirpy.pp.ir_dist`
+        Another :class:`~anndata.AnnData` object, can be either a second dataset with
+        :term:`IR` information or a epitope database. Must be the same object used for
+        running :func:`scirpy.pp.ir_dist`.
     sequence
         The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
+
     {common_doc}
+
     match_columns
         One or multiple columns in `adata.obs` that must match between
-        query and reference.
+        query and reference. Use this to e.g. enforce matching cell-types or HLA-types.
+
     key_added
     distance_key
     inplace
