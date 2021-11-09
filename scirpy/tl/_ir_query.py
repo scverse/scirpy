@@ -136,7 +136,7 @@ def ir_query(
         return clonotype_distance_res
 
 
-def annotate_with_reference(
+def ir_query_annotate(
     adata: AnnData, reference: AnnData, *, include_cols: Optional[Sequence[str]] = None
 ):
     """

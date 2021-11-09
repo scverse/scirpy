@@ -90,7 +90,7 @@ distance_result
     A dictionary containing
      * `distances`: A sparse, pairwise distance matrix between unique
        receptor configurations
-     * `cell_indices`: A dict of arrays, containing the adata.obs_names
+     * `cell_indices`: A dict of arrays, containing the `adata.obs_names`
        (cell indices) for each row in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.

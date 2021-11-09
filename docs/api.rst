@@ -125,6 +125,14 @@ Analyse clonal diversity
    tl.clonotype_modularity
    tl.clonotype_imbalance
 
+Query reference databases
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+   :toctree: ./generated
+
+   tl.ir_query
+   tl.ir_query_annotate
+
 V(D)J gene usage
 ^^^^^^^^^^^^^^^^
 .. autosummary::
@@ -208,6 +216,13 @@ Datasets: `datasets`
    datasets.wu2020_3k
    datasets.maynard2020
 
+Reference databases
+^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: ./generated
+
+   datasets.vdjdb
 
 
 Utility functions: `util`
