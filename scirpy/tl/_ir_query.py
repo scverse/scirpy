@@ -4,13 +4,22 @@ from scirpy.ir_dist import MetricType
 from .._compat import Literal
 from anndata import AnnData
 import pandas as pd
-from ._clonotypes import _common_doc, _common_doc_parallelism, _validate_parameters
+from ._clonotypes import (
+    _common_doc,
+    _common_doc_parallelism,
+    _validate_parameters,
+    _doc_clonotype_definition,
+)
 from ..util import _doc_params
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from scanpy import logging
 
 
-@_doc_params(common_doc=_common_doc, paralellism=_common_doc_parallelism)
+@_doc_params(
+    common_doc=_common_doc,
+    paralellism=_common_doc_parallelism,
+    clonotype_definition=_doc_clonotype_definition.split("3.")[0].strip(),
+)
 def ir_query(
     adata: AnnData,
     reference: AnnData,
@@ -26,7 +35,7 @@ def ir_query(
     inplace: bool = True,
     n_jobs: Optional[int] = None,
     chunksize: int = 2000,
-) -> dict:
+) -> Optional[dict]:
     """
     Query a referece database for matching immune cell receptors.
 
@@ -34,7 +43,9 @@ def ir_query(
     `sequence` and `metric` first.
 
     This function is essentially an extension of :func:`~scirpy.tl.define_clonotype_clusters`
-    to two :class:`~anndata.AnnData` objects and follows the same logic.
+    to two :class:`~anndata.AnnData` objects and follows the same logic:
+
+    {clonotype_definition}
 
     Parameters
     ----------
@@ -56,15 +67,35 @@ def ir_query(
         query and reference. Use this to e.g. enforce matching cell-types or HLA-types.
 
     key_added
+        Dictionary key under which the resulting distance matrix will be stored in
+        `adata.uns` if `inplace=True`. Defaults to `ir_query_{{name}}_{{sequence}}_{{metric}}`.
+        If `metric` is an instance of :class:`scirpy.ir_dist.metrics.DistanceCalculator`,
+        `{{metric}}` defaults to `custom`.
+        `{{name}}` is taken from `reference.uns["DB"]["name"]`. If `reference` does not have a
+        `"DB"` entry, `key_added` needs to be specified manually.
     distance_key
+        Key in `adata.uns` where the results of :func:`~scirpy.pp.ir_dist` are stored.
+        Defaults to `ir_dist_{{name}}_{{sequence}}_{{metric}}`.
+        If `metric` is an instance of :class:`scirpy.ir_dist.metrics.DistanceCalculator`,
+        `{{metric}}` defaults to `custom`.
+        `{{name}}` is taken from `reference.uns["DB"]["name"]`. If `reference` does not have a
+        `"DB"` entry, `distance_key` needs to be specified manually.
     inplace
+        If True, store the result in `adata.uns`. Otherwise return a dictionary
+        with the results.
     {paralellism}
 
     Returns
     -------
-    TODO
+    A dictionary containing
+     * `distances`: A sparse distance matrix between unique receptor configurations
+       in `adata` aund unique receptor configurations in `reference`.
+     * `cell_indices`: A dict of arrays, containing the the `adata.obs_names`
+       (cell indices) for each row in the distance matrix.
+     * `cell_indices_reference`: A dict of arrays, containing the `reference.obs_names`
+       for each column in the distance matrix.
 
-
+    If `inplace` is `True`, this is added to `adata.uns[key_added]`.
     """
     match_columns, distance_key, key_added = _validate_parameters(
         adata,
@@ -96,6 +127,7 @@ def ir_query(
     clonotype_distance_res = {
         "distances": clonotype_dist,
         "cell_indices": ctn.cell_indices,
+        "cell_indices_reference": ctn.cell_indices2,
     }
     if inplace:
         adata.uns[key_added] = clonotype_distance_res
