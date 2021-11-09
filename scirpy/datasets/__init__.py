@@ -142,6 +142,7 @@ def vdjdb(cached: bool = True) -> AnnData:
                 "v_call": row["v.alpha"],
                 "j_call": row["j.alpha"],
                 "consensus_count": 0,
+                "productive": True,
             }
         )
         beta_chain.update(
@@ -152,6 +153,7 @@ def vdjdb(cached: bool = True) -> AnnData:
                 "d_call": row["d.beta"],
                 "j_call": row["j.beta"],
                 "consensus_count": 0,
+                "productive": True,
             }
         )
         cell.add_chain(alpha_chain)
