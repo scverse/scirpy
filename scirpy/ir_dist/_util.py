@@ -10,28 +10,41 @@ from functools import reduce
 from operator import mul
 
 
-def merge_coo_matrices(mats):
+def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
     """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster.
 
-    There's one exception: the builtin `sum` returns 0 for an empty list. This
-    function returns an empty coo matrix with shape (0, 0) instead. This makes
-    downstream operations work more consistently.
+    The only execption is that while `sum` procudes `0` on an empty list, this function
+    returns an empty coo matrix with shape `(0, 0)`. This makes downstream operations
+    more consistent.
+
+    This function makes use of the fact that COO matrices can have multiple entries
+    for the same coordinates. When converting them to a different sparse matrix type
+    they will be summed up internally.
+
+    Parameters
+    ----------
+    mats
+        Sequence of COO matrices
+    shape
+        Expected output shape. If None will infer from the input
+        sequence. Will raise an error if one of the matrices is not consistent with
+        the shape.
     """
     mats = list(mats)
 
-    # special case: empty list - return empty coo matrix.
-    if not len(mats):
-        return sp.coo_matrix((0, 0))
-
-    # check that shapes are consistent
-    shape = mats[0].shape
+    # check that shapes are consistent. matrices with shape 0 are ignored.
     for mat in mats:
-        if mat.shape != shape:
-            raise ValueError("Incompatible shapes")
+        if mat.shape == (0, 0):
+            continue
+        elif shape is None:
+            shape = mat.shape
+        else:
+            if mat.shape != shape:
+                raise ValueError("Incompatible shapes")
 
-    # return empty matrix if one dimension is of length 0
-    if reduce(mul, shape) == 0:
-        return sp.coo_matrix(shape)
+    # sum is 0 if all inputs are 0 or the shape is 0 in one dimension
+    if not len(mats) or shape is None or reduce(mul, shape) == 0:
+        return coo_matrix((0, 0) if shape is None else shape)
 
     data, row, col = zip(*((x.data, x.row, x.col) for x in mats))
 
@@ -285,8 +298,9 @@ class DoubleLookupNeighborFinder:
                     (
                         reverse[i] * multiplier
                         for i, multiplier in zip(row.indices, row.data)  # type: ignore
-                    )
-                )  # type: ignore
+                    ),
+                    shape=(1, reverse.size),
+                )
 
     def add_distance_matrix(
         self,

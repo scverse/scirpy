@@ -101,6 +101,12 @@ def vdjdb(cached: bool = True) -> AnnData:
     ----------
     cached
         If `True`, attempt to read from the `data` directory before downloading
+
+    Returns
+    -------
+    An anndata object containing all entries from VDJDB in `obs`.
+    Each entry is represented as if it was a cell, but without gene expression.
+    Metadata is stored in `adata.uns["DB"]`.
     """
     cache_path = f"data/vdjdb.h5ad"
     if cached:

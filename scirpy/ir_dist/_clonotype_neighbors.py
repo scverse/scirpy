@@ -150,6 +150,7 @@ class ClonotypeNeighbors:
                 name=chain_type,
                 distance_matrix=self.distance_dict[chain_type]["distances"],
                 labels=self.distance_dict[chain_type]["seqs"],
+                labels2=self.distance_dict[chain_type].get("seqs2", None),
             )
 
         if self.same_v_gene:
@@ -285,7 +286,7 @@ class ClonotypeNeighbors:
 
         # need to loop through all coordinates that have at least one distance.
         has_distance = merge_coo_matrices(lookup.values()).tocsr()  # type: ignore
-        # convert to csc matrices to iterate over indices
+        # convert to csr matrices to iterate over indices
         lookup = {k: v.tocsr() for k, v in lookup.items()}
 
         def _lookup_dist_for_chains(

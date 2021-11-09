@@ -110,7 +110,6 @@ def test_sequence_dist(metric, cutoff, expected_square, expected):
     )
 
 
-@pytest.mark.parametrize("with_adata2", [False, True])
 @pytest.mark.parametrize(
     "metric,expected_key,expected_dist_vj,expected_dist_vdj",
     [
@@ -143,14 +142,11 @@ def test_ir_dist(
     expected_key,
     expected_dist_vj,
     expected_dist_vdj,
-    with_adata2,
 ):
-    adata2 = adata_cdr3 if with_adata2 else None
     expected_seq_vj = np.array(["AAA", "AHA"])
     expected_seq_vdj = np.array(["AAA", "KK", "KKK", "KKY", "LLL"])
     ir.pp.ir_dist(
         adata_cdr3,
-        adata2,
         metric=metric if metric != "mock" else adata_cdr3_mock_distance_calculator,
         sequence="aa",
     )
@@ -356,7 +352,9 @@ def test_compute_distances(
     metric = adata_cdr3_mock_distance_calculator if metric == "custom" else metric
     adata2 = adata_cdr3 if with_adata2 else None
     expected_dist = np.array(expected_dist)
-    ir.pp.ir_dist(adata_cdr3, adata2, metric=metric, sequence="aa")
+    ir.pp.ir_dist(
+        adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key
+    )
     cn = ClonotypeNeighbors(
         adata_cdr3,
         adata2,
@@ -415,7 +413,11 @@ def test_compute_distances_2(
     """Test that `dual_ir` does not impact the second reduction step"""
     adata2 = adata_cdr3_2 if with_adata2 else None
     ir.pp.ir_dist(
-        adata_cdr3_2, adata2, metric=adata_cdr3_mock_distance_calculator, sequence="aa"
+        adata_cdr3_2,
+        adata2,
+        metric=adata_cdr3_mock_distance_calculator,
+        sequence="aa",
+        key_added="ir_dist_aa_custom",
     )
     cn = ClonotypeNeighbors(
         adata_cdr3_2,
@@ -442,7 +444,11 @@ def test_compute_distances_no_dist(
     adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(
-        adata_cdr3, adata2, metric=adata_cdr3_mock_distance_calculator, sequence="aa"
+        adata_cdr3,
+        adata2,
+        metric=adata_cdr3_mock_distance_calculator,
+        sequence="aa",
+        key_added="ir_dist_aa_custom",
     )
     cn = ClonotypeNeighbors(
         adata_cdr3,
@@ -558,7 +564,9 @@ def test_compute_distances_second_anndata(
     """
     distance_key = f"ir_dist_aa_{metric}"
     expected_dist = np.array(expected_dist)
-    ir.pp.ir_dist(adata_cdr3, adata_cdr3_2, metric=metric, sequence="aa")
+    ir.pp.ir_dist(
+        adata_cdr3, adata_cdr3_2, metric=metric, sequence="aa", key_added=distance_key
+    )
     cn = ClonotypeNeighbors(
         adata_cdr3,
         adata_cdr3_2,
