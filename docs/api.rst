@@ -132,6 +132,7 @@ Query reference databases
 
    tl.ir_query
    tl.ir_query_annotate
+   tl.ir_query_annotate_df
 
 V(D)J gene usage
 ^^^^^^^^^^^^^^^^
