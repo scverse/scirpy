@@ -39,6 +39,7 @@ requires = [
     'airr>=1.2',
     'tqdm>=4.44.1', # required for process_map
     'adjustText>=0.7',
+    'numba>=0.41.0',
     # for getting the version
     'setuptools_scm',
     'pytoml',

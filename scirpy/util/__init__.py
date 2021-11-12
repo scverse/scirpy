@@ -5,6 +5,7 @@ from typing import Union
 from scipy.sparse import issparse
 import scipy.sparse
 import warnings
+from numba import jit
 
 # Determine the right tqdm version, see https://github.com/tqdm/tqdm/issues/1082
 try:

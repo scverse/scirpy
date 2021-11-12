@@ -134,7 +134,7 @@ def _validate_parameters(
     metric,
     key_added,
 ) -> Tuple[Optional[List[str]], str, str]:
-    """Validate an sanitze parameters for `define_clonotypes`"""
+    """Validate and sanitze parameters for `define_clonotypes`"""
 
     def _get_db_name():
         try:

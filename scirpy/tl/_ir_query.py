@@ -1,4 +1,4 @@
-from typing import Optional, Union, Sequence
+from typing import Counter, Optional, Union, Sequence
 
 from .._compat import Literal
 from anndata import AnnData
@@ -10,10 +10,12 @@ from ._clonotypes import (
     _validate_parameters,
     _doc_clonotype_definition,
 )
-from ..util import _doc_params
+from ..util import _doc_params, _is_na
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..ir_dist import _get_metric_key, MetricType
 from scanpy import logging
+import numpy as np
+import json
 
 
 @_doc_params(
@@ -165,10 +167,10 @@ def ir_query_annotate_df(
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
-    include_cols: Sequence[str] = None,
-    query_key=None,
-    suffix="_ref",
-    **kwargs,
+    include_ref_cols: Sequence[str] = None,
+    include_query_cols: Sequence[str] = None,
+    query_key: Optional[str] = None,
+    suffix: str = "_ref",
 ) -> pd.DataFrame:
     """
     Returns the inner join of `adata.obs` with matching entries from `reference.obs`.
@@ -221,43 +223,50 @@ def ir_query_annotate_df(
             )
             yield from itertools.product(query_cells, reference_cells)
 
-    reference_obs = (
-        reference.obs if include_cols is None else reference.obs.loc[:, include_cols]
-    )
+    query_obs, reference_obs = adata.obs, reference.obs
+    if include_query_cols is not None:
+        query_obs = query_obs.loc[:, include_query_cols]  # type: ignore
+    if include_ref_cols is not None:
+        reference_obs = reference_obs.loc[:, include_ref_cols]  # type:ignore
     df = pd.DataFrame.from_records(get_pairs(), columns=["query_idx", "reference_idx"])
     assert "query_idx" not in reference_obs.columns
     reference_obs = reference_obs.join(df.set_index("reference_idx"))
 
-    return adata.obs.join(reference_obs.set_index("query_idx"), rsuffix=suffix)
+    return query_obs.join(reference_obs.set_index("query_idx"), rsuffix=suffix)
 
 
+# TODO unit-test all strategies
+# TODO this can be quite slow
 def ir_query_annotate(
     adata: AnnData,
     reference: AnnData,
     *,
-    include_cols: Optional[Sequence[str]] = None,
-    strategy: Literal["one-to-many", "unique-only", "most-frequent"] = "unique-only",
-    sequence,
-    metric,
-    query_key,
-):
+    sequence: Literal["aa", "nt"] = "aa",
+    metric: MetricType = "identity",
+    include_ref_cols: Optional[Sequence[str]] = None,
+    strategy: Literal["json", "unique-only", "most-frequent"] = "unique-only",
+    query_key: Optional[str] = None,
+    inplace=True,
+) -> Optional[pd.DataFrame]:
     """
     Annotate cells based on matching :term:`IR`s in a reference dataset.
 
-    Once you added a distance matrix between query and reference dataset, you
-    likely want to annotated the dataset based on the reference.
-    The issue is that multiple entries from the reference may match
-    a single cell in the query.
+    Multiple entries from the reference can match a single cell in the query dataset.
+    In order to reduce the matching entries to a single value that can be added
+    to `adata.obs` and used for plotting and other downstream analyses, you'll
+    need to choose a strategy to deal with duplicates:
 
-    Therefore, you'll need to choose a strategy to deal with duplicates
-
-     * one-to-many:  Don't modify obs, but return a table that maps
-       each cell from the query to all entries from the reference. If
-       inplace=True, will write json to obs. Use this to get the data and manually deal with it
      * unique-only: Only annotate those cells that have a unique result. Cells
        with multiple inconsistent matches will receive the predicate "ambiguous"
-     * most-frequent: if therer are multiple matches, assign the match that is
+     * most-frequent: if there are multiple matches, assign the match that is
        most frequent. If there are ties, it will receive the predicate "ambiguous"
+     * json: store multiple values and their counts as json string
+
+    NA values are ignored in all strategies (e.g. if an entry matches `"foo"` and `nan`,
+    `"foo"` is considered unique)
+
+    Alternatively, you can use :func:`scirpy.tl.ir_query_annotate_df` to obtain
+    a data frame mapping all cells to their matching entries from `reference.obs`.
 
     Parameters
     ----------
@@ -271,4 +280,62 @@ def ir_query_annotate(
         If set to None, will include all columns from the reference.
 
     """
-    pass
+    df = ir_query_annotate_df(
+        adata,
+        reference,
+        include_ref_cols=include_ref_cols,
+        include_query_cols=[],
+        sequence=sequence,
+        metric=metric,
+        query_key=query_key,
+    )
+    df.index.name = "_query_cell_index"
+
+    def _reduce_unique_only(values: np.ndarray):
+        values = values[~_is_na(values)]
+        if values.size == 0:
+            return np.nan
+        elif np.unique(values).size == 1:
+            return values[0]
+        else:
+            return "ambiguous"
+
+    def _reduce_most_frequent(values: np.ndarray):
+        values = values[~_is_na(values)]
+        if values.size == 0:
+            return np.nan
+        else:
+            c = Counter(values)
+            if (len(c)) == 1:
+                return values[0]
+            else:
+                # 2 or more elements, get most common and 2nd most common
+                (mc, mc_cnt), (mc2, mc2_cnt) = c.most_common()[:2]
+                if mc_cnt > mc2_cnt:
+                    return mc
+                else:
+                    return "ambiguous"
+
+    def _reduce_json(values: np.ndarray):
+        values = values[~_is_na(values)]
+        return json.dumps(Counter(values))
+
+    try:
+        reduce_fun = {
+            "unique-only": _reduce_unique_only,
+            "most-frequent": _reduce_most_frequent,
+            "json": _reduce_json,
+        }[
+            strategy
+        ]  # type: ignore
+    except KeyError:
+        raise ValueError("Invalid value for `strategy`.")
+
+    df_res = (
+        df.groupby("_query_cell_index").aggregate(reduce_fun).reindex(adata.obs_names)
+    )
+
+    if inplace:
+        adata.obs = adata.obs.join(df_res, how="left").reindex(adata.obs_names)
+    else:
+        return df_res
