@@ -276,7 +276,7 @@ def ir_query_annotate_df(
     )
 
 
-# TOOD check performance
+# TODO check performance
 def ir_query_annotate(
     adata: AnnData,
     reference: AnnData,
@@ -316,11 +316,24 @@ def ir_query_annotate(
     reference
         reference dataset in anndata format. Must be the same used to run
         `query_reference`.
-    include_cols
-        List of columns from the reference database to add to obs of the query dataset.
-        If set to None, will include all columns from the reference.
-    TODO doc
+    sequence
+        The sequence parameter used when running :func:`scirpy.pp.ir_dist`
+    metric
+        The metric parameter used when running :func:`scirpy.pp.ir_dist`
+    include_ref_cols
+        Subset the reference database to these columns. Default: include all.
+    query_key
+        Use the distance matric stored under this key in `adata.uns`. If set to None,
+        the key is automatically inferred based on `reference`, `sequence`, and `metric`.
+        Additional arguments are passed to the last join.
+    suffix
+        Suffix appended to columns from `reference.obs` in case their names
+        are conflicting with those in `adata.obs`.
 
+    Returns
+    -------
+    If inplace is True, modifies `adata.obs` inplace. Otherwise returns a data-frame
+    with one column for each column in `reference.obs`, aligned to `adata.obs_names`.
     """
     df = ir_query_annotate_df(
         adata,
