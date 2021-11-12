@@ -94,7 +94,7 @@ def ir_query(
     n_jobs: Optional[int] = None,
     chunksize: int = 2000,
 ) -> Optional[dict]:
-    """
+    """\
     Query a referece database for matching immune cell receptors.
 
     The reference database can either be a imune cell receptor database, or
@@ -121,9 +121,7 @@ def ir_query(
         The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
-
     {common_doc}
-
     match_columns
         One or multiple columns in `adata.obs` that must match between
         query and reference. Use this to e.g. enforce matching cell-types or HLA-types.
@@ -210,7 +208,8 @@ def ir_query_annotate_df(
     suffix: str = "_ref",
 ) -> pd.DataFrame:
     """
-    Returns the inner join of `adata.obs` with matching entries from `reference.obs`.
+    Returns the inner join of `adata.obs` with matching entries from `reference.obs`
+    based on the result of :func:`~scirpy.tl.ir_query`.
 
     The function first creates a two-column dataframe mapping cell indices of `adata`
     to cell indices of `reference`. It then performs an inner join with `reference.obs`,
@@ -283,14 +282,14 @@ def ir_query_annotate(
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
-    include_ref_cols: Optional[Sequence[str]] = None,
     strategy: Literal["json", "unique-only", "most-frequent"] = "unique-only",
+    include_ref_cols: Optional[Sequence[str]] = None,
     query_key: Optional[str] = None,
     suffix: str = "_ref",
     inplace=True,
 ) -> Optional[pd.DataFrame]:
     """
-    Annotate cells based on matching :term:`IR`s in a reference dataset.
+    Annotate cells based on the result of :func:`~scirpy.tl.ir_query`.
 
     Multiple entries from the reference can match a single cell in the query dataset.
     In order to reduce the matching entries to a single value that can be added
@@ -320,6 +319,8 @@ def ir_query_annotate(
         The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
+    strategy
+        Strategy to deal with non-unique values (see above).
     include_ref_cols
         Subset the reference database to these columns. Default: include all.
     query_key
