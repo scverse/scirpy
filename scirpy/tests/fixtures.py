@@ -204,7 +204,7 @@ def adata_define_clonotype_clusters():
             ).set_index("cell_id")
         )
     )
-    adata = AnnData(obs=obs)
+    adata = AnnData(obs=obs, X=np.empty((obs.shape[0], 0)))
     adata.uns["scirpy_version"] = "0.7"
     return adata
 

@@ -11,7 +11,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import json
-from .fixtures import adata_cdr3, adata_cdr3_2
+from .fixtures import adata_cdr3, adata_cdr3_2, adata_define_clonotype_clusters
 
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein"])
@@ -83,9 +83,156 @@ def test_reduce_json(input, expected):
     assert json.loads(_reduce_json(input)) == expected
 
 
-def test_ir_query_annotate_df():
-    assert False
+@pytest.fixture
+def query_reference(adata_define_clonotype_clusters):
+    query = adata_define_clonotype_clusters[
+        ["cell2", "cell3", "cell4", "cell10"], :
+    ].copy()
+    reference = adata_define_clonotype_clusters.copy()
+    reference.obs["some_annotation"] = reference.obs_names.str.upper()
+    reference.uns["DB"] = {"name": "TESTDB"}
+
+    return query, reference
 
 
-def test_ir_query_annotate():
-    assert False
+@pytest.mark.parametrize(
+    "same_v_gene,match_columns,expected",
+    [
+        (
+            False,
+            None,
+            [
+                ("cell2", "CELL1"),
+                ("cell2", "CELL2"),
+                ("cell2", "CELL5"),
+                ("cell2", "CELL6"),
+                ("cell2", "CELL7"),
+                ("cell2", "CELL8"),
+                ("cell3", "CELL3"),
+                ("cell3", "CELL4"),
+                ("cell4", "CELL3"),
+                ("cell4", "CELL4"),
+            ],
+        ),
+        (
+            True,
+            None,
+            [
+                ("cell2", "CELL1"),
+                ("cell2", "CELL2"),
+                ("cell2", "CELL5"),
+                ("cell2", "CELL6"),
+                ("cell2", "CELL7"),
+                ("cell2", "CELL8"),
+                ("cell3", "CELL3"),
+                ("cell4", "CELL4"),
+            ],
+        ),
+        (
+            False,
+            ["receptor_type"],
+            [
+                ("cell2", "CELL1"),
+                ("cell2", "CELL2"),
+                ("cell2", "CELL6"),
+                ("cell2", "CELL7"),
+                ("cell2", "CELL8"),
+                ("cell3", "CELL3"),
+                ("cell4", "CELL4"),
+            ],
+        ),
+    ],
+)
+def test_ir_query_annotate_df(query_reference, same_v_gene, match_columns, expected):
+    query, reference = query_reference
+    ir_dist(query, reference, sequence="aa", metric="identity")
+    ir_query(
+        query,
+        reference,
+        sequence="aa",
+        metric="identity",
+        receptor_arms="VJ",
+        dual_ir="primary_only",
+        same_v_gene=same_v_gene,
+        match_columns=match_columns,
+    )
+
+    res = ir_query_annotate_df(
+        query,
+        reference,
+        sequence="aa",
+        metric="identity",
+        include_query_cols=[],
+        include_ref_cols=["some_annotation"],
+    )
+
+    actual = list(res["some_annotation"].items())
+    print(actual)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "strategy,expected",
+    [
+        (
+            "unique-only",
+            [
+                ("cell2", "ambiguous"),
+                ("cell3", "CELL3"),
+                ("cell4", "CELL4"),
+                ("cell10", np.nan),
+            ],
+        ),
+        (
+            "most-frequent",
+            [
+                ("cell2", "ambiguous"),
+                ("cell3", "CELL3"),
+                ("cell4", "CELL4"),
+                ("cell10", np.nan),
+            ],
+        ),
+        (
+            "json",
+            [
+                (
+                    "cell2",
+                    json.dumps(
+                        {"CELL1": 1, "CELL2": 1, "CELL6": 1, "CELL7": 1, "CELL8": 1}
+                    ),
+                ),
+                ("cell3", json.dumps({"CELL3": 1})),
+                ("cell4", json.dumps({"CELL4": 1})),
+                ("cell10", np.nan),
+            ],
+        ),
+    ],
+)
+def test_ir_query_annotate(query_reference, strategy, expected):
+    query, reference = query_reference
+    ir_dist(query, reference, sequence="aa", metric="identity")
+    ir_query(
+        query,
+        reference,
+        sequence="aa",
+        metric="identity",
+        receptor_arms="VJ",
+        dual_ir="primary_only",
+        same_v_gene=True,
+        match_columns=["receptor_type"],
+    )
+
+    ir_query_annotate(
+        query,
+        reference,
+        sequence="aa",
+        metric="identity",
+        include_ref_cols=["some_annotation"],
+        strategy=strategy,
+    )
+
+    actual = list(query.obs["some_annotation"].items())
+    print(actual)
+
+    assert actual == expected

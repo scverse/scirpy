@@ -198,7 +198,6 @@ def ir_query(
         return clonotype_distance_res
 
 
-# TODO add test
 def ir_query_annotate_df(
     adata: AnnData,
     reference: AnnData,
@@ -270,15 +269,14 @@ def ir_query_annotate_df(
         reference_obs = reference_obs.loc[:, include_ref_cols]  # type:ignore
     df = pd.DataFrame.from_records(get_pairs(), columns=["query_idx", "reference_idx"])
     assert "query_idx" not in reference_obs.columns
-    reference_obs = reference_obs.join(df.set_index("reference_idx"))
+    reference_obs = reference_obs.join(df.set_index("reference_idx"), how="inner")
 
-    return query_obs.join(reference_obs.set_index("query_idx"), rsuffix=suffix)
+    return query_obs.join(
+        reference_obs.set_index("query_idx"), rsuffix=suffix, how="inner"
+    )
 
 
-# TODO unit-test all strategies
-# TODO this can be quite slow; idea, convert nans to np.nan beforehand, then
-# we can maybe `jit` the reduction functions. But premature optimisation etc.
-# Let's first do the tests.
+# TOOD check performance
 def ir_query_annotate(
     adata: AnnData,
     reference: AnnData,
@@ -352,7 +350,7 @@ def ir_query_annotate(
 
     # convert nan-equivalents to real nan values.
     for col in df_res:
-        df_res.loc[col, _is_na[df_res[col]]] = np.nan
+        df_res.loc[_is_na(df_res[col]), col] = np.nan
 
     if inplace:
         adata.obs = adata.obs.join(df_res, how="left", rsuffix=suffix).reindex(
