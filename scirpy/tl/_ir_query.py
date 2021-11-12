@@ -18,6 +18,61 @@ import numpy as np
 import json
 
 
+def _validate_ir_query_annotate_params(reference, sequence, metric, query_key):
+    """Validate and sanitize parameters for `ir_query_annotate`"""
+
+    def _get_db_name():
+        try:
+            return reference.uns["DB"]["name"]
+        except KeyError:
+            raise ValueError(
+                'If reference does not contain a `.uns["DB"]["name"]` entry, '
+                "you need to manually specify `distance_key` and `key_added`."
+            )
+
+    if query_key is None:
+        query_key = f"ir_query_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
+    return query_key
+
+
+def _reduce_unique_only(values: np.ndarray):
+    """If values only contains a single unique value, return that value.
+    If values contains multiple different values, return 'ambiguous'.
+    If values is empty, return `None`"""
+    values = values[~pd.isnull(values)]
+    if values.size == 0:
+        return np.nan
+    elif np.unique(values).size == 1:
+        return values[0]
+    else:
+        return "ambiguous"
+
+
+def _reduce_most_frequent(values: np.ndarray):
+    """Return the most frequent value in values. If two values are equally frequent,
+    return "ambiguous". If values is empty, return `None`."""
+    values = values[~pd.isnull(values)]
+    if values.size == 0:
+        return np.nan
+    else:
+        c = Counter(values)
+        if (len(c)) == 1:
+            return values[0]
+        else:
+            # 2 or more elements, get most common and 2nd most common
+            (mc, mc_cnt), (mc2, mc2_cnt) = c.most_common()[:2]
+            if mc_cnt > mc2_cnt:
+                return mc
+            else:
+                return "ambiguous"
+
+
+def _reduce_json(values: np.ndarray):
+    """Returns a dict value -> count for each value in values as a json string."""
+    values = values[~pd.isnull(values)]
+    return json.dumps(Counter(values))
+
+
 @_doc_params(
     common_doc=_common_doc,
     paralellism=_common_doc_parallelism,
@@ -143,23 +198,6 @@ def ir_query(
         return clonotype_distance_res
 
 
-def _validate_ir_query_annotate_params(reference, sequence, metric, query_key):
-    """Validate and sanitize parameters for `ir_query_annotate`"""
-
-    def _get_db_name():
-        try:
-            return reference.uns["DB"]["name"]
-        except KeyError:
-            raise ValueError(
-                'If reference does not contain a `.uns["DB"]["name"]` entry, '
-                "you need to manually specify `distance_key` and `key_added`."
-            )
-
-    if query_key is None:
-        query_key = f"ir_query_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
-    return query_key
-
-
 # TODO add test
 def ir_query_annotate_df(
     adata: AnnData,
@@ -196,8 +234,10 @@ def ir_query_annotate_df(
         The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
-    include_cols
-        Subset the reference database to these columns
+    include_ref_cols
+        Subset the reference database to these columns. Default: include all.
+    include_query_cols
+        Subset `adata.obs` to these columns. Default: include all.
     query_key
         Use the distance matric stored under this key in `adata.uns`. If set to None,
         the key is automatically inferred based on `reference`, `sequence`, and `metric`.
@@ -236,7 +276,9 @@ def ir_query_annotate_df(
 
 
 # TODO unit-test all strategies
-# TODO this can be quite slow
+# TODO this can be quite slow; idea, convert nans to np.nan beforehand, then
+# we can maybe `jit` the reduction functions. But premature optimisation etc.
+# Let's first do the tests.
 def ir_query_annotate(
     adata: AnnData,
     reference: AnnData,
@@ -246,6 +288,7 @@ def ir_query_annotate(
     include_ref_cols: Optional[Sequence[str]] = None,
     strategy: Literal["json", "unique-only", "most-frequent"] = "unique-only",
     query_key: Optional[str] = None,
+    suffix: str = "_ref",
     inplace=True,
 ) -> Optional[pd.DataFrame]:
     """
@@ -278,6 +321,7 @@ def ir_query_annotate(
     include_cols
         List of columns from the reference database to add to obs of the query dataset.
         If set to None, will include all columns from the reference.
+    TODO doc
 
     """
     df = ir_query_annotate_df(
@@ -290,35 +334,6 @@ def ir_query_annotate(
         query_key=query_key,
     )
     df.index.name = "_query_cell_index"
-
-    def _reduce_unique_only(values: np.ndarray):
-        values = values[~_is_na(values)]
-        if values.size == 0:
-            return np.nan
-        elif np.unique(values).size == 1:
-            return values[0]
-        else:
-            return "ambiguous"
-
-    def _reduce_most_frequent(values: np.ndarray):
-        values = values[~_is_na(values)]
-        if values.size == 0:
-            return np.nan
-        else:
-            c = Counter(values)
-            if (len(c)) == 1:
-                return values[0]
-            else:
-                # 2 or more elements, get most common and 2nd most common
-                (mc, mc_cnt), (mc2, mc2_cnt) = c.most_common()[:2]
-                if mc_cnt > mc2_cnt:
-                    return mc
-                else:
-                    return "ambiguous"
-
-    def _reduce_json(values: np.ndarray):
-        values = values[~_is_na(values)]
-        return json.dumps(Counter(values))
 
     try:
         reduce_fun = {
@@ -335,7 +350,13 @@ def ir_query_annotate(
         df.groupby("_query_cell_index").aggregate(reduce_fun).reindex(adata.obs_names)
     )
 
+    # convert nan-equivalents to real nan values.
+    for col in df_res:
+        df_res.loc[col, _is_na[df_res[col]]] = np.nan
+
     if inplace:
-        adata.obs = adata.obs.join(df_res, how="left").reindex(adata.obs_names)
+        adata.obs = adata.obs.join(df_res, how="left", rsuffix=suffix).reindex(
+            adata.obs_names
+        )
     else:
         return df_res
