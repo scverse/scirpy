@@ -115,6 +115,7 @@ def adata_cdr3_2():
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     adata.uns["scirpy_version"] = "0.7"
+    adata.uns["DB"] = {"name": "TESTDB"}
     return adata
 
 
