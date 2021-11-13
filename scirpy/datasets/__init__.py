@@ -135,31 +135,35 @@ def vdjdb(cached: bool = True) -> AnnData:
         df.iterrows(), total=df.shape[0], desc="Processing VDJDB entries"
     ):
         cell = AirrCell(cell_id=idx)
-        alpha_chain = AirrCell.empty_chain_dict()
-        beta_chain = AirrCell.empty_chain_dict()
-        alpha_chain.update(
-            {
-                "locus": "TRA",
-                "junction_aa": row["cdr3.alpha"],
-                "v_call": row["v.alpha"],
-                "j_call": row["j.alpha"],
-                "consensus_count": 0,
-                "productive": True,
-            }
-        )
-        beta_chain.update(
-            {
-                "locus": "TRB",
-                "junction_aa": row["cdr3.beta"],
-                "v_call": row["v.beta"],
-                "d_call": row["d.beta"],
-                "j_call": row["j.beta"],
-                "consensus_count": 0,
-                "productive": True,
-            }
-        )
-        cell.add_chain(alpha_chain)
-        cell.add_chain(beta_chain)
+        if not pd.isnull(row["cdr3.alpha"]):
+            alpha_chain = AirrCell.empty_chain_dict()
+            alpha_chain.update(
+                {
+                    "locus": "TRA",
+                    "junction_aa": row["cdr3.alpha"],
+                    "v_call": row["v.alpha"],
+                    "j_call": row["j.alpha"],
+                    "consensus_count": 0,
+                    "productive": True,
+                }
+            )
+            cell.add_chain(alpha_chain)
+
+        if not pd.isnull(row["cdr3.beta"]):
+            beta_chain = AirrCell.empty_chain_dict()
+            beta_chain.update(
+                {
+                    "locus": "TRB",
+                    "junction_aa": row["cdr3.beta"],
+                    "v_call": row["v.beta"],
+                    "d_call": row["d.beta"],
+                    "j_call": row["j.beta"],
+                    "consensus_count": 0,
+                    "productive": True,
+                }
+            )
+            cell.add_chain(beta_chain)
+
         INCLUDE_CELL_METADATA_FIELDS = [
             "species",
             "mhc.a",
