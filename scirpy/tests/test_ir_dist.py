@@ -10,6 +10,7 @@ from .util import _squarify
 from scirpy.util import _is_symmetric
 import pandas.testing as pdt
 import pandas as pd
+from anndata import AnnData
 
 
 def _assert_frame_equal(left, right):
@@ -600,3 +601,14 @@ def test_compute_distances_second_anndata(
     npt.assert_equal(
         dist, expected_dist if not swap_query_reference else expected_dist.T
     )
+
+
+@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
+def test_ir_dist_empty_anndata(adata_cdr3, metric):
+    adata_empty = AnnData()
+    ir.pp.ir_dist(
+        adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
+    )
+    print(adata_cdr3.uns["ir_dist"]["seqs"])
+    print(adata_cdr3.uns["ir_dist"]["seqs2"])
+    print(adata_cdr3.uns["ir_dist"]["distances"])

@@ -202,9 +202,14 @@ def _ir_dist(
     for i, tmp_adata in enumerate([adata, reference]):
         if tmp_adata is not None:
             for chain_type in ["VJ", "VDJ"]:
-                result[chain_type]["seqs2" if i == 1 else "seqs"] = _get_unique_seqs(
-                    tmp_adata, chain_type
-                )
+                tmp_key = "seqs2" if i == 1 else "seqs"
+                unique_seqs = _get_unique_seqs(tmp_adata, chain_type)
+                if tmp_key == "seqs2" and not len(unique_seqs):
+                    logging.warning(
+                        "No sequences found in reference anndata object. "
+                        "Are you sure you chose the right sequence type (`aa` vs. `nt`)?"
+                    )
+                result[chain_type][tmp_key] = unique_seqs
 
     # compute distance matrices
     dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs)

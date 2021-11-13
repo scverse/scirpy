@@ -12,6 +12,7 @@ import pandas as pd
 import scanpy as sc
 from datetime import datetime
 from ..util import tqdm
+from scanpy import logging
 
 HERE = Path(__file__).parent
 
@@ -115,6 +116,7 @@ def vdjdb(cached: bool = True) -> AnnData:
         except OSError:
             pass
 
+    logging.info("Downloading latest version of VDJDB")
     with urllib.request.urlopen(
         "https://raw.githubusercontent.com/antigenomics/vdjdb-db/master/latest-version.txt"
     ) as url:
@@ -189,6 +191,7 @@ def vdjdb(cached: bool = True) -> AnnData:
             cell[f] = row[f]
         tcr_cells.append(cell)
 
+    logging.info("Converting to AnnData object")
     adata = from_airr_cells(tcr_cells)
 
     adata.uns["DB"] = {"name": "VDJDB", "date_downloaded": datetime.now().isoformat()}
