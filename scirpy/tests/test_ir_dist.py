@@ -605,10 +605,15 @@ def test_compute_distances_second_anndata(
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
-    adata_empty = AnnData()
+    adata_empty = AnnData(obs=pd.DataFrame(columns=adata_cdr3.obs.columns))
     ir.pp.ir_dist(
         adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
     )
-    print(adata_cdr3.uns["ir_dist"]["seqs"])
-    print(adata_cdr3.uns["ir_dist"]["seqs2"])
-    print(adata_cdr3.uns["ir_dist"]["distances"])
+    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
+    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs2"]) == []
+    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs"]) == (
+        ["AAA", "KK", "KKK", "KKY", "LLL"]
+    )
+    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs2"]) == []
+    assert adata_cdr3.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
+    assert adata_cdr3.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)
