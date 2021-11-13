@@ -10,7 +10,7 @@ from ._clonotypes import (
     _validate_parameters,
     _doc_clonotype_definition,
 )
-from ..util import _doc_params, _is_na
+from ..util import _doc_params, _is_na, tqdm
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..ir_dist import _get_metric_key, MetricType
 from scanpy import logging
@@ -96,6 +96,9 @@ def ir_query(
 ) -> Optional[dict]:
     """\
     Query a referece database for matching immune cell receptors.
+
+    .. warning::
+        This is an experimental function that may change in the future.
 
     The reference database can either be a imune cell receptor database, or
     simply another scRNA-seq dataset with some annotations in `.obs`. This function
@@ -211,6 +214,9 @@ def ir_query_annotate_df(
     Returns the inner join of `adata.obs` with matching entries from `reference.obs`
     based on the result of :func:`~scirpy.tl.ir_query`.
 
+    .. warning::
+        This is an experimental function that may change in the future.
+
     The function first creates a two-column dataframe mapping cell indices of `adata`
     to cell indices of `reference`. It then performs an inner join with `reference.obs`,
     and finally performs another join with `query.obs`.
@@ -275,7 +281,6 @@ def ir_query_annotate_df(
     )
 
 
-# TODO check performance
 def ir_query_annotate(
     adata: AnnData,
     reference: AnnData,
@@ -290,6 +295,9 @@ def ir_query_annotate(
 ) -> Optional[pd.DataFrame]:
     """
     Annotate cells based on the result of :func:`~scirpy.tl.ir_query`.
+
+    .. warning::
+        This is an experimental function that may change in the future.
 
     Multiple entries from the reference can match a single cell in the query dataset.
     In order to reduce the matching entries to a single value that can be added
@@ -347,20 +355,28 @@ def ir_query_annotate(
     )
     df.index.name = "_query_cell_index"
 
-    try:
-        reduce_fun = {
-            "unique-only": _reduce_unique_only,
-            "most-frequent": _reduce_most_frequent,
-            "json": _reduce_json,
-        }[
-            strategy
-        ]  # type: ignore
-    except KeyError:
-        raise ValueError("Invalid value for `strategy`.")
+    with tqdm(total=df.index.nunique() * df.shape[1]) as pbar:
+        try:
 
-    df_res = (
-        df.groupby("_query_cell_index").aggregate(reduce_fun).reindex(adata.obs_names)
-    )
+            def reduce_fun(x):
+                pbar.update(1)
+                return {
+                    "unique-only": _reduce_unique_only,
+                    "most-frequent": _reduce_most_frequent,
+                    "json": _reduce_json,
+                }[
+                    strategy
+                ](  # type: ignore
+                    x
+                )
+
+        except KeyError:
+            raise ValueError("Invalid value for `strategy`.")
+        df_res = (
+            df.groupby("_query_cell_index")
+            .aggregate(reduce_fun)
+            .reindex(adata.obs_names)
+        )
 
     # convert nan-equivalents to real nan values.
     for col in df_res:
