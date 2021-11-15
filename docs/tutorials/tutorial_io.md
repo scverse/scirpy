@@ -5,11 +5,12 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.2'
-      jupytext_version: 1.5.0.rc1
+      format_version: '1.3'
+      jupytext_version: 1.11.4
 ---
 
 ```python
+# This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
 import anndata
@@ -18,6 +19,10 @@ anndata.logging.anndata_logger.addFilter(
     lambda r: not r.getMessage().startswith("storing")
     and r.getMessage().endswith("as categorical.")
 )
+
+# Temporarily suppress FutureWarnings
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 ```
 
 ```python

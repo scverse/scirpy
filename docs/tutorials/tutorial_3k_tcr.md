@@ -23,6 +23,10 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
+
+# Temporarily suppress FutureWarnings
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 ```
 
 ```python
