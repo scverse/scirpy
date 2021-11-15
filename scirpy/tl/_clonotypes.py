@@ -52,7 +52,9 @@ same_v_gene
 
     v genes are matched based on the behaviour defined with `receptor_arms` and
     `dual_ir`.
+"""
 
+_common_doc_within_group = """\
 within_group
     Enforces clonotypes to have the same group defined by one or multiple grouping
     variables. Per default, this is set to :term:`receptor_type<Receptor type>`,
@@ -88,7 +90,7 @@ distance_result
     A dictionary containing
      * `distances`: A sparse, pairwise distance matrix between unique
        receptor configurations
-     * `cell_indices`: A dict of arrays, containing the adata.obs_names
+     * `cell_indices`: A dict of arrays, containing the `adata.obs_names`
        (cell indices) for each row in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
@@ -123,15 +125,26 @@ in the tutorial.
 
 def _validate_parameters(
     adata,
+    reference,
     receptor_arms,
     dual_ir,
-    within_group,
+    match_columns,
     distance_key,
     sequence,
     metric,
     key_added,
 ) -> Tuple[Optional[List[str]], str, str]:
-    """Validate an sanitze parameters for `define_clonotypes`"""
+    """Validate and sanitze parameters for `define_clonotypes`"""
+
+    def _get_db_name():
+        try:
+            return reference.uns["DB"]["name"]
+        except KeyError:
+            raise ValueError(
+                'If reference does not contain a `.uns["DB"]["name"]` entry, '
+                "you need to manually specify `distance_key` and `key_added`."
+            )
+
     if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
         raise ValueError(
             "Invalid value for `receptor_arms`. Note that starting with v0.5 "
@@ -141,32 +154,43 @@ def _validate_parameters(
     if dual_ir not in ["primary_only", "all", "any"]:
         raise ValueError("Invalid value for `dual_ir")
 
-    if within_group is not None:
-        if isinstance(within_group, str):
-            within_group = [within_group]
-        for group_col in within_group:
+    if match_columns is not None:
+        if isinstance(match_columns, str):
+            match_columns = [match_columns]
+        for group_col in match_columns:
             if group_col not in adata.obs.columns:
-                msg = f"column `{within_group}` not found in `adata.obs`. "
+                msg = f"column `{match_columns}` not found in `adata.obs`. "
                 if group_col in ("receptor_type", "receptor_subtype"):
                     msg += "Did you run `tl.chain_qc`? "
                 raise ValueError(msg)
 
     if distance_key is None:
-        distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
+        if reference is not None:
+            distance_key = (
+                f"ir_dist_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
+            )
+        else:
+            distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
     if distance_key not in adata.uns:
         raise ValueError(
             "Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?"
         )
 
     if key_added is None:
-        key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
+        if reference is not None:
+            key_added = (
+                f"ir_query_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
+            )
+        else:
+            key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
 
-    return within_group, distance_key, key_added
+    return match_columns, distance_key, key_added
 
 
 @_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
+    within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
     return_values=_common_doc_return_values,
     paralellism=_common_doc_parallelism,
@@ -180,7 +204,7 @@ def define_clonotype_clusters(
     dual_ir: Literal["primary_only", "all", "any"] = "any",
     same_v_gene: bool = False,
     within_group: Union[Sequence[str], str, None] = "receptor_type",
-    key_added: str = None,
+    key_added: Optional[str] = None,
     partitions: Literal["connected", "leiden"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
@@ -207,11 +231,13 @@ def define_clonotype_clusters(
     adata
         Annotated data matrix
     sequence
-        The sequence parameter used when running :func:scirpy.pp.ir_dist`
+        The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
         The metric parameter used when running :func:`scirpy.pp.ir_dist`
 
     {common_doc}
+
+    {within_group}
 
     key_added
         The column name under which the clonotype clusters and cluster sizes
@@ -248,6 +274,7 @@ def define_clonotype_clusters(
     """
     within_group, distance_key, key_added = _validate_parameters(
         adata,
+        None,
         receptor_arms,
         dual_ir,
         within_group,
@@ -262,7 +289,7 @@ def define_clonotype_clusters(
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
-        within_group=within_group,
+        match_columns=within_group,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",
         n_jobs=n_jobs,
@@ -318,6 +345,7 @@ def define_clonotype_clusters(
 @_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
+    within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
     return_values=_common_doc_return_values,
     paralellism=_common_doc_parallelism,
@@ -346,6 +374,7 @@ def define_clonotypes(
     adata
         Annotated data matrix
     {common_doc}
+    {within_group}
     key_added
         The column name under which the clonotype clusters and cluster sizes
         will be stored in `adata.obs` and under which the clonotype network will be

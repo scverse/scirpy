@@ -13,3 +13,4 @@ from ._clonotypes import (
 )
 from ._convergence import clonotype_convergence
 from ._clonotype_modularity import clonotype_modularity
+from ._ir_query import ir_query, ir_query_annotate, ir_query_annotate_df

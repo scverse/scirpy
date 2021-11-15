@@ -5,6 +5,7 @@ from typing import Union
 from scipy.sparse import issparse
 import scipy.sparse
 import warnings
+from numba import jit
 
 # Determine the right tqdm version, see https://github.com/tqdm/tqdm/issues/1082
 try:
@@ -40,19 +41,20 @@ def _is_symmetric(M) -> bool:
         return np.allclose(M, M.T, 1e-6, 1e-6, equal_nan=True)
 
 
-@np.vectorize
-def _is_na(x):
+def _is_na2(x):
     """Check if an object or string is NaN.
     The function is vectorized over numpy arrays or pandas Series
     but also works for single values.
 
     Pandas Series are converted to numpy arrays.
     """
-    return _is_na2(x)
+    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A", "")
 
 
-@np.vectorize
-def _is_true(x):
+_is_na = np.vectorize(_is_na2, otypes=[bool])
+
+
+def _is_true2(x):
     """Evaluates true for bool(x) unless _is_false(x) evaluates true.
     I.e. strings like "false" evaluate as False.
 
@@ -60,36 +62,25 @@ def _is_true(x):
 
     The function is vectorized over numpy arrays or pandas Series
     but also works for single values."""
-    return _is_true2(x)
+    return not _is_false2(x) and not _is_na2(x)
 
 
-@np.vectorize
-def _is_false(x):
+_is_true = np.vectorize(_is_true2, otypes=[bool])
+
+
+def _is_false2(x):
     """Evaluates false for bool(False) and str("false")/str("False").
     The function is vectorized over numpy arrays or pandas Series.
 
     Everything that is NA as defined in `is_na()` evaluates to False.
 
     but also works for single values."""
-    x = np.array(x).astype(object)
-
-    return _is_false2(x)
-
-
-def _is_na2(x):
-    """the non-vectorized version, to be called from a function
-    that gets vectorized"""
-    return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A", "")
-
-
-def _is_true2(x):
-    """Non-vectorized helper function"""
-    return not _is_false2(x) and not _is_na2(x)
-
-
-def _is_false2(x):
-    """Non-vectorized helper function"""
     return (x in ("False", "false", "0") or not bool(x)) and not _is_na2(x)
+
+
+_is_false = np.vectorize(
+    lambda x: _is_false2(np.array(x).astype(object)), otypes=[bool]
+)
 
 
 def _normalize_counts(

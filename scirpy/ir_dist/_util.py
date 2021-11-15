@@ -10,23 +10,41 @@ from functools import reduce
 from operator import mul
 
 
-def merge_coo_matrices(mats):
-    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster."""
+def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
+    """Fast sum of coo_matrices. Equivalent to builtin function `sum()`, but faster.
+
+    The only execption is that while `sum` procudes `0` on an empty list, this function
+    returns an empty coo matrix with shape `(0, 0)`. This makes downstream operations
+    more consistent.
+
+    This function makes use of the fact that COO matrices can have multiple entries
+    for the same coordinates. When converting them to a different sparse matrix type
+    they will be summed up internally.
+
+    Parameters
+    ----------
+    mats
+        Sequence of COO matrices
+    shape
+        Expected output shape. If None will infer from the input
+        sequence. Will raise an error if one of the matrices is not consistent with
+        the shape.
+    """
     mats = list(mats)
 
-    # special case: empty list - sum returns 0
-    if not len(mats):
-        return 0
-
-    # check that shapes are consistent
-    shape = mats[0].shape
+    # check that shapes are consistent. matrices with shape 0 are ignored.
     for mat in mats:
-        if mat.shape != shape:
-            raise ValueError("Incompatible shapes")
+        if mat.shape == (0, 0):
+            continue
+        elif shape is None:
+            shape = mat.shape
+        else:
+            if mat.shape != shape:
+                raise ValueError("Incompatible shapes")
 
-    # return empty matrix if one dimension is of length 0
-    if reduce(mul, shape) == 0:
-        return sp.coo_matrix(shape)
+    # sum is 0 if all inputs are 0 or the shape is 0 in one dimension
+    if not len(mats) or shape is None or reduce(mul, shape) == 0:
+        return coo_matrix((0, 0) if shape is None else shape)
 
     data, row, col = zip(*((x.data, x.row, x.col) for x in mats))
 
@@ -157,7 +175,9 @@ class ReverseLookupTable:
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(self, feature_table: pd.DataFrame):
+    def __init__(
+        self, feature_table: pd.DataFrame, feature_table2: pd.DataFrame = None
+    ):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -172,7 +192,7 @@ class DoubleLookupNeighborFinder:
               constructed via `add_lookup_table`.
 
         For each object `o`, all neighbors `N` with a distance != 0 can be retrieved
-        in `O(|N|))` via double-lookup. The forward lookup-step retrieves
+        in `O(|N|)` via double-lookup. The forward lookup-step retrieves
         the row/col index in the distance matrix for the entry associated with `o`.
         From the spare matrix we directly obtain the indices in the distance matrix
         with distance != 0. The reverse lookup-step retrieves all neighbors `N` from
@@ -184,13 +204,24 @@ class DoubleLookupNeighborFinder:
             A data frame with features in columns. Rows must be unique.
             In our case, rows are clonotypes, and features can be CDR3 sequences,
             v genes, etc.
+        feature_table2
+            A second feature table. If omitted, computes pairwise distances
+            between the rows of the first feature table
         """
         self.feature_table = feature_table
+        self.feature_table2 = (
+            feature_table2 if feature_table2 is not None else feature_table
+        )
 
-        # n_feature x n_feature sparse, symmetric distance matrices
+        # n_feature x n_feature sparse m x k distance matrices
+        # where m is the number of unique features in feature_table and
+        # k is the number if unique features in feature_table2
         self.distance_matrices: Dict[str, sp.csr_matrix] = dict()
-        # mapping feature_label -> feature_index with len = n_feature
+        # mapping feature_label -> feature_index with len = n_feature for feature_table
+        # (rows of the distance matrix)
         self.distance_matrix_labels: Dict[str, dict] = dict()
+        # ... for feature_table2 (columns of the distance matrix)
+        self.distance_matrix_labels2: Dict[str, dict] = dict()
         # tuples (dist_mat, forward, reverse)
         # dist_mat: name of associated distance matrix
         # forward: clonotype -> feature_index lookups
@@ -200,6 +231,10 @@ class DoubleLookupNeighborFinder:
     @property
     def n_rows(self):
         return self.feature_table.shape[0]
+
+    @property
+    def n_cols(self):
+        return self.feature_table2.shape[0]
 
     def lookup(
         self,
@@ -211,7 +246,9 @@ class DoubleLookupNeighborFinder:
 
         Performs the following lookup:
 
-            clonotype_id -> dist_mat -> neighboring features -> neighboring object.
+            object_id -> dist_mat -> neighboring features -> neighboring objects.
+
+        where an object is a clonotype in our case (but could be used for something else)
 
         "nan"s are not looked up via the distance matrix, they return a row of zeros
         instead.
@@ -227,7 +264,7 @@ class DoubleLookupNeighborFinder:
             The unique identifier of the lookup table used for the reverse lookup.
             If not provided will use the same lookup table for forward and reverse
             lookup. This is useful to calculate distances across features from
-            different columns of the feature table.
+            different columns of the feature table (e.g. primary and secondary VJ chains).
         """
         distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
 
@@ -261,11 +298,16 @@ class DoubleLookupNeighborFinder:
                     (
                         reverse[i] * multiplier
                         for i, multiplier in zip(row.indices, row.data)  # type: ignore
-                    )
-                )  # type: ignore
+                    ),
+                    shape=(1, reverse.size),
+                )
 
     def add_distance_matrix(
-        self, name: str, distance_matrix: sp.csr_matrix, labels: Sequence
+        self,
+        name: str,
+        distance_matrix: sp.csr_matrix,
+        labels: Sequence,
+        labels2: Sequence = None,
     ):
         """Add a distance matrix.
 
@@ -276,11 +318,18 @@ class DoubleLookupNeighborFinder:
         distance_matrix
             sparse distance matrix `D` in CSR format
         labels
-            array with row/column names of the distance matrix.
-            `len(array) == D.shape[0] == D.shape[1]`
+            array with row names of the distance matrix.
+            `len(array) == D.shape[0]`
+        labels2
+            array with column names of the distance matrix.
+            Can be omitted if the distance matrix is symmetric.
+            `len(array) == D.shape[1]`.
         """
-        if not (len(labels) == distance_matrix.shape[0] == distance_matrix.shape[1]):
-            raise ValueError("Dimension mismatch!")
+        labels2 = labels if labels2 is None else labels2
+        if not len(labels) == distance_matrix.shape[0]:
+            raise ValueError("Dimensions mismatch alon axis 0")
+        if not len(labels2) == distance_matrix.shape[1]:
+            raise ValueError("Dimensions mismatch alon axis 1")
         if not isinstance(distance_matrix, csr_matrix):
             raise TypeError("Distance matrix must be sparse and in CSR format. ")
 
@@ -288,8 +337,10 @@ class DoubleLookupNeighborFinder:
         distance_matrix.eliminate_zeros()
         self.distance_matrices[name] = distance_matrix
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
+        self.distance_matrix_labels2[name] = {k: i for i, k in enumerate(labels2)}
         # The label "nan" does not have an index in the matrix
         self.distance_matrix_labels[name]["nan"] = np.nan
+        self.distance_matrix_labels2[name]["nan"] = np.nan
 
     def add_lookup_table(
         self,
@@ -341,10 +392,10 @@ class DoubleLookupNeighborFinder:
         If the dist_type is boolean, use a dense boolean.
         """
         tmp_reverse_lookup = dict()
-        tmp_index_lookup = self.distance_matrix_labels[distance_matrix]
+        tmp_index_lookup = self.distance_matrix_labels2[distance_matrix]
 
         # Build reverse lookup
-        for i, k in enumerate(self.feature_table[feature_col]):
+        for i, k in enumerate(self.feature_table2[feature_col]):
             tmp_key = tmp_index_lookup[k]
             if np.isnan(tmp_key):
                 continue
@@ -354,5 +405,5 @@ class DoubleLookupNeighborFinder:
                 tmp_reverse_lookup[tmp_key] = [i]
 
         return ReverseLookupTable.from_dict_of_indices(
-            tmp_reverse_lookup, dist_type, self.n_rows
+            tmp_reverse_lookup, dist_type, self.n_cols
         )

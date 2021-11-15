@@ -218,6 +218,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
             max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
             chunksize=50,
             tqdm_class=tqdm,
+            total=len(blocks),
         )
 
         try:

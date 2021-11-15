@@ -227,7 +227,7 @@ class _ClonotypeModularity:
         """
         self.n_permutations = n_permutations
 
-        # TODO parallelize. Need to do this more cleverly, currelty the memory
+        # TODO parallelize. Need to do this more cleverly, currently the memory
         # consumption is too high as everything is copied to each worker.
         # This is also the bottleneck of the process, s.t. naively parallelizing
         # does not lead to a speed gain.

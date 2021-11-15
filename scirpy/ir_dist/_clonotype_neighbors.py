@@ -1,5 +1,5 @@
 from multiprocessing import cpu_count
-from typing import Union, Sequence
+from typing import Dict, Mapping, Tuple, Union, Sequence, Optional
 from anndata import AnnData
 from scanpy import logging
 from .._compat import Literal
@@ -16,11 +16,12 @@ class ClonotypeNeighbors:
     def __init__(
         self,
         adata: AnnData,
+        adata2: Optional[AnnData] = None,
         *,
         receptor_arms=Literal["VJ", "VDJ", "all", "any"],
         dual_ir=Literal["primary_only", "all", "any"],
         same_v_gene: bool = False,
-        within_group: Union[None, Sequence[str]] = None,
+        match_columns: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
         n_jobs: Union[int, None] = None,
@@ -29,18 +30,13 @@ class ClonotypeNeighbors:
         """Computes pairwise distances between cells with identical
         receptor configuration and calls clonotypes from this distance matrix"""
         self.same_v_gene = same_v_gene
-        self.within_group = within_group
+        self.match_columns = match_columns
         self.receptor_arms = receptor_arms
         self.dual_ir = dual_ir
         self.distance_dict = adata.uns[distance_key]
         self.sequence_key = sequence_key
         self.n_jobs = n_jobs
         self.chunksize = chunksize
-
-        # will be filled in self._prepare
-        self.neighbor_finder = None  # instance of DoubleLookupNeighborFinder
-        self.clonotypes = None  # pandas data frame with unique receptor configurations
-        self.cell_indices = None  # a mapping row index from self.clonotypes -> obs name
 
         self._receptor_arm_cols = (
             ["VJ", "VDJ"]
@@ -55,26 +51,32 @@ class ClonotypeNeighbors:
             if same_v_gene:
                 self._v_gene_cols.append(f"IR_{arm}_{i}_v_call")
 
-        self._prepare(adata)
+        # Initialize the DoubleLookupNeighborFinder and all lookup tables
+        start = logging.info("Initializing lookup tables. ")  # type: ignore
 
-    def _prepare(self, adata: AnnData):
-        """Initalize the DoubleLookupNeighborFinder and all required lookup tables"""
-        start = logging.info("Initializing lookup tables. ")
-        self._make_clonotype_table(adata)
-        self._make_chain_count()
-        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes)
-        self._add_distance_matrices(adata)
+        self.cell_indices, self.clonotypes = self._make_clonotype_table(adata)
+        self._chain_count = self._make_chain_count(self.clonotypes)
+        if adata2 is not None:
+            self.cell_indices2, self.clonotypes2 = self._make_clonotype_table(adata2)
+            self._chain_count2 = self._make_chain_count(self.clonotypes2)
+        else:
+            self.cell_indices2, self.clonotypes2, self._chain_count2 = None, None, None
+
+        self.neighbor_finder = DoubleLookupNeighborFinder(
+            self.clonotypes, self.clonotypes2
+        )
+        self._add_distance_matrices()
         self._add_lookup_tables()
-        logging.hint("Done initializing lookup tables.", time=start)
+        logging.hint("Done initializing lookup tables.", time=start)  # type: ignore
 
-    def _make_clonotype_table(self, adata):
+    def _make_clonotype_table(self, adata) -> Tuple[Mapping, pd.DataFrame]:
         """Define 'preliminary' clonotypes based identical IR features."""
         if not adata.obs_names.is_unique:
             raise ValueError("Obs names need to be unique!")
 
         clonotype_cols = self._cdr3_cols + self._v_gene_cols
-        if self.within_group is not None:
-            clonotype_cols += list(self.within_group)
+        if self.match_columns is not None:
+            clonotype_cols += list(self.match_columns)
 
         obs_filtered = adata.obs.loc[lambda df: _is_true(df["has_ir"]), clonotype_cols]
         # make sure all nans are consistent "nan"
@@ -101,7 +103,7 @@ class ClonotypeNeighbors:
         # can't save it to h5ad.
         # Also the dict keys need to be of type `str`, or they'll get converted
         # implicitly.
-        self.cell_indices = {
+        cell_indices = {
             str(i): obs_filtered.index[
                 clonotype_groupby.indices.get(
                     # indices is not a tuple if it's just a single column.
@@ -114,13 +116,13 @@ class ClonotypeNeighbors:
 
         # make 'within group' a single column of tuples (-> only one distance
         # matrix instead of one per column.)
-        if self.within_group is not None:
-            within_group_col = list(
-                clonotypes.loc[:, self.within_group].itertuples(index=False, name=None)
+        if self.match_columns is not None:
+            match_columns_col = list(
+                clonotypes.loc[:, self.match_columns].itertuples(index=False, name=None)
             )
-            for tmp_col in self.within_group:
+            for tmp_col in self.match_columns:
                 del clonotypes[tmp_col]
-            clonotypes["within_group"] = within_group_col
+            clonotypes["match_columns"] = match_columns_col
 
         # consistency check: there must not be a secondary chain if there is no
         # primary one:
@@ -136,9 +138,9 @@ class ClonotypeNeighbors:
                     ~secondary_is_nan[primary_is_nan]
                 ), "There must not be a secondary chain if there is no primary one"
 
-        self.clonotypes = clonotypes
+        return cell_indices, clonotypes
 
-    def _add_distance_matrices(self, adata):
+    def _add_distance_matrices(self) -> None:
         """Add all required distance matrices to the DoubleLookupNeighborFinder"""
         # sequence distance matrices
         for chain_type in self._receptor_arm_cols:
@@ -146,33 +148,41 @@ class ClonotypeNeighbors:
                 name=chain_type,
                 distance_matrix=self.distance_dict[chain_type]["distances"],
                 labels=self.distance_dict[chain_type]["seqs"],
+                labels2=self.distance_dict[chain_type].get("seqs2", None),
             )
 
         if self.same_v_gene:
             # V gene distance matrix (identity mat)
             v_genes = self._unique_values_in_multiple_columns(
-                adata.obs, self._v_gene_cols
+                self.clonotypes, self._v_gene_cols
             )
+            if self.clonotypes2 is not None:
+                v_genes |= self._unique_values_in_multiple_columns(
+                    self.clonotypes2, self._v_gene_cols
+                )
+
             self.neighbor_finder.add_distance_matrix(
                 "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
             )
 
-        if self.within_group is not None:
-            within_group_values = np.unique(self.clonotypes["within_group"].values)
+        if self.match_columns is not None:
+            match_columns_values = set(self.clonotypes["match_columns"].values)
+            if self.clonotypes2 is not None:
+                match_columns_values |= set(self.clonotypes2["match_columns"].values)
             self.neighbor_finder.add_distance_matrix(
-                "within_group",
-                sp.identity(len(within_group_values), dtype=bool, format="csr"),  # type: ignore
-                within_group_values,
+                "match_columns",
+                sp.identity(len(match_columns_values), dtype=bool, format="csr"),  # type: ignore
+                list(match_columns_values),
             )
 
     @staticmethod
     def _unique_values_in_multiple_columns(
         df: pd.DataFrame, columns: Sequence[str]
-    ) -> np.ndarray:
+    ) -> set:
         """Return the Union of unique values of multiple columns of a dataframe"""
-        return np.unique(np.concatenate([df[c].values.astype(str) for c in columns]))  # type: ignore
+        return set(np.concatenate([df[c].values.astype(str) for c in columns]))
 
-    def _add_lookup_tables(self):
+    def _add_lookup_tables(self) -> None:
         """Add all required lookup tables to the DoubleLookupNeighborFinder"""
         for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
             self.neighbor_finder.add_lookup_table(
@@ -186,12 +196,12 @@ class ClonotypeNeighbors:
                     dist_type="boolean",
                 )
 
-        if self.within_group is not None:
+        if self.match_columns is not None:
             self.neighbor_finder.add_lookup_table(
-                "within_group", "within_group", "within_group", dist_type="boolean"
+                "match_columns", "match_columns", "match_columns", dist_type="boolean"
             )
 
-    def _make_chain_count(self) -> None:
+    def _make_chain_count(self, clonotype_table) -> Dict[str, int]:
         """Compute how many chains there are of each type."""
         cols = {
             arm: [f"IR_{arm}_{c}_{self.sequence_key}" for c in self._dual_ir_cols]
@@ -200,15 +210,14 @@ class ClonotypeNeighbors:
         cols["arms"] = [
             f"IR_{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols
         ]
-        self._chain_count = {
-            step: np.sum(self.clonotypes.loc[:, cols].values != "nan", axis=1)
+        return {
+            step: np.sum(clonotype_table.loc[:, cols].values != "nan", axis=1)
             for step, cols in cols.items()
         }
 
     def compute_distances(self) -> sp.csr_matrix:
-        """Compute the distances between clonotypes. `prepare` must have
-        been ran previously. Returns a clonotype x clonotype sparse
-        distance matrix."""
+        """Compute the distances between clonotypes.
+        Returns a clonotype x clonotype2 sparse distance matrix."""
         start = logging.info(
             "Computing clonotype x clonotype distances."
         )  # type: ignore
@@ -244,7 +253,7 @@ class ClonotypeNeighbors:
         """Compute neighboring clonotypes for a given clonotype.
 
         Or operations use the min dist of two matching entries.
-        And operations use the max dist of two matchin entries.
+        And operations use the max dist of two matching entries.
 
         The motivation for using the max instead of sum/average is
         that our hypotheis is that a receptor recognizes the same antigen if it
@@ -252,6 +261,9 @@ class ClonotypeNeighbors:
         match ("and"), the higher one should count.
         """
         # Lookup distances for current row
+        tmp_clonotypes = (
+            self.clonotypes2 if self.clonotypes2 is not None else self.clonotypes
+        )
         lookup = dict()  # CDR3 distances
         lookup_v = dict()  # V-gene distances
         for tmp_arm in self._receptor_arm_cols:
@@ -274,9 +286,8 @@ class ClonotypeNeighbors:
                     )
 
         # need to loop through all coordinates that have at least one distance.
-        # sum 'merges' coo matrices.
         has_distance = merge_coo_matrices(lookup.values()).tocsr()  # type: ignore
-        # convert to csc matrices to iterate over indices
+        # convert to csr matrices to iterate over indices
         lookup = {k: v.tocsr() for k, v in lookup.items()}
 
         def _lookup_dist_for_chains(
@@ -288,7 +299,7 @@ class ClonotypeNeighbors:
             array with dimensions (1, n) where n equals the number
             of entries in `has_distance`.
             """
-            ct_col2 = self.clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
+            ct_col2 = tmp_clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
             tmp_array = (
                 lookup[(tmp_arm, c1, c2)][0, has_distance.indices]
                 .todense()
@@ -334,11 +345,11 @@ class ClonotypeNeighbors:
         # be a secondary chain if there is no first one.
         res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
 
-        if self.within_group is not None:
-            within_group_mask = self.neighbor_finder.lookup(
-                ct_id, "within_group", "within_group"
+        if self.match_columns is not None:
+            match_columns_mask = self.neighbor_finder.lookup(
+                ct_id, "match_columns", "match_columns"
             )
-            res = np.multiply(res, within_group_mask[0, has_distance.indices])
+            res = np.multiply(res, match_columns_mask[0, has_distance.indices])
 
         final_res = has_distance.copy()
         final_res.data = res.astype(np.uint8)

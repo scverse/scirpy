@@ -115,6 +115,7 @@ def adata_cdr3_2():
     obs["has_ir"] = "True"
     adata = AnnData(obs=obs)
     adata.uns["scirpy_version"] = "0.7"
+    adata.uns["DB"] = {"name": "TESTDB"}
     return adata
 
 
@@ -203,7 +204,7 @@ def adata_define_clonotype_clusters():
             ).set_index("cell_id")
         )
     )
-    adata = AnnData(obs=obs)
+    adata = AnnData(obs=obs, X=np.empty((obs.shape[0], 0)))
     adata.uns["scirpy_version"] = "0.7"
     return adata
 

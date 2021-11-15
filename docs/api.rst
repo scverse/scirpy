@@ -125,6 +125,15 @@ Analyse clonal diversity
    tl.clonotype_modularity
    tl.clonotype_imbalance
 
+Query reference databases
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+   :toctree: ./generated
+
+   tl.ir_query
+   tl.ir_query_annotate
+   tl.ir_query_annotate_df
+
 V(D)J gene usage
 ^^^^^^^^^^^^^^^^
 .. autosummary::
@@ -208,6 +217,17 @@ Datasets: `datasets`
    datasets.wu2020_3k
    datasets.maynard2020
 
+Reference databases
+^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: ./generated
+
+   datasets.vdjdb
+
+A reference database is also just a :ref:`Scirpy-formatted AnnData object<data-structure>`.
+This means you can follow the instructions in the :ref:`data loading tutorial <importing-custom-formats>`
+to build a custom reference database.
 
 
 Utility functions: `util`

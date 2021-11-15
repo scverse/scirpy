@@ -10,6 +10,7 @@ from .util import _squarify
 from scirpy.util import _is_symmetric
 import pandas.testing as pdt
 import pandas as pd
+from anndata import AnnData
 
 
 def _assert_frame_equal(left, right):
@@ -157,219 +158,222 @@ def test_ir_dist(
     npt.assert_array_equal(res["VDJ"]["distances"].toarray(), expected_dist_vdj)
 
 
+@pytest.mark.parametrize("with_adata2", [False, True])
 @pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances1(adata_cdr3, n_jobs):
-    # test single chain with identity distance
-    ir.pp.ir_dist(adata_cdr3, metric="identity", cutoff=0, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="VJ",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_identity",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes, pd.DataFrame({"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]})
-    )
-    dist = cn.compute_distances()
-    npt.assert_equal(
-        dist.toarray(),
-        np.array(
+@pytest.mark.parametrize(
+    "comment,metric,ctn_kwargs,expected_clonotype_df,expected_dist",
+    (
+        [
+            "test single chain with identity distance",
+            "identity",
+            {"receptor_arms": "VJ", "dual_ir": "primary_only"},
+            {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
             [
                 [1, 0, 0],
                 [0, 1, 0],
                 [0, 0, 0],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances2(adata_cdr3, n_jobs):
-    # test single receptor arm with multiple chains and identity distance
-    ir.pp.ir_dist(adata_cdr3, metric="identity", cutoff=0, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="VJ",
-        dual_ir="any",
-        distance_key="ir_dist_aa_identity",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
+            ],
+        ],
+        [
+            """test single receptor arm with multiple chains and identity distance""",
+            "identity",
+            {"receptor_arms": "VJ", "dual_ir": "any"},
             {
                 "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
                 "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
+            },
             [
                 [1, 1, 0, 1, 1],
                 [1, 1, 0, 0, 0],
-                [0] * 5,
+                [0, 0, 0, 0, 0],
                 [1, 0, 0, 1, 1],
                 [1, 0, 0, 1, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances3(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    # test single chain with custom distance
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="VJ",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes, pd.DataFrame({"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]})
-    )
-    dist = cn.compute_distances()
-    assert dist.nnz == 4
-    dist = dist.toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
+            ],
+        ],
+        [
+            """test single chain with custom distance""",
+            "custom",
+            {"receptor_arms": "VJ", "dual_ir": "primary_only"},
+            {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
             [
                 [1, 4, 0],
                 [4, 1, 0],
                 [0, 0, 0],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances4(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    # test single receptor arm with multiple chains and custom distance
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="VJ",
-        dual_ir="any",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
+            ],
+        ],
+        [
+            """test single receptor arm with multiple chains and custom distance""",
+            "custom",
+            {"receptor_arms": "VJ", "dual_ir": "any"},
             {
                 "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
                 "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances()
-    assert dist.nnz == 16
-    npt.assert_equal(
-        dist.toarray(),
-        np.array(
+            },
             [
                 [1, 1, 0, 1, 1],
                 [1, 1, 0, 4, 4],
-                [0] * 5,
+                [0, 0, 0, 0, 0],
                 [1, 4, 0, 1, 1],
                 [1, 4, 0, 1, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances5(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    # test single receptor arm with multiple chains and custom distance
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="VJ",
-        dual_ir="all",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
+            ],
+        ],
+        [
+            """test single receptor arm with multiple chains and custom distance""",
+            "custom",
+            {"receptor_arms": "VJ", "dual_ir": "all"},
             {
                 "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
                 "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
+            },
             [
                 [1, 0, 0, 4, 0],
                 [0, 1, 0, 0, 4],
                 [0, 0, 0, 0, 0],
                 [4, 0, 0, 1, 0],
                 [0, 4, 0, 0, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    # test both receptor arms, primary chain only
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="all",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
+            ],
+        ],
+        [
+            """test both receptor arms, primary chain only""",
+            "custom",
+            {"receptor_arms": "all", "dual_ir": "primary_only"},
             {
                 "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
                 "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
+            },
             [
                 [1, 10, 0, 0],
                 [10, 1, 0, 0],
                 [0, 0, 0, 0],
                 [0, 0, 0, 1],
-            ]
-        ),
+            ],
+        ],
+        [
+            """Test with any receptor arms, primary chain only""",
+            "custom",
+            {"receptor_arms": "any", "dual_ir": "primary_only"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
+            },
+            [
+                [1, 4, 0, 1],
+                [4, 1, 0, 4],
+                [0, 0, 0, 0],
+                [1, 4, 0, 1],
+            ],
+        ],
+        [
+            "Test with any receptor arms, all chains",
+            "custom",
+            {"receptor_arms": "any", "dual_ir": "all"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+            },
+            [
+                [1, 10, 0, 4, 0],
+                [10, 1, 0, 0, 4],
+                [0, 0, 0, 0, 0],
+                [4, 0, 0, 1, 0],
+                [0, 4, 0, 0, 1],
+            ],
+        ],
+        [
+            "Test with any receptor amrms, any chains",
+            "custom",
+            {"receptor_arms": "any", "dual_ir": "any"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+            },
+            [
+                [1, 1, 0, 1, 1],
+                [1, 1, 0, 4, 4],
+                [0, 0, 0, 0, 0],
+                [1, 4, 0, 1, 1],
+                [1, 4, 0, 1, 1],
+            ],
+        ],
+        [
+            "Test with all receptor arms, any dual ir",
+            "custom",
+            {"receptor_arms": "all", "dual_ir": "any"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+            },
+            [
+                [1, 1, 0, 0, 0],
+                [1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1],
+                [0, 0, 0, 1, 1],
+            ],
+        ],
+        [
+            "Test with all receptor amrs, all dual ir",
+            "custom",
+            {"receptor_arms": "all", "dual_ir": "all"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+            },
+            [
+                [1, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ],
+        ],
+    ),
+)
+def test_compute_distances(
+    adata_cdr3,
+    adata_cdr3_mock_distance_calculator,
+    comment,
+    metric,
+    ctn_kwargs,
+    expected_clonotype_df,
+    expected_dist,
+    n_jobs,
+    with_adata2,
+):
+    f"""{comment}"""
+    distance_key = f"ir_dist_aa_{metric}"
+    metric = adata_cdr3_mock_distance_calculator if metric == "custom" else metric
+    adata2 = adata_cdr3 if with_adata2 else None
+    expected_dist = np.array(expected_dist)
+    ir.pp.ir_dist(
+        adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key
     )
+    cn = ClonotypeNeighbors(
+        adata_cdr3,
+        adata2,
+        distance_key=distance_key,
+        sequence_key="junction_aa",
+        n_jobs=n_jobs,
+        chunksize=1,
+        **ctn_kwargs,
+    )
+    _assert_frame_equal(cn.clonotypes, pd.DataFrame(expected_clonotype_df))
+    dist = cn.compute_distances()
+    print(dist)
+    assert dist.nnz == np.sum(expected_dist != 0)
+    npt.assert_equal(dist.toarray(), expected_dist)
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
+@pytest.mark.parametrize("with_adata2", [False, True])
 @pytest.mark.parametrize("dual_ir", ["all", "any", "primary_only"])
 @pytest.mark.parametrize(
     "receptor_arms,expected",
@@ -398,20 +402,27 @@ def test_compute_distances6(adata_cdr3, adata_cdr3_mock_distance_calculator, n_j
         ("VDJ", np.array([[1, 0], [0, 1]])),
     ],
 )
-def test_compute_distances6_2(
+def test_compute_distances_2(
     adata_cdr3_2,
     adata_cdr3_mock_distance_calculator,
     receptor_arms,
     dual_ir,
     expected,
     n_jobs,
+    with_adata2,
 ):
     """Test that `dual_ir` does not impact the second reduction step"""
+    adata2 = adata_cdr3_2 if with_adata2 else None
     ir.pp.ir_dist(
-        adata_cdr3_2, metric=adata_cdr3_mock_distance_calculator, sequence="aa"
+        adata_cdr3_2,
+        adata2,
+        metric=adata_cdr3_mock_distance_calculator,
+        sequence="aa",
+        key_added="ir_dist_aa_custom",
     )
     cn = ClonotypeNeighbors(
         adata_cdr3_2,
+        adata2,
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         distance_key="ir_dist_aa_custom",
@@ -424,205 +435,25 @@ def test_compute_distances6_2(
     npt.assert_equal(dist, expected)
 
 
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances7(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="any",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
-            [
-                [1, 4, 0, 1],
-                [4, 1, 0, 4],
-                [0, 0, 0, 0],
-                [1, 4, 0, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances8(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="any",
-        dual_ir="all",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
-            [
-                [1, 10, 0, 4, 0],
-                [10, 1, 0, 0, 4],
-                [0, 0, 0, 0, 0],
-                [4, 0, 0, 1, 0],
-                [0, 4, 0, 0, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances9(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="any",
-        dual_ir="any",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances()
-    npt.assert_equal(
-        dist.toarray(),
-        np.array(
-            [
-                [1, 1, 0, 1, 1],
-                [1, 1, 0, 4, 4],
-                [0, 0, 0, 0, 0],
-                [1, 4, 0, 1, 1],
-                [1, 4, 0, 1, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances10(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="all",
-        dual_ir="any",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
-            [
-                [1, 1, 0, 0, 0],
-                [1, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1],
-                [0, 0, 0, 1, 1],
-            ]
-        ),
-    )
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2])
-def test_compute_distances11(adata_cdr3, adata_cdr3_mock_distance_calculator, n_jobs):
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        receptor_arms="all",
-        dual_ir="all",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-        n_jobs=n_jobs,
-        chunksize=1,
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances().toarray()
-    print(dist)
-    npt.assert_equal(
-        dist,
-        np.array(
-            [
-                [1, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 1],
-            ]
-        ),
-    )
-
-
-def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
+@pytest.mark.parametrize("with_adata2", [False, True])
+def test_compute_distances_no_dist(
+    adata_cdr3, adata_cdr3_mock_distance_calculator, with_adata2
+):
+    adata2 = adata_cdr3 if with_adata2 else None
     """Test for #174. Gracefully handle the case when there are no distances."""
     adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     # test both receptor arms, primary chain only
-    ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
+    ir.pp.ir_dist(
+        adata_cdr3,
+        adata2,
+        metric=adata_cdr3_mock_distance_calculator,
+        sequence="aa",
+        key_added="ir_dist_aa_custom",
+    )
     cn = ClonotypeNeighbors(
         adata_cdr3,
+        adata2,
         receptor_arms="all",
         dual_ir="primary_only",
         distance_key="ir_dist_aa_custom",
@@ -641,8 +472,8 @@ def test_compute_distances12(adata_cdr3, adata_cdr3_mock_distance_calculator):
     npt.assert_equal(dist.toarray(), np.zeros((1, 1)))
 
 
-def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
-    """Test for #174. Gracefully handle the case when there are IR."""
+def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator):
+    """Test for #174. Gracefully handle the case when there are no IR."""
     adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
     adata_cdr3.obs["has_ir"] = "False"
@@ -656,3 +487,133 @@ def test_compute_distances13(adata_cdr3, adata_cdr3_mock_distance_calculator):
             distance_key="ir_dist_aa_custom",
             sequence_key="junction_aa",
         )
+
+
+@pytest.mark.parametrize("swap_query_reference", [True, False])
+@pytest.mark.parametrize(
+    "comment,metric,ctn_kwargs,expected_clonotype_df,expected_clonotype_df2,expected_dist",
+    (
+        [
+            "VJ, primary_only",
+            "identity",
+            {"receptor_arms": "VJ", "dual_ir": "primary_only"},
+            {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
+            {"IR_VJ_1_junction_aa": ["AAA", "nan"]},
+            [
+                [1, 0],
+                [0, 0],
+                [0, 0],
+            ],
+        ],
+        [
+            "receptor_arms=all, dual_ir=primary_only",
+            "identity",
+            {"receptor_arms": "all", "dual_ir": "primary_only"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
+            },
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKK", "LLL", "LLL"],
+            },
+            [
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 1, 0],
+            ],
+        ],
+        [
+            "receptor_arms=all, dual_ir=any",
+            "identity",
+            {"receptor_arms": "all", "dual_ir": "any"},
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
+                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+            },
+            {
+                "IR_VJ_1_junction_aa": ["AAA", "AAA", "nan"],
+                "IR_VJ_2_junction_aa": ["AAA", "AAA", "nan"],
+                "IR_VDJ_1_junction_aa": ["KKK", "LLL", "LLL"],
+                "IR_VDJ_2_junction_aa": ["KKK", "LLL", "LLL"],
+            },
+            [
+                [1, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 1, 0],
+                [0, 1, 0],
+            ],
+        ],
+    ),
+)
+def test_compute_distances_second_anndata(
+    adata_cdr3,
+    adata_cdr3_2,
+    comment,
+    metric,
+    ctn_kwargs,
+    expected_clonotype_df,
+    expected_clonotype_df2,
+    expected_dist,
+    swap_query_reference,
+):
+    f"""
+    Test that the distance calculation works with two different anndata objects
+    {comment}
+    """
+    query = adata_cdr3 if not swap_query_reference else adata_cdr3_2
+    reference = adata_cdr3_2 if not swap_query_reference else adata_cdr3
+    distance_key = f"ir_dist_aa_{metric}"
+    expected_dist = np.array(expected_dist)
+    ir.pp.ir_dist(
+        query, reference, metric=metric, sequence="aa", key_added=distance_key
+    )
+    cn = ClonotypeNeighbors(
+        query,
+        reference,
+        distance_key=distance_key,
+        sequence_key="junction_aa",
+        **ctn_kwargs,
+    )
+    _assert_frame_equal(
+        cn.clonotypes,
+        pd.DataFrame(
+            expected_clonotype_df
+            if not swap_query_reference
+            else expected_clonotype_df2
+        ),
+    )
+    _assert_frame_equal(
+        cn.clonotypes2,
+        pd.DataFrame(
+            expected_clonotype_df2
+            if not swap_query_reference
+            else expected_clonotype_df
+        ),
+    )
+    dist = cn.compute_distances()
+    dist = dist.toarray()
+    print(dist)
+    npt.assert_equal(
+        dist, expected_dist if not swap_query_reference else expected_dist.T
+    )
+
+
+@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
+def test_ir_dist_empty_anndata(adata_cdr3, metric):
+    adata_empty = AnnData(obs=pd.DataFrame(columns=adata_cdr3.obs.columns))
+    ir.pp.ir_dist(
+        adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
+    )
+    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
+    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs2"]) == []
+    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs"]) == (
+        ["AAA", "KK", "KKK", "KKY", "LLL"]
+    )
+    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs2"]) == []
+    assert adata_cdr3.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
+    assert adata_cdr3.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)
