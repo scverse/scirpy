@@ -206,9 +206,9 @@ def ir_query_annotate_df(
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
     include_ref_cols: Sequence[str] = None,
-    include_query_cols: Sequence[str] = None,
+    include_query_cols: Sequence[str] = (),
     query_key: Optional[str] = None,
-    suffix: str = "_ref",
+    suffix: str = "",
 ) -> pd.DataFrame:
     """
     Returns the inner join of `adata.obs` with matching entries from `reference.obs`
@@ -290,7 +290,7 @@ def ir_query_annotate(
     strategy: Literal["json", "unique-only", "most-frequent"] = "unique-only",
     include_ref_cols: Optional[Sequence[str]] = None,
     query_key: Optional[str] = None,
-    suffix: str = "_ref",
+    suffix: str = "",
     inplace=True,
 ) -> Optional[pd.DataFrame]:
     """
