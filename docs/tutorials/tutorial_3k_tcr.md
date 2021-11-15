@@ -241,6 +241,7 @@ ax = ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
     
     Code written based on scirpy versions prior to v0.7.0 needs to be updated. Please read the `release notes <https://github.com/icbi-lab/scirpy/releases/tag/v0.7.0>`_ and follow the description in this section. 
     
+.. _define-clonotypes-tutorial:
 
 In this section, we will define and visualize :term:`clonotypes <Clonotype>` and :term:`clonotype clusters <Clonotype cluster>`.
 
@@ -673,7 +674,8 @@ Let's further inspect the two top scoring candidates. We can extract that inform
 clonotypes_top_modularity = list(
     adata.obs.set_index("cc_aa_alignment")["clonotype_modularity"]
     .sort_values(ascending=False)
-    .index.unique().values[:2]
+    .index.unique()
+    .values[:2]
 )
 ```
 
@@ -692,11 +694,17 @@ of the cells in the two clonotypes to the rest.
 
 ```python
 sc.tl.rank_genes_groups(
-    adata, "clone_id", groups=clonotypes_top_modularity, reference="rest", method="wilcoxon"
+    adata,
+    "clone_id",
+    groups=clonotypes_top_modularity,
+    reference="rest",
+    method="wilcoxon",
 )
 fig, axs = plt.subplots(1, 2, figsize=(8, 4))
 for ct, ax in zip(clonotypes_top_modularity, axs):
-    sc.pl.rank_genes_groups_violin(adata, groups=[ct], n_genes=15, ax=ax, show=False, strip=False)
+    sc.pl.rank_genes_groups_violin(
+        adata, groups=[ct], n_genes=15, ax=ax, show=False, strip=False
+    )
 ```
 
 ### Clonotype imbalance among cell clusters
@@ -753,4 +761,80 @@ sc.tl.rank_genes_groups(
     adata, "clone_id", groups=["101"], reference="68", method="wilcoxon"
 )
 sc.pl.rank_genes_groups_violin(adata, groups="101", n_genes=15)
+```
+
+## Query epitope databases
+
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+We can use scirpy to query reference databases or datasets to annotate :term:`IRs <IR>` with certain
+features, such as epitope specificity. The reference database can be any dataset in :ref:`scirpy's AnnData format <data-structure>` and you can follow the instructions in the :ref:`data loading tutorial <importing-custom-formats>`
+to build a custom reference database, if it is not available from :mod:`scirpy.datasets` yet. 
+
+Querying reference datasets uses the same logic as :ref:`defining clonotypes <define-clonotypes-tutorial>`: 
+
+.. list-table:: Analysis steps on IR data
+    :widths: 40 60
+    :header-rows: 1
+
+    - - scirpy function
+      - objective
+    - - :func:`scirpy.pp.ir_dist`
+      - Compute sequence-based distance matrices .
+    - - :func:`scirpy.tl.ir_query`
+      - For each cell, identify matching entries in a reference database.
+    - - :func:`scirpy.tl.ir_query_annotate`
+      - Transfer annotations from reference database to `adata.obs`. 
+    - - :func:`scirpy.tl.ir_query_annotate_df`
+      - Return a dataframe with all matching annotations. 
+      
+Here, we obtain the :func:`VDJDB <scirpy.datasets.vdjdb>` and annotate epitopes based
+on amino acid sequence identity. For demonstration purposes on this toy dataset we use rather lenient settings: For a match, we specify that it is enough that either of the :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` sequences, and either of the primary or secondary receptor chains matches the database. 
+<!-- #endraw -->
+
+```python
+vdjdb = ir.datasets.vdjdb()
+```
+
+```python
+ir.pp.ir_dist(adata, vdjdb, metric="identity", sequence="aa")
+```
+
+```python
+ir.tl.ir_query(
+    adata, vdjdb, metric="identity", sequence="aa", receptor_arms="any", dual_ir="any"
+)
+```
+
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve *all pairs cells with their of matching entries*. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell. 
+<!-- #endraw -->
+
+```python
+ir.tl.ir_query_annotate_df(
+    adata,
+    vdjdb,
+    metric="identity",
+    sequence="aa",
+    include_ref_cols=["antigen.species", "antigen.gene"],
+).tail()
+```
+
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+Alternatively, to break down the annotation to a single-value per cell, you can use
+:func:`~scirpy.tl.ir_query_annotate`. Depending on the specified `strategy` it will only label unambiguous matches, or use the most frequent value. 
+<!-- #endraw -->
+
+```python
+ir.tl.ir_query_annotate(
+    adata,
+    vdjdb,
+    metric="identity",
+    sequence="aa",
+    include_ref_cols=["antigen.species"],
+    strategy="most-frequent",
+)
+```
+
+```python
+sc.pl.umap(adata, color="antigen.species")
 ```
