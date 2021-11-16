@@ -58,13 +58,13 @@ def _cdr3_from_junction(junction_aa, junction_nt):
     """
     cdr3_aa, cdr3_nt = None, None
     if (
-        junction_aa is not None
+        not _is_na2(junction_aa)
         and junction_aa[0] == "C"
         and junction_aa[-1] in ("W", "F")
     ):
         cdr3_aa = junction_aa[1:-1]
     if (
-        junction_nt is not None
+        not _is_na2(junction_nt)
         and _translate_dna_to_protein(junction_nt[:3]) == "C"
         and _translate_dna_to_protein(junction_nt[-3:]) in ("W", "F")
     ):
