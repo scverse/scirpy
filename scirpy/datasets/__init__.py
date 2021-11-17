@@ -13,6 +13,7 @@ import scanpy as sc
 from datetime import datetime
 from ..util import tqdm
 from scanpy import logging
+import os.path
 
 HERE = Path(__file__).parent
 
@@ -91,7 +92,7 @@ def maynard2020() -> AnnData:
     return adata
 
 
-def vdjdb(cached: bool = True) -> AnnData:
+def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
     """\
     Download VDJdb and process it into an AnnData object.
 
@@ -109,7 +110,6 @@ def vdjdb(cached: bool = True) -> AnnData:
     Each entry is represented as if it was a cell, but without gene expression.
     Metadata is stored in `adata.uns["DB"]`.
     """
-    cache_path = f"data/vdjdb.h5ad"
     if cached:
         try:
             return sc.read_h5ad(cache_path)
@@ -201,6 +201,7 @@ def vdjdb(cached: bool = True) -> AnnData:
     adata.uns["DB"] = {"name": "VDJDB", "date_downloaded": datetime.now().isoformat()}
 
     # store cache
+    os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
     adata.write_h5ad(cache_path)
 
     return adata
