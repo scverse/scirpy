@@ -14,6 +14,7 @@ from datetime import datetime
 from ..util import tqdm
 from scanpy import logging
 import os.path
+import platform
 
 HERE = Path(__file__).parent
 
@@ -115,6 +116,11 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
             return sc.read_h5ad(cache_path)
         except OSError:
             pass
+
+    # if run on macOS, there may be certificate issues. Hence we have to set the default context to unverified
+    if platform.system() == "Darwin":
+        import ssl
+        ssl._create_default_https_context = ssl._create_unverified_context
 
     logging.info("Downloading latest version of VDJDB")
     with urllib.request.urlopen(
