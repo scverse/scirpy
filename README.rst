@@ -7,7 +7,7 @@ Scirpy: A Scanpy extension for analyzing single-cell immune-cell receptor sequen
     :alt: Build Status
 
 .. |docs| image::  https://github.com/scverse/scirpy/workflows/docs/badge.svg
-    :target: https://scverse.github.io/scirpy/latest
+    :target: https://scverse.org/scirpy/latest
     :alt: Documentation Status
 
 .. |pypi| image:: https://img.shields.io/pypi/v/scirpy?logo=PyPI
@@ -37,16 +37,16 @@ provides various modules for data import, analysis and visualization.
 
 Getting started
 ^^^^^^^^^^^^^^^
-Please refer to the `documentation <https://scverse.github.io/scirpy/latest>`_. In particular, the
+Please refer to the `documentation <https://scverse.org/scirpy/latest>`_. In particular, the
 
-- `Tutorial <https://scverse.github.io/scirpy/latest/tutorials/tutorial_3k_tcr.html>`_, and the
-- `API documentation <https://scverse.github.io/scirpy/latest/api.html>`_.
+- `Tutorial <https://scverse.org/scirpy/latest/tutorials/tutorial_3k_tcr.html>`_, and the
+- `API documentation <https://scverse.org/scirpy/latest/api.html>`_.
 
-In the documentation, you can also learn more about our `immune-cell receptor model <https://scverse.github.io/scirpy/latest/ir-biology.html>`_.
+In the documentation, you can also learn more about our `immune-cell receptor model <https://scverse.org/scirpy/latest/ir-biology.html>`_.
 
 Case-study
 ~~~~~~~~~~
-The case study from our preprint is available `here <https://scverse.github.io/scirpy-paper/wu2020.html>`_.
+The case study from our preprint is available `here <https://scverse.org/scirpy-paper/wu2020.html>`_.
 
 Installation
 ^^^^^^^^^^^^

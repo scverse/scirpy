@@ -79,7 +79,7 @@ doc = [
 ]
 
 [tool.flit.metadata.urls]
-Documentation = 'https://scverse.github.io/scirpy/'
+Documentation = 'https://scverse.org/scirpy/'
 
 [tool.pytest.ini_options]
 markers = [

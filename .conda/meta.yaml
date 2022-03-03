@@ -59,7 +59,7 @@ test:
     - cd docs && jupytext --execute tutorials/tutorial_3k_tcr.md
 
 about:
-  home: https://scverse.github.io/scirpy
+  home: https://scverse.org/scirpy
   dev_url: https://github.com/scverse/scirpy
   license: BSD-3
   license_family: BSD
