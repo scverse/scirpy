@@ -5,7 +5,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.11.4
 ---
 
@@ -39,17 +39,17 @@ sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hint
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-.. _importing-data:
 
-Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
-=========================================================================
+.. \_importing-data:
+
+# Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
 
 In this notebook, we demonstrate how single-cell :term:`IR`-data can be imported into
 an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
 AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data-structure>` section.
 
 The example data used in this notebook are available from the
-`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
+`Scirpy repository <https://github.com/scverse/scirpy/tree/master/docs/tutorials/example_data>`\_\_.
 
 .. important:: **The Scirpy data model**
 
@@ -57,7 +57,7 @@ The example data used in this notebook are available from the
 
      * BCR and TCR chains are supported. Chain loci must be valid :term:`Chain locus`,
        i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or
-       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). 
+       `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction).
      * Each cell can contain up to two `VJ` and two `VDJ` chains (:term:`Dual IR`).
        Excess chains are ignored (those with lowest read count/:term:`UMI` count)
        and cells flagged as :term:`Multichain-cell`.
@@ -65,12 +65,11 @@ The example data used in this notebook are available from the
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
      * Excess chains, non-productive chains, or chains with invalid loci
-       are serialized to JSON and stored in the `extra_chains` column. They are not 
-       used by scirpy except when exporting the `AnnData` object to :term:`AIRR` format. 
-     
+       are serialized to JSON and stored in the `extra_chains` column. They are not
+       used by scirpy except when exporting the `AnnData` object to :term:`AIRR` format.
+
 
     For more information, see :ref:`receptor-model`.
-
 
 .. note:: **IR quality control**
 
@@ -86,33 +85,32 @@ The example data used in this notebook are available from the
        these cells can be matched to clonotypes on a single chain only, by using the `receptor_arms="any"`
        parameter when running :func:`scirpy.tl.define_clonotypes`.
 
+## Loading data from _10x Genomics CellRanger_, _TraCeR_, _BraCer_ or AIRR-compliant tools
 
-Loading data from *10x Genomics CellRanger*, *TraCeR*, *BraCer* or AIRR-compliant tools
----------------------------------------------------------------------------------------
-
-We provide convenience functions to load data from *CellRanger*, *TraCeR*, or *BraCeR* with a single function call,
-supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively.
+We provide convenience functions to load data from _CellRanger_, _TraCeR_, or _BraCeR_ with a single function call,
+supporting both data generated on the _10x_ and _Smart-seq2_ sequencing platforms, respectively.
 Moreover, we support importing data in the community-standard
-`AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__.
+`AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`\_\_.
 
 .. module:: scirpy.io
-   :noindex:
+:noindex:
 
 .. autosummary::
-   :toctree: ../generated
+:toctree: ../generated
 
-   read_10x_vdj
-   read_tracer
-   read_bracer
-   read_airr
-   from_dandelion
+read_10x_vdj
+read_tracer
+read_bracer
+read_airr
+from_dandelion
 
 Read 10x data
 ^^^^^^^^^^^^^
 
-With :func:`~scirpy.io.read_10x_vdj` we can load `filtered_contig_annotations.csv` or `contig_annotations.json` files as they are produced by *CellRanger*.
+With :func:`~scirpy.io.read_10x_vdj` we can load `filtered_contig_annotations.csv` or `contig_annotations.json` files as they are produced by _CellRanger_.
 Here, we demonstrate how to load paired single cell transcriptomics and TCR sequencing data from COVID19 patients
-from `GSE145926 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145926>`_ (:cite:`Liao2020`).
+from `GSE145926 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE145926>`\_ (:cite:`Liao2020`).
+
 <!-- #endraw -->
 
 ```python
@@ -138,8 +136,10 @@ adata.shape
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 Next, we integrate both the TCR and the transcriptomics data into a single :class:`anndata.AnnData` object
 using :func:`scirpy.pp.merge_with_ir`:
+
 <!-- #endraw -->
 
 ```python
@@ -159,19 +159,21 @@ sc.pl.umap(adata, color=["has_ir", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 Read Smart-seq2 data processed with TraCeR
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`TraCeR <https://github.com/Teichlab/tracer>`__ (:cite:`Stubbington2016-kh`) is a method commonly used
+`TraCeR <https://github.com/Teichlab/tracer>`** (:cite:`Stubbington2016-kh`) is a method commonly used
 to extract TCR sequences from data generated with Smart-seq2 or other full-length single-cell sequencing protocols.
-`Nf-core <https://nf-co.re/>`_ provides a full `pipeline for processing Smart-seq2 sequencing data <https://github.com/nf-core/smartseq2/>`__.
+`Nf-core <https://nf-co.re/>`\_ provides a full `pipeline for processing Smart-seq2 sequencing data <https://github.com/nf-core/smartseq2/>`**.
 
 The :func:`scirpy.io.read_tracer` function obtains its TCR information from the `.pkl` file
 in the `filtered_TCR_seqs` folder TraCeR generates for each cell.
 
 For this example, we load the ~500 cells from triple-negative breast cancer patients from
-`GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`_ (:cite:`Chung2017`).
-The raw data has been processed using the aforementioned `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core.
+`GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`\_ (:cite:`Chung2017`).
+The raw data has been processed using the aforementioned `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`\_\_ from nf-core.
+
 <!-- #endraw -->
 
 ```python
@@ -209,15 +211,17 @@ sc.pl.umap(adata, color=["has_ir", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 Read an AIRR-compliant rearrangement table
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We generated example data using `immuneSIM <https://immunesim.readthedocs.io/en/latest/>`__ (:cite:`Weber2020`).
+We generated example data using `immuneSIM <https://immunesim.readthedocs.io/en/latest/>`\_\_ (:cite:`Weber2020`).
 The data consists of 100 cells and does not include transcriptomics data.
 
 The rearrangement tables are often organized into separate tables per chain. Therefore, :func:`scirpy.io.read_airr` supports
 specifiying multiple `tsv` files at once. This would have the same effect as concatenating them before
 the import.
+
 <!-- #endraw -->
 
 ```python
@@ -231,6 +235,7 @@ ir.tl.chain_qc(adata)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 The dataset does not come with transcriptomics data. We can, therefore, not
 show the UMAP plot highlighting cells with TCRs, but we can still use scirpy
 to analyse it. Below, we visualize the clonotype network
@@ -238,6 +243,7 @@ connecting cells with similar :term:`CDR3` sequences.
 
 **Note:** The cutoff of 25 was chosen for demonstration purposes on this small sample dataset. Usually a smaller cutoff
 is more approriate.
+
 <!-- #endraw -->
 
 ```python
@@ -264,25 +270,25 @@ ir.pl.clonotype_network(
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-.. _importing-custom-formats:
 
-Creating AnnData objects from other formats
--------------------------------------------
+.. \_importing-custom-formats:
+
+## Creating AnnData objects from other formats
 
 Often, immune receptor (IR) data are just provided as a simple table listing the :term:`CDR3` sequences for each cell.
 We provide a generic data structure for cells with IRs, which can then be converted into
 an :class:`~anndata.AnnData` object.
 
 .. module:: scirpy.io
-   :noindex:
+:noindex:
 
 .. autosummary::
-   :toctree: ../generated
+:toctree: ../generated
 
-   AirrCell
-   from_airr_cells
+AirrCell
+from_airr_cells
 
-If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/icbi-lab/scirpy/issues>`_
+If you believe you are working with a commonly used format, consider sending a `feature request <https://github.com/scverse/scirpy/issues>`\_
 for a `read_XXX` function.
 
 For this example, we again load the triple-negative breast cancer data from :cite:`Chung2017`. However, this
@@ -292,11 +298,11 @@ be a supplementary file from the paper).
 
 Such a table typically contains information about
 
- * CDR3 sequences (amino acid and/or nucleotide)
- * The :term:`Chain locus`, e.g. `TRA`, `TRB`, or `IGH`.
- * expression of the receptor chain (e.g. count, :term:`UMI`, transcripts per million (TPM))
- * the :term:`V(D)J` genes for each chain
- * information if the chain is :term:`productive <Productive chain>`.
+- CDR3 sequences (amino acid and/or nucleotide)
+- The :term:`Chain locus`, e.g. `TRA`, `TRB`, or `IGH`.
+- expression of the receptor chain (e.g. count, :term:`UMI`, transcripts per million (TPM))
+- the :term:`V(D)J` genes for each chain
+- information if the chain is :term:`productive <Productive chain>`.
 <!-- #endraw -->
 
 ```python
@@ -311,13 +317,15 @@ tcr_table
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 Our task is now to dissect the table into :class:`~scirpy.io.AirrCell` objects.
 Each :class:`~scirpy.io.AirrCell` can have an arbitrary number of chains. A chain is simply represented as a Python
-dictionary following the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
+dictionary following the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`\_\_.
 
 When converting the :class:`~scirpy.io.AirrCell` objects into an :class:`~anndata.AnnData` object,
 scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
 this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`receptor-model`.
+
 <!-- #endraw -->
 
 ```python
@@ -355,7 +363,9 @@ for idx, row in tcr_table.iterrows():
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 Now, we can convert the list of :class:`~scirpy.io.AirrCell` objects using :func:`scirpy.io.from_airr_cells`.
+
 <!-- #endraw -->
 
 ```python
@@ -383,14 +393,15 @@ sc.pl.umap(adata, color=["has_ir", "CD3E"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Combining multiple samples
---------------------------
+
+## Combining multiple samples
 
 It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
 in this document. Then, we combine them using :func:`anndata.concat`.
 
 Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
+
 <!-- #endraw -->
 
 ```python

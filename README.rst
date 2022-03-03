@@ -2,12 +2,12 @@ Scirpy: A Scanpy extension for analyzing single-cell immune-cell receptor sequen
 =========================================================================================
 |tests| |docs| |pypi| |bioconda| |airr| |black|
 
-.. |tests| image:: https://github.com/icbi-lab/scirpy/workflows/tests/badge.svg
-    :target: https://github.com/icbi-lab/scirpy/actions?query=workflow%3Atests
+.. |tests| image:: https://github.com/scverse/scirpy/workflows/tests/badge.svg
+    :target: https://github.com/scverse/scirpy/actions?query=workflow%3Atests
     :alt: Build Status
 
-.. |docs| image::  https://github.com/icbi-lab/scirpy/workflows/docs/badge.svg
-    :target: https://icbi-lab.github.io/scirpy/latest
+.. |docs| image::  https://github.com/scverse/scirpy/workflows/docs/badge.svg
+    :target: https://scverse.github.io/scirpy/latest
     :alt: Documentation Status
 
 .. |pypi| image:: https://img.shields.io/pypi/v/scirpy?logo=PyPI
@@ -37,16 +37,16 @@ provides various modules for data import, analysis and visualization.
 
 Getting started
 ^^^^^^^^^^^^^^^
-Please refer to the `documentation <https://icbi-lab.github.io/scirpy/latest>`_. In particular, the
+Please refer to the `documentation <https://scverse.github.io/scirpy/latest>`_. In particular, the
 
-- `Tutorial <https://icbi-lab.github.io/scirpy/latest/tutorials/tutorial_3k_tcr.html>`_, and the
-- `API documentation <https://icbi-lab.github.io/scirpy/latest/api.html>`_.
+- `Tutorial <https://scverse.github.io/scirpy/latest/tutorials/tutorial_3k_tcr.html>`_, and the
+- `API documentation <https://scverse.github.io/scirpy/latest/api.html>`_.
 
-In the documentation, you can also learn more about our `immune-cell receptor model <https://icbi-lab.github.io/scirpy/latest/ir-biology.html>`_.
+In the documentation, you can also learn more about our `immune-cell receptor model <https://scverse.github.io/scirpy/latest/ir-biology.html>`_.
 
 Case-study
 ~~~~~~~~~~
-The case study from our preprint is available `here <https://icbi-lab.github.io/scirpy-paper/wu2020.html>`_.
+The case study from our preprint is available `here <https://scverse.github.io/scirpy-paper/wu2020.html>`_.
 
 Installation
 ^^^^^^^^^^^^
@@ -73,7 +73,7 @@ There are several alternative options to install scirpy:
 
 .. code-block::
 
-    pip install git+https://github.com/icbi-lab/scirpy.git@master
+    pip install git+https://github.com/scverse/scirpy.git@master
 
 
 4) Run it in a container using `Docker <https://www.docker.com/>`_ or `Podman <https://podman.io/>`_:
@@ -87,17 +87,17 @@ where `tag` is one of `these tags <https://quay.io/repository/biocontainers/scir
 Support
 ^^^^^^^
 We are happy to assist with problems when using scirpy. Please report any bugs,
-feature requests, or help requests using the `issue tracker <https://github.com/icbi-lab/scirpy/issues>`_.
+feature requests, or help requests using the `issue tracker <https://github.com/scverse/scirpy/issues>`_.
 We try to respond within two working days, however fixing bugs or implementing new features
 can take substantially longer, depending on the availability of our developers.
 
 Release notes
 ^^^^^^^^^^^^^
-See the `release section <https://github.com/icbi-lab/scirpy/releases>`_.
+See the `release section <https://github.com/scverse/scirpy/releases>`_.
 
 Contact
 ^^^^^^^
-Please use the `issue tracker <https://github.com/icbi-lab/scirpy/issues>`_.
+Please use the `issue tracker <https://github.com/scverse/scirpy/issues>`_.
 
 Citation
 ^^^^^^^^
