@@ -6,19 +6,17 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: "1.3"
+      format_version: '1.3'
       jupytext_version: 1.11.4
 ---
 
 # Analysis of 3k T cells from cancer
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 In this tutorial, we re-analyze single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
 generated on the 10x Genomics platform. The original dataset consists of >140k T cells
 from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
-
 <!-- #endraw -->
 
 ```python
@@ -48,9 +46,7 @@ sc.logging.print_header()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 The dataset ships with the `scirpy` package. We can conveniently load it from the :mod:`~scirpy.datasets` module:
-
 <!-- #endraw -->
 
 ```python
@@ -58,21 +54,18 @@ adata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+.. note:: 
 
-.. note::
-
-    `adata` is a regular :class:`~anndata.AnnData` object with additional, Immune Receptor (IR)-specific columns in `obs` that are named according to the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. For more information, check the page about
+    `adata` is a regular :class:`~anndata.AnnData` object with additional, Immune Receptor (IR)-specific columns in `obs` that are named according to the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__. For more information, check the page about 
 
      * Scirpy's :ref:`data structure <data-structure>`, and
      * Scirpy's :ref:`working model of immune receptors <receptor-model>`.
-
-
+     
 .. warning::
 
     **scirpy's data structure has updated in v0.7.0 to be fully AIRR-compliant.**
-
-    `AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
-
+    
+    `AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy. 
 <!-- #endraw -->
 
 ```python
@@ -84,7 +77,6 @@ adata.obs
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 .. note:: **Importing data**
 
     `scirpy` natively supports reading :term:`IR` data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2)
@@ -165,9 +157,8 @@ sc.pl.umap(
 ## TCR Quality Control
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 While most of T cell receptors have exactly one pair of α and β chains, up to one third of
-T cells can have _dual TCRs_, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
+T cells can have *dual TCRs*, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
 Using the :func:`scirpy.tl.chain_qc` function, we can add a summary
 about the Immune cell-receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
@@ -176,8 +167,9 @@ about the Immune cell-receptor compositions to `adata.obs`. We can visualize it 
 
     - *Orphan chain* refers to cells that have either a single alpha or beta receptor chain.
     - *Extra chain* refers to cells that have a full alpha/beta receptor pair, and an additional chain.
-    - :term:`Multichain <Multichain-cell>` refers to cells with more than two receptor pairs detected.
+    - :term:`Multichain <Multichain-cell>` refers to cells with more than two receptor pairs detected. 
       These cells are likely doublets.
+
 
 .. note:: **receptor type and receptor subtype**
 
@@ -186,7 +178,6 @@ about the Immune cell-receptor compositions to `adata.obs`. We can visualize it 
     - `receptor_subtype` refers to a more specific classification into α/β, ɣ/δ, IG-λ, and IG-κ chain configurations.
 
     For more details, see :func:`scirpy.tl.chain_qc`.
-
 <!-- #endraw -->
 
 ```python
@@ -220,9 +211,7 @@ print(
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 Next, we visualize the :term:`Multichain-cells <Multichain-cell>` on the UMAP plot and exclude them from downstream analysis:
-
 <!-- #endraw -->
 
 ```python
@@ -233,15 +222,15 @@ sc.pl.umap(adata, color="chain_pairing", groups="multichain")
 adata = adata[adata.obs["chain_pairing"] != "multichain", :].copy()
 ```
 
-Similarly, we can use the `chain_pairing` information to exclude all cells that don't have at least
+Similarly, we can use the `chain_pairing` information to exclude all cells that don't have at least 
 one full pair of receptor sequences:
 
 ```python
 adata = adata[~adata.obs["chain_pairing"].isin(["orphan VDJ", "orphan VJ"]), :].copy()
 ```
 
-Finally, we re-create the chain-pairing plot to ensure that the filtering worked
-as expected:
+Finally, we re-create the chain-pairing plot to ensure that the filtering worked 
+as expected: 
 
 ```python
 ax = ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
@@ -250,28 +239,27 @@ ax = ir.pl.group_abundance(adata, groupby="chain_pairing", target_col="source")
 ## Define clonotypes and clonotype clusters
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 .. warning::
 
     **The way scirpy computes clonotypes and clonotype clusters has been changed in v0.7.0.**
-
-    Code written based on scirpy versions prior to v0.7.0 needs to be updated. Please read the `release notes <https://github.com/scverse/scirpy/releases/tag/v0.7.0>`_ and follow the description in this section.
-
-.. \_define-clonotypes-tutorial:
+    
+    Code written based on scirpy versions prior to v0.7.0 needs to be updated. Please read the `release notes <https://github.com/icbi-lab/scirpy/releases/tag/v0.7.0>`_ and follow the description in this section. 
+    
+.. _define-clonotypes-tutorial:
 
 In this section, we will define and visualize :term:`clonotypes <Clonotype>` and :term:`clonotype clusters <Clonotype cluster>`.
 
-_Scirpy_ implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with _scanpy_.
+*Scirpy* implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with *scanpy*.
 
 .. list-table:: Analysis steps on IR data
-:widths: 40 60
-:header-rows: 1
+    :widths: 40 60
+    :header-rows: 1
 
     - - scirpy function
       - objective
     - - :func:`scirpy.pp.ir_dist`
       - Compute sequence-based distance matrices for all :term:`VJ <Chain locus>` and
-        :term:`VDJ <Chain locus>` sequences.
+        :term:`VDJ <Chain locus>` sequences. 
     - - :func:`scirpy.tl.define_clonotypes`
       - Define :term:`clonotypes <Clonotype>` by nucleotide
         sequence identity.
@@ -287,20 +275,18 @@ _Scirpy_ implements a network-based approach for clonotype definition. The steps
 ### Compute CDR3 neighborhood graph and define clonotypes
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+:func:`scirpy.pp.ir_dist` computes distances between :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity. It creates two distance matrices: one for all unique :term:`VJ <Chain locus>` sequences and one for all unique :term:`VDJ <Chain locus>` sequences. The distance matrices are added to `adata.uns`. 
 
-:func:`scirpy.pp.ir_dist` computes distances between :term:`CDR3 <CDR>` nucleotide (`nt`) or amino acid (`aa`) sequences, either based on sequence identity or similarity. It creates two distance matrices: one for all unique :term:`VJ <Chain locus>` sequences and one for all unique :term:`VDJ <Chain locus>` sequences. The distance matrices are added to `adata.uns`.
-
-The function :func:`scirpy.tl.define_clonotypes` matches cells based on the distances of their
+The function :func:`scirpy.tl.define_clonotypes` matches cells based on the distances of their 
 `VJ` and `VDJ` CDR3-sequences and value of the function parameters `dual_ir` and `receptor_arms`. Finally, it
 detects connected modules in the graph and annotates them as clonotypes. This will add a `clone_id` and
 `clone_id_size` column to `adata.obs`.
 
-The `dual_ir` parameter defines how scirpy handles cells with :term:`more than one pair of receptors <Dual IR>`. The default value is `any` which implies that cells with any of their primary or secondary receptor chain matching will be considered to be of the same clonotype.
+The `dual_ir` parameter defines how scirpy handles cells with :term:`more than one pair of receptors <Dual IR>`. The default value is `any` which implies that cells with any of their primary or secondary receptor chain matching will be considered to be of the same clonotype. 
 
 Here, we define :term:`clonotypes <Clonotype>` based on nt-sequence identity.
 In a later step, we will define :term:`clonotype clusters <Clonotype cluster>` based on
 amino-acid similarity.
-
 <!-- #endraw -->
 
 ```python
@@ -310,11 +296,9 @@ ir.tl.define_clonotypes(adata, receptor_arms="all", dual_ir="primary_only")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 To visualize the network we first call :func:`scirpy.tl.clonotype_network` to compute the layout.
 We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend setting the
 `min_cells` parameter to `>=2`, to prevent the singleton clonotypes from cluttering the network.
-
 <!-- #endraw -->
 
 ```python
@@ -322,13 +306,11 @@ ir.tl.clonotype_network(adata, min_cells=2)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
-The resulting plot is a network, where each dot represents cells with identical
-receptor configurations. As we define :term:`clonotypes <Clonotype>` as cells with identical CDR3-sequences, each
-dot is also a clonotype. For each clonotype, the numeric clonotype id is shown in the graph.
-The size of each dot refers to the number of cells with the same receptor configurations.
-Categorical variables can be visualized as pie charts.
-
+The resulting plot is a network, where each dot represents cells with identical 
+receptor configurations. As we define :term:`clonotypes <Clonotype>` as cells with identical CDR3-sequences, each 
+dot is also a clonotype. For each clonotype, the numeric clonotype id is shown in the graph. 
+The size of each dot refers to the number of cells with the same receptor configurations. 
+Categorical variables can be visualized as pie charts. 
 <!-- #endraw -->
 
 ```python
@@ -340,17 +322,15 @@ ir.pl.clonotype_network(
 ### Re-compute CDR3 neighborhood graph and define clonotype clusters
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 We can now re-compute the clonotype network based on amino-acid sequence similarity
 and define :term:`clonotype clusters <Clonotype cluster>`.
 
 To this end, we need to change set `metric="alignment"` and specify a `cutoff` parameter.
-The distance is based on the `BLOSUM62 <https://en.wikipedia.org/wiki/BLOSUM>`\_\_ matrix.
+The distance is based on the `BLOSUM62 <https://en.wikipedia.org/wiki/BLOSUM>`__ matrix.
 For instance, a distance of `10` is equivalent to 2 `R`s mutating into `N`.
-This appoach was initially proposed as _TCRdist_ by Dash et al. (:cite:`TCRdist`).
+This appoach was initially proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
 
 All cells with a distance between their CDR3 sequences lower than `cutoff` will be connected in the network.
-
 <!-- #endraw -->
 
 ```python
@@ -372,12 +352,12 @@ ir.tl.define_clonotype_clusters(
 ir.tl.clonotype_network(adata, min_cells=3, sequence="aa", metric="alignment")
 ```
 
-Compared to the previous plot, we observere several connected dots.
-Each fully connected subnetwork represents a "clonotype cluster", each dot
+Compared to the previous plot, we observere several connected dots. 
+Each fully connected subnetwork represents a "clonotype cluster", each dot 
 still represents cells with identical receptor configurations.
 
-The dots are colored by patient. We observe, that for instance, clonotypes `101` and `68` (left top and bottom) are _private_, i.e. they contain cells from a single patient only. On the other hand, clonotype `159` (left middle) is
-_public_, i.e. it is shared across patients _Lung1_ and _Lung3_.
+The dots are colored by patient. We observe, that for instance, clonotypes `101` and `68` (left top and bottom) are *private*, i.e. they contain cells from a single patient only. On the other hand, clonotype `159` (left middle) is 
+*public*, i.e. it is shared across patients *Lung1* and *Lung3*. 
 
 ```python
 ir.pl.clonotype_network(
@@ -386,7 +366,7 @@ ir.pl.clonotype_network(
 ```
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `AnnData`.
-When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph.
+When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph. 
 
 ```python
 adata.obs.loc[adata.obs["cc_aa_alignment"] == "159", :].groupby(
@@ -404,11 +384,9 @@ adata.obs.loc[adata.obs["cc_aa_alignment"] == "159", :].groupby(
 ### Including the V-gene in clonotype definition
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 Using the paramter `use_v_gene` in :func:`~scirpy.tl.define_clonotypes`, we can enforce
 clonotypes (or clonotype clusters) to have the same :term:`V-gene <V(D)J>`, and, therefore, the same :term:`CDR1 and 2 <CDR>`
 regions. Let's look for clonotype clusters with different V genes:
-
 <!-- #endraw -->
 
 ```python
@@ -432,7 +410,7 @@ ct_different_v = ct_different_v[ct_different_v].index.values.tolist()
 ct_different_v
 ```
 
-Here, we see that the clonotype clusters `280` and `765` get split into `(280, 788)` and `(765, 1071)`, respectively, when the `same_v_gene` flag is set.
+Here, we see that the clonotype clusters `280` and `765` get split into `(280, 788)` and `(765, 1071)`, respectively, when the `same_v_gene` flag is set. 
 
 ```python
 adata.obs.loc[
@@ -451,11 +429,9 @@ adata.obs.loc[
 ### Clonal expansion
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 Let's visualize the number of expanded clonotypes (i.e. clonotypes consisting
 of more than one cell) by cell-type. The first option is to add a column with the :func:`scirpy.tl.clonal_expansion`
 to `adata.obs` and overlay it on the UMAP plot.
-
 <!-- #endraw -->
 
 ```python
@@ -470,10 +446,8 @@ sc.pl.umap(adata, color=["clonal_expansion", "clone_id_size"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 The second option is to show the number of cells belonging to an expanded clonotype per category
 in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting function.
-
 <!-- #endraw -->
 
 ```python
@@ -489,11 +463,9 @@ ir.pl.clonal_expansion(adata, "cluster")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 Expectedly, the CD8+ effector T cells have the largest fraction of expanded clonotypes.
 
 Consistent with this observation, they have the lowest :func:`scirpy.pl.alpha_diversity` of clonotypes.
-
 <!-- #endraw -->
 
 ```python
@@ -505,11 +477,9 @@ ax = ir.pl.alpha_diversity(
 ### Clonotype abundance
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 The function :func:`scirpy.pl.group_abundance` allows us to create bar charts for
 arbitrary categorial from `obs`. Here, we use it to show the distribution of the
 ten largest clonotypes across the cell-type clusters.
-
 <!-- #endraw -->
 
 ```python
@@ -526,8 +496,8 @@ ir.pl.group_abundance(
 ```
 
 Coloring the bars by patient gives us information about public and private clonotypes:
-Some clonotypes are _private_, i.e. specific to a certain tissue,
-others are _public_, i.e. they are shared across different tissues.
+Some clonotypes are *private*, i.e. specific to a certain tissue,
+others are *public*, i.e. they are shared across different tissues.
 
 ```python
 ax = ir.pl.group_abundance(
@@ -535,7 +505,7 @@ ax = ir.pl.group_abundance(
 )
 ```
 
-However, clonotypes that are shared between _patients_ are rare:
+However, clonotypes that are shared between *patients* are rare:
 
 ```python
 ax = ir.pl.group_abundance(
@@ -546,11 +516,9 @@ ax = ir.pl.group_abundance(
 ## Gene usage
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 :func:`scirpy.tl.group_abundance` can also give us some information on VDJ usage.
 We can choose any of the `{TRA,TRB}_{1,2}_{v,d,j,c}_gene` columns to make a stacked bar plot.
 We use `max_col` to limit the plot to the 10 most abundant V-genes.
-
 <!-- #endraw -->
 
 ```python
@@ -576,9 +544,7 @@ ax = ir.pl.group_abundance(
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 The exact combinations of VDJ genes can be visualized as a Sankey-plot using :func:`scirpy.pl.vdj_usage`.
-
 <!-- #endraw -->
 
 ```python
@@ -598,9 +564,7 @@ ir.pl.vdj_usage(
 ### Spectratype plots
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 :func:`~scirpy.pl.spectratype` plots give us information about the length distribution of CDR3 regions.
-
 <!-- #endraw -->
 
 ```python
@@ -642,10 +606,8 @@ ir.pl.spectratype(
 ### Repertoire simlarity and overlaps
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-
 Overlaps in the adaptive immune receptor repertoire of samples or sample groups enables to pinpoint important clonotype groups, as well as to provide a measure of similarity between samples.
 Running Scirpy's :func:`~scirpy.tl.repertoire_overlap` tool creates a matrix featuring the abundance of clonotypes in each sample. Additionally, it also computes a (Jaccard) distance matrix of samples as well as the linkage of hierarchical clustering.
-
 <!-- #endraw -->
 
 ```python
@@ -674,15 +636,13 @@ Leveraging the opportunity offered by close integeration with scanpy, transcript
 ### Clonotype modularity
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+Using the :term:`Clonotype modularity` we can identify clonotypes consisting of 
+cells that are transcriptionally more similar than expected by random. 
 
-Using the :term:`Clonotype modularity` we can identify clonotypes consisting of
-cells that are transcriptionally more similar than expected by random.
-
-The clonotype modularity score represents the log2 fold change of the
-number of edges in the cell-cell neighborhood graph compared to
-the random background model. Clonotypes (or clonotype clusters) with
-a high modularity score consist of cells that have a similar molecular phenotype.
-
+The clonotype modularity score represents the log2 fold change of the 
+number of edges in the cell-cell neighborhood graph compared to 
+the random background model. Clonotypes (or clonotype clusters) with 
+a high modularity score consist of cells that have a similar molecular phenotype. 
 <!-- #endraw -->
 
 ```python
@@ -712,7 +672,7 @@ FDR as a sort of "one sided volcano plot":
 ir.pl.clonotype_modularity(adata, base_size=20)
 ```
 
-Let's further inspect the two top scoring candidates. We can extract that information from `adata.obs["clonotype_modularity"]`.
+Let's further inspect the two top scoring candidates. We can extract that information from `adata.obs["clonotype_modularity"]`. 
 
 ```python
 clonotypes_top_modularity = list(
@@ -733,8 +693,8 @@ sc.pl.umap(
 ```
 
 We observe that they are (mostly) restricted to a single cluster. By leveraging
-scanpy's differential expression module, we can compare the gene expression
-of the cells in the two clonotypes to the rest.
+scanpy's differential expression module, we can compare the gene expression 
+of the cells in the two clonotypes to the rest. 
 
 ```python
 sc.tl.rank_genes_groups(
@@ -767,7 +727,7 @@ freq, stat = ir.tl.clonotype_imbalance(
 top_differential_clonotypes = stat["clone_id"].tolist()[:3]
 ```
 
-Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells.
+Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells. 
 
 ```python
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
@@ -810,16 +770,15 @@ sc.pl.rank_genes_groups_violin(adata, groups="101", n_genes=15)
 ## Query epitope databases
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
-
 We can use scirpy to query reference databases or datasets to annotate :term:`IRs <IR>` with certain
 features, such as epitope specificity. The reference database can be any dataset in :ref:`scirpy's AnnData format <data-structure>` and you can follow the instructions in the :ref:`data loading tutorial <importing-custom-formats>`
-to build a custom reference database, if it is not available from :mod:`scirpy.datasets` yet.
+to build a custom reference database, if it is not available from :mod:`scirpy.datasets` yet. 
 
-Querying reference datasets uses the same logic as :ref:`defining clonotypes <define-clonotypes-tutorial>`:
+Querying reference datasets uses the same logic as :ref:`defining clonotypes <define-clonotypes-tutorial>`: 
 
 .. list-table:: Analysis steps on IR data
-:widths: 40 60
-:header-rows: 1
+    :widths: 40 60
+    :header-rows: 1
 
     - - scirpy function
       - objective
@@ -828,14 +787,12 @@ Querying reference datasets uses the same logic as :ref:`defining clonotypes <de
     - - :func:`scirpy.tl.ir_query`
       - For each cell, identify matching entries in a reference database.
     - - :func:`scirpy.tl.ir_query_annotate`
-      - Transfer annotations from reference database to `adata.obs`.
+      - Transfer annotations from reference database to `adata.obs`. 
     - - :func:`scirpy.tl.ir_query_annotate_df`
-      - Return a dataframe with all matching annotations.
-
-
+      - Return a dataframe with all matching annotations. 
+      
 Here, we obtain the :func:`VDJDB <scirpy.datasets.vdjdb>` and annotate epitopes based
-on amino acid sequence identity. For demonstration purposes on this toy dataset we use rather lenient settings: For a match, we specify that it is enough that either of the :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` sequences, and either of the primary or secondary receptor chains matches the database.
-
+on amino acid sequence identity. For demonstration purposes on this toy dataset we use rather lenient settings: For a match, we specify that it is enough that either of the :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` sequences, and either of the primary or secondary receptor chains matches the database. 
 <!-- #endraw -->
 
 ```python
@@ -853,9 +810,7 @@ ir.tl.ir_query(
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
-
-:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve _all pairs cells with their of matching entries_. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell.
-
+:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve *all pairs cells with their of matching entries*. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell. 
 <!-- #endraw -->
 
 ```python
@@ -869,10 +824,8 @@ ir.tl.ir_query_annotate_df(
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
-
 Alternatively, to break down the annotation to a single-value per cell, you can use
-:func:`~scirpy.tl.ir_query_annotate`. Depending on the specified `strategy` it will only label unambiguous matches, or use the most frequent value.
-
+:func:`~scirpy.tl.ir_query_annotate`. Depending on the specified `strategy` it will only label unambiguous matches, or use the most frequent value. 
 <!-- #endraw -->
 
 ```python
