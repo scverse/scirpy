@@ -286,7 +286,7 @@ def _fruchterman_reingold(
 
 def _get_fr_repulsion(distance, direction, k):
     with np.errstate(divide="ignore", invalid="ignore"):
-        magnitude = k ** 2 / distance
+        magnitude = k**2 / distance
     vectors = direction * magnitude[..., None]
     # Note that we cannot apply the usual strategy of summing the array
     # along either axis and subtracting the trace,
@@ -299,7 +299,7 @@ def _get_fr_repulsion(distance, direction, k):
 
 
 def _get_fr_attraction(distance, direction, adjacency, k):
-    magnitude = 1.0 / k * distance ** 2 * adjacency
+    magnitude = 1.0 / k * distance**2 * adjacency
     vectors = -direction * magnitude[..., None]  # NB: the minus!
     vectors = _set_diagonal(vectors, 0)
     return np.sum(vectors, axis=0)

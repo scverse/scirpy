@@ -174,7 +174,7 @@ def _bbox_sorted(component_sizes, pad_x=1.0, pad_y=1.0):
 
 def _get_bbox_dimensions(n, power=0.5):
     # return (np.sqrt(n), np.sqrt(n))
-    return (n ** power, n ** power)
+    return (n**power, n**power)
 
 
 def _layout_component(component, bbox, component_layout_func, layout_kwargs):

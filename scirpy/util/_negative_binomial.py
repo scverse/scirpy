@@ -63,7 +63,7 @@ def fit_nbinom(
         # reasonable initial values (from fitdistr function in R)
         m = np.mean(X)
         v = np.var(X)
-        size = (m ** 2) / (v - m) if v > m else 10
+        size = (m**2) / (v - m) if v > m else 10
 
         # convert mu/size parameterization to prob/size
         p0 = size / ((size + m) if size + m != 0 else 1)

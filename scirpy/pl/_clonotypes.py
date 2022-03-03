@@ -257,14 +257,14 @@ def clonotype_network(
 
 def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_dots=4):
     sizes = np.unique(sizes)
-    dot_sizes = sizes ** size_power * base_size
+    dot_sizes = sizes**size_power * base_size
     n_dots = min(n_dots, len(dot_sizes))
     min_size = np.min(dot_sizes)
     max_size = min(np.max(dot_sizes), 800)
     diff = max_size - min_size
     # special case if only one dot size.
     if n_dots <= 1:
-        dot_sizes = np.array([base_size ** size_power])
+        dot_sizes = np.array([base_size**size_power])
     else:
         step = diff / (n_dots - 1)
         dot_sizes = np.array(list(np.arange(min_size, max_size, step)) + [max_size])
@@ -484,7 +484,7 @@ def _plot_clonotype_network_panel(
                 s = np.abs(xy).max()
 
                 sct = ax.scatter(
-                    [xx], [yy], marker=xy, color=color, s=s ** 2 * tmp_size
+                    [xx], [yy], marker=xy, color=color, s=s**2 * tmp_size
                 )
 
     # plot edges
