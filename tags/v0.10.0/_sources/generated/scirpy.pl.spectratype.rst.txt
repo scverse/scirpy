@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/pl/_spectratype.py#L12-L101
+
+scirpy.pl.spectratype
+=====================
+
+.. currentmodule:: scirpy.pl
+
+.. autofunction:: spectratype

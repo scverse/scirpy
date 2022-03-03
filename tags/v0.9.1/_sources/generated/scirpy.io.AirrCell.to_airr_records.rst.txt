@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/io/_datastructures.py#L260-L274
+
+scirpy.io.AirrCell.to\_airr\_records
+====================================
+
+.. currentmodule:: scirpy.io
+
+.. automethod:: AirrCell.to_airr_records

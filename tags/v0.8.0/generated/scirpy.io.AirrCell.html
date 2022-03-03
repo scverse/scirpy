@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+
+  <title>scirpy.io.AirrCell &mdash; scirpy  documentation</title>
+  
+
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/scanpy.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/typehints.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="scirpy.io.AirrCell.VALID_LOCI" href="scirpy.io.AirrCell.VALID_LOCI.html" />
+    <link rel="prev" title="scirpy.io.from_dandelion" href="scirpy.io.from_dandelion.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/tutorial_3k_tcr.html">Analysis of 3k T cells from cancer</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials/tutorial_io.html">Loading adaptive Immune Receptor (<span class="xref std std-term">IR</span>)-sequencing data with Scirpy</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/tutorial_io.html#Loading-data-from-10x-Genomics-CellRanger,-TraCeR,-BraCer-or-AIRR-compliant-tools">Loading data from <em>10x Genomics CellRanger</em>, <em>TraCeR</em>, <em>BraCer</em> or AIRR-compliant tools</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../tutorials/tutorial_io.html#Creating-AnnData-objects-from-other-formats">Creating AnnData objects from other formats</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">scirpy.io.AirrCell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scirpy.io.from_airr_cells.html">scirpy.io.from_airr_cells</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/tutorial_io.html#Combining-multiple-samples">Combining multiple samples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage-principles.html">Usage principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ir-biology.html">Immune receptor (IR) model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">Other versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../zzz_bibliography.html">Bibliography</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">scirpy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="../tutorials/tutorial_io.html">Loading adaptive Immune Receptor (<span class="xref std std-term">IR</span>)-sequencing data with Scirpy</a> &raquo;</li>
+        
+      <li>scirpy.io.AirrCell</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            
+              <!-- User defined GitHub URL -->
+              <a href="https://github.com/icbi-lab/scirpy/tree/master/scirpy/io/_datastructures.py#L17-L361" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="scirpy-io-airrcell">
+<h1>scirpy.io.AirrCell<a class="headerlink" href="#scirpy-io-airrcell" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="scirpy.io.AirrCell">
+<em class="property">class </em><code class="sig-prename descclassname">scirpy.io.</code><code class="sig-name descname">AirrCell</code><span class="sig-paren">(</span><em class="sig-param">cell_id</em>, <em class="sig-param">cell_attribute_fields=()</em>, <em class="sig-param">*</em>, <em class="sig-param">logger=&lt;module 'scanpy.logging' from '/opt/hostedtoolcache/Python/3.8.11/x64/lib/python3.8/site-packages/scanpy/logging.py'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#scirpy.io.AirrCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data structure for a Cell with immune receptors. Represents one row of <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code>.</p>
+<p>This data structure is compliant with the AIRR rearrangement schema v1.0.
+An AirrCell can hold multiple chains (i.e. rows from the rearrangement TSV)
+which belong to the same cell. A chain is represented as a dictionary, where
+the keys are AIRR-rearrangement fields.</p>
+<p>The AirrCell can, additionally, hold cell-level attributes which can be set
+in a dict-like fashion. Keys marked as “cell-level” via <code class="docutils literal notranslate"><span class="pre">cell_attribute_fields</span></code>
+will be automatically transferred to the cell-level when added through a chain.
+They are required to have the same value for all chains.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cell_id</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>cell id or barcode.  Needs to match the cell id used for transcriptomics
+data (i.e. the <code class="docutils literal notranslate"><span class="pre">adata.obs_names</span></code>)</p>
+</dd>
+<dt><strong>cell_attribute_fields</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Collection" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Collection" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">()</span></code>)</dt><dd><p>List of field-names which are supposed to be stored at the cell-level
+rather than the chain level. If a chain with these fields is added
+to the cell, they are set on the cell-level instead. If the values already
+exist on the cell-level, a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> is raised, if they differ from
+the values that are already present.</p>
+</dd>
+<dt><strong>logger</strong></dt><dd><p>A logger to write messages to. If not specified, use scanpy’s default logger.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.VALID_LOCI.html#scirpy.io.AirrCell.VALID_LOCI" title="scirpy.io.AirrCell.VALID_LOCI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VALID_LOCI</span></code></a></p></td>
+<td><p>Valid chains are IMGT locus names see <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names">https://docs.airr-community.org/en/latest/datarep/rearrangements.html#locus-names</a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.VDJ_LOCI.html#scirpy.io.AirrCell.VDJ_LOCI" title="scirpy.io.AirrCell.VDJ_LOCI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VDJ_LOCI</span></code></a></p></td>
+<td><p>Identifiers of loci with a <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">V-D-J</span></a> junction</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.VJ_LOCI.html#scirpy.io.AirrCell.VJ_LOCI" title="scirpy.io.AirrCell.VJ_LOCI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VJ_LOCI</span></code></a></p></td>
+<td><p>Identifiers of loci with a <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">V-J</span></a> junction</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.cell_id.html#scirpy.io.AirrCell.cell_id" title="scirpy.io.AirrCell.cell_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_id</span></code></a></p></td>
+<td><p>Unique identifier (barcode) of the cell.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.chains.html#scirpy.io.AirrCell.chains" title="scirpy.io.AirrCell.chains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">chains</span></code></a></p></td>
+<td><p>List of chain-dictionaries added to the cell.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.fields.html#scirpy.io.AirrCell.fields" title="scirpy.io.AirrCell.fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fields</span></code></a></p></td>
+<td><p>Return a list of all fields (chain-level and cell-level)</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.add_chain.html#scirpy.io.AirrCell.add_chain" title="scirpy.io.AirrCell.add_chain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_chain</span></code></a>(chain)</p></td>
+<td><p>Add a chain to the cell.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.add_serialized_chains.html#scirpy.io.AirrCell.add_serialized_chains" title="scirpy.io.AirrCell.add_serialized_chains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_serialized_chains</span></code></a>(serialized_chains)</p></td>
+<td><p>Add chains serialized as JSON.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.clear.html#scirpy.io.AirrCell.clear" title="scirpy.io.AirrCell.clear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.empty_chain_dict.html#scirpy.io.AirrCell.empty_chain_dict" title="scirpy.io.AirrCell.empty_chain_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">empty_chain_dict</span></code></a>()</p></td>
+<td><p>Generate an empty chain dictionary, containing all required AIRR columns, but set to <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.get.html#scirpy.io.AirrCell.get" title="scirpy.io.AirrCell.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>(k[,d])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.items.html#scirpy.io.AirrCell.items" title="scirpy.io.AirrCell.items"><code class="xref py py-obj docutils literal notranslate"><span class="pre">items</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.keys.html#scirpy.io.AirrCell.keys" title="scirpy.io.AirrCell.keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keys</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.pop.html#scirpy.io.AirrCell.pop" title="scirpy.io.AirrCell.pop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop</span></code></a>(k[,d])</p></td>
+<td><p>If key is not found, d is returned if given, otherwise KeyError is raised.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.popitem.html#scirpy.io.AirrCell.popitem" title="scirpy.io.AirrCell.popitem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">popitem</span></code></a>()</p></td>
+<td><p>as a 2-tuple; but raise KeyError if D is empty.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.setdefault.html#scirpy.io.AirrCell.setdefault" title="scirpy.io.AirrCell.setdefault"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setdefault</span></code></a>(k[,d])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.to_airr_records.html#scirpy.io.AirrCell.to_airr_records" title="scirpy.io.AirrCell.to_airr_records"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_airr_records</span></code></a>()</p></td>
+<td><p>Iterate over chains as AIRR-Rearrangent compliant dictonaries.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.to_scirpy_record.html#scirpy.io.AirrCell.to_scirpy_record" title="scirpy.io.AirrCell.to_scirpy_record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_scirpy_record</span></code></a>([include_fields])</p></td>
+<td><p>Convert the cell to a scirpy record (i.e.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="scirpy.io.AirrCell.update.html#scirpy.io.AirrCell.update" title="scirpy.io.AirrCell.update"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code></a>([E, ]**F)</p></td>
+<td><p>If E present and has a .keys() method, does:     for k in E: D[k] = E[k] If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v In either case, this is followed by: for k, v in F.items(): D[k] = v</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scirpy.io.AirrCell.values.html#scirpy.io.AirrCell.values" title="scirpy.io.AirrCell.values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">values</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="scirpy.io.AirrCell.VALID_LOCI.html" class="btn btn-neutral float-right" title="scirpy.io.AirrCell.VALID_LOCI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="scirpy.io.from_dandelion.html" class="btn btn-neutral float-left" title="scirpy.io.from_dandelion" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Gregor Sturm, Tamas Szabo.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/collections/abc.py#L824-L840
+
+scirpy.io.AirrCell.update
+=========================
+
+.. currentmodule:: scirpy.io
+
+.. automethod:: AirrCell.update

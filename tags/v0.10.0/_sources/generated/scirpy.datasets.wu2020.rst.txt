@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/datasets/__init__.py#L20-L39
+
+scirpy.datasets.wu2020
+======================
+
+.. currentmodule:: scirpy.datasets
+
+.. autofunction:: wu2020

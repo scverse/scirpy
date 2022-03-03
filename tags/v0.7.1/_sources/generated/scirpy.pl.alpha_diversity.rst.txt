@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/_plotting/_diversity.py#L10-L45
+
+scirpy.pl.alpha\_diversity
+==========================
+
+.. currentmodule:: scirpy.pl
+
+.. autofunction:: alpha_diversity

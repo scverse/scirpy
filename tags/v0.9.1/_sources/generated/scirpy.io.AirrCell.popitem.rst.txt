@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/collections/abc.py#L804-L814
+
+scirpy.io.AirrCell.popitem
+==========================
+
+.. currentmodule:: scirpy.io
+
+.. automethod:: AirrCell.popitem

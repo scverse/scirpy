@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/tl/_ir_query.py#L202-L281
+
+scirpy.tl.ir\_query\_annotate\_df
+=================================
+
+.. currentmodule:: scirpy.tl
+
+.. autofunction:: ir_query_annotate_df

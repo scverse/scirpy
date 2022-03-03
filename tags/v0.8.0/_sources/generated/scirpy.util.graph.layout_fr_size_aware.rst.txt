@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/util/graph/_fr_size_aware_layout.py#L13-L211
+
+scirpy.util.graph.layout\_fr\_size\_aware
+=========================================
+
+.. currentmodule:: scirpy.util.graph
+
+.. autofunction:: layout_fr_size_aware

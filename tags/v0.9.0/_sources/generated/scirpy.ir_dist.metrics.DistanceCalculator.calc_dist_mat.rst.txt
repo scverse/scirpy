@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/ir_dist/metrics.py#L64-L89
+
+scirpy.ir\_dist.metrics.DistanceCalculator.calc\_dist\_mat
+==========================================================
+
+.. currentmodule:: scirpy.ir_dist.metrics
+
+.. automethod:: DistanceCalculator.calc_dist_mat

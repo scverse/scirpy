@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/util/graph/__init__.py#L12-L48
+
+scirpy.util.graph.igraph\_from\_sparse\_matrix
+==============================================
+
+.. currentmodule:: scirpy.util.graph
+
+.. autofunction:: igraph_from_sparse_matrix

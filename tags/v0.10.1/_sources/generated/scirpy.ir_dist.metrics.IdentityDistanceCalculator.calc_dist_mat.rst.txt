@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/ir_dist/metrics.py#L267-L291
+
+scirpy.ir\_dist.metrics.IdentityDistanceCalculator.calc\_dist\_mat
+==================================================================
+
+.. currentmodule:: scirpy.ir_dist.metrics
+
+.. automethod:: IdentityDistanceCalculator.calc_dist_mat

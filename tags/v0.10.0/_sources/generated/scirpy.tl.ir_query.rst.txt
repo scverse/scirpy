@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/tl/_ir_query.py#L76-L199
+
+scirpy.tl.ir\_query
+===================
+
+.. currentmodule:: scirpy.tl
+
+.. autofunction:: ir_query

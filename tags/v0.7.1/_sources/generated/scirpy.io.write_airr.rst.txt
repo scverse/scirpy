@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/io/_io.py#L557-L585
+
+scirpy.io.write\_airr
+=====================
+
+.. currentmodule:: scirpy.io
+
+.. autofunction:: write_airr

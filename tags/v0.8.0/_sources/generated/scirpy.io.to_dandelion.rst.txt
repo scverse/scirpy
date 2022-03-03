@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/io/_io.py#L631-L662
+
+scirpy.io.to\_dandelion
+=======================
+
+.. currentmodule:: scirpy.io
+
+.. autofunction:: to_dandelion

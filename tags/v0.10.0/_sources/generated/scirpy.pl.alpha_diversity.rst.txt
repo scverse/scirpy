@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/pl/_diversity.py#L11-L66
+
+scirpy.pl.alpha\_diversity
+==========================
+
+.. currentmodule:: scirpy.pl
+
+.. autofunction:: alpha_diversity

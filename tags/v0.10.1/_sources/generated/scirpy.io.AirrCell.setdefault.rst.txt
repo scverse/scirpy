@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/collections/abc.py#L842-L848
+
+scirpy.io.AirrCell.setdefault
+=============================
+
+.. currentmodule:: scirpy.io
+
+.. automethod:: AirrCell.setdefault

@@ -1,0 +1,35 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/ir_dist/metrics.py#L111-L240
+
+scirpy.ir\_dist.metrics.ParallelDistanceCalculator
+==================================================
+
+.. currentmodule:: scirpy.ir_dist.metrics
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: ParallelDistanceCalculator
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+      :toctree: .
+   
+      
+      ~scirpy.ir_dist.metrics.ParallelDistanceCalculator.DTYPE
+      
+   
+   
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :toctree: .
+   
+      ~scirpy.ir_dist.metrics.ParallelDistanceCalculator.calc_dist_mat
+      ~scirpy.ir_dist.metrics.ParallelDistanceCalculator.squarify
+   
+   

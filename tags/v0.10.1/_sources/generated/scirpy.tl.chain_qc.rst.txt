@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/tl/_chain_qc.py#L39-L166
+
+scirpy.tl.chain\_qc
+===================
+
+.. currentmodule:: scirpy.tl
+
+.. autofunction:: chain_qc

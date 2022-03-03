@@ -1,0 +1,62 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/io/_datastructures.py#L17-L363
+
+scirpy.io.AirrCell
+==================
+
+.. currentmodule:: scirpy.io
+
+.. add toctree option to make autodoc generate the pages
+
+.. autoclass:: AirrCell
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+      :toctree: .
+   
+      
+      ~scirpy.io.AirrCell.VALID_LOCI
+      
+      
+      ~scirpy.io.AirrCell.VDJ_LOCI
+      
+      
+      ~scirpy.io.AirrCell.VJ_LOCI
+      
+      
+      ~scirpy.io.AirrCell.cell_id
+      
+      
+      ~scirpy.io.AirrCell.chains
+      
+      
+      ~scirpy.io.AirrCell.fields
+      
+   
+   
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :toctree: .
+   
+      ~scirpy.io.AirrCell.add_chain
+      ~scirpy.io.AirrCell.add_serialized_chains
+      ~scirpy.io.AirrCell.clear
+      ~scirpy.io.AirrCell.empty_chain_dict
+      ~scirpy.io.AirrCell.get
+      ~scirpy.io.AirrCell.items
+      ~scirpy.io.AirrCell.keys
+      ~scirpy.io.AirrCell.pop
+      ~scirpy.io.AirrCell.popitem
+      ~scirpy.io.AirrCell.setdefault
+      ~scirpy.io.AirrCell.to_airr_records
+      ~scirpy.io.AirrCell.to_scirpy_record
+      ~scirpy.io.AirrCell.update
+      ~scirpy.io.AirrCell.values
+   
+   

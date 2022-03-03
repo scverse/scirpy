@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Developer Documentation &mdash; scirpy  documentation</title>
+
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/scanpy.css" type="text/css" />
+      <link rel="stylesheet" href="_static/typehints.css" type="text/css" />
+
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+
+
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Other versions" href="versions.html" />
+    <link rel="prev" title="Glossary" href="glossary.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html">
+            <img src="_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.10.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage-principles.html">Usage principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ir-biology.html">Immune receptor (IR) model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-set-up">Getting set-up</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installing-additional-dependencies">Installing additional dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#formatting-code">Formatting code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tests">Running tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#previewing-the-docs">Previewing the docs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Other versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zzz_bibliography.html">Bibliography</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">scirpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Developer Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/icbi-lab/scirpy/blob/master/docs/developer_docs.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="developer-documentation">
+<span id="developer-docs"></span><h1>Developer Documentation<a class="headerlink" href="#developer-documentation" title="Permalink to this headline"></a></h1>
+<p>Scanpy provides extensive <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/index.html">developer documentation</a>,
+most of which applies to Scirpy, too.
+This document will not reproduce the entire content from there. Instead, it aims at summarizing the
+most important information to get you started on contributing to scirpy.</p>
+<section id="getting-set-up">
+<h2>Getting set-up<a class="headerlink" href="#getting-set-up" title="Permalink to this headline"></a></h2>
+<p>We assume that you are already familiar with git and with making pull requests on GitHub.
+If not please, refer to the <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/index.html">Scanpy developer documentation</a>.</p>
+<section id="installing-additional-dependencies">
+<h3>Installing additional dependencies<a class="headerlink" href="#installing-additional-dependencies" title="Permalink to this headline"></a></h3>
+<p>In addition to Scipy’s runtime dependencies you need additional python
+packages to run the tests and building the documentation. It’s easy to
+install them using pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">scirpy</span><span class="p">[</span><span class="n">test</span><span class="p">,</span><span class="n">doc</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="formatting-code">
+<h2>Formatting code<a class="headerlink" href="#formatting-code" title="Permalink to this headline"></a></h2>
+<p>All Python code needs to be formatted using <a class="reference external" href="https://github.com/psf/black">black</a>.
+If the code is not formatted correctly, the continuous integration (CI) checks will fail.</p>
+<p>We recommend setting up the pre-commit hook that automatically formats
+the code on every commit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># inside root of scirpy repository</span>
+<span class="n">pre</span><span class="o">-</span><span class="n">commit</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>Alternatively, you can manually run black by running</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">black</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Most IDEs also have an “autoformat on save” feature. Please refer
+to the <a class="reference external" href="https://black.readthedocs.io/en/stable/integrations/editors.html">black documentation</a>
+on how to enable it.</p>
+</section>
+<section id="running-tests">
+<h2>Running tests<a class="headerlink" href="#running-tests" title="Permalink to this headline"></a></h2>
+<p>Scirpy uses automated testing with <a class="reference external" href="https://docs.pytest.org">pytest</a>.
+All tests need to pass before we can merge a pull request. If you add
+new functionality, <a class="reference external" href="https://scanpy.readthedocs.io/en/latest/dev/testing.html#writing-tests">please add tests</a></p>
+<p>Most IDEs integrate with pytest and provide a GUI to run tests. Alternatively,
+you can run all tests from the command line by executing</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pytest</span>
+</pre></div>
+</div>
+<p>in the root of the scirpy repository.</p>
+</section>
+<section id="previewing-the-docs">
+<h2>Previewing the docs<a class="headerlink" href="#previewing-the-docs" title="Permalink to this headline"></a></h2>
+<p>Updates to the documentation are automatically built
+by the CI for every PR. Once the PR is merged they will
+be automatically published on the documentation website.</p>
+<p>The easiest way to preview changes to the documentation
+is to download the CI artifact:</p>
+<ol class="arabic">
+<li><p>Click on “Details” on one of the CI jobs building the docs:</p>
+<blockquote>
+<div><img alt="get artifacts" src="_images/get_artifacts_01.png" />
+</div></blockquote>
+</li>
+<li><p>Download the artifact from the top right corner.</p>
+<blockquote>
+<div><img alt="get artifacts" src="_images/get_artifacts_02.png" />
+</div></blockquote>
+</li>
+<li><p>Extract the zip file and open <code class="docutils literal notranslate"><span class="pre">index.html</span></code> in your Browser.</p></li>
+</ol>
+<p>Alternatively, you can build and preview the documentation locally:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docs</span>
+<span class="n">make</span> <span class="n">html</span>
+<span class="c1"># open the docs in the web browser, e.g.</span>
+<span class="n">firefox</span> <span class="n">_build</span><span class="o">/</span><span class="n">html</span><span class="o">/</span><span class="n">index</span><span class="o">.</span><span class="n">html</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="glossary.html" class="btn btn-neutral float-left" title="Glossary" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="versions.html" class="btn btn-neutral float-right" title="Other versions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Gregor Sturm, Tamas Szabo..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

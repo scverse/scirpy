@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/_preprocessing/_merge_adata.py#L16-L81
+
+scirpy.pp.merge\_airr\_chains
+=============================
+
+.. currentmodule:: scirpy.pp
+
+.. autofunction:: merge_airr_chains

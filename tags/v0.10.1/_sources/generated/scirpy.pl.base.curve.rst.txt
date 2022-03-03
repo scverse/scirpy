@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/pl/base.py#L152-L269
+
+scirpy.pl.base.curve
+====================
+
+.. currentmodule:: scirpy.pl.base
+
+.. autofunction:: curve

@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/_tools/_clonotype_modularity.py#L15-L165
+
+scirpy.tl.clonotype\_modularity
+===============================
+
+.. currentmodule:: scirpy.tl
+
+.. autofunction:: clonotype_modularity

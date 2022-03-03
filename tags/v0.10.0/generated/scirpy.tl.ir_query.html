@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>scirpy.tl.ir_query &mdash; scirpy  documentation</title>
+
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/scanpy.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/typehints.css" type="text/css" />
+
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+
+
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="scirpy.tl.ir_query_annotate" href="scirpy.tl.ir_query_annotate.html" />
+    <link rel="prev" title="scirpy.tl.clonotype_imbalance" href="scirpy.tl.clonotype_imbalance.html" />
+ 
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html">
+            <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.10.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage-principles.html">Usage principles</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-scirpy.io">Input/Output: <code class="docutils literal notranslate"><span class="pre">io</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-scirpy.pp">Preprocessing: <code class="docutils literal notranslate"><span class="pre">pp</span></code></a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#module-scirpy.tl">Tools: <code class="docutils literal notranslate"><span class="pre">tl</span></code></a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../api.html#generic">Generic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#quality-control">Quality control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#define-and-visualize-clonotypes">Define and visualize clonotypes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#analyse-clonal-diversity">Analyse clonal diversity</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../api.html#query-reference-databases">Query reference databases</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">scirpy.tl.ir_query</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scirpy.tl.ir_query_annotate.html">scirpy.tl.ir_query_annotate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scirpy.tl.ir_query_annotate_df.html">scirpy.tl.ir_query_annotate_df</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#v-d-j-gene-usage">V(D)J gene usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-scirpy.pl">Plotting: <code class="docutils literal notranslate"><span class="pre">pl</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-scirpy.datasets">Datasets: <code class="docutils literal notranslate"><span class="pre">datasets</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-scirpy.util">Utility functions: <code class="docutils literal notranslate"><span class="pre">util</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-scirpy.ir_dist">IR distance utilities: <code class="docutils literal notranslate"><span class="pre">ir_dist</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ir-biology.html">Immune receptor (IR) model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_docs.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">Other versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../zzz_bibliography.html">Bibliography</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">scirpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API</a> &raquo;</li>
+      <li>scirpy.tl.ir_query</li>
+      <li class="wy-breadcrumbs-aside">
+              <!-- User defined GitHub URL -->
+              <a href="https://github.com/icbi-lab/scirpy/tree/master/scirpy/tl/_ir_query.py#L76-L199" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="scirpy-tl-ir-query">
+<h1>scirpy.tl.ir_query<a class="headerlink" href="#scirpy-tl-ir-query" title="Permalink to this headline"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="scirpy.tl.ir_query">
+<span class="sig-prename descclassname"><span class="pre">scirpy.tl.</span></span><span class="sig-name descname"><span class="pre">ir_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'aa'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'identity'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receptor_arms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dual_ir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'any'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same_v_gene</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_added</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scirpy.tl.ir_query" title="Permalink to this definition"></a></dt>
+<dd><p>Query a referece database for matching immune cell receptors.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is an experimental function that may change in the future.</p>
+</div>
+<p>The reference database can either be a imune cell receptor database, or
+simply another scRNA-seq dataset with some annotations in <code class="docutils literal notranslate"><span class="pre">.obs</span></code>. This function
+maps all cells to all matching entries from the reference.</p>
+<p>Requires funning <a class="reference internal" href="scirpy.pp.ir_dist.html#scirpy.pp.ir_dist" title="scirpy.pp.ir_dist"><code class="xref py py-func docutils literal notranslate"><span class="pre">ir_dist()</span></code></a> with the same values for <code class="docutils literal notranslate"><span class="pre">reference</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sequence</span></code> and <code class="docutils literal notranslate"><span class="pre">metric</span></code> first.</p>
+<p>This function is essentially an extension of <a class="reference internal" href="scirpy.tl.define_clonotype_clusters.html#scirpy.tl.define_clonotype_clusters" title="scirpy.tl.define_clonotype_clusters"><code class="xref py py-func docutils literal notranslate"><span class="pre">define_clonotype_clusters()</span></code></a>
+to two <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> objects and follows the same logic:</p>
+<dl class="simple">
+<dt>Definition of clonotype(-clusters) follows roughly the following procedure:</dt><dd><ol class="arabic simple">
+<li><p>Create a list of unique receptor configurations. This is useful to
+collapse heavily expanded clonotypes, leading to many cells with identical
+CDR3 sequences, to a single entry.</p></li>
+<li><p>Compute a pairwise distance matrix of unique receptor configurations.
+Unique receptor configurations are matched based on the pre-computed
+VJ and VDJ distance matrices and the parameters of <code class="docutils literal notranslate"><span class="pre">receptor_arms</span></code>,
+<code class="docutils literal notranslate"><span class="pre">dual_ir</span></code>, <code class="docutils literal notranslate"><span class="pre">same_v_gene</span></code> and <code class="docutils literal notranslate"><span class="pre">within_group</span></code>.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>adata</strong> : <span class="annotation terse"><a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></span><span class="annotation full"><a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></span></dt><dd><p>annotated data matrix</p>
+</dd>
+<dt><strong>reference</strong> : <span class="annotation terse"><a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></span><span class="annotation full"><a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></span></dt><dd><p>Another <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object, can be either a second dataset with
+<a class="reference internal" href="../glossary.html#term-IR"><span class="xref std std-term">IR</span></a> information or a epitope database. Must be the same object used for
+running <a class="reference internal" href="scirpy.pp.ir_dist.html#scirpy.pp.ir_dist" title="scirpy.pp.ir_dist"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pp.ir_dist()</span></code></a>.</p>
+</dd>
+<dt><strong>sequence</strong> : <span class="annotation terse">{‘aa’, ‘nt’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘aa’, ‘nt’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'aa'</span></code>)</dt><dd><p>The sequence parameter used when running <a class="reference internal" href="scirpy.pp.ir_dist.html#scirpy.pp.ir_dist" title="scirpy.pp.ir_dist"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pp.ir_dist()</span></code></a></p>
+</dd>
+<dt><strong>metric</strong> : <span class="annotation terse">{‘alignment’, ‘identity’, ‘levenshtein’, ‘hamming’} | <a class="reference internal" href="scirpy.ir_dist.metrics.DistanceCalculator.html#scirpy.ir_dist.metrics.DistanceCalculator" title="scirpy.ir_dist.metrics.DistanceCalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistanceCalculator</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘alignment’, ‘identity’, ‘levenshtein’, ‘hamming’], <a class="reference internal" href="scirpy.ir_dist.metrics.DistanceCalculator.html#scirpy.ir_dist.metrics.DistanceCalculator" title="scirpy.ir_dist.metrics.DistanceCalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistanceCalculator</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">'identity'</span></code>)</dt><dd><p>The metric parameter used when running <a class="reference internal" href="scirpy.pp.ir_dist.html#scirpy.pp.ir_dist" title="scirpy.pp.ir_dist"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pp.ir_dist()</span></code></a></p>
+</dd>
+<dt><strong>receptor_arms</strong> : <span class="annotation terse">{‘VJ’, ‘VDJ’, ‘all’, ‘any’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘VJ’, ‘VDJ’, ‘all’, ‘any’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'all'</span></code>)</dt><dd><p><dl class="simple">
+<dt>One of the following options:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;VJ&quot;</span></code> - only consider <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">VJ</span></a> sequences</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;VDJ&quot;</span></code> - only consider <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">VDJ</span></a> sequences</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code> - both VJ and VDJ need to match</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;any&quot;</span></code> - either VJ or VDJ need to match</p></li>
+</ul>
+</dd>
+</dl>
+<p>If <code class="docutils literal notranslate"><span class="pre">&quot;any&quot;</span></code>, two distances are combined by taking their minimum. If <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code>,
+two distances are combined by taking their maximum. This is motivated
+by the hypothesis that a receptor recognizes the same antigen if it
+has a distance smaller than a certain cutoff. If we require only one
+of the receptors to match (<code class="docutils literal notranslate"><span class="pre">&quot;any&quot;</span></code>) the smaller distance is relevant.
+If we require both receptors to match (<code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code>), the larger distance is
+relevant.</p>
+</p>
+</dd>
+<dt><strong>dual_ir</strong> : <span class="annotation terse">{‘any’, ‘primary_only’, ‘all’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘any’, ‘primary_only’, ‘all’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'any'</span></code>)</dt><dd><p><dl class="simple">
+<dt>One of the following options:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;primary_only&quot;</span></code> - only consider most abundant pair of <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">VJ/VDJ</span></a> chains</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;any&quot;</span></code> - consider both pairs of <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">VJ/VDJ</span></a> sequences. Distance must be below
+cutoff for any of the chains.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code> - consider both pairs of <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">VJ/VDJ</span></a> sequences. Distance must be below
+cutoff for all of the chains.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Distances are combined as for <code class="docutils literal notranslate"><span class="pre">receptor_arms</span></code>.</p>
+<p>See also <a class="reference internal" href="../glossary.html#term-Dual-IR"><span class="xref std std-term">Dual IR</span></a>.</p>
+</p>
+</dd>
+<dt><strong>same_v_gene</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span> (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</dt><dd><p><p>Enforces clonotypes to have the same <a class="reference internal" href="../glossary.html#term-V-D-J"><span class="xref std std-term">V-genes</span></a>. This is useful
+as the CDR1 and CDR2 regions are fully encoded in this gene.
+See <a class="reference internal" href="../glossary.html#term-CDR"><span class="xref std std-term">CDR</span></a> for more details.</p>
+<p>v genes are matched based on the behaviour defined with <code class="docutils literal notranslate"><span class="pre">receptor_arms</span></code> and
+<code class="docutils literal notranslate"><span class="pre">dual_ir</span></code>.</p>
+</p>
+</dd>
+<dt><strong>match_columns</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>One or multiple columns in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> that must match between
+query and reference. Use this to e.g. enforce matching cell-types or HLA-types.</p>
+</dd>
+<dt><strong>key_added</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Dictionary key under which the resulting distance matrix will be stored in
+<code class="docutils literal notranslate"><span class="pre">adata.uns</span></code> if <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">ir_query_{name}_{sequence}_{metric}</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">metric</span></code> is an instance of <a class="reference internal" href="scirpy.ir_dist.metrics.DistanceCalculator.html#scirpy.ir_dist.metrics.DistanceCalculator" title="scirpy.ir_dist.metrics.DistanceCalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">scirpy.ir_dist.metrics.DistanceCalculator</span></code></a>,
+<code class="docutils literal notranslate"><span class="pre">{metric}</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">custom</span></code>.
+<code class="docutils literal notranslate"><span class="pre">{name}</span></code> is taken from <code class="docutils literal notranslate"><span class="pre">reference.uns[&quot;DB&quot;][&quot;name&quot;]</span></code>. If <code class="docutils literal notranslate"><span class="pre">reference</span></code> does not have a
+<code class="docutils literal notranslate"><span class="pre">&quot;DB&quot;</span></code> entry, <code class="docutils literal notranslate"><span class="pre">key_added</span></code> needs to be specified manually.</p>
+</dd>
+<dt><strong>distance_key</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Key in <code class="docutils literal notranslate"><span class="pre">adata.uns</span></code> where the results of <a class="reference internal" href="scirpy.pp.ir_dist.html#scirpy.pp.ir_dist" title="scirpy.pp.ir_dist"><code class="xref py py-func docutils literal notranslate"><span class="pre">ir_dist()</span></code></a> are stored.
+Defaults to <code class="docutils literal notranslate"><span class="pre">ir_dist_{name}_{sequence}_{metric}</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">metric</span></code> is an instance of <a class="reference internal" href="scirpy.ir_dist.metrics.DistanceCalculator.html#scirpy.ir_dist.metrics.DistanceCalculator" title="scirpy.ir_dist.metrics.DistanceCalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">scirpy.ir_dist.metrics.DistanceCalculator</span></code></a>,
+<code class="docutils literal notranslate"><span class="pre">{metric}</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">custom</span></code>.
+<code class="docutils literal notranslate"><span class="pre">{name}</span></code> is taken from <code class="docutils literal notranslate"><span class="pre">reference.uns[&quot;DB&quot;][&quot;name&quot;]</span></code>. If <code class="docutils literal notranslate"><span class="pre">reference</span></code> does not have a
+<code class="docutils literal notranslate"><span class="pre">&quot;DB&quot;</span></code> entry, <code class="docutils literal notranslate"><span class="pre">distance_key</span></code> needs to be specified manually.</p>
+</dd>
+<dt><strong>inplace</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span> (default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</dt><dd><p>If True, store the result in <code class="docutils literal notranslate"><span class="pre">adata.uns</span></code>. Otherwise return a dictionary
+with the results.</p>
+</dd>
+<dt><strong>n_jobs</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Number of CPUs to use for clonotype cluster calculation. Default: use all cores.
+If the number of cells is smaller than <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">chunksize</span></code> a single
+worker thread will be used to avoid overhead.</p>
+</dd>
+<dt><strong>chunksize</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span> (default: <code class="docutils literal notranslate"><span class="pre">2000</span></code>)</dt><dd><p>Number of objects to process per chunk. Each worker thread receives
+data in chunks. Smaller chunks result in a more meaningful progressbar,
+but more overhead.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A dictionary containing</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">distances</span></code>: A sparse distance matrix between unique receptor configurations
+in <code class="docutils literal notranslate"><span class="pre">adata</span></code> aund unique receptor configurations in <code class="docutils literal notranslate"><span class="pre">reference</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cell_indices</span></code>: A dict of arrays, containing the the <code class="docutils literal notranslate"><span class="pre">adata.obs_names</span></code>
+(cell indices) for each row in the distance matrix.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cell_indices_reference</span></code>: A dict of arrays, containing the <code class="docutils literal notranslate"><span class="pre">reference.obs_names</span></code>
+for each column in the distance matrix.</p></li>
+</ul>
+</dd>
+</dl>
+<p>If <code class="docutils literal notranslate"><span class="pre">inplace</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, this is added to <code class="docutils literal notranslate"><span class="pre">adata.uns[key_added]</span></code>.</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scirpy.tl.clonotype_imbalance.html" class="btn btn-neutral float-left" title="scirpy.tl.clonotype_imbalance" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scirpy.tl.ir_query_annotate.html" class="btn btn-neutral float-right" title="scirpy.tl.ir_query_annotate" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Gregor Sturm, Tamas Szabo..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

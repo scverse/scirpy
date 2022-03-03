@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/ir_dist/__init__.py#L103-L188
+
+scirpy.pp.ir\_dist
+==================
+
+.. currentmodule:: scirpy.pp
+
+.. autofunction:: ir_dist

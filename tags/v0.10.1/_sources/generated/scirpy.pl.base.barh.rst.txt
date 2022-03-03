@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/pl/base.py#L116-L149
+
+scirpy.pl.base.barh
+===================
+
+.. currentmodule:: scirpy.pl.base
+
+.. autofunction:: barh

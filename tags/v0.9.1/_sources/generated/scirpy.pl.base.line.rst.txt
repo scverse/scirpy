@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/_plotting/base.py#L79-L113
+
+scirpy.pl.base.line
+===================
+
+.. currentmodule:: scirpy.pl.base
+
+.. autofunction:: line

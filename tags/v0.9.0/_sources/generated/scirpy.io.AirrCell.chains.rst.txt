@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/io/_datastructures.py
+
+scirpy.io.AirrCell.chains
+=========================
+
+.. currentmodule:: scirpy.io
+
+.. autoproperty:: AirrCell.chains

@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/tl/_clonal_expansion.py#L104-L169
+
+scirpy.tl.summarize\_clonal\_expansion
+======================================
+
+.. currentmodule:: scirpy.tl
+
+.. autofunction:: summarize_clonal_expansion

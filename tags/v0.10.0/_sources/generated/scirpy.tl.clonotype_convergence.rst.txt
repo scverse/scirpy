@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/icbi-lab/scirpy/tree/master/scirpy/tl/_convergence.py#L9-L71
+
+scirpy.tl.clonotype\_convergence
+================================
+
+.. currentmodule:: scirpy.tl
+
+.. autofunction:: clonotype_convergence

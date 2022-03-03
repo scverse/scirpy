@@ -1,0 +1,8 @@
+:github_url: https://github.com/icbi-lab/scirpy/tree/master/collections/abc.py#L676-L678
+
+scirpy.io.AirrCell.items
+========================
+
+.. currentmodule:: scirpy.io
+
+.. automethod:: AirrCell.items
