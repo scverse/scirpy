@@ -13,7 +13,7 @@ from ..util import deprecated
 @deprecated(
     "Consider using `tl.clonotype_modularity` instead. If `clonotype_modularity` "
     "does not cover your use-case, please create an issue on GitHub to let us know "
-    "such that we can take it into account! (https://github.com/icbi-lab/scirpy/issues)"
+    "such that we can take it into account! (https://github.com/scverse/scirpy/issues)"
 )
 def clonotype_imbalance(
     adata: AnnData,

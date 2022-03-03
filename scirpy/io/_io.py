@@ -54,7 +54,7 @@ def _cdr3_from_junction(junction_aa, junction_nt):
     Should the conserved residues not equal to C and W/F, then the chain
     is non-productive and we set CDR3 to None.
 
-    See also https://github.com/icbi-lab/scirpy/pull/290.
+    See also https://github.com/scverse/scirpy/pull/290.
     """
     cdr3_aa, cdr3_nt = None, None
     if (
@@ -270,7 +270,7 @@ def read_10x_vdj(
         Per default, this includes a subset of columns relevant for a typical
         scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
         Set this to `None` to include all columns.
-    
+
 
     Returns
     -------
