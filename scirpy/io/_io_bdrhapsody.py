@@ -8,8 +8,7 @@ def read_bd_vdj_csv(data,adata):
     tcr_table = pd.read_csv(data, sep=",", index_col=None, na_values=["None"], true_values=["True"],comment='#')
     tcr_table['productive_Alpha_Gamma'] = tcr_table.TCR_Alpha_Gamma_CDR3_Translation_Dominant.str.contains('\*', regex=True)
     tcr_table['productive_Beta_Delta'] = tcr_table.TCR_Beta_Delta_CDR3_Translation_Dominant.str.contains('\*', regex=True)
-    print(tcr_table['productive_Beta_Delta'])
-    tcr_table
+
     tcr_cells = []
     for idx, row in tcr_table.iterrows():
         cell = AirrCell(cell_id=row["Cell_Index"])
