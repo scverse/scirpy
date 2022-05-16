@@ -86,8 +86,11 @@ where `tag` is one of `these tags <https://quay.io/repository/biocontainers/scir
 
 Support
 ^^^^^^^
-We are happy to assist with problems when using scirpy. Please report any bugs,
-feature requests, or help requests using the `issue tracker <https://github.com/scverse/scirpy/issues>`_.
+We are happy to assist with problems when using scirpy.
+
+* If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the `scverse discourse <https://discourse.scverse.org/>`_.
+* For bug report or feature requests, please use the `issue tracker <https://github.com/scverse/scirpy/issues>`_.
+
 We try to respond within two working days, however fixing bugs or implementing new features
 can take substantially longer, depending on the availability of our developers.
 
