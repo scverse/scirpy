@@ -59,6 +59,7 @@ jobs:
         # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
         run: |
           pip install oldest-supported-numpy
+          pip install scikit-bio
           pip install .[doc,test,rpack,dandelion]
       - name: run sphinx
         run: |
