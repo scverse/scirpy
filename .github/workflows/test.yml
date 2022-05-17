@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         # TODO the separate numpy installation is to workaround an issue with dandelion's skbio dependency
         run: |
-          pip install numpy
+          pip install "numpy<=1.20"
           pip install .[test,rpack,dandelion]
       - name: Check black formatting
         run: |
