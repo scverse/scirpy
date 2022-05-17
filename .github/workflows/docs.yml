@@ -55,10 +55,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        # TODO this is to workaround an issue with dandelion's skbio dependency
-        # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1690
         run: |
-          pip install numpy
           pip install .[doc,test,rpack,dandelion]
       - name: run sphinx
         run: |
