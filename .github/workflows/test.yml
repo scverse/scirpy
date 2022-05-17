@@ -17,11 +17,9 @@ jobs:
           - { python-version: 3.7, os: ubuntu-latest }
           - { python-version: 3.8, os: ubuntu-latest }
           - { python-version: 3.9, os: ubuntu-latest }
-          # - { python-version: "3.10", os: ubuntu-latest }
-          # 3.8 is enough for macos and linux. For 3.9 essential wheels are still missing and building
-          # from source is very painful, especially on windows.
-          - { python-version: 3.8, os: macos-latest }
-          - { python-version: 3.8, os: windows-latest }
+          - { python-version: "3.10", os: ubuntu-latest }
+          - { python-version: 3.9, os: macos-latest }
+          - { python-version: 3.9, os: windows-latest }
 
     steps:
       - uses: actions/checkout@v2
