@@ -47,9 +47,10 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
       - name: Install dependencies
-        # TODO the separate numpy installation is to workaround an issue with dandelion's skbio dependency
+        # TODO this is to workaround an issue with the skbio dependency
+        # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
         run: |
-          pip install numpy
+          pip install oldest-supported-numpy
           pip install .[test,rpack,dandelion]
       - name: Check black formatting
         run: |
