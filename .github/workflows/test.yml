@@ -18,10 +18,8 @@ jobs:
           - { python-version: 3.8, os: ubuntu-latest }
           - { python-version: 3.9, os: ubuntu-latest }
           # - { python-version: "3.10", os: ubuntu-latest }
-          # 3.8 is enough for macos and linux. For 3.9 essential wheels are still missing and building
-          # from source is very painful, especially on windows.
-          - { python-version: 3.8, os: macos-latest }
-          - { python-version: 3.8, os: windows-latest }
+          - { python-version: 3.9, os: macos-latest }
+          - { python-version: 3.9, os: windows-latest }
 
     steps:
       - uses: actions/checkout@v2
@@ -47,9 +45,10 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
       - name: Install dependencies
-        # TODO the separate numpy installation is to workaround an issue with dandelion's skbio dependency
+        # TODO this is to workaround an issue with the skbio dependency
+        # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
         run: |
-          pip install numpy
+          pip install git+https://github.com/grst/scikit-bio.git@a3423e4
           pip install .[test,rpack,dandelion]
       - name: Check black formatting
         run: |
