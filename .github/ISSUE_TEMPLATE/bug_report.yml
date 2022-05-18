@@ -55,12 +55,12 @@ body:
       description: |
         Please paste the output of `scanpy.logging.print_versions()` here.
       value: |
-      <details>
-      <summary>versions</summary>
+        <details>
+        <summary>versions</summary>
 
-      <!-- plase paste the output between the backticks -->
-      ```
+        <!-- plase paste the output between the backticks -->
+        ```
 
-      ```
+        ```
 
-      </details>
+        </details>
