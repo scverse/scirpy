@@ -47,7 +47,7 @@ requires = [
     'pycairo>=1.20; sys_platform == "win32"',
 ]
 
-[tool.flit.metadata.requires-extra]
+[project.optional-dependencies]
 rpack = [
     'rectangle-packer',
 ]
@@ -78,7 +78,7 @@ doc = [
     'sc-dandelion',
 ]
 
-[tool.flit.metadata.urls]
+[project.urls]
 Documentation = 'https://scverse.org/scirpy/'
 
 [tool.pytest.ini_options]
