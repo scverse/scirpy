@@ -57,7 +57,7 @@ jobs:
       - name: Install dependencies
         run: |
           # https://github.com/pypa/pip/issues/11110
-          pip install --upgrade "pip!=22.1"
+          python -m pip install --upgrade "pip!=22.1"
           # TODO this is to workaround an issue with the skbio dependency
           # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
           pip install git+https://github.com/grst/scikit-bio.git@a3423e4
