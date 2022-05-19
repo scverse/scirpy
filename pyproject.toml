@@ -8,7 +8,7 @@ requires = [
 ]
 build-backend = 'flit_core.buildapi'
 
-[tool.flit.metadata]
+[project.metadata]
 module = 'scirpy'
 author = 'Gregor Sturm, Tamas Szabo'
 author-email = 'gregor.sturm@i-med.ac.at'
