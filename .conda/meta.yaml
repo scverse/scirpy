@@ -19,6 +19,7 @@ requirements:
   # requires all dependencies to be installed at build time.
   host:
     - python >=3.7
+    - pip!=22.1 # https://github.com/pypa/pip/issues/11110
     - flit
     - setuptools_scm
     - pytoml
