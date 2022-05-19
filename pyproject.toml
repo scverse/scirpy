@@ -8,12 +8,13 @@ requires = [
 ]
 build-backend = 'flit_core.buildapi'
 
-[project.metadata]
-module = 'scirpy'
-author = 'Gregor Sturm, Tamas Szabo'
-author-email = 'gregor.sturm@i-med.ac.at'
-home-page = 'https://github.com/grst/scirpy'
-description-file = "README.rst"
+[project]
+name = 'scirpy'
+authors = [
+    {name = "Gregor Sturm", email="gregor.sturm@i-med.ac.at"},
+    {name= "Tamas Szabo"},
+]
+readme = {file = "README.rst", content-type="text/x-rst"}
 classifiers = [
     'License :: OSI Approved :: BSD License',
     'Development Status :: 4 - Beta',
@@ -23,11 +24,11 @@ classifiers = [
     'Programming Language :: R'
 ]
 requires-python = '>= 3.7'
-requires = [
+dependencies = [
     'anndata>=0.7.6',
     'scanpy>=1.6.0',
     'pandas>=1.0',
-    'numpy>=1.17.0', 
+    'numpy>=1.17.0',
     'scipy',
     # parasail 1.2.1 fails to be installd on MacOS
     'parasail != 1.2.1',
@@ -46,6 +47,7 @@ requires = [
     'importlib_metadata>=0.7; python_version < "3.8"',
     'pycairo>=1.20; sys_platform == "win32"',
 ]
+dynamic = ["version", "description"]
 
 [project.optional-dependencies]
 rpack = [
@@ -80,6 +82,9 @@ doc = [
 
 [project.urls]
 Documentation = 'https://scverse.org/scirpy/'
+Home-page = 'https://scverse.org/scirpy/'
+Source = "https://github.com/scverse/scirpy"
+
 
 [tool.pytest.ini_options]
 markers = [
