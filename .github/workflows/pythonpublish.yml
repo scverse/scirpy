@@ -3,7 +3,7 @@ name: Publish on PyPI
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   deploy:
@@ -19,7 +19,8 @@ jobs:
           python-version: "3.8"
       - name: Install dependencies
         run: |
-          python -m pip install flit
+          # https://github.com/pypa/pip/issues/11110
+          python -m pip install flit "pip!=22.1"
           pip install .
       - name: Build and publish
         env:

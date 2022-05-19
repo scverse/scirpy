@@ -8,16 +8,18 @@ HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE / "extensions"))
 
-from scirpy import __author__, __version__
+from importlib.metadata import metadata
+
+info = metadata("scirpy")
 
 # ignore Future warnings (which are caused by dependencies)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # General information
-project = "scirpy"
-author = __author__
+project = info["Name"]
+author = info["Author"]
 copyright = f"{datetime.now():%Y}, {author}."
-version = __version__
+version = info["Version"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
