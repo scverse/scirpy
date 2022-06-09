@@ -67,6 +67,6 @@ Scirpy adds the following :term:`IR`-related columns to `AnnData.obs`:
 Where `<attr>` can be any field of the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
 For Scirpy the following fields are relevant: 
 
- * `locus`: The :term:`IGMT locus name<Chain locus>` of the chain (`TRA`, `IGH`, etc.)
+ * `locus`: The :term:`IMGT locus name<Chain locus>` of the chain (`TRA`, `IGH`, etc.)
  * `c_call`, `v_call`, `d_call`, `j_call`: The gene symbols of the respective genes
  * `junction_aa` and `junction`: The amino acid and nucleotide sequences of the CDR3 regions

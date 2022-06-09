@@ -12,7 +12,7 @@ doc_working_model = """\
      * Excess chains are ignored (those with lowest read count/:term:`UMI` count)
        and cells flagged as :term:`Multichain-cell`.
      * Non-productive chains are ignored. 
-     * Chain loci must be valid :term:`IGMT locus names<Chain locus>`.
+     * Chain loci must be valid :term:`IMGT locus names<Chain locus>`.
      * Excess chains, non-productive chains, chains without a CDR3 sequence, 
        or chains with invalid loci are serialized to JSON and stored in the 
        `extra_chains` column. They are not used by scirpy except when exporting 
