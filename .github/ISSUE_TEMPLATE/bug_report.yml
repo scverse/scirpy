@@ -53,14 +53,7 @@ body:
     attributes:
       label: Version information
       description: |
-        Please provide use with some details about your system:
-
-         * Version of scirpy (`scirpy.__version__`)
-         * Version of numpy (`numpy.__version__`)
-         * Version of pandas (`pandas.__version__`)
-         * Version of AnnData (`anndata.__version__`)
-         * Python version (*e.g. 3.7, 3.8*)
-         * OS (*e.g. Arch Linux, Windows 10, MacOS*)
+        Please paste the output of `scanpy.logging.print_versions()` here.
       placeholder: |
         scirpy: 0.7.0
         numpy: 1.22.3
