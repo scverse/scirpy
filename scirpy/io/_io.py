@@ -514,7 +514,7 @@ def read_airr(
 
 
 def _infer_locus_from_gene_names(chain_dict):
-    """Infer the IGMT locus name from VDJ calls"""
+    """Infer the IMGT locus name from VDJ calls"""
     keys = ["v_call", "d_call", "j_call", "c_call"]
 
     # TRAV.*/DV is misleading as it actually points to a delta locus

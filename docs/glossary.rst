@@ -214,7 +214,7 @@ Glossary
         schema and complies with the `AIRR Software Guidelines <https://docs.airr-community.org/en/latest/swtools/airr_swtools_standard.html>`_.
 
     Chain locus
-        Scirpy supports all valid `IGMT locus names <http://www.imgt.org/IMGTScientificChart/Nomenclature/IMGTnomenclature.html>`_:
+        Scirpy supports all valid `IMGT locus names <http://www.imgt.org/IMGTScientificChart/Nomenclature/IMGTnomenclature.html>`_:
 
         Loci with a :term:`VJ<V(D)J>` junction:
             * `TRA` (T-cell receptor alpha)
