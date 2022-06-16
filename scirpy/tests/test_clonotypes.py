@@ -3,7 +3,6 @@ import pandas as pd
 import numpy.testing as npt
 import pandas.testing as pdt
 import scirpy as ir
-from anndata import AnnData
 import numpy as np
 from scirpy.util import _is_symmetric
 from .fixtures import (
@@ -14,8 +13,8 @@ from .fixtures import (
     adata_clonotype,
     adata_conn,
 )  # NOQA
-import random
 import pytest
+import sys
 
 
 @pytest.mark.parametrize("key_added", [None, "my_key"])
@@ -217,6 +216,10 @@ def test_clonotype_clusters_end_to_end(
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
+@pytest.mark.xfail(
+    sys.platform == "win32",
+    reason="Inconsistent coordinates with igraph on windows (got introduced only after release of python-igraph 0.9.11)",
+)
 @pytest.mark.parametrize(
     "min_cells,min_nodes,layout,size_aware,expected",
     (
