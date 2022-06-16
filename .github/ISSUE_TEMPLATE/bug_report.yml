@@ -43,10 +43,10 @@ body:
 
         /opt/conda/lib/python3.8/site-packages/scirpy/io/_io.py in read_airr(path, use_umi_count_col, infer_locus, cell_attributes, include_fields)
             437             tmp_cell.add_chain(chain_dict)
-            438 
+            438
         --> 439     return from_airr_cells(airr_cells.values(), include_fields=include_fields)
-            440 
-            441 
+            440
+            441
 
   - type: textarea
     id: versions
@@ -54,13 +54,10 @@ body:
       label: Version information
       description: |
         Please paste the output of `scanpy.logging.print_versions()` here.
-      value: |
-        <details>
-        <summary>versions</summary>
-
-        <!-- plase paste the output between the backticks -->
-        ```
-
-        ```
-
-        </details>
+      placeholder: |
+        scirpy: 0.7.0
+        numpy: 1.22.3
+        pandas: 1.4.2
+        AnnData: 0.7.6
+        Python: 3.7
+        OS: Arch Linux
