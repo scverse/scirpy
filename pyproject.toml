@@ -59,7 +59,7 @@ test = [
     'pre-commit',
 ]
 dandelion = [
-    'sc-dandelion>=0.1.3',
+    'sc-dandelion>=0.2.3',
 ]
 diversity = [
     'scikit-bio>=0.5.7'
