@@ -294,8 +294,9 @@ def test_convert_dandelion(anndata_from_10x_sample):
     ddl = to_dandelion(anndata)
     anndata2 = from_dandelion(ddl)
 
-    ir_objs1 = to_airr_cells(anndata)
-    ir_objs2 = to_airr_cells(anndata2)
+    # dandelion reorders cell barcodes
+    ir_objs1 = sorted(to_airr_cells(anndata), key=lambda x: x.cell_id)
+    ir_objs2 = sorted(to_airr_cells(anndata2), key=lambda x: x.cell_id)
 
     assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
 
@@ -303,8 +304,10 @@ def test_convert_dandelion(anndata_from_10x_sample):
     # due to 'sequence_id' being different.
     for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2):
         assert len(ir_obj1.chains) == len(ir_obj2.chains)
+        chains1 = sorted(ir_obj1.chains, key=AirrCell._key_sort_chains)
+        chains2 = sorted(ir_obj2.chains, key=AirrCell._key_sort_chains)
 
-        for tmp_chain1, tmp_chain2 in zip(ir_obj1.chains, ir_obj2.chains):
+        for tmp_chain1, tmp_chain2 in zip(chains1, chains2):
             # this field is expected to be different
             del tmp_chain1["sequence_id"]
             del tmp_chain2["sequence_id"]
