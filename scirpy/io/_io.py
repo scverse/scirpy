@@ -4,6 +4,7 @@ from anndata import AnnData
 from ._datastructures import AirrCell
 from typing import (
     Iterable,
+    List,
     Mapping,
     MutableMapping,
     Sequence,
@@ -21,7 +22,12 @@ from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein, _is_na2
 from ._convert_anndata import from_airr_cells, to_airr_cells, _sanitize_anndata
-from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
+from ._util import (
+    doc_working_model,
+    _IOLogger,
+    _check_upgrade_schema,
+    _read_airr_rearrangement_df,
+)
 from .._compat import Literal
 from airr import RearrangementSchema
 import itertools
@@ -404,7 +410,9 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     include_fields=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_FIELDS])})`""",
 )
 def read_airr(
-    path: Union[str, Sequence[str], Path, Sequence[Path]],
+    path: Union[
+        str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]
+    ],
     use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
@@ -433,6 +441,7 @@ def read_airr(
         Path to the AIRR rearrangement tsv file. If different
         chains are split up into multiple files, these can be specified
         as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
+        Alternatively, this can be a pandas data frame.
     use_umi_count_col
         Whether to add UMI counts from the non-strandard (but common) `umi_count`
         column. When this column is used, the UMI counts are moved over to the
@@ -460,7 +469,7 @@ def read_airr(
     logger = _IOLogger()
 
     if isinstance(path, (str, Path, pd.DataFrame)):
-        path: list = [path]
+        path: List[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
 
     def _decide_use_umi_count_col(chain_dict):
         """Logic to decide whether or not to use counts form the `umi_counts` column."""
@@ -478,11 +487,11 @@ def read_airr(
         else:
             return False
 
-    for tmp_path in path:
-        if isinstance(tmp_path, pd.DataFrame):
-            iterator = tmp_path.to_dict(orient="records")
+    for tmp_path_or_df in path:
+        if isinstance(tmp_path_or_df, pd.DataFrame):
+            iterator = _read_airr_rearrangement_df(tmp_path_or_df)
         else:
-            iterator = airr.read_rearrangement(str(tmp_path))
+            iterator = airr.read_rearrangement(str(tmp_path_or_df))
 
         for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
