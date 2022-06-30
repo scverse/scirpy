@@ -819,4 +819,42 @@ def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
     -------
     A :class:`~anndata.AnnData` instance with AIRR information stored in `obs`.
     """
-    pass
+    df = pd.read_csv(path, comment="#", index_col=0)
+
+    def _translate_locus(locus):
+        return {
+            "TCR_Alpha": "TRA",
+            "TCR_Beta": "TRB",
+            "TCR_Gamma": "TRG",
+            "TCR_Delta": "TRD",
+            "BCR_Lambda": "IGL",
+            "BCR_Kappa": "IGK",
+            "BCR_Heavy": "IGH",
+        }[locus]
+
+    airr_cells = {}
+    for idx, row in df.iterrows():
+        idx = str(idx)
+        if idx not in airr_cells:
+            airr_cells[idx] = AirrCell(cell_id=idx)
+        tmp_cell = airr_cells[idx]
+        tmp_chain = AirrCell.empty_chain_dict()
+        tmp_chain.update(
+            {
+                "locus": _translate_locus(row["Chain_Type"]),
+                "v_call": row["V_gene"],
+                "d_call": row["D_gene"],
+                "j_call": row["J_gene"],
+                "c_call": row["C_gene"],
+                # strictly, this would have to go the the "cdr3" field as the conserved residues
+                # are not contained. However we only work with `junction` in scirpy
+                "junction": row["CDR3_Nucleotide"],
+                "junction_aa": row["CDR3_Translation"],
+                "productive": row["Productive"],
+                "consensus_count": row["Read_Count"],
+                "duplicate_count": row["Molecule_Count"],
+            }
+        )
+        tmp_cell.add_chain(tmp_chain)
+
+    return from_airr_cells(airr_cells.values())

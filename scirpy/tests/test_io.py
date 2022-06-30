@@ -200,8 +200,8 @@ def test_infer_locus_from_gene_name(chain_dict, expected):
 @pytest.mark.parametrize(
     "path",
     [
-        TESTDATA / "BD/RhapBDFDemo_BCR_Dominant_Contigs.csv.gz",
-        TESTDATA / "BD/RhapVDJDemo_BCR_Unfiltered_Contigs.csv.gz",
+        TESTDATA / "bd/RhapVDJDemo_BCR_Dominant_Contigs.csv.gz",
+        TESTDATA / "bd/RhapVDJDemo_BCR_Unfiltered_Contigs.csv.gz",
     ],
 )
 def test_read_and_convert_bd_samples(path):
@@ -927,7 +927,7 @@ def test_read_bracer():
 def test_read_bd_per_cell_chain():
     adata = read_bd_rhapsody(TESTDATA / "bd/test_per_cell_chain.csv")
 
-    assert adata.obs.shape[0] == 7
+    assert adata.obs.shape[0] == 6
 
     cell1 = adata.obs.loc["1", :]
     cell25 = adata.obs.loc["25", :]
@@ -939,10 +939,10 @@ def test_read_bd_per_cell_chain():
     assert cell1["IR_VJ_1_consensus_count"] == 72
     assert cell1["IR_VJ_1_junction"] == "GCTGCCCCAGAATTTTGTC"
     assert cell1["IR_VJ_1_junction_aa"] == "AAGQNFV"
-    assert cell1["IR_VJ_1_v_gene"] == "TRAV38*01"
-    assert _is_na(cell1["IR_VJ_1_d_gene"])
-    assert cell1["IR_VJ_1_j_gene"] == "TRAJ2*01"
-    assert cell1["IR_VJ_1_c_gene"] == "TRAC"
+    assert cell1["IR_VJ_1_v_call"] == "TRAV38*01"
+    assert _is_na(cell1["IR_VJ_1_d_call"])
+    assert cell1["IR_VJ_1_j_call"] == "TRAJ2*01"
+    assert cell1["IR_VJ_1_c_call"] == "TRAC"
 
     # cell25 has no productive chains
     assert not _is_na(cell25["extra_chains"])
@@ -954,8 +954,8 @@ def test_read_bd_per_cell_chain():
     assert cell85["IR_VJ_1_locus"] == "TRA"
     assert cell85["IR_VJ_1_consensus_count"] == 418
     assert cell85["IR_VJ_2_locus"] == "TRA"
-    assert cell85["IR_VJ_1_consensus_count"] == 1
-    assert cell85["extra_chains"].contains("TRA")
+    assert cell85["IR_VJ_2_consensus_count"] == 1
+    assert "TRA" in cell85["extra_chains"]
 
 
 @pytest.mark.conda
