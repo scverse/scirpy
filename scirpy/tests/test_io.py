@@ -8,6 +8,7 @@ from scirpy.io import (
     to_airr_cells,
     to_dandelion,
     from_dandelion,
+    read_bd_rhapsody,
     write_airr,
     upgrade_schema,
     AirrCell,
@@ -194,6 +195,18 @@ def test_airr_cell_empty():
 )
 def test_infer_locus_from_gene_name(chain_dict, expected):
     assert expected is _infer_locus_from_gene_names(chain_dict)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        TESTDATA / "BD/RhapBDFDemo_BCR_Dominant_Contigs.csv.gz",
+        TESTDATA / "BD/RhapVDJDemo_BCR_Unfiltered_Contigs.csv.gz",
+    ],
+)
+def test_read_and_convert_bd_samples(path):
+    """Test that a full BD dataset can be imported without errors"""
+    assert read_bd_rhapsody(path).shape[0] > 0
 
 
 @pytest.mark.parametrize(
@@ -908,3 +921,50 @@ def test_read_bracer():
     )
     assert cell2["IR_VDJ_1_np1_length"] == 2
     assert cell2["IR_VDJ_1_np2_length"] == 22
+
+
+@pytest.mark.conda
+def test_read_bd_per_cell_chain():
+    adata = read_bd_rhapsody(TESTDATA / "bd/test_per_cell_chain.csv")
+
+    assert adata.obs.shape[0] == 7
+
+    cell1 = adata.obs.loc["1", :]
+    cell25 = adata.obs.loc["25", :]
+    cell39 = adata.obs.loc["39", :]
+    cell85 = adata.obs.loc["85", :]
+
+    assert cell1["IR_VJ_1_locus"] == "TRA"
+    assert cell1["IR_VJ_1_duplicate_count"] == 1
+    assert cell1["IR_VJ_1_consensus_count"] == 72
+    assert cell1["IR_VJ_1_junction"] == "GCTGCCCCAGAATTTTGTC"
+    assert cell1["IR_VJ_1_junction_aa"] == "AAGQNFV"
+    assert cell1["IR_VJ_1_v_gene"] == "TRAV38*01"
+    assert _is_na(cell1["IR_VJ_1_d_gene"])
+    assert cell1["IR_VJ_1_j_gene"] == "TRAJ2*01"
+    assert cell1["IR_VJ_1_c_gene"] == "TRAC"
+
+    # cell25 has no productive chains
+    assert not _is_na(cell25["extra_chains"])
+    assert _is_na(cell25["IR_VJ_1_locus"])
+
+    assert cell39["IR_VJ_1_locus"] == "TRG"
+    assert cell39["IR_VDJ_1_locus"] == "TRD"
+
+    assert cell85["IR_VJ_1_locus"] == "TRA"
+    assert cell85["IR_VJ_1_consensus_count"] == 418
+    assert cell85["IR_VJ_2_locus"] == "TRA"
+    assert cell85["IR_VJ_1_consensus_count"] == 1
+    assert cell85["extra_chains"].contains("TRA")
+
+
+@pytest.mark.conda
+def test_read_bd_contigs():
+    adata = read_bd_rhapsody(TESTDATA / "bd/test_unfiltered_contigs.csv")
+
+    assert adata.obs.shape[0] == 5
+
+    cell10681 = adata.obs.loc["10681"]
+
+    assert cell10681["IR_VJ_1_locus"] == "IGK"
+    assert cell10681["IR_VJ_1_duplicate_count"] == 2

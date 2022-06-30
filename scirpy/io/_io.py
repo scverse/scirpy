@@ -798,10 +798,14 @@ def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
 
     Supports `*_perCellChain.csv`, `*_perCellChain_unfiltered.csv`, `*_VDJ_Dominant_Contigs.csv`, and
     `*_VDJ_Unfiltered_Contigs.csv` files. The applicable filename depends your version of the BD Rhapsody pipeline.
-    More recent versions of the pipeline generate data in standardized `AIRR Rearragement format <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
-    If you have AIRR filese available we recommend to read those instead using :func:`scirpy.io.read_airr`.
 
-    `_perCell` files are currently not supported, follow the :ref:`IO Tutorial <importing-custom-formats>` to import
+    .. note::
+
+        More recent versions of the pipeline generate data in standardized `AIRR Rearragement format <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_.
+        If you have a chance to do so, we recommend reanalysing your data with the most recent version of the
+        BD Rhapsody pipeline and read output filese with :func:`scirpy.io.read_airr`.
+
+    `*_perCell` files are currently not supported, follow the :ref:`IO Tutorial <importing-custom-formats>` to import
     custom formats and make use of `this snippet <https://github.com/scverse/scirpy/blob/8de293fd54125a00f8ff6fd5f8a4cb232d7a51e6/scirpy/io/_io_bdrhapsody.py#L8-L44>`_
 
     {doc_working_model}
