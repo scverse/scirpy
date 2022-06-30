@@ -41,6 +41,7 @@ formats.
    io.read_10x_vdj
    io.read_tracer
    io.read_bracer
+   io.read_bd_rhapsody
    io.read_airr
    io.from_dandelion
 

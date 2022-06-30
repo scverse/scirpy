@@ -87,12 +87,11 @@ The example data used in this notebook are available from the
        parameter when running :func:`scirpy.tl.define_clonotypes`.
 
 
-Loading data from *10x Genomics CellRanger*, *TraCeR*, *BraCer* or AIRR-compliant tools
----------------------------------------------------------------------------------------
+Loading data from estabilshed analysis pipelines or AIRR-compliant tools
+------------------------------------------------------------------------
 
-We provide convenience functions to load data from *CellRanger*, *TraCeR*, or *BraCeR* with a single function call,
-supporting both data generated on the *10x* and *Smart-seq2* sequencing platforms, respectively.
-Moreover, we support importing data in the community-standard
+We provide convenience functions to load data from *10x CellRanger*, *BD Rhapsody*, *TraCeR*, or *BraCeR* with 
+a single function call. Moreover, we support importing data in the community-standard
 `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__.
 
 .. module:: scirpy.io
@@ -105,6 +104,7 @@ Moreover, we support importing data in the community-standard
    read_tracer
    read_bracer
    read_airr
+   read_bd_rhapsody
    from_dandelion
 
 Read 10x data
