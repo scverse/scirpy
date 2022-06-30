@@ -832,6 +832,13 @@ def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
             "BCR_Heavy": "IGH",
         }[locus]
 
+    def _get(row, field):
+        try:
+            return row[field]
+        except KeyError:
+            # in "Dominant_Contigs", the fields end with "_Dominant"
+            return row[f"{field}_Dominant"]
+
     airr_cells = {}
     for idx, row in df.iterrows():
         idx = str(idx)
@@ -842,14 +849,14 @@ def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
         tmp_chain.update(
             {
                 "locus": _translate_locus(row["Chain_Type"]),
-                "v_call": row["V_gene"],
-                "d_call": row["D_gene"],
-                "j_call": row["J_gene"],
-                "c_call": row["C_gene"],
+                "v_call": _get(row, "V_gene"),
+                "d_call": _get(row, "D_gene"),
+                "j_call": _get(row, "J_gene"),
+                "c_call": _get(row, "C_gene"),
                 # strictly, this would have to go the the "cdr3" field as the conserved residues
                 # are not contained. However we only work with `junction` in scirpy
-                "junction": row["CDR3_Nucleotide"],
-                "junction_aa": row["CDR3_Translation"],
+                "junction": _get(row, "CDR3_Nucleotide"),
+                "junction_aa": _get(row, "CDR3_Translation"),
                 "productive": row["Productive"],
                 "consensus_count": row["Read_Count"],
                 "duplicate_count": row["Molecule_Count"],
