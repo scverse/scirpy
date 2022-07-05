@@ -93,7 +93,7 @@ jobs:
           path: docs/_build/html
 
       - name: Deploy to gh-pages
-        if: ( matrix.os == 'ubuntu-latest' ) && ( matrix.python-version == '3.8' ) && ( github.event_name != 'pull_request' )
+        if: ( matrix.os == 'ubuntu-latest' ) && ( github.event_name != 'pull_request' )
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
