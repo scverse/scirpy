@@ -43,7 +43,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -339,6 +339,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -347,10 +348,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -362,12 +367,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -413,7 +421,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div></div>
 </div>
@@ -430,7 +438,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-scanpy==1.8.2 anndata==0.7.8 umap==0.5.2 numpy==1.20.0 scipy==1.8.0 pandas==1.4.1 scikit-learn==1.0.2 statsmodels==0.13.2 python-igraph==0.9.9 pynndescent==0.5.6
+scanpy==1.9.1 anndata==0.8.0 umap==0.5.3 numpy==1.22.4 scipy==1.8.1 pandas==1.4.3 scikit-learn==1.1.1 statsmodels==0.13.2 python-igraph==0.9.11 pynndescent==0.5.7
 </pre></div></div>
 </div>
 <p>The dataset ships with the <cite>scirpy</cite> package. We can conveniently load it from the <a class="reference internal" href="../api.html#module-scirpy.datasets" title="scirpy.datasets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datasets</span></code></a> module:</p>
@@ -450,7 +458,7 @@ scanpy==1.8.2 anndata==0.7.8 umap==0.5.2 numpy==1.20.0 scipy==1.8.0 pandas==1.4.
 try downloading from url
 https://github.com/scverse/scirpy/releases/download/d0.1.0/wu2020_3k.h5ad
 ... this may take a while but only happens once
-creating directory /home/runner/work/scirpy/scirpy/docs/tutorials/data/ for saving data
+creating directory /Users/runner/work/scirpy/scirpy/docs/tutorials/data/ for saving data
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -458,12 +466,12 @@ creating directory /home/runner/work/scirpy/scirpy/docs/tutorials/data/ for savi
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 16.0M/16.0M [00:00&lt;00:00, 28.2MB/s]
+100%|██████████| 16.0M/16.0M [00:00&lt;00:00, 80.7MB/s]
 </pre></div></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><cite>adata</cite> is a regular <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object with additional, Immune Receptor (IR)-specific columns in <cite>obs</cite> that are named according to the <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html">AIRR Rearrangement Schema</a>. For more information, check the page about</p>
+<p><cite>adata</cite> is a regular <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object with additional, Immune Receptor (IR)-specific columns in <cite>obs</cite> that are named according to the <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html">AIRR Rearrangement Schema</a>. For more information, check the page about</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Scirpy’s <a class="reference internal" href="../usage-principles.html#data-structure"><span class="std std-ref">data structure</span></a>, and</p></li>
@@ -858,7 +866,7 @@ filtered out 18877 genes that are detected in less than 10 cells
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
@@ -871,10 +879,25 @@ extracting highly variable genes
 computing PCA
     on highly variable genes
     with n_comps=50
-    finished (0:00:00)
+    finished (0:00:01)
 computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
-    finished (0:00:02)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+    finished (0:00:03)
 </pre></div></div>
 </div>
 <p>For the <em>Wu2020</em> dataset, the authors already provide clusters and UMAP coordinates. Instead of performing clustering and cluster annotation ourselves, we will just use the provided data. The clustering and annotation methodology is described in <a class="reference external" href="https://doi.org/10.1038/s41586-020-2056-8">their paper</a>.</p>
@@ -928,19 +951,11 @@ computing neighbors
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-... storing &#39;cluster&#39; as categorical
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_18_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_18_1.png" style="width: 952px; height: 873px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_18_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_18_0.png" style="width: 951px; height: 877px;" />
 </div>
 </div>
 </section>
@@ -987,21 +1002,11 @@ are labelled as <cite>ambiguous</cite>.</p></li>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-... storing &#39;receptor_type&#39; as categorical
-... storing &#39;receptor_subtype&#39; as categorical
-... storing &#39;chain_pairing&#39; as categorical
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_23_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_23_1.png" style="width: 482px; height: 288px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_23_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_23_0.png" style="width: 470px; height: 281px;" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1016,7 +1021,7 @@ are labelled as <cite>ambiguous</cite>.</p></li>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_24_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_24_0.png" style="width: 482px; height: 302px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_24_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_24_0.png" style="width: 470px; height: 293px;" />
 </div>
 </div>
 <p>Indeed, in this dataset, ~6% of cells have more than one pair of productive T-cell receptors:</p>
@@ -1058,7 +1063,7 @@ Fraction of cells with more than one pair of TCRs: 0.06
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_28_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_28_0.png" style="width: 391px; height: 296px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_28_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_28_0.png" style="width: 384px; height: 300px;" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -1091,7 +1096,7 @@ Fraction of cells with more than one pair of TCRs: 0.06
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_33_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_33_0.png" style="width: 482px; height: 302px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_33_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_33_0.png" style="width: 470px; height: 293px;" />
 </div>
 </div>
 </section>
@@ -1172,7 +1177,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1526/1526 [00:02&lt;00:00, 722.97it/s]
+100%|██████████| 1526/1526 [00:05&lt;00:00, 282.17it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1210,14 +1215,6 @@ Categorical variables can be visualized as pie charts.</p>
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-... storing &#39;clone_id&#39; as categorical
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
@@ -1230,7 +1227,7 @@ Categorical variables can be visualized as pie charts.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_42_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_42_2.png" style="width: 646px; height: 482px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_42_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_42_1.png" style="width: 642px; height: 482px;" />
 </div>
 </div>
 </section>
@@ -1269,7 +1266,7 @@ Computing sequence x sequence distance matrix for VJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 496/496 [00:13&lt;00:00, 37.43it/s]
+100%|██████████| 496/496 [01:42&lt;00:00,  4.84it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1285,8 +1282,7 @@ Computing sequence x sequence distance matrix for VDJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-
-100%|██████████| 496/496 [00:13&lt;00:00, 37.92it/s]
+100%|██████████| 496/496 [01:28&lt;00:00,  5.59it/s]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1313,7 +1309,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1549/1549 [00:06&lt;00:00, 228.54it/s]
+100%|██████████| 1549/1549 [00:15&lt;00:00, 101.04it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1353,14 +1349,6 @@ Stored clonal assignments in `adata.obs[&#34;cc_aa_alignment&#34;]`.
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-... storing &#39;cc_aa_alignment&#39; as categorical
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
 </pre></div>
 </div>
@@ -1373,7 +1361,7 @@ Stored clonal assignments in `adata.obs[&#34;cc_aa_alignment&#34;]`.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_49_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_49_2.png" style="width: 608px; height: 480px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_49_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_49_1.png" style="width: 608px; height: 479px;" />
 </div>
 </div>
 <p>We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting <code class="docutils literal notranslate"><span class="pre">AnnData</span></code>. When extracting the CDR3 sequences of clonotype cluster <code class="docutils literal notranslate"><span class="pre">159</span></code>, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph.</p>
@@ -1511,23 +1499,15 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1549/1549 [00:06&lt;00:00, 231.62it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Stored clonal assignments in `adata.obs[&#34;cc_aa_alignment_same_v&#34;]`.
+100%|██████████| 1549/1549 [00:16&lt;00:00, 91.20it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-
+Stored clonal assignments in `adata.obs[&#34;cc_aa_alignment_same_v&#34;]`.
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1657,20 +1637,11 @@ to <cite>adata.obs</cite> and overlay it on the UMAP plot.</p>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-... storing &#39;cc_aa_alignment_same_v&#39; as categorical
-... storing &#39;clonal_expansion&#39; as categorical
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_62_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_62_1.png" style="width: 662px; height: 299px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_62_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_62_0.png" style="width: 664px; height: 303px;" />
 </div>
 </div>
 <p>The second option is to show the number of cells belonging to an expanded clonotype per category
@@ -1696,7 +1667,7 @@ in a stacked bar plot, using the <a class="reference internal" href="../generate
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_64_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_64_1.png" style="width: 441px; height: 249px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_64_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_64_1.png" style="width: 431px; height: 247px;" />
 </div>
 </div>
 <p>The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection for a certain, reactive T-cell clone. It, therefore, makes sense that CD8+ effector T-cells have the largest fraction of expanded clonotypes.</p>
@@ -1721,7 +1692,7 @@ in a stacked bar plot, using the <a class="reference internal" href="../generate
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_66_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_66_1.png" style="width: 440px; height: 250px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_66_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_66_1.png" style="width: 431px; height: 248px;" />
 </div>
 </div>
 <p>Expectedly, the CD8+ effector T cells have the largest fraction of expanded clonotypes.</p>
@@ -1740,7 +1711,7 @@ in a stacked bar plot, using the <a class="reference internal" href="../generate
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_68_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_68_0.png" style="width: 427px; height: 272px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_68_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_68_0.png" style="width: 420px; height: 269px;" />
 </div>
 </div>
 </section>
@@ -1770,7 +1741,7 @@ ten largest clonotypes across the cell-type clusters.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_71_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_71_1.png" style="width: 487px; height: 266px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_71_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_71_1.png" style="width: 481px; height: 262px;" />
 </div>
 </div>
 <p>It might be beneficial to normalize the counts to the number of cells per sample to mitigate biases due to different sample sizes:</p>
@@ -1797,7 +1768,7 @@ ten largest clonotypes across the cell-type clusters.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_73_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_73_1.png" style="width: 495px; height: 266px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_73_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_73_1.png" style="width: 487px; height: 262px;" />
 </div>
 </div>
 <p>Coloring the bars by patient gives us information about public and private clonotypes: Some clonotypes are <em>private</em>, i.e. specific to a certain tissue, others are <em>public</em>, i.e. they are shared across different tissues.</p>
@@ -1815,7 +1786,7 @@ ten largest clonotypes across the cell-type clusters.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_75_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_75_0.png" style="width: 587px; height: 294px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_75_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_75_0.png" style="width: 579px; height: 290px;" />
 </div>
 </div>
 <p>However, clonotypes that are shared between <em>patients</em> are rare:</p>
@@ -1833,7 +1804,7 @@ ten largest clonotypes across the cell-type clusters.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_77_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_77_0.png" style="width: 592px; height: 333px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_77_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_77_0.png" style="width: 583px; height: 318px;" />
 </div>
 </div>
 </section>
@@ -1857,7 +1828,7 @@ We use <cite>max_col</cite> to limit the plot to the 10 most abundant V-genes.</
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_80_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_80_0.png" style="width: 495px; height: 300px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_80_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_80_0.png" style="width: 487px; height: 294px;" />
 </div>
 </div>
 <p>We can pre-select groups by filtering <code class="docutils literal notranslate"><span class="pre">adata</span></code>:</p>
@@ -1884,14 +1855,15 @@ We use <cite>max_col</cite> to limit the plot to the 10 most abundant V-genes.</
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Trying to set attribute `._uns` of view, copying.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/compat/_overloaded_dict.py:106: ImplicitModificationWarning: Trying to modify attribute `._uns` of view, initializing view as actual.
+  self.data[key] = value
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_82_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_82_1.png" style="width: 484px; height: 297px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_82_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_82_1.png" style="width: 475px; height: 288px;" />
 </div>
 </div>
 <p>The exact combinations of VDJ genes can be visualized as a Sankey-plot using <a class="reference internal" href="../generated/scirpy.pl.vdj_usage.html#scirpy.pl.vdj_usage" title="scirpy.pl.vdj_usage"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pl.vdj_usage()</span></code></a>.</p>
@@ -1907,7 +1879,7 @@ Trying to set attribute `._uns` of view, copying.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_84_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_84_0.png" style="width: 508px; height: 281px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_84_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_84_0.png" style="width: 502px; height: 281px;" />
 </div>
 </div>
 <p>We can also use this plot to investigate the exact VDJ composition of one (or several) clonotypes:</p>
@@ -1936,7 +1908,7 @@ Trying to set attribute `._uns` of view, copying.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_86_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_86_1.png" style="width: 488px; height: 281px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_86_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_86_1.png" style="width: 485px; height: 281px;" />
 </div>
 </div>
 <section id="Spectratype-plots">
@@ -1963,7 +1935,7 @@ Trying to set attribute `._uns` of view, copying.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_89_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_89_1.png" style="width: 551px; height: 356px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_89_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_89_1.png" style="width: 542px; height: 352px;" />
 </div>
 </div>
 <p>The same chart visualized as “ridge”-plot:</p>
@@ -1987,7 +1959,7 @@ Trying to set attribute `._uns` of view, copying.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/scirpy/pl/base.py:262: UserWarning: FixedFormatter should only be used together with FixedLocator
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/scirpy/pl/base.py:262: UserWarning: FixedFormatter should only be used together with FixedLocator
   ax.set_yticklabels(order)
 </pre></div></div>
 </div>
@@ -2004,7 +1976,7 @@ Trying to set attribute `._uns` of view, copying.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_91_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_91_2.png" style="width: 541px; height: 465px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_91_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_91_2.png" style="width: 535px; height: 462px;" />
 </div>
 </div>
 <p>A spectratype-plot by gene usage. To pre-select specific genes, we can simply filter the <code class="docutils literal notranslate"><span class="pre">adata</span></code> object before plotting.</p>
@@ -2032,7 +2004,8 @@ Trying to set attribute `._uns` of view, copying.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Trying to set attribute `._uns` of view, copying.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/compat/_overloaded_dict.py:106: ImplicitModificationWarning: Trying to modify attribute `._uns` of view, initializing view as actual.
+  self.data[key] = value
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2048,7 +2021,7 @@ Trying to set attribute `._uns` of view, copying.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_93_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_93_2.png" style="width: 552px; height: 356px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_93_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_93_2.png" style="width: 536px; height: 352px;" />
 </div>
 </div>
 </section>
@@ -2279,7 +2252,7 @@ Running Scirpy’s <a class="reference internal" href="../generated/scirpy.tl.re
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;seaborn.matrix.ClusterGrid at 0x7fc0f6f84bb0&gt;
+&lt;seaborn.matrix.ClusterGrid at 0x139a8ea30&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2321,7 +2294,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_100_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_100_2.png" style="width: 433px; height: 364px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_100_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_100_2.png" style="width: 430px; height: 361px;" />
 </div>
 </div>
 </section>
@@ -2358,7 +2331,7 @@ Initalizing clonotype subgraphs...
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1487/1487 [00:00&lt;00:00, 7431.73it/s]
+100%|██████████| 1487/1487 [00:00&lt;00:00, 3285.91it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2375,7 +2348,7 @@ Computing background distributions...
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
 
-100%|██████████| 1000/1000 [00:01&lt;00:00, 804.39it/s]
+100%|██████████| 1000/1000 [00:02&lt;00:00, 396.81it/s]
 </pre></div></div>
 </div>
 <p>We can plot the clonotype modularity on top of a umap of clonotype network plot</p>
@@ -2391,7 +2364,7 @@ Computing background distributions...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_105_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_105_0.png" style="width: 290px; height: 296px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_105_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_105_0.png" style="width: 293px; height: 300px;" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -2421,7 +2394,7 @@ Computing background distributions...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_106_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_106_1.png" style="width: 546px; height: 419px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_106_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_106_1.png" style="width: 546px; height: 418px;" />
 </div>
 </div>
 <p>We can also visualize the clonotype modularity together with the associated FDR as a sort of “one sided volcano plot”:</p>
@@ -2446,7 +2419,7 @@ Computing background distributions...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_108_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_108_1.png" style="width: 592px; height: 300px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_108_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_108_1.png" style="width: 590px; height: 300px;" />
 </div>
 </div>
 <p>Let’s further inspect the two top scoring candidates. We can extract that information from <code class="docutils literal notranslate"><span class="pre">adata.obs[&quot;clonotype_modularity&quot;]</span></code>.</p>
@@ -2480,7 +2453,7 @@ Computing background distributions...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_111_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_111_0.png" style="width: 343px; height: 296px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_111_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_111_0.png" style="width: 343px; height: 300px;" />
 </div>
 </div>
 <p>We observe that they are (mostly) restricted to a single cluster. By leveraging scanpy’s differential expression module, we can compare the gene expression of the cells in the two clonotypes to the rest.</p>
@@ -2509,14 +2482,14 @@ Computing background distributions...
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 ranking genes
-    finished (0:00:01)
+    finished (0:00:06)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_113_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_113_1.png" style="width: 564px; height: 424px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_113_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_113_1.png" style="width: 559px; height: 413px;" />
 </div>
 </div>
 </section>
@@ -2552,9 +2525,9 @@ WARNING: Clonotype imbalance calculation depends on repertoire overlap. We could
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/scirpy/tl/_clonotype_imbalance.py:280: RuntimeWarning: divide by zero encountered in log2
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/scirpy/tl/_clonotype_imbalance.py:280: RuntimeWarning: divide by zero encountered in log2
   logfoldchange = np.log2(
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/scirpy/tl/_clonotype_imbalance.py:281: RuntimeWarning: divide by zero encountered in double_scalars
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/scirpy/tl/_clonotype_imbalance.py:281: RuntimeWarning: divide by zero encountered in double_scalars
   (case_mean_freq + global_minimum) / (control_mean_freq + global_minimum)
 </pre></div></div>
 </div>
@@ -2583,7 +2556,7 @@ WARNING: Clonotype imbalance calculation depends on repertoire overlap. We could
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_117_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_117_0.png" style="width: 842px; height: 296px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_117_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_117_0.png" style="width: 843px; height: 300px;" />
 </div>
 </div>
 </section>
@@ -2622,7 +2595,7 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_119_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_119_2.png" style="width: 456px; height: 364px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_119_2.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_119_2.png" style="width: 443px; height: 361px;" />
 </div>
 </div>
 </section>
@@ -2653,7 +2626,7 @@ ranking genes
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_121_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_121_1.png" style="width: 302px; height: 372px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_121_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_121_1.png" style="width: 301px; height: 371px;" />
 </div>
 </div>
 </section>
@@ -2713,9 +2686,9 @@ Downloading latest version of VDJDB
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/scirpy/datasets/__init__.py:131: DtypeWarning: Columns (20,29,30) have mixed types. Specify dtype option on import or set low_memory=False.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/scirpy/datasets/__init__.py:131: DtypeWarning: Columns (20,29,30) have mixed types. Specify dtype option on import or set low_memory=False.
   df = pd.read_csv(d / &#34;vdjdb_full.txt&#34;, sep=&#34;\t&#34;)
-Processing VDJDB entries: 100%|██████████| 56997/56997 [00:11&lt;00:00, 4994.95it/s]
+Processing VDJDB entries: 100%|██████████| 60055/60055 [00:25&lt;00:00, 2320.31it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2732,32 +2705,8 @@ Converting to AnnData object
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
 
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/anndata/_core/anndata.py:120: ImplicitModificationWarning: Transforming to str index.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/_core/anndata.py:121: ImplicitModificationWarning: Transforming to str index.
   warnings.warn(&#34;Transforming to str index.&#34;, ImplicitModificationWarning)
-... storing &#39;species&#39; as categorical
-... storing &#39;mhc.a&#39; as categorical
-... storing &#39;mhc.b&#39; as categorical
-... storing &#39;mhc.class&#39; as categorical
-... storing &#39;antigen.epitope&#39; as categorical
-... storing &#39;antigen.gene&#39; as categorical
-... storing &#39;antigen.species&#39; as categorical
-... storing &#39;reference.id&#39; as categorical
-... storing &#39;method.identification&#39; as categorical
-... storing &#39;method.frequency&#39; as categorical
-... storing &#39;method.singlecell&#39; as categorical
-... storing &#39;method.sequencing&#39; as categorical
-... storing &#39;method.verification&#39; as categorical
-... storing &#39;meta.study.id&#39; as categorical
-... storing &#39;meta.cell.subset&#39; as categorical
-... storing &#39;meta.subject.cohort&#39; as categorical
-... storing &#39;meta.subject.id&#39; as categorical
-... storing &#39;meta.replica.id&#39; as categorical
-... storing &#39;meta.clone.id&#39; as categorical
-... storing &#39;meta.epitope.id&#39; as categorical
-... storing &#39;meta.tissue&#39; as categorical
-... storing &#39;meta.donor.MHC&#39; as categorical
-... storing &#39;meta.donor.MHC.method&#39; as categorical
-... storing &#39;meta.structure.id&#39; as categorical
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -2801,15 +2750,23 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1549/1549 [00:04&lt;00:00, 370.76it/s]
+100%|██████████| 1549/1549 [00:09&lt;00:00, 159.23it/s]
 </pre></div></div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Stored IR distance matrix in `adata.uns[&#34;ir_query_VDJDB_aa_identity&#34;]`.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
 </pre></div></div>
 </div>
 <p><a class="reference internal" href="../generated/scirpy.tl.ir_query_annotate_df.html#scirpy.tl.ir_query_annotate_df" title="scirpy.tl.ir_query_annotate_df"><code class="xref py py-func docutils literal notranslate"><span class="pre">ir_query_annotate_df()</span></code></a> allows us to retrieve <em>all pairs cells with their of matching entries</em>. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell.</p>
@@ -2872,13 +2829,13 @@ Stored IR distance matrix in `adata.uns[&#34;ir_query_VDJDB_aa_identity&#34;]`.
     </tr>
     <tr>
       <th>RT3_TCTCTAATCACAATGC-1-6</th>
-      <td>CMV</td>
-      <td>IE1</td>
+      <td>InfluenzaA</td>
+      <td>NP</td>
     </tr>
     <tr>
       <th>RT3_TCTCTAATCACAATGC-1-6</th>
-      <td>InfluenzaA</td>
-      <td>NP</td>
+      <td>SARS-CoV-2</td>
+      <td>ORF9b</td>
     </tr>
   </tbody>
 </table>
@@ -2906,7 +2863,7 @@ Stored IR distance matrix in `adata.uns[&#34;ir_query_VDJDB_aa_identity&#34;]`.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 304/304 [00:00&lt;00:00, 4120.86it/s]
+100%|██████████| 315/315 [00:00&lt;00:00, 1950.50it/s]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -2917,19 +2874,11 @@ Stored IR distance matrix in `adata.uns[&#34;ir_query_VDJDB_aa_identity&#34;]`.
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-... storing &#39;antigen.species&#39; as categorical
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_3k_tcr_131_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_131_1.png" style="width: 414px; height: 296px;" />
+<img alt="../_images/tutorials_tutorial_3k_tcr_131_0.png" class="no-scaled-link" src="../_images/tutorials_tutorial_3k_tcr_131_0.png" style="width: 409px; height: 300px;" />
 </div>
 </div>
 </section>
@@ -2946,7 +2895,7 @@ Stored IR distance matrix in `adata.uns[&#34;ir_query_VDJDB_aa_identity&#34;]`.
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

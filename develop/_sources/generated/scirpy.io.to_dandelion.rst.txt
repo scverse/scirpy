@@ -1,4 +1,4 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L709-L740
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L718-L749
 
 scirpy.io.to\_dandelion
 =======================

@@ -41,7 +41,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -121,7 +121,7 @@ Can be anything that can be passed to <code class="docutils literal notranslate"
 algorithm that respects node sizes. See
 <a class="reference internal" href="scirpy.util.graph.layout_fr_size_aware.html#scirpy.util.graph.layout_fr_size_aware" title="scirpy.util.graph.layout_fr_size_aware"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.util.graph.layout_fr_size_aware()</span></code></a> for more details.</p>
 </dd>
-<dt><strong>arrange_boxes</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘size’, ‘rpack’, ‘squarify’] (default: <code class="docutils literal notranslate"><span class="pre">'squarify'</span></code>)</dt><dd><p>How to arrange the individual components. Can be “size”
+<dt><strong>arrange_boxes</strong> : <span class="annotation terse">{‘size’, ‘rpack’, ‘squarify’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘size’, ‘rpack’, ‘squarify’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'squarify'</span></code>)</dt><dd><p>How to arrange the individual components. Can be “size”
 to arange them by the component size, or “rpack” to pack them as densly
 as possible, or “squarify” to arrange them using a treemap algorithm.</p>
 </dd>
@@ -129,12 +129,12 @@ as possible, or “squarify” to arrange them using a treemap algorithm.</p>
 </dd>
 <dt><strong>pad_y</strong> : <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> (default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</dt><dd><p>Padding between subgraphs in the y dimension.</p>
 </dd>
-<dt><strong>layout_kwargs</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Additional arguments passed to the layouting algorithm used for each component.</p>
+<dt><strong>layout_kwargs</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Additional arguments passed to the layouting algorithm used for each component.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.22)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a></p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>pos
@@ -156,7 +156,7 @@ n_nodes x dim array containing the layout coordinates</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

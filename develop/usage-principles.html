@@ -41,7 +41,7 @@
             <img src="_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -103,10 +103,10 @@
 <a class="reference external" href="https://scanpy.readthedocs.io/en/stable/usage-principles.html">workflow principles</a>:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>The <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/index.html#api" title="(in pandas v1.4.1)"><span class="xref std std-ref">API</span></a> is divided into <em>preprocessing</em> (<code class="docutils literal notranslate"><span class="pre">pp</span></code>), <em>tools</em> (<code class="docutils literal notranslate"><span class="pre">tl</span></code>),
+<li><p>The <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/index.html#api" title="(in pandas v1.4.3)"><span class="xref std std-ref">API</span></a> is divided into <em>preprocessing</em> (<code class="docutils literal notranslate"><span class="pre">pp</span></code>), <em>tools</em> (<code class="docutils literal notranslate"><span class="pre">tl</span></code>),
 and <em>plotting</em> (<code class="docutils literal notranslate"><span class="pre">pl</span></code>).</p></li>
-<li><p>All functions work on <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> objects.</p></li>
-<li><p>The <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> instance is modified inplace, unless the functions
+<li><p>All functions work on <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> objects.</p></li>
+<li><p>The <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> instance is modified inplace, unless the functions
 is called with the keyword argument <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>.</p></li>
 </ul>
 </div></blockquote>
@@ -115,8 +115,8 @@ is called with the keyword argument <code class="docutils literal notranslate"><
 <div><ul class="simple">
 <li><p>Plotting functions with inexpensive computations (e.g. <a class="reference internal" href="generated/scirpy.pl.clonal_expansion.html#scirpy.pl.clonal_expansion" title="scirpy.pl.clonal_expansion"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pl.clonal_expansion()</span></code></a>)
 call the corresponding tool (<a class="reference internal" href="generated/scirpy.tl.clonal_expansion.html#scirpy.tl.clonal_expansion" title="scirpy.tl.clonal_expansion"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.tl.clonal_expansion()</span></code></a>) on-the-fly and
-don’t store the results in the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p></li>
-<li><p>All plotting functions, by default, return a <a class="reference external" href="https://matplotlib.org/stable/api/axes_api.html#matplotlib.axes.Axes" title="(in Matplotlib v3.5.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Axes</span></code></a> object,
+don’t store the results in the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p></li>
+<li><p>All plotting functions, by default, return a <a class="reference external" href="https://matplotlib.org/stable/api/axes_api.html#matplotlib.axes.Axes" title="(in Matplotlib v3.5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Axes</span></code></a> object,
 or a list of such.</p></li>
 </ul>
 </div></blockquote>
@@ -126,7 +126,7 @@ or a list of such.</p></li>
 <p>For instructions how to load data into scirpy, see <a class="reference internal" href="tutorials/tutorial_io.html#importing-data"><span class="std std-ref">Loading adaptive Immune Receptor (IR)-sequencing data with Scirpy</span></a>.</p>
 <p>Scirpy leverages the <a class="reference external" href="https://github.com/theislab/anndata">AnnData</a> data structure
 which combines a gene expression matrix (<code class="docutils literal notranslate"><span class="pre">.X</span></code>), gene-level annotations (<code class="docutils literal notranslate"><span class="pre">.var</span></code>) and
-cell-level annotations (<code class="docutils literal notranslate"><span class="pre">.obs</span></code>) into a single object. <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> forms the basis for the
+cell-level annotations (<code class="docutils literal notranslate"><span class="pre">.obs</span></code>) into a single object. <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> forms the basis for the
 <a class="reference external" href="https://scanpy.readthedocs.io/en/stable/usage-principles.html">Scanpy analysis workflow</a>
 for single-cell transcriptomics data.</p>
 <figure class="align-default" id="id2">
@@ -155,7 +155,7 @@ two or more productive <code class="docutils literal notranslate"><span class="p
 For Scirpy the following fields are relevant:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">locus</span></code>: The <a class="reference internal" href="glossary.html#term-Chain-locus"><span class="xref std std-term">IGMT locus name</span></a> of the chain (<code class="docutils literal notranslate"><span class="pre">TRA</span></code>, <code class="docutils literal notranslate"><span class="pre">IGH</span></code>, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">locus</span></code>: The <a class="reference internal" href="glossary.html#term-Chain-locus"><span class="xref std std-term">IMGT locus name</span></a> of the chain (<code class="docutils literal notranslate"><span class="pre">TRA</span></code>, <code class="docutils literal notranslate"><span class="pre">IGH</span></code>, etc.)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">c_call</span></code>, <code class="docutils literal notranslate"><span class="pre">v_call</span></code>, <code class="docutils literal notranslate"><span class="pre">d_call</span></code>, <code class="docutils literal notranslate"><span class="pre">j_call</span></code>: The gene symbols of the respective genes</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">junction_aa</span></code> and <code class="docutils literal notranslate"><span class="pre">junction</span></code>: The amino acid and nucleotide sequences of the CDR3 regions</p></li>
 </ul>
@@ -174,7 +174,7 @@ For Scirpy the following fields are relevant:</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

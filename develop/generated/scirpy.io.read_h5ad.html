@@ -41,7 +41,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -61,6 +61,7 @@
 <li class="toctree-l3"><a class="reference internal" href="scirpy.io.read_10x_vdj.html">scirpy.io.read_10x_vdj</a></li>
 <li class="toctree-l3"><a class="reference internal" href="scirpy.io.read_tracer.html">scirpy.io.read_tracer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="scirpy.io.read_bracer.html">scirpy.io.read_bracer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scirpy.io.read_bd_rhapsody.html">scirpy.io.read_bd_rhapsody</a></li>
 <li class="toctree-l3"><a class="reference internal" href="scirpy.io.read_airr.html">scirpy.io.read_airr</a></li>
 <li class="toctree-l3"><a class="reference internal" href="scirpy.io.from_dandelion.html">scirpy.io.from_dandelion</a></li>
 <li class="toctree-l3"><a class="reference internal" href="scirpy.io.write_airr.html">scirpy.io.write_airr</a></li>
@@ -103,7 +104,7 @@
       <li>scirpy.io.read_h5ad</li>
       <li class="wy-breadcrumbs-aside">
               <!-- User defined GitHub URL -->
-              <a href="https://github.com/scverse/scirpy/tree/master/_io/h5ad.py#L349-L437" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/scverse/scirpy/tree/master/_io/h5ad.py#L165-L254" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -120,9 +121,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>filename</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]</dt><dd><p>File name of data file.</p>
+<dt><strong>filename</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]</span></dt><dd><p>File name of data file.</p>
 </dd>
-<dt><strong>backed</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘r’, ‘r+’], <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">'r'</span></code>, load <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> in <code class="docutils literal notranslate"><span class="pre">backed</span></code> mode
+<dt><strong>backed</strong> : <span class="annotation terse">{‘r’, ‘r+’} | <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘r’, ‘r+’], <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">'r'</span></code>, load <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> in <code class="docutils literal notranslate"><span class="pre">backed</span></code> mode
 instead of fully loading it into memory (<code class="docutils literal notranslate"><span class="pre">memory</span></code> mode).
 If you want to modify backed attributes of the AnnData object,
 you need to choose <code class="docutils literal notranslate"><span class="pre">'r+'</span></code>.</p>
@@ -130,7 +131,7 @@ you need to choose <code class="docutils literal notranslate"><span class="pre">
 <dt><strong>as_sparse</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">()</span></code>)</dt><dd><p>If an array was saved as dense, passing its name here will read it as
 a sparse_matrix, by chunk of size <code class="docutils literal notranslate"><span class="pre">chunk_size</span></code>.</p>
 </dd>
-<dt><strong>as_sparse_fmt</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>[<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.spmatrix.html#scipy.sparse.spmatrix" title="(in SciPy v1.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">spmatrix</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'scipy.sparse._csr.csr_matrix'&gt;</span></code>)</dt><dd><p>Sparse format class to read elements from <code class="docutils literal notranslate"><span class="pre">as_sparse</span></code> in as.</p>
+<dt><strong>as_sparse_fmt</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>[<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.spmatrix.html#scipy.sparse.spmatrix" title="(in SciPy v1.8.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">spmatrix</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'scipy.sparse._csr.csr_matrix'&gt;</span></code>)</dt><dd><p>Sparse format class to read elements from <code class="docutils literal notranslate"><span class="pre">as_sparse</span></code> in as.</p>
 </dd>
 <dt><strong>chunk_size</strong> : <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> (default: <code class="docutils literal notranslate"><span class="pre">6000</span></code>)</dt><dd><p>Used only when loading sparse dataset that is stored as dense.
 Loading iterates through chunks of the dataset of this row size
@@ -141,7 +142,7 @@ loading speed.</p>
 </dl>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -159,7 +160,7 @@ loading speed.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

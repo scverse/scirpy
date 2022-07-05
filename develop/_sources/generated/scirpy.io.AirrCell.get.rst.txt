@@ -1,4 +1,4 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/collections/abc.py#L657-L662
+:github_url: https://github.com/scverse/scirpy/tree/master/collections/abc.py#L760-L765
 
 scirpy.io.AirrCell.get
 ======================

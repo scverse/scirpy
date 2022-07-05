@@ -1,4 +1,4 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/ir_dist/metrics.py#L295-L340
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/ir_dist/metrics.py#L294-L340
 
 scirpy.ir\_dist.metrics.LevenshteinDistanceCalculator
 =====================================================

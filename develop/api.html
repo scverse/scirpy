@@ -41,7 +41,7 @@
             <img src="_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -61,6 +61,7 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.read_10x_vdj.html">scirpy.io.read_10x_vdj</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.read_tracer.html">scirpy.io.read_tracer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.read_bracer.html">scirpy.io.read_bracer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.read_bd_rhapsody.html">scirpy.io.read_bd_rhapsody</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.read_airr.html">scirpy.io.read_airr</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.from_dandelion.html">scirpy.io.from_dandelion</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/scirpy.io.write_airr.html">scirpy.io.write_airr</a></li>
@@ -256,10 +257,13 @@ formats.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.io.read_bracer.html#scirpy.io.read_bracer" title="scirpy.io.read_bracer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.read_bracer</span></code></a>(path)</p></td>
 <td><p>Read data from <a class="reference external" href="https://github.com/Teichlab/bracer">BraCeR</a> (<span id="id2">[<a class="reference internal" href="zzz_bibliography.html#id22" title="Ida Lindeman, Guy Emerton, Lira Mamanova, Omri Snir, Krzysztof Polanski, Shuo-Wang Qiao, Ludvig M. Sollid, Sarah A. Teichmann, and Michael J. T. Stubbington. BraCeR: b-cell-receptor reconstruction and clonality inference from single-cell RNA-seq. Nature Methods, 15(8):563–565, July 2018. URL: https://doi.org/10.1038/s41592-018-0082-3, doi:10.1038/s41592-018-0082-3.">LEM+18</a>]</span>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.io.read_airr.html#scirpy.io.read_airr" title="scirpy.io.read_airr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.read_airr</span></code></a>(path[, use_umi_count_col, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.io.read_bd_rhapsody.html#scirpy.io.read_bd_rhapsody" title="scirpy.io.read_bd_rhapsody"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.read_bd_rhapsody</span></code></a>(path[, dominant])</p></td>
+<td><p>Read <a class="reference internal" href="glossary.html#term-IR"><span class="xref std std-term">IR</span></a> data from the BD Rhapsody Analysis Pipeline.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.io.read_airr.html#scirpy.io.read_airr" title="scirpy.io.read_airr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.read_airr</span></code></a>(path[, use_umi_count_col, ...])</p></td>
 <td><p>Read data from <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html">AIRR rearrangement</a> format.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.io.from_dandelion.html#scirpy.io.from_dandelion" title="scirpy.io.from_dandelion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.from_dandelion</span></code></a>(dandelion[, transfer])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.io.from_dandelion.html#scirpy.io.from_dandelion" title="scirpy.io.from_dandelion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.from_dandelion</span></code></a>(dandelion[, transfer])</p></td>
 <td><p>Import data from <a class="reference external" href="https://github.com/zktuong/dandelion">Dandelion</a> (<span id="id3">[<a class="reference internal" href="zzz_bibliography.html#id23" title="Emily Stephenson, Gary Reynolds, Rachel A Botting, Fernando J Calero-Nieto, Michael Morgan, Zewen Kelvin Tuong, Karsten Bach, Waradon Sungnak, Kaylee B Worlock, Masahiro Yoshida, Natsuhiko Kumasaka, Katarzyna Kania, Justin Engelbert, Bayanne Olabi, Jarmila Stremenova Spegarova, Nicola K Wilson, Nicole Mende, Laura Jardine, Louis CS Gardner, Issac Goh, Dave Horsfall, Jim McGrath, Simone Webb, Michael W. Mather, Rik GH Lindeboom, Emma Dann, Ni Huang, Krzysztof Polanski, Elena Prigmore, Florian Gothe, Jonathan Scott, Rebecca P Payne, Kenneth F Baker, Aidan T Hanrath, Ina CD Schim van der Loeff, Andrew S Barr, Amada Sanchez-Gonzalez, Laura Bergamaschi, Federica Mescia, Josephine L Barnes, Eliz Kilich, Angus de Wilton, Anita Saigal, Aarash Saleh, Sam M Janes, Claire M Smith, Nusayhah Gopee, Caroline Wilson, Paul Coupland, Jonathan M Coxhead, Vladimir Y Kiselev, Stijn van Dongen, Jaume Bacardit, Hamish W King, Anthony J Rostron, A John Simpson, Sophie Hambleton, Elisa Laurenti, Paul A Lyons, Kerstin B Meyer, Marko Z Nikolic, Christopher JA Duncan, Ken Smith, Sarah A Teichmann, Menna R Clatworthy, John C Marioni, Berthold Gottgens, and Muzlifah Haniffa and. Single-cell multi-omics analysis of the immune response in COVID-19. Nature Medicine, April 2021. URL: https://www.nature.com/articles/s41591-021-01329-2, doi:10.1038/s41591-021-01329-2.">SRB+21</a>]</span>).</p></td>
 </tr>
 </tbody>
@@ -282,7 +286,7 @@ formats.</p>
 </table>
 <p>To convert own formats into the scirpy <a class="reference internal" href="usage-principles.html#data-structure"><span class="std std-ref">Data structure</span></a>, we recommend building
 a list of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects first, and then converting them into
-an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object using <a class="reference internal" href="generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_airr_cells()</span></code></a>.
+an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object using <a class="reference internal" href="generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_airr_cells()</span></code></a>.
 For more details, check the <a class="reference internal" href="tutorials/tutorial_io.html#importing-data"><span class="std std-ref">Data loading tutorial</span></a>.</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -294,7 +298,7 @@ For more details, check the <a class="reference internal" href="tutorials/tutori
 <td><p>Data structure for a Cell with immune receptors.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.from_airr_cells</span></code></a>(airr_cells[, include_fields])</p></td>
-<td><p>Convert a collection of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
+<td><p>Convert a collection of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.io.to_airr_cells.html#scirpy.io.to_airr_cells" title="scirpy.io.to_airr_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.to_airr_cells</span></code></a>(adata)</p></td>
 <td><p>Convert an adata object with IR information back to a list of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects.</p></td>
@@ -311,7 +315,7 @@ For more details, check the <a class="reference internal" href="tutorials/tutori
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.pp.merge_with_ir.html#scirpy.pp.merge_with_ir" title="scirpy.pp.merge_with_ir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pp.merge_with_ir</span></code></a>(adata, adata_ir[, on])</p></td>
-<td><p>Merge adaptive immune receptor (<a class="reference internal" href="glossary.html#term-IR"><span class="xref std std-term">IR</span></a>) data with transcriptomics data into a single <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p></td>
+<td><p>Merge adaptive immune receptor (<a class="reference internal" href="glossary.html#term-IR"><span class="xref std std-term">IR</span></a>) data with transcriptomics data into a single <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.pp.merge_airr_chains.html#scirpy.pp.merge_airr_chains" title="scirpy.pp.merge_airr_chains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pp.merge_airr_chains</span></code></a>(adata, adata2)</p></td>
 <td><p>Merge two AnnData objects with <a class="reference internal" href="glossary.html#term-IR"><span class="xref std std-term">IR</span></a> information (e.g.</p></td>
@@ -324,7 +328,7 @@ For more details, check the <a class="reference internal" href="tutorials/tutori
 </section>
 <section id="module-scirpy.tl">
 <span id="tools-tl"></span><h2>Tools: <code class="docutils literal notranslate"><span class="pre">tl</span></code><a class="headerlink" href="#module-scirpy.tl" title="Permalink to this headline"></a></h2>
-<p>Tools add an interpretable annotation to the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object
+<p>Tools add an interpretable annotation to the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object
 which usually can be visualized by a corresponding plotting function.</p>
 <section id="generic">
 <h3>Generic<a class="headerlink" href="#generic" title="Permalink to this headline"></a></h3>
@@ -455,7 +459,7 @@ which usually can be visualized by a corresponding plotting function.</p>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.pl.embedding.html#scirpy.pl.embedding" title="scirpy.pl.embedding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.embedding</span></code></a>(adata, basis, *[, color, ...])</p></td>
-<td><p>A customized wrapper to the <a class="reference external" href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.pl.embedding.html#scanpy.pl.embedding" title="(in Scanpy v1.8.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scanpy.pl.embedding()</span></code></a> function.</p></td>
+<td><p>A customized wrapper to the <a class="reference external" href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.pl.embedding.html#scanpy.pl.embedding" title="(in Scanpy v1.9.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scanpy.pl.embedding()</span></code></a> function.</p></td>
 </tr>
 </tbody>
 </table>
@@ -465,7 +469,7 @@ which usually can be visualized by a corresponding plotting function.</p>
 <p>Every of these plotting functions has a corresponding <em>tool</em> in the <a class="reference internal" href="#module-scirpy.tl" title="scirpy.tl"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scirpy.tl</span></code></a>
 section. Depending on the computational load, tools are either invoked on-the-fly
 when calling the plotting function or need to be precomputed and stored in
-<a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> previously.</p>
+<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> previously.</p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -656,7 +660,7 @@ to build a custom reference database.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

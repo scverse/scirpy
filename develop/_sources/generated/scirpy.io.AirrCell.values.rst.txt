@@ -1,4 +1,4 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/collections/abc.py#L680-L682
+:github_url: https://github.com/scverse/scirpy/tree/master/collections/abc.py#L783-L785
 
 scirpy.io.AirrCell.values
 =========================

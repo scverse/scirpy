@@ -1,4 +1,4 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/_io/h5ad.py#L349-L437
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/_io/h5ad.py#L165-L254
 
 scirpy.io.read\_h5ad
 ====================

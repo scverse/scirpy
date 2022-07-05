@@ -1,4 +1,4 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L287-L398
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L293-L404
 
 scirpy.io.read\_tracer
 ======================

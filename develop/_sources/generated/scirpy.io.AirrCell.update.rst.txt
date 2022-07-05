@@ -1,4 +1,4 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/collections/abc.py#L824-L840
+:github_url: https://github.com/scverse/scirpy/tree/master/collections/abc.py#L933-L949
 
 scirpy.io.AirrCell.update
 =========================

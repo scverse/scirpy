@@ -41,7 +41,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -111,15 +111,15 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>matrix</strong> : <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.spmatrix.html#scipy.sparse.spmatrix" title="(in SciPy v1.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">spmatrix</span></code></a></dt><dd><p>A sparse matrix that represents the connectivity or distance matrix for the graph.
+<dt><strong>matrix</strong> : <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.spmatrix.html#scipy.sparse.spmatrix" title="(in SciPy v1.8.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">spmatrix</span></code></a></dt><dd><p>A sparse matrix that represents the connectivity or distance matrix for the graph.
 Zero-entries mean “no edge between the two nodes”.</p>
 </dd>
-<dt><strong>matrix_type</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘connectivity’, ‘distance’] (default: <code class="docutils literal notranslate"><span class="pre">'distance'</span></code>)</dt><dd><p>Whether the <code class="docutils literal notranslate"><span class="pre">sparse_matrix</span></code> represents connectivities (higher value = smaller distance)
+<dt><strong>matrix_type</strong> : <span class="annotation terse">{‘connectivity’, ‘distance’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘connectivity’, ‘distance’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'distance'</span></code>)</dt><dd><p>Whether the <code class="docutils literal notranslate"><span class="pre">sparse_matrix</span></code> represents connectivities (higher value = smaller distance)
 or distances (higher value = higher distance). Distance matrices will be
 converted into connectivities. A connectivity matrix is also known as
 weighted adjacency matrix.</p>
 </dd>
-<dt><strong>max_value</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>When converting distances to connectivities, this will be considered the
+<dt><strong>max_value</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>When converting distances to connectivities, this will be considered the
 maximum distance. This defaults to <code class="docutils literal notranslate"><span class="pre">numpy.max(sparse_matrix)</span></code>.</p>
 </dd>
 <dt><strong>simplify</strong> : <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> (default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</dt><dd><p>Make an undirected graph and remove circular edges (i.e. edges from
@@ -149,7 +149,7 @@ a node to itself).</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

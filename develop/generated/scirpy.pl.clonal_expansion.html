@@ -41,7 +41,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -129,7 +129,7 @@ of clonotypes instead of the fraction of cells.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>adata</strong> : <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></dt><dd><p>AnnData object to work on.</p>
+<dt><strong>adata</strong> : <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></dt><dd><p>AnnData object to work on.</p>
 </dd>
 <dt><strong>groupby</strong> : <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></dt><dd><p>Group by this categorical variable in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code>.</p>
 </dd>
@@ -138,12 +138,12 @@ of clonotypes instead of the fraction of cells.</p>
 <dt><strong>clip_at</strong> : <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> (default: <code class="docutils literal notranslate"><span class="pre">3</span></code>)</dt><dd><p>All entries in <code class="docutils literal notranslate"><span class="pre">target_col</span></code> with more copies than <code class="docutils literal notranslate"><span class="pre">clip_at</span></code>
 will be summarized into a single group.</p>
 </dd>
-<dt><strong>expanded_in</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Calculate clonal expansion within groups. To calculate expansion
+<dt><strong>expanded_in</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Calculate clonal expansion within groups. To calculate expansion
 within patients, set this to the column containing patient annotation.
 If set to None, a clonotype counts as expanded if there’s any cell of the
 same clonotype across the entire dataset. See also <a class="reference internal" href="../glossary.html#term-Public-clonotype"><span class="xref std std-term">Public clonotype</span></a>.</p>
 </dd>
-<dt><strong>summarize_by</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘cell’, ‘clone_id’] (default: <code class="docutils literal notranslate"><span class="pre">'cell'</span></code>)</dt><dd><p>Can be either <code class="docutils literal notranslate"><span class="pre">cell</span></code> to count cells belonging to a clonotype (the default),
+<dt><strong>summarize_by</strong> : <span class="annotation terse">{‘cell’, ‘clone_id’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘cell’, ‘clone_id’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'cell'</span></code>)</dt><dd><p>Can be either <code class="docutils literal notranslate"><span class="pre">cell</span></code> to count cells belonging to a clonotype (the default),
 or <code class="docutils literal notranslate"><span class="pre">clone_id</span></code> to count clonotypes. The former leads to a over-representation
 of expanded clonotypes but better represents the fraction of expanded cells.</p>
 </dd>
@@ -152,7 +152,7 @@ abosolute numbers.</p>
 </dd>
 <dt><strong>show_nonexpanded</strong> : <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> (default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</dt><dd><p>Whether or not to show the fraction of non-expanded cells/clonotypes</p>
 </dd>
-<dt><strong>viztype</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘bar’, ‘barh’] (default: <code class="docutils literal notranslate"><span class="pre">'bar'</span></code>)</dt><dd><p><code class="docutils literal notranslate"><span class="pre">bar</span></code> for bars, <code class="docutils literal notranslate"><span class="pre">barh</span></code> for horizontal bars.</p>
+<dt><strong>viztype</strong> : <span class="annotation terse">{‘bar’, ‘barh’}</span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘bar’, ‘barh’]</span> (default: <code class="docutils literal notranslate"><span class="pre">'bar'</span></code>)</dt><dd><p><code class="docutils literal notranslate"><span class="pre">bar</span></code> for bars, <code class="docutils literal notranslate"><span class="pre">barh</span></code> for horizontal bars.</p>
 </dd>
 <dt><strong>**kwargs</strong></dt><dd><p>Additional arguments passed to <a class="reference internal" href="scirpy.pl.base.bar.html#scirpy.pl.base.bar" title="scirpy.pl.base.bar"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pl.base.bar()</span></code></a></p>
 </dd>
@@ -174,7 +174,7 @@ abosolute numbers.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

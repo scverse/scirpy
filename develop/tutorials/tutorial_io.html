@@ -43,7 +43,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -57,11 +57,12 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="tutorial_3k_tcr.html">Analysis of 3k T cells from cancer</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Loading adaptive Immune Receptor (<span class="xref std std-term">IR</span>)-sequencing data with Scirpy</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#Loading-data-from-10x-Genomics-CellRanger,-TraCeR,-BraCer-or-AIRR-compliant-tools">Loading data from <em>10x Genomics CellRanger</em>, <em>TraCeR</em>, <em>BraCer</em> or AIRR-compliant tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Loading-data-from-estabilshed-analysis-pipelines-or-AIRR-compliant-tools">Loading data from estabilshed analysis pipelines or AIRR-compliant tools</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../generated/scirpy.io.read_10x_vdj.html">scirpy.io.read_10x_vdj</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../generated/scirpy.io.read_tracer.html">scirpy.io.read_tracer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../generated/scirpy.io.read_bracer.html">scirpy.io.read_bracer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../generated/scirpy.io.read_airr.html">scirpy.io.read_airr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/scirpy.io.read_bd_rhapsody.html">scirpy.io.read_bd_rhapsody</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../generated/scirpy.io.from_dandelion.html">scirpy.io.from_dandelion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Read-10x-data">Read 10x data</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Read-Smart-seq2-data-processed-with-TraCeR">Read Smart-seq2 data processed with TraCeR</a></li>
@@ -327,6 +328,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -335,10 +337,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -350,12 +356,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -402,14 +411,14 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div></div>
 </div>
 <section id="Loading-adaptive-Immune-Receptor-(IR)-sequencing-data-with-Scirpy">
 <span id="importing-data"></span><h1>Loading adaptive Immune Receptor (<a class="reference internal" href="../glossary.html#term-IR"><span class="xref std std-term">IR</span></a>)-sequencing data with Scirpy<a class="headerlink" href="#Loading-adaptive-Immune-Receptor-(IR)-sequencing-data-with-Scirpy" title="Permalink to this headline"></a></h1>
 <p>In this notebook, we demonstrate how single-cell <a class="reference internal" href="../glossary.html#term-IR"><span class="xref std std-term">IR</span></a>-data can be imported into
-an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object for the use with Scirpy. To learn more about
+an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object for the use with Scirpy. To learn more about
 AnnData and how Scirpy makes use of it, check out the <a class="reference internal" href="../usage-principles.html#data-structure"><span class="std std-ref">data structure</span></a> section.</p>
 <p>The example data used in this notebook are available from the
 <a class="reference external" href="https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data">Scirpy repository</a>.</p>
@@ -456,11 +465,10 @@ these cells can be matched to clonotypes on a single chain only, by using the <c
 parameter when running <a class="reference internal" href="../generated/scirpy.tl.define_clonotypes.html#scirpy.tl.define_clonotypes" title="scirpy.tl.define_clonotypes"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.tl.define_clonotypes()</span></code></a>.</p></li>
 </ul>
 </div>
-<section id="Loading-data-from-10x-Genomics-CellRanger,-TraCeR,-BraCer-or-AIRR-compliant-tools">
-<h2>Loading data from <em>10x Genomics CellRanger</em>, <em>TraCeR</em>, <em>BraCer</em> or AIRR-compliant tools<a class="headerlink" href="#Loading-data-from-10x-Genomics-CellRanger,-TraCeR,-BraCer-or-AIRR-compliant-tools" title="Permalink to this headline"></a></h2>
-<p>We provide convenience functions to load data from <em>CellRanger</em>, <em>TraCeR</em>, or <em>BraCeR</em> with a single function call,
-supporting both data generated on the <em>10x</em> and <em>Smart-seq2</em> sequencing platforms, respectively.
-Moreover, we support importing data in the community-standard
+<section id="Loading-data-from-estabilshed-analysis-pipelines-or-AIRR-compliant-tools">
+<h2>Loading data from estabilshed analysis pipelines or AIRR-compliant tools<a class="headerlink" href="#Loading-data-from-estabilshed-analysis-pipelines-or-AIRR-compliant-tools" title="Permalink to this headline"></a></h2>
+<p>We provide convenience functions to load data from <em>10x CellRanger</em>, <em>BD Rhapsody</em>, <em>TraCeR</em>, or <em>BraCeR</em> with
+a single function call. Moreover, we support importing data in the community-standard
 <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html">AIRR rearrangement schema</a>.</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -480,7 +488,10 @@ Moreover, we support importing data in the community-standard
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/scirpy.io.read_airr.html#scirpy.io.read_airr" title="scirpy.io.read_airr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_airr</span></code></a>(path[, use_umi_count_col, …])</p></td>
 <td><p>Read data from <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html">AIRR rearrangement</a> format.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/scirpy.io.from_dandelion.html#scirpy.io.from_dandelion" title="scirpy.io.from_dandelion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dandelion</span></code></a>(dandelion[, transfer])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/scirpy.io.read_bd_rhapsody.html#scirpy.io.read_bd_rhapsody" title="scirpy.io.read_bd_rhapsody"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_bd_rhapsody</span></code></a>(path[, dominant])</p></td>
+<td><p>Read <a class="reference internal" href="../glossary.html#term-IR"><span class="xref std std-term">IR</span></a> data from the BD Rhapsody Analysis Pipeline.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/scirpy.io.from_dandelion.html#scirpy.io.from_dandelion" title="scirpy.io.from_dandelion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dandelion</span></code></a>(dandelion[, transfer])</p></td>
 <td><p>Import data from <a class="reference external" href="https://github.com/zktuong/dandelion">Dandelion</a> (<span id="id3">[<a class="reference internal" href="../zzz_bibliography.html#id23" title="Emily Stephenson, Gary Reynolds, Rachel A Botting, Fernando J Calero-Nieto, Michael Morgan, Zewen Kelvin Tuong, Karsten Bach, Waradon Sungnak, Kaylee B Worlock, Masahiro Yoshida, Natsuhiko Kumasaka, Katarzyna Kania, Justin Engelbert, Bayanne Olabi, Jarmila Stremenova Spegarova, Nicola K Wilson, Nicole Mende, Laura Jardine, Louis CS Gardner, Issac Goh, Dave Horsfall, Jim McGrath, Simone Webb, Michael W. Mather, Rik GH Lindeboom, Emma Dann, Ni Huang, Krzysztof Polanski, Elena Prigmore, Florian Gothe, Jonathan Scott, Rebecca P Payne, Kenneth F Baker, Aidan T Hanrath, Ina CD Schim van der Loeff, Andrew S Barr, Amada Sanchez-Gonzalez, Laura Bergamaschi, Federica Mescia, Josephine L Barnes, Eliz Kilich, Angus de Wilton, Anita Saigal, Aarash Saleh, Sam M Janes, Claire M Smith, Nusayhah Gopee, Caroline Wilson, Paul Coupland, Jonathan M Coxhead, Vladimir Y Kiselev, Stijn van Dongen, Jaume Bacardit, Hamish W King, Anthony J Rostron, A John Simpson, Sophie Hambleton, Elisa Laurenti, Paul A Lyons, Kerstin B Meyer, Marko Z Nikolic, Christopher JA Duncan, Ken Smith, Sarah A Teichmann, Menna R Clatworthy, John C Marioni, Berthold Gottgens, and Muzlifah Haniffa and. Single-cell multi-omics analysis of the immune response in COVID-19. Nature Medicine, April 2021. URL: https://www.nature.com/articles/s41591-021-01329-2, doi:10.1038/s41591-021-01329-2.">SRB+21</a>]</span>).</p></td>
 </tr>
 </tbody>
@@ -512,21 +523,6 @@ from <a class="reference external" href="https://www.ncbi.nlm.nih.gov/geo/query/
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 reading example_data/liao-2019-covid19/GSM4339772_C144_filtered_feature_bc_matrix.h5
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
  (0:00:00)
 </pre></div></div>
 </div>
@@ -535,7 +531,8 @@ Variable names are not unique. To make them unique, call `.var_names_make_unique
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/_core/anndata.py:1830: UserWarning: Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+  utils.warn_names_duplicates(&#34;var&#34;)
 </pre></div></div>
 </div>
 <p>This particular sample only has a detected TCR for a small fraction of the cells:</p>
@@ -573,7 +570,7 @@ Variable names are not unique. To make them unique, call `.var_names_make_unique
 (3716, 33539)
 </pre></div></div>
 </div>
-<p>Next, we integrate both the TCR and the transcriptomics data into a single <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">anndata.AnnData</span></code></a> object
+<p>Next, we integrate both the TCR and the transcriptomics data into a single <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">anndata.AnnData</span></code></a> object
 using <a class="reference internal" href="../generated/scirpy.pp.merge_with_ir.html#scirpy.pp.merge_with_ir" title="scirpy.pp.merge_with_ir"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pp.merge_with_ir()</span></code></a>:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -606,16 +603,31 @@ computing PCA
     finished (0:00:02)
 computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
-    finished (0:00:06)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+    finished (0:00:09)
 computing UMAP
-    finished (0:00:05)
+    finished (0:00:08)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_io_10_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_10_1.png" style="width: 667px; height: 299px;" />
+<img alt="../_images/tutorials_tutorial_io_10_3.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_10_3.png" style="width: 668px; height: 303px;" />
 </div>
 </div>
 </section>
@@ -1043,19 +1055,19 @@ extracting highly variable genes
 computing PCA
     on highly variable genes
     with n_comps=50
-    finished (0:00:00)
+    finished (0:00:03)
 computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
     finished (0:00:00)
 computing UMAP
-    finished (0:00:01)
+    finished (0:00:03)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_io_16_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_16_1.png" style="width: 652px; height: 299px;" />
+<img alt="../_images/tutorials_tutorial_io_16_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_16_1.png" style="width: 655px; height: 303px;" />
 </div>
 </div>
 </section>
@@ -1107,7 +1119,7 @@ Computing sequence x sequence distance matrix for VJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 3/3 [00:00&lt;00:00, 26.96it/s]
+100%|██████████| 3/3 [00:12&lt;00:00,  4.02s/it]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1123,8 +1135,7 @@ Computing sequence x sequence distance matrix for VDJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-
-100%|██████████| 3/3 [00:00&lt;00:00, 25.61it/s]
+100%|██████████| 3/3 [00:11&lt;00:00,  3.71s/it]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1164,7 +1175,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 100/100 [00:00&lt;00:00, 653.10it/s]
+100%|██████████| 100/100 [00:00&lt;00:00, 273.05it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1205,7 +1216,7 @@ Stored clonal assignments in `adata.obs[&#34;cc_aa_alignment&#34;]`.
 <span id="importing-custom-formats"></span><h2>Creating AnnData objects from other formats<a class="headerlink" href="#Creating-AnnData-objects-from-other-formats" title="Permalink to this headline"></a></h2>
 <p>Often, immune receptor (IR) data are just provided as a simple table listing the <a class="reference internal" href="../glossary.html#term-CDR3"><span class="xref std std-term">CDR3</span></a> sequences for each cell.
 We provide a generic data structure for cells with IRs, which can then be converted into
-an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p>
+an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -1216,7 +1227,7 @@ an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/
 <td><p>Data structure for a Cell with immune receptors.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_airr_cells</span></code></a>(airr_cells[, include_fields])</p></td>
-<td><p>Convert a collection of <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
+<td><p>Convert a collection of <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1486,7 +1497,7 @@ be a supplementary file from the paper).</p>
 <p>Our task is now to dissect the table into <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects.
 Each <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> can have an arbitrary number of chains. A chain is simply represented as a Python
 dictionary following the <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields">AIRR Rearrangement Schema</a>.</p>
-<p>When converting the <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects into an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object,
+<p>When converting the <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects into an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object,
 scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
 this number as <a class="reference internal" href="../glossary.html#term-Multichain-cell"><span class="xref std std-term">multichain cells</span></a>. For more information, check the page about our <a class="reference internal" href="../ir-biology.html#receptor-model"><span class="std std-ref">Immune receptor (IR) model</span></a>.</p>
 <div class="nbinput nblast docutils container">
@@ -1924,14 +1935,14 @@ computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
     finished (0:00:00)
 computing UMAP
-    finished (0:00:01)
+    finished (0:00:02)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_io_30_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_30_1.png" style="width: 652px; height: 299px;" />
+<img alt="../_images/tutorials_tutorial_io_30_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_30_1.png" style="width: 655px; height: 303px;" />
 </div>
 </div>
 </section>
@@ -1939,7 +1950,7 @@ computing UMAP
 <h2>Combining multiple samples<a class="headerlink" href="#Combining-multiple-samples" title="Permalink to this headline"></a></h2>
 <p>It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
-in this document. Then, we combine them using <a class="reference external" href="https://anndata.readthedocs.io/en/stable/anndata.concat.html#anndata.concat" title="(in anndata v0.7.7.dev1+g33006dc)"><code class="xref py py-func docutils literal notranslate"><span class="pre">anndata.concat()</span></code></a>.</p>
+in this document. Then, we combine them using <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.concat.html#anndata.concat" title="(in anndata v0.8.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">anndata.concat()</span></code></a>.</p>
 <p>Here is a full example loading and combining three samples from the COVID19 study by <span id="id9">[<a class="reference internal" href="../zzz_bibliography.html#id18" title="Mingfeng Liao, Yang Liu, Jing Yuan, Yanling Wen, Gang Xu, Juanjuan Zhao, Lin Cheng, Jinxiu Li, Xin Wang, Fuxiang Wang, Lei Liu, Ido Amit, Shuye Zhang, and Zheng Zhang. Single-cell landscape of bronchoalveolar immune cells in patients with COVID-19. Nature Medicine, May 2020. URL: https://doi.org/10.1038/s41591-020-0901-9, doi:10.1038/s41591-020-0901-9.">LLY+20</a>]</span>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
@@ -1980,21 +1991,6 @@ in this document. Then, we combine them using <a class="reference external" href
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 reading example_data/liao-2019-covid19/GSM4339772_C144_filtered_feature_bc_matrix.h5
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
  (0:00:00)
 </pre></div></div>
 </div>
@@ -2003,7 +1999,8 @@ Variable names are not unique. To make them unique, call `.var_names_make_unique
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/_core/anndata.py:1830: UserWarning: Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+  utils.warn_names_duplicates(&#34;var&#34;)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2012,21 +2009,6 @@ Variable names are not unique. To make them unique, call `.var_names_make_unique
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 reading example_data/liao-2019-covid19/GSM4339774_C146_filtered_feature_bc_matrix.h5
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
  (0:00:00)
 </pre></div></div>
 </div>
@@ -2035,7 +2017,8 @@ Variable names are not unique. To make them unique, call `.var_names_make_unique
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/_core/anndata.py:1830: UserWarning: Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+  utils.warn_names_duplicates(&#34;var&#34;)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2044,38 +2027,17 @@ Variable names are not unique. To make them unique, call `.var_names_make_unique
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 reading example_data/liao-2019-covid19/GSM4475052_C149_filtered_feature_bc_matrix.h5
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
  (0:00:00)
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+WARNING: Non-standard locus name ignored: Multi
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING: Non-standard locus name ignored: Multi
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/_core/anndata.py:1830: UserWarning: Variable names are not unique. To make them unique, call `.var_names_make_unique`.
+  utils.warn_names_duplicates(&#34;var&#34;)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -2092,7 +2054,8 @@ WARNING: Non-standard locus name ignored: Multi
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-Observation names are not unique. To make them unique, call `.obs_names_make_unique`.
+/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/anndata/_core/anndata.py:1828: UserWarning: Observation names are not unique. To make them unique, call `.obs_names_make_unique`.
+  utils.warn_names_duplicates(&#34;obs&#34;)
 </pre></div></div>
 </div>
 <p>The data is now integrated in a single object. Again, the detected TCRs coincide with <code class="docutils literal notranslate"><span class="pre">CD3E</span></code> gene expression. We clearly observe batch effects between the samples – for a meaningful downstream analysis further processing steps such as highly-variable gene filtering and batch correction are necessary.</p>
@@ -2115,19 +2078,19 @@ Observation names are not unique. To make them unique, call `.obs_names_make_uni
 <div class="highlight"><pre>
 computing PCA
     with n_comps=50
-    finished (0:00:10)
+    finished (0:00:09)
 computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
-    finished (0:00:17)
+    finished (0:00:26)
 computing UMAP
-    finished (0:00:07)
+    finished (0:00:10)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_tutorial_io_36_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_36_1.png" style="width: 1002px; height: 299px;" />
+<img alt="../_images/tutorials_tutorial_io_36_1.png" class="no-scaled-link" src="../_images/tutorials_tutorial_io_36_1.png" style="width: 1003px; height: 303px;" />
 </div>
 </div>
 </section>
@@ -2144,7 +2107,7 @@ computing UMAP
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

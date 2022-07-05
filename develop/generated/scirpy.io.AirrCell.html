@@ -41,7 +41,7 @@
             <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10.2.dev13
+                0.10.2.dev52+gd432712
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -55,7 +55,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/tutorial_3k_tcr.html">Analysis of 3k T cells from cancer</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../tutorials/tutorial_io.html">Loading adaptive Immune Receptor (<span class="xref std std-term">IR</span>)-sequencing data with Scirpy</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="../tutorials/tutorial_io.html#Loading-data-from-10x-Genomics-CellRanger,-TraCeR,-BraCer-or-AIRR-compliant-tools">Loading data from <em>10x Genomics CellRanger</em>, <em>TraCeR</em>, <em>BraCer</em> or AIRR-compliant tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/tutorial_io.html#Loading-data-from-estabilshed-analysis-pipelines-or-AIRR-compliant-tools">Loading data from estabilshed analysis pipelines or AIRR-compliant tools</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="../tutorials/tutorial_io.html#Creating-AnnData-objects-from-other-formats">Creating AnnData objects from other formats</a><ul class="current">
 <li class="toctree-l4 current"><a class="current reference internal" href="#">scirpy.io.AirrCell</a></li>
 <li class="toctree-l4"><a class="reference internal" href="scirpy.io.from_airr_cells.html">scirpy.io.from_airr_cells</a></li>
@@ -106,7 +106,7 @@
 <h1>scirpy.io.AirrCell<a class="headerlink" href="#scirpy-io-airrcell" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="scirpy.io.AirrCell">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">scirpy.io.</span></span><span class="sig-name descname"><span class="pre">AirrCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">cell_id</span></em>, <em class="sig-param"><span class="pre">cell_attribute_fields=()</span></em>, <em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">logger=&lt;module</span> <span class="pre">'scanpy.logging'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/scanpy/logging.py'&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#scirpy.io.AirrCell" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">scirpy.io.</span></span><span class="sig-name descname"><span class="pre">AirrCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">cell_id</span></em>, <em class="sig-param"><span class="pre">cell_attribute_fields=()</span></em>, <em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">logger=&lt;module</span> <span class="pre">'scanpy.logging'</span> <span class="pre">from</span> <span class="pre">'/Users/runner/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/scanpy/logging.py'&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#scirpy.io.AirrCell" title="Permalink to this definition"></a></dt>
 <dd><p>Data structure for a Cell with immune receptors. Represents one row of <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code>.</p>
 <p>This data structure is compliant with the AIRR rearrangement schema v1.0.
 An AirrCell can hold multiple chains (i.e. rows from the rearrangement TSV)
@@ -226,7 +226,7 @@ the values that are already present.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Gregor Sturm, Tamas Szabo..</p>
+    <p>&#169; Copyright 2022, Tamas Szabo..</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
