@@ -92,15 +92,18 @@ jobs:
           name: docs
           path: docs/_build/html
 
-      - name: Deploy to gh-pages
-        if: ( matrix.os == 'ubuntu-latest' ) && ( github.event_name != 'pull_request' )
-        uses: JamesIves/github-pages-deploy-action@releases/v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: docs/_build/html # The folder the action should deploy.
-          TARGET_FOLDER: ${{ env.target_dir }}
-          CLEAN: true
-          CLEAN_EXCLUDE: '["heads", "pull", "tags"]'
-          SINGLE_COMMIT: true
-          REPOSITORY_NAME: scverse/scirpy
+# Temporarily disable docs deployment
+# The way the target directory is calculated is broken. It overwrites everything. 
+# 
+#       - name: Deploy to gh-pages
+#         if: ( matrix.os == 'ubuntu-latest' ) && ( github.event_name != 'pull_request' )
+#         uses: JamesIves/github-pages-deploy-action@releases/v3
+#         with:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           BRANCH: gh-pages # The branch the action should deploy to.
+#           FOLDER: docs/_build/html # The folder the action should deploy.
+#           TARGET_FOLDER: ${{ env.target_dir }}
+#           CLEAN: true
+#           CLEAN_EXCLUDE: '["heads", "pull", "tags"]'
+#           SINGLE_COMMIT: true
+#           REPOSITORY_NAME: scverse/scirpy
