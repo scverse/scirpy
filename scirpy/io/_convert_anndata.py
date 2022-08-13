@@ -73,15 +73,32 @@ def from_airr_cells(
     :class:`~anndata.AnnData` object with :term:`IR` information in `obs`.
 
     """
-    ir_df = pd.DataFrame.from_records(
-        (x.to_scirpy_record(include_fields=include_fields) for x in airr_cells)
-    )
-    if ir_df.shape[0] > 0:
-        ir_df.set_index("cell_id", inplace=True)
-    adata = AnnData(obs=ir_df, X=np.empty([ir_df.shape[0], 0]))
-    _sanitize_anndata(adata)
-    adata.uns["scirpy_version"] = __version__
-    return adata
+    import awkward._v2 as ak
+
+    obs = pd.DataFrame.from_records(iter(airr_cells)).set_index("cell_id")
+
+    # For now, require that all chains have the same keys
+    airr_keys = None
+    for tmp_cell in airr_cells:
+        for tmp_chain in tmp_cell.chains:
+            assert airr_keys == tmp_chain.keys() or airr_keys is None
+            airr_keys = tmp_chain.keys()
+
+    # Build list of lists for awkward array
+    # TODO this is inefficient, but maybe efficient enough.
+    # Dimensions (obs, var, n_chains)
+    cell_list = []
+    for tmp_cell in airr_cells:
+        tmp_var_list = [[] for _ in airr_keys]
+        for tmp_chain in tmp_cell.chains:
+            for tmp_chain_list, value in zip(tmp_var_list, tmp_chain.values()):
+                tmp_chain_list.append(value)
+        cell_list.append(tmp_var_list)
+
+    X = ak.Array(cell_list)
+    X = ak.to_regular(X, 1)
+
+    return AnnData(X=X, obs=obs, var=pd.DataFrame(index=airr_keys))
 
 
 @_check_upgrade_schema()
