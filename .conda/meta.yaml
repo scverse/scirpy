@@ -31,7 +31,7 @@ requirements:
     - scanpy>=1.6.0
     - pandas>=1.0
     - numpy
-    - scipy
+    - scipy<1.9.0
     - parasail-python
     - scikit-learn
     - python-levenshtein
