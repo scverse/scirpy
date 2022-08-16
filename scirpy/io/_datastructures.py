@@ -181,6 +181,7 @@ class AirrCell(MutableMapping):
               * `vdj_chains`: The (up to) two most highly expressed, productive VDJ chains
               * `extra_chains`: All remaining chains
         """
+        # TODO rewrite that this returns the indices rather than the actual chains
         is_multichain = self["multi_chain"]
         split_chains = {"VJ": list(), "VDJ": list(), "extra": list()}
         for tmp_chain in self.chains:
