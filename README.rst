@@ -46,7 +46,7 @@ In the documentation, you can also learn more about our `immune-cell receptor mo
 
 Case-study
 ~~~~~~~~~~
-The case study from our preprint is available `here <https://scverse.org/scirpy-paper/wu2020.html>`_.
+The case study from our paper is available `here <https://icbi-lab.github.io/scirpy-paper/wu2020.html>`_.
 
 Installation
 ^^^^^^^^^^^^
