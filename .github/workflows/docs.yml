@@ -63,7 +63,7 @@ jobs:
           python -m pip install --upgrade "pip!=22.1"
           # TODO this is to workaround an issue with the skbio dependency
           # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
-          pip install git+https://github.com/grst/scikit-bio.git@a3423e4
+          pip install git+https://github.com/grst/scikit-bio.git@main
           pip install .[doc,test,rpack,dandelion]
       - name: run sphinx
         run: |
@@ -94,10 +94,9 @@ jobs:
         with:
           name: docs
           path: docs/_build/html
-
 # Temporarily disable docs deployment
-# The way the target directory is calculated is broken. It overwrites everything. 
-# 
+# The way the target directory is calculated is broken. It overwrites everything.
+#
 #       - name: Deploy to gh-pages
 #         if: ( matrix.os == 'ubuntu-latest' ) && ( github.event_name != 'pull_request' )
 #         uses: JamesIves/github-pages-deploy-action@releases/v3
