@@ -4,6 +4,8 @@ Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
+from functools import partial
+import itertools
 from ..util import _is_na2, _is_true2, _doc_params
 from typing import Collection, Dict, Iterable, List, Mapping, Optional, Iterator, Tuple
 from airr import RearrangementSchema
@@ -167,40 +169,29 @@ class AirrCell(MutableMapping):
                 tmp_chain.update(chain)
                 self.add_chain(tmp_chain)
 
-    def _split_chains(self) -> Tuple[bool, dict]:
+    def chain_indices(self) -> Dict:
         """
-        Splits the chains into productive VJ, productive VDJ, and extra chains.
+        Returns the indices of the primary and secondary VJ and VDJ chains.
 
-        Returns
-        -------
-        is_multichain
-            Boolean that indicates if the current cell is a multichain
-        split_chains
-            dictionary with the following entries:
-              * `vj_chains`: The (up to) two most highly expressed, productive VJ-chains
-              * `vdj_chains`: The (up to) two most highly expressed, productive VDJ chains
-              * `extra_chains`: All remaining chains
+         * only productive chains are considered
+         * chains are ranked by their expression
         """
-        # TODO rewrite that this returns the indices rather than the actual chains
-        is_multichain = self["multi_chain"]
-        split_chains = {"VJ": list(), "VDJ": list(), "extra": list()}
-        for tmp_chain in self.chains:
+        chain_indices = {"VJ": list(), "VDJ": list()}
+        for i, tmp_chain in enumerate(self.chains):
             if "locus" not in tmp_chain:
-                split_chains["extra"].append(tmp_chain)
-            elif (
+                continue
+            if (
                 tmp_chain["locus"] in self.VJ_LOCI
                 and tmp_chain["productive"]
                 and not _is_na2(tmp_chain["junction_aa"])
             ):
-                split_chains["VJ"].append(tmp_chain)
+                chain_indices["VJ"].append(i)
             elif (
                 tmp_chain["locus"] in self.VDJ_LOCI
                 and tmp_chain["productive"]
                 and not _is_na2(tmp_chain["junction_aa"])
             ):
-                split_chains["VDJ"].append(tmp_chain)
-            else:
-                split_chains["extra"].append(tmp_chain)
+                chain_indices["VDJ"].append(i)
 
         if (
             "duplicate_count" not in self.fields
@@ -212,21 +203,28 @@ class AirrCell(MutableMapping):
             )  # type: ignore
 
         for junction_type in ["VJ", "VDJ"]:
-            split_chains[junction_type] = sorted(
-                split_chains[junction_type], key=self._key_sort_chains, reverse=True
+            chain_indices[junction_type] = sorted(
+                chain_indices[junction_type],
+                key=partial(self._key_sort_chains, self.chains),
+                reverse=True,
             )
             # only keep the (up to) two most highly expressed chains
-            tmp_extra_chains = split_chains[junction_type][2:]
-            # if productive chains are appended to extra chains, it's a multichain cell!
-            is_multichain = is_multichain or len(tmp_extra_chains)
-            split_chains["extra"].extend(tmp_extra_chains)
-            split_chains[junction_type] = split_chains[junction_type][:2]
+            chain_indices[junction_type] = chain_indices[junction_type][:2]
 
-        return bool(is_multichain), split_chains
+        res_dict = {}
+        for i, junction_type in itertools.product([0, 1], ["VJ", "VDJ"]):
+            res_key = f"{junction_type}_{i+1}"
+            try:
+                res_dict[res_key] = chain_indices[junction_type][i]
+            except IndexError:
+                res_dict[res_key] = None
+
+        return res_dict
 
     @staticmethod
-    def _key_sort_chains(chain) -> Tuple:
-        """Get key to sort chains by expression"""
+    def _key_sort_chains(chains, idx) -> Tuple:
+        """Get key to sort chains by expression. Idx is the index of a chain in `self.chains`"""
+        chain = chains[idx]
         sort_tuple = (
             chain.get("duplicate_count", 0),
             chain.get("consensus_count", 0),
@@ -235,28 +233,6 @@ class AirrCell(MutableMapping):
         )
         # replace None by -1 to make sure it comes in last
         return tuple(-1 if x is None else x for x in sort_tuple)
-
-    @staticmethod
-    def _serialize_chains(
-        chains: List[MutableMapping], include_fields: Optional[Collection[str]] = None
-    ) -> str:
-        """Serialize chains into a JSON object. This is useful for storing
-        an arbitrary number of extra chains in a single column of a dataframe."""
-        # convert numpy dtypes to python types
-        # https://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types
-        for chain in chains:
-            for k, v in chain.items():
-                try:
-                    chain[k] = chain[k].item()
-                except AttributeError:
-                    pass
-
-        # Filter chains for `include_fields`
-        chains_filtered = [
-            {k: v for k, v in chain.items() if k in include_fields} for chain in chains
-        ]
-
-        return json.dumps(chains_filtered)
 
     def to_airr_records(self) -> Iterable[dict]:
         """Iterate over chains as AIRR-Rearrangent compliant dictonaries.

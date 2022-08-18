@@ -98,7 +98,13 @@ def from_airr_cells(
     X = ak.Array(cell_list)
     X = ak.to_regular(X, 1)
 
-    return AnnData(X=X, obs=obs, var=pd.DataFrame(index=airr_keys))
+    obsm = {
+        "chain_indices": pd.DataFrame.from_records(
+            [c.chain_indices() for c in airr_cells]
+        ).set_index(obs.index)
+    }
+
+    return AnnData(X=X, obs=obs, var=pd.DataFrame(index=airr_keys), obsm=obsm)
 
 
 @_check_upgrade_schema()
