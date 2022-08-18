@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, Hashable, Sequence, Tuple, Union, Mapping
+from typing import Dict, Hashable, Optional, Sequence, Tuple, Union, Mapping
 import scipy.sparse as sp
 from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
@@ -307,7 +307,7 @@ class DoubleLookupNeighborFinder:
         name: str,
         distance_matrix: sp.csr_matrix,
         labels: Sequence,
-        labels2: Sequence = None,
+        labels2: Optional[Sequence] = None,
     ):
         """Add a distance matrix.
 
@@ -327,9 +327,9 @@ class DoubleLookupNeighborFinder:
         """
         labels2 = labels if labels2 is None else labels2
         if not len(labels) == distance_matrix.shape[0]:
-            raise ValueError("Dimensions mismatch alon axis 0")
+            raise ValueError("Dimensions mismatch along axis 0")
         if not len(labels2) == distance_matrix.shape[1]:
-            raise ValueError("Dimensions mismatch alon axis 1")
+            raise ValueError("Dimensions mismatch along axis 1")
         if not isinstance(distance_matrix, csr_matrix):
             raise TypeError("Distance matrix must be sparse and in CSR format. ")
 
@@ -384,7 +384,7 @@ class DoubleLookupNeighborFinder:
         feature_col: str,
         distance_matrix: str,
         *,
-        dist_type: Literal["boolean", "numberic"],
+        dist_type: Literal["boolean", "numeric"],
     ) -> ReverseLookupTable:
         """Create a reverse-lookup dict that maps each (numeric) index
         of a feature distance matrix to a numeric or boolean mask.
