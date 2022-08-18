@@ -28,8 +28,8 @@ requirements:
     - anndata >=0.7.6
     - scanpy>=1.6.0
     - pandas>=1.0
-    - numpy<1.22
-    - scipy<1.9.0
+    - numpy
+    - scipy
     - parasail-python
     - scikit-learn
     - python-levenshtein
