@@ -280,7 +280,7 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
-        if np.isnan(idx_in_dist_mat):
+        if idx_in_dist_mat == -1:  # nan
             return reverse.empty()
         else:
             # get distances from the distance matrix...
@@ -339,8 +339,8 @@ class DoubleLookupNeighborFinder:
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
         self.distance_matrix_labels2[name] = {k: i for i, k in enumerate(labels2)}
         # The label "nan" does not have an index in the matrix
-        self.distance_matrix_labels[name]["nan"] = np.nan
-        self.distance_matrix_labels2[name]["nan"] = np.nan
+        self.distance_matrix_labels[name]["nan"] = -1
+        self.distance_matrix_labels2[name]["nan"] = -1
 
     def add_lookup_table(
         self,
@@ -376,7 +376,7 @@ class DoubleLookupNeighborFinder:
             [
                 self.distance_matrix_labels[distance_matrix][k]
                 for k in self.feature_table[feature_col]
-            ]
+            ],
         )
 
     def _build_reverse_lookup_table(
@@ -397,7 +397,7 @@ class DoubleLookupNeighborFinder:
         # Build reverse lookup
         for i, k in enumerate(self.feature_table2[feature_col]):
             tmp_key = tmp_index_lookup[k]
-            if np.isnan(tmp_key):
+            if tmp_key == -1:
                 continue
             try:
                 tmp_reverse_lookup[tmp_key].append(i)

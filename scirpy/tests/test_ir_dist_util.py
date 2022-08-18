@@ -169,7 +169,7 @@ def test_reduce_and(args, chain_count, expected):
             "dlnf_square",
             "VDJ",
             "VDJ_test",
-            np.array([0, 1, 2, 3, np.nan, 3, np.nan, 5]),
+            np.array([0, 1, 2, 3, -1, 3, -1, 5]),
             {
                 0: [1, 0, 0, 0, 0, 0, 0, 0],
                 1: [0, 1, 0, 0, 0, 0, 0, 0],
@@ -193,7 +193,7 @@ def test_reduce_and(args, chain_count, expected):
             "dlnf_rectangle",
             "VDJ",
             "VDJ_test",
-            np.array([0, 1, 2, 3, np.nan, 3, np.nan, 5]),
+            np.array([0, 1, 2, 3, -1, 3, -1, 5]),
             {
                 0: [1, 0, 0, 1, 0],
                 1: [0, 1, 0, 0, 0],
