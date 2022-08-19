@@ -8,7 +8,7 @@ from ..util import _is_na, deprecated
 from scipy.sparse import csr_matrix
 from ..util import _doc_params
 from . import metrics
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 import itertools
 
 

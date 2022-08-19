@@ -3,11 +3,10 @@ from typing import Union, List, Dict
 from anndata import AnnData
 from ..io._convert_anndata import (
     _sanitize_anndata,
-    to_airr_cells,
     from_airr_cells,
 )
 from ..io._datastructures import AirrCell
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 from scanpy import logging
 import itertools
 import pandas as pd

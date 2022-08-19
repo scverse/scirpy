@@ -6,7 +6,7 @@ from .. import tl
 from . import _base as base
 from typing import Union, List, Collection
 from ..util import _doc_params
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()

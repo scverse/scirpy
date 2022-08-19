@@ -1,10 +1,10 @@
-import anndata
-from ..util import _is_na, _is_true, _is_false
+from ..util import _is_na
 import pandas as pd
 import numpy as np
 from typing import List, Union
-from tempfile import NamedTemporaryFile
-import gzip
+from anndata import AnnData
+import awkward._v2 as ak
+from scirpy import __version__
 
 
 def _normalize_df_types(df: pd.DataFrame):
@@ -29,3 +29,55 @@ def _squarify(matrix: Union[List[List], np.ndarray]):
     matrix[i_lower] = matrix.T[i_lower]
     assert np.allclose(matrix.T, matrix)
     return matrix
+
+
+def _make_adata(obs: pd.DataFrame) -> AnnData:
+    """Generate an AnnData object from a obs dataframe formatted according to the old obs-based scheam.
+
+    This is used to convert test cases from unittests. Writing them from scratch
+    would be a lot of effort. Also the awkward array format is not very ergonomic to create
+    manually, so we use this instead.
+
+    Compared to the function that converts legacy anndata objects via an intermediate step of
+    creating AirrCells, this function works more directly, and can cope with minimal data that is
+     * incorrect on purpose (for a test case)
+     * is missing columns that are mandatory, but irrelevant for a test case
+     * ensures a value ends up in the chain (VJ_1, VDJ_2, etc) the author of the test explicitly intended, instead
+       of relying on the ranking of cells implemented in the AirrCell class.
+    """
+    cols = [x for x in obs.columns if x.startswith("IR_")]
+    unique_variables = set(c.split("_")[3] for c in cols)
+    # map unique variables to a numeric index
+    var_to_index = {v: i for i, v in enumerate(unique_variables)}
+
+    cell_list = []
+    chain_idx_list = []
+    for _, row in obs.iterrows():
+        tmp_cell = [[] for _ in unique_variables]
+        chain_idx_row = {}
+        for c in cols:
+            _, receptor_arm, chain, var = c.split("_", 3)
+            i = len(tmp_cell[var_to_index[var]])
+            tmp_cell[var_to_index[var]].append(row[c])
+            chain_key = f"{receptor_arm}_{chain}"
+            try:
+                assert chain_idx_row[chain_key] == i
+            except KeyError:
+                chain_idx_row[chain_key] = i
+        cell_list.append(tmp_cell)
+        chain_idx_list.append(chain_idx_row)
+
+    X = ak.Array(cell_list)
+    X = ak.to_regular(X, 1)
+
+    obsm = {
+        "chain_indices": pd.DataFrame.from_records(chain_idx_list).set_index(obs.index)
+    }
+
+    return AnnData(
+        X=X,
+        obs=obs,
+        var=pd.DataFrame(index=unique_variables),
+        obsm=obsm,
+        uns={"scirpy_version": __version__},
+    )

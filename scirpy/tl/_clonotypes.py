@@ -15,7 +15,7 @@ from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..util import _doc_params
 from ..util.graph import igraph_from_sparse_matrix, layout_components
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 _common_doc = """\
 receptor_arms

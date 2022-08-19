@@ -7,12 +7,11 @@ from ._io import (
     write_airr,
     from_dandelion,
     to_dandelion,
-    upgrade_schema,
     read_bd_rhapsody,
     DEFAULT_AIRR_CELL_ATTRIBUTES,
     DEFAULT_AIRR_FIELDS,
 )
-from ._convert_anndata import from_airr_cells, to_airr_cells
+from ._convert_anndata import from_airr_cells
 from ..util import deprecated
 from ._datastructures import AirrCell
 
@@ -28,11 +27,6 @@ def from_tcr_objs(*args, **kwargs):
 @deprecated("This function has been renamed to `from_airr_cells`")
 def from_ir_objs(*args, **kwargs):
     return from_airr_cells(*args, **kwargs)
-
-
-@deprecated("This function has been renamed to `to_airr_cells`.")
-def to_ir_objs(*args, **kwargs):
-    return to_airr_cells(*args, **kwargs)
 
 
 @deprecated(

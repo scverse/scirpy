@@ -56,3 +56,13 @@ def airr(
 def most_frequent(array: Sequence, n=10):
     """Get the most frequnet categories of an Array"""
     return pd.Series(array).value_counts().index[:n].tolist()
+
+
+def obs_context(adata, **kwargs):
+    """A context manager that temporarily adds columns to adata.obs"""
+    pass
+
+
+def add_to_obs(adata, **kwargs):
+    """Add columnt to obs"""
+    pass

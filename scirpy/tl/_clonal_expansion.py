@@ -4,7 +4,7 @@ import numpy as np
 from typing import Union, List
 from .._compat import Literal
 import pandas as pd
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 def _clip_and_count(

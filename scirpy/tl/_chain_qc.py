@@ -3,7 +3,7 @@ from anndata import AnnData
 from typing import Union, Sequence, Tuple
 import numpy as np
 from scanpy import logging
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 @deprecated("Use `tl.chain_qc` instead.")

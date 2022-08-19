@@ -3,7 +3,7 @@ from ..util import _is_na
 from anndata import AnnData
 import pandas as pd
 from typing import Union, Callable, Optional
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 from scanpy import logging
 
 

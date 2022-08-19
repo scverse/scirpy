@@ -2,12 +2,11 @@
 import itertools
 from anndata import AnnData
 from ..util import _doc_params, _is_true, _is_na2, _is_true2, _is_false2
-from ._util import doc_working_model, _IOLogger, _check_upgrade_schema
+from ._util import doc_working_model
 from ._datastructures import AirrCell
 import pandas as pd
 from typing import Collection, Iterable, List, Optional
 from .. import __version__
-import numpy as np
 from pandas.api.types import is_object_dtype
 
 

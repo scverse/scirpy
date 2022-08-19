@@ -131,20 +131,3 @@ def _obs_schema_to_airr_cells(adata: AnnData) -> List[AirrCell]:
         cells.append(tmp_ir_cell)
 
     return cells
-
-
-def _from_testdata(obs) -> AnnData:
-    """Generate an AnnData object from a obs dataframe formatted according to the old obs-based scheam.
-
-    This is used to convert test cases from unittests. Writing them from scratch
-    would be a lot of effort. Also the awkward array format is not very ergonomic to create
-    manually, so we use this instead.
-
-    Compared to the function that converts legacy anndata objects via an intermediate step of
-    creating AirrCells, this function works more directly, and can cope with minimal data that is
-     * incorrect on purpose (for a test case)
-     * is missing columns that are mandatory, but irrelevant for a test case
-     * ensures a value ends up in the chain (VJ_1, VDJ_2, etc) the author of the test explicitly intended, instead
-       of relying on the ranking of cells implemented in the AirrCell class.
-    """
-    pass

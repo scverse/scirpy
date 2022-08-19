@@ -21,7 +21,7 @@ from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
 from ..tl._clonotypes import _graph_from_coordinates, _doc_clonotype_network
 from ..util import _doc_params
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#CCCCCC", "#000000"]

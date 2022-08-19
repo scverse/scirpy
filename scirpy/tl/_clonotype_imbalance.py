@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from ._repertoire_overlap import repertoire_overlap
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 from ..util import deprecated
 
 

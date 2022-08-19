@@ -5,7 +5,7 @@ from scanpy.readwrite import read
 from scanpy import settings
 from textwrap import indent
 import tempfile
-from ..io import upgrade_schema, AirrCell, from_airr_cells
+from ..io import AirrCell, from_airr_cells
 import urllib.request
 import zipfile
 import pandas as pd

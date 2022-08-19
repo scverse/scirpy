@@ -3,7 +3,7 @@ from anndata import AnnData
 from . import base
 from typing import Union
 from .._compat import Literal
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()

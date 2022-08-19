@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from ._group_abundance import _group_abundance
 from ..util import _is_na
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()

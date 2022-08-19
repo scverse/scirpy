@@ -5,7 +5,7 @@ import pandas as pd
 from ..util import _is_na, _normalize_counts
 from typing import Sequence
 from .._compat import Literal
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 def _group_abundance(

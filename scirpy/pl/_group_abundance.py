@@ -5,7 +5,7 @@ from .. import tl
 from . import base
 from typing import Union, Sequence
 from .styling import _get_colors
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()

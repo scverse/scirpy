@@ -4,7 +4,7 @@ from . import base
 from .. import tl
 import numpy as np
 import matplotlib.pyplot as plt
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 from typing import Union, Callable, Mapping
 
 

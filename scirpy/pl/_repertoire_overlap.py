@@ -9,7 +9,7 @@ from typing import Union, Sequence
 from .. import tl
 from .styling import _init_ax, _get_colors
 from .base import ol_scatter
-from ..io._util import _check_upgrade_schema
+from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()

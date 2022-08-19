@@ -17,6 +17,7 @@ from .fixtures import (
     adata_clonotype_network,
     adata_define_clonotype_clusters,
 )
+from .util import _make_adata
 
 
 def test_chain_pairing():
@@ -47,8 +48,7 @@ def test_chain_pairing():
             "IR_VDJ_2_locus",
         ],
     )
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
+    adata = _make_adata(obs)
     res = ir.tl.chain_pairing(adata, inplace=False)
     npt.assert_equal(
         res,
