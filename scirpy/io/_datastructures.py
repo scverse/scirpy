@@ -71,11 +71,9 @@ class AirrCell(MutableMapping):
         # A list of AIRR compliant dictionaries
         self._chains = list()
         self["cell_id"] = cell_id
-        # legacy argument for the old AnnData scheme (when there was no `extra_chains` field)
-        self._cell_attrs["multi_chain"] = None
 
     def __repr__(self):
-        return "AirrCell {} with {} chains".format(self.cell_id, len(self.chains))
+        return f"AirrCell {self.cell_id} with {len(self.chains)} chains"
 
     @property
     def cell_id(self) -> str:
@@ -152,8 +150,7 @@ class AirrCell(MutableMapping):
                 "`locus` field not specified, but required for most scirpy functionality. "
             )  # type: ignore
         elif chain["locus"] not in self.VALID_LOCI:
-            # TODO seems this isn't actually ignored. Chain will just be moved to `extra chains`.
-            self._logger.warning(f"Non-standard locus name ignored: {chain['locus']} ")  # type: ignore
+            self._logger.warning(f"Non-standard locus name: {chain['locus']} ")  # type: ignore
 
         self.chains.append(chain)
 
@@ -249,89 +246,6 @@ class AirrCell(MutableMapping):
             # add cell-level attributes
             chain.update(self)
             yield chain
-
-    @_doc_params(doc_working_model=doc_working_model)
-    def to_scirpy_record(
-        self, include_fields: Optional[Collection[str]] = None
-    ) -> dict:
-        """\
-        Convert the cell to a scirpy record (i.e. one row of `adata.obs`) according
-        to our working model of adaptive immune receptors.
-
-        {doc_working_model}
-
-        Parameters
-        ----------
-        include_fields
-            AIRR fields to include into `adata.obs` (to save space and to not clutter
-            `obs`). Set to `None` to include all fields.
-
-        Returns
-        -------
-        Dictionary representing one row of scirpy's `adata.obs`.
-        """
-        res_dict = dict()
-
-        if include_fields is None:
-            include_fields = self.fields
-        # ensure cell_id is always added
-        include_fields = set(include_fields)
-        include_fields.add("cell_id")
-
-        # add cell-level attributes
-        for key in self:
-            if key in include_fields:
-                res_dict[key] = self[key]
-
-        # this will overwrite the fields, should the already be included as cell-level
-        # attributes.
-        res_dict["multi_chain"], chain_dict = self._split_chains()
-        res_dict["extra_chains"] = self._serialize_chains(
-            chain_dict.pop("extra"), include_fields=include_fields
-        )
-
-        # add chain-level attributes, do nothing when cell with no chains
-        if self._chain_fields is not None:
-            for key in self._chain_fields:
-                if key in include_fields:
-                    for junction_type, tmp_chains in chain_dict.items():
-                        for i in range(2):
-                            try:
-                                tmp_chain = tmp_chains[i]
-                            except IndexError:
-                                tmp_chain = dict()
-                            res_dict[
-                                "IR_{}_{}_{}".format(junction_type, i + 1, key)
-                            ] = tmp_chain.get(key, None)
-
-        # use this check instead of `is None`, as the fields are missing in an empty cell.
-        def _is_nan_or_missing(col):
-            return col not in res_dict or res_dict[col] is None
-
-        # in some weird reasons, it can happen that a cell has been called from
-        # TCR-seq but no TCR seqs have been found. `has_ir` should be equal
-        # to "at least one productive chain"
-        res_dict["has_ir"] = not (
-            _is_nan_or_missing("IR_VJ_1_junction_aa")
-            and _is_nan_or_missing("IR_VDJ_1_junction_aa")
-        )
-
-        # if there are no chains at all, we want multi-chain to be nan
-        # This is to be consistent with what happens when turning an anndata object into
-        # airr_cells and converting it back to anndata.
-        if not len(self.chains):
-            res_dict["multi_chain"] = np.nan
-
-        if _is_nan_or_missing("IR_VJ_1_junction_aa"):
-            assert _is_nan_or_missing(
-                "IR_VJ_2_junction_aa"
-            ), f"There can't be a secondary chain if there is no primary one: {res_dict}"
-        if _is_nan_or_missing("IR_VDJ_1_junction_aa"):
-            assert _is_nan_or_missing(
-                "IR_VDJ_2_junction_aa"
-            ), f"There can't be a secondary chain if there is no primary one: {res_dict}"
-
-        return res_dict
 
     @staticmethod
     def empty_chain_dict() -> dict:

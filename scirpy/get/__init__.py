@@ -7,24 +7,40 @@ import awkward._v2 as ak
 def airr(
     adata,
     airr_variable,
-    chain: Literal["vj1", "vdj1", "vj2", "vdj2"],
-):
-    """Retrieve AIRR variables for each cell"""
-    # TODO VJ_1 vs vj1?
-    # chain = chain.lower().replace("_", "")
-    # valid_chains = ["vj1", "vdj1", "vj2", "vdj2"]
-    # if chain not in valid_chains:
-    #     raise ValueError(
-    #         f"Invalid value for chain. Valid values are {', '.join(valid_chains)}"
-    #     )
+    chain: Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
+) -> pd.Series:
+    """Retrieve AIRR variables for each cell, given a specific chain.
+
+    Parameters
+    ----------
+    adata
+        scirpy AnnData object
+    airr_variable
+        a column from the AIRR Rearrangment schema (see adata.var)
+    chain
+        choose the recptor arm (VJ/VDJ) and if you want to retrieve the primary or secondary chain.
+
+    Returns
+    -------
+    a pandas series aligned to adata.obs. Contains missing values in places where a cell
+    does not have the requested chain.
+    """
+    chain = chain.upper()
+    valid_chains = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
+    if chain not in valid_chains:
+        raise ValueError(
+            f"Invalid value for chain. Valid values are {', '.join(valid_chains)}"
+        )
     if airr_variable not in adata.var_names:
         raise ValueError("airr_variable is not in adata.var_names")
 
     idx = adata.obsm["chain_indices"][chain]
+    mask = ~pd.isnull(idx)
+
     # TODO ensure that this doesn't get converted to something not supporting missing values
     # when saving anndata
-    mask = ~pd.isnull(idx)
     result = np.full(idx.shape, fill_value=None, dtype=object)
+
     # to_numpy fails with some dtypes and missing values are only supported through masked arrays
     # TODO to_numpy would surely be faster than to_list. Maybe this can be updated in the future.
     result[mask] = ak.to_list(
