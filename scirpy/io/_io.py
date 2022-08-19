@@ -184,7 +184,7 @@ def _read_10x_vdj_json(
 
         ir_obj.add_chain(chain)
 
-    return from_airr_cells(airr_cells.values(), include_fields=include_fields)
+    return from_airr_cells(airr_cells.values())
 
 
 def _read_10x_vdj_csv(
@@ -238,7 +238,7 @@ def _read_10x_vdj_csv(
 
         airr_cells[barcode] = ir_obj
 
-    return from_airr_cells(airr_cells.values(), include_fields=include_fields)
+    return from_airr_cells(airr_cells.values())
 
 
 @_doc_params(doc_working_model=doc_working_model, include_fields=DEFAULT_10X_FIELDS)
@@ -517,7 +517,7 @@ def read_airr(
 
             tmp_cell.add_chain(chain_dict)
 
-    return from_airr_cells(airr_cells.values(), include_fields=include_fields)
+    return from_airr_cells(airr_cells.values())
 
 
 def _infer_locus_from_gene_names(chain_dict):

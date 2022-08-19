@@ -5,12 +5,10 @@ from scirpy.io import (
     read_airr,
     read_bracer,
     from_airr_cells,
-    to_airr_cells,
     to_dandelion,
     from_dandelion,
     read_bd_rhapsody,
     write_airr,
-    upgrade_schema,
     AirrCell,
 )
 from scirpy.io._io import _infer_locus_from_gene_names, _cdr3_from_junction

@@ -46,26 +46,49 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
      * ensures a value ends up in the chain (VJ_1, VDJ_2, etc) the author of the test explicitly intended, instead
        of relying on the ranking of cells implemented in the AirrCell class.
     """
+    # ensure that the columns are ordered, i.e. for each variable, VJ_1, VJ_2, VDJ1, ... come in the same order.
+    obs.sort_index(axis=1, inplace=True)
     cols = [x for x in obs.columns if x.startswith("IR_")]
     unique_variables = set(c.split("_", 3)[3] for c in cols)
     # map unique variables to a numeric index
     var_to_index = {v: i for i, v in enumerate(unique_variables)}
 
+    # determine the number of chains per cell. This is used to determine the size of the third
+    # dimension of the awkward array. May be different for each cell, but has the same length for all variablese
+    # of a certain cell.
+    has_chain = []
+    for _, row in obs.iterrows():
+        has_chain_dict = {k: False for k in ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]}
+        for c in cols:
+            # if any of the columns has that chain, we set the value to True
+            _, receptor_arm, chain, var = c.split("_", 3)
+            if not _is_na2(row[c]):
+                has_chain_dict[f"{receptor_arm}_{chain}"] = True
+        has_chain.append(has_chain_dict)
+
     cell_list = []
     chain_idx_list = []
-    for _, row in obs.iterrows():
+    for i, (_, row) in enumerate(obs.iterrows()):
         tmp_cell = [[] for _ in unique_variables]
         chain_idx_row = {}
         for c in cols:
             _, receptor_arm, chain, var = c.split("_", 3)
-            i = len(tmp_cell[var_to_index[var]])
-            # TODO what about nan-like values?
-            tmp_cell[var_to_index[var]].append(row[c])
             chain_key = f"{receptor_arm}_{chain}"
-            try:
-                assert chain_idx_row[chain_key] == i
-            except KeyError:
-                chain_idx_row[chain_key] = i
+            chain_idx = len(tmp_cell[var_to_index[var]])
+
+            if _is_na2(row[c]) and not has_chain[i][chain_key]:
+                # keep nan values only if any other variable has that many chains.
+                # otherwise the 'ragged' array will just be one entry shorter.
+                continue
+            else:
+                tmp_cell[var_to_index[var]].append(None if _is_na2(row[c]) else row[c])
+                try:
+                    try:
+                        assert chain_idx_row[chain_key] == chain_idx
+                    except AssertionError:
+                        print("TODO")
+                except KeyError:
+                    chain_idx_row[chain_key] = chain_idx
         cell_list.append(tmp_cell)
         chain_idx_list.append(chain_idx_row)
 

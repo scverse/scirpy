@@ -1,4 +1,4 @@
-from ._chain_qc import chain_pairing, chain_qc
+from ._chain_qc import chain_qc
 from ._clonal_expansion import clonal_expansion, summarize_clonal_expansion
 from ._diversity import alpha_diversity
 from ._group_abundance import group_abundance

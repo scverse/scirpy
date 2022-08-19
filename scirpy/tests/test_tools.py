@@ -20,54 +20,6 @@ from .fixtures import (
 from .util import _make_adata
 
 
-def test_chain_pairing():
-    obs = pd.DataFrame.from_records(
-        [
-            ["False", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-            ["True", "True", "AA", "BB", "CC", "DD", "TRA", "TRA", "TRA", "TRB"],
-            ["True", "False", "AA", "BB", "CC", "DD", "TRA", "TRA", "TRB", "TRB"],
-            ["True", "False", "AA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
-            ["True", "False", "AA", "nan", "CC", "nan", "TRA", "nan", "TRB", "nan"],
-            ["True", "False", "AA", "BB", "nan", "nan", "TRA", "TRA", "nan", "nan"],
-            ["True", "False", "AA", "BB", "CC", "nan", "TRA", "TRA", "TRB", "TRB"],
-            ["True", "False", "nan", "nan", "CC", "nan", "nan", "nan", "TRB", "nan"],
-            ["True", "False", "nan", "nan", "CC", "DD", "nan", "nan", "TRB", "TRB"],
-            ["True", "False", "AA", "nan", "CC", "DD", "TRA", "nan", "TRB", "TRB"],
-            ["True", "False", "AA", "nan", "CC", "DD", "TRA", "nan", "TRB", "IGH"],
-        ],
-        columns=[
-            "has_ir",
-            "multi_chain",
-            "IR_VJ_1_junction_aa",
-            "IR_VJ_2_junction_aa",
-            "IR_VDJ_1_junction_aa",
-            "IR_VDJ_2_junction_aa",
-            "IR_VJ_1_locus",
-            "IR_VJ_2_locus",
-            "IR_VDJ_1_locus",
-            "IR_VDJ_2_locus",
-        ],
-    )
-    adata = _make_adata(obs)
-    res = ir.tl.chain_pairing(adata, inplace=False)
-    npt.assert_equal(
-        res,
-        [
-            "no IR",
-            "multichain",
-            "two full chains",
-            "orphan VJ",
-            "single pair",
-            "orphan VJ",
-            "extra VJ",
-            "orphan VDJ",
-            "orphan VDJ",
-            "extra VDJ",
-            "ambiguous",
-        ],
-    )
-
-
 def test_chain_qc():
     obs = pd.DataFrame.from_records(
         [
@@ -104,8 +56,7 @@ def test_chain_qc():
             "AAA" if x != "nan" else "nan"
             for x in obs[f"IR_{chain}_{chain_number}_locus"]
         ]
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
+    adata = _make_adata(obs)
 
     ir.tl.chain_qc(adata, key_added=("rec_type", "rec_subtype", "ch_pairing"))
 
