@@ -5,6 +5,7 @@ from typing import List, Union
 from anndata import AnnData
 import awkward._v2 as ak
 from scirpy import __version__
+from scirpy.util import _is_na2
 
 
 def _normalize_df_types(df: pd.DataFrame):
@@ -46,7 +47,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
        of relying on the ranking of cells implemented in the AirrCell class.
     """
     cols = [x for x in obs.columns if x.startswith("IR_")]
-    unique_variables = set(c.split("_")[3] for c in cols)
+    unique_variables = set(c.split("_", 3)[3] for c in cols)
     # map unique variables to a numeric index
     var_to_index = {v: i for i, v in enumerate(unique_variables)}
 
@@ -58,6 +59,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         for c in cols:
             _, receptor_arm, chain, var = c.split("_", 3)
             i = len(tmp_cell[var_to_index[var]])
+            # TODO what about nan-like values?
             tmp_cell[var_to_index[var]].append(row[c])
             chain_key = f"{receptor_arm}_{chain}"
             try:
@@ -70,14 +72,13 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     X = ak.Array(cell_list)
     X = ak.to_regular(X, 1)
 
-    obsm = {
-        "chain_indices": pd.DataFrame.from_records(chain_idx_list).set_index(obs.index)
-    }
+    chain_indices = pd.DataFrame.from_records(chain_idx_list)
 
-    return AnnData(
+    adata = AnnData(
         X=X,
-        obs=obs,
+        obs=obs.loc[:, ~obs.columns.isin(cols)].copy(),
         var=pd.DataFrame(index=unique_variables),
-        obsm=obsm,
         uns={"scirpy_version": __version__},
     )
+    adata.obsm["chain_indices"] = chain_indices.set_index(adata.obs_names)
+    return adata
