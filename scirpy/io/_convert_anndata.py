@@ -14,6 +14,8 @@ from pandas.api.types import is_object_dtype
 def _sanitize_anndata(adata: AnnData) -> None:
     """Sanitization and sanity checks on IR-anndata object.
     Should be executed by every read_xxx function"""
+    # TODO do we still need this?
+    # TODO this is currently not even called by `from_airr_cells`
     assert (
         len(adata.X.shape) == 2
     ), "X needs to have dimensions, otherwise concat doesn't work. "
@@ -48,9 +50,7 @@ def _sanitize_anndata(adata: AnnData) -> None:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_airr_cells(
-    airr_cells: Iterable[AirrCell], include_fields: Optional[Collection[str]] = None
-) -> AnnData:
+def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     """\
     Convert a collection of :class:`~scirpy.io.AirrCell` objects to :class:`~anndata.AnnData`.
 
@@ -104,61 +104,10 @@ def from_airr_cells(
         ).set_index(obs.index)
     }
 
-    return AnnData(X=X, obs=obs, var=pd.DataFrame(index=airr_keys), obsm=obsm)
-
-
-@_check_upgrade_schema()
-def to_airr_cells(adata: AnnData) -> List[AirrCell]:
-    """
-    Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
-    objects.
-
-    Inverse function of :func:`from_airr_cells`.
-
-    Parameters
-    ----------
-    adata
-        annotated data matrix with :term:`IR` annotations.
-
-    Returns
-    -------
-    List of :class:`~scirpy.io.AirrCell` objects.
-    """
-    cells = []
-    logger = _IOLogger()
-
-    obs = adata.obs.copy()
-    ir_cols = obs.columns[obs.columns.str.startswith("IR_")]
-    other_cols = set(adata.obs.columns) - set(ir_cols)
-    for cell_id, row in obs.iterrows():
-        tmp_ir_cell = AirrCell(cell_id, logger=logger)
-
-        # add cell-level attributes
-        for col in other_cols:
-            # skip these columns: we want to use the index as cell id,
-            # extra_chains and has_ir get added separately
-            if col in ("cell_id", "extra_chains", "has_ir"):
-                continue
-            tmp_ir_cell[col] = row[col]
-
-        # add chain level attributes
-        chains = {
-            (junction_type, chain_id): AirrCell.empty_chain_dict()
-            for junction_type, chain_id in itertools.product(["VJ", "VDJ"], ["1", "2"])
-        }
-        for tmp_col in ir_cols:
-            _, junction_type, chain_id, key = tmp_col.split("_", maxsplit=3)
-            chains[(junction_type, chain_id)][key] = row[tmp_col]
-
-        for tmp_chain in chains.values():
-            # Don't add empty chains!
-            if not all([_is_na2(x) for x in tmp_chain.values()]):
-                tmp_ir_cell.add_chain(tmp_chain)
-
-        try:
-            tmp_ir_cell.add_serialized_chains(row["extra_chains"])
-        except KeyError:
-            pass
-        cells.append(tmp_ir_cell)
-
-    return cells
+    return AnnData(
+        X=X,
+        obs=obs,
+        var=pd.DataFrame(index=airr_keys),
+        obsm=obsm,
+        uns={"scirpy_version": __version__},
+    )

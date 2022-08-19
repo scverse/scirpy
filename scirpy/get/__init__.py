@@ -54,4 +54,5 @@ def airr(
 
 
 def most_frequent(array: Sequence, n=10):
+    """Get the most frequnet categories of an Array"""
     return pd.Series(array).value_counts().index[:n].tolist()

@@ -3,10 +3,7 @@ import json
 from anndata import AnnData
 from ._datastructures import AirrCell
 from typing import (
-    Iterable,
     List,
-    Mapping,
-    MutableMapping,
     Sequence,
     Union,
     Collection,
@@ -18,16 +15,17 @@ import pickle
 import os.path
 from . import _tracerlib
 import sys
+import awkward._v2 as ak
 from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein, _is_na2
-from ._convert_anndata import from_airr_cells, to_airr_cells, _sanitize_anndata
+from ._convert_anndata import from_airr_cells, _sanitize_anndata
 from ._util import (
     doc_working_model,
     _IOLogger,
-    _check_upgrade_schema,
     _read_airr_rearrangement_df,
 )
+from ._legacy import _check_upgrade_schema
 from .._compat import Literal
 from airr import RearrangementSchema
 import itertools
@@ -672,47 +670,6 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
                     chain[f] = int(chain[f])
             writer.write(chain)
     writer.close()
-
-
-def upgrade_schema(adata) -> None:
-    """Update older versions of a scirpy anndata object to the latest schema.
-
-    Modifies adata inplace.
-
-    Parameters
-    ----------
-    adata
-        annotated data matrix
-    """
-    # the scirpy_version flag was introduced in 0.7, therefore, for now,
-    # there's no need to parse the version information but just check its presence.
-    if "scirpy_version" in adata.uns:
-        raise ValueError(
-            "Your AnnData object seems already up-to-date with scirpy v0.7"
-        )
-    # junction_ins is not exactly np1, therefore we just leave it as is
-    rename_dict = {
-        f"IR_{arm}_{i}_{key_old}": f"IR_{arm}_{i}_{key_new}"
-        for arm, i, (key_old, key_new) in itertools.product(
-            ["VJ", "VDJ"],
-            ["1", "2"],
-            {
-                "cdr3": "junction_aa",
-                "expr": "duplicate_count",
-                "expr_raw": "consensus_count",
-                "v_gene": "v_call",
-                "d_gene": "d_call",
-                "j_gene": "j_call",
-                "c_gene": "c_call",
-                "cdr3_nt": "junction",
-            }.items(),
-        )
-    }
-    rename_dict["clonotype"] = "clone_id"
-    adata.obs.rename(columns=rename_dict, inplace=True)
-    adata.obs["extra_chains"] = None
-    adata.uns["scirpy_version"] = __version__
-    _sanitize_anndata(adata)
 
 
 @_check_upgrade_schema()
