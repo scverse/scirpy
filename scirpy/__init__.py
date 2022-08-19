@@ -11,3 +11,4 @@ if not within_flit():
     from . import tl
     from . import datasets
     from . import ir_dist
+    from . import get
