@@ -103,10 +103,15 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
         ).set_index(obs.index)
     }
 
+    # TODO tmp experiment
+    from anndata.utils import dim_len
+    import numpy as np
+
     return AnnData(
-        X=X,
+        X=np.zeros((dim_len(X, 0), dim_len(X, 1))),
         obs=obs,
         var=pd.DataFrame(index=airr_keys),
+        layers={"airr": X},
         obsm=obsm,
         uns={"scirpy_version": __version__},
     )
