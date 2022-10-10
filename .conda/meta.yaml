@@ -15,8 +15,6 @@ build:
     - "{{ PYTHON }} -m pip install . --ignore-installed --no-deps -vv"
 
 requirements:
-  # The way the version is resolved from SCM (flit + get_version)
-  # requires all dependencies to be installed at build time.
   host:
     - python >=3.7
     - pip!=22.1 # https://github.com/pypa/pip/issues/11110
@@ -30,7 +28,7 @@ requirements:
     - anndata >=0.7.6
     - scanpy>=1.6.0
     - pandas>=1.0
-    - numpy
+    - numpy<1.22
     - scipy
     - parasail-python
     - scikit-learn

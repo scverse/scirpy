@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, Hashable, Sequence, Tuple, Union, Mapping
+from typing import Dict, Hashable, Optional, Sequence, Tuple, Union, Mapping
 import scipy.sparse as sp
 from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
@@ -280,7 +280,7 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
-        if np.isnan(idx_in_dist_mat):
+        if idx_in_dist_mat == -1:  # nan
             return reverse.empty()
         else:
             # get distances from the distance matrix...
@@ -307,7 +307,7 @@ class DoubleLookupNeighborFinder:
         name: str,
         distance_matrix: sp.csr_matrix,
         labels: Sequence,
-        labels2: Sequence = None,
+        labels2: Optional[Sequence] = None,
     ):
         """Add a distance matrix.
 
@@ -327,9 +327,9 @@ class DoubleLookupNeighborFinder:
         """
         labels2 = labels if labels2 is None else labels2
         if not len(labels) == distance_matrix.shape[0]:
-            raise ValueError("Dimensions mismatch alon axis 0")
+            raise ValueError("Dimensions mismatch along axis 0")
         if not len(labels2) == distance_matrix.shape[1]:
-            raise ValueError("Dimensions mismatch alon axis 1")
+            raise ValueError("Dimensions mismatch along axis 1")
         if not isinstance(distance_matrix, csr_matrix):
             raise TypeError("Distance matrix must be sparse and in CSR format. ")
 
@@ -339,8 +339,8 @@ class DoubleLookupNeighborFinder:
         self.distance_matrix_labels[name] = {k: i for i, k in enumerate(labels)}
         self.distance_matrix_labels2[name] = {k: i for i, k in enumerate(labels2)}
         # The label "nan" does not have an index in the matrix
-        self.distance_matrix_labels[name]["nan"] = np.nan
-        self.distance_matrix_labels2[name]["nan"] = np.nan
+        self.distance_matrix_labels[name]["nan"] = -1
+        self.distance_matrix_labels2[name]["nan"] = -1
 
     def add_lookup_table(
         self,
@@ -376,7 +376,7 @@ class DoubleLookupNeighborFinder:
             [
                 self.distance_matrix_labels[distance_matrix][k]
                 for k in self.feature_table[feature_col]
-            ]
+            ],
         )
 
     def _build_reverse_lookup_table(
@@ -384,7 +384,7 @@ class DoubleLookupNeighborFinder:
         feature_col: str,
         distance_matrix: str,
         *,
-        dist_type: Literal["boolean", "numberic"],
+        dist_type: Literal["boolean", "numeric"],
     ) -> ReverseLookupTable:
         """Create a reverse-lookup dict that maps each (numeric) index
         of a feature distance matrix to a numeric or boolean mask.
@@ -397,7 +397,7 @@ class DoubleLookupNeighborFinder:
         # Build reverse lookup
         for i, k in enumerate(self.feature_table2[feature_col]):
             tmp_key = tmp_index_lookup[k]
-            if np.isnan(tmp_key):
+            if tmp_key == -1:
                 continue
             try:
                 tmp_reverse_lookup[tmp_key].append(i)
