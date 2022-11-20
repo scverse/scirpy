@@ -34,7 +34,8 @@ dependencies = [
     'parasail != 1.2.1',
     'scikit-learn',
     'python-levenshtein',
-    'python-igraph',
+    # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
+    'python-igraph != 0.10.0,!=0.10.1',
     'networkx>=2.5',
     'squarify',
     'airr>=1.2',
