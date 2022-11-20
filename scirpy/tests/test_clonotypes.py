@@ -277,7 +277,7 @@ def test_clonotype_network(
         inplace=False,
     )
     # print(coords)
-    npt.assert_almost_equal(coords.values, np.array(expected), decimal=2)
+    npt.assert_almost_equal(coords.values, np.array(expected), decimal=1)
 
 
 def test_clonotype_network_igraph(adata_clonotype_network):
