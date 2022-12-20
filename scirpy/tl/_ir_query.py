@@ -100,7 +100,7 @@ def ir_query(
     .. warning::
         This is an experimental function that may change in the future.
 
-    The reference database can either be a imune cell receptor database, or
+    The reference database can either be an immune cell receptor database, or
     simply another scRNA-seq dataset with some annotations in `.obs`. This function
     maps all cells to all matching entries from the reference.
 
