@@ -15,11 +15,10 @@ import pickle
 import os.path
 from . import _tracerlib
 import sys
-import awkward._v2 as ak
 from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein, _is_na2
-from ._convert_anndata import from_airr_cells, _sanitize_anndata
+from ._convert_anndata import from_airr_cells
 from ._util import (
     doc_working_model,
     _IOLogger,
@@ -28,7 +27,6 @@ from ._util import (
 from ._legacy import _check_upgrade_schema
 from .._compat import Literal
 from airr import RearrangementSchema
-import itertools
 import re
 from .. import __version__
 

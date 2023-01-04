@@ -1,7 +1,7 @@
 """Code to support older version of the scipy data structure. """
 
 from copy import copy
-import awkward._v2 as ak
+import awkward as ak
 from .. import __version__
 from functools import wraps
 import itertools

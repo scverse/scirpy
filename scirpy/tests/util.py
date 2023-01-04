@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Union
 from anndata import AnnData
-import awkward._v2 as ak
+import awkward as ak
 from scirpy import __version__
 from scirpy.util import _is_na2
 

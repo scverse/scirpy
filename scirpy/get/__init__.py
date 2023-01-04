@@ -2,7 +2,7 @@ import itertools
 from typing import Sequence, Literal, Union
 import pandas as pd
 import numpy as np
-import awkward._v2 as ak
+import awkward as ak
 from anndata import AnnData
 
 

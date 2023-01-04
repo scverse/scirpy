@@ -72,8 +72,9 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     :class:`~anndata.AnnData` object with :term:`IR` information in `obs`.
 
     """
-    import awkward._v2 as ak
+    import awkward as ak
 
+    # data frame from cell-level attributes
     obs = pd.DataFrame.from_records(iter(airr_cells)).set_index("cell_id")
 
     # For now, require that all chains have the same keys
@@ -83,35 +84,16 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
             assert airr_keys == tmp_chain.keys() or airr_keys is None
             airr_keys = tmp_chain.keys()
 
-    # Build list of lists for awkward array
-    # TODO this is inefficient, but maybe efficient enough.
-    # Dimensions (obs, var, n_chains)
-    cell_list = []
-    for tmp_cell in airr_cells:
-        tmp_var_list = [[] for _ in airr_keys]
-        for tmp_chain in tmp_cell.chains:
-            for tmp_chain_list, value in zip(tmp_var_list, tmp_chain.values()):
-                tmp_chain_list.append(value)
-        cell_list.append(tmp_var_list)
-
-    X = ak.Array(cell_list)
-    X = ak.to_regular(X, 1)
-
     obsm = {
+        "airr": ak.Array((c.chains for c in airr_cells)),
         "chain_indices": pd.DataFrame.from_records(
-            [c.chain_indices() for c in airr_cells]
-        ).set_index(obs.index)
+            (c.chain_indices() for c in airr_cells)
+        ).set_index(obs.index),
     }
 
-    # TODO tmp experiment
-    from anndata.utils import dim_len
-    import numpy as np
-
     return AnnData(
-        X=np.zeros((dim_len(X, 0), dim_len(X, 1))),
+        X=None,
         obs=obs,
-        var=pd.DataFrame(index=airr_keys),
-        layers={"airr": X},
         obsm=obsm,
         uns={"scirpy_version": __version__},
     )
