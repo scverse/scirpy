@@ -1,5 +1,5 @@
 import itertools
-from typing import Sequence, Literal, Union
+from typing import Sequence, Literal, Union, cast
 import pandas as pd
 import numpy as np
 import awkward as ak
@@ -13,6 +13,9 @@ def airr(
         Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
         Sequence[Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]],
     ],
+    *,
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
 ) -> Union[pd.Series, pd.DataFrame]:
     """Retrieve AIRR variables for each cell, given a specific chain.
 
@@ -35,57 +38,56 @@ def airr(
     multiple_vars = not isinstance(airr_variable, str)
     multiple_chains = not isinstance(chain, str)
 
+    airr_data = cast(ak.Array, adata.obsm[airr_key])
+    chain_indices = cast(pd.DataFrame, adata.obsm[chain_idx_key])
+
     if multiple_vars or multiple_chains:
         if not multiple_vars:
             airr_variable = [airr_variable]
         if not multiple_chains:
-            chain = [chain]
+            chain = [chain]  # type: ignore
         return pd.DataFrame(
             {
-                f"{tmp_chain}_{tmp_var}": _airr_col(adata, tmp_var, tmp_chain)
+                f"{tmp_chain}_{tmp_var}": _airr_col(
+                    airr_data, chain_indices, tmp_var, tmp_chain
+                )
                 for tmp_chain, tmp_var in itertools.product(chain, airr_variable)
-            }
+            },
+            index=adata.obs_names,
         )
     else:
-        return _airr_col(adata, airr_variable, chain)
+        return pd.Series(
+            _airr_col(airr_data, chain_indices, airr_variable, chain),
+            index=adata.obs_names,
+        )
 
 
 def _airr_col(
-    adata: AnnData,
+    airr_data: ak.Array,
+    chain_indices: pd.DataFrame,
     airr_variable: str,
-    chain: Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
-) -> pd.Series:
+    chain: str,
+) -> np.ndarray:
     """called by `airr()` to retrieve a single column"""
     chain = chain.upper()
-    valid_chains = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
-    if chain not in valid_chains:
+    if chain not in chain_indices.columns:
         raise ValueError(
-            f"Invalid value for chain. Valid values are {', '.join(valid_chains)}"
+            f"Invalid value for chain. Valid values are {', '.join(chain_indices.columns)}"
         )
-    if airr_variable not in adata.var_names:
-        raise ValueError("airr_variable is not in adata.var_names")
 
-    idx = adata.obsm["chain_indices"][chain]
+    idx = chain_indices[chain]
     mask = ~pd.isnull(idx)
 
     # TODO ensure that this doesn't get converted to something not supporting missing values
     # when saving anndata
     result = np.full(idx.shape, fill_value=None, dtype=object)
 
-    # to_numpy fails with some dtypes and missing values are only supported through masked arrays
-    # TODO to_numpy would surely be faster than to_list. Maybe this can be updated in the future.
-    result[mask] = ak.to_list(
-        adata.X[
-            np.where(mask)[0],
-            np.where(adata.var_names == airr_variable)[0],
-            idx[mask].astype(int),
-        ],
-    )
-    return pd.Series(result, index=adata.obs_names)
+    result[mask] = airr_data[np.where(mask)[0], airr_variable, idx[mask].astype(int)]
+    return result
 
 
 def most_frequent(array: Sequence, n=10):
-    """Get the most frequnet categories of an Array"""
+    """Get the most frequent categories of an Array"""
     return pd.Series(array).value_counts().index[:n].tolist()
 
 
@@ -95,5 +97,5 @@ def obs_context(adata, **kwargs):
 
 
 def add_to_obs(adata, **kwargs):
-    """Add columnt to obs"""
+    """Add column to obs"""
     raise NotImplementedError

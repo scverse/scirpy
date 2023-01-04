@@ -62,10 +62,6 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     ----------
     airr_cells
         A list of :class:`~scirpy.io.AirrCell` objects
-    include_fields
-        A list of field names that are to be transferred to `adata`. If `None`
-        (the default), transfer all fields. Use this option to avoid cluttering
-        of `adata.obs` by irrelevant columns.
 
     Returns
     -------
