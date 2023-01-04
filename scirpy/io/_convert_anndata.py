@@ -72,6 +72,10 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
 
     # data frame from cell-level attributes
     obs = pd.DataFrame.from_records(iter(airr_cells)).set_index("cell_id")
+    # AnnData requires indices to be strings
+    # A range index would automatically be converted by AnnData, but then the `obsm` object doesn't
+    # match the index anymore.
+    obs.index = obs.index.astype(str)
 
     # For now, require that all chains have the same keys
     airr_keys = None

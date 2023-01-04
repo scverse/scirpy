@@ -93,9 +93,5 @@ def most_frequent(array: Sequence, n=10):
 
 def obs_context(adata, **kwargs):
     """A context manager that temporarily adds columns to adata.obs"""
-    raise NotImplementedError
-
-
-def add_to_obs(adata, **kwargs):
-    """Add column to obs"""
+    # TODO
     raise NotImplementedError

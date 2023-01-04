@@ -23,7 +23,7 @@ def upgrade_schema(adata: AnnData) -> AnnData:
     adata
         annotated data matrix
     """
-    if isinstance(adata.X, ak.Array):
+    if "airr" in adata.obsm and isinstance(adata.obsm["airr"], ak.Array):
         raise ValueError(
             "Your AnnData object seems already up-to-date with scirpy v0.12"
         )
@@ -35,7 +35,7 @@ def _check_anndata_upgrade_schema(adata):
     """Check if `adata` uses the latest scirpy schema.
 
     Raises ValueError if it doesn't"""
-    if not isinstance(adata.X, ak.Array):
+    if not any((isinstance(x, ak.Array) for x in adata.obsm.values())):
         # First check for very old version. We don't support it at all anymore.
         if (
             # I would actually only use `scirpy_version` for the check, but
@@ -58,7 +58,7 @@ def _check_anndata_upgrade_schema(adata):
         else:
             raise ValueError(
                 "Scirpy has updated the format of `adata` in v0.12. AIRR data is now stored as an"
-                "awkward array in `adata.X`."
+                "awkward array in `adata.obsm['airr']`."
                 "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
                 "the latest version. "
             )
