@@ -2,11 +2,8 @@ import pytest
 import pandas as pd
 from anndata import AnnData
 import numpy as np
-import scanpy
-from scipy import sparse
-from scipy.sparse.csr import csr_matrix
-from scirpy.util import _is_symmetric
 import scirpy as ir
+from .util import _make_adata
 
 
 @pytest.fixture
@@ -89,11 +86,7 @@ def adata_cdr3():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
-    obs["has_ir"] = "True"
-    adata = AnnData(obs=obs)
-    adata._sanitize()
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -112,11 +105,7 @@ def adata_cdr3_2():
             "IR_VDJ_2_junction_aa",
         ],
     ).set_index("cell_id")
-    obs["has_ir"] = "True"
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    adata.uns["DB"] = {"name": "TESTDB"}
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -141,10 +130,7 @@ def adata_define_clonotypes():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
-    obs["has_ir"] = "True"
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -204,9 +190,7 @@ def adata_define_clonotype_clusters():
             ).set_index("cell_id")
         )
     )
-    adata = AnnData(obs=obs, X=np.empty((obs.shape[0], 0)))
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -230,7 +214,6 @@ def adata_conn(adata_define_clonotype_clusters):
     ir.tl.define_clonotype_clusters(
         adata, sequence="aa", metric="alignment", receptor_arms="any", dual_ir="any"
     )
-    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -239,8 +222,8 @@ def adata_define_clonotype_clusters_singletons():
     """Adata where every cell belongs to a singleton clonotype.
     Required for a regression test for #236.
     """
-    adata = AnnData(
-        obs=pd.DataFrame()
+    obs = (
+        pd.DataFrame()
         .assign(
             cell_id=["cell1", "cell2", "cell3", "cell4"],
             IR_VJ_1_junction_aa=["AAA", "BBB", "CCC", "DDD"],
@@ -256,8 +239,8 @@ def adata_define_clonotype_clusters_singletons():
         )
         .set_index("cell_id")
     )
+    adata = _make_adata(obs)
     ir.pp.ir_dist(adata, metric="identity", sequence="aa")
-    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -282,7 +265,6 @@ def adata_clonotype_network(adata_conn):
     )
     adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
     ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
-    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -417,9 +399,7 @@ def adata_tra():
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -577,9 +557,7 @@ def adata_vdj():
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -599,9 +577,7 @@ def adata_clonotype():
         ],
         columns=["cell_id", "group", "clone_id", "clonotype_cluster"],
     ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
 
 
 @pytest.fixture
@@ -619,6 +595,4 @@ def adata_diversity():
         ],
         columns=["cell_id", "group", "clonotype_"],
     ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs)
