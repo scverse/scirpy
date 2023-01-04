@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 import airr
 from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein, _is_na2
-from ._convert_anndata import from_airr_cells
+from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._util import (
     doc_working_model,
     _IOLogger,

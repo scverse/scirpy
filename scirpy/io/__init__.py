@@ -11,7 +11,8 @@ from ._io import (
     DEFAULT_AIRR_CELL_ATTRIBUTES,
     DEFAULT_AIRR_FIELDS,
 )
-from ._convert_anndata import from_airr_cells
+from ._legacy import upgrade_schema
+from ._convert_anndata import from_airr_cells, to_airr_cells
 from ..util import deprecated
 from ._datastructures import AirrCell
 

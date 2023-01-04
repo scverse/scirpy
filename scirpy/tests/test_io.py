@@ -12,7 +12,7 @@ from scirpy.io import (
     AirrCell,
 )
 from scirpy.io._io import _infer_locus_from_gene_names, _cdr3_from_junction
-from scirpy.io._legacy import _check_upgrade_schema
+from scirpy.io._legacy import _check_upgrade_schema, upgrade_schema
 from scirpy.util import _is_na, _is_false
 import scirpy as ir
 import numpy as np

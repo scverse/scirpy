@@ -7,7 +7,17 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 from functools import partial
 import itertools
 from ..util import _is_na2, _is_true2, _doc_params
-from typing import Collection, Dict, Iterable, List, Mapping, Optional, Iterator, Tuple
+from typing import (
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Iterator,
+    Tuple,
+    Any,
+)
 from airr import RearrangementSchema
 import scanpy
 import json
@@ -59,7 +69,7 @@ class AirrCell(MutableMapping):
         cell_id: str,
         cell_attribute_fields: Collection[str] = (),
         *,
-        logger=scanpy.logging,
+        logger: Any = scanpy.logging,
     ):
         self._logger = logger
         self._chain_fields = None

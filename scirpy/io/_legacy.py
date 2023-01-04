@@ -6,11 +6,10 @@ from .. import __version__
 from functools import wraps
 import itertools
 from anndata import AnnData
-from typing import Callable, List
+from typing import Callable, List, cast
 from ._datastructures import AirrCell
 from ._util import _IOLogger
 from ..util import _is_na2
-from ._convert_anndata import from_airr_cells
 
 
 def upgrade_schema(adata: AnnData) -> AnnData:
@@ -23,6 +22,8 @@ def upgrade_schema(adata: AnnData) -> AnnData:
     adata
         annotated data matrix
     """
+    from ._convert_anndata import from_airr_cells
+
     if "airr" in adata.obsm and isinstance(adata.obsm["airr"], ak.Array):
         raise ValueError(
             "Your AnnData object seems already up-to-date with scirpy v0.12"
@@ -100,7 +101,7 @@ def _obs_schema_to_airr_cells(adata: AnnData) -> List[AirrCell]:
     ir_cols = obs.columns[obs.columns.str.startswith("IR_")]
     other_cols = set(adata.obs.columns) - set(ir_cols)
     for cell_id, row in obs.iterrows():
-        tmp_ir_cell = AirrCell(cell_id, logger=logger)
+        tmp_ir_cell = AirrCell(cast(str, cell_id), logger=logger)
 
         # add cell-level attributes
         for col in other_cols:

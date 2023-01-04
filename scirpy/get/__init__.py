@@ -29,6 +29,10 @@ def airr(
     chain
         choose the recptor arm (VJ/VDJ) and if you want to retrieve the primary or secondary chain.
         If multiple chains are specified, a adataframe will be returned
+    airr_key
+        Key in `adata.obsm` under which the AwkwardArray with AIRR information is stored
+    chain_idx_key
+        Key in `adata.obsm` under which the chain indices are stored
 
     Returns
     -------
