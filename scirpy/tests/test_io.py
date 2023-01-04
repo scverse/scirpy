@@ -12,6 +12,7 @@ from scirpy.io import (
     AirrCell,
 )
 from scirpy.io._io import _infer_locus_from_gene_names, _cdr3_from_junction
+from scirpy.io import to_airr_cells
 from scirpy.io._legacy import _check_upgrade_schema, upgrade_schema
 from scirpy.util import _is_na, _is_false
 import scirpy as ir
@@ -74,6 +75,7 @@ def test_cdr3_from_junction(junction_aa, junction_nt, cdr3_aa, cdr3_nt):
     indirect=True,
 )
 def test_upgrade_schema(anndata_from_10x_sample):
+    # TODO need to make a version for the *very old* schema and the *v0.7* schema.
     adata = sc.read_h5ad(TESTDATA / "wu2020_200_old_schema.h5ad")
     upgrade_schema(adata)
 
@@ -138,7 +140,8 @@ def test_airr_cell_empty():
     airr_record = list(ac.to_airr_records())
     assert airr_record == []
 
-    ac.to_scirpy_record()
+    adata = from_airr_cells([ac])
+    assert adata.shape == (1, 0)
 
 
 @pytest.mark.parametrize(
