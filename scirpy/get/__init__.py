@@ -82,7 +82,12 @@ def _airr_col(
     # when saving anndata
     result = np.full(idx.shape, fill_value=None, dtype=object)
 
-    result[mask] = airr_data[np.where(mask)[0], airr_variable, idx[mask].astype(int)]
+    # to_numpy would be faster, but it doesn't work with strings (as this would create an object dtype
+    # which is not allowed as per the awkward documentation)
+    # Currently the performance hit doesn't seem to be a deal breaker, can maybe revisit this in the future.
+    # It is anyway not very efficient to create a result array with an object dtype.
+    _ak_slice = airr_data[np.where(mask)[0], airr_variable, idx[mask].astype(int)]
+    result[mask] = ak.to_list(_ak_slice)
     return result
 
 

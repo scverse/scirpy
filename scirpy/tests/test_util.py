@@ -17,9 +17,11 @@ from itertools import combinations
 import igraph as ig
 import numpy as np
 import pandas as pd
+import scirpy as ir
 import numpy.testing as npt
 import pytest
 import scipy.sparse
+from typing import cast
 from .fixtures import adata_tra
 
 import warnings
@@ -204,9 +206,10 @@ def test_layout_components(arrange_boxes, component_layout):
 
 def test_translate_dna_to_protein(adata_tra):
     for nt, aa in zip(
-        adata_tra.obs["IR_VJ_1_junction"], adata_tra.obs["IR_VJ_1_junction_aa"]
+        ir.get.airr(adata_tra, "junction", "VJ_1"),
+        ir.get.airr(adata_tra, "junction_aa", "VJ_1"),
     ):
-        assert _translate_dna_to_protein(nt) == aa
+        assert _translate_dna_to_protein(cast(str, nt)) == aa
 
 
 @pytest.mark.parametrize(

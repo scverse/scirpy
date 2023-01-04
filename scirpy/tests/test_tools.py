@@ -333,7 +333,7 @@ def test_group_abundance():
         ],
         columns=["cell_id", "group", "clone_id"],
     ).set_index("cell_id")
-    adata = AnnData(obs=obs)
+    adata = _make_adata(obs)
 
     # Check counts
     res = ir.tl.group_abundance(
@@ -377,6 +377,7 @@ def test_group_abundance():
 
 def test_spectratype(adata_tra):
     # Check numbers
+    adata_tra.obs["IR_VJ_1_junction_aa"] = ir.get.airr(adata_tra, "junction_aa", "VJ_1")
     res1 = ir.tl.spectratype(
         adata_tra,
         groupby="IR_VJ_1_junction_aa",
