@@ -9,6 +9,8 @@ from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()
+# TODO `has_ir` column doesn't neecessariy exist anymore. Need to find a different solution
+# maybe combine with https://github.com/scverse/scirpy/issues/232
 def group_abundance(
     adata: Union[dict, AnnData],
     groupby: str,

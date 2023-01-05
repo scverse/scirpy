@@ -52,8 +52,6 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     obs.sort_index(axis=1, inplace=True)
     cols = [x for x in obs.columns if x.startswith("IR_")]
     unique_variables = set(c.split("_", 3)[3] for c in cols)
-    # map unique variables to a numeric index
-    var_to_index = {v: i for i, v in enumerate(unique_variables)}
 
     # determine the number of chains per cell. This is used to determine the size of the second
     # dimension of the awkward array. May be different for each cell, but has the same length for all variables
@@ -76,7 +74,9 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         tmp_chain_idx: dict[str, Optional[int]] = {k: None for k in has_chain_dict}
         for chain, row_has_chain in has_chain_dict.items():
             if row_has_chain:
-                tmp_chains.append({v: row[f"IR_{chain}_{v}"] for v in unique_variables})
+                tmp_chains.append(
+                    {v: row.get("IR_{chain}_{v}", None) for v in unique_variables}
+                )
                 tmp_chain_idx[chain] = len(tmp_chains) - 1
 
         cell_list.append(tmp_chains)

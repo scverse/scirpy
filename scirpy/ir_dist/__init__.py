@@ -9,6 +9,7 @@ from scipy.sparse import csr_matrix
 from ..util import _doc_params
 from . import metrics
 from ..io._legacy import _check_upgrade_schema
+from ..get import airr as get_airr
 import itertools
 
 
@@ -188,14 +189,11 @@ def _ir_dist(
     # get all unique seqs for VJ and VDJ
     def _get_unique_seqs(tmp_adata, chain_type):
         """Get all unique sequences for a chain type"""
-        obs_col = "IR_{chain_type}_{chain_id}_{key}"
         tmp_seqs = np.concatenate(
             [
-                tmp_adata.obs[
-                    obs_col.format(chain_type=chain_type, chain_id=chain_id, key=key)
-                ].values
+                get_airr(tmp_adata, key, f"{chain_type}_{chain_id}").values
                 for chain_id in ["1", "2"]
-            ]
+            ]  # type: ignore
         )
         return np.unique([x.upper() for x in tmp_seqs[~_is_na(tmp_seqs)]])
 

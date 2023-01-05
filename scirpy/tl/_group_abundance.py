@@ -65,6 +65,8 @@ def _group_abundance(
 
 
 @_check_upgrade_schema()
+# TODO `has_ir` column doesn't neecessariy exist anymore. Need to find a different solution
+# maybe combine with https://github.com/scverse/scirpy/issues/232
 def group_abundance(
     adata: AnnData,
     groupby: str,

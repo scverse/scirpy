@@ -12,44 +12,6 @@ from ._util import _IOLogger
 from ._legacy import _check_upgrade_schema
 
 
-def _sanitize_anndata(adata: AnnData) -> None:
-    """Sanitization and sanity checks on IR-anndata object.
-    Should be executed by every read_xxx function"""
-    # TODO do we still need this?
-    # TODO this is currently not even called by `from_airr_cells`
-    assert (
-        len(adata.X.shape) == 2
-    ), "X needs to have dimensions, otherwise concat doesn't work. "
-
-    # Pending updates to anndata to properly handle boolean columns.
-    # For now, let's turn them into a categorical with "True/False"
-    BOOLEAN_COLS = ("has_ir", "is_cell", "multi_chain", "high_confidence", "productive")
-
-    # explicitly convert those to categoricals. All IR_ columns that are strings
-    # will be converted to categoricals, too
-    CATEGORICAL_COLS = ("extra_chains",)
-
-    # Sanitize has_ir column into categorical
-    # This should always be a categorical with True / False
-    for col in adata.obs.columns:
-        if col.endswith(BOOLEAN_COLS):
-            adata.obs[col] = pd.Categorical(
-                [
-                    "True" if _is_true2(x) else "False" if _is_false2(x) else "None"
-                    for x in adata.obs[col]
-                ],
-                categories=["True", "False", "None"],
-            )
-        elif col.endswith(CATEGORICAL_COLS) or (
-            col.startswith("IR_") and is_object_dtype(adata.obs[col])
-        ):
-            # Turn all IR_VJ columns that are of type string or object to categoricals
-            # otherwise saving anndata doesn't work.
-            adata.obs[col] = pd.Categorical(adata.obs[col])
-
-    adata.strings_to_categoricals()
-
-
 @_doc_params(doc_working_model=doc_working_model)
 def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     """\

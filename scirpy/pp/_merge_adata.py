@@ -1,17 +1,12 @@
-from textwrap import indent
 from typing import Union, List, Dict
 from anndata import AnnData
-from ..io._convert_anndata import (
-    _sanitize_anndata,
-    from_airr_cells,
-)
+from ..io._convert_anndata import from_airr_cells, to_airr_cells
 from ..io._datastructures import AirrCell
 from ..io._legacy import _check_upgrade_schema
-from scanpy import logging
 import itertools
-import pandas as pd
 
 
+# TODO can this be achieved with a join at the AnnData level (i.e. anndata itself merging the awkward array?)
 @_check_upgrade_schema(check_args=(0, 1))
 def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     """
@@ -80,6 +75,11 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     ).obs.reindex(adata.obs_names)
 
 
+# TODO can we remove this?
+# Merging modailties would happen with MuData in the future
+# We may support storing AIRR data in the same AnnData object. This could be achieved
+# with a simple reindexing of the `airr` and `chain_indices` array/Dataframe in .obsm,
+# but it could still warrant a helper function
 @_check_upgrade_schema(check_args=(1,))
 def merge_with_ir(
     adata: AnnData, adata_ir: AnnData, on: Union[List[str], None] = None, **kwargs
@@ -149,5 +149,3 @@ def merge_with_ir(
     )
 
     adata.obs.index.name = orig_index_name
-
-    _sanitize_anndata(adata)
