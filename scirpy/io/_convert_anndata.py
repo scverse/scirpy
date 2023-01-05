@@ -79,13 +79,6 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     # match the index anymore.
     obs.index = obs.index.astype(str)
 
-    # For now, require that all chains have the same keys
-    airr_keys = None
-    for tmp_cell in airr_cells:
-        for tmp_chain in tmp_cell.chains:
-            assert airr_keys == tmp_chain.keys() or airr_keys is None
-            airr_keys = tmp_chain.keys()
-
     obsm = {
         "airr": ak.Array((c.chains for c in airr_cells)),
         "chain_indices": pd.DataFrame.from_records(

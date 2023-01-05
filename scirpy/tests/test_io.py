@@ -24,6 +24,7 @@ from .util import _normalize_df_types
 from functools import lru_cache
 import scanpy as sc
 import pandas as pd
+from typing import cast
 
 
 @lru_cache(None)
@@ -292,6 +293,7 @@ def test_convert_dandelion(anndata_from_10x_sample):
 
     assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
 
+    # TODO this comparison is overly complicated now that we have the new data structure
     # Frame-level comparison is not possible as the "extra chains" field is different
     # due to 'sequence_id' being different.
     for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2):
@@ -526,19 +528,21 @@ def test_read_tracer():
 
     anndata = read_tracer(TESTDATA / "tracer")
     assert "cell1" in anndata.obs_names and "cell2" in anndata.obs_names
-    assert anndata.obs.shape[0] == 3
 
-    cell1 = anndata.obs.loc["cell1", :]
-    cell2 = anndata.obs.loc["cell2", :]
+    obs = ir.get.airr(anndata, ["junction_aa", "j_call"], ["VJ_1", "VDJ_1"])
+    assert obs.shape[0] == 3
+
+    cell1 = obs.loc["cell1", :]
+    cell2 = obs.loc["cell2", :]
 
     assert cell1.name == "cell1"
-    assert cell1["IR_VJ_1_junction_aa"] == "AESTGTSGTYKYI"
-    assert cell1["IR_VDJ_1_junction_aa"] == "ASSYSVSRSGELF"
+    assert cell1["VJ_1_junction_aa"] == "AESTGTSGTYKYI"
+    assert cell1["VDJ_1_junction_aa"] == "ASSYSVSRSGELF"
 
     assert cell2.name == "cell2"
-    assert cell2["IR_VJ_1_junction_aa"] == "ALSEAEGGSEKLV"
-    assert cell2["IR_VDJ_1_junction_aa"] == "ASSYNRGPGGTQY"
-    assert cell2["IR_VDJ_1_j_call"] == "TRBJ2-5"
+    assert cell2["VJ_1_junction_aa"] == "ALSEAEGGSEKLV"
+    assert cell2["VDJ_1_junction_aa"] == "ASSYNRGPGGTQY"
+    assert cell2["VDJ_1_j_call"] == "TRBJ2-5"
 
 
 @pytest.mark.conda
@@ -563,55 +567,58 @@ def test_read_airr():
             TESTDATA / "airr/rearrangement_ig.tsv",
         ]
     )
-    tra_cols = [
-        "IR_VJ_1_junction_aa",
-        "IR_VJ_1_junction",
-        "IR_VJ_1_v_call",
-        "IR_VJ_1_d_call",
-        "IR_VJ_1_j_call",
-        "IR_VJ_1_c_call",
-        "IR_VJ_1_consensus_count",
+    airr_variables = [
+        "junction_aa",
+        "junction",
+        "v_call",
+        "d_call",
+        "j_call",
+        "c_call",
+        "consensus_count",
+        "locus",
     ]
-    trb_cols = [x.replace("IR_VJ", "IR_VDJ") for x in tra_cols]
-    ig_cols = tra_cols + trb_cols
+
     pdt.assert_frame_equal(
-        anndata.obs.loc[anndata.obs["IR_VJ_1_locus"] == "TRA", tra_cols],
-        anndata_tra.obs.loc[:, tra_cols],
+        ir.get.airr(anndata, airr_variables, "VJ_1").loc[lambda x: x["VJ_1_locus"] == "TRA"],  # type: ignore
+        ir.get.airr(anndata_tra, airr_variables, "VJ_1"),  # type: ignore
         check_categorical=False,  # categories differ, obviously
         check_dtype=False,
     )
     pdt.assert_frame_equal(
-        anndata.obs.loc[anndata.obs["IR_VDJ_1_locus"] == "TRB", trb_cols],
-        anndata_trb.obs.loc[:, trb_cols],
+        ir.get.airr(anndata, airr_variables, "VDJ_1").loc[lambda x: x["VDJ_1_locus"] == "TRB"],  # type: ignore
+        ir.get.airr(anndata_trb, airr_variables, "VDJ_1"),  # type: ignore
         check_categorical=False,  # categories differ, obviously
         check_dtype=False,
     )
     pdt.assert_frame_equal(
-        anndata.obs.loc[anndata.obs["IR_VDJ_1_locus"] == "IGH", ig_cols],
-        anndata_ig.obs.loc[:, ig_cols],
+        ir.get.airr(anndata, airr_variables, ["VJ_1", "VDJ_1"]).loc[lambda x: x["VDJ_1_locus"] == "IGH"],  # type: ignore
+        ir.get.airr(anndata_ig, airr_variables, ["VJ_1", "VDJ_1"]),  # type: ignore
         check_categorical=False,  # categories differ, obviously
         check_dtype=False,
     )
 
     # test some fundamental values
-    assert anndata.obs.shape[0] == 5
+    obs = ir.get.airr(
+        anndata, ["junction_aa", "locus"], ["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]
+    )
+    assert obs.shape[0] == 5
 
-    cell1 = anndata.obs.loc["cell1", :]
-    cell2 = anndata.obs.loc["cell2", :]
-    cell3 = anndata.obs.loc["AAACCTGCAGCGTAAG-1", :]
+    cell1 = obs.loc["cell1", :]
+    cell2 = obs.loc["cell2", :]
+    cell3 = obs.loc["AAACCTGCAGCGTAAG-1", :]
 
     assert cell1.name == "cell1"
-    assert cell1["IR_VJ_1_junction_aa"] == "CTRPKWESPMVDAFDIW"
-    assert cell1["IR_VDJ_2_junction_aa"] == "CQQYDNLQITF"
-    assert cell1["IR_VDJ_1_junction_aa"] == "CQQYYHTPYSF"
-    assert cell1["IR_VJ_1_locus"] == "TRA"
-    assert cell1["IR_VDJ_1_locus"] == "TRB"
+    assert cell1["VJ_1_junction_aa"] == "CTRPKWESPMVDAFDIW"
+    assert cell1["VDJ_2_junction_aa"] == "CQQYDNLQITF"
+    assert cell1["VDJ_1_junction_aa"] == "CQQYYHTPYSF"
+    assert cell1["VJ_1_locus"] == "TRA"
+    assert cell1["VDJ_1_locus"] == "TRB"
 
     assert cell2.name == "cell2"
 
     # check that inferring the locus name from genes works
-    assert cell3["IR_VJ_1_locus"] == "IGL"
-    assert cell3["IR_VDJ_1_locus"] == "IGH"
+    assert cell3["VJ_1_locus"] == "IGL"
+    assert cell3["VDJ_1_locus"] == "IGH"
 
 
 def test_airr_df():
@@ -877,26 +884,32 @@ def test_read_bracer():
     assert "SRR10788834" in anndata.obs.index
     assert anndata.obs.shape[0] == 6
 
-    cell1 = anndata.obs.loc["SRR10779208", :]
-    cell2 = anndata.obs.loc["SRR10788834", :]
+    obs = ir.get.airr(
+        anndata,
+        ["locus", "j_call", "junction", "junction_aa", "np1_length", "np2_length"],
+        ["VJ_1", "VDJ_1"],
+    )
+
+    cell1 = obs.loc["SRR10779208", :]
+    cell2 = obs.loc["SRR10788834", :]
 
     assert cell1.name == "SRR10779208"
-    assert cell1["IR_VJ_1_locus"] == "IGK"
-    assert cell1["IR_VDJ_1_locus"] == "IGH"
-    assert cell1["IR_VDJ_1_j_call"] == "IGHJ4"
-    assert cell1["IR_VDJ_1_junction"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
-    assert cell1["IR_VDJ_1_junction_aa"] == "CATMTGGDLDYW"
-    assert cell1["IR_VJ_1_np1_length"] == 1
-    assert _is_na(cell1["IR_VJ_1_np2_length"])
+    assert cell1["VJ_1_locus"] == "IGK"
+    assert cell1["VDJ_1_locus"] == "IGH"
+    assert cell1["VDJ_1_j_call"] == "IGHJ4"
+    assert cell1["VDJ_1_junction"] == "TGTGCGACGATGACGGGGGGTGACCTTGACTACTGG"
+    assert cell1["VDJ_1_junction_aa"] == "CATMTGGDLDYW"
+    assert cell1["VJ_1_np1_length"] == 1
+    assert _is_na(cell1["VJ_1_np2_length"])
 
     assert cell2.name == "SRR10788834"
-    assert cell2["IR_VDJ_1_junction_aa"] == "CARDHIVVLEPTPKRYGMDVW"
+    assert cell2["VDJ_1_junction_aa"] == "CARDHIVVLEPTPKRYGMDVW"
     assert (
-        cell2["IR_VDJ_1_junction"]
+        cell2["VDJ_1_junction"]
         == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
     )
-    assert cell2["IR_VDJ_1_np1_length"] == 2
-    assert cell2["IR_VDJ_1_np2_length"] == 22
+    assert cell2["VDJ_1_np1_length"] == 2
+    assert cell2["VDJ_1_np2_length"] == 22
 
 
 @pytest.mark.conda
@@ -905,42 +918,62 @@ def test_read_bd_per_cell_chain():
 
     assert adata.obs.shape[0] == 6
 
-    cell1 = adata.obs.loc["1", :]
-    cell25 = adata.obs.loc["25", :]
-    cell39 = adata.obs.loc["39", :]
-    cell85 = adata.obs.loc["85", :]
+    obs = ir.get.airr(
+        adata,
+        [
+            "locus",
+            "duplicate_count",
+            "consensus_count",
+            "junction",
+            "junction_aa",
+            "v_call",
+            "d_call",
+            "j_call",
+            "c_call",
+        ],
+        ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
+    )
 
-    assert cell1["IR_VJ_1_locus"] == "TRA"
-    assert cell1["IR_VJ_1_duplicate_count"] == 1
-    assert cell1["IR_VJ_1_consensus_count"] == 72
-    assert cell1["IR_VJ_1_junction"] == "GCTGCCCCAGAATTTTGTC"
-    assert cell1["IR_VJ_1_junction_aa"] == "AAGQNFV"
-    assert cell1["IR_VJ_1_v_call"] == "TRAV38*01"
-    assert _is_na(cell1["IR_VJ_1_d_call"])
-    assert cell1["IR_VJ_1_j_call"] == "TRAJ2*01"
-    assert cell1["IR_VJ_1_c_call"] == "TRAC"
+    cell1 = obs.loc["1", :]
+    cell25 = obs.loc["25", :]
+    cell39 = obs.loc["39", :]
+    cell85 = obs.loc["85", :]
+
+    assert cell1["VJ_1_locus"] == "TRA"
+    assert cell1["VJ_1_duplicate_count"] == 1
+    assert cell1["VJ_1_consensus_count"] == 72
+    assert cell1["VJ_1_junction"] == "GCTGCCCCAGAATTTTGTC"
+    assert cell1["VJ_1_junction_aa"] == "AAGQNFV"
+    assert cell1["VJ_1_v_call"] == "TRAV38*01"
+    assert _is_na(cell1["VJ_1_d_call"])
+    assert cell1["VJ_1_j_call"] == "TRAJ2*01"
+    assert cell1["VJ_1_c_call"] == "TRAC"
 
     # cell25 has no productive chains
-    assert not _is_na(cell25["extra_chains"])
-    assert _is_na(cell25["IR_VJ_1_locus"])
+    assert np.all(adata.obsm["chain_indices"].loc["25", :].isnull())
+    assert _is_na(cell25["VJ_1_locus"])
 
-    assert cell39["IR_VJ_1_locus"] == "TRG"
-    assert cell39["IR_VDJ_1_locus"] == "TRD"
+    assert cell39["VJ_1_locus"] == "TRG"
+    assert cell39["VDJ_1_locus"] == "TRD"
 
-    assert cell85["IR_VJ_1_locus"] == "TRA"
-    assert cell85["IR_VJ_1_consensus_count"] == 418
-    assert cell85["IR_VJ_2_locus"] == "TRA"
-    assert cell85["IR_VJ_2_consensus_count"] == 1
-    assert "TRA" in cell85["extra_chains"]
+    assert cell85["VJ_1_locus"] == "TRA"
+    assert cell85["VJ_1_consensus_count"] == 418
+    assert cell85["VJ_2_locus"] == "TRA"
+    assert cell85["VJ_2_consensus_count"] == 1
+
+    # TODO how to deal with that
+    # assert "TRA" in cell85["extra_chains"]
 
 
 @pytest.mark.conda
 def test_read_bd_contigs():
     adata = read_bd_rhapsody(TESTDATA / "bd/test_unfiltered_contigs.csv")
 
-    assert adata.obs.shape[0] == 5
+    obs = ir.get.airr(adata, ["locus", "duplicate_count"], "VJ_1")
 
-    cell10681 = adata.obs.loc["10681"]
+    assert obs.shape[0] == 5
 
-    assert cell10681["IR_VJ_1_locus"] == "IGK"
-    assert cell10681["IR_VJ_1_duplicate_count"] == 2
+    cell10681 = obs.loc["10681"]
+
+    assert cell10681["VJ_1_locus"] == "IGK"
+    assert cell10681["VJ_1_duplicate_count"] == 2

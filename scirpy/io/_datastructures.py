@@ -230,7 +230,7 @@ class AirrCell(MutableMapping):
 
     @staticmethod
     def _key_sort_chains(chains, idx) -> Tuple:
-        """Get key to sort chains by expression. Idx is the index of a chain in `self.chains`"""
+        """Get key to sort chains by expression. Idx is the index of a chain in `chains`"""
         chain = chains[idx]
         sort_tuple = (
             chain.get("duplicate_count", 0),
