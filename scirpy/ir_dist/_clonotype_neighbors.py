@@ -8,6 +8,7 @@ import scipy.sparse as sp
 import itertools
 from ._util import DoubleLookupNeighborFinder, reduce_and, reduce_or, merge_coo_matrices
 from ..util import _is_na, _is_true, tqdm
+from ..get import airr as get_airr
 import pandas as pd
 from tqdm.contrib.concurrent import process_map
 
@@ -45,12 +46,6 @@ class ClonotypeNeighbors:
         )
         self._dual_ir_cols = ["1"] if self.dual_ir == "primary_only" else ["1", "2"]
 
-        self._cdr3_cols, self._v_gene_cols = list(), list()
-        for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
-            self._cdr3_cols.append(f"IR_{arm}_{i}_{self.sequence_key}")
-            if same_v_gene:
-                self._v_gene_cols.append(f"IR_{arm}_{i}_v_call")
-
         # Initialize the DoubleLookupNeighborFinder and all lookup tables
         start = logging.info("Initializing lookup tables. ")  # type: ignore
 
@@ -74,27 +69,41 @@ class ClonotypeNeighbors:
         if not adata.obs_names.is_unique:
             raise ValueError("Obs names need to be unique!")
 
-        clonotype_cols = self._cdr3_cols + self._v_gene_cols
+        airr_variables = [self.sequence_key]
+        if self.same_v_gene:
+            airr_variables.append("v_call")
+        chains = [
+            f"{arm}_{chain}"
+            for arm, chain in itertools.product(
+                self._receptor_arm_cols, self._dual_ir_cols
+            )
+        ]
+
         if self.match_columns is not None:
             clonotype_cols += list(self.match_columns)
 
-        obs_filtered = adata.obs.loc[lambda df: _is_true(df["has_ir"]), clonotype_cols]
+        obs = get_airr(adata, airr_variables, chains)
+        if self.match_columns is not None:
+            obs = obs.join(adata.obs.loc[:, self.match_columns], validate="one_to_one")
+        # remove entries without receptor (e.g. only non-productive chains)
+        obs = obs.loc[~np.all(adata.obsm["chain_indices"].isnull(), axis=1), :]
+
+        # TODO can we safely delete this?
         # make sure all nans are consistent "nan"
         # This workaround will be made obsolete by #190.
-        for col in obs_filtered.columns:
-            obs_filtered[col] = obs_filtered[col].astype(str)
-            obs_filtered.loc[_is_na(obs_filtered[col]), col] = "nan"
+        for col in obs.columns:
+            obs[col] = obs[col].astype(str)
+            obs.loc[_is_na(obs[col]), col] = "nan"
 
-        clonotype_groupby = obs_filtered.groupby(
-            clonotype_cols, sort=False, observed=True
-        )
+        # using groupby instead of drop_duplicates since we need the group indices below
+        clonotype_groupby = obs.groupby(obs.columns.tolist(), sort=False, observed=True)
         # This only gets the unique_values (the groupby index)
         clonotypes = clonotype_groupby.size().index.to_frame(index=False)
 
         if clonotypes.shape[0] == 0:
             raise ValueError(
                 "Error computing clonotypes. "
-                "No cells with IR information found (`adata.obs['has_ir'] == True`)"
+                "No cells with IR information found (adata.obsm['chain_indices'] is None for all cells)"
             )
 
         # groupby.indices gets us a (index -> array of row indices) mapping.
@@ -104,7 +113,7 @@ class ClonotypeNeighbors:
         # Also the dict keys need to be of type `str`, or they'll get converted
         # implicitly.
         cell_indices = {
-            str(i): obs_filtered.index[
+            str(i): obs.index[
                 clonotype_groupby.indices.get(
                     # indices is not a tuple if it's just a single column.
                     ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
@@ -128,11 +137,9 @@ class ClonotypeNeighbors:
         # primary one:
         if "2" in self._dual_ir_cols:
             for tmp_arm in self._receptor_arm_cols:
-                primary_is_nan = (
-                    clonotypes[f"IR_{tmp_arm}_1_{self.sequence_key}"] == "nan"
-                )
+                primary_is_nan = clonotypes[f"{tmp_arm}_1_{self.sequence_key}"] == "nan"
                 secondary_is_nan = (
-                    clonotypes[f"IR_{tmp_arm}_2_{self.sequence_key}"] == "nan"
+                    clonotypes[f"{tmp_arm}_2_{self.sequence_key}"] == "nan"
                 )
                 assert not np.sum(
                     ~secondary_is_nan[primary_is_nan]
@@ -154,11 +161,12 @@ class ClonotypeNeighbors:
         if self.same_v_gene:
             # V gene distance matrix (identity mat)
             v_genes = self._unique_values_in_multiple_columns(
-                self.clonotypes, self._v_gene_cols
+                self.clonotypes, [x for x in self.clonotypes.columns if "v_call" in x]
             )
             if self.clonotypes2 is not None:
                 v_genes |= self._unique_values_in_multiple_columns(
-                    self.clonotypes2, self._v_gene_cols
+                    self.clonotypes2,
+                    [x for x in self.clonotypes.columns if "v_call" in x],
                 )
 
             self.neighbor_finder.add_distance_matrix(
@@ -186,12 +194,12 @@ class ClonotypeNeighbors:
         """Add all required lookup tables to the DoubleLookupNeighborFinder"""
         for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
             self.neighbor_finder.add_lookup_table(
-                f"{arm}_{i}", f"IR_{arm}_{i}_{self.sequence_key}", arm
+                f"{arm}_{i}", f"{arm}_{i}_{self.sequence_key}", arm
             )
             if self.same_v_gene:
                 self.neighbor_finder.add_lookup_table(
                     f"{arm}_{i}_v_call",
-                    f"IR_{arm}_{i}_v_call",
+                    f"{arm}_{i}_v_call",
                     "v_gene",
                     dist_type="boolean",
                 )
@@ -204,11 +212,11 @@ class ClonotypeNeighbors:
     def _make_chain_count(self, clonotype_table) -> Dict[str, int]:
         """Compute how many chains there are of each type."""
         cols = {
-            arm: [f"IR_{arm}_{c}_{self.sequence_key}" for c in self._dual_ir_cols]
+            arm: [f"{arm}_{c}_{self.sequence_key}" for c in self._dual_ir_cols]
             for arm in self._receptor_arm_cols
         }
         cols["arms"] = [
-            f"IR_{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols
+            f"{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols
         ]
         return {
             step: np.sum(clonotype_table.loc[:, cols].values != "nan", axis=1)
@@ -299,7 +307,7 @@ class ClonotypeNeighbors:
             array with dimensions (1, n) where n equals the number
             of entries in `has_distance`.
             """
-            ct_col2 = tmp_clonotypes[f"IR_{tmp_arm}_{c2}_{self.sequence_key}"].values
+            ct_col2 = tmp_clonotypes[f"{tmp_arm}_{c2}_{self.sequence_key}"].values
             tmp_array = (
                 lookup[(tmp_arm, c1, c2)][0, has_distance.indices]
                 .todense()

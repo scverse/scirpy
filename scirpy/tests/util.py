@@ -75,7 +75,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         for chain, row_has_chain in has_chain_dict.items():
             if row_has_chain:
                 tmp_chains.append(
-                    {v: row.get("IR_{chain}_{v}", None) for v in unique_variables}
+                    {v: row.get(f"IR_{chain}_{v}", None) for v in unique_variables}
                 )
                 tmp_chain_idx[chain] = len(tmp_chains) - 1
 
