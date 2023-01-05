@@ -104,7 +104,7 @@ def ir_query(
     simply another scRNA-seq dataset with some annotations in `.obs`. This function
     maps all cells to all matching entries from the reference.
 
-    Requires funning :func:`~scirpy.pp.ir_dist` with the same values for `reference`,
+    Requires running :func:`~scirpy.pp.ir_dist` with the same values for `reference`,
     `sequence` and `metric` first.
 
     This function is essentially an extension of :func:`~scirpy.tl.define_clonotype_clusters`

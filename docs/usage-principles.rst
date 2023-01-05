@@ -19,7 +19,7 @@ Scirpy is an extension to `Scanpy <https://scanpy.readthedocs.io>`_ and adheres 
  * The :ref:`API <API>` is divided into *preprocessing* (`pp`), *tools* (`tl`),
    and *plotting* (`pl`).
  * All functions work on :class:`~anndata.AnnData` objects.
- * The :class:`~anndata.AnnData` instance is modified inplace, unless the functions
+ * The :class:`~anndata.AnnData` instance is modified inplace, unless a function
    is called with the keyword argument `inplace=False`.
 
 We decided to handle a few minor points differently to Scanpy:
@@ -59,13 +59,13 @@ Scirpy adds the following :term:`IR`-related columns to `AnnData.obs`:
  * `has_ir`: `True` for all cells with an adaptive immune receptor
  * `extra_chains`: Contains non-productive chains (if not filtered out), and extra chains
    that do not fit into the 2 `VJ` + 2 `VDJ` chain model encoded as JSON. Scirpy does
-   not use this information except for writing it back to AIRR format using 
-   :func:`scirpy.io.write_airr`. 
- * `multi_chain`: `True` for all cells with more than two productive `VJ` cells or 
-   two or more productive `VDJ` cells. 
+   not use this information except for writing it back to AIRR format using
+   :func:`scirpy.io.write_airr`.
+ * `multi_chain`: `True` for all cells with more than two productive `VJ` cells or
+   two or more productive `VDJ` cells.
 
-Where `<attr>` can be any field of the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
-For Scirpy the following fields are relevant: 
+Where `<attr>` can be any field of the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__.
+For Scirpy the following fields are relevant:
 
  * `locus`: The :term:`IMGT locus name<Chain locus>` of the chain (`TRA`, `IGH`, etc.)
  * `c_call`, `v_call`, `d_call`, `j_call`: The gene symbols of the respective genes
