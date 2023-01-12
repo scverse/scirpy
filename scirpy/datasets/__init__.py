@@ -237,7 +237,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         sep=",",
         na_values=["None"],
         true_values=["True"],
-        )
+    )
 
     tcr_table.loc[
         tcr_table["Chain 1 CDR3 Curated"].isna(), "Chain 1 CDR3 Curated"
