@@ -206,6 +206,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
 
     return adata
 
+
 def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     """\
     Download IEDBD and process it into an AnnData object.
@@ -226,19 +227,36 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
 
     with tempfile.TemporaryDirectory() as d:
         d = Path(d)
-        urllib.request.urlretrieve("https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip", d / "receptor_full_v3.zip")
+        urllib.request.urlretrieve(
+            "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip",
+            d / "receptor_full_v3.zip",
+        )
         with zipfile.ZipFile(d / "receptor_full_v3.zip") as zf:
             zf.extractall(d)
-        tcr_table = pd.read_csv(d / "receptor_full_v3.csv", index_col=None, sep=",", na_values=["None"], true_values=["True"],)
+        tcr_table = pd.read_csv(
+            d / "receptor_full_v3.csv",
+            index_col=None,
+            sep=",",
+            na_values=["None"],
+            true_values=["True"],
+        )
 
-    tcr_table.loc[tcr_table["Chain 1 CDR3 Curated"].isna(),'Chain 1 CDR3 Curated'] = tcr_table["Chain 1 CDR3 Calculated"]
+    tcr_table.loc[
+        tcr_table["Chain 1 CDR3 Curated"].isna(), "Chain 1 CDR3 Curated"
+    ] = tcr_table["Chain 1 CDR3 Calculated"]
 
-    tcr_table.loc[tcr_table["Chain 2 CDR3 Curated"].isna(),'Chain 2 CDR3 Curated'] = tcr_table["Chain 2 CDR3 Calculated"]
+    tcr_table.loc[
+        tcr_table["Chain 2 CDR3 Curated"].isna(), "Chain 2 CDR3 Curated"
+    ] = tcr_table["Chain 2 CDR3 Calculated"]
 
     tcr_table_T = tcr_table[(tcr_table["Response Type"] == "T cell")]
 
-    tcr_table_T["Chain 1 CDR3 Curated"] = tcr_table_T["Chain 1 CDR3 Curated"].str.upper()
-    tcr_table_T["Chain 2 CDR3 Curated"] = tcr_table_T["Chain 2 CDR3 Curated"].str.upper()
+    tcr_table_T["Chain 1 CDR3 Curated"] = tcr_table_T[
+        "Chain 1 CDR3 Curated"
+    ].str.upper()
+    tcr_table_T["Chain 2 CDR3 Curated"] = tcr_table_T[
+        "Chain 2 CDR3 Curated"
+    ].str.upper()
 
     tcr_table = tcr_table_T
 
