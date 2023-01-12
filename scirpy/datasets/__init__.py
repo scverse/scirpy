@@ -209,10 +209,16 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
 
 def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     """\
-    Download IEDBD and process it into an AnnData object.
+    Download IEBD v3 and process it into an AnnData object.
+
+    :cite:`iedb` is a curated database of
+    T-cell receptor (TCR) sequences with known antigen specificities.
+
+    Parameters
     ----------
     cached
         If `True`, attempt to read from the `data` directory before downloading
+
     Returns
     -------
     An anndata object containing all entries from IEDB in `obs`.
@@ -225,20 +231,12 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         except OSError:
             pass
 
-    with tempfile.TemporaryDirectory() as d:
-        d = Path(d)
-        urllib.request.urlretrieve(
-            "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip",
-            d / "receptor_full_v3.zip",
-        )
-        with zipfile.ZipFile(d / "receptor_full_v3.zip") as zf:
-            zf.extractall(d)
-        tcr_table = pd.read_csv(
-            d / "receptor_full_v3.csv",
-            index_col=None,
-            sep=",",
-            na_values=["None"],
-            true_values=["True"],
+    tcr_table = pd.read_csv(
+        "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip",
+        index_col=None,
+        sep=",",
+        na_values=["None"],
+        true_values=["True"],
         )
 
     tcr_table.loc[
@@ -261,7 +259,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     tcr_table = tcr_table_T
 
     tcr_cells = []
-    for idx, row in tcr_table.iterrows():
+    for _, row in tcr_table.iterrows():
         cell = AirrCell(cell_id=row["Receptor ID"])
         alpha_chain = AirrCell.empty_chain_dict()
         beta_chain = AirrCell.empty_chain_dict()
@@ -269,23 +267,23 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
             {
                 "locus": "TRA",
                 "junction_aa": row["Chain 1 CDR3 Curated"],
-                "junction": "None",
-                "consensus_count": "None",
+                "junction": None,
+                "consensus_count": None,
                 "v_call": row["Curated Chain 1 V Gene"],
                 "j_call": row["Curated Chain 1 J Gene"],
-                "productive": "True",
+                "productive": True,
             }
         )
         beta_chain.update(
             {
                 "locus": "TRB",
                 "junction_aa": row["Chain 2 CDR3 Curated"],
-                "junction": "None",
-                "consensus_count": "None",
+                "junction": None,
+                "consensus_count": None,
                 "v_call": row["Curated Chain 2 V Gene"],
                 "d_call": row["Curated Chain 2 D Gene"],
                 "j_call": row["Curated Chain 2 J Gene"],
-                "productive": "True",
+                "productive": True,
             }
         )
         cell.add_chain(alpha_chain)
@@ -293,22 +291,20 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         tcr_cells.append(cell)
 
     logging.info("Converting to AnnData object")
-    IEDB = from_airr_cells(tcr_cells)
-    tcr_table = tcr_table.set_index(IEDB.obs.index)
-    IEDB.obs["Antigen"] = tcr_table["Antigen"]
-    IEDB.obs["Organism"] = tcr_table["Organism"]
-    IEDB.obs["Chain 1 Type"] = tcr_table["Chain 1 Type"]
-    IEDB.obs["Chain 2 Type"] = tcr_table["Chain 2 Type"]
-    IEDB.obs["Response Type"] = tcr_table["Response Type"]
-    IEDB.obs["Reference IRI"] = tcr_table["Reference IRI"]
-    IEDB.obs["Epitope IRI"] = tcr_table["Epitope IRI"]
+    iedb = from_airr_cells(tcr_cells)
+    tcr_table = tcr_table.set_index(iedb.obs.index)
+    iedb.obs["Antigen"] = tcr_table["Antigen"]
+    iedb.obs["Organism"] = tcr_table["Organism"]
+    iedb.obs["Chain 1 Type"] = tcr_table["Chain 1 Type"]
+    iedb.obs["Chain 2 Type"] = tcr_table["Chain 2 Type"]
+    iedb.obs["Response Type"] = tcr_table["Response Type"]
+    iedb.obs["Reference IRI"] = tcr_table["Reference IRI"]
+    iedb.obs["Epitope IRI"] = tcr_table["Epitope IRI"]
 
-    adata = IEDB
-
-    adata.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
+    iedb.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
 
     # store cache
     os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
-    adata.write_h5ad(cache_path)
+    iedb.write_h5ad(cache_path)
 
-    return adata
+    return iedb
