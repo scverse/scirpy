@@ -79,9 +79,6 @@ class ClonotypeNeighbors:
             )
         ]
 
-        if self.match_columns is not None:
-            clonotype_cols += list(self.match_columns)
-
         obs = get_airr(adata, airr_variables, chains)
         if self.match_columns is not None:
             obs = obs.join(adata.obs.loc[:, self.match_columns], validate="one_to_one")
@@ -91,6 +88,7 @@ class ClonotypeNeighbors:
         # TODO can we safely delete this?
         # make sure all nans are consistent "nan"
         # This workaround will be made obsolete by #190.
+        # Edit: note: I don't think this can be `np.nan` since this must be a string type column.
         for col in obs.columns:
             obs[col] = obs[col].astype(str)
             obs.loc[_is_na(obs[col]), col] = "nan"

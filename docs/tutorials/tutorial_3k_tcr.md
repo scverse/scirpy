@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.11.4
+      jupytext_version: 1.14.0
 ---
 
 # Analysis of 3k T cells from cancer
@@ -797,6 +797,38 @@ on amino acid sequence identity. For demonstration purposes on this toy dataset 
 
 ```python
 vdjdb = ir.datasets.vdjdb()
+```
+
+```python
+iedb = ir.datasets.iedb()
+```
+
+```python
+iedb.obs["Chain 1 Type"].unique()
+```
+
+```python
+iedb.obs.loc[:, ["extra_chains"] + [x for x in iedb.obs.columns if x.endswith("locus") or x.endswith("junction_aa") ]]
+```
+
+```python
+adata.uns.keys()
+```
+
+```python
+pd.set_option("display.max_columns", 300)
+```
+
+```python
+iedb_df = pd.read_csv("https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip", low_memory=False)
+```
+
+```python
+iedb_df["Receptor Type"].value_counts()
+```
+
+```python
+iedb_df.loc[lambda x: x["Receptor Type"] == "heavyheavy"]
 ```
 
 ```python

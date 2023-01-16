@@ -53,6 +53,10 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     cols = [x for x in obs.columns if x.startswith("IR_")]
     unique_variables = set(c.split("_", 3)[3] for c in cols)
 
+    def _sanitize_value(v):
+        """Nans are represented as the string `"nan"` in most test cases for historical reasons"""
+        return None if _is_na(v) else v
+
     # determine the number of chains per cell. This is used to determine the size of the second
     # dimension of the awkward array. May be different for each cell, but has the same length for all variables
     # of a certain cell.
@@ -75,7 +79,10 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         for chain, row_has_chain in has_chain_dict.items():
             if row_has_chain:
                 tmp_chains.append(
-                    {v: row.get(f"IR_{chain}_{v}", None) for v in unique_variables}
+                    {
+                        v: _sanitize_value(row.get(f"IR_{chain}_{v}", None))
+                        for v in unique_variables
+                    }
                 )
                 tmp_chain_idx[chain] = len(tmp_chains) - 1
 

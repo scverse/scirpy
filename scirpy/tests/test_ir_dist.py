@@ -11,6 +11,7 @@ from scirpy.util import _is_symmetric
 import pandas.testing as pdt
 import pandas as pd
 from anndata import AnnData
+import awkward as ak
 
 
 def _assert_frame_equal(left, right):
@@ -433,48 +434,11 @@ def test_compute_distances_2(
     npt.assert_equal(dist, expected)
 
 
-@pytest.mark.parametrize("with_adata2", [False, True])
-def test_compute_distances_no_dist(
-    adata_cdr3, adata_cdr3_mock_distance_calculator, with_adata2
-):
-    adata2 = adata_cdr3 if with_adata2 else None
-    """Test for #174. Gracefully handle the case when there are no distances."""
-    adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
-    adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
-    # test both receptor arms, primary chain only
-    ir.pp.ir_dist(
-        adata_cdr3,
-        adata2,
-        metric=adata_cdr3_mock_distance_calculator,
-        sequence="aa",
-        key_added="ir_dist_aa_custom",
-    )
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        adata2,
-        receptor_arms="all",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["nan"],
-                "IR_VDJ_1_junction_aa": ["nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances()
-    npt.assert_equal(dist.toarray(), np.zeros((1, 1)))
-
-
 def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are no IR."""
-    adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
-    adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
-    adata_cdr3.obs["has_ir"] = "False"
+    # reset chain indices such that they point to no chains whatsoever.
+    adata_cdr3.obsm["chain_indices"][:] = None
+
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     with pytest.raises(ValueError):
@@ -497,6 +461,8 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
             {"receptor_arms": "VJ", "dual_ir": "primary_only"},
             {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
             {"IR_VJ_1_junction_aa": ["AAA", "nan"]},
+            # TODO note: from adata_cdr3_2, the nan is not removed, because it has a receptor, but no VJ chain
+            # not sure if this is what we want. cf. ClonotypeNeighbors._make_clonotype_table.
             [
                 [1, 0],
                 [0, 0],
@@ -603,7 +569,10 @@ def test_compute_distances_second_anndata(
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
-    adata_empty = AnnData(obs=pd.DataFrame(columns=adata_cdr3.obs.columns))
+    adata_empty = adata_cdr3.copy()
+    # reset chain indices such that no chain will actually be used.
+    adata_empty.obsm["chain_indices"][:] = None
+
     ir.pp.ir_dist(
         adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
     )

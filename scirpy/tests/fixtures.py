@@ -90,11 +90,13 @@ def adata_define_clonotype_clusters():
                 ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
                 ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
                 ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
+                # cell5 has no receptor data whatsoever
                 ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
                 ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
                 ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
                 ["cell8", "AAA", "nan", "KKK", "nan", "TRA", "nan", "TRB", "nan"],
                 ["cell9", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB", "nan"],
+                # while cell 10 has no CDR3 sequences, but v-calls and a receptor type.
                 ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
             ],
             columns=[
@@ -113,17 +115,17 @@ def adata_define_clonotype_clusters():
         .join(
             pd.DataFrame(
                 [
-                    ["cell1", "A", "B", "A", "B", "TCR", "True"],
-                    ["cell2", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell3", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell4", "C", "C", "C", "C", "BCR", "True"],
-                    ["cell5", "A", "A", "A", "A", "BCR", "True"],
-                    ["cell5.noir", "A", "A", "A", "A", "nan", "False"],
-                    ["cell6", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell7", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell8", "A", "A", "X", "A", "TCR", "True"],
-                    ["cell9", "A", "A", "A", "A", "BCR", "True"],
-                    ["cell10", "A", "A", "A", "A", "BCR", "True"],
+                    ["cell1", "A", "B", "A", "B", "TCR"],
+                    ["cell2", "A", "A", "A", "A", "TCR"],
+                    ["cell3", "A", "A", "A", "A", "TCR"],
+                    ["cell4", "C", "C", "C", "C", "BCR"],
+                    ["cell5", "A", "A", "A", "A", "BCR"],
+                    ["cell5.noir", "nan", "nan", "nan", "nan", "nan"],
+                    ["cell6", "A", "A", "A", "A", "TCR"],
+                    ["cell7", "A", "A", "A", "A", "TCR"],
+                    ["cell8", "A", "A", "X", "A", "TCR"],
+                    ["cell9", "A", "A", "A", "A", "BCR"],
+                    ["cell10", "A", "A", "A", "A", "BCR"],
                 ],
                 columns=[
                     "cell_id",
@@ -132,7 +134,6 @@ def adata_define_clonotype_clusters():
                     "IR_VDJ_1_v_call",
                     "IR_VDJ_2_v_call",
                     "receptor_type",
-                    "has_ir",
                 ],
             ).set_index("cell_id")
         )
