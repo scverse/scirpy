@@ -222,15 +222,14 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "VJ", "dual_ir": "all"},
             {
-                "VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
             },
             [
-                [1, 0, 0, 4, 0],
-                [0, 1, 0, 0, 4],
-                [0, 0, 0, 0, 0],
-                [4, 0, 0, 1, 0],
-                [0, 4, 0, 0, 1],
+                [1, 0, 4, 0],
+                [0, 1, 0, 4],
+                [4, 0, 1, 0],
+                [0, 4, 0, 1],
             ],
         ],
         [
@@ -238,14 +237,13 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "all", "dual_ir": "primary_only"},
             {
-                "VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
-                "VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL"],
             },
             [
-                [1, 10, 0, 0],
-                [10, 1, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 1],
+                [1, 10, 0],
+                [10, 1, 0],
+                [0, 0, 1],
             ],
         ],
         [
