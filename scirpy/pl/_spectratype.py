@@ -4,21 +4,24 @@ from .._compat import Literal
 from anndata import AnnData
 from .. import tl
 from . import base
-from typing import Union, List, Collection, Callable
+from typing import Union, List, Collection, Callable, Sequence
 from .styling import _get_colors
 from ..io._legacy import _check_upgrade_schema
 
 
 @_check_upgrade_schema()
 def spectratype(
-    adata: Union[dict, AnnData],
-    cdr3_col: Union[str, Collection[str]] = ["IR_VJ_1_junction_aa"],
+    adata: AnnData,
+    chain: Union[
+        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
+        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
+    ] = "VJ_1",
     *,
     color: str,
+    cdr3_col: str = "junction_aa",
     combine_fun: Callable = np.sum,
     normalize: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
-    kde_kws: Union[dict, None] = None,
     **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
     """Show the distribution of CDR3 region lengths.
@@ -29,10 +32,12 @@ def spectratype(
     ----------
     adata
         AnnData object to work on.
-    cdr3_col
-        Column(s) containing CDR3 lengths.
+    chain
+        One or multiple chains to include in the plot.
     color
         Color by this column from `obs`. E.g. sample or diagnosis
+    cdr3_col
+        AIRR rearrangement column from which sequences are obtained
     combine_fun
         A function definining how the `cdr3_col` columns should be merged,
         in case multiple ones were specified.
@@ -52,10 +57,10 @@ def spectratype(
     -------
     Axes object
     """
-
     data = tl.spectratype(
         adata,
-        cdr3_col,
+        chain=chain,
+        cdr3_col=cdr3_col,
         target_col=color,
         combine_fun=combine_fun,
         fraction=normalize,

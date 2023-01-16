@@ -8,6 +8,7 @@ from ..io import AirrCell
 from itertools import islice
 from copy import deepcopy
 from ..io._legacy import _check_upgrade_schema
+from ..get import airr as get_airr
 
 
 def _sanitize_gene_name(gene_text):
@@ -22,11 +23,11 @@ def vdj_usage(
     adata: AnnData,
     *,
     vdj_cols: Sequence = (
-        "IR_VJ_1_v_call",
-        "IR_VJ_1_j_call",
-        "IR_VDJ_1_v_call",
-        "IR_VDJ_1_d_call",
-        "IR_VDJ_1_j_call",
+        "VJ_1_v_call",
+        "VJ_1_j_call",
+        "VDJ_1_v_call",
+        "VDJ_1_d_call",
+        "VDJ_1_j_call",
     ),
     normalize_to: Union[bool, str, Sequence[float]] = False,
     ax: Union[plt.Axes, None] = None,
@@ -83,9 +84,13 @@ def vdj_usage(
     Axes object.
     """
 
-    vdj_cols = list(vdj_cols)
+    vdj_cols = [x.replace("IR_", "") for x in vdj_cols]
 
-    df = adata.obs.assign(
+    df = get_airr(
+        adata,
+        ["v_call", "d_call", "j_call", "c_call"],
+        ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
+    ).assign(
         cell_weights=_normalize_counts(adata.obs, normalize_to)
         if isinstance(normalize_to, (bool, str))
         else normalize_to

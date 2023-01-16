@@ -40,6 +40,13 @@ def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, color="sample")
     assert isinstance(p, plt.Axes)
 
+    # test if error message highlighting the API change is raised
+    with pytest.raises(ValueError):
+        pl.spectratype(adata_tra, ["IR_VJ_1_junction_aa"], color="sample")
+
+    with pytest.raises(ValueError):
+        pl.spectratype(adata_tra, cdr3_col="IR_VJ_1_junction_aa", color="sample")
+
 
 def test_repertoire_overlap(adata_tra):
     p = pl.repertoire_overlap(adata_tra, groupby="sample", dendro_only=True)

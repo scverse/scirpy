@@ -380,13 +380,13 @@ def test_spectratype(adata_tra):
     adata_tra.obs["IR_VJ_1_junction_aa"] = ir.get.airr(adata_tra, "junction_aa", "VJ_1")
     res1 = ir.tl.spectratype(
         adata_tra,
-        groupby="IR_VJ_1_junction_aa",
+        chain="IR_VJ_1_junction_aa",
         target_col="sample",
         fraction=False,
     )
     res2 = ir.tl.spectratype(
         adata_tra,
-        groupby=("IR_VJ_1_junction_aa",),
+        chain=("IR_VJ_1_junction_aa",),
         target_col="sample",
         fraction=False,
     )
@@ -418,7 +418,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = ir.tl.spectratype(
-        adata_tra, groupby="IR_VJ_1_junction_aa", target_col="sample", fraction="sample"
+        adata_tra, chain="IR_VJ_1_junction_aa", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {
