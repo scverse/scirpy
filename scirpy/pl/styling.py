@@ -102,6 +102,7 @@ def style_axes(
         )
         xax = ax.get_xaxis()
         xax.set_tick_params(length=0)
+    ax.tick_params(axis="both", labelsize=tick_fontsize)
     ax.set_ylabel(ylab, fontsize=label_fontsize)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
@@ -114,7 +115,6 @@ def style_axes(
             fontsize=tick_fontsize,
             frameon=False,
         )
-        ax.set_position([0.1, 0.3, 0.6, 0.55])
 
 
 def _get_colors(
