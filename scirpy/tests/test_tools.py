@@ -378,17 +378,28 @@ def test_group_abundance():
 def test_spectratype(adata_tra):
     # Check numbers
     adata_tra.obs["IR_VJ_1_junction_aa"] = ir.get.airr(adata_tra, "junction_aa", "VJ_1")
+
+    # Old API calls should raise a value error
+    with pytest.raises(ValueError):
+        res1 = ir.tl.spectratype(
+            adata_tra,
+            chain="IR_VJ_1_junction_aa",
+            target_col="sample",
+            fraction=False,
+        )
+    with pytest.raises(ValueError):
+        res2 = ir.tl.spectratype(
+            adata_tra,
+            chain=("IR_VJ_1_junction_aa",),
+            target_col="sample",
+            fraction=False,
+        )
+
     res1 = ir.tl.spectratype(
-        adata_tra,
-        chain="IR_VJ_1_junction_aa",
-        target_col="sample",
-        fraction=False,
+        adata_tra, chain="VJ_1", target_col="sample", fraction=False
     )
     res2 = ir.tl.spectratype(
-        adata_tra,
-        chain=("IR_VJ_1_junction_aa",),
-        target_col="sample",
-        fraction=False,
+        adata_tra, chain=["VJ_1"], target_col="sample", fraction=False
     )
     expected_count = pd.DataFrame.from_dict(
         {
@@ -418,7 +429,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = ir.tl.spectratype(
-        adata_tra, chain="IR_VJ_1_junction_aa", target_col="sample", fraction="sample"
+        adata_tra, chain="VJ_1", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {
