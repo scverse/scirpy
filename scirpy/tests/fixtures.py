@@ -52,7 +52,9 @@ def adata_cdr3_2():
             "IR_VDJ_2_junction_aa",
         ],
     ).set_index("cell_id")
-    return _make_adata(obs)
+    adata = _make_adata(obs)
+    adata.uns["DB"] = {"name": "TESTDB"}
+    return adata
 
 
 @pytest.fixture

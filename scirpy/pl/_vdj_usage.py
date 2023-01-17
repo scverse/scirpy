@@ -85,12 +85,16 @@ def vdj_usage(
     """
 
     vdj_cols = [x.replace("IR_", "") for x in vdj_cols]
+    chains, airr_variables = zip(
+        *[
+            (f"{arm}_{chain}", airr_variable)
+            for arm, chain, airr_variable in map(
+                lambda x: x.split("_", maxsplit=2), vdj_cols
+            )
+        ]
+    )
 
-    df = get_airr(
-        adata,
-        ["v_call", "d_call", "j_call", "c_call"],
-        ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
-    ).assign(
+    df = get_airr(adata, airr_variables, chains).assign(
         cell_weights=_normalize_counts(adata.obs, normalize_to)
         if isinstance(normalize_to, (bool, str))
         else normalize_to

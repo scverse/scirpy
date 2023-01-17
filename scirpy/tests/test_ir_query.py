@@ -29,8 +29,8 @@ def test_ir_query(adata_cdr3, adata_cdr3_2, metric, key1, key2):
     )
 
     tmp_key2 = f"ir_query_TESTDB_aa_{metric}" if key2 is None else key2
-    assert adata_cdr3.uns[tmp_key2]["distances"].shape == (5, 3)
-    assert len(adata_cdr3.uns[tmp_key2]["cell_indices"]) == 5
+    assert adata_cdr3.uns[tmp_key2]["distances"].shape == (4, 3)
+    assert len(adata_cdr3.uns[tmp_key2]["cell_indices"]) == 4
     assert len(adata_cdr3.uns[tmp_key2]["cell_indices_reference"]) == 3
 
 
