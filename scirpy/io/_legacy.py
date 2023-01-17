@@ -10,6 +10,28 @@ from typing import Callable, List, cast
 from ._datastructures import AirrCell
 from ._util import _IOLogger
 from ..util import _is_na2
+from packaging import version
+
+
+def _check_schema_pre_v0_7(adata: AnnData):
+    """Raise an error if AnnData is in pre scirpy v0.7 format."""
+    if (
+        # I would actually only use `scirpy_version` for the check, but
+        # there might be cases where it gets lost (e.g. when rebuilding AnnData).
+        # If a `v_call` is present, that's a safe sign that it is the AIRR schema, too
+        "has_ir" in adata.obs.columns
+        and (
+            "IR_VJ_1_v_call" not in adata.obs.columns
+            and "IR_VDJ_1_v_call" not in adata.obs.columns
+        )
+        and "scirpy_version" not in adata.uns
+    ):
+        raise ValueError(
+            "It seems your anndata object is of a very old format used by scirpy < v0.7 "
+            "which is not supported anymore. You might be best off reading in your data from scratch. "
+            "If you absolutely want to, you can use scirpy < v0.12 to read that format, "
+            "convert it to a legacy format, and convert it again using the most recent version of scirpy. "
+        )
 
 
 def upgrade_schema(adata: AnnData) -> AnnData:
@@ -24,12 +46,23 @@ def upgrade_schema(adata: AnnData) -> AnnData:
     """
     from ._convert_anndata import from_airr_cells
 
-    if "airr" in adata.obsm and isinstance(adata.obsm["airr"], ak.Array):
+    # Raise error if already up to date
+    if ("airr" in adata.obsm and isinstance(adata.obsm["airr"], ak.Array)) or (
+        version.parse(adata.uns.get("scirpy_version", "v0.0.0"))
+        >= version.parse("0.12.0")
+    ):
         raise ValueError(
             "Your AnnData object seems already up-to-date with scirpy v0.12"
         )
+    # Raise error if very old schema
+    _check_schema_pre_v0_7(adata)
+
     airr_cells = _obs_schema_to_airr_cells(adata)
-    return from_airr_cells(airr_cells)
+    tmp_adata = from_airr_cells(airr_cells)
+    adata.obsm["airr"] = tmp_adata.obsm["airr"]
+    adata.obsm["chain_indices"] = tmp_adata.obsm["chain_indices"]
+    adata.uns["scirpy_version"] = __version__
+    adata.obs = tmp_adata.obs
 
 
 def _check_anndata_upgrade_schema(adata):
@@ -38,31 +71,14 @@ def _check_anndata_upgrade_schema(adata):
     Raises ValueError if it doesn't"""
     if not any((isinstance(x, ak.Array) for x in adata.obsm.values())):
         # First check for very old version. We don't support it at all anymore.
-        if (
-            # I would actually only use `scirpy_version` for the check, but
-            # there might be cases where it gets lost (e.g. when rebuilding AnnData).
-            # If a `v_call` is present, that's a safe sign that it is the AIRR schema, too
-            "has_ir" in adata.obs.columns
-            and (
-                "IR_VJ_1_v_call" not in adata.obs.columns
-                and "IR_VDJ_1_v_call" not in adata.obs.columns
-            )
-            and "scirpy_version" not in adata.uns
-        ):
-            raise ValueError(
-                "It seems your anndata object is of a very old format used by scirpy < v0.7 "
-                "which is not supported anymore. You might be best off reading in your data from scratch. "
-                "If you absolutely want to, you can use scirpy < v0.12 to read that format, "
-                "convert it to a legacy format, and convert it again using the most recent version of scirpy. "
-            )
+        _check_schema_pre_v0_7(adata)
         # otherwise suggest to use `upgrade_schema`
-        else:
-            raise ValueError(
-                "Scirpy has updated the format of `adata` in v0.12. AIRR data is now stored as an"
-                "awkward array in `adata.obsm['airr']`."
-                "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
-                "the latest version. "
-            )
+        raise ValueError(
+            "Scirpy has updated the format of `adata` in v0.12. AIRR data is now stored as an"
+            "awkward array in `adata.obsm['airr']`."
+            "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
+            "the latest version. "
+        )
 
 
 def _check_upgrade_schema(check_args=(0,)) -> Callable:

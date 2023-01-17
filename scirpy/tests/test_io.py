@@ -68,27 +68,10 @@ def test_cdr3_from_junction(junction_aa, junction_nt, cdr3_aa, cdr3_nt):
     assert _cdr3_from_junction(junction_aa, junction_nt) == (cdr3_aa, cdr3_nt)
 
 
-@pytest.mark.parametrize(
-    "anndata_from_10x_sample",
-    [
-        TESTDATA / "10x/filtered_contig_annotations.csv",
-    ],
-    indirect=True,
-)
-def test_upgrade_schema(anndata_from_10x_sample):
-    # TODO need to make a version for the *very old* schema and the *v0.7* schema.
-    adata = sc.read_h5ad(TESTDATA / "wu2020_200_old_schema.h5ad")
-    upgrade_schema(adata)
+def test_check_upgrade_schema_pre_scirpy_v0_7():
+    """Test that running a function on very old (pre v0.7) schema
+    raises an error"""
 
-    # should raise error if already upgraded
-    with pytest.raises(ValueError):
-        upgrade_schema(adata)
-
-    with pytest.raises(ValueError):
-        upgrade_schema(anndata_from_10x_sample)
-
-
-def test_check_upgrade_schema():
     @_check_upgrade_schema()
     def dummy_fun(adata, foo, *, bar):
         assert adata.shape[0] > 0
@@ -96,12 +79,33 @@ def test_check_upgrade_schema():
         assert bar == "bar"
         return True
 
-    adata = sc.read_h5ad(TESTDATA / "wu2020_200_old_schema.h5ad")
+    # Very old schema raises a ValueError
+    adata = sc.read_h5ad(TESTDATA / "wu2020_200_v0_6.h5ad")
+    with pytest.raises(ValueError):
+        dummy_fun(adata, "foo", bar="bar")
+
+    # Trying to run check upgrade schema raises an error
+    with pytest.raises(ValueError):
+        upgrade_schema(adata)
+
+
+def test_check_upgrade_schema_pre_scirpy_v0_12():
+    """Test that running a functon on an old anndata object raises an error
+    Also test that the function can successfully be ran after calling `upgrade_schema`.
+    """
+
+    @_check_upgrade_schema()
+    def dummy_fun(adata, foo, *, bar):
+        assert adata.shape[0] > 0
+        assert foo == "foo"
+        assert bar == "bar"
+        return True
+
+    adata = sc.read_h5ad(TESTDATA / "wu2020_200_v0_11.h5ad")
     with pytest.raises(ValueError):
         dummy_fun(adata, "foo", bar="bar")
 
     upgrade_schema(adata)
-
     assert dummy_fun(adata, "foo", bar="bar") is True
 
 
