@@ -13,8 +13,6 @@ def adata_cdr3():
         [
             [ "cell1", "AAA", "AHA", "KKY", "KKK", "GCGGCGGCG", "TRA", "TRB", "TRA", "TRB"],
             [ "cell2", "AHA", "nan", "KK", "KKK", "GCGAUGGCG", "TRA", "TRB", "TRA", "TRB"],
-            # This row has no chains, but "has_ir" = True. That can happen if
-            # the user does not filter the data.
             [ "cell3", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
             [ "cell4", "AAA", "AAA", "LLL", "AAA", "GCUGCUGCU", "TRA", "TRB", "TRA", "TRB"],
             [ "cell5", "AAA", "nan", "LLL", "nan", "nan", "nan", "TRB", "TRA", "nan"],
