@@ -24,9 +24,9 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-update-conda: true
-          mamba-version: "*"
-          channels: conda-forge,bioconda,defaults
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          channels: conda-forge,bioconda
           channel-priority: strict 
           python-version: ${{ matrix.python-version }}
 
