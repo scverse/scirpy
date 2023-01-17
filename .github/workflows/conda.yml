@@ -27,7 +27,7 @@ jobs:
           auto-update-conda: true
           mamba-version: "*"
           channels: conda-forge,bioconda,defaults
-          channel-priority: true
+          channel-priority: strict 
           python-version: ${{ matrix.python-version }}
 
       - name: install conda build
