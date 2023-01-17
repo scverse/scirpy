@@ -26,19 +26,20 @@ requirements:
   run:
     - python >=3.7
     - anndata >=0.7.6
-    - scanpy>=1.6.0
-    - pandas>=1.0
-    - numpy<1.22
+    - scanpy >=1.6.0
+    - pandas >=1.0
+    - numpy >=1.17.0
     - scipy
     - parasail-python
     - scikit-learn
     - python-levenshtein
-    - python-igraph
-    - adjusttext
-    - networkx
+    - python-igraph !=0.10.0,!=0.10.1
+    - adjusttext >=0.7
+    - networkx >=2.5
     - squarify
-    - tqdm>=4.42.0
-    - airr>=1.2
+    - tqdm >=4.44.1
+    - airr >=1.2
+    - numba >=0.41.0
 
 test:
   source_files:
