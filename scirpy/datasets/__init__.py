@@ -239,6 +239,19 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         true_values=["True"],
     )
 
+    tcr_table = tcr_table.drop_duplicates()
+    tcr_table = tcr_table.drop_duplicates(
+        [
+            "Chain 1 CDR3 Curated",
+            "Chain 2 CDR3 Curated",
+            "Organism",
+            "Antigen",
+            "Response Type",
+            "Chain 1 Type",
+            "Chain 2 Type",
+        ]
+    )
+
     tcr_table.loc[
         tcr_table["Chain 1 CDR3 Curated"].isna(), "Chain 1 CDR3 Curated"
     ] = tcr_table["Chain 1 CDR3 Calculated"]
@@ -247,25 +260,40 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         tcr_table["Chain 2 CDR3 Curated"].isna(), "Chain 2 CDR3 Curated"
     ] = tcr_table["Chain 2 CDR3 Calculated"]
 
-    tcr_table_T = tcr_table[(tcr_table["Response Type"] == "T cell")]
+    tcr_table["Chain 1 CDR3 Curated"] = tcr_table["Chain 1 CDR3 Curated"].str.upper()
+    tcr_table["Chain 2 CDR3 Curated"] = tcr_table["Chain 2 CDR3 Curated"].str.upper()
 
-    tcr_table_T["Chain 1 CDR3 Curated"] = tcr_table_T[
-        "Chain 1 CDR3 Curated"
-    ].str.upper()
-    tcr_table_T["Chain 2 CDR3 Curated"] = tcr_table_T[
-        "Chain 2 CDR3 Curated"
-    ].str.upper()
+    tcr_table["cell_id"] = tcr_table.reset_index(drop=True).index
 
-    tcr_table = tcr_table_T
+    accepted_chains = ["alpha", "beta", "heavy", "light", "gamma", "delta"]
+    tcr_table = tcr_table[
+        (tcr_table["Chain 1 Type"].isin(accepted_chains))
+        & (tcr_table["Chain 2 Type"].isin(accepted_chains))
+    ]
+
+    receptor_dict = {
+        "alpha": "TRA",
+        "beta": "TRB",
+        "heavy": "IGH",
+        "light": "IGL",
+        "gamma": "TRG",
+        "delta": "TRD",
+    }
 
     tcr_cells = []
     for _, row in tcr_table.iterrows():
-        cell = AirrCell(cell_id=row["Receptor ID"])
+        cell = AirrCell(cell_id=row["cell_id"])
         alpha_chain = AirrCell.empty_chain_dict()
         beta_chain = AirrCell.empty_chain_dict()
+        cell["Receptor ID"] = row["Receptor ID"]
+        cell["Antigen"] = row["Antigen"]
+        cell["Organism"] = row["Organism"]
+        cell["Response Type"] = row["Response Type"]
+        cell["Reference IRI"] = row["Reference IRI"]
+        cell["Epitope IRI"] = row["Epitope IRI"]
         alpha_chain.update(
             {
-                "locus": "TRA",
+                "locus": receptor_dict[row["Chain 1 Type"]],
                 "junction_aa": row["Chain 1 CDR3 Curated"],
                 "junction": None,
                 "consensus_count": None,
@@ -276,7 +304,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         )
         beta_chain.update(
             {
-                "locus": "TRB",
+                "locus": receptor_dict[row["Chain 2 Type"]],
                 "junction_aa": row["Chain 2 CDR3 Curated"],
                 "junction": None,
                 "consensus_count": None,
@@ -293,13 +321,6 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     logging.info("Converting to AnnData object")
     iedb = from_airr_cells(tcr_cells)
     tcr_table = tcr_table.set_index(iedb.obs.index)
-    iedb.obs["Antigen"] = tcr_table["Antigen"]
-    iedb.obs["Organism"] = tcr_table["Organism"]
-    iedb.obs["Chain 1 Type"] = tcr_table["Chain 1 Type"]
-    iedb.obs["Chain 2 Type"] = tcr_table["Chain 2 Type"]
-    iedb.obs["Response Type"] = tcr_table["Response Type"]
-    iedb.obs["Reference IRI"] = tcr_table["Reference IRI"]
-    iedb.obs["Epitope IRI"] = tcr_table["Epitope IRI"]
 
     iedb.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
 
