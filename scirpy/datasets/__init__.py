@@ -6,6 +6,7 @@ from scanpy import settings
 from textwrap import indent
 import tempfile
 from ..io import upgrade_schema, AirrCell, from_airr_cells
+from ..io._io import _infer_locus_from_gene_names, _IOLogger
 import urllib.request
 import zipfile
 import pandas as pd
@@ -231,16 +232,18 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         except OSError:
             pass
 
-    tcr_table = pd.read_csv(
+    logger = _IOLogger()
+    iedb_df = pd.read_csv(
         "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip",
         index_col=None,
         sep=",",
         na_values=["None"],
         true_values=["True"],
+        low_memory=False,
     )
 
-    tcr_table = tcr_table.drop_duplicates()
-    tcr_table = tcr_table.drop_duplicates(
+    iedb_df = iedb_df.drop_duplicates()
+    iedb_df = iedb_df.drop_duplicates(
         [
             "Chain 1 CDR3 Curated",
             "Chain 2 CDR3 Curated",
@@ -252,57 +255,59 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         ]
     )
 
-    tcr_table.loc[
-        tcr_table["Chain 1 CDR3 Curated"].isna(), "Chain 1 CDR3 Curated"
-    ] = tcr_table["Chain 1 CDR3 Calculated"]
+    iedb_df.loc[
+        iedb_df["Chain 1 CDR3 Curated"].isna(), "Chain 1 CDR3 Curated"
+    ] = iedb_df["Chain 1 CDR3 Calculated"]
 
-    tcr_table.loc[
-        tcr_table["Chain 2 CDR3 Curated"].isna(), "Chain 2 CDR3 Curated"
-    ] = tcr_table["Chain 2 CDR3 Calculated"]
+    iedb_df.loc[
+        iedb_df["Chain 2 CDR3 Curated"].isna(), "Chain 2 CDR3 Curated"
+    ] = iedb_df["Chain 2 CDR3 Calculated"]
 
-    tcr_table["Chain 1 CDR3 Curated"] = tcr_table["Chain 1 CDR3 Curated"].str.upper()
-    tcr_table["Chain 2 CDR3 Curated"] = tcr_table["Chain 2 CDR3 Curated"].str.upper()
+    iedb_df["Chain 1 CDR3 Curated"] = iedb_df["Chain 1 CDR3 Curated"].str.upper()
+    iedb_df["Chain 2 CDR3 Curated"] = iedb_df["Chain 2 CDR3 Curated"].str.upper()
 
-    tcr_table["cell_id"] = tcr_table.reset_index(drop=True).index
+    iedb_df["cell_id"] = iedb_df.reset_index(drop=True).index
 
     accepted_chains = ["alpha", "beta", "heavy", "light", "gamma", "delta"]
-    tcr_table = tcr_table[
-        (tcr_table["Chain 1 Type"].isin(accepted_chains))
-        & (tcr_table["Chain 2 Type"].isin(accepted_chains))
+    iedb_df = iedb_df[
+        (iedb_df["Chain 1 Type"].isin(accepted_chains))
+        & (iedb_df["Chain 2 Type"].isin(accepted_chains))
     ]
 
     receptor_dict = {
         "alpha": "TRA",
         "beta": "TRB",
         "heavy": "IGH",
-        "light": "IGL",
+        # IEDB does not distinguish between lambda and kappa
+        "light": None,
         "gamma": "TRG",
         "delta": "TRD",
     }
 
     tcr_cells = []
-    for _, row in tcr_table.iterrows():
-        cell = AirrCell(cell_id=row["cell_id"])
-        alpha_chain = AirrCell.empty_chain_dict()
-        beta_chain = AirrCell.empty_chain_dict()
+    for _, row in iedb_df.iterrows():
+        cell = AirrCell(cell_id=row["cell_id"], logger=logger)
+        chain1 = AirrCell.empty_chain_dict()
+        chain2 = AirrCell.empty_chain_dict()
         cell["Receptor ID"] = row["Receptor ID"]
         cell["Antigen"] = row["Antigen"]
         cell["Organism"] = row["Organism"]
         cell["Response Type"] = row["Response Type"]
         cell["Reference IRI"] = row["Reference IRI"]
         cell["Epitope IRI"] = row["Epitope IRI"]
-        alpha_chain.update(
+        chain1.update(
             {
                 "locus": receptor_dict[row["Chain 1 Type"]],
                 "junction_aa": row["Chain 1 CDR3 Curated"],
                 "junction": None,
                 "consensus_count": None,
                 "v_call": row["Curated Chain 1 V Gene"],
+                "d_call": None,
                 "j_call": row["Curated Chain 1 J Gene"],
                 "productive": True,
             }
         )
-        beta_chain.update(
+        chain2.update(
             {
                 "locus": receptor_dict[row["Chain 2 Type"]],
                 "junction_aa": row["Chain 2 CDR3 Curated"],
@@ -314,13 +319,20 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
                 "productive": True,
             }
         )
-        cell.add_chain(alpha_chain)
-        cell.add_chain(beta_chain)
+        for chain_dict in [chain1, chain2]:
+            # Since IEDB does not distinguish between lambda and kappa light chains, we need
+            # to call them from the gene names
+            if chain_dict["locus"] is None:
+                chain_dict["locus"] = _infer_locus_from_gene_names(
+                    chain_dict, keys=("v_call", "d_call", "j_call")
+                )
+            cell.add_chain(chain_dict)
+
         tcr_cells.append(cell)
 
     logging.info("Converting to AnnData object")
     iedb = from_airr_cells(tcr_cells)
-    tcr_table = tcr_table.set_index(iedb.obs.index)
+    iedb_df = iedb_df.set_index(iedb.obs.index)
 
     iedb.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
 
