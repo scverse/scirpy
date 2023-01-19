@@ -115,8 +115,6 @@ class AirrCell(MutableMapping):
         return len(self._cell_attrs)
 
     def __setitem__(self, k, v) -> None:
-        if k == "multi_chain":
-            v = _is_true2(v)
         try:
             existing_value = self._cell_attrs[k]
             if existing_value != v and not _is_na2(existing_value):

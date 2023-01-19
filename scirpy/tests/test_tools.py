@@ -42,6 +42,7 @@ def test_chain_qc():
             ["False", "nan", "TRD", "nan", "nan"],
         ],
         columns=[
+            # TODO new multichain handling
             "multi_chain",
             "IR_VJ_1_locus",
             "IR_VDJ_1_locus",

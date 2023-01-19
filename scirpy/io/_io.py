@@ -48,7 +48,7 @@ DEFAULT_AIRR_FIELDS = (
     "duplicate_count",
 )
 DEFAULT_10X_FIELDS = DEFAULT_AIRR_FIELDS + ("is_cell", "high_confidence")
-DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence", "multi_chain")
+DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence")
 
 
 def _cdr3_from_junction(junction_aa, junction_nt):
