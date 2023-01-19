@@ -4,26 +4,28 @@ Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
-from functools import partial
 import itertools
-from ..util import _is_na2, _is_true2, _doc_params
+import json
+from collections.abc import MutableMapping
+from functools import partial
 from typing import (
+    Any,
     Collection,
     Dict,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
-    Iterator,
     Tuple,
-    Any,
 )
-from airr import RearrangementSchema
-import scanpy
-import json
+
 import numpy as np
+import scanpy
+from airr import RearrangementSchema
+
+from ..util import _doc_params, _is_na2, _is_true2
 from ._util import doc_working_model
-from collections.abc import MutableMapping
 
 
 class AirrCell(MutableMapping):
@@ -173,71 +175,6 @@ class AirrCell(MutableMapping):
                 tmp_chain = AirrCell.empty_chain_dict()
                 tmp_chain.update(chain)
                 self.add_chain(tmp_chain)
-
-    def chain_indices(self) -> Dict:
-        """
-        Returns the indices of the primary and secondary VJ and VDJ chains.
-
-         * only productive chains are considered
-         * chains are ranked by their expression
-        """
-        chain_indices = {"VJ": list(), "VDJ": list()}
-        for i, tmp_chain in enumerate(self.chains):
-            if "locus" not in tmp_chain:
-                continue
-            if (
-                tmp_chain["locus"] in self.VJ_LOCI
-                and tmp_chain["productive"]
-                and not _is_na2(tmp_chain["junction_aa"])
-            ):
-                chain_indices["VJ"].append(i)
-            elif (
-                tmp_chain["locus"] in self.VDJ_LOCI
-                and tmp_chain["productive"]
-                and not _is_na2(tmp_chain["junction_aa"])
-            ):
-                chain_indices["VDJ"].append(i)
-
-        if (
-            "duplicate_count" not in self.fields
-            and "consensus_count" not in self.fields
-            and len(self.chains)  # don't warn for empty cells
-        ):
-            self._logger.warning(
-                "No expression information available. Cannot rank chains by expression. "
-            )  # type: ignore
-
-        for junction_type in ["VJ", "VDJ"]:
-            chain_indices[junction_type] = sorted(
-                chain_indices[junction_type],
-                key=partial(self._key_sort_chains, self.chains),
-                reverse=True,
-            )
-            # only keep the (up to) two most highly expressed chains
-            chain_indices[junction_type] = chain_indices[junction_type][:2]
-
-        res_dict = {}
-        for i, junction_type in itertools.product([0, 1], ["VJ", "VDJ"]):
-            res_key = f"{junction_type}_{i+1}"
-            try:
-                res_dict[res_key] = chain_indices[junction_type][i]
-            except IndexError:
-                res_dict[res_key] = None
-
-        return res_dict
-
-    @staticmethod
-    def _key_sort_chains(chains, idx) -> Tuple:
-        """Get key to sort chains by expression. Idx is the index of a chain in `chains`"""
-        chain = chains[idx]
-        sort_tuple = (
-            chain.get("duplicate_count", 0),
-            chain.get("consensus_count", 0),
-            chain.get("junction", ""),
-            chain.get("junction_aa", ""),
-        )
-        # replace None by -1 to make sure it comes in last
-        return tuple(-1 if x is None else x for x in sort_tuple)
 
     def to_airr_records(self) -> Iterable[dict]:
         """Iterate over chains as AIRR-Rearrangent compliant dictonaries.
