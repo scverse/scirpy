@@ -526,6 +526,7 @@ def _infer_locus_from_gene_names(
     chain_dict, *, keys=("v_call", "d_call", "j_call", "c_call")
 ):
     """Infer the IMGT locus name from VDJ calls"""
+    keys = list(keys)
     # TRAV.*/DV is misleading as it actually points to a delta locus
     # See #285
     if not _is_na2(chain_dict["v_call"]) and re.search(
