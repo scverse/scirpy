@@ -7,6 +7,7 @@ from scanpy.plotting._utils import (
     _validate_palette,
 )
 from cycler import Cycler
+from anndata import AnnData
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
@@ -118,7 +119,9 @@ def style_axes(
 
 
 def _get_colors(
-    adata, obs_key: str, palette: Union[str, Sequence[str], Cycler, None] = None
+    adata: AnnData,
+    obs_key: str,
+    palette: Union[str, Sequence[str], Cycler, None] = None,
 ) -> Dict[str, str]:
     """Return colors for a category stored in AnnData.
 

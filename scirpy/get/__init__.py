@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import awkward as ak
 from anndata import AnnData
+from contextlib import contextmanager
 
 
 def airr(
@@ -95,12 +96,23 @@ def _airr_col(
     return result
 
 
-def most_frequent(array: Sequence, n=10):
-    """Get the most frequent categories of an Array"""
-    return pd.Series(array).value_counts().index[:n].tolist()
+# def most_frequent(array: Sequence, n=10):
+#     """Get the most frequent categories of an Array"""
+#     return pd.Series(array).value_counts().index[:n].tolist()
 
 
-def obs_context(adata, **kwargs):
-    """A context manager that temporarily adds columns to adata.obs"""
-    # TODO
-    raise NotImplementedError
+# def obs_context(adata, **kwargs):
+#     """A context manager that temporarily adds columns to adata.obs"""
+#     # TODO
+#     raise NotImplementedError
+
+
+@contextmanager
+def _obs_context(adata, **kwargs):
+    """Temporarily add columns to adata.obs"""
+    orig_obs = adata.obs.copy()
+    adata.obs = adata.obs.assign(**kwargs)
+    try:
+        yield adata
+    finally:
+        adata.obs = orig_obs

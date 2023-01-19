@@ -6,6 +6,7 @@ from . import base
 from typing import Union, Sequence
 from .styling import _get_colors
 from ..io._legacy import _check_upgrade_schema
+from ..get import _obs_context
 
 
 @_check_upgrade_schema()
@@ -61,9 +62,22 @@ def group_abundance(
     -------
     Axes object
     """
-    abundance = tl.group_abundance(
-        adata, groupby, target_col=target_col, fraction=normalize, sort=sort
-    )
+    if (
+        isinstance(adata, AnnData)
+        and target_col == "has_ir"
+        and "has_ir" not in adata.obs.columns
+    ):
+        with _obs_context(
+            adata,
+            has_ir=(~adata.obsm["chain_indices"].isnull().all(axis=1)).astype(str),
+        ) as adata_ctx:
+            abundance = tl.group_abundance(
+                adata_ctx, groupby, target_col=target_col, fraction=normalize, sort=sort
+            )
+    else:
+        abundance = tl.group_abundance(
+            adata, groupby, target_col=target_col, fraction=normalize, sort=sort
+        )
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(
             "Attempting to plot more than 100 columns. "
