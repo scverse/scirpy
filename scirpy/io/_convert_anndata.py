@@ -43,9 +43,10 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
 
     obsm = {
         "airr": ak.Array((c.chains for c in airr_cells)),
-        "chain_indices": pd.DataFrame.from_records(
-            (c.chain_indices() for c in airr_cells)
-        ).set_index(obs.index),
+        # TODO call chains
+        # "chain_indices": pd.DataFrame.from_records(
+        #     (c.chain_indices() for c in airr_cells)
+        # ).set_index(obs.index),
     }
 
     return AnnData(

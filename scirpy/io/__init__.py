@@ -15,39 +15,3 @@ from ._legacy import upgrade_schema
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ..util import deprecated
 from ._datastructures import AirrCell
-
-
-@deprecated(
-    "Due to added BCR support, this function has been renamed "
-    "to `from_ir_objs. The old version will be removed in a future release. "
-)
-def from_tcr_objs(*args, **kwargs):
-    return from_airr_cells(*args, **kwargs)
-
-
-@deprecated("This function has been renamed to `from_airr_cells`")
-def from_ir_objs(*args, **kwargs):
-    return from_airr_cells(*args, **kwargs)
-
-
-@deprecated(
-    "Due to added BCR support, this function has been renamed "
-    "to `AirrCell. The old version will be removed in a future release. "
-)
-def TcrCell(*args, **kwargs):
-    return AirrCell(*args, **kwargs)
-
-
-def AirrChain(*args, **kwargs):
-    raise RuntimeError(
-        "AirrChain has been removed in v0.7. "
-        "Use a AIRR-rearrangement compliant dictionary instead! "
-    )
-
-
-@deprecated(
-    "Due to added BCR support, this function has been renamed "
-    "to `AirrChain. The old version will be removed in a future release. "
-)
-def TcrChain(*args, **kwargs):
-    return AirrChain(*args, **kwargs)
