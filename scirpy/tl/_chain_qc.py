@@ -77,7 +77,7 @@ def chain_qc(
     res_receptor_type = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
     res_receptor_subtype = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
 
-    mask_has_ir = _is_true(x["has_ir"].values)
+    mask_has_ir = ~adata.obsm["chain_indices"].isnull().all(axis=1).values
     mask_multichain = mask_has_ir & _is_true(x["multi_chain"].values)
 
     vj_loci = get.airr(adata, "locus", ["VJ_1", "VJ_2"]).values

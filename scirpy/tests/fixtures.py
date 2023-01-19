@@ -183,7 +183,6 @@ def adata_define_clonotype_clusters_singletons():
             IR_VJ_2_v_call=["A", "B", "C", "D"],
             IR_VDJ_2_v_call=["A", "B", "C", "D"],
             receptor_type=["TCR", "TCR", "TCR", "TCR"],
-            has_ir=["True", "True", "True", "True"],
         )
         .set_index("cell_id")
     )

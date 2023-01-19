@@ -10,10 +10,8 @@ from ..get import _obs_context
 
 
 @_check_upgrade_schema()
-# TODO `has_ir` column doesn't neecessariy exist anymore. Need to find a different solution
-# maybe combine with https://github.com/scverse/scirpy/issues/232
 def group_abundance(
-    adata: Union[dict, AnnData],
+    adata: AnnData,
     groupby: str,
     target_col: str = "has_ir",
     *,
@@ -62,22 +60,10 @@ def group_abundance(
     -------
     Axes object
     """
-    if (
-        isinstance(adata, AnnData)
-        and target_col == "has_ir"
-        and "has_ir" not in adata.obs.columns
-    ):
-        with _obs_context(
-            adata,
-            has_ir=(~adata.obsm["chain_indices"].isnull().all(axis=1)).astype(str),
-        ) as adata_ctx:
-            abundance = tl.group_abundance(
-                adata_ctx, groupby, target_col=target_col, fraction=normalize, sort=sort
-            )
-    else:
-        abundance = tl.group_abundance(
-            adata, groupby, target_col=target_col, fraction=normalize, sort=sort
-        )
+    abundance = tl.group_abundance(
+        adata, groupby, target_col=target_col, fraction=normalize, sort=sort
+    )
+
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(
             "Attempting to plot more than 100 columns. "

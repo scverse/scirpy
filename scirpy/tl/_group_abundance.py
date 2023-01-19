@@ -65,8 +65,6 @@ def _group_abundance(
 
 
 @_check_upgrade_schema()
-# TODO `has_ir` column doesn't neecessariy exist anymore. Need to find a different solution
-# maybe combine with https://github.com/scverse/scirpy/issues/232
 def group_abundance(
     adata: AnnData,
     groupby: str,
@@ -104,6 +102,16 @@ def group_abundance(
     -------
     Returns a data frame with the number (or fraction) of cells per group.
     """
+    ir_obs = adata.obs
+
+    # TODO temporarily adding `has_ir` is a temporary workaround to make this function work
+    # with the new datastructure (has_ir doesn't exist anymore by default) until
+    # This whole function is rewritten (see https://github.com/scverse/scirpy/issues/232)
+    if target_col == "has_ir" and "has_ir" not in adata.obs.columns:
+        ir_obs = ir_obs.copy().assign(
+            has_ir=(~adata.obsm["chain_indices"].isnull().all(axis=1)).astype(str)
+        )
+
     if target_col not in adata.obs.columns:
         raise ValueError("`target_col` not found in obs`")
 
