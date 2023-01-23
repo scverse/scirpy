@@ -73,7 +73,6 @@ def test_index_chains(airr_chains, expected_index):
 @pytest.mark.parametrize(
     "productive,require_junction_aa,sort_chains_by,expected_index",
     [
-        # default parameters
         (
             True,
             True,
@@ -85,7 +84,42 @@ def test_index_chains(airr_chains, expected_index):
             },
             # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
             [3, np.nan, 0, np.nan, False],
-        )
+        ),
+        (
+            False,
+            True,
+            {"junction_aa": ""},
+            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+            [3, np.nan, 1, np.nan, True],
+        ),
+        (
+            True,
+            False,
+            {"junction_aa": ""},
+            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+            [3, np.nan, 0, np.nan, True],
+        ),
+        (
+            False,
+            False,
+            {"junction_aa": ""},
+            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+            [3, np.nan, 1, np.nan, True],
+        ),
+        (
+            True,
+            False,
+            {"sort": 10000},
+            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+            [2, np.nan, 3, np.nan, True],
+        ),
+    ],
+    ids=[
+        "default parameters",
+        "productive = False",
+        "require_junction_aa = False",
+        "productive = False & require_junction_aa = False",
+        "custom sort function",
     ],
 )
 def test_index_chains_custom_parameters(
@@ -94,10 +128,10 @@ def test_index_chains_custom_parameters(
     """Test that parameters for chain indexing work as intended (Single data, different params)"""
     airr_chains = [
         [
-            {"locus": "TRA", "junction_aa": "AAA", "productive": True},
-            {"locus": "TRA", "junction_aa": "AAB", "productive": False},
+            {"locus": "TRA", "junction_aa": "AAA", "sort": 2, "productive": True},
+            {"locus": "TRA", "junction_aa": "AAB", "sort": 5, "productive": False},
             {"locus": "TRA", "productive": True},
-            {"locus": "TRA", "junction_aa": "AAD", "productive": True},
+            {"locus": "TRA", "junction_aa": "AAD", "sort": 3, "productive": True},
         ]
     ]
     adata = AnnData(
