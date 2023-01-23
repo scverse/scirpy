@@ -1,3 +1,4 @@
+from ast import type_ignore
 from os import read
 from .util import _normalize_df_types
 from anndata import AnnData
@@ -17,6 +18,7 @@ import awkward as ak
 @pytest.mark.parametrize(
     "airr_chains,expected_index",
     [
+        # standard case, multiple rows
         (
             [
                 # fmt: off
@@ -33,21 +35,90 @@ import awkward as ak
                 # fmt: on
             ],
             [
-                # VJ_1, VDJ_1, VJ_2, VDJ_2
-                [1, 2, 0, np.nan],
-                [1, 0, np.nan, 2],
+                # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+                [1, 2, 0, np.nan, False],
+                [1, 0, np.nan, 2, False],
             ],
         )
+        # single VJ chain
+        # (
+        #     [[{"locus": "TRA", "junction_aa": "AAA", "duplicate_count": 3, "productive": True}]],
+        #     [[]]
+        # )
+        # single VDJ chain
+        # multichain (3 VJ chains)
+        # no multichain (3 VJ chains, but one is not productive)
+        # no multichain (3 VJ chains, but one does not have a junction_aa sequence)
+        # ties in counts
+        # deal with missing sort keys
     ],
 )
 def test_index_chains(airr_chains, expected_index):
-    """Test that chain indexing works as expected"""
+    """Test that chain indexing works as expected (Multiple data, default parameters)"""
     adata = AnnData(
-        X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])
+        X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])  # type: ignore
     )
     adata.obsm["airr2"] = ak.Array(airr_chains)
     index_chains(adata, airr_key="airr2", key_added="chain_indices2")
-    npt.assert_almost_equal(adata.obsm["chain_indices2"], np.array(expected_index))
+    pdt.assert_frame_equal(
+        adata.obsm["chain_indices2"],
+        pd.DataFrame(
+            expected_index,
+            index=adata.obs_names,
+            columns=["VJ_1", "VDJ_1", "VJ_2", "VDJ_2", "multichain"],
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "productive,require_junction_aa,sort_chains_by,expected_index",
+    [
+        # default parameters
+        (
+            True,
+            True,
+            {
+                "duplicate_count": 0,
+                "consensus_count": 0,
+                "junction": "",
+                "junction_aa": "",
+            },
+            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+            [3, np.nan, 0, np.nan, False],
+        )
+    ],
+)
+def test_index_chains_custom_parameters(
+    productive, require_junction_aa, sort_chains_by, expected_index
+):
+    """Test that parameters for chain indexing work as intended (Single data, different params)"""
+    airr_chains = [
+        [
+            {"locus": "TRA", "junction_aa": "AAA", "productive": True},
+            {"locus": "TRA", "junction_aa": "AAB", "productive": False},
+            {"locus": "TRA", "productive": True},
+            {"locus": "TRA", "junction_aa": "AAD", "productive": True},
+        ]
+    ]
+    adata = AnnData(
+        X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])
+    )
+    adata.obsm["airr"] = ak.Array(airr_chains)
+    index_chains(
+        adata,
+        productive=productive,
+        require_junction_aa=require_junction_aa,
+        sort_chains_by=sort_chains_by,
+    )
+    pdt.assert_frame_equal(
+        adata.obsm["chain_indices"],
+        pd.DataFrame(
+            [expected_index],
+            index=adata.obs_names,
+            columns=["VJ_1", "VDJ_1", "VJ_2", "VDJ_2", "multichain"],
+        ),
+        check_dtype=True,
+    )
 
 
 def test_merge_airr_chains_identity():

@@ -9,6 +9,7 @@ from scanpy import logging
 from functools import partial
 import pandas as pd
 import itertools
+import numpy as np
 
 # TODO do we need tests or is it enough to have this tested implicitly through all IO tests?
 def index_chains(
@@ -69,6 +70,8 @@ def index_chains(
         )  # type: ignore
     for cell_chains in awk_array:
         cell_chains = cast(List[ak.Record], cell_chains)
+
+        # Split chains into VJ and VDJ chains
         chain_indices = {"VJ": list(), "VDJ": list()}
         for i, tmp_chain in enumerate(cell_chains):
             if "locus" not in awk_array.fields:
@@ -86,23 +89,25 @@ def index_chains(
             ):
                 chain_indices["VDJ"].append(i)
 
-        # TODO Add multichain calling somewhere here.
+        # Order chains by expression (or whatever was specified in sort_chains_by)
         for junction_type in ["VJ", "VDJ"]:
             chain_indices[junction_type] = sorted(
                 chain_indices[junction_type],
                 key=partial(_key_sort_chains, cell_chains, sort_chains_by),  # type: ignore
                 reverse=True,
             )
-            # only keep the (up to) two most highly expressed chains
-            chain_indices[junction_type] = chain_indices[junction_type][:2]
 
+        # Generate row in final data frame
         res_dict = {}
         for i, junction_type in itertools.product([0, 1], ["VJ", "VDJ"]):
             res_key = f"{junction_type}_{i+1}"
             try:
                 res_dict[res_key] = chain_indices[junction_type][i]
             except IndexError:
-                res_dict[res_key] = None
+                res_dict[res_key] = np.nan
+        res_dict["multichain"] = (
+            len(chain_indices["VJ"]) > 2 or len(chain_indices["VDJ"]) > 2
+        )
 
         chain_index_df.append(res_dict)
 
