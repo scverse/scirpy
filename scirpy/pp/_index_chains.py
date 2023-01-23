@@ -1,4 +1,5 @@
-from typing import Dict, List, Sequence, Tuple, cast
+from types import MappingProxyType
+from typing import Any, Dict, List, Mapping, Sequence, Tuple, cast
 
 from anndata import AnnData
 from ..io import AirrCell
@@ -15,11 +16,8 @@ def index_chains(
     *,
     productive: bool = True,
     require_junction_aa: bool = True,
-    sort_chains_by: Sequence[str] = (
-        "duplicate_count",
-        "consensus_count",
-        "junction",
-        "junction_aa",
+    sort_chains_by: Mapping[str, Any] = MappingProxyType(
+        {"duplicate_count": 0, "consensus_count": 0, "junction": "", "junction_aa": ""}
     ),
     airr_key: str = "airr",
     key_added: str = "chain_indices",
@@ -70,10 +68,10 @@ def index_chains(
             "No expression information available. Cannot rank chains by expression. "
         )  # type: ignore
     for cell_chains in awk_array:
-        cell_chains = cast(List[Dict], cell_chains)
+        cell_chains = cast(List[ak.Record], cell_chains)
         chain_indices = {"VJ": list(), "VDJ": list()}
         for i, tmp_chain in enumerate(cell_chains):
-            if "locus" not in tmp_chain:
+            if "locus" not in awk_array.fields:
                 continue
             if (
                 tmp_chain["locus"] in AirrCell.VJ_LOCI
@@ -92,7 +90,7 @@ def index_chains(
         for junction_type in ["VJ", "VDJ"]:
             chain_indices[junction_type] = sorted(
                 chain_indices[junction_type],
-                key=partial(_key_sort_chains, cell_chains),
+                key=partial(_key_sort_chains, cell_chains, sort_chains_by),  # type: ignore
                 reverse=True,
             )
             # only keep the (up to) two most highly expressed chains
@@ -108,17 +106,33 @@ def index_chains(
 
         chain_index_df.append(res_dict)
 
-    adata.obsm[key_added] = pd.DataFrame.from_records(chain_index_df)
-
-
-def _key_sort_chains(chains, idx) -> Tuple:
-    """Get key to sort chains by expression. Idx is the index of a chain in `chains`"""
-    chain = chains[idx]
-    sort_tuple = (
-        chain.get("duplicate_count", 0),
-        chain.get("consensus_count", 0),
-        chain.get("junction", ""),
-        chain.get("junction_aa", ""),
+    adata.obsm[key_added] = pd.DataFrame.from_records(
+        chain_index_df, index=adata.obs_names
     )
-    # replace None by -1 to make sure it comes in last
-    return tuple(-1 if x is None else x for x in sort_tuple)
+
+
+def _key_sort_chains(
+    chains: List[Mapping], sort_chains_by: Mapping[str, Any], idx: int
+) -> Sequence:
+    """Get key to sort chains by expression.
+
+    Parameters
+    ----------
+    chains
+        List of dictionaries with chains
+    keys
+        Dictionary with sort keys and default values should the key not be found
+    idx
+        The chain index of the current chain in `chains`
+    """
+    chain = chains[idx]
+    sort_key = []
+    for k, default in sort_chains_by.items():
+        try:
+            v = chain[k]
+            if v is None:
+                v = default
+        except IndexError:
+            v = default
+        sort_key.append(v)
+    return sort_key

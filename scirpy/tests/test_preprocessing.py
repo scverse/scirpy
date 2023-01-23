@@ -4,13 +4,50 @@ from anndata import AnnData
 import numpy as np
 from ..io import read_10x_vdj, read_bracer
 from . import TESTDATA
-from ..pp import merge_with_ir
+from ..pp import merge_with_ir, index_chains
 from ..pp._merge_adata import merge_airr_chains
 import pandas.testing as pdt
 import numpy.testing as npt
 from ..util import _is_na
 import pandas as pd
 import pytest
+import awkward as ak
+
+
+@pytest.mark.parametrize(
+    "airr_chains,expected_index",
+    [
+        (
+            [
+                # fmt: off
+                [
+                    {"locus": "TRA", "junction_aa": "AAA", "duplicate_count": 3, "productive": True},
+                    {"locus": "TRA", "junction_aa": "KKK", "duplicate_count": 6, "productive": True},
+                    {"locus": "TRB", "junction_aa": "LLL", "duplicate_count": 3, "productive": True},
+                ],
+                [
+                    {"locus": "TRB", "junction_aa": "KKK", "duplicate_count": 6, "productive": True},
+                    {"locus": "TRA", "junction_aa": "AAA", "duplicate_count": 3, "productive": True},
+                    {"locus": "TRB", "junction_aa": "LLL", "duplicate_count": 3, "productive": True},
+                ],
+                # fmt: on
+            ],
+            [
+                # VJ_1, VDJ_1, VJ_2, VDJ_2
+                [1, 2, 0, np.nan],
+                [1, 0, np.nan, 2],
+            ],
+        )
+    ],
+)
+def test_index_chains(airr_chains, expected_index):
+    """Test that chain indexing works as expected"""
+    adata = AnnData(
+        X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])
+    )
+    adata.obsm["airr2"] = ak.Array(airr_chains)
+    index_chains(adata, airr_key="airr2", key_added="chain_indices2")
+    npt.assert_almost_equal(adata.obsm["chain_indices2"], np.array(expected_index))
 
 
 def test_merge_airr_chains_identity():
