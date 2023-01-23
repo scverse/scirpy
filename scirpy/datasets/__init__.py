@@ -255,16 +255,20 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         ]
     )
 
-    iedb_df.loc[
-        iedb_df["Chain 1 CDR3 Curated"].isna(), "Chain 1 CDR3 Curated"
-    ] = iedb_df["Chain 1 CDR3 Calculated"]
+    # If no curated CDR3 sequence or V/D/J gene is available, the calculated one is used.
+    def replace_curated(input_1, input_2):
+        Calculated_1 = input_1.replace("Curated", "Calculated")
+        tcr_table.loc[tcr_table[input_1].isna(), input_1] = tcr_table[Calculated_1]
+        tcr_table[input_1] = tcr_table[input_1].str.upper()
+        Calculated_2 = input_2.replace("Curated", "Calculated")
+        tcr_table.loc[tcr_table[input_2].isna(), input_2] = tcr_table[Calculated_2]
+        tcr_table[input_2] = tcr_table[input_2].str.upper()
+        return tcr_table
 
-    iedb_df.loc[
-        iedb_df["Chain 2 CDR3 Curated"].isna(), "Chain 2 CDR3 Curated"
-    ] = iedb_df["Chain 2 CDR3 Calculated"]
-
-    iedb_df["Chain 1 CDR3 Curated"] = iedb_df["Chain 1 CDR3 Curated"].str.upper()
-    iedb_df["Chain 2 CDR3 Curated"] = iedb_df["Chain 2 CDR3 Curated"].str.upper()
+    tcr_table = replace_curated("Chain 1 CDR3 Curated", "Chain 2 CDR3 Curated")
+    tcr_table = replace_curated("Curated Chain 1 V Gene", "Curated Chain 2 V Gene")
+    tcr_table = replace_curated("Curated Chain 1 D Gene", "Curated Chain 2 D Gene")
+    tcr_table = replace_curated("Curated Chain 1 J Gene", "Curated Chain 2 J Gene")
 
     iedb_df["cell_id"] = iedb_df.reset_index(drop=True).index
 
