@@ -18,7 +18,6 @@ import awkward as ak
 @pytest.mark.parametrize(
     "airr_chains,expected_index",
     [
-        # standard case, multiple rows
         (
             [
                 # fmt: off
@@ -40,21 +39,11 @@ import awkward as ak
                 [1, 0, np.nan, 2, False],
             ],
         )
-        # single VJ chain
-        # (
-        #     [[{"locus": "TRA", "junction_aa": "AAA", "duplicate_count": 3, "productive": True}]],
-        #     [[]]
-        # )
-        # single VDJ chain
-        # multichain (3 VJ chains)
-        # no multichain (3 VJ chains, but one is not productive)
-        # no multichain (3 VJ chains, but one does not have a junction_aa sequence)
-        # ties in counts
-        # deal with missing sort keys
     ],
+    ids=["standard case, multiple rows"],
 )
 def test_index_chains(airr_chains, expected_index):
-    """Test that chain indexing works as expected (Multiple data, default parameters)"""
+    """Test that chain indexing works as expected (default parameters)"""
     adata = AnnData(
         X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])  # type: ignore
     )

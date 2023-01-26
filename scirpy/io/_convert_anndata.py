@@ -1,4 +1,5 @@
 """Convert IrCells to AnnData and vice-versa"""
+from operator import index
 from anndata import AnnData
 from ..util import _doc_params, _is_true2, _is_false2
 from ._util import doc_working_model
@@ -10,8 +11,10 @@ from pandas.api.types import is_object_dtype
 import awkward as ak
 from ._util import _IOLogger
 from ._legacy import _check_upgrade_schema
+from ..pp import index_chains
 
 
+# TODO index_chains flag for backwards compatibility that is true by default
 @_doc_params(doc_working_model=doc_working_model)
 def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     """\
@@ -43,18 +46,16 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
 
     obsm = {
         "airr": ak.Array((c.chains for c in airr_cells)),
-        # TODO call chains
-        # "chain_indices": pd.DataFrame.from_records(
-        #     (c.chain_indices() for c in airr_cells)
-        # ).set_index(obs.index),
     }
 
-    return AnnData(
+    adata = AnnData(
         X=None,
         obs=obs,
         obsm=obsm,
         uns={"scirpy_version": __version__},
     )
+    index_chains(adata)
+    return adata
 
 
 @_check_upgrade_schema()
