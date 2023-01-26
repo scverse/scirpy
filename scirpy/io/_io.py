@@ -522,13 +522,16 @@ def read_airr(
     return from_airr_cells(airr_cells.values(), include_fields=include_fields)
 
 
-def _infer_locus_from_gene_names(chain_dict):
+def _infer_locus_from_gene_names(
+    chain_dict, *, keys=("v_call", "d_call", "j_call", "c_call")
+):
     """Infer the IMGT locus name from VDJ calls"""
-    keys = ["v_call", "d_call", "j_call", "c_call"]
-
+    keys = list(keys)
     # TRAV.*/DV is misleading as it actually points to a delta locus
     # See #285
-    if re.search("TRAV.*/DV", chain_dict["v_call"]):
+    if not _is_na2(chain_dict["v_call"]) and re.search(
+        "TRAV.*/DV", chain_dict["v_call"]
+    ):
         keys.remove("v_call")
 
     genes = []

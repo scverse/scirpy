@@ -225,6 +225,7 @@ Reference databases
    :toctree: ./generated
 
    datasets.vdjdb
+   datasets.iedb
 
 A reference database is also just a :ref:`Scirpy-formatted AnnData object<data-structure>`.
 This means you can follow the instructions in the :ref:`data loading tutorial <importing-custom-formats>`
