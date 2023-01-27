@@ -10,6 +10,12 @@ import scanpy as sc
 
 import scirpy as ir
 
+from .fixtures import (  # NOQA
+    adata_clonotype,
+    adata_clonotype_network,
+    adata_diversity,
+    adata_tra,
+)
 from .util import _make_adata
 
 
