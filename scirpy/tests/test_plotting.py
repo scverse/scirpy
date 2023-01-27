@@ -1,19 +1,21 @@
 # pylama:ignore=W0611,W0404
-from scipy import sparse
-from scirpy import pl
-from .fixtures import (
-    adata_tra,
-    adata_clonotype,
-    adata_diversity,
-    adata_vdj,
-    adata_conn,
-    adata_define_clonotype_clusters,
-    adata_clonotype_network,
-    adata_define_clonotypes,
-    adata_clonotype_modularity,
-)
 import matplotlib.pyplot as plt
 import pytest
+from scipy import sparse
+
+from scirpy import pl
+
+from .fixtures import (  # NOQA
+    adata_clonotype,
+    adata_clonotype_modularity,
+    adata_clonotype_network,
+    adata_conn,
+    adata_define_clonotype_clusters,
+    adata_define_clonotypes,
+    adata_diversity,
+    adata_tra,
+    adata_vdj,
+)
 
 
 def test_clonal_expansion(adata_clonotype):

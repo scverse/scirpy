@@ -1,3 +1,10 @@
+import json
+
+import numpy as np
+import numpy.testing as npt
+import pytest
+
+from scirpy.pp import ir_dist
 from scirpy.tl._ir_query import (
     _reduce_json,
     _reduce_most_frequent,
@@ -6,12 +13,8 @@ from scirpy.tl._ir_query import (
     ir_query_annotate,
     ir_query_annotate_df,
 )
-from scirpy.pp import ir_dist
-import numpy as np
-import numpy.testing as npt
-import pytest
-import json
-from .fixtures import adata_cdr3, adata_cdr3_2, adata_define_clonotype_clusters
+
+from .fixtures import adata_cdr3, adata_cdr3_2, adata_define_clonotype_clusters  # NOQA
 
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein"])

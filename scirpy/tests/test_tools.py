@@ -13,6 +13,8 @@ import scirpy as ir
 from .fixtures import (  # NOQA
     adata_clonotype,
     adata_clonotype_network,
+    adata_conn,
+    adata_define_clonotype_clusters,
     adata_diversity,
     adata_tra,
 )

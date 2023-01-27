@@ -1,30 +1,32 @@
+import warnings
+from itertools import combinations
+from typing import cast
+
+import igraph as ig
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pytest
+import scipy.sparse
+
+import scirpy as ir
 from scirpy.util import (
-    _is_na,
     _is_false,
+    _is_na,
+    _is_symmetric,
     _is_true,
     _normalize_counts,
-    _is_symmetric,
     _translate_dna_to_protein,
 )
 from scirpy.util._negative_binomial import fit_nbinom
 from scirpy.util.graph import (
-    igraph_from_sparse_matrix,
-    layout_components,
     _distance_to_connectivity,
     _get_sparse_from_igraph,
+    igraph_from_sparse_matrix,
+    layout_components,
 )
-from itertools import combinations
-import igraph as ig
-import numpy as np
-import pandas as pd
-import scirpy as ir
-import numpy.testing as npt
-import pytest
-import scipy.sparse
-from typing import cast
-from .fixtures import adata_tra
 
-import warnings
+from .fixtures import adata_tra  # NOQA
 
 
 def test_is_symmetric():
