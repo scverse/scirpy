@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/datasets/__init__.py#L67-L93
+
+scirpy.datasets.maynard2020
+===========================
+
+.. currentmodule:: scirpy.datasets
+
+.. autofunction:: maynard2020

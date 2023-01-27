@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/datasets/__init__.py#L96-L208
+
+scirpy.datasets.vdjdb
+=====================
+
+.. currentmodule:: scirpy.datasets
+
+.. autofunction:: vdjdb

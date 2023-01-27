@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\anndata\_io\h5ad.py#L165-L254
+
+scirpy.io.read\_h5ad
+====================
+
+.. currentmodule:: scirpy.io
+
+.. autofunction:: read_h5ad
