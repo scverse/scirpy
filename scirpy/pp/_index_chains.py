@@ -9,7 +9,7 @@ import pandas as pd
 from anndata import AnnData
 from scanpy import logging
 
-from ..io._convert_anndata import AirrCell
+from ..io._datastructures import AirrCell
 from ..util import _is_na2
 
 

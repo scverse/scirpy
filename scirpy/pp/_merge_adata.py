@@ -1,9 +1,11 @@
-from typing import Union, List, Dict
+import itertools
+from typing import Dict, List, Union
+
 from anndata import AnnData
+
 from ..io._convert_anndata import from_airr_cells, to_airr_cells
 from ..io._datastructures import AirrCell
 from ..io._legacy import _check_upgrade_schema
-import itertools
 
 
 # TODO can this be achieved with a join at the AnnData level (i.e. anndata itself merging the awkward array?)

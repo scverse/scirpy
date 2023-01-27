@@ -6,7 +6,6 @@ import pandas as pd
 from anndata import AnnData
 
 from .. import __version__
-from ..pp import index_chains
 from ..util import _doc_params
 from ._datastructures import AirrCell
 from ._legacy import _check_upgrade_schema
@@ -53,7 +52,13 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
         obsm=obsm,
         uns={"scirpy_version": __version__},
     )
-    index_chains(adata)
+
+    # TODO avoiding circular import. Might be possible to remove this in case the pp.merge_* functions
+    # are gone.
+    from scirpy import pp
+
+    pp.index_chains(adata)
+
     return adata
 
 

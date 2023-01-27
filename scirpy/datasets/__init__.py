@@ -12,7 +12,8 @@ from anndata import AnnData
 from scanpy import logging, settings
 from scanpy.readwrite import read
 
-from ..io._convert_anndata import AirrCell, from_airr_cells
+from ..io._convert_anndata import from_airr_cells
+from ..io._datastructures import AirrCell
 from ..io._io import _infer_locus_from_gene_names, _IOLogger
 from ..io._legacy import upgrade_schema
 from ..util import _doc_params, _read_to_str, tqdm
