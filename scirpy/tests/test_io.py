@@ -352,7 +352,7 @@ def test_read_10x_csv():
     assert cell1["VDJ_1_d_call"] == "TRBD2"
     assert cell1["VDJ_1_j_call"] == "TRBJ2-3"
     assert cell1["VDJ_1_c_call"] == "TRBC2"
-    assert anndata.obsm["chain_indices"]["multichain"][0] is False
+    assert anndata.obsm["chain_indices"]["multichain"][0].item() is False
     assert cell1["VJ_1_locus"] == "TRA"
     assert cell1["VDJ_1_locus"] == "TRB"
 
@@ -501,7 +501,7 @@ def test_read_10x():
     assert cell1["VDJ_1_d_call"] == "TRBD1"
     assert cell1["VDJ_1_j_call"] == "TRBJ2-2"
     assert cell1["VDJ_1_c_call"] == "TRBC2"
-    assert anndata.obsm["chain_indices"]["multichain"][0] is False
+    assert anndata.obsm["chain_indices"]["multichain"][0].item() is False
     assert np.all(
         _is_na(cell1[["VJ_1_junction_aa", "VDJ_2_junction_aa", "VJ_1_np1_length"]])
     )
@@ -877,8 +877,9 @@ def test_airr_df():
         "orphan VDJ",
         "orphan VDJ",
     ]
-    assert adata.obs["IR_VJ_1_locus"].tolist() == ["IGL", np.nan, np.nan]
-    assert adata.obs["IR_VDJ_1_locus"].tolist() == ["IGH"] * 3
+    obs = ir.get.airr(adata, "locus", ["VJ_1", "VDJ_1"])
+    assert obs["VJ_1_locus"].tolist() == ["IGL", None, None]
+    assert obs["VDJ_1_locus"].tolist() == ["IGH"] * 3
 
 
 @pytest.mark.conda
@@ -953,7 +954,9 @@ def test_read_bd_per_cell_chain():
     assert cell1["VJ_1_c_call"] == "TRAC"
 
     # cell25 has no productive chains
-    assert np.all(adata.obsm["chain_indices"].loc["25", :].isnull())
+    assert np.all(
+        adata.obsm["chain_indices"].drop(columns=["multichain"]).loc["25", :].isnull()
+    )
     assert _is_na(cell25["VJ_1_locus"])
 
     assert cell39["VJ_1_locus"] == "TRG"
