@@ -1,35 +1,25 @@
-import pandas as pd
 import json
-from anndata import AnnData
-from ._datastructures import AirrCell
-from typing import (
-    List,
-    Sequence,
-    Union,
-    Collection,
-    Optional,
-)
-import numpy as np
-from glob import iglob
-import pickle
 import os.path
-from . import _tracerlib
-import sys
-from pathlib import Path
-import airr
-from ..util import _doc_params, _is_true, _is_true2, _translate_dna_to_protein, _is_na2
-from ._convert_anndata import from_airr_cells, to_airr_cells
-from ._util import (
-    doc_working_model,
-    _IOLogger,
-    _read_airr_rearrangement_df,
-)
-from ._legacy import _check_upgrade_schema
-from .._compat import Literal
-from airr import RearrangementSchema
+import pickle
 import re
-from .. import __version__
+import sys
+from glob import iglob
+from pathlib import Path
+from typing import Collection, List, Optional, Sequence, Union
 
+import airr
+import numpy as np
+import pandas as pd
+from airr import RearrangementSchema
+from anndata import AnnData
+
+from .._compat import Literal
+from ..util import _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
+from . import _tracerlib
+from ._convert_anndata import from_airr_cells, to_airr_cells
+from ._datastructures import AirrCell
+from ._legacy import _check_upgrade_schema
+from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory

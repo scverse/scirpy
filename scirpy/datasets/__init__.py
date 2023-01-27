@@ -1,20 +1,21 @@
-from anndata import AnnData
-from pathlib import Path
-from ..util import _doc_params, _read_to_str
-from scanpy.readwrite import read
-from scanpy import settings
-from textwrap import indent
+import os.path
 import tempfile
-from ..io import upgrade_schema, AirrCell, from_airr_cells
-from ..io._io import _infer_locus_from_gene_names, _IOLogger
 import urllib.request
 import zipfile
+from datetime import datetime
+from pathlib import Path
+from textwrap import indent
+
 import pandas as pd
 import scanpy as sc
-from datetime import datetime
-from ..util import tqdm
-from scanpy import logging
-import os.path
+from anndata import AnnData
+from scanpy import logging, settings
+from scanpy.readwrite import read
+
+from ..io._convert_anndata import AirrCell, from_airr_cells
+from ..io._io import _infer_locus_from_gene_names, _IOLogger
+from ..io._legacy import upgrade_schema
+from ..util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
 

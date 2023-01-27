@@ -1,15 +1,17 @@
-from types import MappingProxyType
-from typing import Any, Dict, List, Mapping, Sequence, Tuple, cast
-
-from anndata import AnnData
-from ..io import AirrCell
-from ..util import _is_na2
-import awkward as ak
-from scanpy import logging
-from functools import partial
-import pandas as pd
 import itertools
+from functools import partial
+from types import MappingProxyType
+from typing import Any, List, Mapping, Sequence, cast
+
+import awkward as ak
 import numpy as np
+import pandas as pd
+from anndata import AnnData
+from scanpy import logging
+
+from ..io._convert_anndata import AirrCell
+from ..util import _is_na2
+
 
 # TODO do we need tests or is it enough to have this tested implicitly through all IO tests?
 def index_chains(

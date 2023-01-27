@@ -1,16 +1,17 @@
 """Code to support older version of the scipy data structure. """
 
-from copy import copy
-import awkward as ak
-from .. import __version__
-from functools import wraps
 import itertools
-from anndata import AnnData
+from functools import wraps
 from typing import Callable, List, cast
+
+import awkward as ak
+from anndata import AnnData
+from packaging import version
+
+from .. import __version__
+from ..util import _is_na2
 from ._datastructures import AirrCell
 from ._util import _IOLogger
-from ..util import _is_na2
-from packaging import version
 
 
 def _check_schema_pre_v0_7(adata: AnnData):

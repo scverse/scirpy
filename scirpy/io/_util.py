@@ -1,9 +1,10 @@
-from collections import Counter
-from scanpy import logging
-import pandas as pd
 import csv
 import os
+from collections import Counter
+
+import pandas as pd
 from airr import RearrangementReader
+from scanpy import logging
 
 doc_working_model = """\
 

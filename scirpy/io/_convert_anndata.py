@@ -1,17 +1,16 @@
 """Convert IrCells to AnnData and vice-versa"""
-from operator import index
-from anndata import AnnData
-from ..util import _doc_params, _is_true2, _is_false2
-from ._util import doc_working_model
-from ._datastructures import AirrCell
-import pandas as pd
 from typing import Iterable, List, cast
-from .. import __version__
-from pandas.api.types import is_object_dtype
+
 import awkward as ak
-from ._util import _IOLogger
-from ._legacy import _check_upgrade_schema
+import pandas as pd
+from anndata import AnnData
+
+from .. import __version__
 from ..pp import index_chains
+from ..util import _doc_params
+from ._datastructures import AirrCell
+from ._legacy import _check_upgrade_schema
+from ._util import _IOLogger, doc_working_model
 
 
 # TODO index_chains flag for backwards compatibility that is true by default

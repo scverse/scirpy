@@ -4,28 +4,14 @@ Currently only used as intermediate storage.
 See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
-import itertools
 import json
 from collections.abc import MutableMapping
-from functools import partial
-from typing import (
-    Any,
-    Collection,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-)
+from typing import Any, Collection, Iterable, Iterator, List, Mapping
 
-import numpy as np
 import scanpy
 from airr import RearrangementSchema
 
-from ..util import _doc_params, _is_na2, _is_true2
-from ._util import doc_working_model
+from ..util import _is_na2
 
 
 class AirrCell(MutableMapping):

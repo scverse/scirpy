@@ -1,17 +1,18 @@
 from scanpy import read_h5ad
+
+from ..util import deprecated
+from ._convert_anndata import from_airr_cells, to_airr_cells
+from ._datastructures import AirrCell
 from ._io import (
-    read_10x_vdj,
-    read_tracer,
-    read_bracer,
-    read_airr,
-    write_airr,
-    from_dandelion,
-    to_dandelion,
-    read_bd_rhapsody,
     DEFAULT_AIRR_CELL_ATTRIBUTES,
     DEFAULT_AIRR_FIELDS,
+    from_dandelion,
+    read_10x_vdj,
+    read_airr,
+    read_bd_rhapsody,
+    read_bracer,
+    read_tracer,
+    to_dandelion,
+    write_airr,
 )
 from ._legacy import upgrade_schema
-from ._convert_anndata import from_airr_cells, to_airr_cells
-from ..util import deprecated
-from ._datastructures import AirrCell

@@ -101,3 +101,9 @@ git_describe_command = "git describe --dirty --tags --long --match v*.*.*"
 
 [tool.black]
 target-version = ['py37']
+
+[tool.isort]
+include_trailing_comma = true
+multi_line_output = 3
+profile = "black"
+skip_glob = ["docs/*"]
