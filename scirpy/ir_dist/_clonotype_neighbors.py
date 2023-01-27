@@ -88,7 +88,7 @@ class ClonotypeNeighbors:
         # remove entries without receptor (e.g. only non-productive chains)
         obs = obs.loc[_has_ir(adata, "chain_indices"), :]
 
-        # TODO can we safely delete this?
+        # TODO #356: can we safely delete this?
         # make sure all nans are consistent "nan"
         # This workaround will be made obsolete by #190.
         # Edit: note: I don't think this can be `np.nan` since this must be a string type column.

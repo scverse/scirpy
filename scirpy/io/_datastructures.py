@@ -124,7 +124,7 @@ class AirrCell(MutableMapping):
         # sanitize NA values
         chain = {k: None if _is_na2(v) else v for k, v in chain.items()}
 
-        # TODO this should be `.validate_obj` but currently does not work
+        # TODO #356: this should be `.validate_obj` but currently does not work
         # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())
         RearrangementSchema.validate_row(chain)

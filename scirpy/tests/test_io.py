@@ -967,9 +967,6 @@ def test_read_bd_per_cell_chain():
     assert cell85["VJ_2_locus"] == "TRA"
     assert cell85["VJ_2_consensus_count"] == 1
 
-    # TODO how to deal with that
-    # assert "TRA" in cell85["extra_chains"]
-
 
 @pytest.mark.conda
 def test_read_bd_contigs():

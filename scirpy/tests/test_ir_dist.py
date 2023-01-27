@@ -1,17 +1,17 @@
-import pytest
-from scirpy.ir_dist.metrics import DistanceCalculator
-from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
 import numpy.testing as npt
-import scirpy as ir
+import pandas as pd
+import pandas.testing as pdt
+import pytest
 import scipy.sparse
+
+import scirpy as ir
+from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from scirpy.ir_dist.metrics import DistanceCalculator
+from scirpy.util import _is_symmetric
+
 from .fixtures import adata_cdr3, adata_cdr3_2  # NOQA
 from .util import _squarify
-from scirpy.util import _is_symmetric
-import pandas.testing as pdt
-import pandas as pd
-from anndata import AnnData
-import awkward as ak
 
 
 def _assert_frame_equal(left, right):
@@ -452,7 +452,7 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
             {"receptor_arms": "VJ", "dual_ir": "primary_only"},
             {"VJ_1_junction_aa": ["AAA", "AHA"]},
             {"VJ_1_junction_aa": ["AAA", "nan"]},
-            # TODO note: from adata_cdr3_2, the nan is not removed, because it has a receptor, but no VJ chain
+            # TODO #356: note: from adata_cdr3_2, the nan is not removed, because it has a receptor, but no VJ chain
             # not sure if this is what we want. cf. ClonotypeNeighbors._make_clonotype_table.
             [
                 [1, 0],

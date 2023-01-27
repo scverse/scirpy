@@ -84,7 +84,7 @@ def _airr_col(
     idx = chain_indices[chain]
     mask = ~pd.isnull(idx)
 
-    # TODO ensure that this doesn't get converted to something not supporting missing values
+    # TODO #356 ensure that this doesn't get converted to something not supporting missing values
     # when saving anndata
     result = np.full(idx.shape, fill_value=None, dtype=object)
 
@@ -97,15 +97,14 @@ def _airr_col(
     return result
 
 
+# TODO #356: do we want this?
+# def obs_context(adata, **kwargs):
+#     """A context manager that temporarily adds columns to adata.obs"""
+#     raise NotImplementedError
+#
 # def most_frequent(array: Sequence, n=10):
 #     """Get the most frequent categories of an Array"""
 #     return pd.Series(array).value_counts().index[:n].tolist()
-
-
-# def obs_context(adata, **kwargs):
-#     """A context manager that temporarily adds columns to adata.obs"""
-#     # TODO
-#     raise NotImplementedError
 
 
 @contextmanager

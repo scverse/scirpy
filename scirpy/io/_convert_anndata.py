@@ -12,7 +12,7 @@ from ._legacy import _check_upgrade_schema
 from ._util import _IOLogger, doc_working_model
 
 
-# TODO index_chains flag for backwards compatibility that is true by default
+# TODO #356: index_chains flag for backwards compatibility that is true by default
 @_doc_params(doc_working_model=doc_working_model)
 def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     """\
@@ -53,7 +53,7 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
         uns={"scirpy_version": __version__},
     )
 
-    # TODO avoiding circular import. Might be possible to remove this in case the pp.merge_* functions
+    # TODO #356: avoiding circular import. Might be possible to remove this in case the pp.merge_* functions
     # are gone.
     from scirpy import pp
 

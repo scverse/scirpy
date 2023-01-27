@@ -13,7 +13,6 @@ from ..io._datastructures import AirrCell
 from ..util import _is_na2
 
 
-# TODO do we need tests or is it enough to have this tested implicitly through all IO tests?
 def index_chains(
     adata: AnnData,
     *,
@@ -62,14 +61,16 @@ def index_chains(
     chain_index_df = []
     awk_array = cast(ak.Array, adata.obsm[airr_key])
 
-    # TODO only warn if those fields are in the key
-    if (
-        "duplicate_count" not in awk_array.fields
-        and "consensus_count" not in awk_array.fields
-    ):
-        logging.warning(
-            "No expression information available. Cannot rank chains by expression. "
-        )  # type: ignore
+    # only warn if those fields are in the key (i.e. this should give a warning if those are missing with
+    # default settings. If the user specifies their own dictionary, they are on their own)
+    if "duplicate_count" in sort_chains_by and "consensus_count" in sort_chains_by:
+        if (
+            "duplicate_count" not in awk_array.fields
+            and "consensus_count" not in awk_array.fields
+        ):
+            logging.warning(
+                "No expression information available. Cannot rank chains by expression. "
+            )  # type: ignore
     for cell_chains in awk_array:
         cell_chains = cast(List[ak.Record], cell_chains)
 
