@@ -51,7 +51,7 @@ def spectratype(
     if "groupby" in kwargs or "IR_" in str(cdr3_col) or "IR_" in str(chain):
         raise ValueError(
             """\
-            The function signature has been updated when the scirpy 0.12 datastructure was introduced. 
+            The function signature has been updated when the scirpy 0.13 datastructure was introduced. 
             Please use the `chain` attribute to choose `VJ_1`, `VDJ_1`, `VJ_2`, or `VDJ_2` chain(s). 
             """
         )
