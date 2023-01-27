@@ -1,49 +1,41 @@
 # pylama:ignore=W0611,W0404
-import pandas as pd
-import scirpy as ir
-from scanpy import AnnData
-import pytest
-import numpy.testing as npt
-import pandas.testing as pdt
-import numpy as np
-import scanpy as sc
 import itertools
-from .fixtures import (
-    adata_clonotype,
-    adata_tra,
-    adata_vdj,
-    adata_diversity,
-    adata_conn,
-    adata_clonotype_network,
-    adata_define_clonotype_clusters,
-)
+
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
+import pytest
+import scanpy as sc
+
+import scirpy as ir
+
 from .util import _make_adata
 
 
 def test_chain_qc():
     obs = pd.DataFrame.from_records(
         [
-            ["nan", "nan", "nan", "nan", "nan"],
-            ["True", "TRA", "TRB", "TRA", "TRB"],
+            [False, "nan", "nan", "nan", "nan"],
+            [True, "TRA", "TRB", "TRA", "TRB"],
             # multichain takes precedencee over ambiguous
-            ["True", "TRA", "IGH", "nan", "nan"],
-            ["False", "TRA", "TRB", "nan", "nan"],
-            ["False", "TRA", "TRB", "TRA", "nan"],
-            ["False", "TRA", "TRB", "nan", "TRB"],
-            ["False", "TRA", "TRB", "TRA", "TRB"],
-            ["False", "IGK", "IGH", "nan", "nan"],
-            ["False", "IGL", "IGH", "IGL", "IGH"],
-            ["False", "IGL", "IGH", "IGK", "IGH"],
-            ["False", "nan", "IGH", "nan", "IGH"],
-            ["False", "TRA", "TRB", "TRG", "TRB"],
-            ["False", "IGK", "TRB", "nan", "nan"],
-            ["False", "TRA", "nan", "nan", "nan"],
-            ["False", "IGL", "nan", "nan", "nan"],
-            ["False", "nan", "TRD", "nan", "nan"],
+            [True, "TRA", "IGH", "nan", "nan"],
+            [False, "TRA", "TRB", "nan", "nan"],
+            [False, "TRA", "TRB", "TRA", "nan"],
+            [False, "TRA", "TRB", "nan", "TRB"],
+            [False, "TRA", "TRB", "TRA", "TRB"],
+            [False, "IGK", "IGH", "nan", "nan"],
+            [False, "IGL", "IGH", "IGL", "IGH"],
+            [False, "IGL", "IGH", "IGK", "IGH"],
+            [False, "nan", "IGH", "nan", "IGH"],
+            [False, "TRA", "TRB", "TRG", "TRB"],
+            [False, "IGK", "TRB", "nan", "nan"],
+            [False, "TRA", "nan", "nan", "nan"],
+            [False, "IGL", "nan", "nan", "nan"],
+            [False, "nan", "TRD", "nan", "nan"],
         ],
         columns=[
-            # TODO new multichain handling
-            "multi_chain",
+            "_multi_chain",
             "IR_VJ_1_locus",
             "IR_VDJ_1_locus",
             "IR_VJ_2_locus",

@@ -1,16 +1,19 @@
+import itertools
 from multiprocessing import cpu_count
-from typing import Dict, Mapping, Tuple, Union, Sequence, Optional
+from typing import Dict, Mapping, Optional, Sequence, Tuple, Union
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
 from anndata import AnnData
 from scanpy import logging
-from .._compat import Literal
-import numpy as np
-import scipy.sparse as sp
-import itertools
-from ._util import DoubleLookupNeighborFinder, reduce_and, reduce_or, merge_coo_matrices
-from ..util import _is_na, _is_true, tqdm
-from ..get import airr as get_airr
-import pandas as pd
 from tqdm.contrib.concurrent import process_map
+
+from .._compat import Literal
+from ..get import _has_ir
+from ..get import airr as get_airr
+from ..util import _is_na, tqdm
+from ._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
 
 class ClonotypeNeighbors:
@@ -83,7 +86,7 @@ class ClonotypeNeighbors:
         if self.match_columns is not None:
             obs = obs.join(adata.obs.loc[:, self.match_columns], validate="one_to_one")
         # remove entries without receptor (e.g. only non-productive chains)
-        obs = obs.loc[~np.all(adata.obsm["chain_indices"].isnull(), axis=1), :]
+        obs = obs.loc[_has_ir(adata, "chain_indices"), :]
 
         # TODO can we safely delete this?
         # make sure all nans are consistent "nan"

@@ -1,11 +1,13 @@
-from anndata import AnnData
-from typing import Union
+from typing import Sequence, Union
+
 import numpy as np
 import pandas as pd
-from ..util import _is_na, _normalize_counts
-from typing import Sequence
+from anndata import AnnData
+
 from .._compat import Literal
+from ..get import _has_ir
 from ..io._legacy import _check_upgrade_schema
+from ..util import _is_na, _normalize_counts
 
 
 def _group_abundance(
@@ -109,7 +111,7 @@ def group_abundance(
     # This whole function is rewritten (see https://github.com/scverse/scirpy/issues/232)
     if target_col == "has_ir" and "has_ir" not in adata.obs.columns:
         ir_obs = ir_obs.copy().assign(
-            has_ir=(~adata.obsm["chain_indices"].isnull().all(axis=1)).astype(str)
+            has_ir=_has_ir(adata, "chain_indices").astype(str)
         )
 
     if target_col not in adata.obs.columns:

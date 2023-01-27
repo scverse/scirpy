@@ -1,10 +1,11 @@
 import itertools
-from typing import Sequence, Literal, Union, cast
-import pandas as pd
-import numpy as np
-import awkward as ak
-from anndata import AnnData
 from contextlib import contextmanager
+from typing import Literal, Sequence, Union, cast
+
+import awkward as ak
+import numpy as np
+import pandas as pd
+from anndata import AnnData
 
 
 def airr(
@@ -116,3 +117,14 @@ def _obs_context(adata, **kwargs):
         yield adata
     finally:
         adata.obs = orig_obs
+
+
+def _has_ir(adata, chain_idx_key="chain_indices"):
+    """Return a mask of all cells that have a valid IR configuration"""
+    return ~(
+        adata.obsm[chain_idx_key]
+        .drop(columns=["multichain"])
+        .isnull()
+        .all(axis=1)
+        .values
+    )

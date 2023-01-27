@@ -1,11 +1,14 @@
-from ..util import _is_na
-import pandas as pd
-import numpy as np
-from typing import List, Union, Optional, cast
-from anndata import AnnData
+from typing import Any, List, Union
+
 import awkward as ak
+import numpy as np
+import pandas as pd
+from anndata import AnnData
+
 from scirpy import __version__
 from scirpy.util import _is_na2
+
+from ..util import _is_na
 
 
 def _normalize_df_types(df: pd.DataFrame):
@@ -39,6 +42,10 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     would be a lot of effort. Also the awkward array format is not very ergonomic to create
     manually, so we use this instead.
 
+    It accepts the following columns
+        * IR_{VJ,VDJ}_{<airr_var>}_{1,2}, to set an arbitrary airr variable for any of the four chains
+        * _multi_chain (optional), to manually set the multi chain status. Defaults to False.
+
     Compared to the function that converts legacy anndata objects via an intermediate step of
     creating AirrCells, this function works more directly, and can cope with minimal data that is
      * incorrect on purpose (for a test case)
@@ -47,6 +54,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
        of relying on the ranking of cells implemented in the AirrCell class.
     """
     # AnnData requires indices to be strings
+    obs = obs.copy()
     obs.index = obs.index.astype(str)
     # ensure that the columns are ordered, i.e. for each variable, VJ_1, VJ_2, VDJ1, ... come in the same order.
     obs.sort_index(axis=1, inplace=True)
@@ -75,7 +83,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     chain_idx_list = []
     for has_chain_dict, (_, row) in zip(has_chain, obs.iterrows()):
         tmp_chains = []
-        tmp_chain_idx: dict[str, Optional[int]] = {k: None for k in has_chain_dict}
+        tmp_chain_idx: dict[str, Any] = {k: None for k in has_chain_dict}
         for chain, row_has_chain in has_chain_dict.items():
             if row_has_chain:
                 tmp_chains.append(
@@ -85,6 +93,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
                     }
                 )
                 tmp_chain_idx[chain] = len(tmp_chains) - 1
+        tmp_chain_idx["multichain"] = row.get("_multi_chain", False)
 
         cell_list.append(tmp_chains)
         chain_idx_list.append(tmp_chain_idx)

@@ -1,10 +1,12 @@
-from ..util import _is_na, _is_true, deprecated
-from anndata import AnnData
-from typing import Union, Sequence, Tuple
+from typing import Sequence, Tuple, Union
+
 import numpy as np
+from anndata import AnnData
 from scanpy import logging
-from ..io._legacy import _check_upgrade_schema
+
 from .. import get
+from ..io._legacy import _check_upgrade_schema
+from ..util import _is_na
 
 
 @_check_upgrade_schema()
@@ -77,8 +79,8 @@ def chain_qc(
     res_receptor_type = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
     res_receptor_subtype = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
 
-    mask_has_ir = ~adata.obsm["chain_indices"].isnull().all(axis=1).values
-    mask_multichain = mask_has_ir & _is_true(x["multi_chain"].values)
+    mask_has_ir = get._has_ir(adata, "chain_indices")
+    mask_multichain = mask_has_ir & adata.obsm["chain_indices"]["multichain"].values
 
     vj_loci = get.airr(adata, "locus", ["VJ_1", "VJ_2"]).values
     vdj_loci = get.airr(adata, "locus", ["VDJ_1", "VDJ_2"]).values

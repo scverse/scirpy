@@ -1,30 +1,31 @@
-from anndata._core.anndata import AnnData
-from scirpy.io import (
-    read_10x_vdj,
-    read_tracer,
-    read_airr,
-    read_bracer,
-    from_airr_cells,
-    to_dandelion,
-    from_dandelion,
-    read_bd_rhapsody,
-    write_airr,
-    AirrCell,
-)
-from scirpy.io._io import _infer_locus_from_gene_names, _cdr3_from_junction
-from scirpy.io import to_airr_cells
-from scirpy.io._legacy import _check_upgrade_schema, upgrade_schema
-from scirpy.util import _is_na, _is_false
-import scirpy as ir
+from functools import lru_cache
+
 import numpy as np
-import pytest
+import pandas as pd
 import pandas.testing as pdt
+import pytest
+import scanpy as sc
+
+import scirpy as ir
+from scirpy.io import (
+    AirrCell,
+    from_airr_cells,
+    from_dandelion,
+    read_10x_vdj,
+    read_airr,
+    read_bd_rhapsody,
+    read_bracer,
+    read_tracer,
+    to_airr_cells,
+    to_dandelion,
+    write_airr,
+)
+from scirpy.io._io import _cdr3_from_junction, _infer_locus_from_gene_names
+from scirpy.io._legacy import _check_upgrade_schema, upgrade_schema
+from scirpy.util import _is_na
+
 from . import TESTDATA
 from .util import _normalize_df_types
-from functools import lru_cache
-import scanpy as sc
-import pandas as pd
-from typing import cast
 
 
 @lru_cache(None)
@@ -351,8 +352,7 @@ def test_read_10x_csv():
     assert cell1["VDJ_1_d_call"] == "TRBD2"
     assert cell1["VDJ_1_j_call"] == "TRBJ2-3"
     assert cell1["VDJ_1_c_call"] == "TRBC2"
-    # TODO how do we deal with this?
-    # assert _is_false(cell1["multi_chain"])
+    assert anndata.obsm["chain_indices"]["multichain"][0] is False
     assert cell1["VJ_1_locus"] == "TRA"
     assert cell1["VDJ_1_locus"] == "TRB"
 
@@ -501,8 +501,7 @@ def test_read_10x():
     assert cell1["VDJ_1_d_call"] == "TRBD1"
     assert cell1["VDJ_1_j_call"] == "TRBJ2-2"
     assert cell1["VDJ_1_c_call"] == "TRBC2"
-    # TODO how to deal with that
-    # assert _is_false(cell1["multi_chain"])
+    assert anndata.obsm["chain_indices"]["multichain"][0] is False
     assert np.all(
         _is_na(cell1[["VJ_1_junction_aa", "VDJ_2_junction_aa", "VJ_1_np1_length"]])
     )
