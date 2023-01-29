@@ -1,15 +1,17 @@
+from typing import Sequence, Union
+
 import matplotlib.pyplot as plt
-from anndata import AnnData
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.spatial import distance as sc_distance
+from anndata import AnnData
 from scipy.cluster import hierarchy as sc_hierarchy
-from typing import Union, Sequence
+from scipy.spatial import distance as sc_distance
+
 from .. import tl
-from .styling import _init_ax, _get_colors
-from .base import ol_scatter
 from ..io._legacy import _check_upgrade_schema
+from .base import ol_scatter
+from .styling import _get_colors, _init_ax
 
 
 @_check_upgrade_schema()
@@ -92,15 +94,16 @@ def repertoire_overlap(
                     .reset_index()
                 )
                 colordict = _get_colors(adata, lbl)
-                label_levels = labels[lbl].unique()
-                for e in label_levels:
-                    leg_colors.append((lbl + ": " + e, colordict[e]))
-                labels[lbl] = labels[lbl].astype(str)
-                labels[lbl] = labels.loc[:, lbl].map(colordict)
-                labels = labels.loc[:, [groupby, lbl]].set_index(groupby)
-                clust_colors.append(labels[lbl])
-                colordict = labels.to_dict()
-                colordict = colordict[lbl]
+                if colordict is not None:
+                    label_levels = labels[lbl].unique()
+                    for e in label_levels:
+                        leg_colors.append((lbl + ": " + e, colordict[e]))
+                    labels[lbl] = labels[lbl].astype(str)
+                    labels[lbl] = labels.loc[:, lbl].map(colordict)
+                    labels = labels.loc[:, [groupby, lbl]].set_index(groupby)
+                    clust_colors.append(labels[lbl])
+                    colordict = labels.to_dict()
+                    colordict = colordict[lbl]
 
         if dendro_only:
             ax = _init_ax()

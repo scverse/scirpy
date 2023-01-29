@@ -5,7 +5,6 @@ import matplotlib.colors
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import pandas as pd
 import scanpy as sc
 import scipy.sparse as sp
 from anndata import AnnData
@@ -17,11 +16,11 @@ from pandas.api.types import is_categorical_dtype
 from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
 
+from ..io._legacy import _check_upgrade_schema
+from ..tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
+from ..util import _doc_params
 from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
-from ..tl._clonotypes import _graph_from_coordinates, _doc_clonotype_network
-from ..util import _doc_params
-from ..io._legacy import _check_upgrade_schema
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
     "grey2", ["#CCCCCC", "#000000"]
@@ -352,7 +351,6 @@ def _plot_clonotype_network_panel(
     # plot gene expression
     var_names = adata.raw.var_names if use_raw else adata.var_names
     if isinstance(color, str) and color in var_names:
-        x_color = []
         tmp_expr = (adata.raw if use_raw else adata)[:, color].X
         # densify expression vector - less expensive than slicing sparse every iteration.
         if sp.issparse(tmp_expr):
@@ -400,7 +398,8 @@ def _plot_clonotype_network_panel(
                 values[adata.obs_names.isin(cell_ids)], return_counts=True
             )
             fracs = counts / np.sum(counts)
-            pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs)})
+            if cat_colors is not None:
+                pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs)})
 
     # create panel for legend(s)
     legend_ax = None

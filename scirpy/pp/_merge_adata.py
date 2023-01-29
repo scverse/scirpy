@@ -1,5 +1,5 @@
 import itertools
-from typing import Dict, List, Union
+from typing import Dict
 
 from anndata import AnnData
 
@@ -9,6 +9,8 @@ from ..io._legacy import _check_upgrade_schema
 
 
 # TODO #356: can this be achieved with a join at the AnnData level (i.e. anndata itself merging the awkward array?)
+# No, I don't think so. So we still need this function, but it can be simplified (just need to rebuild the
+# awkward array, and call `index_chains` again. )
 @_check_upgrade_schema(check_args=(0, 1))
 def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     """
@@ -66,6 +68,7 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
             # add cell-level attributes
             tmp_cell.update(cell)
 
+    # TODO #356: make this a parameter (e.g. drop_dulicates)?
     # remove duplicate chains
     # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
     for cell in cell_dict.values():
@@ -75,79 +78,3 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
     adata.obs = from_airr_cells(
         cell_dict.values(), include_fields=include_fields
     ).obs.reindex(adata.obs_names)
-
-
-# TODO #356: can we remove this?
-# Merging modailties would happen with MuData in the future
-# We may support storing AIRR data in the same AnnData object. This could be achieved
-# with a simple reindexing of the `airr` and `chain_indices` array/Dataframe in .obsm,
-# but it could still warrant a helper function
-@_check_upgrade_schema(check_args=(1,))
-def merge_with_ir(
-    adata: AnnData, adata_ir: AnnData, on: Union[List[str], None] = None, **kwargs
-) -> None:
-    """Merge adaptive immune receptor (:term:`IR`) data with transcriptomics data into a
-    single :class:`~anndata.AnnData` object.
-
-    :ref:`Reading in IR data<importing-data>` results in an :class:`~anndata.AnnData`
-    object with IR information stored in `obs`. Use this function to merge
-    it with another :class:`~anndata.AnnData` containing transcriptomics data.
-    To add additional IR data on top of on top of an :class:`~anndata.AnnData`
-    object that already contains IR information (e.g. :term:`BCR` on top of
-    :term:`TCR` data.), see :func:`~scirpy.pp.merge_airr_chains`.
-
-    Merging keeps all objects (e.g. `neighbors`, `umap`) from `adata` and integrates
-    `obs` from `adata_ir` into `adata`. Everything other than `.obs` from `adata_ir`
-    will be discarded.
-
-    This function is a thin wrapper around :func:`pandas.merge`. The function performs
-    a "left join", i.e. all cells not present in `adata` will be discarded.
-
-    Modifies `adata` inplace.
-
-    Parameters
-    ----------
-    adata
-        AnnData with the transcriptomics data. Will be modified inplace.
-    adata_ir
-        AnnData with the adaptive immune receptor (IR) data
-    on
-        Merge on columns in addition to 'index'. Defaults to "batch" if present in
-        both `obs` data frames.
-    **kwargs
-        Passed to :func:`pandas.merge`.
-    """
-    if len(kwargs):
-        raise ValueError(
-            "Since scirpy v0.5, this function always performs a 'left' merge "
-            "on the index and does not accept any additional parameters any more."
-        )
-    if not adata.obs_names.is_unique:
-        raise ValueError("obs names of `adata` need to be unique for merging.")
-    if not adata.obs_names.is_unique:
-        raise ValueError("obs_names of `adata_ir` need to be unique for merging.")
-    if on is None and "batch" in adata.obs.columns and "batch" in adata_ir.obs.columns:
-        on = ["batch"]
-
-    if "has_ir" in adata.obs.columns:
-        raise ValueError(
-            "It seems you already have immune receptor (IR) data in `adata`. "
-            "Please use `ir.pp.merge_airr_chains` instead. "
-        )
-
-    # Since pandas does not support both merge on index and columns, we
-    # need to name the index, and use the index name in `on`.
-    orig_index_name = adata.obs.index.name
-    if "obs_names" in adata.obs.columns or "obs_names" in adata_ir.obs.columns:
-        raise ValueError("This doesn't work if there's a column named 'obs_names'. ")
-    adata.obs.index.name = "obs_names"
-    adata_ir.obs.index.name = "obs_names"
-    if on is None:
-        on = list()
-    on.insert(0, "obs_names")
-
-    adata.obs = adata.obs.merge(
-        adata_ir.obs, how="left", on=on, validate="one_to_one", **kwargs
-    )
-
-    adata.obs.index.name = orig_index_name

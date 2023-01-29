@@ -1,12 +1,13 @@
+from typing import Sequence, Union
+
 import matplotlib.pyplot as plt
-from .._compat import Literal
 from anndata import AnnData
+
 from .. import tl
-from . import base
-from typing import Union, Sequence
-from .styling import _get_colors
+from .._compat import Literal
 from ..io._legacy import _check_upgrade_schema
-from ..get import _obs_context
+from . import base
+from .styling import _get_colors
 
 
 @_check_upgrade_schema()
@@ -74,7 +75,8 @@ def group_abundance(
 
     if "color" not in kwargs:
         colors = _get_colors(adata, target_col)
-        kwargs["color"] = [colors[cat] for cat in abundance.columns]
+        if colors is not None:
+            kwargs["color"] = [colors[cat] for cat in abundance.columns]
 
     # Create text for default labels
     if normalize:

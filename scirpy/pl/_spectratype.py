@@ -1,12 +1,14 @@
+from typing import Callable, List, Sequence, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
-from .._compat import Literal
 from anndata import AnnData
+
 from .. import tl
-from . import base
-from typing import Union, List, Collection, Callable, Sequence
-from .styling import _get_colors
+from .._compat import Literal
 from ..io._legacy import _check_upgrade_schema
+from . import base
+from .styling import _get_colors
 
 
 @_check_upgrade_schema()
@@ -77,7 +79,8 @@ def spectratype(
 
     if "color" not in kwargs:
         colors = _get_colors(adata, color)
-        kwargs["color"] = [colors[cat] for cat in data.columns]
+        if colors is not None:
+            kwargs["color"] = [colors[cat] for cat in data.columns]
 
     # For KDE curves, we need to convert the contingency tables back
     if viztype == "curve":

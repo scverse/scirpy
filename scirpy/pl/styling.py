@@ -1,13 +1,15 @@
-from .._compat import Literal
+from typing import Dict, Optional, Sequence, Union
+
 import matplotlib.pyplot as plt
-from typing import Union, Sequence, Dict
+from anndata import AnnData
+from cycler import Cycler
 from scanpy.plotting._utils import (
     _set_colors_for_categorical_obs,
     _set_default_colors_for_categorical_obs,
     _validate_palette,
 )
-from cycler import Cycler
-from anndata import AnnData
+
+from .._compat import Literal
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
@@ -122,7 +124,7 @@ def _get_colors(
     adata: AnnData,
     obs_key: str,
     palette: Union[str, Sequence[str], Cycler, None] = None,
-) -> Dict[str, str]:
+) -> Optional[Dict[str, str]]:
     """Return colors for a category stored in AnnData.
 
     If colors are not stored, new ones are assigned.
@@ -135,17 +137,20 @@ def _get_colors(
     should be changed in the future.
     """
     # required to turn into categoricals
-    adata._sanitize()
-    values = adata.obs[obs_key].values
-    color_key = f"{obs_key}_colors"
-    if palette is not None:
-        _set_colors_for_categorical_obs(adata, obs_key, palette)
-    elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
-        values.categories
-    ):
-        #  set a default palette in case that no colors or few colors are found
-        _set_default_colors_for_categorical_obs(adata, obs_key)
-    else:
-        _validate_palette(adata, obs_key)
+    adata.strings_to_categoricals()
 
-    return {cat: col for cat, col in zip(values.categories, adata.uns[color_key])}
+    # we can only get a palette for columns that are now categorical. Boolean/int/... won't work
+    if adata.obs[obs_key].dtype.name == "category":
+        values = adata.obs[obs_key].values
+        color_key = f"{obs_key}_colors"
+        if palette is not None:
+            _set_colors_for_categorical_obs(adata, obs_key, palette)
+        elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
+            values.categories
+        ):
+            #  set a default palette in case that no colors or few colors are found
+            _set_default_colors_for_categorical_obs(adata, obs_key)
+        else:
+            _validate_palette(adata, obs_key)
+
+        return {cat: col for cat, col in zip(values.categories, adata.uns[color_key])}
