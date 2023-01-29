@@ -104,8 +104,10 @@ class AirrCell(MutableMapping):
 
     def __setitem__(self, k, v) -> None:
         try:
+            if _is_na2(v):
+                v = None
             existing_value = self._cell_attrs[k]
-            if existing_value != v and not _is_na2(existing_value):
+            if existing_value != v and existing_value is not None:
                 raise ValueError(
                     "Cell-level attributes differ between different chains. "
                     f"Already present: `{existing_value}`. Tried to add `{v}`."
@@ -124,8 +126,6 @@ class AirrCell(MutableMapping):
         # sanitize NA values
         chain = {k: None if _is_na2(v) else v for k, v in chain.items()}
 
-        # TODO #356: this should be `.validate_obj` but currently does not work
-        # because of https://github.com/airr-community/airr-standards/issues/508
         RearrangementSchema.validate_header(chain.keys())
         RearrangementSchema.validate_row(chain)
 

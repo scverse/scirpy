@@ -12,7 +12,7 @@ from tqdm.contrib.concurrent import process_map
 from .._compat import Literal
 from ..get import _has_ir
 from ..get import airr as get_airr
-from ..util import _is_na, tqdm
+from ..util import tqdm
 from ._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
 
@@ -88,13 +88,10 @@ class ClonotypeNeighbors:
         # remove entries without receptor (e.g. only non-productive chains)
         obs = obs.loc[_has_ir(adata, "chain_indices"), :]
 
-        # TODO #356: can we safely delete this?
-        # make sure all nans are consistent "nan"
-        # This workaround will be made obsolete by #190.
-        # Edit: note: I don't think this can be `np.nan` since this must be a string type column.
+        # Converting nans to str("nan"), as we want string dtype
         for col in obs.columns:
-            obs[col] = obs[col].astype(str)
-            obs.loc[_is_na(obs[col]), col] = "nan"
+            obs.loc[pd.isnull(obs[col]), col] = "nan"  # type: ignore
+            obs[col] = obs[col].astype(str)  # type: ignore
 
         # using groupby instead of drop_duplicates since we need the group indices below
         clonotype_groupby = obs.groupby(obs.columns.tolist(), sort=False, observed=True)
