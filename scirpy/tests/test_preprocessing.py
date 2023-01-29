@@ -1,18 +1,16 @@
-from ast import type_ignore
-from os import read
-from .util import _normalize_df_types
-from anndata import AnnData
-import numpy as np
-from ..io import read_10x_vdj, read_bracer
-from . import TESTDATA
-from ..pp import merge_with_ir, index_chains
-from ..pp._merge_adata import merge_airr_chains
-import pandas.testing as pdt
-import numpy.testing as npt
-from ..util import _is_na
-import pandas as pd
-import pytest
 import awkward as ak
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
+import pytest
+from anndata import AnnData
+
+from ..io import read_10x_vdj, read_bracer
+from ..pp import index_chains
+from ..pp._merge_adata import merge_airr_chains
+from . import TESTDATA
+from .util import _normalize_df_types
 
 
 @pytest.mark.parametrize(
@@ -218,36 +216,3 @@ def test_merge_airr_chains_no_ir(is_cell, result: BaseException):
         assert "foo" in adata.obs.columns
         assert "foo_ir" in adata.obs.columns
         assert list(adata.obs_names) == list(cell_ids_anndata)
-
-
-def test_merge_adata():
-    """Test that merging of an IR anndata with a non-IR anndata works
-    with `merge_with_ir`"""
-    cell_ids_anndata = np.array(
-        [
-            "AAACCTGAGATAGCAT-1",
-            "AAACCTGAGTACGCCC-1",
-            "AAACCTGCATAGAAAC-1",
-            "AAACCTGGTCCGTTAA-1",
-            "AAACTTGGTCCGTTAA-1",
-            "cell_without_tcr",
-        ]
-    )
-    # X with 6 cells and 2 genes
-    adata = AnnData(X=np.ones((6, 2)))
-    adata.obs_names = cell_ids_anndata
-    adata.obs["foo"] = "bar"
-    adata_ir = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
-    adata_ir.obs["foo_ir"] = "bar_ir"
-
-    merge_with_ir(adata, adata_ir)
-
-    npt.assert_array_equal(adata.obs.index, cell_ids_anndata)
-    assert np.all(np.isin(adata_ir.obs.columns, adata.obs.columns))
-    assert "foo" in adata.obs.columns
-    assert "foo_ir" in adata.obs.columns
-    assert list(adata.obs_names) == list(cell_ids_anndata)
-
-    # Check that an additional merge raises a ValueError (use merge by chain!)
-    with pytest.raises(ValueError):
-        merge_with_ir(adata, adata_ir, on=["foo_ir"])
