@@ -75,6 +75,7 @@ def merge_airr(
     if drop_duplicate_chains:
         # remove duplicate chains
         # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
+        #
         # use dict.fromkeys() instead of set() to obtain a reproducible ordering
         for cell in cell_dict.values():
             cell._chains = [

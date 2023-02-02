@@ -214,18 +214,22 @@ def test_merge_airr(airr1, airr2, airr_expected):
         pytest.param(
             {"cell1": {"a": 1, "b": "test"}, "cell2": {"a": 1, "b": "test"}},
             {"cell1": {"a": 2, "b": "test"}, "cell2": {"a": 1, "b": "xxx"}},
-            {},
+            ValueError,
         ),
     ],
 )
 def test_merge_airr_obs(obs1, obs2, obs_expected):
     adata1 = AnnData(
-        obs=pd.DataFrame(obs1),
-        obsm={"airr": ak.Array([[AirrCell.empty_chain_dict()] * len(obs1)])},
+        obs=pd.DataFrame.from_dict(obs1, orient="index"),
+        obsm={"airr": ak.Array([[AirrCell.empty_chain_dict()]] * len(obs1))},
     )
     adata2 = AnnData(
-        obs=pd.DataFrame(obs2),
-        obsm={"airr": ak.Array([[AirrCell.empty_chain_dict()] * len(obs2)])},
+        obs=pd.DataFrame.from_dict(obs2, orient="index"),
+        obsm={"airr": ak.Array([[AirrCell.empty_chain_dict()]] * len(obs2))},
     )
-    adata_merged = merge_airr(adata1, adata2)
-    assert adata_merged.obs.to_dict() == obs_expected
+    if isinstance(obs_expected, type) and issubclass(obs_expected, Exception):
+        with pytest.raises(obs_expected):
+            adata_merged = merge_airr(adata1, adata2)
+    else:
+        adata_merged = merge_airr(adata1, adata2)
+        assert adata_merged.obs.to_dict(orient="index") == obs_expected
