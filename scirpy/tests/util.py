@@ -1,4 +1,4 @@
-from typing import Any, List, Union
+from typing import Any, Dict, List, Union
 
 import awkward as ak
 import numpy as np
@@ -6,6 +6,7 @@ import pandas as pd
 from anndata import AnnData
 
 from scirpy import __version__
+from scirpy.io import AirrCell
 from scirpy.util import _is_na2
 
 from ..util import _is_na
@@ -98,7 +99,7 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         cell_list.append(tmp_chains)
         chain_idx_list.append(tmp_chain_idx)
 
-    airr_data = ak.Array(cell_list)
+    airr_data = ak.Array(_make_airr_chains_valid(cell_list))
     chain_indices = pd.DataFrame.from_records(chain_idx_list, index=obs.index)
 
     adata = AnnData(
@@ -108,3 +109,17 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         uns={"scirpy_version": __version__},
     )
     return adata
+
+
+def _make_airr_chains_valid(tmp_airr: List[List[Dict]]) -> List[List[Dict]]:
+    """Take a list of lists of Airr chain dictionaries, and add empty fields that are required
+    as per the rearrangement standard"""
+    new_airr = []
+    for row in tmp_airr:
+        new_row = []
+        for chain in row:
+            new_chain = AirrCell.empty_chain_dict()
+            new_chain.update(chain)
+            new_row.append(new_chain)
+        new_airr.append(new_row)
+    return new_airr

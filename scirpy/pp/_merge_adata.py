@@ -8,32 +8,34 @@ from ..io._datastructures import AirrCell
 from ..io._legacy import _check_upgrade_schema
 
 
-# TODO #356: can this be achieved with a join at the AnnData level (i.e. anndata itself merging the awkward array?)
-# No, I don't think so. So we still need this function, but it can be simplified (just need to rebuild the
-# awkward array, and call `index_chains` again. )
 @_check_upgrade_schema(check_args=(0, 1))
-def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
+def merge_airr(
+    adata: AnnData,
+    adata2: AnnData,
+    *,
+    airr_key="airr",
+    airr_key2="airr",
+    drop_duplicate_chains=True,
+    **kwargs,
+) -> AnnData:
     """
     Merge two AnnData objects with :term:`IR` information (e.g. BCR with TCR).
 
     Decomposes the IR information back into :class:`scirpy.io.AirrCell` objects
     and merges them on a chain-level. If both objects contain the same cell-id, and
-    the same chains, the corresponding row in `adata.obs` will be unchanged.
+    the same chains, the corresponding row in `adata.obs` will be unchanged (if `drop_duplicate_chains` is `True`).
     If both objects contain the same cell-id, but different chains, the chains
     will be merged into a single cell such that it can be annotated as
     :term:`ambiguous<Receptor type>` or :term:`multi-chain<Multichain-cell>`
-    if appropriate.  If a cell contains both TCR and BCR chains, they will both
+    if appropriate. If a cell contains both TCR and BCR chains, they will both
     be kept and can be identified as `ambiguous` using the :func:`scirpy.tl.chain_qc`
     function.
 
-    The function performs a "left join", i.e. all cells not present in `adata` will
-    be discarded. Of `adata2` the function only retains information from `obs`.
+    The function performs a "full join", i.e. all cells from both objects
+    will be retained. All information except `.obsm[airr_key]` and
+    `.obs` will be lost.
 
-    To simply add IR information onto an existing `AnnData` object with transcriptomics
-    data, see :func:`~scirpy.pp.merge_with_ir` (this function can do this, too, but
-    `merge_with_ir` is more efficient).
-
-    Modifies `adata` inplace.
+    TODO #356: refer to tutorial showing how to use MuData
 
     Parameters
     ----------
@@ -41,16 +43,23 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
         first AnnData object containing IR information
     adata2
         second AnnData object containing IR information
+    airr_key
+        key under which the AIRR information is stored in `adata.obsm`
+    airr_key2
+        key under which the AIRR information is stored in `adata2.obsm`
+    drop_duplicate_chains
+        If True, if there are identical chains associated with the same cell
+        only one of them is kept.
+    **kwargs
+        passed to :func:`~scirpy.io.from_airr_cells`
+
+    Returns
+    -------
+    new AnnData object with merged AIRR data.
     """
-    ir_objs1 = to_airr_cells(adata)
-    ir_objs2 = to_airr_cells(adata2)
-    # Compute `include_fields` to avoid including fields that are part of
-    # empty airr cells as part of the rearrangement standard, but not included
-    # in the original anndata object.
-    include_fields = set(
-        x.split("_", maxsplit=3)[-1] if x.startswith("IR_") else x
-        for x in itertools.chain(adata.obs.columns, adata2.obs.columns)
-    )
+    ir_objs1 = to_airr_cells(adata, airr_key=airr_key)
+    ir_objs2 = to_airr_cells(adata2, airr_key=airr_key2)
+
     cell_dict: Dict[str, AirrCell] = dict()
     for cell in itertools.chain(ir_objs1, ir_objs2):
         try:
@@ -58,23 +67,18 @@ def merge_airr_chains(adata: AnnData, adata2: AnnData) -> None:
         except KeyError:
             cell_dict[cell.cell_id] = cell
         else:
-            # this is a legacy operation. With adatas generated with scirpy
-            # >= 0.7 this isn't necessary anymore, as all chains are preserved.
-            tmp_cell["multi_chain"] = bool(tmp_cell["multi_chain"]) | bool(
-                cell["multi_chain"]
-            )
             for tmp_chain in cell.chains:
                 tmp_cell.add_chain(tmp_chain)
             # add cell-level attributes
             tmp_cell.update(cell)
 
-    # TODO #356: make this a parameter (e.g. drop_dulicates)?
-    # remove duplicate chains
-    # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
-    for cell in cell_dict.values():
-        cell._chains = [dict(t) for t in set(tuple(d.items()) for d in cell.chains)]
+    if drop_duplicate_chains:
+        # remove duplicate chains
+        # https://stackoverflow.com/questions/9427163/remove-duplicate-dict-in-list-in-python
+        # use dict.fromkeys() instead of set() to obtain a reproducible ordering
+        for cell in cell_dict.values():
+            cell._chains = [
+                dict(t) for t in dict.fromkeys(tuple(d.items()) for d in cell.chains)
+            ]
 
-    # only keep entries that are in `adata` and ensure consistent ordering
-    adata.obs = from_airr_cells(
-        cell_dict.values(), include_fields=include_fields
-    ).obs.reindex(adata.obs_names)
+    return from_airr_cells(cell_dict.values(), **kwargs)

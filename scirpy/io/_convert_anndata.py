@@ -14,7 +14,7 @@ from ._util import _IOLogger, doc_working_model
 
 # TODO #356: index_chains flag for backwards compatibility that is true by default
 @_doc_params(doc_working_model=doc_working_model)
-def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
+def from_airr_cells(airr_cells: Iterable[AirrCell], index_chains=True) -> AnnData:
     """\
     Convert a collection of :class:`~scirpy.io.AirrCell` objects to :class:`~anndata.AnnData`.
 
@@ -27,6 +27,9 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
     ----------
     airr_cells
         A list of :class:`~scirpy.io.AirrCell` objects
+    index_chains
+        If `True`, automatically run :func:`~scirpy.pp.index_chains` with 
+        default parameters. 
 
     Returns
     -------
@@ -53,11 +56,11 @@ def from_airr_cells(airr_cells: Iterable[AirrCell]) -> AnnData:
         uns={"scirpy_version": __version__},
     )
 
-    # TODO #356: avoiding circular import. Might be possible to remove this in case the pp.merge_* functions
-    # are gone.
-    from scirpy import pp
+    if index_chains:
+        # import here to avoid circular import
+        from scirpy.pp import index_chains as index_chains_
 
-    pp.index_chains(adata)
+        index_chains_(adata)
 
     return adata
 
