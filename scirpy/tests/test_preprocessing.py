@@ -1,5 +1,4 @@
 import awkward as ak
-import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
@@ -32,8 +31,8 @@ from .util import _make_airr_chains_valid
             ],
             [
                 # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
-                [1, 2, 0, np.nan, False],
-                [1, 0, np.nan, 2, False],
+                {"VJ": [1, 0], "VDJ": [2, None], "multichain": False},
+                {"VJ": [1, None], "VDJ": [0, 2], "multichain": False},
             ],
         )
     ],
@@ -46,14 +45,7 @@ def test_index_chains(airr_chains, expected_index):
     )
     adata.obsm["airr2"] = ak.Array(airr_chains)
     index_chains(adata, airr_key="airr2", key_added="chain_indices2")
-    pdt.assert_frame_equal(
-        adata.obsm["chain_indices2"],
-        pd.DataFrame(
-            expected_index,
-            index=adata.obs_names,
-            columns=["VJ_1", "VDJ_1", "VJ_2", "VDJ_2", "multichain"],
-        ),
-    )
+    assert expected_index == ak.to_list(adata.obsm["chain_indices2"])
 
 
 @pytest.mark.parametrize(
@@ -68,36 +60,31 @@ def test_index_chains(airr_chains, expected_index):
                 "junction": "",
                 "junction_aa": "",
             },
-            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
-            [3, np.nan, 0, np.nan, False],
+            {"VJ": [3, 0], "VDJ": [None, None], "multichain": False},
         ),
         (
             False,
             True,
             {"junction_aa": ""},
-            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
-            [3, np.nan, 1, np.nan, True],
+            {"VJ": [3, 1], "VDJ": [None, None], "multichain": True},
         ),
         (
             True,
             False,
             {"junction_aa": ""},
-            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
-            [3, np.nan, 0, np.nan, True],
+            {"VJ": [3, 0], "VDJ": [None, None], "multichain": True},
         ),
         (
             False,
             False,
             {"junction_aa": ""},
-            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
-            [3, np.nan, 1, np.nan, True],
+            {"VJ": [3, 1], "VDJ": [None, None], "multichain": True},
         ),
         (
             True,
             False,
             {"sort": 10000},
-            # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
-            [2, np.nan, 3, np.nan, True],
+            {"VJ": [2, 3], "VDJ": [None, None], "multichain": True},
         ),
     ],
     ids=[
@@ -130,15 +117,7 @@ def test_index_chains_custom_parameters(
         require_junction_aa=require_junction_aa,
         sort_chains_by=sort_chains_by,
     )
-    pdt.assert_frame_equal(
-        adata.obsm["chain_indices"],
-        pd.DataFrame(
-            [expected_index],
-            index=adata.obs_names,
-            columns=["VJ_1", "VDJ_1", "VJ_2", "VDJ_2", "multichain"],
-        ),
-        check_dtype=True,
-    )
+    assert expected_index == ak.to_list(adata.obsm["chain_indices"])[0]
 
 
 def test_merge_airr_identity():
