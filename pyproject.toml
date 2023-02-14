@@ -23,7 +23,7 @@ classifiers = [
     'Programming Language :: Python :: 3',
     'Programming Language :: R'
 ]
-requires-python = '>= 3.7'
+requires-python = '>= 3.8'
 dependencies = [
     'anndata>=0.7.6',
     'scanpy>=1.6.0',
