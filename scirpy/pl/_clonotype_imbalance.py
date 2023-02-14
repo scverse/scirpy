@@ -1,13 +1,14 @@
+from typing import Literal, Union
+
 import matplotlib.pyplot as plt
-from anndata import AnnData
 import pandas as pd
-import seaborn as sns
 import scanpy as sc
-from typing import Union
-from .._compat import Literal
+import seaborn as sns
+from anndata import AnnData
+
 from .. import tl
-from .base import volcano
 from ..io._legacy import _check_upgrade_schema
+from .base import volcano
 
 
 @_check_upgrade_schema()

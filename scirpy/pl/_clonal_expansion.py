@@ -1,9 +1,10 @@
-from .. import tl
+from typing import Literal, Union
+
 from anndata import AnnData
-from . import base
-from typing import Union
-from .._compat import Literal
+
+from .. import tl
 from ..io._legacy import _check_upgrade_schema
+from . import base
 
 
 @_check_upgrade_schema()

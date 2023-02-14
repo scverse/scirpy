@@ -1,11 +1,12 @@
-from anndata import AnnData
-from .._compat import Literal
-from . import base
-from .. import tl
-import numpy as np
+from typing import Callable, Literal, Mapping, Union
+
 import matplotlib.pyplot as plt
+import numpy as np
+from anndata import AnnData
+
+from .. import tl
 from ..io._legacy import _check_upgrade_schema
-from typing import Union, Callable, Mapping
+from . import base
 
 
 @_check_upgrade_schema()

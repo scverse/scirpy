@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Literal, Optional, Sequence, Union
 
 import matplotlib.pyplot as plt
 from anndata import AnnData
@@ -8,8 +8,6 @@ from scanpy.plotting._utils import (
     _set_default_colors_for_categorical_obs,
     _validate_palette,
 )
-
-from .._compat import Literal
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 

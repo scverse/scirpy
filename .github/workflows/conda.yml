@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9, 3.10]
         os: ["ubuntu-latest", "macos-latest"]
 
     steps:
@@ -27,7 +27,7 @@ jobs:
           miniforge-variant: Mambaforge
           miniforge-version: latest
           channels: conda-forge,bioconda
-          channel-priority: strict 
+          channel-priority: strict
           python-version: ${{ matrix.python-version }}
 
       - name: install conda build

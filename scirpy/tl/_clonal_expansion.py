@@ -1,10 +1,11 @@
-from anndata import AnnData
-from ..util import _is_na, _normalize_counts
+from typing import List, Literal, Union
+
 import numpy as np
-from typing import Union, List
-from .._compat import Literal
 import pandas as pd
+from anndata import AnnData
+
 from ..io._legacy import _check_upgrade_schema
+from ..util import _is_na, _normalize_counts
 
 
 def _clip_and_count(

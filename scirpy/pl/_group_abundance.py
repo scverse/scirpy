@@ -1,10 +1,9 @@
-from typing import Sequence, Union
+from typing import Literal, Sequence, Union
 
 import matplotlib.pyplot as plt
 from anndata import AnnData
 
 from .. import tl
-from .._compat import Literal
 from ..io._legacy import _check_upgrade_schema
 from . import base
 from .styling import _get_colors

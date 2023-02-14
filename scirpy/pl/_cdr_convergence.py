@@ -1,12 +1,13 @@
+from typing import Collection, List, Literal, Union
+
 import matplotlib.pyplot as plt
-from .._compat import Literal
-from anndata import AnnData
 import pandas as pd
+from anndata import AnnData
+
 from .. import tl
-from . import _base as base
-from typing import Union, List, Collection
-from ..util import _doc_params
 from ..io._legacy import _check_upgrade_schema
+from ..util import _doc_params
+from . import _base as base
 
 
 @_check_upgrade_schema()
@@ -94,10 +95,9 @@ def cdr_convergence(
     # Create text for default labels
     title = "Convergence of CDR3 regions in " + groupby + "s"
     if fraction:
-        xlab = "Fraction of cells in " + fraction_base
+        "Fraction of cells in " + fraction_base
         ylab = "Fraction of cells in " + fraction_base
     else:
-        xlab = "Number of cells"
         ylab = "Number of cells"
 
     # Create a dictionary of plot layouts

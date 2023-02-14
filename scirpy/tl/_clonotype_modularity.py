@@ -4,7 +4,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import numpy as np
 from ..util.graph import _get_igraph_from_adjacency
 from ..util._negative_binomial import fit_nbinom
-from .._compat import Literal
+from typing import Literal
 import scipy.stats
 import scipy.sparse
 from statsmodels.stats.multitest import fdrcorrection

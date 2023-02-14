@@ -1,10 +1,9 @@
-from typing import Sequence, Union
+from typing import Literal, Sequence, Union
 
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 
-from .._compat import Literal
 from ..get import _has_ir
 from ..io._legacy import _check_upgrade_schema
 from ..util import _is_na, _normalize_counts

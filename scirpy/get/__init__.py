@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 
+VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
+CHAIN_TYPE = Literal[Unpack[VALID_CHAINS]]
+
 
 def airr(
     adata: AnnData,

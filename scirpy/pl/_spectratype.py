@@ -1,11 +1,10 @@
-from typing import Callable, List, Sequence, Union
+from typing import Callable, List, Literal, Sequence, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
 
 from .. import tl
-from .._compat import Literal
 from ..io._legacy import _check_upgrade_schema
 from . import base
 from .styling import _get_colors

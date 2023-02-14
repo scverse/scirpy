@@ -1,16 +1,16 @@
 """Compute distances between immune receptor sequences"""
-from anndata import AnnData
-from typing import Optional, Sequence, Union
-from .._compat import Literal
-import numpy as np
-from scanpy import logging
-from ..util import _is_na, deprecated
-from scipy.sparse import csr_matrix
-from ..util import _doc_params
-from . import metrics
-from ..io._legacy import _check_upgrade_schema
-from ..get import airr as get_airr
 import itertools
+from typing import Literal, Optional, Sequence, Union
+
+import numpy as np
+from anndata import AnnData
+from scanpy import logging
+from scipy.sparse import csr_matrix
+
+from ..get import airr as get_airr
+from ..io._legacy import _check_upgrade_schema
+from ..util import _doc_params, _is_na, deprecated
+from . import metrics
 
 
 @deprecated(

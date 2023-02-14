@@ -7,13 +7,17 @@ repos:
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
-          - id: isort
+      - id: isort
   - repo: https://github.com/myint/autoflake
     rev: v1.4
     hooks:
-          - id: autoflake
-            args:
-                - --in-place
-                - --remove-all-unused-imports
-                - --remove-unused-variable
-                - --ignore-init-module-imports
+      - id: autoflake
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+          - --remove-unused-variable
+          - --ignore-init-module-imports
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0 # Use the ref you want to point at
+    hooks:
+      - id: check-merge-conflict

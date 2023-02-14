@@ -5,7 +5,7 @@ import re
 import sys
 from glob import iglob
 from pathlib import Path
-from typing import Collection, List, Optional, Sequence, Union
+from typing import Collection, List, Literal, Optional, Sequence, Union
 
 import airr
 import numpy as np
@@ -13,7 +13,6 @@ import pandas as pd
 from airr import RearrangementSchema
 from anndata import AnnData
 
-from .._compat import Literal
 from ..util import _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells

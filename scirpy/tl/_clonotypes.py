@@ -1,21 +1,20 @@
 import itertools
 import random
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Tuple, Union
 
 import igraph as ig
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 from anndata import AnnData
 from scanpy import logging
-import scipy.sparse as sp
 
-from .._compat import Literal
-from ..pp import ir_dist
+from ..io._legacy import _check_upgrade_schema
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from ..pp import ir_dist
 from ..util import _doc_params
 from ..util.graph import igraph_from_sparse_matrix, layout_components
-from ..io._legacy import _check_upgrade_schema
 
 _common_doc = """\
 receptor_arms

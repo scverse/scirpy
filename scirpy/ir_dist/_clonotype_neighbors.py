@@ -1,6 +1,6 @@
 import itertools
 from multiprocessing import cpu_count
-from typing import Dict, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, Literal, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,6 @@ from anndata import AnnData
 from scanpy import logging
 from tqdm.contrib.concurrent import process_map
 
-from .._compat import Literal
 from ..get import _has_ir
 from ..get import airr as get_airr
 from ..util import tqdm
