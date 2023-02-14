@@ -1,16 +1,15 @@
-import itertools
 from functools import partial
 from types import MappingProxyType
-from typing import Any, List, Mapping, Sequence, cast
+from typing import Any, Dict, List, Mapping, Sequence, cast
 
 import awkward as ak
-import numpy as np
-import pandas as pd
 from anndata import AnnData
 from scanpy import logging
 
 from ..io._datastructures import AirrCell
 from ..util import _is_na2
+
+SCIRPY_DUAL_IR_MODEL = "scirpy_dual_ir_v0.13"
 
 
 def index_chains(
@@ -35,6 +34,8 @@ def index_chains(
 
     based on the expression level of the chains and if they are labelled as "productive" or not.
 
+    TODO #356 link to receptor model
+
     Parameters
     ----------
     adata
@@ -52,13 +53,13 @@ def index_chains(
     airr_key
         Key under which airr information is stored in `adata.obsm`
     key_added
-        Key under which the chain indicies will be stored in `adata.obsm`.
+        Key under which the chain indicies will be stored in `adata.obsm` and metadata will be stored in `adata.uns`.
 
     Returns
     -------
     Nothing, but adds a dataframe to `adata.obsm[chain_indices]`
     """
-    chain_index_df = []
+    chain_index_list = []
     awk_array = cast(ak.Array, adata.obsm[airr_key])
 
     # only warn if those fields are in the key (i.e. this should give a warning if those are missing with
@@ -75,7 +76,7 @@ def index_chains(
         cell_chains = cast(List[ak.Record], cell_chains)
 
         # Split chains into VJ and VDJ chains
-        chain_indices = {"VJ": list(), "VDJ": list()}
+        chain_indices: Dict[str, Any] = {"VJ": list(), "VDJ": list()}
         for i, tmp_chain in enumerate(cell_chains):
             if "locus" not in awk_array.fields:
                 continue
@@ -100,23 +101,26 @@ def index_chains(
                 reverse=True,
             )
 
-        # Generate row in final data frame
-        res_dict = {}
-        for i, junction_type in itertools.product([0, 1], ["VJ", "VDJ"]):
-            res_key = f"{junction_type}_{i+1}"
-            try:
-                res_dict[res_key] = chain_indices[junction_type][i]
-            except IndexError:
-                res_dict[res_key] = np.nan
-        res_dict["multichain"] = (
+        chain_indices["multichain"] = (
             len(chain_indices["VJ"]) > 2 or len(chain_indices["VDJ"]) > 2
         )
+        chain_index_list.append(chain_indices)
 
-        chain_index_df.append(res_dict)
+    chain_index_awk = ak.Array(chain_index_list)
+    for k in ["VJ", "VDJ"]:
+        # ensure the length for VJ and VDJ is exactly 2 (such that it can be sliced later)
+        chain_index_awk[k] = ak.pad_none(chain_index_awk[k], 2, axis=1, clip=True)
 
-    adata.obsm[key_added] = pd.DataFrame.from_records(
-        chain_index_df, index=adata.obs_names
-    )
+    adata.obsm[key_added] = chain_index_awk
+
+    # store metadata in .uns
+    adata.uns[key_added] = {
+        "model": SCIRPY_DUAL_IR_MODEL,  # can be used to distinguish different receptor models that may be added in the future.
+        "productive": productive,
+        "require_junction_aa": require_junction_aa,
+        "airr_key": airr_key,
+        "sort_chains_by": str(sort_chains_by),
+    }
 
 
 def _key_sort_chains(

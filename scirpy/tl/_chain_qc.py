@@ -1,5 +1,6 @@
 from typing import Sequence, Tuple, Union
 
+import awkward as ak
 import numpy as np
 from anndata import AnnData
 from scanpy import logging
@@ -80,7 +81,9 @@ def chain_qc(
     res_receptor_subtype = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
 
     mask_has_ir = get._has_ir(adata, "chain_indices")
-    mask_multichain = mask_has_ir & adata.obsm["chain_indices"]["multichain"].values
+    mask_multichain = mask_has_ir & ak.to_numpy(
+        adata.obsm["chain_indices"]["multichain"]
+    )
 
     vj_loci = get.airr(adata, "locus", ["VJ_1", "VJ_2"]).values
     vdj_loci = get.airr(adata, "locus", ["VDJ_1", "VDJ_2"]).values

@@ -84,8 +84,10 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     chain_idx_list = []
     for has_chain_dict, (_, row) in zip(has_chain, obs.iterrows()):
         tmp_chains = []
-        tmp_chain_idx: dict[str, Any] = {k: None for k in has_chain_dict}
+        tmp_chain_idx: dict[str, Any] = {k: [None, None] for k in ["VJ", "VDJ"]}
         for chain, row_has_chain in has_chain_dict.items():
+            receptor_arm, chain_i = chain.split("_")
+            chain_i = int(chain_i) - 1
             if row_has_chain:
                 tmp_chains.append(
                     {
@@ -93,14 +95,14 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
                         for v in unique_variables
                     }
                 )
-                tmp_chain_idx[chain] = len(tmp_chains) - 1
+                tmp_chain_idx[receptor_arm][chain_i] = len(tmp_chains) - 1
         tmp_chain_idx["multichain"] = row.get("_multi_chain", False)
 
         cell_list.append(tmp_chains)
         chain_idx_list.append(tmp_chain_idx)
 
     airr_data = ak.Array(_make_airr_chains_valid(cell_list))
-    chain_indices = pd.DataFrame.from_records(chain_idx_list, index=obs.index)
+    chain_indices = ak.Array(chain_idx_list)
 
     adata = AnnData(
         X=None,

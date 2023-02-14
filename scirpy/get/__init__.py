@@ -1,5 +1,6 @@
 import itertools
 from contextlib import contextmanager
+from enum import Enum, auto
 from typing import Literal, Sequence, Union, cast
 
 import awkward as ak
@@ -7,17 +8,14 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 
-VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
-CHAIN_TYPE = Literal[Unpack[VALID_CHAINS]]
+_VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
+ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 
 
 def airr(
     adata: AnnData,
     airr_variable: Union[str, Sequence[str]],
-    chain: Union[
-        Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"],
-        Sequence[Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]],
-    ],
+    chain: Union[ChainType, Sequence[ChainType]],
     *,
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
@@ -48,7 +46,7 @@ def airr(
     multiple_chains = not isinstance(chain, str)
 
     airr_data = cast(ak.Array, adata.obsm[airr_key])
-    chain_indices = cast(pd.DataFrame, adata.obsm[chain_idx_key])
+    chain_indices = cast(ak.Array, adata.obsm[chain_idx_key])
 
     if multiple_vars or multiple_chains:
         if not multiple_vars:
@@ -73,30 +71,34 @@ def airr(
 
 def _airr_col(
     airr_data: ak.Array,
-    chain_indices: pd.DataFrame,
+    chain_indices: ak.Array,
     airr_variable: str,
-    chain: str,
+    chain: ChainType,
 ) -> np.ndarray:
     """called by `airr()` to retrieve a single column"""
     chain = chain.upper()
-    if chain not in chain_indices.columns:
+    if chain not in _VALID_CHAINS:
         raise ValueError(
-            f"Invalid value for chain. Valid values are {', '.join(chain_indices.columns)}"
+            f"Invalid value for chain. Valid values are {', '.join(_VALID_CHAINS)}"
         )
 
-    idx = chain_indices[chain]
-    mask = ~pd.isnull(idx)
+    # split VJ_1 into ("VJ", 0)
+    receptor_arm, chain_i = chain.split("_")
+    chain_i = int(chain_i) - 1
 
-    # TODO #356 ensure that this doesn't get converted to something not supporting missing values
-    # when saving anndata
-    result = np.full(idx.shape, fill_value=None, dtype=object)
+    # require -1 instead of None for indexing
+    idx = ak.fill_none(chain_indices[:, receptor_arm, chain_i], -1)
+
+    # first, select the variable and pad it with None, such that we can index
+    # we need to pad with the maximum value from idx, but at least 1
+    padded = ak.pad_none(airr_data[:, airr_variable], max(np.max(idx), 1))
 
     # to_numpy would be faster, but it doesn't work with strings (as this would create an object dtype
     # which is not allowed as per the awkward documentation)
     # Currently the performance hit doesn't seem to be a deal breaker, can maybe revisit this in the future.
     # It is anyway not very efficient to create a result array with an object dtype.
-    _ak_slice = airr_data[np.where(mask)[0], airr_variable, idx[mask].astype(int)]
-    result[mask] = ak.to_list(_ak_slice)
+    result = np.array(ak.to_list(padded[np.arange(len(idx)), idx]), dtype=object)
+
     return result
 
 
@@ -123,10 +125,7 @@ def _obs_context(adata, **kwargs):
 
 def _has_ir(adata, chain_idx_key="chain_indices"):
     """Return a mask of all cells that have a valid IR configuration"""
-    return ~(
-        adata.obsm[chain_idx_key]
-        .drop(columns=["multichain"])
-        .isnull()
-        .all(axis=1)
-        .values
+    chain_idx = adata.obsm[chain_idx_key]
+    return ak.to_numpy(
+        (ak.sum(chain_idx["VJ"], axis=1) + ak.sum(chain_idx["VDJ"], axis=1)) > 0
     )
