@@ -28,7 +28,7 @@ from ._util import (
     _check_upgrade_schema,
     _read_airr_rearrangement_df,
 )
-from .._compat import Literal
+from typing import Literal
 from airr import RearrangementSchema
 import itertools
 import re

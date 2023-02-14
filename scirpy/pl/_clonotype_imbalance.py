@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 import scanpy as sc
 from typing import Union
-from .._compat import Literal
+from typing import Literal
 from .. import tl
 from .base import volcano
 from ..io._util import _check_upgrade_schema

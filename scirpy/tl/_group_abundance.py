@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from ..util import _is_na, _normalize_counts
 from typing import Sequence
-from .._compat import Literal
+from typing import Literal
 from ..io._util import _check_upgrade_schema
 
 

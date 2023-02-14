@@ -1,7 +1,7 @@
 """Compute distances between immune receptor sequences"""
 from anndata import AnnData
 from typing import Optional, Sequence, Union
-from .._compat import Literal
+from typing import Literal
 import numpy as np
 from scanpy import logging
 from ..util import _is_na, deprecated

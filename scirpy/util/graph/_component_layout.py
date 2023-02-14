@@ -1,7 +1,7 @@
 from typing import Optional
 import igraph as ig
 import numpy as np
-from ..._compat import Literal
+from typing import Literal
 from ._fr_size_aware_layout import layout_fr_size_aware
 
 

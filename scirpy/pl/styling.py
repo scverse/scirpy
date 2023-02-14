@@ -1,4 +1,4 @@
-from .._compat import Literal
+from typing import Literal
 import matplotlib.pyplot as plt
 from typing import Union, Sequence, Dict
 from scanpy.plotting._utils import (
