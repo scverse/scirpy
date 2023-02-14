@@ -1,9 +1,9 @@
 from packaging import version
 
 try:
-    pass
+    from typing import Unpack
 except ImportError:
-    pass
+    from typing_extensions import Unpack
 
 
 def pkg_metadata(package):
@@ -16,3 +16,6 @@ def pkg_version(package):
     from importlib.metadata import version as v
 
     return version.parse(v(package))
+
+
+__all__ = ["Unpack", "pkg_metadata", "pkg_version"]
