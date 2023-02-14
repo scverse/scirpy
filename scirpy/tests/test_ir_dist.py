@@ -428,7 +428,9 @@ def test_compute_distances_2(
 def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are no IR."""
     # reset chain indices such that they point to no chains whatsoever.
-    adata_cdr3.obsm["chain_indices"][:] = None
+    adata_cdr3.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_cdr3.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_cdr3.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
 
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
@@ -559,7 +561,9 @@ def test_compute_distances_second_anndata(
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
     adata_empty = adata_cdr3.copy()
     # reset chain indices such that no chain will actually be used.
-    adata_empty.obsm["chain_indices"][:] = None
+    adata_cdr3.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_cdr3.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_cdr3.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
 
     ir.pp.ir_dist(
         adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"

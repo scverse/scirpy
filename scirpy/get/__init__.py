@@ -86,19 +86,19 @@ def _airr_col(
     receptor_arm, chain_i = chain.split("_")
     chain_i = int(chain_i) - 1
 
-    # require -1 instead of None for indexing
-    idx = ak.fill_none(chain_indices[:, receptor_arm, chain_i], -1)
+    idx = chain_indices[:, receptor_arm, chain_i]
+    mask = ~ak.to_numpy(ak.is_none(idx))
 
-    # first, select the variable and pad it with None, such that we can index
-    # we need to pad with the maximum value from idx, but at least 1
-    padded = ak.pad_none(airr_data[:, airr_variable], max(np.max(idx), 1))
+    result = np.full((len(idx),), fill_value=None, dtype=object)
 
     # to_numpy would be faster, but it doesn't work with strings (as this would create an object dtype
     # which is not allowed as per the awkward documentation)
     # Currently the performance hit doesn't seem to be a deal breaker, can maybe revisit this in the future.
     # It is anyway not very efficient to create a result array with an object dtype.
-    result = np.array(ak.to_list(padded[np.arange(len(idx)), idx]), dtype=object)
-
+    _ak_slice = airr_data[
+        np.where(mask)[0], airr_variable, ak.to_numpy(idx[mask], allow_missing=False)
+    ]
+    result[mask] = ak.to_list(_ak_slice)
     return result
 
 
@@ -127,5 +127,5 @@ def _has_ir(adata, chain_idx_key="chain_indices"):
     """Return a mask of all cells that have a valid IR configuration"""
     chain_idx = adata.obsm[chain_idx_key]
     return ak.to_numpy(
-        (ak.sum(chain_idx["VJ"], axis=1) + ak.sum(chain_idx["VDJ"], axis=1)) > 0
+        (ak.count(chain_idx["VJ"], axis=1) + ak.count(chain_idx["VDJ"], axis=1)) > 0
     )
