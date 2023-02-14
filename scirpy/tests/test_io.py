@@ -298,22 +298,23 @@ def test_convert_dandelion(anndata_from_10x_sample):
 
     assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
 
-    # TODO this comparison is overly complicated now that we have the new data structure
-    # Frame-level comparison is not possible as the "extra chains" field is different
-    # due to 'sequence_id' being different.
     for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2):
         assert len(ir_obj1.chains) == len(ir_obj2.chains)
-        chains1 = sorted(ir_obj1.chains, key=AirrCell._key_sort_chains)
-        chains2 = sorted(ir_obj2.chains, key=AirrCell._key_sort_chains)
+
+        def _key(chain):
+            v1, v2 = chain.get("duplicate_count", -1), chain.get("junction", "")
+            v1 = -1 if v1 is None else v1
+            v2 = "" if v2 is None else v2
+            return (v1, v2)
+
+        chains1 = sorted(ir_obj1.chains, key=_key)
+        chains2 = sorted(ir_obj2.chains, key=_key)
 
         for tmp_chain1, tmp_chain2 in zip(chains1, chains2):
             # this field is expected to be different
             del tmp_chain1["sequence_id"]
             del tmp_chain2["sequence_id"]
-
-            # remove extra cdr3 and cdr3_aa if exist
-            _ = tmp_chain1.pop("cdr3", "Not exists")
-            _ = tmp_chain1.pop("cdr3_aa", "Not exists")
+            del tmp_chain2["rearrangement_status"]
 
             assert tmp_chain1 == tmp_chain2
 
