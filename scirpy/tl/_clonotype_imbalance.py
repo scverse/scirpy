@@ -114,12 +114,8 @@ def clonotype_imbalance(
     for hue, cases, controls, ncase, ncontrol in case_control_groups:
         if hue is None:
             hue = "All"
-        tdf1 = clonotype_presence.loc[
-            cases,
-        ]
-        tdf2 = clonotype_presence.loc[
-            controls,
-        ]
+        tdf1 = clonotype_presence.loc[cases,]
+        tdf2 = clonotype_presence.loc[controls,]
         suspects = set(
             tdf1.loc[:, tdf1.sum() > 0].columns.values.tolist()
             + tdf2.loc[:, tdf2.sum() > 0].columns.values.tolist()
@@ -156,7 +152,6 @@ def clonotype_imbalance(
     clt_stats = clt_stats.sort_values(by="pValue")
 
     if inplace:
-
         # Store calculated data
         adata.uns[key_added] = {"abundance": clt_freq, "pvalues": clt_stats}
         return

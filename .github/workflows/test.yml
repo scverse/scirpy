@@ -61,9 +61,6 @@ jobs:
         run: |
           pip install .[test]
 
-      - name: Check black formatting
-        run: |
-          black --check .
       - name: Test with pytest (Linux)
         if: matrix.config.os == 'ubuntu-latest'
         run: pytest

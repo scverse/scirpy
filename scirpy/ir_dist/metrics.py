@@ -384,7 +384,6 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
 
         result = []
         for (row, s1), (col, s2) in coord_iterator:
-
             # require identical length of sequences
             if len(s1) != len(s2):
                 continue

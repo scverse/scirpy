@@ -45,7 +45,6 @@ class Cell(object):
         receptor=None,
         loci=None,
     ):
-
         self.name = cell_name
         self.bgcolor = None
         self.recombinants = self._process_recombinants(recombinants, receptor, loci)
@@ -170,7 +169,6 @@ class Cell(object):
         # return(self.name)
 
     def html_style_label_for_circles(self, receptor, loci, colours):
-
         # colours = {'A': {'productive': '#E41A1C', 'non-productive': "#ff8c8e"},
         #           'B': {'productive': '#377eb8', 'non-productive': "#95c1e5"},
         #           'G': {'productive': '#4daf4a', 'non-productive': "#aee5ac"},
