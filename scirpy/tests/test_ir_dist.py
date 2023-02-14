@@ -561,9 +561,9 @@ def test_compute_distances_second_anndata(
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
     adata_empty = adata_cdr3.copy()
     # reset chain indices such that no chain will actually be used.
-    adata_cdr3.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
-    adata_cdr3.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
-    adata_cdr3.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
+    adata_empty.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_empty.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_empty.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
 
     ir.pp.ir_dist(
         adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"

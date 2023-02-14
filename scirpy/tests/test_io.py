@@ -954,9 +954,7 @@ def test_read_bd_per_cell_chain():
     assert cell1["VJ_1_c_call"] == "TRAC"
 
     # cell25 has no productive chains
-    assert np.all(
-        adata.obsm["chain_indices"].drop(columns=["multichain"]).loc["25", :].isnull()
-    )
+    assert ir.get._has_ir(adata["25", :])[0].item() is False
     assert _is_na(cell25["VJ_1_locus"])
 
     assert cell39["VJ_1_locus"] == "TRG"
