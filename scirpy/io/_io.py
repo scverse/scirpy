@@ -5,7 +5,7 @@ import re
 import sys
 from glob import iglob
 from pathlib import Path
-from typing import Collection, List, Literal, Optional, Sequence, Union
+from typing import Any, Collection, Dict, Iterable, List, Literal, Sequence, Union
 
 import airr
 import numpy as np
@@ -24,19 +24,6 @@ from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = _tracerlib
 
-DEFAULT_AIRR_FIELDS = (
-    "productive",
-    "locus",
-    "v_call",
-    "d_call",
-    "j_call",
-    "c_call",
-    "junction",
-    "junction_aa",
-    "consensus_count",
-    "duplicate_count",
-)
-DEFAULT_10X_FIELDS = DEFAULT_AIRR_FIELDS + ("is_cell", "high_confidence")
 DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence")
 
 
@@ -66,14 +53,13 @@ def _cdr3_from_junction(junction_aa, junction_nt):
 def _read_10x_vdj_json(
     path: Union[str, Path],
     filtered: bool = True,
-    include_fields: Optional[Collection[str]] = None,
-) -> AnnData:
+) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
     logger = _IOLogger()
     with open(path, "r") as f:
         cells = json.load(f)
 
-    airr_cells = {}
+    airr_cells: Dict[str, AirrCell] = {}
     for cell in cells:
         if filtered and not (cell["is_cell"] and cell["high_confidence"]):
             continue
@@ -171,14 +157,13 @@ def _read_10x_vdj_json(
 
         ir_obj.add_chain(chain)
 
-    return from_airr_cells(airr_cells.values())
+    return airr_cells.values()
 
 
 def _read_10x_vdj_csv(
     path: Union[str, Path],
     filtered: bool = True,
-    include_fields: Optional[Collection[str]] = None,
-) -> AnnData:
+) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `_contig_annotations.csv` file"""
     logger = _IOLogger()
     df = pd.read_csv(path)
@@ -225,14 +210,12 @@ def _read_10x_vdj_csv(
 
         airr_cells[barcode] = ir_obj
 
-    return from_airr_cells(airr_cells.values())
+    return airr_cells.values()
 
 
-@_doc_params(doc_working_model=doc_working_model, include_fields=DEFAULT_10X_FIELDS)
+@_doc_params(doc_working_model=doc_working_model)
 def read_10x_vdj(
-    path: Union[str, Path],
-    filtered: bool = True,
-    include_fields: Optional[Collection[str]] = DEFAULT_10X_FIELDS,
+    path: Union[str, Path], filtered: bool = True, include_fields: Any = None, **kwargs
 ) -> AnnData:
     """\
     Read :term:`IR` data from 10x Genomics cell-ranger output.
@@ -256,12 +239,9 @@ def read_10x_vdj(
         If using `filtered_contig_annotations.csv` already, this option
         is futile.
     include_fields
-        The fields to include in `adata`. The AIRR rearrangment schema contains
-        can contain a lot of columns, most of which irrelevant for most analyses.
-        Per default, this includes a subset of columns relevant for a typical
-        scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
-        Set this to `None` to include all columns.
-
+        Deprecated. Does not have any effect as of v0.13. 
+    **kwargs
+        are passed to :func:`~scirpy.io.from_airr_cells`. 
 
     Returns
     -------
@@ -270,13 +250,15 @@ def read_10x_vdj(
     """
     path = Path(path)
     if path.suffix == ".json":
-        return _read_10x_vdj_json(path, filtered, include_fields)
+        airr_cells = _read_10x_vdj_json(path, filtered)
     else:
-        return _read_10x_vdj_csv(path, filtered, include_fields)
+        airr_cells = _read_10x_vdj_csv(path, filtered)
+
+    return from_airr_cells(airr_cells, **kwargs)
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_tracer(path: Union[str, Path]) -> AnnData:
+def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
     """\
     Read data from `TraCeR <https://github.com/Teichlab/tracer>`_ (:cite:`Stubbington2016-kh`).
 
@@ -293,6 +275,8 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
     ----------
     path
         Path to the TraCeR output folder.
+    **kwargs
+        are passed to :func:`~scirpy.io.from_airr_cells`. 
 
     Returns
     -------
@@ -392,7 +376,6 @@ def read_tracer(path: Union[str, Path]) -> AnnData:
 @_doc_params(
     doc_working_model=doc_working_model,
     cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
-    include_fields=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_FIELDS])})`""",
 )
 def read_airr(
     path: Union[
@@ -401,7 +384,8 @@ def read_airr(
     use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
-    include_fields: Optional[Collection[str]] = DEFAULT_AIRR_FIELDS,
+    include_fields: Any = None,
+    **kwargs,
 ) -> AnnData:
     """\
     Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
@@ -439,11 +423,9 @@ def read_airr(
         than a chain. The values must be identical over all records belonging to a
         cell. This defaults to {cell_attributes}.
     include_fields
-        The fields to include in `adata`. The AIRR rearrangment schema contains
-        can contain a lot of columns, most of which irrelevant for most analyses.
-        Per default, this includes a subset of columns relevant for a typical
-        scirpy analysis, to keep `adata.obs` a bit cleaner. Defaults to {include_fields}.
-        Set this to `None` to include all columns.
+        Deprecated. Does not have any effect as of v0.13. 
+    **kwargs
+        are passed to :func:`~scirpy.io.from_airr_cells`. 
 
     Returns
     -------
@@ -504,7 +486,7 @@ def read_airr(
 
             tmp_cell.add_chain(chain_dict)
 
-    return from_airr_cells(airr_cells.values())
+    return from_airr_cells(airr_cells.values(), **kwargs)
 
 
 def _infer_locus_from_gene_names(
@@ -548,7 +530,7 @@ def _infer_locus_from_gene_names(
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_bracer(path: Union[str, Path]) -> AnnData:
+def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     """\
     Read data from `BraCeR <https://github.com/Teichlab/bracer>`_ (:cite:`Lindeman2018`).
 
@@ -561,6 +543,8 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
     ----------
     path
         Path to the `changeodb.tab` file.
+    **kwargs
+        are passed to :func:`~scirpy.io.from_airr_cells`.  
 
     Returns
     -------
@@ -628,7 +612,7 @@ def read_bracer(path: Union[str, Path]) -> AnnData:
 
         tmp_ir_cell.add_chain(chain_dict)
 
-    return from_airr_cells(bcr_cells.values())
+    return from_airr_cells(bcr_cells.values(), **kwargs)
 
 
 @_check_upgrade_schema()
@@ -739,7 +723,7 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
+def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
     """\
     Read :term:`IR` data from the BD Rhapsody Analysis Pipeline.
 
@@ -761,6 +745,8 @@ def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
     ----------
     path:
         Path to the `perCellChain` or `Contigs` file generated by the BD Rhapsody analysis pipeline. May be gzipped.
+    **kwargs
+        are passed to :func:`~scirpy.io.from_airr_cells`. 
 
     Returns
     -------
@@ -811,4 +797,4 @@ def read_bd_rhapsody(path: Union[str, Path], dominant=False) -> AnnData:
         )
         tmp_cell.add_chain(tmp_chain)
 
-    return from_airr_cells(airr_cells.values())
+    return from_airr_cells(airr_cells.values(), **kwargs)

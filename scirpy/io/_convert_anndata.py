@@ -12,7 +12,6 @@ from ._legacy import _check_upgrade_schema
 from ._util import _IOLogger, doc_working_model
 
 
-# TODO #356: index_chains flag for backwards compatibility that is true by default
 @_doc_params(doc_working_model=doc_working_model)
 def from_airr_cells(airr_cells: Iterable[AirrCell], index_chains=True) -> AnnData:
     """\
