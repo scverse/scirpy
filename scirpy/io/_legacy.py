@@ -138,6 +138,8 @@ def _obs_schema_to_airr_cells(adata: AnnData) -> List[AirrCell]:
             chains[(junction_type, chain_id)][key] = row[tmp_col]
 
         for tmp_chain in chains.values():
+            # in the old schema, these chains are productive by definition
+            tmp_chain["productive"] = True
             # Don't add empty chains!
             if not all([_is_na2(x) for x in tmp_chain.values()]):
                 tmp_ir_cell.add_chain(tmp_chain)

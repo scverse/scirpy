@@ -89,6 +89,8 @@ class ClonotypeNeighbors:
 
         # Converting nans to str("nan"), as we want string dtype
         for col in obs.columns:
+            if obs[col].dtype == "category":
+                obs[col] = obs[col].astype(str)
             obs.loc[pd.isnull(obs[col]), col] = "nan"  # type: ignore
             obs[col] = obs[col].astype(str)  # type: ignore
 
