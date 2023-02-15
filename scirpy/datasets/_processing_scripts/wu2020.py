@@ -1,15 +1,18 @@
 # %load_ext autoreload
 # %autoreload 2
-import scanpy as sc
 import sys
 
+import scanpy as sc
+
 sys.path.insert(0, "../../..")
-import scirpy as ir
-from multiprocessing import Pool
 import os
-import pandas as pd
 from glob import glob
+from multiprocessing import Pool
+
 import numpy as np
+import pandas as pd
+
+import scirpy as ir
 
 # + language="bash"
 # mkdir -p data
@@ -70,9 +73,11 @@ def _load_adata(path):
     adata.obs = adata.obs.join(obs, how="inner")
     assert adata.shape[0] == umap_coords.shape[0]
     adata.obsm["X_umap_orig"] = umap_coords
-    ir.pp.merge_with_ir(adata, adata_tcr)
-    return adata
+    # ir.pp.merge_with_ir(adata, adata_tcr)
+    return adata, adata_tcr
 
+
+adata, adata_tcr = _load_adata(mtx_paths[0])
 
 p = Pool()
 adatas = p.map(_load_adata, mtx_paths)

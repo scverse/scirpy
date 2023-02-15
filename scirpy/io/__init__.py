@@ -5,7 +5,6 @@ from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
 from ._io import (
     DEFAULT_AIRR_CELL_ATTRIBUTES,
-    DEFAULT_AIRR_FIELDS,
     from_dandelion,
     read_10x_vdj,
     read_airr,
