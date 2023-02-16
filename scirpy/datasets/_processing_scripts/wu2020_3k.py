@@ -1,10 +1,17 @@
-import scanpy as sc
+import muon as mu
 import pandas as pd
 
 # Use this list of 3k barcodes for consistency with previous versions
 barcodes = pd.read_csv("./3k_barcodes.csv", header=None)[0].values
 
-adata = sc.read_h5ad("wu2020.h5ad")
-adata = adata[barcodes, :].copy()
+barcodes = pd.Series(barcodes).str.replace("-\d+$", "", regex=True).values
 
-adata.write_h5ad("wu2020_3k.h5ad", compression="lzf")
+mdata = mu.read_h5mu("wu2020.h5mu")
+
+assert mdata.obs_names.is_unique
+
+mdata = mdata[barcodes, :].copy()
+
+mdata
+
+mdata.write_h5mu("wu2020_3k.h5mu", compression="lzf")

@@ -1,16 +1,20 @@
+# +
 # %load_ext autoreload
 # %autoreload 2
 import sys
 
 import scanpy as sc
 
+# +
 sys.path.insert(0, "../../..")
 import os
 from glob import glob
 from multiprocessing import Pool
 
+import anndata
 import numpy as np
 import pandas as pd
+from mudata import MuData
 
 import scirpy as ir
 
@@ -68,32 +72,45 @@ def _load_adata(path):
     adata_tcr.obs_names = [
         "{}_{}".format(sample_id, barcode) for barcode in adata_tcr.obs_names
     ]
-    # subset to T cells only
+    # subset to cells with annotated metadata only
     adata = adata[obs.index, :].copy()
-    adata.obs = adata.obs.join(obs, how="inner")
+    # all metadata except clonotyp_orig in GEX modality
+    adata.obs = adata.obs.join(obs.drop(columns=["clonotype_orig"]), how="inner")
     assert adata.shape[0] == umap_coords.shape[0]
     adata.obsm["X_umap_orig"] = umap_coords
-    # ir.pp.merge_with_ir(adata, adata_tcr)
+    # TODO #356: workaround for https://github.com/scverse/muon/issues/93
+    adata_tcr.X = np.ones((adata_tcr.shape[0], 0))
+    # clonotype orig column in TCR modality
+    adata_tcr.obs = adata_tcr.obs.join(
+        obs.loc[:, ["clonotype_orig"]], how="left", validate="one_to_one"
+    )
     return adata, adata_tcr
 
-
-adata, adata_tcr = _load_adata(mtx_paths[0])
 
 p = Pool()
 adatas = p.map(_load_adata, mtx_paths)
 p.close()
 
-adata = adatas[0].concatenate(adatas[1:])
+adatas, adatas_airr = zip(*adatas)
+
+adata = anndata.concat(adatas)
+
+# work around https://github.com/scikit-hep/awkward/issues/2239
+from functools import reduce
+
+adata_airr = reduce(lambda a, b: anndata.concat([a, b], join="outer"), adatas_airr)
 
 # inverse umap X -coordinate
 adata.obsm["X_umap_orig"][:, 0] = (
     np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 )
 
-np.sum(adata.obs["has_ir"] == "True")
+mdata = MuData({"gex": adata, "airr": adata_airr})
 
-adata.write_h5ad("wu2020.h5ad", compression="lzf")
+mdata
 
 adata.obs
+
+adata_airr.obs
 
 sc.pl.embedding(adata, "umap_orig", color="cluster_orig", legend_loc="on data")
