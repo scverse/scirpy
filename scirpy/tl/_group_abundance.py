@@ -113,10 +113,9 @@ def group_abundance(
             has_ir=_has_ir(adata, "chain_indices").astype(str)
         )
 
-    if target_col not in adata.obs.columns:
+    print(ir_obs.columns)
+    if target_col not in ir_obs.columns:
         raise ValueError("`target_col` not found in obs`")
-
-    ir_obs = adata.obs
 
     return _group_abundance(
         ir_obs, groupby, target_col=target_col, fraction=fraction, sort=sort

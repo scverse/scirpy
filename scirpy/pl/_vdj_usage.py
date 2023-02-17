@@ -1,14 +1,15 @@
-from anndata import AnnData
-import matplotlib.pyplot as plt
-from typing import Callable, Union, Tuple, Sequence
-import numpy as np
-from ..util import _normalize_counts, _is_na
-from .styling import _init_ax
-from ..io import AirrCell
-from itertools import islice
 from copy import deepcopy
-from ..io._legacy import _check_upgrade_schema
+from typing import Callable, Sequence, Tuple, Union
+
+import matplotlib.pyplot as plt
+import numpy as np
+from anndata import AnnData
+
 from ..get import airr as get_airr
+from ..io import AirrCell
+from ..io._legacy import _check_upgrade_schema
+from ..util import _is_na, _normalize_counts
+from .styling import _init_ax
 
 
 def _sanitize_gene_name(gene_text):
@@ -99,6 +100,9 @@ def vdj_usage(
         if isinstance(normalize_to, (bool, str))
         else normalize_to
     )
+    for col in df.columns:
+        if col.startswith("VJ") or col.startswith("VDJ"):
+            df[col] = df[col].astype(str)
 
     # Init figure
     default_figargs = {"figsize": (7, 4)}

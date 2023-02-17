@@ -72,10 +72,12 @@ def group_abundance(
     if max_cols is not None and max_cols > 0:
         abundance = abundance.iloc[:max_cols, :]
 
-    if "color" not in kwargs:
-        colors = _get_colors(adata, target_col)
-        if colors is not None:
-            kwargs["color"] = [colors[cat] for cat in abundance.columns]
+    # TODO workaround for temporarily added has_ir column. Don't get colors in that case
+    if target_col != "has_ir":
+        if "color" not in kwargs:
+            colors = _get_colors(adata, target_col)
+            if colors is not None:
+                kwargs["color"] = [colors[cat] for cat in abundance.columns]
 
     # Create text for default labels
     if normalize:
