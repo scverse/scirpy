@@ -1,18 +1,16 @@
-import pandas as pd
-import numpy as np
+import warnings
 from textwrap import dedent
 from typing import Union
-from scipy.sparse import issparse
-import scipy.sparse
-import warnings
-from numba import jit
 
-# Determine the right tqdm version, see https://github.com/tqdm/tqdm/issues/1082
-try:
-    import ipywidgets  # type: ignore # NOQA
-    from tqdm.auto import tqdm
-except ModuleNotFoundError:
-    from tqdm import tqdm  # NOQA
+import numpy as np
+import pandas as pd
+import scipy.sparse
+from numba import jit
+from scipy.sparse import issparse
+from tqdm.auto import tqdm
+
+# reexport tqdm (here was previously a workaround for https://github.com/tqdm/tqdm/issues/1082)
+__all__ = ["tqdm"]
 
 
 def _allclose_sparse(A, B, atol=1e-8):
