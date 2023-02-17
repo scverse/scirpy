@@ -105,7 +105,9 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
     chain_indices = ak.Array(chain_idx_list)
     for k in ["VJ", "VDJ"]:
         # ensure chain indices are alwasy int (even when all values are None)
-        chain_indices[k] = ak.values_astype(chain_indices[k], int)
+        chain_indices[k] = ak.values_astype(
+            chain_indices[k], int, including_unknown=True
+        )
 
     adata = AnnData(
         X=None,
