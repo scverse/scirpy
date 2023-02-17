@@ -1,20 +1,22 @@
 # pylama:ignore=W0611,W0404
-import pandas as pd
-import numpy.testing as npt
-import pandas.testing as pdt
-import scirpy as ir
+import sys
+
 import numpy as np
-from scirpy.util import _is_symmetric
-from .fixtures import (
+import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
+import pytest
+
+import scirpy as ir
+
+from .fixtures import (  # NOQA
+    adata_clonotype,
+    adata_clonotype_network,
+    adata_conn,
+    adata_define_clonotype_clusters,
     adata_define_clonotype_clusters_singletons,
     adata_define_clonotypes,
-    adata_define_clonotype_clusters,
-    adata_clonotype_network,
-    adata_clonotype,
-    adata_conn,
-)  # NOQA
-import pytest
-import sys
+)
 
 
 @pytest.mark.parametrize("key_added", [None, "my_key"])
@@ -98,48 +100,48 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
             "all",
             False,
             None,
-            [0, 0, 1, 2, 3, np.nan, 4, 5, 6, 7, 8],
-            [2, 2, 1, 1, 1, np.nan, 1, 1, 1, 1, 1],
+            [0, 0, 1, 2, 3, np.nan, 4, 5, 6, 7, np.nan],
+            [2, 2, 1, 1, 1, np.nan, 1, 1, 1, 1, np.nan],
         ),
         (
             "any",
             "any",
             False,
             None,
-            [0, 0, 0, 0, 0, np.nan, 0, 0, 0, 0, 1],
-            [9, 9, 9, 9, 9, np.nan, 9, 9, 9, 9, 1],
+            [0, 0, 0, 0, 0, np.nan, 0, 0, 0, 0, np.nan],
+            [9, 9, 9, 9, 9, np.nan, 9, 9, 9, 9, np.nan],
         ),
         (
             "all",
             "any",
             False,
             None,
-            [0, 0, 0, 0, 0, np.nan, 0, 1, 0, 2, 3],
-            [7, 7, 7, 7, 7, np.nan, 7, 1, 7, 1, 1],
+            [0, 0, 0, 0, 0, np.nan, 0, 1, 0, 2, np.nan],
+            [7, 7, 7, 7, 7, np.nan, 7, 1, 7, 1, np.nan],
         ),
         (
             "any",
             "all",
             False,
             None,
-            [0, 0, 0, 0, 0, np.nan, 0, 0, 0, 0, 1],
-            [9, 9, 9, 9, 9, np.nan, 9, 9, 9, 9, 1],
+            [0, 0, 0, 0, 0, np.nan, 0, 0, 0, 0, np.nan],
+            [9, 9, 9, 9, 9, np.nan, 9, 9, 9, 9, np.nan],
         ),
         (
             "all",
             "primary_only",
             False,
             None,
-            [0, 0, 1, 2, 0, np.nan, 0, 3, 4, 5, 6],
-            [4, 4, 1, 1, 4, np.nan, 4, 1, 1, 1, 1],
+            [0, 0, 1, 2, 0, np.nan, 0, 3, 4, 5, np.nan],
+            [4, 4, 1, 1, 4, np.nan, 4, 1, 1, 1, np.nan],
         ),
         (
             "VDJ",
             "primary_only",
             False,
             None,
-            [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 3, 4],
-            [5, 5, 5, 1, 5, np.nan, 5, 1, 2, 2, 1],
+            [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 3, np.nan],
+            [5, 5, 5, 1, 5, np.nan, 5, 1, 2, 2, np.nan],
         ),
         # by receptor type
         (
@@ -147,8 +149,8 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
             "any",
             False,
             "receptor_type",
-            [0, 0, 0, 1, 1, np.nan, 0, 0, 0, 1, 2],
-            [6, 6, 6, 3, 3, np.nan, 6, 6, 6, 3, 1],
+            [0, 0, 0, 1, 1, np.nan, 0, 0, 0, 1, np.nan],
+            [6, 6, 6, 3, 3, np.nan, 6, 6, 6, 3, np.nan],
         ),
         # different combinations with same_v_gene
         (
@@ -229,17 +231,17 @@ def test_clonotype_clusters_end_to_end(
             "components",
             True,
             [
-                [1.000000, 74.221194],
-                [1.000000, 74.221194],
-                [56.000000, 62.678581],
-                [65.742159, 53.500000],
-                [96.000000, 32.184790],
+                [1.0, 76.29518321],
+                [1.0, 76.29518321],
+                [62.66666667, 63.91071673],
+                [72.8511768, 62.66666667],
+                [96.0, 46.84496659],
                 [np.nan, np.nan],
-                [6.536803, 76.000000],
-                [50.707573, 30.929090],
-                [15.000248, 21.000000],
-                [61.000000, 18.500000],
-                [68.500000, 76.000000],
+                [3.6992887, 79.33333333],
+                [56.69600481, 28.51130046],
+                [16.75280038, 17.66666667],
+                [67.66666667, 34.33333333],
+                [np.nan, np.nan],
             ],
         ],
         [
@@ -284,20 +286,19 @@ def test_clonotype_network_igraph(adata_clonotype_network):
     g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
     print(lo.coords)
     print(g.vcount())
-    assert g.vcount() == 9
+    assert g.vcount() == 8
     npt.assert_almost_equal(
         np.array(lo.coords),
         np.array(
             [
-                [1.0, 1.7788058303717946],
-                [56.0, 13.321418780908509],
-                [6.5368033569434605, 0.0],
-                [50.70757322464207, 45.07090964878337],
-                [15.00024843741323, 55.0],
-                [65.74215886730616, 22.5],
-                [96.0, 43.81520950588598],
-                [61.0, 57.5],
-                [68.5, 0.0],
+                [1.0, 3.0381501206112773],
+                [62.66666666666667, 15.422616607972202],
+                [3.699288696489563, 0.0],
+                [56.696004811098774, 50.82203287163998],
+                [16.75280038357383, 61.66666666666668],
+                [72.85117680388525, 16.66666666666667],
+                [96.0, 32.48836674202366],
+                [67.66666666666667, 45.0],
             ]
         ),
     )

@@ -82,10 +82,14 @@ class ClonotypeNeighbors:
         ]
 
         obs = get_airr(adata, airr_variables, chains)
+        # remove entries without receptor (e.g. only non-productive chains) or no sequences
+        obs = obs.loc[
+            _has_ir(adata, "chain_indices") & np.any(~pd.isnull(obs), axis=1), :
+        ]
         if self.match_columns is not None:
-            obs = obs.join(adata.obs.loc[:, self.match_columns], validate="one_to_one")
-        # remove entries without receptor (e.g. only non-productive chains)
-        obs = obs.loc[_has_ir(adata, "chain_indices"), :]
+            obs = obs.join(
+                adata.obs.loc[:, self.match_columns], validate="one_to_one", how="inner"
+            )
 
         # Converting nans to str("nan"), as we want string dtype
         for col in obs.columns:
