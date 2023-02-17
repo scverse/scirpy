@@ -109,7 +109,10 @@ def index_chains(
     chain_index_awk = ak.Array(chain_index_list)
     for k in ["VJ", "VDJ"]:
         # ensure the length for VJ and VDJ is exactly 2 (such that it can be sliced later)
-        chain_index_awk[k] = ak.pad_none(chain_index_awk[k], 2, axis=1, clip=True)
+        # and ensure that the type is always ?int (important if all values are None)
+        chain_index_awk[k] = ak.values_astype(
+            ak.pad_none(chain_index_awk[k], 2, axis=1, clip=True), int
+        )
 
     adata.obsm[key_added] = chain_index_awk
 

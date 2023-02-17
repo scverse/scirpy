@@ -96,7 +96,10 @@ def _airr_col(
     # Currently the performance hit doesn't seem to be a deal breaker, can maybe revisit this in the future.
     # It is anyway not very efficient to create a result array with an object dtype.
     _ak_slice = airr_data[
-        np.where(mask)[0], airr_variable, ak.to_numpy(idx[mask], allow_missing=False)
+        np.where(mask)[0],
+        airr_variable,
+        # astype(int) is required if idx[mask] is an empty array of unknown type.
+        ak.to_numpy(idx[mask], allow_missing=False).astype(int),
     ]
     result[mask] = ak.to_list(_ak_slice)
     return result
