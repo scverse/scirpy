@@ -114,3 +114,5 @@ adata.obs
 adata_airr.obs
 
 sc.pl.embedding(adata, "umap_orig", color="cluster_orig", legend_loc="on data")
+
+mdata.write_h5mu("wu2020.h5mu", compression="lzf")
