@@ -2,7 +2,7 @@ from anndata import AnnData
 from ..util import _is_na, _normalize_counts
 import numpy as np
 from typing import Union, List
-from .._compat import Literal
+from typing import Literal
 import pandas as pd
 from ..io._util import _check_upgrade_schema
 

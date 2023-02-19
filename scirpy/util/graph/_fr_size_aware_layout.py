@@ -218,7 +218,6 @@ def _is_within_bbox(points, origin, scale):
 def _get_temperature_decay(
     initial_temperature, total_iterations, mode="quadratic", eps=1e-9
 ):
-
     x = np.linspace(0.0, 1.0, total_iterations)
     if mode == "quadratic":
         y = (x - 1.0) ** 2 + eps
@@ -336,7 +335,6 @@ def _get_unique_nodes(edge_list):
 
 
 def _edge_list_to_adjacency_matrix(edge_list, edge_weights=None):
-
     sources = [s for (s, _) in edge_list]
     targets = [t for (_, t) in edge_list]
     if edge_weights:

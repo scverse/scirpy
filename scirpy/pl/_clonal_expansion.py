@@ -2,7 +2,7 @@ from .. import tl
 from anndata import AnnData
 from . import base
 from typing import Union
-from .._compat import Literal
+from typing import Literal
 from ..io._util import _check_upgrade_schema
 
 

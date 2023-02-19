@@ -4,7 +4,7 @@ from typing import Dict, Hashable, Optional, Sequence, Tuple, Union, Mapping
 import scipy.sparse as sp
 from scipy.sparse.coo import coo_matrix
 from scipy.sparse.csr import csr_matrix
-from .._compat import Literal
+from typing import Literal
 import warnings
 from functools import reduce
 from operator import mul

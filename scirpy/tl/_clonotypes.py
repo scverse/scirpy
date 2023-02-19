@@ -9,7 +9,7 @@ from anndata import AnnData
 from scanpy import logging
 import scipy.sparse as sp
 
-from .._compat import Literal
+from typing import Literal
 from ..pp import ir_dist
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors

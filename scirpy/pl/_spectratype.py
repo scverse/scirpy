@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from .._compat import Literal
+from typing import Literal
 from anndata import AnnData
 from .. import tl
 from . import base

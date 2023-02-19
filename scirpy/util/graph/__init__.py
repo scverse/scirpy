@@ -2,7 +2,7 @@ from scanpy import logging
 import igraph as ig
 import numpy as np
 from scipy import sparse
-from ..._compat import Literal
+from typing import Literal
 from scipy.sparse import spmatrix, csr_matrix
 import itertools
 from ._component_layout import layout_components

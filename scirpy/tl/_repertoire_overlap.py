@@ -90,7 +90,6 @@ def repertoire_overlap(
     linkage = sc_hierarchy.linkage(distM)
 
     if inplace:
-
         # Store calculated data
         adata.uns[added_key] = {
             "weighted": df,

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from .._compat import Literal
+from typing import Literal
 from anndata import AnnData
 import pandas as pd
 from .. import tl

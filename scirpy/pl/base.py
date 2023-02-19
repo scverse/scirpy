@@ -1,6 +1,6 @@
 """Base plotting functions"""
 from typing import Union, Sequence, Tuple, Optional
-from .._compat import Literal
+from typing import Literal
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np

@@ -2,7 +2,7 @@ from multiprocessing import cpu_count
 from typing import Dict, Mapping, Tuple, Union, Sequence, Optional
 from anndata import AnnData
 from scanpy import logging
-from .._compat import Literal
+from typing import Literal
 import numpy as np
 import scipy.sparse as sp
 import itertools

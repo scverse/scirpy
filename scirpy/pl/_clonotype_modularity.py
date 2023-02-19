@@ -1,6 +1,6 @@
 from numpy.core.fromnumeric import amax
 from .styling import _init_ax, apply_style_to_axes
-from .._compat import Literal
+from typing import Literal
 from ._clonotypes import _plot_size_legend
 from typing import Tuple, Union, Optional, Sequence
 import numpy as np

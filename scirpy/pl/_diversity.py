@@ -1,5 +1,5 @@
 from anndata import AnnData
-from .._compat import Literal
+from typing import Literal
 from . import base
 from .. import tl
 import numpy as np
