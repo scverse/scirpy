@@ -5,7 +5,6 @@ import pandas as pd
 from anndata import AnnData
 
 from ..get import _has_ir
-from ..io._legacy import _check_upgrade_schema
 from ..util import _is_na, _normalize_counts
 
 
@@ -65,7 +64,8 @@ def _group_abundance(
     return result_df
 
 
-@_check_upgrade_schema()
+# TODO #356
+# @_check_upgrade_schema()
 def group_abundance(
     adata: AnnData,
     groupby: str,

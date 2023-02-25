@@ -83,7 +83,15 @@ def _check_anndata_upgrade_schema(adata):
 
 
 def _check_upgrade_schema(check_args=(0,)) -> Callable:
-    """Decorator that checks that anndata uses the latest schema"""
+    """Decorator that checks that anndata uses the latest schema.
+
+    Parameters
+    ----------
+    check_args
+        Tuple that indicates which of the numeric arguments is supposed to be checked.
+        The purpose of this is to enable checking functions that take multiple anndata objects,
+        or take them at a different position than 0.
+    """
 
     def check_upgrade_schema_decorator(f):
         @wraps(f)
@@ -95,6 +103,19 @@ def _check_upgrade_schema(check_args=(0,)) -> Callable:
         return check_wrapper
 
     return check_upgrade_schema_decorator
+
+
+def _check_params(adata_positions=(0,)) -> Callable:
+    """
+    TODO #356
+
+    Decorator function that performs plausibility checks on the input data
+    """
+    raise NotImplemented
+
+
+def _check_params_helper(adata, airr_key, chain_idx_key):
+    raise NotImplemented
 
 
 def _obs_schema_to_airr_cells(adata: AnnData) -> List[AirrCell]:

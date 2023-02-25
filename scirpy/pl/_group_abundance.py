@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from . import base
 from .styling import _get_colors
 
 
-@_check_upgrade_schema()
+# TODO #356
+# @_check_upgrade_schema()
 def group_abundance(
     adata: AnnData,
     groupby: str,
