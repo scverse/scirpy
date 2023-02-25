@@ -7,7 +7,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.14.0
+      jupytext_version: 1.14.4
 ---
 
 # Analysis of 3k T cells from cancer
@@ -54,6 +54,9 @@ The dataset ships with the `scirpy` package. We can conveniently load it from th
 
 ```python
 # adata = ir.datasets.wu2020_3k()
+
+# TODO #356: In this mudata object, columns that belong to all modalities (e.g samples/patient) should be in the global obs. Columns that belong to onlyt gex (e.g. cluster) should be there and 
+# columns that belong only to AIRR should be in that modality. 
 mdata = mu.read_h5mu("../../scirpy/datasets/_processing_scripts/wu2020_3k.h5mu")
 ```
 
@@ -148,6 +151,10 @@ mapping = {
 mdata["gex"].obs["cluster"] = [mapping[x] for x in mdata["gex"].obs["cluster_orig"]]
 ```
 
+```python
+mdata.update()
+```
+
 Let's inspect the UMAP plots. The first three panels show the UMAP plot colored by sample, patient and cluster.
 We don't observe any clustering of samples or patients that could hint at batch effects.
 
@@ -155,9 +162,10 @@ The last three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, 
 We can confirm that the markers correspond to their respective cluster labels.
 
 ```python
-mu.pl.umap(
-    mdata["gex"],
-    color=["sample", "patient", "cluster", "CD8A", "CD4", "FOXP3"],
+mu.pl.embedding(
+    mdata,
+    basis="gex:umap",
+    color=["gex:sample", "gex:patient", "gex:cluster", "CD8A", "CD4", "FOXP3"],
     ncols=2,
     wspace=0.7,
 )
@@ -190,24 +198,37 @@ about the Immune cell-receptor compositions to `adata.obs`. We can visualize it 
 <!-- #endraw -->
 
 ```python
-ir.tl.chain_qc(mdata["airr"])
+mdata
+```
+
+```python tags=[]
+mdata.obs["gex:test"] = "test"
+```
+
+```python tags=[]
+mdata.obs
+```
+
+```python
+ir.tl.chain_qc(mdata)
+# TODO #356 shall this be called implicitly?
+mdata.update()
 ```
 
 As expected, the dataset contains only α/β T-cell receptors:
 
 ```python
-# TODO #356 this should work with mdata
-ax = ir.pl.group_abundance(
-    mdata["airr"],
-    groupby="receptor_subtype",  # target_col="gex:source"
-)
+mdata
 ```
 
 ```python
 ax = ir.pl.group_abundance(
-    mdata["airr"],
-    groupby="chain_pairing",  # target_col="source"
+    mdata, groupby="airr:receptor_subtype", target_col="gex:source"
 )
+```
+
+```python
+ax = ir.pl.group_abundance(mdata, groupby="airr:chain_pairing", target_col="gex:source")
 ```
 
 Indeed, in this dataset, ~6% of cells have more than
@@ -217,11 +238,11 @@ one pair of productive T-cell receptors:
 print(
     "Fraction of cells with more than one pair of TCRs: {:.2f}".format(
         np.sum(
-            mdata["airr"]
-            .obs["chain_pairing"]
-            .isin(["extra VJ", "extra VDJ", "two full chains"])
+            mdata.obs["airr:chain_pairing"].isin(
+                ["extra VJ", "extra VDJ", "two full chains"]
+            )
         )
-        / mdata["airr"].n_obs
+        / mdata.n_obs
     )
 )
 ```
@@ -237,11 +258,10 @@ mdata
 ```python
 # TOTO #356: the wu2020_3k should have umap coordinates in mdata rather than the gex modality
 mdata.obsm["X_umap"] = mdata["gex"].obsm["X_umap"]
-mdata.obs["airr:chain_pairing"] = mdata["airr"].obs["chain_pairing"]
 ```
 
 ```python
-mu.pl.umap(mdata, color="airr:chain_pairing", groups="multichain")
+mu.pl.embedding(mdata, basis="gex:umap", color="airr:chain_pairing", groups="airr:multichain")
 ```
 
 ```python
@@ -265,10 +285,7 @@ Finally, we re-create the chain-pairing plot to ensure that the filtering worked
 as expected: 
 
 ```python
-ax = ir.pl.group_abundance(
-    mdata["airr"],
-    groupby="chain_pairing",  # target_col="source"
-)
+ax = ir.pl.group_abundance(mdata, groupby="airr:chain_pairing", target_col="gex:source")
 ```
 
 ## Define clonotypes and clonotype clusters
@@ -326,8 +343,8 @@ amino-acid similarity.
 
 ```python
 # using default parameters, `ir_dist` will compute nucleotide sequence identity
-ir.pp.ir_dist(mdata["airr"])
-ir.tl.define_clonotypes(mdata["airr"], receptor_arms="all", dual_ir="primary_only")
+ir.pp.ir_dist(mdata)
+ir.tl.define_clonotypes(mdata, receptor_arms="all", dual_ir="primary_only")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -337,7 +354,7 @@ We can then visualize it using :func:`scirpy.pl.clonotype_network`. We recommend
 <!-- #endraw -->
 
 ```python
-ir.tl.clonotype_network(mdata["airr"], min_cells=2)
+ir.tl.clonotype_network(mdata, min_cells=2)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -349,16 +366,8 @@ Categorical variables can be visualized as pie charts.
 <!-- #endraw -->
 
 ```python
-# TODO #356 this needs to be solved differently
-mdata["airr"].obs["source"] = mdata["gex"].obs["source"]
-mdata["airr"].obs["patient"] = mdata["gex"].obs["patient"]
-mdata["airr"].obs["cluster"] = mdata["gex"].obs["cluster"]
-mdata["airr"].obs["sample"] = mdata["gex"].obs["sample"]
-```
-
-```python
 ir.pl.clonotype_network(
-    mdata["airr"], color="source", base_size=20, label_fontsize=9, panel_size=(7, 7)
+    mdata, color="gex:source", base_size=20, label_fontsize=9, panel_size=(7, 7)
 )
 ```
 
@@ -378,7 +387,7 @@ All cells with a distance between their CDR3 sequences lower than `cutoff` will 
 
 ```python
 ir.pp.ir_dist(
-    mdata["airr"],
+    mdata,
     metric="alignment",
     sequence="aa",
     cutoff=15,
@@ -387,12 +396,12 @@ ir.pp.ir_dist(
 
 ```python
 ir.tl.define_clonotype_clusters(
-    mdata["airr"], sequence="aa", metric="alignment", receptor_arms="all", dual_ir="any"
+    mdata, sequence="aa", metric="alignment", receptor_arms="all", dual_ir="any"
 )
 ```
 
 ```python
-ir.tl.clonotype_network(mdata["airr"], min_cells=3, sequence="aa", metric="alignment")
+ir.tl.clonotype_network(mdata, min_cells=3, sequence="aa", metric="alignment")
 ```
 
 Compared to the previous plot, we observere several connected dots. 
@@ -404,7 +413,7 @@ The dots are colored by patient. We observe, that for instance, clonotypes `101`
 
 ```python
 ir.pl.clonotype_network(
-    mdata["airr"], color="patient", label_fontsize=9, panel_size=(7, 7), base_size=20
+    mdata, color="gex:patient", label_fontsize=9, panel_size=(7, 7), base_size=20
 )
 ```
 
@@ -435,7 +444,7 @@ regions. Let's look for clonotype clusters with different V genes:
 
 ```python
 ir.tl.define_clonotype_clusters(
-    mdata["airr"],
+    mdata,
     sequence="aa",
     metric="alignment",
     receptor_arms="all",
@@ -448,9 +457,9 @@ ir.tl.define_clonotype_clusters(
 ```python
 # find clonotypes with more than one `clonotype_same_v`
 ct_different_v = (
-    mdata["airr"]
-    .obs.groupby("cc_aa_alignment")
-    .apply(lambda x: x["cc_aa_alignment_same_v"].nunique() > 1)
+    mdata
+    .obs.groupby("airr:cc_aa_alignment")
+    .apply(lambda x: x["airr:cc_aa_alignment_same_v"].nunique() > 1)
 )
 ct_different_v = ct_different_v[ct_different_v].index.values.tolist()
 ct_different_v
@@ -481,7 +490,7 @@ to `adata.obs` and overlay it on the UMAP plot.
 <!-- #endraw -->
 
 ```python
-ir.tl.clonal_expansion(mdata["airr"])
+ir.tl.clonal_expansion(mdata)
 ```
 
 `clonal_expansion` refers to expansion categories, i.e singleton clonotypes, clonotypes with 2 cells and more than 2 cells.
@@ -492,7 +501,7 @@ mdata.update_obs()
 ```
 
 ```python
-mu.pl.umap(mdata, color=["airr:clonal_expansion", "airr:clone_id_size"])
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:clonal_expansion", "airr:clone_id_size"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -501,7 +510,7 @@ in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting fun
 <!-- #endraw -->
 
 ```python
-ir.pl.clonal_expansion(mdata["airr"], groupby="cluster", clip_at=4, normalize=False)
+ir.pl.clonal_expansion(mdata, groupby="gex:cluster", clip_at=4, normalize=False)
 ```
 
 The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection
@@ -509,7 +518,7 @@ for a certain, reactive T-cell clone. It, therefore, makes sense that CD8+ effec
 have the largest fraction of expanded clonotypes.
 
 ```python
-ir.pl.clonal_expansion(mdata["airr"], "cluster")
+ir.pl.clonal_expansion(mdata, "gex:cluster")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -520,7 +529,7 @@ Consistent with this observation, they have the lowest :func:`scirpy.pl.alpha_di
 
 ```python
 ax = ir.pl.alpha_diversity(
-    mdata["airr"], metric="normalized_shannon_entropy", groupby="cluster"
+    mdata, metric="normalized_shannon_entropy", groupby="gex:cluster"
 )
 ```
 
@@ -534,7 +543,7 @@ ten largest clonotypes across the cell-type clusters.
 
 ```python
 ir.pl.group_abundance(
-    mdata["airr"], groupby="clone_id", target_col="cluster", max_cols=10
+    mdata, groupby="airr:clone_id", target_col="gex:cluster", max_cols=10
 )
 ```
 
@@ -543,11 +552,11 @@ to the number of cells per sample to mitigate biases due to different sample siz
 
 ```python
 ir.pl.group_abundance(
-    mdata["airr"],
-    groupby="clone_id",
-    target_col="cluster",
+    mdata,
+    groupby="airr:clone_id",
+    target_col="gex:cluster",
     max_cols=10,
-    normalize="sample",
+    normalize="gex:sample",
 )
 ```
 
@@ -557,7 +566,7 @@ others are *public*, i.e. they are shared across different tissues.
 
 ```python
 ax = ir.pl.group_abundance(
-    mdata["airr"], groupby="clone_id", target_col="source", max_cols=15, figsize=(5, 3)
+    mdata, groupby="airr:clone_id", target_col="gex:source", max_cols=15, figsize=(5, 3)
 )
 ```
 
@@ -565,7 +574,7 @@ However, clonotypes that are shared between *patients* are rare:
 
 ```python
 ax = ir.pl.group_abundance(
-    mdata["airr"], groupby="clone_id", target_col="patient", max_cols=15, figsize=(5, 3)
+    mdata, groupby="airr:clone_id", target_col="gex:patient", max_cols=15, figsize=(5, 3)
 )
 ```
 
@@ -606,7 +615,7 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 
 ```python
 ax = ir.pl.vdj_usage(
-    mdata["airr"], full_combination=False, max_segments=None, max_ribbons=30
+    mdata, full_combination=False, max_segments=None, max_ribbons=30
 )
 ```
 
@@ -614,7 +623,7 @@ We can also use this plot to investigate the exact VDJ composition of one (or se
 
 ```python
 ir.pl.vdj_usage(
-    mdata["airr"][mdata["airr"].obs["clone_id"].isin(["68", "101", "127", "161"]), :],
+    mdata[mdata.obs["airr:clone_id"].isin(["68", "101", "127", "161"]), :],
     max_ribbons=None,
     max_segments=100,
 )
@@ -627,15 +636,15 @@ ir.pl.vdj_usage(
 <!-- #endraw -->
 
 ```python
-ir.pl.spectratype(mdata["airr"], color="cluster", viztype="bar", fig_kws={"dpi": 120})
+ir.pl.spectratype(mdata, color="airr:cluster", viztype="bar", fig_kws={"dpi": 120})
 ```
 
 The same chart visualized as "ridge"-plot:
 
 ```python
 ir.pl.spectratype(
-    mdata["airr"],
-    color="cluster",
+    mdata,
+    color="airr:cluster",
     viztype="curve",
     curve_layout="shifted",
     fig_kws={"dpi": 120},
@@ -670,7 +679,7 @@ Running Scirpy's :func:`~scirpy.tl.repertoire_overlap` tool creates a matrix fea
 <!-- #endraw -->
 
 ```python
-df, dst, lk = ir.tl.repertoire_overlap(mdata["airr"], "sample", inplace=False)
+df, dst, lk = ir.tl.repertoire_overlap(mdata, "gex:sample", inplace=False)
 df.head()
 ```
 
@@ -678,14 +687,14 @@ The distance matrix can be shown as a heatmap, while samples are reordered based
 
 ```python
 # TODO #356: missing heatmap labels
-ir.pl.repertoire_overlap(mdata["airr"], "sample", heatmap_cats=["patient", "source"])
+ir.pl.repertoire_overlap(mdata, "gex:sample", heatmap_cats=["gex:patient", "gex:source"])
 ```
 
 A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
 
 ```python
 ir.pl.repertoire_overlap(
-    mdata["airr"], "sample", pair_to_plot=["LN2", "LT2"], fig_kws={"dpi": 120}
+    mdata, "gex:sample", pair_to_plot=["LN2", "LT2"], fig_kws={"dpi": 120}
 )
 ```
 
