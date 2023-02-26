@@ -11,9 +11,6 @@ from scanpy import logging
 from scipy.sparse import issparse
 from tqdm.auto import tqdm
 
-from ..io._legacy import _check_anndata_upgrade_schema
-from ..pp import index_chains
-
 # reexport tqdm (here was previously a workaround for https://github.com/tqdm/tqdm/issues/1082)
 __all__ = ["tqdm"]
 
@@ -54,7 +51,7 @@ class _ParamsCheck:
             self.adata = data
 
         # check for outdated schema
-        _check_anndata_upgrade_schema(self.adata, airr_key)
+        self._check_anndata_upgrade_schema(self.adata, airr_key)
 
         # TODO #356: better error message?
         self.airr = self.adata.obsm[
@@ -67,6 +64,9 @@ class _ParamsCheck:
                     f"No chain indices found under adata.obsm['{chain_idx_key}']. "
                     "Running scirpy.pp.index_chains with default parameters. ",
                 )
+                # import here to avoid circular import
+                from ..pp import index_chains
+
                 index_chains(self.adata, airr_key=airr_key, key_added=chain_idx_key)
             self.chain_indices = self.adata.obsm[
                 chain_idx_key
@@ -116,6 +116,45 @@ class _ParamsCheck:
             """
         )
         return _doc_params(**doc, **kwargs)
+
+    @staticmethod
+    def _check_schema_pre_v0_7(adata: AnnData):
+        """Raise an error if AnnData is in pre scirpy v0.7 format."""
+        if (
+            # I would actually only use `scirpy_version` for the check, but
+            # there might be cases where it gets lost (e.g. when rebuilding AnnData).
+            # If a `v_call` is present, that's a safe sign that it is the AIRR schema, too
+            "has_ir" in adata.obs.columns
+            and (
+                "IR_VJ_1_v_call" not in adata.obs.columns
+                and "IR_VDJ_1_v_call" not in adata.obs.columns
+            )
+            and "scirpy_version" not in adata.uns
+        ):
+            raise ValueError(
+                "It seems your anndata object is of a very old format used by scirpy < v0.7 "
+                "which is not supported anymore. You might be best off reading in your data from scratch. "
+                "If you absolutely want to, you can use scirpy < v0.13 to read that format, "
+                "convert it to a legacy format, and convert it again using the most recent version of scirpy. "
+            )
+
+    @staticmethod
+    def _check_anndata_upgrade_schema(adata: AnnData, airr_key):
+        """Check if `adata` uses the latest scirpy schema.
+
+        Raises ValueError if it doesn't"""
+        if airr_key not in adata.obsm and "IR_VJ_1_junction_aa" in adata.obs.columns:
+            # First check for very old version. We don't support it at all anymore.
+            _ParamsCheck._check_schema_pre_v0_7(adata)
+            # otherwise suggest to use `upgrade_schema`
+            raise ValueError(
+                f"No AIRR data found in adata.obsm['{airr_key}']. "
+                "Your AnnData object might be using an outdated schema. "
+                "Scirpy has updated the format of `adata` in v0.13. AIRR data is now stored as an "
+                "awkward array in `adata.obsm['airr']`."
+                "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
+                "the latest version. "
+            )
 
 
 def _allclose_sparse(A, B, atol=1e-8):

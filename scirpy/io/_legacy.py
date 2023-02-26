@@ -8,48 +8,9 @@ from anndata import AnnData
 from packaging import version
 
 from .. import __version__
-from ..util import _is_na2
+from ..util import _is_na2, _ParamsCheck
 from ._datastructures import AirrCell
 from ._util import _IOLogger
-
-
-def _check_schema_pre_v0_7(adata: AnnData):
-    """Raise an error if AnnData is in pre scirpy v0.7 format."""
-    if (
-        # I would actually only use `scirpy_version` for the check, but
-        # there might be cases where it gets lost (e.g. when rebuilding AnnData).
-        # If a `v_call` is present, that's a safe sign that it is the AIRR schema, too
-        "has_ir" in adata.obs.columns
-        and (
-            "IR_VJ_1_v_call" not in adata.obs.columns
-            and "IR_VDJ_1_v_call" not in adata.obs.columns
-        )
-        and "scirpy_version" not in adata.uns
-    ):
-        raise ValueError(
-            "It seems your anndata object is of a very old format used by scirpy < v0.7 "
-            "which is not supported anymore. You might be best off reading in your data from scratch. "
-            "If you absolutely want to, you can use scirpy < v0.13 to read that format, "
-            "convert it to a legacy format, and convert it again using the most recent version of scirpy. "
-        )
-
-
-def _check_anndata_upgrade_schema(adata, airr_key):
-    """Check if `adata` uses the latest scirpy schema.
-
-    Raises ValueError if it doesn't"""
-    if airr_key not in adata.obsm and "IR_VJ_1_junction_aa" in adata.obs.columns:
-        # First check for very old version. We don't support it at all anymore.
-        _check_schema_pre_v0_7(adata)
-        # otherwise suggest to use `upgrade_schema`
-        raise ValueError(
-            "No AIRR data found in adata.obsm[airr_key]. "
-            "Your AnnData object might be using an outdated schema. "
-            "Scirpy has updated the format of `adata` in v0.13. AIRR data is now stored as an"
-            "awkward array in `adata.obsm['airr']`."
-            "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
-            "the latest version. "
-        )
 
 
 def upgrade_schema(adata: AnnData) -> AnnData:
@@ -73,7 +34,7 @@ def upgrade_schema(adata: AnnData) -> AnnData:
             "Your AnnData object seems already up-to-date with scirpy v0.13"
         )
     # Raise error if very old schema
-    _check_schema_pre_v0_7(adata)
+    _ParamsCheck._check_schema_pre_v0_7(adata)
 
     airr_cells = _obs_schema_to_airr_cells(adata)
     tmp_adata = from_airr_cells(airr_cells)

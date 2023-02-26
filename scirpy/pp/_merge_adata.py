@@ -5,10 +5,8 @@ from anndata import AnnData
 
 from ..io._convert_anndata import from_airr_cells, to_airr_cells
 from ..io._datastructures import AirrCell
-from ..io._legacy import _check_upgrade_schema
 
 
-@_check_upgrade_schema(check_args=(0, 1))
 def merge_airr(
     adata: AnnData,
     adata2: AnnData,

@@ -8,7 +8,6 @@ from scanpy import logging
 from scipy.sparse import csr_matrix
 
 from ..get import airr as get_airr
-from ..io._legacy import _check_upgrade_schema
 from ..util import _doc_params, _is_na, deprecated
 from . import metrics
 
