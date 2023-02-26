@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-import scanpy as sc
 
 import scirpy as ir
 from scirpy.io import (
@@ -21,7 +20,6 @@ from scirpy.io import (
     write_airr,
 )
 from scirpy.io._io import _cdr3_from_junction, _infer_locus_from_gene_names
-from scirpy.io._legacy import upgrade_schema
 from scirpy.util import _is_na
 
 from . import TESTDATA
@@ -67,45 +65,6 @@ def anndata_from_10x_sample(request):
 )
 def test_cdr3_from_junction(junction_aa, junction_nt, cdr3_aa, cdr3_nt):
     assert _cdr3_from_junction(junction_aa, junction_nt) == (cdr3_aa, cdr3_nt)
-
-
-def test_check_upgrade_schema_pre_scirpy_v0_7():
-    """Test that running a function on very old (pre v0.7) schema
-    raises an error"""
-
-    def dummy_fun(adata, foo, *, bar):
-        assert adata.shape[0] > 0
-        assert foo == "foo"
-        assert bar == "bar"
-        return True
-
-    # Very old schema raises a ValueError
-    adata = sc.read_h5ad(TESTDATA / "wu2020_200_v0_6.h5ad")
-    with pytest.raises(ValueError):
-        dummy_fun(adata, "foo", bar="bar")
-
-    # Trying to run check upgrade schema raises an error
-    with pytest.raises(ValueError):
-        upgrade_schema(adata)
-
-
-def test_check_upgrade_schema_pre_scirpy_v0_12():
-    """Test that running a functon on an old anndata object raises an error
-    Also test that the function can successfully be ran after calling `upgrade_schema`.
-    """
-
-    def dummy_fun(adata, foo, *, bar):
-        assert adata.shape[0] > 0
-        assert foo == "foo"
-        assert bar == "bar"
-        return True
-
-    adata = sc.read_h5ad(TESTDATA / "wu2020_200_v0_11.h5ad")
-    with pytest.raises(ValueError):
-        dummy_fun(adata, "foo", bar="bar")
-
-    upgrade_schema(adata)
-    assert dummy_fun(adata, "foo", bar="bar") is True
 
 
 def test_airr_cell():

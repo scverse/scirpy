@@ -39,7 +39,6 @@ def upgrade_schema(adata: AnnData) -> AnnData:
     airr_cells = _obs_schema_to_airr_cells(adata)
     tmp_adata = from_airr_cells(airr_cells)
     adata.obsm["airr"] = tmp_adata.obsm["airr"]
-    adata.obsm["chain_indices"] = tmp_adata.obsm["chain_indices"]
     adata.uns["scirpy_version"] = __version__
     adata.obs = tmp_adata.obs
 

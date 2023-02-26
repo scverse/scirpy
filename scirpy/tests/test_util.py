@@ -8,6 +8,7 @@ import numpy.testing as npt
 import pandas as pd
 import pytest
 import scipy.sparse
+from anndata import AnnData, read_h5ad
 
 import scirpy as ir
 from scirpy.util import (
@@ -16,6 +17,7 @@ from scirpy.util import (
     _is_symmetric,
     _is_true,
     _normalize_counts,
+    _ParamsCheck,
     _translate_dna_to_protein,
 )
 from scirpy.util._negative_binomial import fit_nbinom
@@ -26,7 +28,41 @@ from scirpy.util.graph import (
     layout_components,
 )
 
+from . import TESTDATA
 from .fixtures import adata_tra  # NOQA
+
+
+def test_param_check_upgrade_schema_pre_scirpy_v0_7():
+    """Test that running a function on very old (pre v0.7) schema
+    raises an error"""
+    adata = read_h5ad(TESTDATA / "wu2020_200_v0_6.h5ad")
+    with pytest.raises(ValueError):
+        _ParamsCheck(adata, "airr", "airr")
+
+    # Trying to run check upgrade schema raises an error
+    with pytest.raises(ValueError):
+        ir.io.upgrade_schema(adata)
+
+
+def test_param_check_upgrade_schema_pre_scirpy_v0_12():
+    """Test that running a functon on an old anndata object raises an error
+    Also test that the function can successfully be ran after calling `upgrade_schema`.
+    """
+    adata = read_h5ad(TESTDATA / "wu2020_200_v0_11.h5ad")
+    with pytest.raises(ValueError):
+        params = _ParamsCheck(adata, "airr", "airr")
+
+    ir.io.upgrade_schema(adata)
+    params = _ParamsCheck(adata, "airr", "airr")
+    assert params.adata is adata
+
+
+def test_param_check_no_airr():
+    """Test that a key error is raised if ParamsCheck is executed
+    on an anndata without AirrData"""
+    adata = AnnData(np.ones((10, 10)))
+    with pytest.raises(KeyError, match=r"No AIRR data found.*"):
+        _ParamsCheck(adata, "airr", "airr")
 
 
 def test_is_symmetric():

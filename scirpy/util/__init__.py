@@ -51,9 +51,8 @@ class _ParamsCheck:
             self.adata = data
 
         # check for outdated schema
-        self._check_anndata_upgrade_schema(self.adata, airr_key)
+        self._check_airr_key_in_obsm(self.adata, airr_key)
 
-        # TODO #356: better error message?
         self.airr = self.adata.obsm[
             airr_key
         ]  #: reference to the awkward array with AIRR information
@@ -139,22 +138,26 @@ class _ParamsCheck:
             )
 
     @staticmethod
-    def _check_anndata_upgrade_schema(adata: AnnData, airr_key):
+    def _check_airr_key_in_obsm(adata: AnnData, airr_key):
         """Check if `adata` uses the latest scirpy schema.
 
         Raises ValueError if it doesn't"""
-        if airr_key not in adata.obsm and "IR_VJ_1_junction_aa" in adata.obs.columns:
+        if airr_key not in adata.obsm:
             # First check for very old version. We don't support it at all anymore.
             _ParamsCheck._check_schema_pre_v0_7(adata)
-            # otherwise suggest to use `upgrade_schema`
-            raise ValueError(
-                f"No AIRR data found in adata.obsm['{airr_key}']. "
-                "Your AnnData object might be using an outdated schema. "
-                "Scirpy has updated the format of `adata` in v0.13. AIRR data is now stored as an "
-                "awkward array in `adata.obsm['airr']`."
-                "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
-                "the latest version. "
-            )
+            if "IR_VJ_1_junction_aa" in adata.obs.columns:
+                # otherwise suggest to use `upgrade_schema`
+                raise ValueError(
+                    f"No AIRR data found in adata.obsm['{airr_key}']. "
+                    "Your AnnData object might be using an outdated schema. "
+                    "Scirpy has updated the format of `adata` in v0.13. AIRR data is now stored as an "
+                    "awkward array in `adata.obsm['airr']`."
+                    "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
+                    "the latest version. "
+                )
+            else:
+                # TODO #356: refer to docs explaining new schema
+                raise KeyError(f"No AIRR data found in adata.obsm['{airr_key}']. ")
 
 
 def _allclose_sparse(A, B, atol=1e-8):
