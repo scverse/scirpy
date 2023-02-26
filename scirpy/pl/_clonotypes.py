@@ -16,7 +16,6 @@ from pandas.api.types import is_categorical_dtype
 from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
 
-from ..io._legacy import _check_upgrade_schema
 from ..tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
 from ..util import _doc_params
 from ..util.graph import _distance_to_connectivity
@@ -27,7 +26,6 @@ COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
 )
 
 
-@_check_upgrade_schema()
 @_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,

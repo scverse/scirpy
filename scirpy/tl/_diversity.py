@@ -1,13 +1,13 @@
+from typing import Callable, Optional, Union
+
 import numpy as np
-from ..util import _is_na
-from anndata import AnnData
 import pandas as pd
-from typing import Union, Callable, Optional
-from ..io._legacy import _check_upgrade_schema
+from anndata import AnnData
 from scanpy import logging
 
+from ..util import _is_na
 
-@_check_upgrade_schema()
+
 def alpha_diversity(
     adata: AnnData,
     groupby: str,

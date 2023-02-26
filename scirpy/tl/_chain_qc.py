@@ -6,11 +6,9 @@ from anndata import AnnData
 from scanpy import logging
 
 from .. import get
-from ..io._legacy import _check_upgrade_schema
 from ..util import _is_na
 
 
-@_check_upgrade_schema()
 def chain_qc(
     adata: AnnData,
     *,

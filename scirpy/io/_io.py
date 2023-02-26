@@ -17,7 +17,6 @@ from ..util import _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
-from ._legacy import _check_upgrade_schema
 from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
 
 # patch sys.modules to enable pickle import.
@@ -615,7 +614,6 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     return from_airr_cells(bcr_cells.values(), **kwargs)
 
 
-@_check_upgrade_schema()
 def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     """Export :term:`IR` data to :term:`AIRR` Rearrangement `tsv` format.
 
@@ -646,7 +644,6 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     writer.close()
 
 
-@_check_upgrade_schema()
 def to_dandelion(adata: AnnData):
     """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 

@@ -1,15 +1,15 @@
-from anndata import AnnData
-from typing import Union, Tuple, List, Sequence
-from scipy.stats import fisher_exact
+from typing import List, Sequence, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from ._repertoire_overlap import repertoire_overlap
-from ..io._legacy import _check_upgrade_schema
+from anndata import AnnData
+from scipy.stats import fisher_exact
+
 from ..util import deprecated
+from ._repertoire_overlap import repertoire_overlap
 
 
-@_check_upgrade_schema()
 @deprecated(
     "Consider using `tl.clonotype_modularity` instead. If `clonotype_modularity` "
     "does not cover your use-case, please create an issue on GitHub to let us know "

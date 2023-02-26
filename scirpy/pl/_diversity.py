@@ -5,11 +5,9 @@ import numpy as np
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from . import base
 
 
-@_check_upgrade_schema()
 def alpha_diversity(
     adata: AnnData,
     groupby: str,

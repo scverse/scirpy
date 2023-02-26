@@ -1,14 +1,13 @@
-from anndata import AnnData
-from typing import Callable, Union, Collection, Literal, Sequence
+from typing import Callable, Literal, Sequence, Union
+
 import numpy as np
 import pandas as pd
-from ._group_abundance import _group_abundance
-from ..util import _is_na
-from ..io._legacy import _check_upgrade_schema
+from anndata import AnnData
+
 from ..get import airr as get_airr
+from ._group_abundance import _group_abundance
 
 
-@_check_upgrade_schema()
 def spectratype(
     adata: AnnData,
     chain: Union[

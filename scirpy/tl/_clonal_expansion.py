@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 
-from ..io._legacy import _check_upgrade_schema
 from ..util import _is_na, _normalize_counts
 
 
@@ -53,7 +52,6 @@ def _clip_and_count(
         return clipped_count
 
 
-@_check_upgrade_schema()
 def clonal_expansion(
     adata: AnnData,
     *,
@@ -102,7 +100,6 @@ def clonal_expansion(
     )
 
 
-@_check_upgrade_schema()
 def summarize_clonal_expansion(
     adata: AnnData,
     groupby: str,

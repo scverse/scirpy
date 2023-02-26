@@ -1,14 +1,14 @@
-from anndata import AnnData
-from typing import Union, Tuple
-from scipy.spatial import distance as sc_distance
-from scipy.cluster import hierarchy as sc_hierarchy
-import pandas as pd
+from typing import Tuple, Union
+
 import numpy as np
+import pandas as pd
+from anndata import AnnData
+from scipy.cluster import hierarchy as sc_hierarchy
+from scipy.spatial import distance as sc_distance
+
 from ..util import _is_na, _normalize_counts
-from ..io._legacy import _check_upgrade_schema
 
 
-@_check_upgrade_schema()
 def repertoire_overlap(
     adata: AnnData,
     groupby: str,

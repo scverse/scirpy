@@ -3,11 +3,9 @@ from typing import Literal, Union
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from . import base
 
 
-@_check_upgrade_schema()
 def clonal_expansion(
     adata: AnnData,
     groupby: str,

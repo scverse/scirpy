@@ -65,7 +65,7 @@ def _group_abundance(
 
 
 # TODO #356
-# @_check_upgrade_schema()
+#
 def group_abundance(
     adata: AnnData,
     groupby: str,

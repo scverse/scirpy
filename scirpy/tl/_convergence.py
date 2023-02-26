@@ -1,12 +1,12 @@
-from anndata import AnnData
 from typing import Optional
+
 import pandas as pd
+from anndata import AnnData
 from pandas.core.arrays.categorical import Categorical
-from ..io._legacy import _check_upgrade_schema
+
 from ..util import _is_na
 
 
-@_check_upgrade_schema()
 def clonotype_convergence(
     adata: AnnData,
     *,

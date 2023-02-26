@@ -5,12 +5,10 @@ import pandas as pd
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from ..util import _doc_params
 from . import _base as base
 
 
-@_check_upgrade_schema()
 @_doc_params(common_doc=base._common_doc)
 def cdr_convergence(
     adata: Union[dict, AnnData],

@@ -7,7 +7,6 @@ from anndata import AnnData
 
 from ..get import airr as get_airr
 from ..io import AirrCell
-from ..io._legacy import _check_upgrade_schema
 from ..util import _is_na, _normalize_counts
 from .styling import _init_ax
 
@@ -19,7 +18,6 @@ def _sanitize_gene_name(gene_text):
     return gene_text
 
 
-@_check_upgrade_schema()
 def vdj_usage(
     adata: AnnData,
     *,

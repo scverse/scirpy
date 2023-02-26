@@ -9,7 +9,6 @@ import scipy.sparse as sp
 from anndata import AnnData
 from scanpy import logging
 
-from ..io._legacy import _check_upgrade_schema
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..pp import ir_dist
@@ -186,7 +185,6 @@ def _validate_parameters(
     return match_columns, distance_key, key_added
 
 
-@_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
     within_group=_common_doc_within_group,
@@ -341,7 +339,6 @@ def define_clonotype_clusters(
         )
 
 
-@_check_upgrade_schema()
 @_doc_params(
     common_doc=_common_doc,
     within_group=_common_doc_within_group,
@@ -405,7 +402,6 @@ def define_clonotypes(
     )
 
 
-@_check_upgrade_schema()
 @_doc_params(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
     adata: AnnData,
@@ -632,7 +628,6 @@ def _graph_from_coordinates(
     return coords, adj_mat
 
 
-@_check_upgrade_schema()
 def clonotype_network_igraph(
     adata: AnnData, basis="clonotype_network"
 ) -> Tuple[ig.Graph, ig.Layout]:

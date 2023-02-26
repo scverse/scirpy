@@ -7,11 +7,9 @@ import seaborn as sns
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from .base import volcano
 
 
-@_check_upgrade_schema()
 def clonotype_imbalance(
     adata: AnnData,
     replicate_col: str,

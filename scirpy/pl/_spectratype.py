@@ -5,12 +5,10 @@ import numpy as np
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from . import base
 from .styling import _get_colors
 
 
-@_check_upgrade_schema()
 def spectratype(
     adata: AnnData,
     chain: Union[

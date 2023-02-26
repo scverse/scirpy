@@ -21,7 +21,7 @@ from scirpy.io import (
     write_airr,
 )
 from scirpy.io._io import _cdr3_from_junction, _infer_locus_from_gene_names
-from scirpy.io._legacy import _check_upgrade_schema, upgrade_schema
+from scirpy.io._legacy import upgrade_schema
 from scirpy.util import _is_na
 
 from . import TESTDATA
@@ -73,7 +73,6 @@ def test_check_upgrade_schema_pre_scirpy_v0_7():
     """Test that running a function on very old (pre v0.7) schema
     raises an error"""
 
-    @_check_upgrade_schema()
     def dummy_fun(adata, foo, *, bar):
         assert adata.shape[0] > 0
         assert foo == "foo"
@@ -95,7 +94,6 @@ def test_check_upgrade_schema_pre_scirpy_v0_12():
     Also test that the function can successfully be ran after calling `upgrade_schema`.
     """
 
-    @_check_upgrade_schema()
     def dummy_fun(adata, foo, *, bar):
         assert adata.shape[0] > 0
         assert foo == "foo"

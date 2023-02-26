@@ -9,12 +9,10 @@ from scipy.cluster import hierarchy as sc_hierarchy
 from scipy.spatial import distance as sc_distance
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
 from .base import ol_scatter
 from .styling import _get_colors, _init_ax
 
 
-@_check_upgrade_schema()
 def repertoire_overlap(
     adata: AnnData,
     groupby: str,
