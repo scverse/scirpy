@@ -14,6 +14,9 @@ from ..util import _is_na
 def chain_qc(
     adata: AnnData,
     *,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     inplace: bool = True,
     key_added: Sequence[str] = ("receptor_type", "receptor_subtype", "chain_pairing"),
 ) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:

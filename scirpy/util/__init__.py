@@ -1,16 +1,59 @@
 import warnings
 from textwrap import dedent
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse
-from numba import jit
+from anndata import AnnData
+from mudata import MuData
+from scanpy import logging
 from scipy.sparse import issparse
 from tqdm.auto import tqdm
 
+from ..io._legacy import _check_anndata_upgrade_schema
+from ..pp import index_chains
+
 # reexport tqdm (here was previously a workaround for https://github.com/tqdm/tqdm/issues/1082)
 __all__ = ["tqdm"]
+
+
+class _ParamsCheck:
+    def __init__(
+        self,
+        data: Union[AnnData, MuData],
+        airr_mod: str,
+        airr_key: str,
+        chain_idx_key: Optional[str] = None,
+    ):
+        """Perform a plausibility check of the input data for public scirpy functions.
+
+        Provide convenient accessors to the airr data that is stored somewhere in
+        the input AnnData/MuData.
+        """
+        if isinstance(data, MuData):
+            self.mdata = data
+            self.adata = data.mod[airr_mod]
+        else:
+            self.mdata = None
+            self.adata = data
+
+        # check for outdated schema
+        _check_anndata_upgrade_schema(self.adata, airr_key)
+
+        # TODO #356: better error message?
+        self.airr = self.adata.obsm[airr_key]
+
+        if chain_idx_key is not None:
+            if chain_idx_key not in self.adata.obsm:
+                logging.warning(
+                    f"No chain indices found under adata.obsm['{chain_idx_key}']. "
+                    "Running scirpy.pp.index_chains with default parameters. ",
+                )
+                index_chains(self.adata, airr_key=airr_key, key_added=chain_idx_key)
+            self.chain_indices = self.adata.obsm[chain_idx_key]
+        else:
+            self.chain_indices = None
 
 
 def _allclose_sparse(A, B, atol=1e-8):

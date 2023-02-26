@@ -76,10 +76,6 @@ mdata = mu.read_h5mu("../../scirpy/datasets/_processing_scripts/wu2020_3k.h5mu")
 <!-- #endraw -->
 
 ```python
-mdata
-```
-
-```python
 mdata.obs
 ```
 
