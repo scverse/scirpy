@@ -436,3 +436,7 @@ sc.pp.neighbors(adata)
 sc.tl.umap(adata)
 sc.pl.umap(adata, color=["has_ir", "CD3E", "sample"])
 ```
+
+```python
+
+```

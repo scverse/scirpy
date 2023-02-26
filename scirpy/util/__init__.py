@@ -1,7 +1,8 @@
 import warnings
 from textwrap import dedent
-from typing import Callable, Mapping, Optional, Union
+from typing import Callable, Mapping, Optional, Union, cast
 
+import awkward as ak
 import numpy as np
 import pandas as pd
 import scipy.sparse
@@ -53,9 +54,9 @@ class _ParamsCheck:
         # check for outdated schema
         self._check_airr_key_in_obsm(self.adata, airr_key)
 
-        self.airr = self.adata.obsm[
-            airr_key
-        ]  #: reference to the awkward array with AIRR information
+        self.airr: ak.Array = cast(
+            ak.Array, self.adata.obsm[airr_key]
+        )  #: reference to the awkward array with AIRR information
 
         if chain_idx_key is not None:
             if chain_idx_key not in self.adata.obsm:
@@ -67,9 +68,9 @@ class _ParamsCheck:
                 from ..pp import index_chains
 
                 index_chains(self.adata, airr_key=airr_key, key_added=chain_idx_key)
-            self.chain_indices = self.adata.obsm[
-                chain_idx_key
-            ]  #: Reference to chain indices, if available
+            self.chain_indices: Optional[ak.Array] = cast(
+                ak.Array, self.adata.obsm[chain_idx_key]
+            )  #: Reference to chain indices, if available
         else:
             self.chain_indices = None
 

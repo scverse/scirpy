@@ -62,7 +62,7 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
 def to_airr_cells(
     adata: Union[AnnData, MuData], *, airr_mod: str = "airr", airr_key: str = "airr"
 ) -> List[AirrCell]:
-    """
+    """\
     Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
     objects.
     Inverse function of :func:`from_airr_cells`.

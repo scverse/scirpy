@@ -7,11 +7,12 @@ from anndata import AnnData
 from scanpy import logging
 
 from ..io._datastructures import AirrCell
-from ..util import _is_na2
+from ..util import _is_na2, _ParamsCheck
 
 SCIRPY_DUAL_IR_MODEL = "scirpy_dual_ir_v0.13"
 
 
+@_ParamsCheck.inject_param_docs()
 def index_chains(
     adata: AnnData,
     *,
@@ -20,10 +21,11 @@ def index_chains(
     sort_chains_by: Mapping[str, Any] = MappingProxyType(
         {"duplicate_count": 0, "consensus_count": 0, "junction": "", "junction_aa": ""}
     ),
+    airr_mod: str = "airr",
     airr_key: str = "airr",
     key_added: str = "chain_indices",
 ) -> None:
-    """
+    """\
     Determine which chains are considered primary/secondary VJ/VDJ chains
 
     This function goes through all chains stored in the :term:`awkward array` in
@@ -38,8 +40,7 @@ def index_chains(
 
     Parameters
     ----------
-    adata
-        AnnData object with AIRR information
+    {adata}
     productive
         If True, ignore non-productive chains. In that case, non-productive chains will also not count towards
         calling "multichain" cells.
@@ -50,8 +51,8 @@ def index_chains(
         A list of sort keys used to determine an ordering of chains. The chain with the highest value
         of this tuple willl be the primary chain, second-highest the secondary chain. If there are more chains, they
         will not be indexed, and the cell receives the "multichain" flag.
-    airr_key
-        Key under which airr information is stored in `adata.obsm`
+    {airr_mod}
+    {airr_key}
     key_added
         Key under which the chain indicies will be stored in `adata.obsm` and metadata will be stored in `adata.uns`.
 
@@ -60,25 +61,25 @@ def index_chains(
     Nothing, but adds a dataframe to `adata.obsm[chain_indices]`
     """
     chain_index_list = []
-    awk_array = cast(ak.Array, adata.obsm[airr_key])
+    params = _ParamsCheck(adata, airr_mod, airr_key)
 
     # only warn if those fields are in the key (i.e. this should give a warning if those are missing with
     # default settings. If the user specifies their own dictionary, they are on their own)
     if "duplicate_count" in sort_chains_by and "consensus_count" in sort_chains_by:
         if (
-            "duplicate_count" not in awk_array.fields
-            and "consensus_count" not in awk_array.fields
+            "duplicate_count" not in params.airr.fields
+            and "consensus_count" not in params.airr.fields
         ):
             logging.warning(
                 "No expression information available. Cannot rank chains by expression. "
             )  # type: ignore
-    for cell_chains in awk_array:
+    for cell_chains in params.airr:
         cell_chains = cast(List[ak.Record], cell_chains)
 
         # Split chains into VJ and VDJ chains
         chain_indices: Dict[str, Any] = {"VJ": list(), "VDJ": list()}
         for i, tmp_chain in enumerate(cell_chains):
-            if "locus" not in awk_array.fields:
+            if "locus" not in params.airr.fields:
                 continue
             if (
                 tmp_chain["locus"] in AirrCell.VJ_LOCI
@@ -116,7 +117,7 @@ def index_chains(
             including_unknown=True,
         )
 
-    adata.obsm[key_added] = chain_index_awk
+    adata.obsm[key_added] = chain_index_awk  # type: ignore
 
     # store metadata in .uns
     adata.uns[key_added] = {
