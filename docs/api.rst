@@ -77,7 +77,7 @@ Preprocessing: `pp`
    :toctree: ./generated
 
    pp.index_chains
-   pp.merge_airr_chains
+   pp.merge_airr
    pp.ir_dist
 
 Get: `get`

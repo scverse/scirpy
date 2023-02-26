@@ -1,6 +1,6 @@
 import warnings
 from textwrap import dedent
-from typing import Callable, Mapping, Optional, Union, cast
+from typing import Any, Callable, Mapping, Optional, Union, cast
 
 import awkward as ak
 import numpy as np
@@ -76,7 +76,7 @@ class _ParamsCheck:
 
     @staticmethod
     def inject_param_docs(
-        **kwargs: Mapping[str, str],
+        **kwargs: str,
     ) -> Callable:
         """Inject parameter documentation into a function docstring
 
