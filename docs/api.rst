@@ -37,6 +37,7 @@ formats.
 .. autosummary::
    :toctree: ./generated
 
+   io.read_h5mu
    io.read_h5ad
    io.read_10x_vdj
    io.read_tracer
@@ -75,10 +76,21 @@ Preprocessing: `pp`
 .. autosummary::
    :toctree: ./generated
 
-   pp.merge_with_ir
+   pp.index_chains
    pp.merge_airr_chains
    pp.ir_dist
 
+Get: `get`
+----------
+
+.. module:: scirpy.get
+.. currentmodule:: scirpy
+
+.. autosummary::
+   :toctree: ./generated
+
+   get.airr
+   get.obs_context
 
 Tools: `tl`
 -----------
@@ -210,6 +222,9 @@ Datasets: `datasets`
 
 .. module:: scirpy.datasets
 .. currentmodule:: scirpy
+
+Example datasets
+^^^^^^^^^^^^^^^^
 
 .. autosummary::
    :toctree: ./generated
