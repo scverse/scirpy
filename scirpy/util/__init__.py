@@ -1,6 +1,6 @@
 import warnings
 from textwrap import dedent
-from typing import Optional, Union
+from typing import Callable, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,19 @@ from ..pp import index_chains
 
 # reexport tqdm (here was previously a workaround for https://github.com/tqdm/tqdm/issues/1082)
 __all__ = ["tqdm"]
+
+
+def _doc_params(**kwds):
+    """\
+    Docstrings should start with "\" in the first line for proper formatting.
+    """
+
+    def dec(obj):
+        obj.__orig_doc__ = obj.__doc__
+        obj.__doc__ = dedent(obj.__doc__).format_map(kwds)
+        return obj
+
+    return dec
 
 
 class _ParamsCheck:
@@ -54,6 +67,49 @@ class _ParamsCheck:
             self.chain_indices = self.adata.obsm[chain_idx_key]
         else:
             self.chain_indices = None
+
+    @staticmethod
+    def inject_param_docs(
+        **kwargs: Mapping[str, str],
+    ) -> Callable:
+        """Inject parameter documentation into a function docstring
+
+        Parameters
+        ----------
+        **kwargs
+            Further, custom {keys} to replace in the docstring.
+        """
+        doc = {}
+        doc["adata"] = dedent(
+            """\
+            adata
+                AnnData or MuData object that contains :term:`IR` information. 
+            """
+        )
+        doc["airr_mod"] = dedent(
+            """\
+            airr_mod
+                Name of the modality with :term:`IR` information is stored in 
+                the :class:`~mudata.MuData` object. if an `~anndata.AnnData` object
+                is passed to the function, this parameter is ignored. 
+            """
+        )
+        doc["airr_key"] = dedent(
+            """\
+            airr_key
+                Key under which the :term:`IR` information is stored in adata.obsm as an 
+                awkward array.
+            """
+        )
+        doc["chain_idx_key"] = dedent(
+            """\
+            chain_idx_key
+                Key under which the chain indices are stored in adata.obsm. 
+                If chain indices are not present, :func:`~scirpy.pp.index_chains` is
+                run with default parameters. 
+            """
+        )
+        return _doc_params(**doc, **kwargs)
 
 
 def _allclose_sparse(A, B, atol=1e-8):
@@ -149,19 +205,6 @@ def _normalize_counts(
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
     return 1 / obs.groupby(normalize_col)[normalize_col].transform("count").values
-
-
-def _doc_params(**kwds):
-    """\
-    Docstrings should start with "\" in the first line for proper formatting.
-    """
-
-    def dec(obj):
-        obj.__orig_doc__ = obj.__doc__
-        obj.__doc__ = dedent(obj.__doc__).format_map(kwds)
-        return obj
-
-    return dec
 
 
 def _read_to_str(path):

@@ -1,19 +1,19 @@
 """Convert IrCells to AnnData and vice-versa"""
-from typing import Iterable, List, cast
+from typing import Iterable, List, Union, cast
 
 import awkward as ak
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 
 from .. import __version__
-from ..util import _doc_params
+from ..util import _doc_params, _ParamsCheck
 from ._datastructures import AirrCell
-from ._legacy import _check_upgrade_schema
 from ._util import _IOLogger, doc_working_model
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_airr_cells(airr_cells: Iterable[AirrCell], index_chains=True) -> AnnData:
+def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> AnnData:
     """\
     Convert a collection of :class:`~scirpy.io.AirrCell` objects to :class:`~anndata.AnnData`.
 
@@ -45,7 +45,7 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], index_chains=True) -> AnnDat
     obs.index = obs.index.astype(str)
 
     obsm = {
-        "airr": ak.Array((c.chains for c in airr_cells)),
+        key_added: ak.Array((c.chains for c in airr_cells)),
     }
 
     adata = AnnData(
@@ -55,27 +55,23 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], index_chains=True) -> AnnDat
         uns={"scirpy_version": __version__},
     )
 
-    if index_chains:
-        # import here to avoid circular import
-        from scirpy.pp import index_chains as index_chains_
-
-        index_chains_(adata)
-
     return adata
 
 
-@_check_upgrade_schema()
-def to_airr_cells(adata: AnnData, *, airr_key: str = "airr") -> List[AirrCell]:
+@_ParamsCheck.inject_param_docs()
+def to_airr_cells(
+    adata: Union[AnnData, MuData], *, airr_mod: str = "airr", airr_key: str = "airr"
+) -> List[AirrCell]:
     """
     Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
     objects.
     Inverse function of :func:`from_airr_cells`.
+
     Parameters
     ----------
-    adata
-        annotated data matrix with :term:`IR` annotations.
-    airr_key
-        Key in `adata.obsm` under which the AwkwardArray with AIRR information is stored
+    {adata}
+    {airr_mod}
+    {airr_key}
 
     Returns
     -------
@@ -84,7 +80,9 @@ def to_airr_cells(adata: AnnData, *, airr_key: str = "airr") -> List[AirrCell]:
     cells = []
     logger = _IOLogger()
 
-    for (cell_id, row), chains in zip(adata.obs.iterrows(), adata.obsm[airr_key]):
+    params = _ParamsCheck(adata, airr_mod, airr_key)
+
+    for (cell_id, row), chains in zip(params.adata.obs.iterrows(), params.airr):
         tmp_cell = AirrCell(cast(str, cell_id), logger=logger)
         # add cell-level metadata
         tmp_cell.update(row)
