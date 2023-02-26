@@ -45,8 +45,10 @@ class _ParamsCheck:
         the input AnnData/MuData.
         """
         if isinstance(data, MuData):
-            self.mdata = data
-            self.adata = data.mod[airr_mod]
+            self.mdata = data  #: reference to MuData object, if available
+            self.adata = data.mod[
+                airr_mod
+            ]  #: reference to AnnData object of airr modality
         else:
             self.mdata = None
             self.adata = data
@@ -55,7 +57,9 @@ class _ParamsCheck:
         _check_anndata_upgrade_schema(self.adata, airr_key)
 
         # TODO #356: better error message?
-        self.airr = self.adata.obsm[airr_key]
+        self.airr = self.adata.obsm[
+            airr_key
+        ]  #: reference to the awkward array with AIRR information
 
         if chain_idx_key is not None:
             if chain_idx_key not in self.adata.obsm:
@@ -64,7 +68,9 @@ class _ParamsCheck:
                     "Running scirpy.pp.index_chains with default parameters. ",
                 )
                 index_chains(self.adata, airr_key=airr_key, key_added=chain_idx_key)
-            self.chain_indices = self.adata.obsm[chain_idx_key]
+            self.chain_indices = self.adata.obsm[
+                chain_idx_key
+            ]  #: Reference to chain indices, if available
         else:
             self.chain_indices = None
 
