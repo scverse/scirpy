@@ -8,12 +8,14 @@ import sys
 
 sys.path.insert(0, "../../..")
 
-import scirpy as ir
-import scanpy as sc
-import pandas as pd
-import numpy as np
-from scipy.sparse import csr_matrix
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import scanpy as sc
+from scipy.sparse import csr_matrix
+
+import scirpy as ir
 
 # The dataset has been downloaded from ENA and then processed using the Smart-seq2 Pipeline:
 # https://github.com/nf-core/smartseq2/

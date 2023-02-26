@@ -1,10 +1,12 @@
-from scanpy import logging
+import itertools
+from typing import Literal
+
 import igraph as ig
 import numpy as np
+from scanpy import logging
 from scipy import sparse
-from typing import Literal
-from scipy.sparse import spmatrix, csr_matrix
-import itertools
+from scipy.sparse import csr_matrix, spmatrix
+
 from ._component_layout import layout_components
 from ._fr_size_aware_layout import layout_fr_size_aware
 

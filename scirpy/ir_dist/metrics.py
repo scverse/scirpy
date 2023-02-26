@@ -1,18 +1,19 @@
-from multiprocessing import cpu_count
-import parasail
-from scipy.sparse.csr import csr_matrix
-from tqdm.contrib.concurrent import process_map
-import itertools
-from typing import Union, Sequence, Tuple, Optional
-import numpy as np
 import abc
+import itertools
+from multiprocessing import cpu_count
+from typing import Optional, Sequence, Tuple, Union
+
+import numpy as np
+import parasail
+import scipy.sparse
+import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from Levenshtein import hamming as hamming_dist
-import scipy.spatial
-import scipy.sparse
 from scipy.sparse import coo_matrix
-from ..util import _doc_params, tqdm
+from scipy.sparse.csr import csr_matrix
+from tqdm.contrib.concurrent import process_map
 
+from ..util import _doc_params, tqdm
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -86,7 +87,6 @@ class DistanceCalculator(abc.ABC):
         -------
         Sparse pairwise distance matrix.
         """
-        pass
 
     @staticmethod
     def squarify(triangular_matrix: csr_matrix) -> csr_matrix:
@@ -156,7 +156,6 @@ class ParallelDistanceCalculator(DistanceCalculator):
         row, col must be the coordinates in the final matrix (they can be derived using
         `origin`). Can't be a generator because this needs to be picklable.
         """
-        pass
 
     @staticmethod
     def _block_iter(

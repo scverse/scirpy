@@ -1,11 +1,11 @@
-from numpy.core.fromnumeric import amax
-from .styling import _init_ax, apply_style_to_axes
-from typing import Literal
-from ._clonotypes import _plot_size_legend
-from typing import Tuple, Union, Optional, Sequence
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
+
+from ._clonotypes import _plot_size_legend
+from .styling import _init_ax
 
 
 def _rand_jitter(arr, jitter=None):

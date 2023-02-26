@@ -4,6 +4,7 @@ from ._merge_adata import merge_airr
 
 __all__ = ["ir_dist", "index_chains", "merge_airr"]
 
+
 # TODO #356 refer to corresponding docs sections
 def merge_with_ir(*args, **kwargs):
     raise NotImplementedError("This function has been removed in v0.13")

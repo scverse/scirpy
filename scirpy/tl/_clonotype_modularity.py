@@ -1,15 +1,14 @@
-from logging import log
-from multiprocessing import cpu_count
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Literal, Optional, Sequence, Tuple
+
 import numpy as np
-from ..util.graph import _get_igraph_from_adjacency
-from ..util._negative_binomial import fit_nbinom
-from typing import Literal
-import scipy.stats
 import scipy.sparse
-from statsmodels.stats.multitest import fdrcorrection
-from ..util import tqdm, _is_na
+import scipy.stats
 from scanpy import logging
+from statsmodels.stats.multitest import fdrcorrection
+
+from ..util import _is_na, tqdm
+from ..util._negative_binomial import fit_nbinom
+from ..util.graph import _get_igraph_from_adjacency
 
 
 def clonotype_modularity(

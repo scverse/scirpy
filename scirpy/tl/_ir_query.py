@@ -1,21 +1,21 @@
-from typing import Counter, Optional, Union, Sequence
-
-from typing import Literal
-from anndata import AnnData
-import pandas as pd
 import itertools
+import json
+from typing import Counter, Literal, Optional, Sequence, Union
+
+import numpy as np
+import pandas as pd
+from anndata import AnnData
+from scanpy import logging
+
+from ..ir_dist import MetricType, _get_metric_key
+from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from ..util import _doc_params, _is_na, tqdm
 from ._clonotypes import (
     _common_doc,
     _common_doc_parallelism,
-    _validate_parameters,
     _doc_clonotype_definition,
+    _validate_parameters,
 )
-from ..util import _doc_params, _is_na, tqdm
-from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from ..ir_dist import _get_metric_key, MetricType
-from scanpy import logging
-import numpy as np
-import json
 
 
 def _validate_ir_query_annotate_params(reference, sequence, metric, query_key):

@@ -1,16 +1,18 @@
+import numpy as np
+import numpy.testing as npt
 import pytest
+import scipy.sparse
+
+import scirpy as ir
 from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     DistanceCalculator,
+    HammingDistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
-    HammingDistanceCalculator,
     ParallelDistanceCalculator,
 )
-import numpy as np
-import numpy.testing as npt
-import scirpy as ir
-import scipy.sparse
+
 from .util import _squarify
 
 

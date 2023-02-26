@@ -12,6 +12,7 @@ def refresh_entry_points():
     """
     try:
         import sys
+
         import pkg_resources
 
         ws: pkg_resources.WorkingSet = pkg_resources.working_set
