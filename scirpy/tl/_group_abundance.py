@@ -3,6 +3,7 @@ from typing import Literal, Sequence, Union
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 
 from ..get import _has_ir
 from ..util import _is_na, _normalize_counts
@@ -64,17 +65,16 @@ def _group_abundance(
     return result_df
 
 
-# TODO #356
-#
 def group_abundance(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     groupby: str,
     target_col: str = "has_ir",
     *,
     fraction: Union[None, str, bool] = None,
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
 ) -> pd.DataFrame:
-    """Summarizes the number/fraction of cells of a certain category by a certain group.
+    """\
+    Summarizes the number/fraction of cells of a certain category by a certain group.
 
     Ignores NaN values.
 

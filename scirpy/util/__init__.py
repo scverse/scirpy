@@ -186,7 +186,9 @@ class _ParamsCheck:
                 )
             else:
                 # TODO #356: refer to docs explaining new schema
-                raise KeyError(f"No AIRR data found in adata.obsm['{airr_key}']. ")
+                raise KeyError(
+                    f"No AIRR data found in adata.obsm['{self._airr_key}']. "
+                )
 
 
 def _allclose_sparse(A, B, atol=1e-8):
