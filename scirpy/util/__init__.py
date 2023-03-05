@@ -42,37 +42,66 @@ class _ParamsCheck:
         Provide convenient accessors to the airr data that is stored somewhere in
         the input AnnData/MuData.
         """
-        if isinstance(data, MuData):
-            self.mdata = data  #: reference to MuData object, if available
-            self.adata = data.mod[
-                airr_mod
-            ]  #: reference to AnnData object of airr modality
-        else:
-            self.mdata = None
-            self.adata = data
+        self._data = data
+        self._airr_mod = airr_mod
+        self._airr_key = airr_key
+        self._chain_idx_key = chain_idx_key
 
         # check for outdated schema
-        self._check_airr_key_in_obsm(self.adata, airr_key)
+        self._check_airr_key_in_obsm()
+        self._check_chain_indices()
 
-        self.airr: ak.Array = cast(
-            ak.Array, self.adata.obsm[airr_key]
-        )  #: reference to the awkward array with AIRR information
+    def _check_chain_indices(self):
+        """Check if chain indices are available. Compute chain indices with default parameters
+        if not available."""
+        if (
+            self._chain_idx_key is not None
+            and self._chain_idx_key not in self.adata.obsm
+        ):
+            # import here to avoid circular import
+            from ..pp import index_chains
 
-        if chain_idx_key is not None:
-            if chain_idx_key not in self.adata.obsm:
-                logging.warning(
-                    f"No chain indices found under adata.obsm['{chain_idx_key}']. "
-                    "Running scirpy.pp.index_chains with default parameters. ",
-                )
-                # import here to avoid circular import
-                from ..pp import index_chains
+            logging.warning(
+                f"No chain indices found under adata.obsm['{self._chain_idx_key}']. "
+                "Running scirpy.pp.index_chains with default parameters. ",
+            )
 
-                index_chains(self.adata, airr_key=airr_key, key_added=chain_idx_key)
-            self.chain_indices: Optional[ak.Array] = cast(
-                ak.Array, self.adata.obsm[chain_idx_key]
-            )  #: Reference to chain indices, if available
+            index_chains(
+                self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key
+            )
+
+    @property
+    def chain_indices(self) -> ak.Array:
+        """Reference to the chain indices
+
+        Raises an AttributeError if chain indices are not available."""
+        if self._chain_idx_key is not None:
+            return cast(ak.Array, self.adata.obsm[self._chain_idx_key])
         else:
-            self.chain_indices = None
+            raise AttributeError("ParamsCheck was initialized without chain indices.")
+
+    @property
+    def airr(self) -> ak.Array:
+        """reference to the awkward array with AIRR information."""
+        return cast(ak.Array, self.adata.obsm[self._airr_key])
+
+    @property
+    def adata(self) -> AnnData:
+        """Reference to the AnnData object of the AIRR modality."""
+        if isinstance(self._data, AnnData):
+            return self._data
+        else:
+            return self._data.mod[self._airr_mod]
+
+    @property
+    def mdata(self) -> MuData:
+        """Reference to the MuData object.
+
+        Raises an attribute error if only AnnData is available."""
+        if isinstance(self._data, MuData):
+            return self._data
+        else:
+            raise AttributeError("ParamsCheck was initalized with only AnnData")
 
     @staticmethod
     def inject_param_docs(
@@ -118,7 +147,7 @@ class _ParamsCheck:
         return _doc_params(**doc, **kwargs)
 
     @staticmethod
-    def _check_schema_pre_v0_7(adata: AnnData):
+    def check_schema_pre_v0_7(adata: AnnData):
         """Raise an error if AnnData is in pre scirpy v0.7 format."""
         if (
             # I would actually only use `scirpy_version` for the check, but
@@ -138,18 +167,17 @@ class _ParamsCheck:
                 "convert it to a legacy format, and convert it again using the most recent version of scirpy. "
             )
 
-    @staticmethod
-    def _check_airr_key_in_obsm(adata: AnnData, airr_key):
+    def _check_airr_key_in_obsm(self):
         """Check if `adata` uses the latest scirpy schema.
 
         Raises ValueError if it doesn't"""
-        if airr_key not in adata.obsm:
+        if self._airr_key not in self.adata.obsm:
             # First check for very old version. We don't support it at all anymore.
-            _ParamsCheck._check_schema_pre_v0_7(adata)
-            if "IR_VJ_1_junction_aa" in adata.obs.columns:
+            _ParamsCheck.check_schema_pre_v0_7(self.adata)
+            if "IR_VJ_1_junction_aa" in self.adata.obs.columns:
                 # otherwise suggest to use `upgrade_schema`
                 raise ValueError(
-                    f"No AIRR data found in adata.obsm['{airr_key}']. "
+                    f"No AIRR data found in adata.obsm['{self._airr_key}']. "
                     "Your AnnData object might be using an outdated schema. "
                     "Scirpy has updated the format of `adata` in v0.13. AIRR data is now stored as an "
                     "awkward array in `adata.obsm['airr']`."

@@ -7,46 +7,48 @@ import awkward as ak
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
+
+from ..util import _ParamsCheck
 
 _VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 
 
+@_ParamsCheck.inject_param_docs()
 def airr(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     airr_variable: Union[str, Sequence[str]],
     chain: Union[ChainType, Sequence[ChainType]],
     *,
+    airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
 ) -> Union[pd.Series, pd.DataFrame]:
-    """Retrieve AIRR variables for each cell, given a specific chain.
+    """\
+    Retrieve AIRR variables for each cell, given a specific chain.
 
     Parameters
     ----------
-    adata
-        scirpy AnnData object
+    {adata}
     airr_variable
         One or multiple columns from the AIRR Rearrangment schema (see adata.var).
         If multiple values are specified, a dataframe will be returned.
     chain
         choose the recptor arm (VJ/VDJ) and if you want to retrieve the primary or secondary chain.
         If multiple chains are specified, a adataframe will be returned
-    airr_key
-        Key in `adata.obsm` under which the AwkwardArray with AIRR information is stored
-    chain_idx_key
-        Key in `adata.obsm` under which the chain indices are stored
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     Returns
     -------
     a pandas series or dataframe aligned to adata.obs. Contains missing values in places where a cell
     does not have the requested chain.
     """
+    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
     multiple_vars = not isinstance(airr_variable, str)
     multiple_chains = not isinstance(chain, str)
-
-    airr_data = cast(ak.Array, adata.obsm[airr_key])
-    chain_indices = cast(ak.Array, adata.obsm[chain_idx_key])
 
     if multiple_vars or multiple_chains:
         if not multiple_vars:
@@ -56,7 +58,7 @@ def airr(
         return pd.DataFrame(
             {
                 f"{tmp_chain}_{tmp_var}": _airr_col(
-                    airr_data, chain_indices, tmp_var, tmp_chain
+                    params.airr, params.chain_indices, tmp_var, tmp_chain
                 )
                 for tmp_chain, tmp_var in itertools.product(chain, airr_variable)
             },
@@ -64,7 +66,7 @@ def airr(
         )
     else:
         return pd.Series(
-            _airr_col(airr_data, chain_indices, airr_variable, chain),
+            _airr_col(params.airr, params.chain_indices, airr_variable, chain),
             index=adata.obs_names,
         )
 

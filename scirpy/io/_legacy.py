@@ -34,7 +34,7 @@ def upgrade_schema(adata: AnnData) -> AnnData:
             "Your AnnData object seems already up-to-date with scirpy v0.13"
         )
     # Raise error if very old schema
-    _ParamsCheck._check_schema_pre_v0_7(adata)
+    _ParamsCheck.check_schema_pre_v0_7(adata)
 
     airr_cells = _obs_schema_to_airr_cells(adata)
     tmp_adata = from_airr_cells(airr_cells)

@@ -107,7 +107,7 @@ def _get_distance_calculator(
 )
 def _ir_dist(
     adata: Union[AnnData, MuData],
-    reference: Optional[AnnData] = None,
+    reference: Optional[Union[AnnData, MuData]] = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,
@@ -122,7 +122,7 @@ def _ir_dist(
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
 ) -> Union[dict, None]:
-    """
+    """\
     Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
     :term:`CDR3` sequences and between all unique :term:`VDJ <Chain locus>`
     :term:`CDR3` sequences.
