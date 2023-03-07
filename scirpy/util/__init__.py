@@ -30,9 +30,11 @@ def _doc_params(**kwds):
 
 
 class _ParamsCheck:
+    TYPE = Union[AnnData, MuData, "_ParamsCheck"]
+
     def __init__(
         self,
-        data: Union[AnnData, MuData],
+        data: "_ParamsCheck.TYPE",
         airr_mod: str,
         airr_key: str,
         chain_idx_key: Optional[str] = None,
@@ -41,11 +43,21 @@ class _ParamsCheck:
 
         Provide convenient accessors to the airr data that is stored somewhere in
         the input AnnData/MuData.
+
+        ParamsCheck may be called with another ParamsCheck instance as `data` attribute. In that
+        case all attributes are taken from the existing ParamsCheck instance and all keyword attributes
+        are ignored.
         """
-        self._data = data
-        self._airr_mod = airr_mod
-        self._airr_key = airr_key
-        self._chain_idx_key = chain_idx_key
+        if isinstance(data, _ParamsCheck):
+            self._data = data._data
+            self._airr_mod = data._airr_mod
+            self._airr_key = data._airr_key
+            self._chain_idx_key = data._chain_idx_key
+        else:
+            self._data = data
+            self._airr_mod = airr_mod
+            self._airr_key = airr_key
+            self._chain_idx_key = chain_idx_key
 
         # check for outdated schema
         self._check_airr_key_in_obsm()

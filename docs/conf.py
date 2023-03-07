@@ -76,6 +76,8 @@ intersphinx_mapping = dict(
     sklearn=("https://scikit-learn.org/stable/", None),
     networkx=("https://networkx.org/documentation/networkx-1.10/", None),
     dandelion=("https://sc-dandelion.readthedocs.io/en/latest/", None),
+    muon=("https://muon.readthedocs.io/en/latest", None),
+    mudata=("https://mudata.readthedocs.io/en/latest/", None),
 )
 
 

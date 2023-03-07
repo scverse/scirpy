@@ -1,14 +1,15 @@
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 from pandas.core.arrays.categorical import Categorical
 
 from ..util import _is_na
 
 
 def clonotype_convergence(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     *,
     key_coarse: str,
     key_fine: str,

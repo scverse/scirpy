@@ -3,6 +3,7 @@ from typing import Sequence, Tuple, Union
 import awkward as ak
 import numpy as np
 from anndata import AnnData
+from mudata import MuData
 from scanpy import logging
 
 from .. import get
@@ -11,7 +12,7 @@ from ..util import _is_na, _ParamsCheck
 
 @_ParamsCheck.inject_param_docs()
 def chain_qc(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     *,
     airr_mod="airr",
     airr_key="airr",

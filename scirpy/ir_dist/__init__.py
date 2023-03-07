@@ -106,7 +106,7 @@ def _get_distance_calculator(
     metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat
 )
 def _ir_dist(
-    adata: Union[AnnData, MuData],
+    adata: _ParamsCheck.TYPE,
     reference: Optional[Union[AnnData, MuData]] = None,
     *,
     metric: MetricType = "identity",
