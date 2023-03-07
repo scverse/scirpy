@@ -2,8 +2,6 @@ from typing import Sequence, Tuple, Union
 
 import awkward as ak
 import numpy as np
-from anndata import AnnData
-from mudata import MuData
 from scanpy import logging
 
 from .. import get
@@ -12,7 +10,7 @@ from ..util import _is_na, _ParamsCheck
 
 @_ParamsCheck.inject_param_docs()
 def chain_qc(
-    adata: Union[AnnData, MuData],
+    adata: _ParamsCheck.TYPE,
     *,
     airr_mod="airr",
     airr_key="airr",
@@ -90,7 +88,7 @@ def chain_qc(
         dtype=f"<U{string_length}", shape=(params.adata.shape[0],)
     )
 
-    mask_has_ir = get._has_ir(params.adata, chain_idx_key)
+    mask_has_ir = get._has_ir(params)
     mask_multichain = mask_has_ir & ak.to_numpy(params.chain_indices["multichain"])
 
     vj_loci = get.airr(params, "locus", ["VJ_1", "VJ_2"]).values

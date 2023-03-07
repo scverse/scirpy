@@ -1,6 +1,7 @@
 import warnings
+from lib2to3.pgen2.token import OP
 from textwrap import dedent
-from typing import Any, Callable, Mapping, Optional, Union, cast
+from typing import Any, Callable, Mapping, Optional, Union, cast, overload
 
 import awkward as ak
 import numpy as np
@@ -32,11 +33,28 @@ def _doc_params(**kwds):
 class _ParamsCheck:
     TYPE = Union[AnnData, MuData, "_ParamsCheck"]
 
+    @overload
+    @staticmethod
+    def default(data: None) -> None:
+        ...
+
+    @overload
+    @staticmethod
+    def default(data: "_ParamsCheck") -> "_ParamsCheck":
+        ...
+
+    @staticmethod
+    def default(data):
+        """Initailize a ParamsCheck object with default keys. Returns None if `data` is None.
+        Particularly useful for testing."""
+        if data is not None:
+            return _ParamsCheck(data, "airr", "airr", "chain_indices")
+
     def __init__(
         self,
         data: "_ParamsCheck.TYPE",
-        airr_mod: str,
-        airr_key: str,
+        airr_mod: Optional[str] = None,
+        airr_key: Optional[str] = None,
         chain_idx_key: Optional[str] = None,
     ):
         """Perform a plausibility check of the input data for public scirpy functions.
@@ -95,7 +113,10 @@ class _ParamsCheck:
     @property
     def airr(self) -> ak.Array:
         """reference to the awkward array with AIRR information."""
-        return cast(ak.Array, self.adata.obsm[self._airr_key])
+        if self._airr_key is not None:
+            return cast(ak.Array, self.adata.obsm[self._airr_key])
+        else:
+            raise AttributeError("ParamsCheck was initialized wihtout airr information")
 
     @property
     def adata(self) -> AnnData:
@@ -103,7 +124,12 @@ class _ParamsCheck:
         if isinstance(self._data, AnnData):
             return self._data
         else:
-            return self._data.mod[self._airr_mod]
+            if self._airr_mod is not None:
+                return self._data.mod[self._airr_mod]
+            else:
+                raise AttributeError(
+                    "ParamsCheck was initalized with MuData, but without specifying a modality"
+                )
 
     @property
     def mdata(self) -> MuData:
@@ -182,7 +208,12 @@ class _ParamsCheck:
     def _check_airr_key_in_obsm(self):
         """Check if `adata` uses the latest scirpy schema.
 
-        Raises ValueError if it doesn't"""
+        Raises ValueError if it doesn't.
+
+        If `_airr_key` is not specified, we do not perform any check (could be a valid, non-scirpy anndata object)
+        """
+        if self._airr_key is None:
+            return
         if self._airr_key not in self.adata.obsm:
             # First check for very old version. We don't support it at all anymore.
             _ParamsCheck.check_schema_pre_v0_7(self.adata)

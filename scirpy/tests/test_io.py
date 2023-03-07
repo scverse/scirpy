@@ -20,7 +20,7 @@ from scirpy.io import (
     write_airr,
 )
 from scirpy.io._io import _cdr3_from_junction, _infer_locus_from_gene_names
-from scirpy.util import _is_na
+from scirpy.util import _is_na, _ParamsCheck
 
 from . import TESTDATA
 from .util import _normalize_df_types
@@ -912,7 +912,7 @@ def test_read_bd_per_cell_chain():
     assert cell1["VJ_1_c_call"] == "TRAC"
 
     # cell25 has no productive chains
-    assert ir.get._has_ir(adata["25", :])[0].item() is False
+    assert ir.get._has_ir(_ParamsCheck.default(adata["25", :]))[0].item() is False
     assert _is_na(cell25["VJ_1_locus"])
 
     assert cell39["VJ_1_locus"] == "TRG"

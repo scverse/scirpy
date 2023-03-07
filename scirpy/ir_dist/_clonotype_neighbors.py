@@ -5,21 +5,20 @@ from typing import Dict, Literal, Mapping, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
-from anndata import AnnData
 from scanpy import logging
 from tqdm.contrib.concurrent import process_map
 
 from ..get import _has_ir
 from ..get import airr as get_airr
-from ..util import tqdm
+from ..util import _ParamsCheck, tqdm
 from ._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
 
 class ClonotypeNeighbors:
     def __init__(
         self,
-        adata: AnnData,
-        adata2: Optional[AnnData] = None,
+        params: _ParamsCheck,
+        params2: Optional[_ParamsCheck] = None,
         *,
         receptor_arms=Literal["VJ", "VDJ", "all", "any"],
         dual_ir=Literal["primary_only", "all", "any"],
@@ -36,7 +35,7 @@ class ClonotypeNeighbors:
         self.match_columns = match_columns
         self.receptor_arms = receptor_arms
         self.dual_ir = dual_ir
-        self.distance_dict = adata.uns[distance_key]
+        self.distance_dict = params.adata.uns[distance_key]
         self.sequence_key = sequence_key
         self.n_jobs = n_jobs
         self.chunksize = chunksize
@@ -50,11 +49,11 @@ class ClonotypeNeighbors:
 
         # Initialize the DoubleLookupNeighborFinder and all lookup tables
         start = logging.info("Initializing lookup tables. ")  # type: ignore
-
-        self.cell_indices, self.clonotypes = self._make_clonotype_table(adata)
+        # TODO #356: deal with params!
+        self.cell_indices, self.clonotypes = self._make_clonotype_table(params)
         self._chain_count = self._make_chain_count(self.clonotypes)
-        if adata2 is not None:
-            self.cell_indices2, self.clonotypes2 = self._make_clonotype_table(adata2)
+        if params2 is not None:
+            self.cell_indices2, self.clonotypes2 = self._make_clonotype_table(params2)
             self._chain_count2 = self._make_chain_count(self.clonotypes2)
         else:
             self.cell_indices2, self.clonotypes2, self._chain_count2 = None, None, None
@@ -66,9 +65,11 @@ class ClonotypeNeighbors:
         self._add_lookup_tables()
         logging.hint("Done initializing lookup tables.", time=start)  # type: ignore
 
-    def _make_clonotype_table(self, adata) -> Tuple[Mapping, pd.DataFrame]:
+    def _make_clonotype_table(
+        self, params: _ParamsCheck
+    ) -> Tuple[Mapping, pd.DataFrame]:
         """Define 'preliminary' clonotypes based identical IR features."""
-        if not adata.obs_names.is_unique:
+        if not params.adata.obs_names.is_unique:
             raise ValueError("Obs names need to be unique!")
 
         airr_variables = [self.sequence_key]
@@ -81,14 +82,14 @@ class ClonotypeNeighbors:
             )
         ]
 
-        obs = get_airr(adata, airr_variables, chains)
+        obs = get_airr(params, airr_variables, chains)
         # remove entries without receptor (e.g. only non-productive chains) or no sequences
-        obs = obs.loc[
-            _has_ir(adata, "chain_indices") & np.any(~pd.isnull(obs), axis=1), :
-        ]
+        obs = obs.loc[_has_ir(params) & np.any(~pd.isnull(obs), axis=1), :]
         if self.match_columns is not None:
             obs = obs.join(
-                adata.obs.loc[:, self.match_columns], validate="one_to_one", how="inner"
+                params.adata.obs.loc[:, self.match_columns],
+                validate="one_to_one",
+                how="inner",
             )
 
         # Converting nans to str("nan"), as we want string dtype

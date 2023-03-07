@@ -8,7 +8,7 @@ import scipy.sparse
 import scirpy as ir
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from scirpy.ir_dist.metrics import DistanceCalculator
-from scirpy.util import _is_symmetric
+from scirpy.util import _is_symmetric, _ParamsCheck
 
 from .fixtures import adata_cdr3, adata_cdr3_2  # NOQA
 from .util import _squarify
@@ -347,8 +347,8 @@ def test_compute_distances(
         adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3,
-        adata2,
+        _ParamsCheck.default(adata_cdr3),
+        _ParamsCheck.default(adata2),
         distance_key=distance_key,
         sequence_key="junction_aa",
         n_jobs=n_jobs,
@@ -411,8 +411,8 @@ def test_compute_distances_2(
         key_added="ir_dist_aa_custom",
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3_2,
-        adata2,
+        _ParamsCheck.default(adata_cdr3_2),
+        _ParamsCheck.default(adata2),
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         distance_key="ir_dist_aa_custom",
@@ -436,7 +436,7 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     with pytest.raises(ValueError):
         cn = ClonotypeNeighbors(
-            adata_cdr3,
+            _ParamsCheck.default(adata_cdr3),
             receptor_arms="all",
             dual_ir="primary_only",
             distance_key="ir_dist_aa_custom",
@@ -522,8 +522,8 @@ def test_compute_distances_second_anndata(
         query, reference, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        query,
-        reference,
+        _ParamsCheck.default(query),
+        _ParamsCheck.default(reference),
         distance_key=distance_key,
         sequence_key="junction_aa",
         **ctn_kwargs,

@@ -128,9 +128,12 @@ def _obs_context(adata, **kwargs):
         adata.obs = orig_obs
 
 
-def _has_ir(adata, chain_idx_key="chain_indices"):
+def _has_ir(params: _ParamsCheck):
     """Return a mask of all cells that have a valid IR configuration"""
-    chain_idx = adata.obsm[chain_idx_key]
     return ak.to_numpy(
-        (ak.count(chain_idx["VJ"], axis=1) + ak.count(chain_idx["VDJ"], axis=1)) > 0
+        (
+            ak.count(params.chain_indices["VJ"], axis=1)
+            + ak.count(params.chain_indices["VDJ"], axis=1)
+        )
+        > 0
     )

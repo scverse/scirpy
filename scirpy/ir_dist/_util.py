@@ -176,7 +176,7 @@ class ReverseLookupTable:
 
 class DoubleLookupNeighborFinder:
     def __init__(
-        self, feature_table: pd.DataFrame, feature_table2: pd.DataFrame = None
+        self, feature_table: pd.DataFrame, feature_table2: Optional[pd.DataFrame] = None
     ):
         """
         A datastructure to efficiently retrieve distances based on different features.

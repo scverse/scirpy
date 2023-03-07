@@ -288,7 +288,7 @@ def define_clonotype_clusters(
     )
 
     ctn = ClonotypeNeighbors(
-        params.adata,
+        params,
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
@@ -500,15 +500,13 @@ def clonotype_network(
     random_state
         Random seed set before computing the layout.
     {airr_mod}
-    {airr_key}
-    {chain_idx_key}
 
     Returns
     -------
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates.
     """
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = _ParamsCheck(adata, airr_mod)
     if size_aware and layout != "components":
         raise ValueError(
             "The `size_aware` option is only compatible with the `components` layout."
@@ -655,8 +653,6 @@ def clonotype_network_igraph(
     adata: _ParamsCheck.TYPE,
     basis="clonotype_network",
     airr_mod="airr",
-    airr_key="airr",
-    chain_idx_key="chain_indices",
 ) -> Tuple[ig.Graph, ig.Layout]:
     """
     Get an `igraph` object representing the clonotype network.
@@ -670,8 +666,6 @@ def clonotype_network_igraph(
     basis
         Key in `adata.obsm` where the network layout is stored.
     {airr_mod}
-    {airr_key}
-    {chain_idx_key}
 
     Returns
     -------
@@ -682,7 +676,7 @@ def clonotype_network_igraph(
     """
     from ..util.graph import igraph_from_sparse_matrix
 
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = _ParamsCheck(adata, airr_mod)
 
     try:
         clonotype_key = params.adata.uns[basis]["clonotype_key"]
