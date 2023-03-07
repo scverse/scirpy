@@ -1,10 +1,9 @@
 """Convert IrCells to AnnData and vice-versa"""
-from typing import Iterable, List, Union, cast
+from typing import Iterable, List, cast
 
 import awkward as ak
 import pandas as pd
 from anndata import AnnData
-from mudata import MuData
 
 from .. import __version__
 from ..util import _doc_params, _ParamsCheck
@@ -60,7 +59,7 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
 
 @_ParamsCheck.inject_param_docs()
 def to_airr_cells(
-    adata: Union[AnnData, MuData], *, airr_mod: str = "airr", airr_key: str = "airr"
+    adata: _ParamsCheck.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr"
 ) -> List[AirrCell]:
     """\
     Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`

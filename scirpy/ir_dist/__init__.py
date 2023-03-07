@@ -107,7 +107,7 @@ def _get_distance_calculator(
 )
 def _ir_dist(
     adata: _ParamsCheck.TYPE,
-    reference: Optional[Union[AnnData, MuData]] = None,
+    reference: Optional[_ParamsCheck.TYPE] = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,

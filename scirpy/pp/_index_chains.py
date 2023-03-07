@@ -3,7 +3,6 @@ from types import MappingProxyType
 from typing import Any, Dict, List, Mapping, Sequence, cast
 
 import awkward as ak
-from anndata import AnnData
 from scanpy import logging
 
 from ..io._datastructures import AirrCell
@@ -14,7 +13,7 @@ SCIRPY_DUAL_IR_MODEL = "scirpy_dual_ir_v0.13"
 
 @_ParamsCheck.inject_param_docs()
 def index_chains(
-    adata: AnnData,
+    adata: _ParamsCheck.TYPE,
     *,
     productive: bool = True,
     require_junction_aa: bool = True,

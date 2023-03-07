@@ -13,7 +13,14 @@ import pandas as pd
 from airr import RearrangementSchema
 from anndata import AnnData
 
-from ..util import _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
+from ..util import (
+    _doc_params,
+    _is_na2,
+    _is_true,
+    _is_true2,
+    _ParamsCheck,
+    _translate_dna_to_protein,
+)
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
@@ -614,7 +621,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     return from_airr_cells(bcr_cells.values(), **kwargs)
 
 
-def write_airr(adata: AnnData, filename: Union[str, Path], **kwargs) -> None:
+def write_airr(adata: _ParamsCheck.TYPE, filename: Union[str, Path], **kwargs) -> None:
     """Export :term:`IR` data to :term:`AIRR` Rearrangement `tsv` format.
 
     Parameters
@@ -646,7 +653,7 @@ def write_airr(adata: AnnData, filename: Union[str, Path], **kwargs) -> None:
     writer.close()
 
 
-def to_dandelion(adata: AnnData, **kwargs):
+def to_dandelion(adata: _ParamsCheck.TYPE, **kwargs):
     """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters

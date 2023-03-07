@@ -10,8 +10,8 @@ from ..util import _ParamsCheck
 
 @_ParamsCheck.inject_param_docs()
 def merge_airr(
-    adata: AnnData,
-    adata2: AnnData,
+    adata: _ParamsCheck.TYPE,
+    adata2: _ParamsCheck.TYPE,
     *,
     airr_mod="airr",
     airr_mod2="airr",
