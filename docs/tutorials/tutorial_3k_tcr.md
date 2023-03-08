@@ -357,8 +357,12 @@ The size of each dot refers to the number of cells with the same receptor config
 Categorical variables can be visualized as pie charts. 
 <!-- #endraw -->
 
+```python tags=[]
+mdata.obs.groupby("gex:source", dropna=False).size()
+```
+
 ```python
-ir.pl.clonotype_network(
+_ = ir.pl.clonotype_network(
     mdata, color="gex:source", base_size=20, label_fontsize=9, panel_size=(7, 7)
 )
 ```

@@ -404,7 +404,7 @@ def _fetch_features_mudata(
                     how="left",
                 )
 
-        return obs
+    return obs
 
 
 def _plot_clonotype_network_panel(
@@ -487,7 +487,9 @@ def _plot_clonotype_network_panel(
     # plot categorical variables
     if isinstance(color, str) and color in obs and is_categorical_dtype(obs[color]):
         pie_colors = []
-        values = obs[color].values
+        values = obs[color]
+        values = values.cat.add_categories("nan")
+        values = values.fillna("nan").values
         # cycle colors for categories with many values instead of
         # coloring them in grey
         if palette is None:
@@ -498,6 +500,8 @@ def _plot_clonotype_network_panel(
             obs_key=color,
             palette=palette,
         )
+        if "nan" not in cat_colors:
+            cat_colors["nan"] = "lightgrey"
         for dist_idx in coords["dist_idx"]:
             cell_ids = cell_indices[dist_idx]
             unique, counts = np.unique(
