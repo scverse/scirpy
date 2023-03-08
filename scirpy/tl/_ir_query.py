@@ -9,7 +9,7 @@ from scanpy import logging
 
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from ..util import _doc_params, _is_na, tqdm
+from ..util import _is_na, _ParamsCheck, tqdm
 from ._clonotypes import (
     _common_doc,
     _common_doc_parallelism,
@@ -73,14 +73,14 @@ def _reduce_json(values: np.ndarray):
     return json.dumps(Counter(values))
 
 
-@_doc_params(
+@_ParamsCheck.inject_param_docs(
     common_doc=_common_doc,
     paralellism=_common_doc_parallelism,
     clonotype_definition=_doc_clonotype_definition.split("3.")[0].strip(),
 )
 def ir_query(
-    adata: AnnData,
-    reference: AnnData,
+    adata: _ParamsCheck.TYPE,
+    reference: _ParamsCheck.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
@@ -93,6 +93,12 @@ def ir_query(
     inplace: bool = True,
     n_jobs: Optional[int] = None,
     chunksize: int = 2000,
+    airr_mod: str = "airr",
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
+    airr_mod_ref: str = "airr",
+    airr_key_ref: str = "airr",
+    chain_idx_key_ref: str = "chain_indices",
 ) -> Optional[dict]:
     """\
     Query a referece database for matching immune cell receptors.
@@ -114,8 +120,7 @@ def ir_query(
 
     Parameters
     ----------
-    adata
-        annotated data matrix
+    {adata}
     reference
         Another :class:`~anndata.AnnData` object, can be either a second dataset with
         :term:`IR` information or a epitope database. Must be the same object used for
@@ -147,6 +152,15 @@ def ir_query(
         If True, store the result in `adata.uns`. Otherwise return a dictionary
         with the results.
     {paralellism}
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+    airr_mod_ref
+        Like `airr_mod`, but for `reference`.
+    airr_key_ref
+        Like `airr_key`, but for `reference`.
+    chain_idx_key_ref
+        Like `chain_idx_key`, but for `reference`.
 
     Returns
     -------
@@ -160,9 +174,15 @@ def ir_query(
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
     """
+    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params_ref = (
+        _ParamsCheck(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
+        if reference is not None
+        else None
+    )
     match_columns, distance_key, key_added = _validate_parameters(
-        adata,
-        reference,
+        params.adata,
+        params_ref.adata if params_ref is not None else None,
         receptor_arms,
         dual_ir,
         match_columns,
@@ -173,8 +193,8 @@ def ir_query(
     )
 
     ctn = ClonotypeNeighbors(
-        adata,
-        reference,
+        params,
+        params_ref,
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
@@ -193,12 +213,13 @@ def ir_query(
         "cell_indices_reference": ctn.cell_indices2,
     }
     if inplace:
-        adata.uns[key_added] = clonotype_distance_res
+        params.adata.uns[key_added] = clonotype_distance_res
         logging.info(f'Stored IR distance matrix in `adata.uns["{key_added}"]`.')  # type: ignore
     else:
         return clonotype_distance_res
 
 
+# TODO #356: figure out best API for this
 def ir_query_annotate_df(
     adata: AnnData,
     reference: AnnData,
@@ -281,6 +302,7 @@ def ir_query_annotate_df(
     )
 
 
+# TODO #356: figure out best API for this
 def ir_query_annotate(
     adata: AnnData,
     reference: AnnData,

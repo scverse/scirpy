@@ -3,12 +3,13 @@ from typing import List, Literal, Union
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 
 from ..util import _is_na, _normalize_counts
 
 
 def _clip_and_count(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     target_col: str,
     *,
     groupby: Union[str, None, List[str]] = None,
@@ -52,8 +53,12 @@ def _clip_and_count(
         return clipped_count
 
 
+# TODO #356:
+# Not sure if this should operate on the airr anndata (i.e. use paramscheck) or just
+# use mudata and allow to specify the modality via `target_col`
+# same applies to alpha diversity, repertoire overlap, ...
 def clonal_expansion(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     *,
     target_col: str = "clone_id",
     expanded_in: Union[str, None] = None,
@@ -101,7 +106,7 @@ def clonal_expansion(
 
 
 def summarize_clonal_expansion(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     groupby: str,
     *,
     target_col: str = "clone_id",

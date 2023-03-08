@@ -3,13 +3,50 @@ from typing import Callable, Optional, Union
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 from scanpy import logging
 
 from ..util import _is_na
 
 
+def _shannon_entropy(counts):
+    """Normalized shannon entropy according to
+    https://math.stackexchange.com/a/945172
+    """
+    freqs = counts / np.sum(counts)
+    np.testing.assert_almost_equal(np.sum(freqs), 1)
+
+    if len(freqs) == 1:
+        # the formula below is not defined for n==1
+        return 0
+    else:
+        return -np.sum((freqs * np.log(freqs)) / np.log(len(freqs)))
+
+
+def _dxx(counts, *, percentage):
+    """
+    D50/DXX according to https://patents.google.com/patent/WO2012097374A1/en
+
+    Parameters
+    ----------
+    percentage
+        Percentage of J
+    """
+    freqs = counts / np.sum(counts)
+    np.testing.assert_almost_equal(np.sum(freqs), 1)
+
+    freqs = np.sort(freqs)[::-1]
+    prop, i = 0, 0
+
+    while prop < (percentage / 100):
+        prop += freqs[i]
+        i += 1
+
+    return i / len(freqs) * 100
+
+
 def alpha_diversity(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     groupby: str,
     *,
     target_col: str = "clone_id",
@@ -73,41 +110,6 @@ def alpha_diversity(
     Depending on the value of inplace returns a DataFrame with the alpha diversity
     for each group or adds a column to `adata.obs`.
     """
-
-    def _shannon_entropy(counts):
-        """Normalized shannon entropy according to
-        https://math.stackexchange.com/a/945172
-        """
-        freqs = counts / np.sum(counts)
-        np.testing.assert_almost_equal(np.sum(freqs), 1)
-
-        if len(freqs) == 1:
-            # the formula below is not defined for n==1
-            return 0
-        else:
-            return -np.sum((freqs * np.log(freqs)) / np.log(len(freqs)))
-
-    def _dxx(counts, *, percentage):
-        """
-        D50/DXX according to https://patents.google.com/patent/WO2012097374A1/en
-
-        Parameters
-        ----------
-        percentage
-            Percentage of J
-        """
-        freqs = counts / np.sum(counts)
-        np.testing.assert_almost_equal(np.sum(freqs), 1)
-
-        freqs = np.sort(freqs)[::-1]
-        prop, i = 0, 0
-
-        while prop < (percentage / 100):
-            prop += freqs[i]
-            i += 1
-
-        return i / len(freqs) * 100
-
     ir_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
     clono_counts = (
         ir_obs.groupby([groupby, target_col], observed=True)

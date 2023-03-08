@@ -49,7 +49,7 @@ class ClonotypeNeighbors:
 
         # Initialize the DoubleLookupNeighborFinder and all lookup tables
         start = logging.info("Initializing lookup tables. ")  # type: ignore
-        # TODO #356: deal with params!
+
         self.cell_indices, self.clonotypes = self._make_clonotype_table(params)
         self._chain_count = self._make_chain_count(self.clonotypes)
         if params2 is not None:

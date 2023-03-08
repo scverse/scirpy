@@ -6,9 +6,13 @@ import scipy.stats
 from scanpy import logging
 from statsmodels.stats.multitest import fdrcorrection
 
-from ..util import _is_na, tqdm
+from ..util import _is_na, _ParamsCheck, tqdm
 from ..util._negative_binomial import fit_nbinom
 from ..util.graph import _get_igraph_from_adjacency
+
+# TODO #356: need to think of best API here to support both anndata and mudata
+
+_ParamsCheck.inject_param_docs()
 
 
 def clonotype_modularity(
@@ -62,8 +66,7 @@ def clonotype_modularity(
 
     Parameters
     ----------
-    adata
-        annotated data matrix
+    {adata}
     target_col
         Column in `adata.obs` containing the clonotype annotation.
     connectivity_key

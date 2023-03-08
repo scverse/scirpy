@@ -4,19 +4,14 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from mudata import MuData
 from scipy.stats import fisher_exact
 
-from ..util import deprecated
 from ._repertoire_overlap import repertoire_overlap
 
 
-@deprecated(
-    "Consider using `tl.clonotype_modularity` instead. If `clonotype_modularity` "
-    "does not cover your use-case, please create an issue on GitHub to let us know "
-    "such that we can take it into account! (https://github.com/scverse/scirpy/issues)"
-)
 def clonotype_imbalance(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     replicate_col: str,
     groupby: str,
     case_label: str,

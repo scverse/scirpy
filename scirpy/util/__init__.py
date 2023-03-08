@@ -31,6 +31,24 @@ def _doc_params(**kwds):
 
 
 class _ParamsCheck:
+    """\
+    Perform a plausibility check of the input data for public scirpy functions.
+
+    Provide convenient accessors to the airr data that is stored somewhere in
+    the input AnnData/MuData.
+
+    ParamsCheck may be called with another ParamsCheck instance as `data` attribute. In that
+    case all attributes are taken from the existing ParamsCheck instance and all keyword attributes
+    are ignored.
+
+    Parameters
+    ----------
+    {adata}
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+    """
+
     TYPE = Union[AnnData, MuData, "_ParamsCheck"]
 
     @overload
@@ -57,15 +75,6 @@ class _ParamsCheck:
         airr_key: Optional[str] = None,
         chain_idx_key: Optional[str] = None,
     ):
-        """Perform a plausibility check of the input data for public scirpy functions.
-
-        Provide convenient accessors to the airr data that is stored somewhere in
-        the input AnnData/MuData.
-
-        ParamsCheck may be called with another ParamsCheck instance as `data` attribute. In that
-        case all attributes are taken from the existing ParamsCheck instance and all keyword attributes
-        are ignored.
-        """
         if isinstance(data, _ParamsCheck):
             self._data = data._data
             self._airr_mod = data._airr_mod
@@ -83,9 +92,13 @@ class _ParamsCheck:
 
     def _check_chain_indices(self):
         """Check if chain indices are available. Compute chain indices with default parameters
-        if not available."""
+        if not available.
+
+        Skip if no airr key has been defined.
+        """
         if (
-            self._chain_idx_key is not None
+            self._airr_key is not None
+            and self._chain_idx_key is not None
             and self._chain_idx_key not in self.adata.obsm
         ):
             # import here to avoid circular import
@@ -234,6 +247,9 @@ class _ParamsCheck:
                 )
 
 
+_ParamsCheck = _ParamsCheck.inject_param_docs()(_ParamsCheck)
+
+
 def _allclose_sparse(A, B, atol=1e-8):
     """Check if two sparse matrices are almost equal.
 
@@ -304,9 +320,9 @@ _is_false = np.vectorize(
 
 def _normalize_counts(
     obs: pd.DataFrame, normalize: Union[bool, str], default_col: Union[None, str] = None
-) -> pd.Series:
+) -> np.ndarray:
     """
-    Produces a pd.Series with group sizes that can be used to normalize
+    Produces an array with group sizes that can be used to normalize
     counts in a DataFrame.
 
     Parameters
@@ -326,7 +342,9 @@ def _normalize_counts(
         raise ValueError("No colname specified in either `normalize` or `default_col")
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
-    return 1 / obs.groupby(normalize_col)[normalize_col].transform("count").values
+    return 1 / cast(
+        np.ndarray, obs.groupby(normalize_col)[normalize_col].transform("count").values
+    )
 
 
 def _read_to_str(path):

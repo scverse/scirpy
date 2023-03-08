@@ -3,6 +3,7 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 from scipy.cluster import hierarchy as sc_hierarchy
 from scipy.spatial import distance as sc_distance
 
@@ -10,7 +11,7 @@ from ..util import _is_na, _normalize_counts
 
 
 def repertoire_overlap(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     groupby: str,
     *,
     target_col: str = "clone_id",

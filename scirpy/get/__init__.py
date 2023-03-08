@@ -58,7 +58,10 @@ def airr(
         return pd.DataFrame(
             {
                 f"{tmp_chain}_{tmp_var}": _airr_col(
-                    params.airr, params.chain_indices, tmp_var, tmp_chain
+                    params.airr,
+                    params.chain_indices,
+                    tmp_var,
+                    cast(ChainType, tmp_chain),
                 )
                 for tmp_chain, tmp_var in itertools.product(chain, airr_variable)
             },
@@ -66,7 +69,9 @@ def airr(
         )
     else:
         return pd.Series(
-            _airr_col(params.airr, params.chain_indices, airr_variable, chain),
+            _airr_col(
+                params.airr, params.chain_indices, airr_variable, cast(ChainType, chain)
+            ),
             index=params.adata.obs_names,
         )
 
@@ -78,7 +83,7 @@ def _airr_col(
     chain: ChainType,
 ) -> np.ndarray:
     """called by `airr()` to retrieve a single column"""
-    chain = chain.upper()
+    chain = chain.upper()  # type: ignore
     if chain not in _VALID_CHAINS:
         raise ValueError(
             f"Invalid value for chain. Valid values are {', '.join(_VALID_CHAINS)}"

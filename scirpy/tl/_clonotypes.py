@@ -438,8 +438,6 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    airr_key="airr",
-    chain_idx_key="chain_indices",
 ) -> Union[None, pd.DataFrame]:
     """
     Computes the layout of the clonotype network.
