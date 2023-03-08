@@ -115,7 +115,6 @@ def group_abundance(
             has_ir=_has_ir(_ParamsCheck.default(adata)).astype(str)
         )
 
-    print(ir_obs.columns)
     if target_col not in ir_obs.columns:
         raise ValueError("`target_col` not found in obs`")
 

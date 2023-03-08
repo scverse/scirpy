@@ -91,16 +91,11 @@ mdata.obs
 
 <!-- #endraw -->
 
-<!-- #region -->
 ## Preprocess Transcriptomics data
 
-TODO #356: link to best practice book and new scverse tutorials
-
-
-Transcriptomics data needs to be filtered and preprocessed as with any other single-cell dataset.
-We recommend following the [scanpy tutorial](https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html)
-and the best practice paper by [Luecken et al.](https://www.embopress.org/doi/10.15252/msb.20188746)
-<!-- #endregion -->
+Gene expression (GEX) data needs to be filtered and preprocessed as with any other single-cell dataset.
+For this tutorial, we perform minimal preprocessing for demonstration purposes. For a real dataset, we recommend following the [scverse tutorials](https://scverse.org/learn/) 
+and the [single-cell best practice book](https://sc-best-practices.org/). 
 
 ```python
 sc.pp.filter_genes(mdata["gex"], min_cells=10)
@@ -147,12 +142,14 @@ mapping = {
 mdata["gex"].obs["cluster"] = [mapping[x] for x in mdata["gex"].obs["cluster_orig"]]
 ```
 
+Now that we filtered obs and var of the GEX data, we need to propagate those changes back to the `MuData` object. 
+
 ```python
 mdata.update()
 ```
 
 Let's inspect the UMAP plots. The first three panels show the UMAP plot colored by sample, patient and cluster.
-We don't observe any clustering of samples or patients that could hint at batch effects.
+We don't observe any obvious clustering of samples or patients that could hint at batch effects.
 
 The last three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
 We can confirm that the markers correspond to their respective cluster labels.
@@ -197,34 +194,23 @@ about the Immune cell-receptor compositions to `adata.obs`. We can visualize it 
 mdata
 ```
 
-```python tags=[]
-mdata.obs["gex:test"] = "test"
-```
-
-```python tags=[]
-mdata.obs
-```
-
 ```python
 ir.tl.chain_qc(mdata)
-# TODO #356 shall this be called implicitly?
+# TODO #356: should chain_qc write the columns also to mdata.obs directly? 
+# e.g. params.update_obs(["explicit", "list", "of", "columns"]) that does nothing if we aren't working on mudata
 mdata.update()
 ```
 
 As expected, the dataset contains only α/β T-cell receptors:
 
 ```python
-mdata
-```
-
-```python
-ax = ir.pl.group_abundance(
+_ = ir.pl.group_abundance(
     mdata, groupby="airr:receptor_subtype", target_col="gex:source"
 )
 ```
 
 ```python
-ax = ir.pl.group_abundance(mdata, groupby="airr:chain_pairing", target_col="gex:source")
+_ = ir.pl.group_abundance(mdata, groupby="airr:chain_pairing", target_col="gex:source")
 ```
 
 Indeed, in this dataset, ~6% of cells have more than
@@ -248,16 +234,7 @@ Next, we visualize the :term:`Multichain-cells <Multichain-cell>` on the UMAP pl
 <!-- #endraw -->
 
 ```python
-mdata
-```
-
-```python
-# TOTO #356: the wu2020_3k should have umap coordinates in mdata rather than the gex modality
-mdata.obsm["X_umap"] = mdata["gex"].obsm["X_umap"]
-```
-
-```python
-mu.pl.embedding(mdata, basis="gex:umap", color="airr:chain_pairing", groups="airr:multichain")
+mu.pl.embedding(mdata, basis="gex:umap", color="airr:chain_pairing", groups="multichain")
 ```
 
 ```python

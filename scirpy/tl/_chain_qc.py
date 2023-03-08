@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union, cast
 
 import awkward as ak
 import numpy as np
@@ -91,8 +91,8 @@ def chain_qc(
     mask_has_ir = get._has_ir(params)
     mask_multichain = mask_has_ir & ak.to_numpy(params.chain_indices["multichain"])
 
-    vj_loci = get.airr(params, "locus", ["VJ_1", "VJ_2"]).values
-    vdj_loci = get.airr(params, "locus", ["VDJ_1", "VDJ_2"]).values
+    vj_loci = cast(np.ndarray, get.airr(params, "locus", ["VJ_1", "VJ_2"]).values)
+    vdj_loci = cast(np.ndarray, get.airr(params, "locus", ["VDJ_1", "VDJ_2"]).values)
 
     # Build masks for receptor chains
     has_tra = (vj_loci == "TRA").any(axis=1)
@@ -141,9 +141,9 @@ def chain_qc(
 
     if inplace:
         col_receptor_type, col_receptor_subtype, col_chain_pairing = key_added
-        adata.obs[col_receptor_type] = res_receptor_type
-        adata.obs[col_receptor_subtype] = res_receptor_subtype
-        adata.obs[col_chain_pairing] = res_chain_pairing
+        params.adata.obs[col_receptor_type] = res_receptor_type
+        params.adata.obs[col_receptor_subtype] = res_receptor_subtype
+        params.adata.obs[col_chain_pairing] = res_chain_pairing
     else:
         return (res_receptor_type, res_receptor_subtype, res_chain_pairing)
 

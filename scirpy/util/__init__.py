@@ -138,7 +138,12 @@ class _ParamsCheck:
             return self._data
         else:
             if self._airr_mod is not None:
-                return self._data.mod[self._airr_mod]
+                try:
+                    return self._data.mod[self._airr_mod]
+                except KeyError:
+                    raise KeyError(
+                        f"There is no AIRR modality in MuData under key '{self._airr_mod}'"
+                    )
             else:
                 raise AttributeError(
                     "ParamsCheck was initalized with MuData, but without specifying a modality"

@@ -6,7 +6,7 @@ import awkward as ak
 from scanpy import logging
 
 from ..io._datastructures import AirrCell
-from ..util import _is_na2, _ParamsCheck
+from ..util import _is_na2, _ParamsCheck, tqdm
 
 SCIRPY_DUAL_IR_MODEL = "scirpy_dual_ir_v0.13"
 
@@ -72,7 +72,7 @@ def index_chains(
             logging.warning(
                 "No expression information available. Cannot rank chains by expression. "
             )  # type: ignore
-    for cell_chains in params.airr:
+    for cell_chains in tqdm(params.airr):
         cell_chains = cast(List[ak.Record], cell_chains)
 
         # Split chains into VJ and VDJ chains
