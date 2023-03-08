@@ -18,7 +18,7 @@ from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
 
 from ..tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
-from ..util import _ParamsCheck
+from ..util import DataHandler
 from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
 
@@ -27,9 +27,9 @@ COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
 )
 
 
-@_ParamsCheck.inject_param_docs(clonotype_network=_doc_clonotype_network)
+@DataHandler.inject_param_docs(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     *,
     color: Union[str, Sequence[str], None] = None,
     basis: str = "clonotype_network",
@@ -165,7 +165,7 @@ def clonotype_network(
 
     """
     # The plotting code borrows a lot from scanpy.plotting._tools.paga._paga_graph.
-    params = _ParamsCheck(adata, airr_mod)
+    params = DataHandler(adata, airr_mod)
     params.strings_to_categoricals()
     try:
         clonotype_key = params.adata.uns[basis]["clonotype_key"]

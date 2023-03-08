@@ -6,7 +6,7 @@ from anndata import AnnData
 from mudata import MuData
 
 from ..get import _has_ir
-from ..util import _is_na, _normalize_counts, _ParamsCheck
+from ..util import DataHandler, _is_na, _normalize_counts
 
 
 def _group_abundance(
@@ -112,7 +112,7 @@ def group_abundance(
         ir_obs = ir_obs.copy().assign(
             # TODO I didn't expose the params check keyword arguments in this function
             # because the whole function needs to be rewritten.
-            has_ir=_has_ir(_ParamsCheck.default(adata)).astype(str)
+            has_ir=_has_ir(DataHandler.default(adata)).astype(str)
         )
 
     if target_col not in ir_obs.columns:

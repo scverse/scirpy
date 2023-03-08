@@ -9,15 +9,15 @@ import pandas as pd
 from anndata import AnnData
 from mudata import MuData
 
-from ..util import _ParamsCheck
+from ..util import DataHandler
 
 _VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def airr(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     airr_variable: Union[str, Sequence[str]],
     chain: Union[ChainType, Sequence[ChainType]],
     *,
@@ -46,7 +46,7 @@ def airr(
     a pandas series or dataframe aligned to adata.obs. Contains missing values in places where a cell
     does not have the requested chain.
     """
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     multiple_vars = not isinstance(airr_variable, str)
     multiple_chains = not isinstance(chain, str)
 
@@ -133,7 +133,7 @@ def _obs_context(adata, **kwargs):
         adata.obs = orig_obs
 
 
-def _has_ir(params: _ParamsCheck):
+def _has_ir(params: DataHandler):
     """Return a mask of all cells that have a valid IR configuration"""
     return ak.to_numpy(
         (

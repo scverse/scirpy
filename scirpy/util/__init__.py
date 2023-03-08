@@ -30,15 +30,17 @@ def _doc_params(**kwds):
     return dec
 
 
-class _ParamsCheck:
+class DataHandler:
     """\
-    Perform a plausibility check of the input data for public scirpy functions.
+    Transparent access to airr modality in both AnnData and MuData objects.
 
-    Provide convenient accessors to the airr data that is stored somewhere in
+    Performs a plausibility check of the input data for public scirpy functions.
+
+    Provides convenient accessors to the airr data that is stored somewhere in
     the input AnnData/MuData.
 
-    ParamsCheck may be called with another ParamsCheck instance as `data` attribute. In that
-    case all attributes are taken from the existing ParamsCheck instance and all keyword attributes
+    DataHandler may be called with another DataHandler instance as `data` attribute. In that
+    case all attributes are taken from the existing DataHandler instance and all keyword attributes
     are ignored.
 
     Parameters
@@ -49,7 +51,7 @@ class _ParamsCheck:
     {chain_idx_key}
     """
 
-    TYPE = Union[AnnData, MuData, "_ParamsCheck"]
+    TYPE = Union[AnnData, MuData, "DataHandler"]
 
     @overload
     @staticmethod
@@ -58,24 +60,24 @@ class _ParamsCheck:
 
     @overload
     @staticmethod
-    def default(data: "_ParamsCheck") -> "_ParamsCheck":
+    def default(data: "DataHandler") -> "DataHandler":
         ...
 
     @staticmethod
     def default(data):
-        """Initailize a ParamsCheck object with default keys. Returns None if `data` is None.
+        """Initailize a DataHandler object with default keys. Returns None if `data` is None.
         Particularly useful for testing."""
         if data is not None:
-            return _ParamsCheck(data, "airr", "airr", "chain_indices")
+            return DataHandler(data, "airr", "airr", "chain_indices")
 
     def __init__(
         self,
-        data: "_ParamsCheck.TYPE",
+        data: "DataHandler.TYPE",
         airr_mod: Optional[str] = None,
         airr_key: Optional[str] = None,
         chain_idx_key: Optional[str] = None,
     ):
-        if isinstance(data, _ParamsCheck):
+        if isinstance(data, DataHandler):
             self._data = data._data
             self._airr_mod = data._airr_mod
             self._airr_key = data._airr_key
@@ -121,7 +123,7 @@ class _ParamsCheck:
         if self._chain_idx_key is not None:
             return cast(ak.Array, self.adata.obsm[self._chain_idx_key])
         else:
-            raise AttributeError("ParamsCheck was initialized without chain indices.")
+            raise AttributeError("DataHandler was initialized without chain indices.")
 
     @property
     def airr(self) -> ak.Array:
@@ -129,7 +131,7 @@ class _ParamsCheck:
         if self._airr_key is not None:
             return cast(ak.Array, self.adata.obsm[self._airr_key])
         else:
-            raise AttributeError("ParamsCheck was initialized wihtout airr information")
+            raise AttributeError("DataHandler was initialized wihtout airr information")
 
     @property
     def adata(self) -> AnnData:
@@ -146,7 +148,7 @@ class _ParamsCheck:
                     )
             else:
                 raise AttributeError(
-                    "ParamsCheck was initalized with MuData, but without specifying a modality"
+                    "DataHandler was initalized with MuData, but without specifying a modality"
                 )
 
     @property
@@ -157,7 +159,7 @@ class _ParamsCheck:
         if isinstance(self._data, MuData):
             return self._data
         else:
-            raise AttributeError("ParamsCheck was initalized with only AnnData")
+            raise AttributeError("DataHandler was initalized with only AnnData")
 
     def strings_to_categoricals(self):
         """Convert strings to categoricals. If MuData is not defined, perform this on AnnData"""
@@ -241,7 +243,7 @@ class _ParamsCheck:
             return
         if self._airr_key not in self.adata.obsm:
             # First check for very old version. We don't support it at all anymore.
-            _ParamsCheck.check_schema_pre_v0_7(self.adata)
+            DataHandler.check_schema_pre_v0_7(self.adata)
             if "IR_VJ_1_junction_aa" in self.adata.obs.columns:
                 # otherwise suggest to use `upgrade_schema`
                 raise ValueError(
@@ -259,7 +261,7 @@ class _ParamsCheck:
                 )
 
 
-_ParamsCheck = _ParamsCheck.inject_param_docs()(_ParamsCheck)
+DataHandler = DataHandler.inject_param_docs()(DataHandler)
 
 
 def _allclose_sparse(A, B, atol=1e-8):

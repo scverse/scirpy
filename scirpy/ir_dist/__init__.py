@@ -9,7 +9,7 @@ from scanpy import logging
 from scipy.sparse import csr_matrix
 
 from ..get import airr as get_airr
-from ..util import _doc_params, _is_na, _ParamsCheck, deprecated
+from ..util import DataHandler, _doc_params, _is_na, deprecated
 from . import metrics
 
 
@@ -102,12 +102,12 @@ def _get_distance_calculator(
     return dist_calc
 
 
-@_ParamsCheck.inject_param_docs(
+@DataHandler.inject_param_docs(
     metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat
 )
 def _ir_dist(
-    adata: _ParamsCheck.TYPE,
-    reference: Optional[_ParamsCheck.TYPE] = None,
+    adata: DataHandler.TYPE,
+    reference: Optional[DataHandler.TYPE] = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,
@@ -181,9 +181,9 @@ def _ir_dist(
         "VDJ": dict(),
         "params": {"metric": str(metric), "sequence": sequence, "cutoff": cutoff},
     }
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     params_ref = (
-        _ParamsCheck(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
+        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
         if reference is not None
         else None
     )

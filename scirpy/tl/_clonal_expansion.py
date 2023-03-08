@@ -54,7 +54,7 @@ def _clip_and_count(
 
 
 # TODO #356:
-# Not sure if this should operate on the airr anndata (i.e. use paramscheck) or just
+# Not sure if this should operate on the airr anndata (i.e. use DataHandler) or just
 # use mudata and allow to specify the modality via `target_col`
 # same applies to alpha diversity, repertoire overlap, ...
 def clonal_expansion(

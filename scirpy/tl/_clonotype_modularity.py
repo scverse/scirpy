@@ -6,13 +6,13 @@ import scipy.stats
 from scanpy import logging
 from statsmodels.stats.multitest import fdrcorrection
 
-from ..util import _is_na, _ParamsCheck, tqdm
+from ..util import DataHandler, _is_na, tqdm
 from ..util._negative_binomial import fit_nbinom
 from ..util.graph import _get_igraph_from_adjacency
 
 # TODO #356: need to think of best API here to support both anndata and mudata
 
-_ParamsCheck.inject_param_docs()
+DataHandler.inject_param_docs()
 
 
 def clonotype_modularity(

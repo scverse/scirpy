@@ -256,7 +256,7 @@ Utility functions: `util`
 .. autosummary::
    :toctree: ./generated
 
-   util._ParamsCheck
+   util.DataHandler
    util.graph.layout_components
    util.graph.layout_fr_size_aware
    util.graph.igraph_from_sparse_matrix

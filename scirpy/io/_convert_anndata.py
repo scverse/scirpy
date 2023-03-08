@@ -6,7 +6,7 @@ import pandas as pd
 from anndata import AnnData
 
 from .. import __version__
-from ..util import _doc_params, _ParamsCheck
+from ..util import DataHandler, _doc_params
 from ._datastructures import AirrCell
 from ._util import _IOLogger, doc_working_model
 
@@ -57,9 +57,9 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
     return adata
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def to_airr_cells(
-    adata: _ParamsCheck.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr"
+    adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr"
 ) -> List[AirrCell]:
     """\
     Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
@@ -79,7 +79,7 @@ def to_airr_cells(
     cells = []
     logger = _IOLogger()
 
-    params = _ParamsCheck(adata, airr_mod, airr_key)
+    params = DataHandler(adata, airr_mod, airr_key)
 
     for (cell_id, row), chains in zip(params.adata.obs.iterrows(), params.airr):
         tmp_cell = AirrCell(cast(str, cell_id), logger=logger)

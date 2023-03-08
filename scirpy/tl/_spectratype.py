@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 
 from ..get import airr as get_airr
-from ..util import _ParamsCheck
+from ..util import DataHandler
 from ._group_abundance import _group_abundance
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def spectratype(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     chain: Union[
         Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
         Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
@@ -62,7 +62,7 @@ def spectratype(
             Please use the `chain` attribute to choose `VJ_1`, `VDJ_1`, `VJ_2`, or `VDJ_2` chain(s). 
             """
         )
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
     # Get airr and remove NAs
     airr_df = get_airr(params, [cdr3_col], chain).dropna(how="any")

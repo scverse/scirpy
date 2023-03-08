@@ -10,15 +10,15 @@ from tqdm.contrib.concurrent import process_map
 
 from ..get import _has_ir
 from ..get import airr as get_airr
-from ..util import _ParamsCheck, tqdm
+from ..util import DataHandler, tqdm
 from ._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
 
 class ClonotypeNeighbors:
     def __init__(
         self,
-        params: _ParamsCheck,
-        params2: Optional[_ParamsCheck] = None,
+        params: DataHandler,
+        params2: Optional[DataHandler] = None,
         *,
         receptor_arms=Literal["VJ", "VDJ", "all", "any"],
         dual_ir=Literal["primary_only", "all", "any"],
@@ -66,7 +66,7 @@ class ClonotypeNeighbors:
         logging.hint("Done initializing lookup tables.", time=start)  # type: ignore
 
     def _make_clonotype_table(
-        self, params: _ParamsCheck
+        self, params: DataHandler
     ) -> Tuple[Mapping, pd.DataFrame]:
         """Define 'preliminary' clonotypes based identical IR features."""
         if not params.adata.obs_names.is_unique:

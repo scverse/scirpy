@@ -5,13 +5,13 @@ from anndata import AnnData
 
 from ..io._convert_anndata import from_airr_cells, to_airr_cells
 from ..io._datastructures import AirrCell
-from ..util import _ParamsCheck
+from ..util import DataHandler
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def merge_airr(
-    adata: _ParamsCheck.TYPE,
-    adata2: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
+    adata2: DataHandler.TYPE,
     *,
     airr_mod="airr",
     airr_mod2="airr",

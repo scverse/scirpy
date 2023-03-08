@@ -12,7 +12,7 @@ from scanpy import logging
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from ..pp import ir_dist
-from ..util import _ParamsCheck
+from ..util import DataHandler
 from ..util.graph import igraph_from_sparse_matrix, layout_components
 
 _common_doc = """\
@@ -185,7 +185,7 @@ def _validate_parameters(
     return match_columns, distance_key, key_added
 
 
-@_ParamsCheck.inject_param_docs(
+@DataHandler.inject_param_docs(
     common_doc=_common_doc,
     within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
@@ -193,7 +193,7 @@ def _validate_parameters(
     paralellism=_common_doc_parallelism,
 )
 def define_clonotype_clusters(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
@@ -274,7 +274,7 @@ def define_clonotype_clusters(
 
     {return_values}
     """
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     within_group, distance_key, key_added = _validate_parameters(
         params.adata,
         None,
@@ -349,7 +349,7 @@ def define_clonotype_clusters(
         )
 
 
-@_ParamsCheck.inject_param_docs(
+@DataHandler.inject_param_docs(
     common_doc=_common_doc,
     within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
@@ -357,7 +357,7 @@ def define_clonotype_clusters(
     paralellism=_common_doc_parallelism,
 )
 def define_clonotypes(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     *,
     key_added: str = "clone_id",
     distance_key: Union[str, None] = None,
@@ -397,7 +397,7 @@ def define_clonotypes(
     {return_values}
 
     """
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     if distance_key is None and "ir_dist_nt_identity" not in params.adata.uns:
         # For the case of "clonotypes" we want to compute the distance automatically
         # if it doesn't exist yet. Since it's just a sparse ID matrix, this
@@ -418,9 +418,9 @@ def define_clonotypes(
     )
 
 
-@_ParamsCheck.inject_param_docs(clonotype_network=_doc_clonotype_network)
+@DataHandler.inject_param_docs(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "nt",
     metric: Literal[
@@ -504,7 +504,7 @@ def clonotype_network(
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates.
     """
-    params = _ParamsCheck(adata, airr_mod)
+    params = DataHandler(adata, airr_mod)
     if size_aware and layout != "components":
         raise ValueError(
             "The `size_aware` option is only compatible with the `components` layout."
@@ -646,9 +646,9 @@ def _graph_from_coordinates(
     return coords, adj_mat
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def clonotype_network_igraph(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     basis="clonotype_network",
     airr_mod="airr",
 ) -> Tuple[ig.Graph, ig.Layout]:
@@ -674,7 +674,7 @@ def clonotype_network_igraph(
     """
     from ..util.graph import igraph_from_sparse_matrix
 
-    params = _ParamsCheck(adata, airr_mod)
+    params = DataHandler(adata, airr_mod)
 
     try:
         clonotype_key = params.adata.uns[basis]["clonotype_key"]

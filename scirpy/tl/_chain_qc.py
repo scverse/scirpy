@@ -5,12 +5,12 @@ import numpy as np
 from scanpy import logging
 
 from .. import get
-from ..util import _is_na, _ParamsCheck
+from ..util import DataHandler, _is_na
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def chain_qc(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     *,
     airr_mod="airr",
     airr_key="airr",
@@ -77,7 +77,7 @@ def chain_qc(
     `adata.obs` or returns a tuple with three numpy arrays containing
     the annotations.
     """
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
     # initalize result arrays
     string_length = len("multichain")
@@ -149,7 +149,7 @@ def chain_qc(
 
 
 def _chain_pairing(
-    params: _ParamsCheck,
+    params: DataHandler,
     mask_ambiguous: np.ndarray,
     mask_has_ir: np.ndarray,
     mask_multichain: np.ndarray,

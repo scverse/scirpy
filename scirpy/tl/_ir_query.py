@@ -9,7 +9,7 @@ from scanpy import logging
 
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from ..util import _is_na, _ParamsCheck, tqdm
+from ..util import DataHandler, _is_na, tqdm
 from ._clonotypes import (
     _common_doc,
     _common_doc_parallelism,
@@ -73,14 +73,14 @@ def _reduce_json(values: np.ndarray):
     return json.dumps(Counter(values))
 
 
-@_ParamsCheck.inject_param_docs(
+@DataHandler.inject_param_docs(
     common_doc=_common_doc,
     paralellism=_common_doc_parallelism,
     clonotype_definition=_doc_clonotype_definition.split("3.")[0].strip(),
 )
 def ir_query(
-    adata: _ParamsCheck.TYPE,
-    reference: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
+    reference: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
@@ -174,9 +174,9 @@ def ir_query(
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
     """
-    params = _ParamsCheck(adata, airr_mod, airr_key, chain_idx_key)
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     params_ref = (
-        _ParamsCheck(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
+        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
         if reference is not None
         else None
     )

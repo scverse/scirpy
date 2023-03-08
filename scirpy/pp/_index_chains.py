@@ -6,14 +6,14 @@ import awkward as ak
 from scanpy import logging
 
 from ..io._datastructures import AirrCell
-from ..util import _is_na2, _ParamsCheck, tqdm
+from ..util import DataHandler, _is_na2, tqdm
 
 SCIRPY_DUAL_IR_MODEL = "scirpy_dual_ir_v0.13"
 
 
-@_ParamsCheck.inject_param_docs()
+@DataHandler.inject_param_docs()
 def index_chains(
-    adata: _ParamsCheck.TYPE,
+    adata: DataHandler.TYPE,
     *,
     productive: bool = True,
     require_junction_aa: bool = True,
@@ -60,7 +60,7 @@ def index_chains(
     Nothing, but adds a dataframe to `adata.obsm[chain_indices]`
     """
     chain_index_list = []
-    params = _ParamsCheck(adata, airr_mod, airr_key)
+    params = DataHandler(adata, airr_mod, airr_key)
 
     # only warn if those fields are in the key (i.e. this should give a warning if those are missing with
     # default settings. If the user specifies their own dictionary, they are on their own)
