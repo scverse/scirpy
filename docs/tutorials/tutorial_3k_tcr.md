@@ -60,6 +60,18 @@ The dataset ships with the `scirpy` package. We can conveniently load it from th
 mdata = mu.read_h5mu("../../scirpy/datasets/_processing_scripts/wu2020_3k.h5mu")
 ```
 
+```python tags=[]
+mdata = mu.read_h5mu("../../scirpy/datasets/_processing_scripts/wu2020.h5mu")
+```
+
+```python tags=[]
+mdata = mu.pp.sample_obs(mdata, frac=0.05).copy()
+```
+
+```python tags=[]
+mdata
+```
+
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 .. note:: 
 
@@ -139,7 +151,7 @@ mapping = {
     "8.5-Mitosis": "other",
     "8.6-KLRB1": "other",
 }
-mdata["gex"].obs["cluster"] = [mapping[x] for x in mdata["gex"].obs["cluster_orig"]]
+mdata["gex"].obs["cluster"] = mdata["gex"].obs["cluster_orig"].map(mapping)
 ```
 
 Now that we filtered obs and var of the GEX data, we need to propagate those changes back to the `MuData` object. 
@@ -154,12 +166,19 @@ We don't observe any obvious clustering of samples or patients that could hint a
 The last three panels show the UMAP colored by the T cell markers _CD8_, _CD4_, and _FOXP3_.
 We can confirm that the markers correspond to their respective cluster labels.
 
-```python
+```python tags=[]
 mu.pl.embedding(
     mdata,
     basis="gex:umap",
-    color=["gex:sample", "gex:patient", "gex:cluster", "CD8A", "CD4", "FOXP3"],
-    ncols=2,
+    color=["gex:sample", "gex:patient", "gex:cluster"], 
+    ncols=3,
+    wspace=0.7,
+)
+mu.pl.embedding(
+    mdata,
+    basis="gex:umap",
+    color=["CD8A", "CD4", "FOXP3"],
+    ncols=3,
     wspace=0.7,
 )
 ```
@@ -221,10 +240,10 @@ print(
     "Fraction of cells with more than one pair of TCRs: {:.2f}".format(
         np.sum(
             mdata.obs["airr:chain_pairing"].isin(
-                ["extra VJ", "extra VDJ", "two full chains"]
+                ["extra VJ", "extra VDJ", "two full chains", "multichain"]
             )
         )
-        / mdata.n_obs
+        / mdata["airr"].n_obs
     )
 )
 ```
@@ -427,6 +446,10 @@ ir.tl.define_clonotype_clusters(
 )
 ```
 
+```python tags=[]
+mdata.update()
+```
+
 ```python
 # find clonotypes with more than one `clonotype_same_v`
 ct_different_v = (
@@ -463,7 +486,7 @@ to `adata.obs` and overlay it on the UMAP plot.
 <!-- #endraw -->
 
 ```python
-ir.tl.clonal_expansion(mdata)
+ir.tl.clonal_expansion(mdata, target_col="airr:clone_id")
 ```
 
 `clonal_expansion` refers to expansion categories, i.e singleton clonotypes, clonotypes with 2 cells and more than 2 cells.
@@ -473,8 +496,12 @@ The `clonotype_size` refers to the absolute number of cells in a clonotype.
 mdata.update_obs()
 ```
 
+```python tags=[]
+mdata.obs
+```
+
 ```python
-mu.pl.embedding(mdata, basis="gex:umap", color=["airr:clonal_expansion", "airr:clone_id_size"])
+mu.pl.embedding(mdata, basis="gex:umap", color=["clonal_expansion", "airr:clone_id_size"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -483,7 +510,7 @@ in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting fun
 <!-- #endraw -->
 
 ```python
-ir.pl.clonal_expansion(mdata, groupby="gex:cluster", clip_at=4, normalize=False)
+ir.pl.clonal_expansion(mdata, target_col="airr:clone_id", groupby="gex:cluster", clip_at=4, normalize=False)
 ```
 
 The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection
@@ -491,7 +518,7 @@ for a certain, reactive T-cell clone. It, therefore, makes sense that CD8+ effec
 have the largest fraction of expanded clonotypes.
 
 ```python
-ir.pl.clonal_expansion(mdata, "gex:cluster")
+ir.pl.clonal_expansion(mdata, "gex:cluster", target_col="airr:clone_id")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -608,8 +635,12 @@ ir.pl.vdj_usage(
 :func:`~scirpy.pl.spectratype` plots give us information about the length distribution of CDR3 regions.
 <!-- #endraw -->
 
+```python tags=[]
+mdata.obs
+```
+
 ```python
-ir.pl.spectratype(mdata, color="airr:cluster", viztype="bar", fig_kws={"dpi": 120})
+ir.pl.spectratype(mdata, color="gex:cluster", viztype="bar", fig_kws={"dpi": 120})
 ```
 
 The same chart visualized as "ridge"-plot:
@@ -617,7 +648,7 @@ The same chart visualized as "ridge"-plot:
 ```python
 ir.pl.spectratype(
     mdata,
-    color="airr:cluster",
+    color="gex:cluster",
     viztype="curve",
     curve_layout="shifted",
     fig_kws={"dpi": 120},

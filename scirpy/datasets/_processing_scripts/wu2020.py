@@ -1,3 +1,15 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: -all
+#     notebook_metadata_filter: -kernelspec
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.14.4
+# ---
+
 # +
 # %load_ext autoreload
 # %autoreload 2
@@ -95,10 +107,7 @@ adatas, adatas_airr = zip(*adatas)
 
 adata = anndata.concat(adatas)
 
-# work around https://github.com/scikit-hep/awkward/issues/2239
-from functools import reduce
-
-adata_airr = reduce(lambda a, b: anndata.concat([a, b], join="outer"), adatas_airr)
+adata_airr = anndata.concat(adatas_airr)
 
 # inverse umap X -coordinate
 adata.obsm["X_umap_orig"][:, 0] = (
@@ -112,6 +121,8 @@ mdata
 adata.obs
 
 adata_airr.obs
+
+mdata.obs
 
 sc.pl.embedding(adata, "umap_orig", color="cluster_orig", legend_loc="on data")
 

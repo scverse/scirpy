@@ -116,10 +116,10 @@ def index_chains(
             including_unknown=True,
         )
 
-    adata.obsm[key_added] = chain_index_awk  # type: ignore
+    params.adata.obsm[key_added] = chain_index_awk  # type: ignore
 
     # store metadata in .uns
-    adata.uns[key_added] = {
+    params.adata.uns[key_added] = {
         "model": SCIRPY_DUAL_IR_MODEL,  # can be used to distinguish different receptor models that may be added in the future.
         "productive": productive,
         "require_junction_aa": require_junction_aa,

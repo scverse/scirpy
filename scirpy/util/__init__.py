@@ -159,6 +159,13 @@ class _ParamsCheck:
         else:
             raise AttributeError("ParamsCheck was initalized with only AnnData")
 
+    def strings_to_categoricals(self):
+        """Convert strings to categoricals. If MuData is not defined, perform this on AnnData"""
+        try:
+            self.mdata.strings_to_categoricals()
+        except AttributeError:
+            self.adata.strings_to_categoricals()
+
     @staticmethod
     def inject_param_docs(
         **kwargs: str,

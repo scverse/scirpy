@@ -12,12 +12,13 @@ from cycler import Cycler, cycler
 from matplotlib import patheffects, rcParams, ticker
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap, is_color_like
+from mudata import MuData
 from pandas.api.types import is_categorical_dtype
 from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
 
 from ..tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
-from ..util import _doc_params
+from ..util import _ParamsCheck
 from ..util.graph import _distance_to_connectivity
 from .styling import _get_colors, _init_ax
 
@@ -26,9 +27,9 @@ COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
 )
 
 
-@_doc_params(clonotype_network=_doc_clonotype_network)
+@_ParamsCheck.inject_param_docs(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
-    adata: AnnData,
+    adata: _ParamsCheck.TYPE,
     *,
     color: Union[str, Sequence[str], None] = None,
     basis: str = "clonotype_network",
@@ -49,7 +50,7 @@ def clonotype_network(
     show_legend: Optional[bool] = None,
     show_size_legend: bool = True,
     palette: Union[str, Sequence[str], Cycler, None] = None,
-    cmap: Union[str, Colormap] = None,
+    cmap: Union[str, Colormap, None] = None,
     edges_color: Union[str, None] = None,
     edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
     edges: bool = True,
@@ -58,6 +59,7 @@ def clonotype_network(
     title: Optional[str] = None,
     ax: Optional[Axes] = None,
     fig_kws: Optional[dict] = None,
+    airr_mod: str = "airr",
 ) -> plt.Axes:
     """\
     Plot the :term:`Clonotype` network.
@@ -78,8 +80,7 @@ def clonotype_network(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix.
+    {adata}
     color
         Keys for annotations of observations/cells or variables/genes,
         e.g. `patient` or `CD8A`.
@@ -155,6 +156,7 @@ def clonotype_network(
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call
         if no `ax` is specified.
+    {airr_mod}
 
     Returns
     -------
@@ -163,24 +165,27 @@ def clonotype_network(
 
     """
     # The plotting code borrows a lot from scanpy.plotting._tools.paga._paga_graph.
-    adata._sanitize()
+    params = _ParamsCheck(adata, airr_mod)
+    params.strings_to_categoricals()
     try:
-        clonotype_key = adata.uns[basis]["clonotype_key"]
-        base_size = adata.uns[basis]["base_size"] if base_size is None else base_size
+        clonotype_key = params.adata.uns[basis]["clonotype_key"]
+        base_size = (
+            params.adata.uns[basis]["base_size"] if base_size is None else base_size
+        )
         size_power = (
-            adata.uns[basis]["size_power"] if size_power is None else size_power
+            params.adata.uns[basis]["size_power"] if size_power is None else size_power
         )
     except KeyError:
         raise KeyError(
             f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
         )
-    if f"X_{basis}" not in adata.obsm_keys():
+    if f"X_{basis}" not in params.adata.obsm_keys():
         raise KeyError(
             f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
         )
-    if clonotype_key not in adata.obs.columns:
+    if clonotype_key not in params.adata.obs.columns:
         raise KeyError(f"{clonotype_key} not found in adata.obs.")
-    if clonotype_key not in adata.uns:
+    if clonotype_key not in params.adata.uns:
         raise KeyError(f"{clonotype_key} not found in adata.uns.")
 
     if use_raw is None:
@@ -195,8 +200,8 @@ def clonotype_network(
         else:
             show_legend = True
 
-    clonotype_res = adata.uns[clonotype_key]
-    coords, adj_mat = _graph_from_coordinates(adata, clonotype_key)
+    clonotype_res = params.adata.uns[clonotype_key]
+    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
     nx_graph = nx.Graph(_distance_to_connectivity(adj_mat))
     # in 2.6 networkx added functionality to draw self-loops. We don't want
     # them plotted, so we remove them here
@@ -297,6 +302,87 @@ def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_d
 
     xmin, xmax = size_legend_ax.get_xlim()
     size_legend_ax.set_xlim(xmin - 0.15, xmax + 0.5)
+
+
+def _fetch_features_mudata(
+    data: MuData, key: str, use_raw: Optional[bool], layer: Optional[str]
+):
+    """Fetch a feature from the corresponding modality.
+
+    Taken from https://github.com/scverse/muon/blob/ed96be64b07957152382e9acc1c48010e94ee615/muon/_core/plot.py#L94
+    """
+    # {'rna': [True, False], 'prot': [False, True]}
+    keys_in_mod = {m: [key in data.mod[m].var_names for key in keys] for m in data.mod}
+
+    # .raw slots might have exclusive var_names
+    if use_raw is None or use_raw:
+        for i, k in enumerate(keys):
+            for m in data.mod:
+                if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
+                    keys_in_mod[m][i] = k in data.mod[m].raw.var_names
+
+    # e.g. color="rna:CD8A" - especially relevant for mdata.axis == -1
+    mod_key_modifier: dict[str, str] = dict()
+    for i, k in enumerate(keys):
+        mod_key_modifier[k] = k
+        for m in data.mod:
+            if not keys_in_mod[m][i]:
+                k_clean = k
+                if k.startswith(f"{m}:"):
+                    k_clean = k.split(":", 1)[1]
+                    mod_key_modifier[k] = k_clean
+
+                keys_in_mod[m][i] = k_clean in data.mod[m].var_names
+                if use_raw is None or use_raw:
+                    if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
+                        keys_in_mod[m][i] = k_clean in data.mod[m].raw.var_names
+
+    for m in data.mod:
+        if np.sum(keys_in_mod[m]) > 0:
+            mod_keys = np.array(keys)[keys_in_mod[m]]
+            mod_keys = np.array([mod_key_modifier[k] for k in mod_keys])
+
+            if use_raw is None or use_raw:
+                if data.mod[m].raw is not None:
+                    keysidx = data.mod[m].raw.var.index.get_indexer_for(mod_keys)
+                    fmod_adata = AnnData(
+                        X=data.mod[m].raw.X[:, keysidx],
+                        var=pd.DataFrame(index=mod_keys),
+                        obs=data.mod[m].obs,
+                    )
+                else:
+                    if use_raw:
+                        warnings.warn(
+                            f"Attibute .raw is None for the modality {m}, using .X instead"
+                        )
+                    fmod_adata = data.mod[m][:, mod_keys]
+            else:
+                fmod_adata = data.mod[m][:, mod_keys]
+
+            if layer is not None:
+                if isinstance(layer, Dict):
+                    m_layer = layer.get(m, None)
+                    if m_layer is not None:
+                        x = data.mod[m][:, mod_keys].layers[m_layer]
+                        fmod_adata.X = x.todense() if issparse(x) else x
+                        if use_raw:
+                            warnings.warn(
+                                f"Layer='{layer}' superseded use_raw={use_raw}"
+                            )
+                elif layer in data.mod[m].layers:
+                    x = data.mod[m][:, mod_keys].layers[layer]
+                    fmod_adata.X = x.todense() if issparse(x) else x
+                    if use_raw:
+                        warnings.warn(f"Layer='{layer}' superseded use_raw={use_raw}")
+                else:
+                    warnings.warn(
+                        f"Layer {layer} is not present for the modality {m}, using count matrix instead"
+                    )
+            x = fmod_adata.X.toarray() if issparse(fmod_adata.X) else fmod_adata.X
+            obs = obs.join(
+                pd.DataFrame(x, columns=mod_keys, index=fmod_adata.obs_names),
+                how="left",
+            )
 
 
 def _plot_clonotype_network_panel(
