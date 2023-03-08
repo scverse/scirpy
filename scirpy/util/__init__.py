@@ -180,6 +180,10 @@ class DataHandler:
                 )
 
     @property
+    def has_mdata(self) -> bool:
+        return isinstance(self._data, MuData)
+
+    @property
     def mdata(self) -> MuData:
         """Reference to the MuData object.
 

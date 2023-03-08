@@ -1,10 +1,12 @@
-from typing import Optional, Sequence, Tuple, Union
+import warnings
+from typing import Dict, Optional, Sequence, Tuple, Union, cast
 
 import matplotlib
 import matplotlib.colors
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import pandas as pd
 import scanpy as sc
 import scipy.sparse as sp
 from anndata import AnnData
@@ -12,10 +14,10 @@ from cycler import Cycler, cycler
 from matplotlib import patheffects, rcParams, ticker
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap, is_color_like
-from mudata import MuData
 from pandas.api.types import is_categorical_dtype
 from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
+from scipy.sparse import issparse
 
 from ..tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
 from ..util import DataHandler
@@ -56,7 +58,7 @@ def clonotype_network(
     edges: bool = True,
     edges_width: float = 0.4,
     frameon: Optional[bool] = None,
-    title: Optional[str] = None,
+    title: Optional[Union[str, Sequence[str]]] = None,
     ax: Optional[Axes] = None,
     fig_kws: Optional[dict] = None,
     airr_mod: str = "airr",
@@ -188,17 +190,18 @@ def clonotype_network(
     if clonotype_key not in params.adata.uns:
         raise KeyError(f"{clonotype_key} not found in adata.uns.")
 
-    if use_raw is None:
-        use_raw = adata.raw is not None
-
     if frameon is None:
         frameon = settings._frameon
 
     if show_legend is None:
-        if color in adata.obs.columns and is_categorical_dtype(adata.obs[color]):
-            show_legend = adata.obs[color].nunique() < 50
-        else:
-            show_legend = True
+        show_legend = True
+        if color is not None:
+            try:
+                color_col = params.get_obs(color)
+                if is_categorical_dtype(color_col) and color_col.nunique() >= 50:
+                    show_legend = False
+            except KeyError:
+                pass
 
     clonotype_res = params.adata.uns[clonotype_key]
     coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
@@ -225,7 +228,7 @@ def clonotype_network(
     ax.set_yticks([])
 
     _plot_clonotype_network_panel(
-        adata,
+        params,
         ax,
         legend_width=legend_width,
         color=color,
@@ -304,89 +307,108 @@ def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_d
     size_legend_ax.set_xlim(xmin - 0.15, xmax + 0.5)
 
 
+# TODO: maybe this can become a public function in muon instead
 def _fetch_features_mudata(
-    data: MuData, key: str, use_raw: Optional[bool], layer: Optional[str]
-):
+    params: DataHandler,
+    keys: Sequence[str],
+    use_raw: Optional[bool] = None,
+    layer: Optional[str] = None,
+) -> pd.DataFrame:
     """Fetch a feature from the corresponding modality.
 
     Taken from https://github.com/scverse/muon/blob/ed96be64b07957152382e9acc1c48010e94ee615/muon/_core/plot.py#L94
     """
-    # {'rna': [True, False], 'prot': [False, True]}
-    keys_in_mod = {m: [key in data.mod[m].var_names for key in keys] for m in data.mod}
+    data = params.mdata
+    obs = data.obs.loc[params.adata.obs.index.values]
 
-    # .raw slots might have exclusive var_names
-    if use_raw is None or use_raw:
-        for i, k in enumerate(keys):
-            for m in data.mod:
-                if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
-                    keys_in_mod[m][i] = k in data.mod[m].raw.var_names
+    # Fetch respective features
+    if not all([key in obs for key in keys]):
+        # {'rna': [True, False], 'prot': [False, True]}
+        keys_in_mod = {
+            m: [key in data.mod[m].var_names for key in keys] for m in data.mod
+        }
 
-    # e.g. color="rna:CD8A" - especially relevant for mdata.axis == -1
-    mod_key_modifier: dict[str, str] = dict()
-    for i, k in enumerate(keys):
-        mod_key_modifier[k] = k
-        for m in data.mod:
-            if not keys_in_mod[m][i]:
-                k_clean = k
-                if k.startswith(f"{m}:"):
-                    k_clean = k.split(":", 1)[1]
-                    mod_key_modifier[k] = k_clean
-
-                keys_in_mod[m][i] = k_clean in data.mod[m].var_names
-                if use_raw is None or use_raw:
+        # .raw slots might have exclusive var_names
+        if use_raw is None or use_raw:
+            for i, k in enumerate(keys):
+                for m in data.mod:
                     if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
-                        keys_in_mod[m][i] = k_clean in data.mod[m].raw.var_names
+                        keys_in_mod[m][i] = k in data.mod[m].raw.var_names
 
-    for m in data.mod:
-        if np.sum(keys_in_mod[m]) > 0:
-            mod_keys = np.array(keys)[keys_in_mod[m]]
-            mod_keys = np.array([mod_key_modifier[k] for k in mod_keys])
+        # e.g. color="rna:CD8A" - especially relevant for mdata.axis == -1
+        mod_key_modifier: dict[str, str] = dict()
+        for i, k in enumerate(keys):
+            mod_key_modifier[k] = k
+            for m in data.mod:
+                if not keys_in_mod[m][i]:
+                    k_clean = k
+                    if k.startswith(f"{m}:"):
+                        k_clean = k.split(":", 1)[1]
+                        mod_key_modifier[k] = k_clean
 
-            if use_raw is None or use_raw:
-                if data.mod[m].raw is not None:
-                    keysidx = data.mod[m].raw.var.index.get_indexer_for(mod_keys)
-                    fmod_adata = AnnData(
-                        X=data.mod[m].raw.X[:, keysidx],
-                        var=pd.DataFrame(index=mod_keys),
-                        obs=data.mod[m].obs,
-                    )
-                else:
-                    if use_raw:
-                        warnings.warn(
-                            f"Attibute .raw is None for the modality {m}, using .X instead"
+                    keys_in_mod[m][i] = k_clean in data.mod[m].var_names
+                    if use_raw is None or use_raw:
+                        if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
+                            keys_in_mod[m][i] = k_clean in data.mod[m].raw.var_names
+
+        for m in data.mod:
+            if np.sum(keys_in_mod[m]) > 0:
+                mod_keys = np.array(keys)[keys_in_mod[m]]
+                mod_keys = np.array([mod_key_modifier[k] for k in mod_keys])
+
+                if use_raw is None or use_raw:
+                    if data.mod[m].raw is not None:
+                        keysidx = data.mod[m].raw.var.index.get_indexer_for(mod_keys)
+                        fmod_adata = AnnData(
+                            X=data.mod[m].raw.X[:, keysidx],
+                            var=pd.DataFrame(index=mod_keys),
+                            obs=data.mod[m].obs,
                         )
+                    else:
+                        if use_raw:
+                            warnings.warn(
+                                f"Attibute .raw is None for the modality {m}, using .X instead"
+                            )
+                        fmod_adata = data.mod[m][:, mod_keys]
+                else:
                     fmod_adata = data.mod[m][:, mod_keys]
-            else:
-                fmod_adata = data.mod[m][:, mod_keys]
 
-            if layer is not None:
-                if isinstance(layer, Dict):
-                    m_layer = layer.get(m, None)
-                    if m_layer is not None:
-                        x = data.mod[m][:, mod_keys].layers[m_layer]
+                if layer is not None:
+                    if isinstance(layer, Dict):
+                        m_layer = layer.get(m, None)
+                        if m_layer is not None:
+                            x = data.mod[m][:, mod_keys].layers[m_layer]
+                            fmod_adata.X = x.todense() if issparse(x) else x
+                            if use_raw:
+                                warnings.warn(
+                                    f"Layer='{layer}' superseded use_raw={use_raw}"
+                                )
+                    elif layer in data.mod[m].layers:
+                        x = data.mod[m][:, mod_keys].layers[layer]
                         fmod_adata.X = x.todense() if issparse(x) else x
                         if use_raw:
                             warnings.warn(
                                 f"Layer='{layer}' superseded use_raw={use_raw}"
                             )
-                elif layer in data.mod[m].layers:
-                    x = data.mod[m][:, mod_keys].layers[layer]
-                    fmod_adata.X = x.todense() if issparse(x) else x
-                    if use_raw:
-                        warnings.warn(f"Layer='{layer}' superseded use_raw={use_raw}")
-                else:
-                    warnings.warn(
-                        f"Layer {layer} is not present for the modality {m}, using count matrix instead"
-                    )
-            x = fmod_adata.X.toarray() if issparse(fmod_adata.X) else fmod_adata.X
-            obs = obs.join(
-                pd.DataFrame(x, columns=mod_keys, index=fmod_adata.obs_names),
-                how="left",
-            )
+                    else:
+                        warnings.warn(
+                            f"Layer {layer} is not present for the modality {m}, using count matrix instead"
+                        )
+                x = (
+                    cast(sp.spmatrix, fmod_adata.X).toarray()
+                    if issparse(fmod_adata.X)
+                    else fmod_adata.X
+                )
+                obs = obs.join(
+                    pd.DataFrame(x, columns=mod_keys, index=fmod_adata.obs_names),
+                    how="left",
+                )
+
+        return obs
 
 
 def _plot_clonotype_network_panel(
-    adata,
+    params: DataHandler,
     ax,
     *,
     color,
@@ -421,6 +443,23 @@ def _plot_clonotype_network_panel(
     cat_colors = None
     colorbar = False
 
+    if params.has_mdata:
+        # in the mudata case, we use a function internally used by muon
+        obs = _fetch_features_mudata(params, [color], use_raw)
+    else:
+        # ... in the anndata case, we retrieve expression from X or raw manually
+        if use_raw is None:
+            use_raw = params.adata.raw is not None
+        obs = params.adata.obs
+        # store gene expression in obs
+        if color not in obs.columns:
+            tmp_expr = (params.adata.raw if use_raw else params.adata)[:, color].X
+            if sp.issparse(tmp_expr):
+                tmp_expr = cast(np.matrix, cast(sp.spmatrix, tmp_expr).todense()).A1
+            else:
+                tmp_expr = np.ravel(cast(np.ndarray, tmp_expr))
+            obs[color] = tmp_expr
+
     # uniform color
     if isinstance(color, str) and is_color_like(color):
         color = [color for c in range(coords.shape[0])]
@@ -429,21 +468,8 @@ def _plot_clonotype_network_panel(
         x_color = []
         for dist_idx in coords["dist_idx"]:
             cell_ids = cell_indices[dist_idx]
-            x_color.append(np.mean(values[adata.obs_names.isin(cell_ids)]))
+            x_color.append(np.mean(values[obs.index.isin(cell_ids)]))
         return x_color
-
-    # plot gene expression
-    var_names = adata.raw.var_names if use_raw else adata.var_names
-    if isinstance(color, str) and color in var_names:
-        tmp_expr = (adata.raw if use_raw else adata)[:, color].X
-        # densify expression vector - less expensive than slicing sparse every iteration.
-        if sp.issparse(tmp_expr):
-            tmp_expr = tmp_expr.todense().A1
-        else:
-            tmp_expr = np.ravel(tmp_expr)
-
-        color = _aggregate_per_dot_continuous(tmp_expr)
-        colorbar = True
 
     if color_by_n_cells:
         color = coords["size"]
@@ -454,32 +480,28 @@ def _plot_clonotype_network_panel(
         show_size_legend = False
 
     # plot continuous values
-    if (
-        isinstance(color, str)
-        and color in adata.obs
-        and not is_categorical_dtype(adata.obs[color])
-    ):
-        color = _aggregate_per_dot_continuous(adata.obs[color])
+    if isinstance(color, str) and color in obs and not is_categorical_dtype(obs[color]):
+        color = _aggregate_per_dot_continuous(obs[color])
         colorbar = True
 
     # plot categorical variables
-    if (
-        isinstance(color, str)
-        and color in adata.obs
-        and is_categorical_dtype(adata.obs[color])
-    ):
+    if isinstance(color, str) and color in obs and is_categorical_dtype(obs[color]):
         pie_colors = []
-        values = adata.obs[color].values
+        values = obs[color].values
         # cycle colors for categories with many values instead of
         # coloring them in grey
         if palette is None:
-            if adata.obs[color].nunique() > len(sc.pl.palettes.default_102):
+            if obs[color].nunique() > len(sc.pl.palettes.default_102):
                 palette = cycler(color=sc.pl.palettes.default_102)
-        cat_colors = _get_colors(adata, obs_key=color, palette=palette)
+        cat_colors = _get_colors(
+            params.mdata if params.has_mdata else params.adata,
+            obs_key=color,
+            palette=palette,
+        )
         for dist_idx in coords["dist_idx"]:
             cell_ids = cell_indices[dist_idx]
             unique, counts = np.unique(
-                values[adata.obs_names.isin(cell_ids)], return_counts=True
+                values[obs.index.isin(cell_ids)], return_counts=True
             )
             fracs = counts / np.sum(counts)
             if cat_colors is not None:

@@ -1,6 +1,6 @@
 import itertools
 import random
-from typing import List, Literal, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Tuple, Union, cast
 
 import igraph as ig
 import numpy as np
@@ -289,8 +289,8 @@ def define_clonotype_clusters(
 
     ctn = ClonotypeNeighbors(
         params,
-        receptor_arms=receptor_arms,
-        dual_ir=dual_ir,
+        receptor_arms=receptor_arms,  # type: ignore
+        dual_ir=dual_ir,  # type: ignore
         same_v_gene=same_v_gene,
         match_columns=within_group,
         distance_key=distance_key,
@@ -606,7 +606,7 @@ def clonotype_network(
 
 def _graph_from_coordinates(
     adata: AnnData, clonotype_key: str
-) -> [pd.DataFrame, sp.spmatrix]:
+) -> Tuple[pd.DataFrame, sp.csr_matrix]:
     """
     Given an AnnData object on which `tl.clonotype_network` was ran, and
     the corresponding `clonotype_key`, extract a data-frame
@@ -629,7 +629,7 @@ def _graph_from_coordinates(
 
     # Retrieve coordinates and reduce them to one coordinate per node
     coords = (
-        adata.obsm["X_clonotype_network"]
+        cast(pd.DataFrame, adata.obsm["X_clonotype_network"])
         .dropna(axis=0, how="any")
         .join(dist_idx_lookup)
         .join(clonotype_label_lookup)
