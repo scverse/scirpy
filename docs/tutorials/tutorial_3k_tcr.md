@@ -486,22 +486,22 @@ to `adata.obs` and overlay it on the UMAP plot.
 <!-- #endraw -->
 
 ```python
-ir.tl.clonal_expansion(mdata, target_col="airr:clone_id")
+ir.tl.clonal_expansion(mdata)
 ```
 
 `clonal_expansion` refers to expansion categories, i.e singleton clonotypes, clonotypes with 2 cells and more than 2 cells.
 The `clonotype_size` refers to the absolute number of cells in a clonotype.
 
-```python
-mdata.update_obs()
-```
-
 ```python tags=[]
 mdata.obs
 ```
 
+```python tags=[]
+mdata.update_obs()
+```
+
 ```python
-mu.pl.embedding(mdata, basis="gex:umap", color=["clonal_expansion", "airr:clone_id_size"])
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:clonal_expansion", "airr:clone_id_size"])
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -510,7 +510,7 @@ in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting fun
 <!-- #endraw -->
 
 ```python
-ir.pl.clonal_expansion(mdata, target_col="airr:clone_id", groupby="gex:cluster", clip_at=4, normalize=False)
+ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby="cluster", clip_at=4, normalize=False)
 ```
 
 The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection

@@ -1,7 +1,7 @@
 import warnings
 from lib2to3.pgen2.token import OP
 from textwrap import dedent
-from typing import Any, Callable, Mapping, Optional, Union, cast, overload
+from typing import Any, Callable, Mapping, Optional, Sequence, Union, cast, overload
 
 import awkward as ak
 import numpy as np
@@ -114,6 +114,34 @@ class DataHandler:
             index_chains(
                 self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key
             )
+
+    @overload
+    def get_obs(self, columns: str) -> pd.Series:
+        ...
+
+    @overload
+    def get_obs(self, columns: Sequence[str]) -> pd.DataFrame:
+        ...
+
+    def get_obs(self, columns):
+        """Get one or multiple obs columns from either MuData or AIRR Anndata
+
+        Checks if the column is available in MuData.obs. If it
+        can't be found or DataHandler is initalized without mudata
+        object, AnnData.obs is tried.
+        """
+        if isinstance(columns, str):
+            return self._get_obs_col(columns)
+        else:
+            df = pd.concat({c: self._get_obs_col(c) for c in columns}, axis=1)
+            assert df.index.is_unique, "Index not unique"
+            return df
+
+    def _get_obs_col(self, column: str) -> pd.Series:
+        try:
+            return self.mdata.obs[column]
+        except (KeyError, AttributeError):
+            return self.adata.obs[column]
 
     @property
     def chain_indices(self) -> ak.Array:

@@ -3,11 +3,10 @@ from typing import Callable, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from anndata import AnnData
 
 from ..get import airr as get_airr
 from ..io import AirrCell
-from ..util import _is_na, _normalize_counts
+from ..util import DataHandler, _is_na, _normalize_counts
 from .styling import _init_ax
 
 
@@ -18,8 +17,9 @@ def _sanitize_gene_name(gene_text):
     return gene_text
 
 
+@DataHandler.inject_param_docs()
 def vdj_usage(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
     vdj_cols: Sequence = (
         "VJ_1_v_call",
@@ -37,15 +37,18 @@ def vdj_usage(
     draw_bars: bool = True,
     full_combination: bool = True,
     fig_kws: Union[dict, None] = None,
+    airr_mod: str = "airr",
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
 ) -> plt.Axes:
-    """Creates a ribbon plot of the most abundant VDJ combinations.
+    """\
+    Creates a ribbon plot of the most abundant VDJ combinations.
 
     Currently works with primary alpha and beta chains only.
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     vdj_cols
         Columns containing gene segment information.
         Overwrite default only if you know what you are doing!
@@ -77,12 +80,15 @@ def vdj_usage(
     fig_kws
         Dictionary of keyword args that will be passed to the matplotlib
         figure (e.g. `figsize`)
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     Returns
     -------
     Axes object.
     """
-
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     vdj_cols = [x.replace("IR_", "") for x in vdj_cols]
     chains, airr_variables = zip(
         *[
@@ -93,8 +99,9 @@ def vdj_usage(
         ]
     )
 
-    df = get_airr(adata, airr_variables, chains).assign(
-        cell_weights=_normalize_counts(adata.obs, normalize_to)
+    df = get_airr(params, airr_variables, chains).assign(
+        # TODO #356: normalize_to should potentially also work with mudata columns.
+        cell_weights=_normalize_counts(params.adata.obs, normalize_to)
         if isinstance(normalize_to, (bool, str))
         else normalize_to
     )
