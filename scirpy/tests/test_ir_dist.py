@@ -8,7 +8,7 @@ import scipy.sparse
 import scirpy as ir
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from scirpy.ir_dist.metrics import DistanceCalculator
-from scirpy.util import _is_symmetric
+from scirpy.util import DataHandler, _is_symmetric
 
 from .fixtures import adata_cdr3, adata_cdr3_2  # NOQA
 from .util import _squarify
@@ -347,8 +347,8 @@ def test_compute_distances(
         adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3,
-        adata2,
+        DataHandler.default(adata_cdr3),
+        DataHandler.default(adata2),
         distance_key=distance_key,
         sequence_key="junction_aa",
         n_jobs=n_jobs,
@@ -388,7 +388,7 @@ def test_compute_distances(
                 ]
             ),
         ),
-        ("VJ", np.array([[1, 0], [0, 0]])),
+        ("VJ", np.array([[1]])),
         ("VDJ", np.array([[1, 0], [0, 1]])),
     ],
 )
@@ -411,8 +411,8 @@ def test_compute_distances_2(
         key_added="ir_dist_aa_custom",
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3_2,
-        adata2,
+        DataHandler.default(adata_cdr3_2),
+        DataHandler.default(adata2),
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         distance_key="ir_dist_aa_custom",
@@ -436,7 +436,7 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     with pytest.raises(ValueError):
         cn = ClonotypeNeighbors(
-            adata_cdr3,
+            DataHandler.default(adata_cdr3),
             receptor_arms="all",
             dual_ir="primary_only",
             distance_key="ir_dist_aa_custom",
@@ -453,13 +453,8 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
             "identity",
             {"receptor_arms": "VJ", "dual_ir": "primary_only"},
             {"VJ_1_junction_aa": ["AAA", "AHA"]},
-            {"VJ_1_junction_aa": ["AAA", "nan"]},
-            # TODO #356: note: from adata_cdr3_2, the nan is not removed, because it has a receptor, but no VJ chain
-            # not sure if this is what we want. cf. ClonotypeNeighbors._make_clonotype_table.
-            [
-                [1, 0],
-                [0, 0],
-            ],
+            {"VJ_1_junction_aa": ["AAA"]},
+            [[1], [0]],
         ],
         [
             "receptor_arms=all, dual_ir=primary_only",
@@ -527,8 +522,8 @@ def test_compute_distances_second_anndata(
         query, reference, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        query,
-        reference,
+        DataHandler.default(query),
+        DataHandler.default(reference),
         distance_key=distance_key,
         sequence_key="junction_aa",
         **ctn_kwargs,

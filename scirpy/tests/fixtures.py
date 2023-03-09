@@ -1,8 +1,10 @@
-import pytest
-import pandas as pd
-from anndata import AnnData
 import numpy as np
+import pandas as pd
+import pytest
+from anndata import AnnData
+
 import scirpy as ir
+
 from .util import _make_adata
 
 
@@ -514,7 +516,7 @@ def adata_clonotype():
             ["cell1", "A", "ct1", "cc1"],
             ["cell2", "A", "ct1", "cc1"],
             ["cell3", "A", "ct1", "cc1"],
-            ["cell3", "A", "NaN", "NaN"],
+            ["cell3.1", "A", "NaN", "NaN"],
             ["cell3.2", "A", np.nan, np.nan],
             ["cell4", "B", "ct1", "cc1"],
             ["cell5", "B", "ct2", "cc2"],
@@ -534,7 +536,7 @@ def adata_diversity():
             ["cell1", "A", "ct1"],
             ["cell2", "A", "ct1"],
             ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
+            ["cell3.1", "A", "NaN"],
             ["cell4", "B", "ct1"],
             ["cell5", "B", "ct2"],
             ["cell6", "B", "ct3"],

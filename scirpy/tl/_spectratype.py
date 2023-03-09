@@ -1,16 +1,16 @@
-from anndata import AnnData
-from typing import Callable, Union, Collection, Literal, Sequence
+from typing import Callable, Literal, Sequence, Union
+
 import numpy as np
 import pandas as pd
-from ._group_abundance import _group_abundance
-from ..util import _is_na
-from ..io._legacy import _check_upgrade_schema
+
 from ..get import airr as get_airr
+from ..util import DataHandler
+from ._group_abundance import _group_abundance
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def spectratype(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     chain: Union[
         Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
         Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
@@ -20,16 +20,19 @@ def spectratype(
     cdr3_col: str = "junction_aa",
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     **kwargs,
 ) -> pd.DataFrame:
-    """Summarizes the distribution of :term:`CDR3` region lengths.
+    """\
+    Summarizes the distribution of :term:`CDR3` region lengths.
 
     Ignores NaN values.
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     chain
         One or multiple chains from which to use CDR3 sequences
     target_col
@@ -43,6 +46,10 @@ def spectratype(
         If True, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+
 
     Returns
     -------
@@ -55,10 +62,11 @@ def spectratype(
             Please use the `chain` attribute to choose `VJ_1`, `VDJ_1`, `VJ_2`, or `VDJ_2` chain(s). 
             """
         )
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
     # Get airr and remove NAs
-    airr_df = get_airr(adata, [cdr3_col], chain).dropna(how="any")
-    obs = adata.obs.loc[:, [target_col]]
+    airr_df = get_airr(params, [cdr3_col], chain).dropna(how="any")
+    obs = params.get_obs([target_col])
 
     # Combine (potentially) multiple length columns into one
     obs["lengths"] = airr_df.applymap(len).apply(combine_fun, axis=1)

@@ -1,13 +1,13 @@
-import numpy as np
-import pandas as pd
-from typing import Dict, Hashable, Optional, Sequence, Tuple, Union, Mapping
-import scipy.sparse as sp
-from scipy.sparse.coo import coo_matrix
-from scipy.sparse.csr import csr_matrix
-from typing import Literal
 import warnings
 from functools import reduce
 from operator import mul
+from typing import Dict, Hashable, Literal, Mapping, Optional, Sequence, Tuple, Union
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
+from scipy.sparse.coo import coo_matrix
+from scipy.sparse.csr import csr_matrix
 
 
 def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
@@ -176,7 +176,7 @@ class ReverseLookupTable:
 
 class DoubleLookupNeighborFinder:
     def __init__(
-        self, feature_table: pd.DataFrame, feature_table2: pd.DataFrame = None
+        self, feature_table: pd.DataFrame, feature_table2: Optional[pd.DataFrame] = None
     ):
         """
         A datastructure to efficiently retrieve distances based on different features.

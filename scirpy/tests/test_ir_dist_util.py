@@ -1,16 +1,17 @@
 """Test ir_dist._util utility functions"""
 
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pytest
+import scipy.sparse as sp
+
 from scirpy.ir_dist._util import (
     DoubleLookupNeighborFinder,
+    merge_coo_matrices,
     reduce_and,
     reduce_or,
-    merge_coo_matrices,
 )
-import pytest
-import numpy as np
-import scipy.sparse as sp
-import pandas as pd
-import numpy.testing as npt
 
 
 @pytest.fixture

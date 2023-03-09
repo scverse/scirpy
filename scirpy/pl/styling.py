@@ -3,6 +3,7 @@ from typing import Dict, Literal, Optional, Sequence, Union
 import matplotlib.pyplot as plt
 from anndata import AnnData
 from cycler import Cycler
+from mudata import MuData
 from scanpy.plotting._utils import (
     _set_colors_for_categorical_obs,
     _set_default_colors_for_categorical_obs,
@@ -119,7 +120,7 @@ def style_axes(
 
 
 def _get_colors(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     obs_key: str,
     palette: Union[str, Sequence[str], Cycler, None] = None,
 ) -> Optional[Dict[str, str]]:
@@ -140,15 +141,14 @@ def _get_colors(
     # we can only get a palette for columns that are now categorical. Boolean/int/... won't work
     if adata.obs[obs_key].dtype.name == "category":
         values = adata.obs[obs_key].values
+        categories = values.categories  # type: ignore
         color_key = f"{obs_key}_colors"
         if palette is not None:
             _set_colors_for_categorical_obs(adata, obs_key, palette)
-        elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
-            values.categories
-        ):
+        elif color_key not in adata.uns or len(adata.uns[color_key]) < len(categories):
             #  set a default palette in case that no colors or few colors are found
             _set_default_colors_for_categorical_obs(adata, obs_key)
         else:
             _validate_palette(adata, obs_key)
 
-        return {cat: col for cat, col in zip(values.categories, adata.uns[color_key])}
+        return {cat: col for cat, col in zip(categories, adata.uns[color_key])}

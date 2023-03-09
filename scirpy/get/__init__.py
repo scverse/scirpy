@@ -7,46 +7,48 @@ import awkward as ak
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
+
+from ..util import DataHandler
 
 _VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 
 
+@DataHandler.inject_param_docs()
 def airr(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     airr_variable: Union[str, Sequence[str]],
     chain: Union[ChainType, Sequence[ChainType]],
     *,
+    airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
 ) -> Union[pd.Series, pd.DataFrame]:
-    """Retrieve AIRR variables for each cell, given a specific chain.
+    """\
+    Retrieve AIRR variables for each cell, given a specific chain.
 
     Parameters
     ----------
-    adata
-        scirpy AnnData object
+    {adata}
     airr_variable
         One or multiple columns from the AIRR Rearrangment schema (see adata.var).
         If multiple values are specified, a dataframe will be returned.
     chain
         choose the recptor arm (VJ/VDJ) and if you want to retrieve the primary or secondary chain.
         If multiple chains are specified, a adataframe will be returned
-    airr_key
-        Key in `adata.obsm` under which the AwkwardArray with AIRR information is stored
-    chain_idx_key
-        Key in `adata.obsm` under which the chain indices are stored
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     Returns
     -------
     a pandas series or dataframe aligned to adata.obs. Contains missing values in places where a cell
     does not have the requested chain.
     """
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     multiple_vars = not isinstance(airr_variable, str)
     multiple_chains = not isinstance(chain, str)
-
-    airr_data = cast(ak.Array, adata.obsm[airr_key])
-    chain_indices = cast(ak.Array, adata.obsm[chain_idx_key])
 
     if multiple_vars or multiple_chains:
         if not multiple_vars:
@@ -56,16 +58,21 @@ def airr(
         return pd.DataFrame(
             {
                 f"{tmp_chain}_{tmp_var}": _airr_col(
-                    airr_data, chain_indices, tmp_var, tmp_chain
+                    params.airr,
+                    params.chain_indices,
+                    tmp_var,
+                    cast(ChainType, tmp_chain),
                 )
                 for tmp_chain, tmp_var in itertools.product(chain, airr_variable)
             },
-            index=adata.obs_names,
+            index=params.adata.obs_names,
         )
     else:
         return pd.Series(
-            _airr_col(airr_data, chain_indices, airr_variable, chain),
-            index=adata.obs_names,
+            _airr_col(
+                params.airr, params.chain_indices, airr_variable, cast(ChainType, chain)
+            ),
+            index=params.adata.obs_names,
         )
 
 
@@ -76,7 +83,7 @@ def _airr_col(
     chain: ChainType,
 ) -> np.ndarray:
     """called by `airr()` to retrieve a single column"""
-    chain = chain.upper()
+    chain = chain.upper()  # type: ignore
     if chain not in _VALID_CHAINS:
         raise ValueError(
             f"Invalid value for chain. Valid values are {', '.join(_VALID_CHAINS)}"
@@ -96,7 +103,10 @@ def _airr_col(
     # Currently the performance hit doesn't seem to be a deal breaker, can maybe revisit this in the future.
     # It is anyway not very efficient to create a result array with an object dtype.
     _ak_slice = airr_data[
-        np.where(mask)[0], airr_variable, ak.to_numpy(idx[mask], allow_missing=False)
+        np.where(mask)[0],
+        airr_variable,
+        # astype(int) is required if idx[mask] is an empty array of unknown type.
+        ak.to_numpy(idx[mask], allow_missing=False).astype(int),
     ]
     result[mask] = ak.to_list(_ak_slice)
     return result
@@ -123,9 +133,12 @@ def _obs_context(adata, **kwargs):
         adata.obs = orig_obs
 
 
-def _has_ir(adata, chain_idx_key="chain_indices"):
+def _has_ir(params: DataHandler):
     """Return a mask of all cells that have a valid IR configuration"""
-    chain_idx = adata.obsm[chain_idx_key]
     return ak.to_numpy(
-        (ak.count(chain_idx["VJ"], axis=1) + ak.count(chain_idx["VDJ"], axis=1)) > 0
+        (
+            ak.count(params.chain_indices["VJ"], axis=1)
+            + ak.count(params.chain_indices["VDJ"], axis=1)
+        )
+        > 0
     )

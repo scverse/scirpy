@@ -1,18 +1,18 @@
 """Base plotting functions"""
-from typing import Union, Sequence, Tuple, Optional
-from typing import Literal
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-from .styling import apply_style_to_axes, DEFAULT_FIG_KWS, _init_ax
-from ..util import _doc_params
-from sklearn.neighbors import KernelDensity
-from cycler import Cycler
 import itertools
+from typing import Literal, Optional, Sequence, Tuple, Union
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import scanpy as sc
 from anndata import AnnData
-from matplotlib import rcParams, cycler, patheffects
+from cycler import Cycler
+from matplotlib import cycler, rcParams
+from sklearn.neighbors import KernelDensity
 
+from ..util import _doc_params
+from .styling import DEFAULT_FIG_KWS, _init_ax, apply_style_to_axes
 
 _common_doc = """\
 style

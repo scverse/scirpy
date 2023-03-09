@@ -5,20 +5,22 @@ from anndata import AnnData
 
 from ..io._convert_anndata import from_airr_cells, to_airr_cells
 from ..io._datastructures import AirrCell
-from ..io._legacy import _check_upgrade_schema
+from ..util import DataHandler
 
 
-@_check_upgrade_schema(check_args=(0, 1))
+@DataHandler.inject_param_docs()
 def merge_airr(
-    adata: AnnData,
-    adata2: AnnData,
+    adata: DataHandler.TYPE,
+    adata2: DataHandler.TYPE,
     *,
+    airr_mod="airr",
+    airr_mod2="airr",
     airr_key="airr",
     airr_key2="airr",
     drop_duplicate_chains=True,
     **kwargs,
 ) -> AnnData:
-    """
+    """\
     Merge two AnnData objects with :term:`IR` information (e.g. BCR with TCR).
 
     Decomposes the IR information back into :class:`scirpy.io.AirrCell` objects
@@ -43,10 +45,12 @@ def merge_airr(
         first AnnData object containing IR information
     adata2
         second AnnData object containing IR information
-    airr_key
-        key under which the AIRR information is stored in `adata.obsm`
+    {airr_mod}
+    airr_mod2
+        Like `airr_mod`, but for adata2
+    {airr_key}
     airr_key2
-        key under which the AIRR information is stored in `adata2.obsm`
+        Like `airr_key`, but for adata2
     drop_duplicate_chains
         If True, if there are identical chains associated with the same cell
         only one of them is kept.
@@ -57,8 +61,8 @@ def merge_airr(
     -------
     new AnnData object with merged AIRR data.
     """
-    ir_objs1 = to_airr_cells(adata, airr_key=airr_key)
-    ir_objs2 = to_airr_cells(adata2, airr_key=airr_key2)
+    ir_objs1 = to_airr_cells(adata, airr_mod=airr_mod, airr_key=airr_key)
+    ir_objs2 = to_airr_cells(adata2, airr_mod=airr_mod2, airr_key=airr_key2)
 
     cell_dict: Dict[str, AirrCell] = dict()
     for cell in itertools.chain(ir_objs1, ir_objs2):

@@ -1,9 +1,10 @@
-from scirpy import pl
-import pytest
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pytest
 from anndata import AnnData
+
+from scirpy import pl
 
 
 @pytest.fixture

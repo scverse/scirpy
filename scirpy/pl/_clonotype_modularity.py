@@ -1,11 +1,14 @@
-from numpy.core.fromnumeric import amax
-from .styling import _init_ax, apply_style_to_axes
-from typing import Literal
-from ._clonotypes import _plot_size_legend
-from typing import Tuple, Union, Optional, Sequence
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 from adjustText import adjust_text
+from anndata import AnnData
 from matplotlib import patheffects
+from mudata import MuData
+
+from ..util import DataHandler
+from ._clonotypes import _plot_size_legend
+from .styling import _init_ax
 
 
 def _rand_jitter(arr, jitter=None):
@@ -16,8 +19,9 @@ def _rand_jitter(arr, jitter=None):
     return arr + np.random.randn(len(arr)) * stdev
 
 
+@DataHandler.inject_param_docs()
 def clonotype_modularity(
-    adata,
+    adata: Union[AnnData, MuData],
     ax=None,
     target_col="clonotype_modularity",
     jitter: float = 0.01,
@@ -35,20 +39,19 @@ def clonotype_modularity(
     legend_width: float = 2,
     fig_kws: Union[dict, None] = None,
 ):
-    """
+    """\
     Plots the :term:`Clonotype modularity` score against the associated log10 p-value.
 
     Parameters
     ----------
-    adata
-        Annotated data matrix.
+    {adata}
     ax
         Add the plot to a predefined Axes object.
     target_col
         Column in `adata.obs` containing the clonotype modularity score and
         key in `adata.uns` containing the dictionary with parameters.
-        Will look for p-values or FDRs in `adata.obs["{target_col}_pvalue"]` or
-        `adata.obs["{target_col}_fdr"]`.
+        Will look for p-values or FDRs in `adata.obs["{{target_col}}_pvalue"]` or
+        `adata.obs["{{target_col}}_fdr"]`.
     jitter
         Add random jitter along the x axis to avoid overlapping point.
         Samples from `N(0, jitter * (max(arr) - min(arr)))`
@@ -87,6 +90,7 @@ def clonotype_modularity(
     -------
     A list of axis objects
     """
+    # Doesn't need param handler, we only access attributes of MuData or a all-in-one AnnData.
     if ax is None:
         fig_kws = dict() if fig_kws is None else fig_kws
         fig_width = (

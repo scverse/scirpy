@@ -4,19 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from anndata import AnnData
 from scipy.cluster import hierarchy as sc_hierarchy
 from scipy.spatial import distance as sc_distance
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
+from ..util import DataHandler
 from .base import ol_scatter
 from .styling import _get_colors, _init_ax
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def repertoire_overlap(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     groupby: str,
     *,
     target_col: str = "clone_id",
@@ -27,6 +26,7 @@ def repertoire_overlap(
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
     added_key: str = "repertoire_overlap",
+    airr_mod: str = "airr",
     **kwargs,
 ) -> plt.Axes:
     """Visualizes overlap betwen a pair of samples on a scatter plot or
@@ -62,6 +62,7 @@ def repertoire_overlap(
         to all cells.
     added_key
         If the tools has already been run, the results are added to `uns` under this key.
+    {airr_mod}
     **kwargs
         Additional arguments passed to the base plotting function.
 
@@ -69,31 +70,32 @@ def repertoire_overlap(
     -------
     Axes object
     """
-
-    if added_key not in adata.uns:
-        tl.repertoire_overlap(
-            adata,
-            groupby=groupby,
-            target_col=target_col,
-            overlap_measure=overlap_measure,
-            overlap_threshold=overlap_threshold,
-            fraction=fraction,
-            added_key=added_key,
-        )
-    df = adata.uns[added_key]["weighted"]
+    params = DataHandler(adata, airr_mod)
+    tl.repertoire_overlap(
+        adata,
+        groupby=groupby,
+        target_col=target_col,
+        overlap_measure=overlap_measure,
+        overlap_threshold=overlap_threshold,
+        fraction=fraction,
+        added_key=added_key,
+    )
+    df = params.adata.uns[added_key]["weighted"]
 
     if pair_to_plot is None:
-        linkage = adata.uns[added_key]["linkage"]
+        linkage = params.adata.uns[added_key]["linkage"]
 
         if heatmap_cats is not None:
             clust_colors, leg_colors = [], []
             for lbl in heatmap_cats:
                 labels = (
-                    adata.obs.groupby([groupby, lbl], observed=True)
+                    params.get_obs([groupby, lbl])
+                    .groupby([groupby, lbl], observed=True)
                     .agg("size")
                     .reset_index()
                 )
-                colordict = _get_colors(adata, lbl)
+                # TODO refactor get_colors
+                colordict = _get_colors(params.data, lbl)
                 if colordict is not None:
                     label_levels = labels[lbl].unique()
                     for e in label_levels:
@@ -117,11 +119,9 @@ def repertoire_overlap(
                     lbl.set_color(colordict[lbl.get_text()])
             ax.get_yaxis().set_ticks([])
         else:
-            distM = adata.uns[added_key]["distance"]
+            distM = params.adata.uns[added_key]["distance"]
             distM = sc_distance.squareform(distM)
-            np.fill_diagonal(distM, 1)
-            scaling_factor = distM.min()
-            np.fill_diagonal(distM, scaling_factor)
+            np.fill_diagonal(distM, np.nan)
             distM = pd.DataFrame(distM, index=df.index, columns=df.index)
             dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
             distM = distM.iloc[dd["leaves"], :]
@@ -144,7 +144,7 @@ def repertoire_overlap(
                 lax = ax.ax_row_dendrogram
                 for e, c in leg_colors:
                     lax.bar(0, 0, color=c, label=e, linewidth=0)
-                lax.legend(loc="lower left")
+                lax.legend(loc="lower right")
             b, t = ax.ax_row_dendrogram.get_ylim()
             l, r = ax.ax_row_dendrogram.get_xlim()
             ax.ax_row_dendrogram.text(l, 0.9 * t, f"1-distance ({overlap_measure})")

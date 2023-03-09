@@ -1,29 +1,30 @@
-from typing import Counter, Optional, Union, Sequence
-
-from typing import Literal
-from anndata import AnnData
-import pandas as pd
 import itertools
+import json
+from typing import Counter, Literal, Optional, Sequence, Union
+
+import numpy as np
+import pandas as pd
+from scanpy import logging
+
+from ..ir_dist import MetricType, _get_metric_key
+from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from ..util import DataHandler, _is_na, tqdm
 from ._clonotypes import (
     _common_doc,
     _common_doc_parallelism,
-    _validate_parameters,
     _doc_clonotype_definition,
+    _validate_parameters,
 )
-from ..util import _doc_params, _is_na, tqdm
-from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from ..ir_dist import _get_metric_key, MetricType
-from scanpy import logging
-import numpy as np
-import json
 
 
-def _validate_ir_query_annotate_params(reference, sequence, metric, query_key):
+def _validate_ir_query_annotate_params(
+    params_ref: DataHandler, sequence, metric, query_key
+):
     """Validate and sanitize parameters for `ir_query_annotate`"""
 
     def _get_db_name():
         try:
-            return reference.uns["DB"]["name"]
+            return params_ref.adata.uns["DB"]["name"]
         except KeyError:
             raise ValueError(
                 'If reference does not contain a `.uns["DB"]["name"]` entry, '
@@ -73,14 +74,14 @@ def _reduce_json(values: np.ndarray):
     return json.dumps(Counter(values))
 
 
-@_doc_params(
+@DataHandler.inject_param_docs(
     common_doc=_common_doc,
     paralellism=_common_doc_parallelism,
     clonotype_definition=_doc_clonotype_definition.split("3.")[0].strip(),
 )
 def ir_query(
-    adata: AnnData,
-    reference: AnnData,
+    adata: DataHandler.TYPE,
+    reference: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
@@ -93,6 +94,12 @@ def ir_query(
     inplace: bool = True,
     n_jobs: Optional[int] = None,
     chunksize: int = 2000,
+    airr_mod: str = "airr",
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
+    airr_mod_ref: str = "airr",
+    airr_key_ref: str = "airr",
+    chain_idx_key_ref: str = "chain_indices",
 ) -> Optional[dict]:
     """\
     Query a referece database for matching immune cell receptors.
@@ -114,8 +121,7 @@ def ir_query(
 
     Parameters
     ----------
-    adata
-        annotated data matrix
+    {adata}
     reference
         Another :class:`~anndata.AnnData` object, can be either a second dataset with
         :term:`IR` information or a epitope database. Must be the same object used for
@@ -147,6 +153,15 @@ def ir_query(
         If True, store the result in `adata.uns`. Otherwise return a dictionary
         with the results.
     {paralellism}
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+    airr_mod_ref
+        Like `airr_mod`, but for `reference`.
+    airr_key_ref
+        Like `airr_key`, but for `reference`.
+    chain_idx_key_ref
+        Like `chain_idx_key`, but for `reference`.
 
     Returns
     -------
@@ -160,9 +175,15 @@ def ir_query(
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
     """
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
+    params_ref = (
+        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
+        if reference is not None
+        else None
+    )
     match_columns, distance_key, key_added = _validate_parameters(
-        adata,
-        reference,
+        params.adata,
+        params_ref.adata if params_ref is not None else None,
         receptor_arms,
         dual_ir,
         match_columns,
@@ -173,8 +194,8 @@ def ir_query(
     )
 
     ctn = ClonotypeNeighbors(
-        adata,
-        reference,
+        params,
+        params_ref,
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         same_v_gene=same_v_gene,
@@ -193,22 +214,25 @@ def ir_query(
         "cell_indices_reference": ctn.cell_indices2,
     }
     if inplace:
-        adata.uns[key_added] = clonotype_distance_res
+        params.adata.uns[key_added] = clonotype_distance_res
         logging.info(f'Stored IR distance matrix in `adata.uns["{key_added}"]`.')  # type: ignore
     else:
         return clonotype_distance_res
 
 
+@DataHandler.inject_param_docs()
 def ir_query_annotate_df(
-    adata: AnnData,
-    reference: AnnData,
+    adata: DataHandler.TYPE,
+    reference: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
-    include_ref_cols: Sequence[str] = None,
+    include_ref_cols: Optional[Sequence[str]] = None,
     include_query_cols: Sequence[str] = (),
     query_key: Optional[str] = None,
     suffix: str = "",
+    airr_mod: str = "airr",
+    airr_mod_ref: str = "airr",
 ) -> pd.DataFrame:
     """
     Returns the inner join of `adata.obs` with matching entries from `reference.obs`
@@ -249,15 +273,21 @@ def ir_query_annotate_df(
     suffix
         Suffix appended to columns from `reference.obs` in case their names
         are conflicting with those in `adata.obs`.
+    {airr_mod}
+    airr_mod_ref
+        Like `airr_mod`, but for `reference`.
 
     Returns
     -------
     DataFrame with matching entries from `reference.obs`.
     """
+    params = DataHandler(adata, airr_mod)
+    params_ref = DataHandler(reference, airr_mod_ref)
+
     query_key = _validate_ir_query_annotate_params(
-        reference, sequence, metric, query_key
+        params_ref, sequence, metric, query_key
     )
-    res = adata.uns[query_key]
+    res = params.adata.uns[query_key]
     dist = res["distances"]
 
     def get_pairs():
@@ -267,11 +297,11 @@ def ir_query_annotate_df(
             )
             yield from itertools.product(query_cells, reference_cells)
 
-    query_obs, reference_obs = adata.obs, reference.obs
+    query_obs, reference_obs = params.data.obs, params_ref.data.obs
     if include_query_cols is not None:
-        query_obs = query_obs.loc[:, include_query_cols]  # type: ignore
+        query_obs = params.get_obs(include_query_cols)
     if include_ref_cols is not None:
-        reference_obs = reference_obs.loc[:, include_ref_cols]  # type:ignore
+        reference_obs = params_ref.get_obs(include_ref_cols)
     df = pd.DataFrame.from_records(get_pairs(), columns=["query_idx", "reference_idx"])
     assert "query_idx" not in reference_obs.columns
     reference_obs = reference_obs.join(df.set_index("reference_idx"), how="inner")
@@ -281,9 +311,10 @@ def ir_query_annotate_df(
     )
 
 
+@DataHandler.inject_param_docs()
 def ir_query_annotate(
-    adata: AnnData,
-    reference: AnnData,
+    adata: DataHandler.TYPE,
+    reference: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
@@ -292,6 +323,8 @@ def ir_query_annotate(
     query_key: Optional[str] = None,
     suffix: str = "",
     inplace=True,
+    airr_mod: str = "airr",
+    airr_mod_ref: str = "airr",
 ) -> Optional[pd.DataFrame]:
     """
     Annotate cells based on the result of :func:`~scirpy.tl.ir_query`.
@@ -338,15 +371,20 @@ def ir_query_annotate(
     suffix
         Suffix appended to columns from `reference.obs` in case their names
         are conflicting with those in `adata.obs`.
+    {airr_mod}
+    airr_mod_ref
+        Like `airr_mod`, but for `reference`.
 
     Returns
     -------
     If inplace is True, modifies `adata.obs` inplace. Otherwise returns a data-frame
     with one column for each column in `reference.obs`, aligned to `adata.obs_names`.
     """
+    params = DataHandler(adata, airr_mod)
+    params_ref = DataHandler(reference, airr_mod_ref)
     df = ir_query_annotate_df(
-        adata,
-        reference,
+        params,
+        params_ref,
         include_ref_cols=include_ref_cols,
         include_query_cols=[],
         sequence=sequence,
@@ -375,7 +413,7 @@ def ir_query_annotate(
         df_res = (
             df.groupby("_query_cell_index")
             .aggregate(reduce_fun)
-            .reindex(adata.obs_names)
+            .reindex(params.adata.obs_names)
         )
 
     # convert nan-equivalents to real nan values.
@@ -383,8 +421,8 @@ def ir_query_annotate(
         df_res.loc[_is_na(df_res[col]), col] = np.nan
 
     if inplace:
-        adata.obs = adata.obs.join(df_res, how="left", rsuffix=suffix).reindex(
-            adata.obs_names
-        )
+        params.adata.obs = params.adata.obs.join(
+            df_res, how="left", rsuffix=suffix
+        ).reindex(params.adata.obs_names)
     else:
         return df_res

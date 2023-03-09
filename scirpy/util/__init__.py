@@ -1,18 +1,308 @@
-import pandas as pd
-import numpy as np
-from textwrap import dedent
-from typing import Union
-from scipy.sparse import issparse
-import scipy.sparse
 import warnings
-from numba import jit
+from lib2to3.pgen2.token import OP
+from textwrap import dedent
+from typing import Any, Callable, Mapping, Optional, Sequence, Union, cast, overload
 
-# Determine the right tqdm version, see https://github.com/tqdm/tqdm/issues/1082
-try:
-    import ipywidgets  # type: ignore # NOQA
-    from tqdm.auto import tqdm
-except ModuleNotFoundError:
-    from tqdm import tqdm  # NOQA
+import awkward as ak
+import numpy as np
+import pandas as pd
+import scipy.sparse
+from anndata import AnnData
+from mudata import MuData
+from scanpy import logging
+from scipy.sparse import issparse
+from tqdm.auto import tqdm
+
+# reexport tqdm (here was previously a workaround for https://github.com/tqdm/tqdm/issues/1082)
+__all__ = ["tqdm"]
+
+
+def _doc_params(**kwds):
+    """\
+    Docstrings should start with "\" in the first line for proper formatting.
+    """
+
+    def dec(obj):
+        obj.__orig_doc__ = obj.__doc__
+        obj.__doc__ = dedent(obj.__doc__).format_map(kwds)
+        return obj
+
+    return dec
+
+
+class DataHandler:
+    """\
+    Transparent access to airr modality in both AnnData and MuData objects.
+
+    Performs a plausibility check of the input data for public scirpy functions.
+
+    Provides convenient accessors to the airr data that is stored somewhere in
+    the input AnnData/MuData.
+
+    DataHandler may be called with another DataHandler instance as `data` attribute. In that
+    case all attributes are taken from the existing DataHandler instance and all keyword attributes
+    are ignored.
+
+    Parameters
+    ----------
+    {adata}
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+    """
+
+    TYPE = Union[AnnData, MuData, "DataHandler"]
+
+    @overload
+    @staticmethod
+    def default(data: None) -> None:
+        ...
+
+    @overload
+    @staticmethod
+    def default(data: "DataHandler") -> "DataHandler":
+        ...
+
+    @staticmethod
+    def default(data):
+        """Initailize a DataHandler object with default keys. Returns None if `data` is None.
+        Particularly useful for testing."""
+        if data is not None:
+            return DataHandler(data, "airr", "airr", "chain_indices")
+
+    def __init__(
+        self,
+        data: "DataHandler.TYPE",
+        airr_mod: Optional[str] = None,
+        airr_key: Optional[str] = None,
+        chain_idx_key: Optional[str] = None,
+    ):
+        if isinstance(data, DataHandler):
+            self._data = data._data
+            self._airr_mod = data._airr_mod
+            self._airr_key = data._airr_key
+            self._chain_idx_key = data._chain_idx_key
+        else:
+            self._data = data
+            self._airr_mod = airr_mod
+            self._airr_key = airr_key
+            self._chain_idx_key = chain_idx_key
+
+        # check for outdated schema
+        self._check_airr_key_in_obsm()
+        self._check_chain_indices()
+
+    def _check_chain_indices(self):
+        """Check if chain indices are available. Compute chain indices with default parameters
+        if not available.
+
+        Skip if no airr key has been defined.
+        """
+        if (
+            self._airr_key is not None
+            and self._chain_idx_key is not None
+            and self._chain_idx_key not in self.adata.obsm
+        ):
+            # import here to avoid circular import
+            from ..pp import index_chains
+
+            logging.warning(
+                f"No chain indices found under adata.obsm['{self._chain_idx_key}']. "
+                "Running scirpy.pp.index_chains with default parameters. ",
+            )
+
+            index_chains(
+                self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key
+            )
+
+    @overload
+    def get_obs(self, columns: str) -> pd.Series:
+        ...
+
+    @overload
+    def get_obs(self, columns: Sequence[str]) -> pd.DataFrame:
+        ...
+
+    def get_obs(self, columns):
+        """Get one or multiple obs columns from either MuData or AIRR Anndata
+
+        Checks if the column is available in MuData.obs. If it
+        can't be found or DataHandler is initalized without mudata
+        object, AnnData.obs is tried.
+        """
+        # TODO #356: not sure if this should return always the dimensions of MuData?
+        # currently the dimensions of the dataframe are inconsistent depending on which columns
+        # are requested.
+        if isinstance(columns, str):
+            return self._get_obs_col(columns)
+        else:
+            if len(columns):
+                df = pd.concat({c: self._get_obs_col(c) for c in columns}, axis=1)
+                assert df.index.is_unique, "Index not unique"
+                return df
+            else:
+                # return empty dataframe (only index) if no columns are specified
+                return self.data.obs.loc[:, []]
+
+    def _get_obs_col(self, column: str) -> pd.Series:
+        try:
+            return self.mdata.obs[column]
+        except (KeyError, AttributeError):
+            return self.adata.obs[column]
+
+    @property
+    def chain_indices(self) -> ak.Array:
+        """Reference to the chain indices
+
+        Raises an AttributeError if chain indices are not available."""
+        if self._chain_idx_key is not None:
+            return cast(ak.Array, self.adata.obsm[self._chain_idx_key])
+        else:
+            raise AttributeError("DataHandler was initialized without chain indices.")
+
+    @property
+    def airr(self) -> ak.Array:
+        """reference to the awkward array with AIRR information."""
+        if self._airr_key is not None:
+            return cast(ak.Array, self.adata.obsm[self._airr_key])
+        else:
+            raise AttributeError("DataHandler was initialized wihtout airr information")
+
+    @property
+    def adata(self) -> AnnData:
+        """Reference to the AnnData object of the AIRR modality."""
+        if isinstance(self._data, AnnData):
+            return self._data
+        else:
+            if self._airr_mod is not None:
+                try:
+                    return self._data.mod[self._airr_mod]
+                except KeyError:
+                    raise KeyError(
+                        f"There is no AIRR modality in MuData under key '{self._airr_mod}'"
+                    )
+            else:
+                raise AttributeError(
+                    "DataHandler was initalized with MuData, but without specifying a modality"
+                )
+
+    @property
+    def data(self) -> Union[MuData, AnnData]:
+        """Get the outermost container. If MuData is defined, return the MuData object.
+        Otherwise the AnnData object."""
+        return self._data
+
+    @property
+    def mdata(self) -> MuData:
+        """Reference to the MuData object.
+
+        Raises an attribute error if only AnnData is available."""
+        if isinstance(self._data, MuData):
+            return self._data
+        else:
+            raise AttributeError("DataHandler was initalized with only AnnData")
+
+    def strings_to_categoricals(self):
+        """Convert strings to categoricals. If MuData is not defined, perform this on AnnData"""
+        try:
+            self.mdata.strings_to_categoricals()
+        except AttributeError:
+            self.adata.strings_to_categoricals()
+
+    @staticmethod
+    def inject_param_docs(
+        **kwargs: str,
+    ) -> Callable:
+        """Inject parameter documentation into a function docstring
+
+        Parameters
+        ----------
+        **kwargs
+            Further, custom {keys} to replace in the docstring.
+        """
+        doc = {}
+        doc["adata"] = dedent(
+            """\
+            adata
+                AnnData or MuData object that contains :term:`IR` information. 
+            """
+        )
+        doc["airr_mod"] = dedent(
+            """\
+            airr_mod
+                Name of the modality with :term:`IR` information is stored in 
+                the :class:`~mudata.MuData` object. if an `~anndata.AnnData` object
+                is passed to the function, this parameter is ignored. 
+            """
+        )
+        doc["airr_key"] = dedent(
+            """\
+            airr_key
+                Key under which the :term:`IR` information is stored in adata.obsm as an 
+                awkward array.
+            """
+        )
+        doc["chain_idx_key"] = dedent(
+            """\
+            chain_idx_key
+                Key under which the chain indices are stored in adata.obsm. 
+                If chain indices are not present, :func:`~scirpy.pp.index_chains` is
+                run with default parameters. 
+            """
+        )
+        return _doc_params(**doc, **kwargs)
+
+    @staticmethod
+    def check_schema_pre_v0_7(adata: AnnData):
+        """Raise an error if AnnData is in pre scirpy v0.7 format."""
+        if (
+            # I would actually only use `scirpy_version` for the check, but
+            # there might be cases where it gets lost (e.g. when rebuilding AnnData).
+            # If a `v_call` is present, that's a safe sign that it is the AIRR schema, too
+            "has_ir" in adata.obs.columns
+            and (
+                "IR_VJ_1_v_call" not in adata.obs.columns
+                and "IR_VDJ_1_v_call" not in adata.obs.columns
+            )
+            and "scirpy_version" not in adata.uns
+        ):
+            raise ValueError(
+                "It seems your anndata object is of a very old format used by scirpy < v0.7 "
+                "which is not supported anymore. You might be best off reading in your data from scratch. "
+                "If you absolutely want to, you can use scirpy < v0.13 to read that format, "
+                "convert it to a legacy format, and convert it again using the most recent version of scirpy. "
+            )
+
+    def _check_airr_key_in_obsm(self):
+        """Check if `adata` uses the latest scirpy schema.
+
+        Raises ValueError if it doesn't.
+
+        If `_airr_key` is not specified, we do not perform any check (could be a valid, non-scirpy anndata object)
+        """
+        if self._airr_key is None:
+            return
+        if self._airr_key not in self.adata.obsm:
+            # First check for very old version. We don't support it at all anymore.
+            DataHandler.check_schema_pre_v0_7(self.adata)
+            if "IR_VJ_1_junction_aa" in self.adata.obs.columns:
+                # otherwise suggest to use `upgrade_schema`
+                raise ValueError(
+                    f"No AIRR data found in adata.obsm['{self._airr_key}']. "
+                    "Your AnnData object might be using an outdated schema. "
+                    "Scirpy has updated the format of `adata` in v0.13. AIRR data is now stored as an "
+                    "awkward array in `adata.obsm['airr']`."
+                    "Please run `ir.io.upgrade_schema(adata) to update your AnnData object to "
+                    "the latest version. "
+                )
+            else:
+                # TODO #356: refer to docs explaining new schema
+                raise KeyError(
+                    f"No AIRR data found in adata.obsm['{self._airr_key}']. "
+                )
+
+
+DataHandler = DataHandler.inject_param_docs()(DataHandler)
 
 
 def _allclose_sparse(A, B, atol=1e-8):
@@ -85,9 +375,9 @@ _is_false = np.vectorize(
 
 def _normalize_counts(
     obs: pd.DataFrame, normalize: Union[bool, str], default_col: Union[None, str] = None
-) -> pd.Series:
+) -> np.ndarray:
     """
-    Produces a pd.Series with group sizes that can be used to normalize
+    Produces an array with group sizes that can be used to normalize
     counts in a DataFrame.
 
     Parameters
@@ -107,20 +397,9 @@ def _normalize_counts(
         raise ValueError("No colname specified in either `normalize` or `default_col")
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
-    return 1 / obs.groupby(normalize_col)[normalize_col].transform("count").values
-
-
-def _doc_params(**kwds):
-    """\
-    Docstrings should start with "\" in the first line for proper formatting.
-    """
-
-    def dec(obj):
-        obj.__orig_doc__ = obj.__doc__
-        obj.__doc__ = dedent(obj.__doc__).format_map(kwds)
-        return obj
-
-    return dec
+    return 1 / cast(
+        np.ndarray, obs.groupby(normalize_col)[normalize_col].transform("count").values
+    )
 
 
 def _read_to_str(path):

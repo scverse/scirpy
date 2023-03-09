@@ -1,24 +1,41 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: -all
+#     formats: py:light,ipynb
+#     notebook_metadata_filter: -kernelspec
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.14.4
+# ---
+
+# +
 # %load_ext autoreload
 # %autoreload 2
 import sys
 
 import scanpy as sc
 
+# +
 sys.path.insert(0, "../../..")
 import os
 from glob import glob
 from multiprocessing import Pool
 
+import anndata
 import numpy as np
 import pandas as pd
+from mudata import MuData
 
 import scirpy as ir
 
 # + language="bash"
 # mkdir -p data
 # cd data
-# wget -O GSE139555_raw.tar "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file"
-# wget -O GSE139555_tcell_metadata.txt.gz "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file&file=GSE139555%5Ftcell%5Fmetadata%2Etxt%2Egz"
+# wget --no-verbose -O GSE139555_raw.tar "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file"
+# wget --no-verbose -O GSE139555_tcell_metadata.txt.gz "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file&file=GSE139555%5Ftcell%5Fmetadata%2Etxt%2Egz"
 # tar xvf GSE139555_raw.tar
 
 # + language="bash"
@@ -68,32 +85,46 @@ def _load_adata(path):
     adata_tcr.obs_names = [
         "{}_{}".format(sample_id, barcode) for barcode in adata_tcr.obs_names
     ]
-    # subset to T cells only
+    # subset to cells with annotated metadata only
     adata = adata[obs.index, :].copy()
-    adata.obs = adata.obs.join(obs, how="inner")
+    # all metadata except clonotyp_orig in GEX modality
+    adata.obs = adata.obs.join(obs.drop(columns=["clonotype_orig"]), how="inner")
     assert adata.shape[0] == umap_coords.shape[0]
     adata.obsm["X_umap_orig"] = umap_coords
-    # ir.pp.merge_with_ir(adata, adata_tcr)
+    # TODO #356: workaround for https://github.com/scverse/muon/issues/93
+    adata_tcr.X = np.ones((adata_tcr.shape[0], 0))
+    # clonotype orig column in TCR modality
+    adata_tcr.obs = adata_tcr.obs.join(
+        obs.loc[:, ["clonotype_orig"]], how="left", validate="one_to_one"
+    )
     return adata, adata_tcr
 
-
-adata, adata_tcr = _load_adata(mtx_paths[0])
 
 p = Pool()
 adatas = p.map(_load_adata, mtx_paths)
 p.close()
 
-adata = adatas[0].concatenate(adatas[1:])
+adatas, adatas_airr = zip(*adatas)
+
+adata = anndata.concat(adatas)
+
+adata_airr = anndata.concat(adatas_airr)
 
 # inverse umap X -coordinate
 adata.obsm["X_umap_orig"][:, 0] = (
     np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 )
 
-np.sum(adata.obs["has_ir"] == "True")
+mdata = MuData({"gex": adata, "airr": adata_airr})
 
-adata.write_h5ad("wu2020.h5ad", compression="lzf")
+mdata
 
 adata.obs
 
+adata_airr.obs
+
+mdata.obs
+
 sc.pl.embedding(adata, "umap_orig", color="cluster_orig", legend_loc="on data")
+
+mdata.write_h5mu("wu2020.h5mu", compression="lzf")

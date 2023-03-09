@@ -23,7 +23,6 @@ specific language governing permissions and limitations
 under the License.
 """
 
-import re
 from collections import Counter, defaultdict
 
 import six

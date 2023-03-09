@@ -3,10 +3,10 @@ from typing import Literal, Sequence, Union
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 
 from ..get import _has_ir
-from ..io._legacy import _check_upgrade_schema
-from ..util import _is_na, _normalize_counts
+from ..util import DataHandler, _is_na, _normalize_counts
 
 
 def _group_abundance(
@@ -65,16 +65,16 @@ def _group_abundance(
     return result_df
 
 
-@_check_upgrade_schema()
 def group_abundance(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     groupby: str,
     target_col: str = "has_ir",
     *,
     fraction: Union[None, str, bool] = None,
     sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
 ) -> pd.DataFrame:
-    """Summarizes the number/fraction of cells of a certain category by a certain group.
+    """\
+    Summarizes the number/fraction of cells of a certain category by a certain group.
 
     Ignores NaN values.
 
@@ -110,13 +110,13 @@ def group_abundance(
     # This whole function is rewritten (see https://github.com/scverse/scirpy/issues/232)
     if target_col == "has_ir" and "has_ir" not in adata.obs.columns:
         ir_obs = ir_obs.copy().assign(
-            has_ir=_has_ir(adata, "chain_indices").astype(str)
+            # TODO I didn't expose the params check keyword arguments in this function
+            # because the whole function needs to be rewritten.
+            has_ir=_has_ir(DataHandler.default(adata)).astype(str)
         )
 
-    if target_col not in adata.obs.columns:
+    if target_col not in ir_obs.columns:
         raise ValueError("`target_col` not found in obs`")
-
-    ir_obs = adata.obs
 
     return _group_abundance(
         ir_obs, groupby, target_col=target_col, fraction=fraction, sort=sort

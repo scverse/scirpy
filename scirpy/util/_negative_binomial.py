@@ -6,13 +6,12 @@ Permission granted to include it in Scirpy under BSD-License in
 https://github.com/gokceneraslan/fit_nbinom/issues/5
 """
 
-from typing import Optional, Tuple
-import numpy as np
-from scipy.special import gammaln
-from scipy.special import psi
-from scipy.special import factorial
-from scipy.optimize import fmin_l_bfgs_b as optim
 from numbers import Number
+from typing import Optional, Tuple
+
+import numpy as np
+from scipy.optimize import fmin_l_bfgs_b as optim
+from scipy.special import factorial, gammaln, psi
 
 
 def fit_nbinom(

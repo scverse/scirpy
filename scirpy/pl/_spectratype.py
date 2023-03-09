@@ -5,14 +5,14 @@ import numpy as np
 from anndata import AnnData
 
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
+from ..util import DataHandler
 from . import base
 from .styling import _get_colors
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def spectratype(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     chain: Union[
         Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
         Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
@@ -23,16 +23,19 @@ def spectratype(
     combine_fun: Callable = np.sum,
     normalize: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
-    """Show the distribution of CDR3 region lengths.
+    """\
+    Show the distribution of CDR3 region lengths.
 
     Ignores NaN values.
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     chain
         One or multiple chains to include in the plot.
     color
@@ -50,6 +53,9 @@ def spectratype(
         the values will be normalized.
     viztype
         Type of plot to produce.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
     **kwargs
         Additional parameters passed to the base plotting function
 
@@ -58,8 +64,9 @@ def spectratype(
     -------
     Axes object
     """
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     data = tl.spectratype(
-        adata,
+        params,
         chain=chain,
         cdr3_col=cdr3_col,
         target_col=color,
@@ -77,7 +84,7 @@ def spectratype(
         ylab = "Number of cells"
 
     if "color" not in kwargs:
-        colors = _get_colors(adata, color)
+        colors = _get_colors(params.data, color)
         if colors is not None:
             kwargs["color"] = [colors[cat] for cat in data.columns]
 

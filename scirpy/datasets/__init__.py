@@ -1,3 +1,4 @@
+import os
 import os.path
 import tempfile
 import urllib.request
@@ -16,9 +17,11 @@ from ..io._convert_anndata import from_airr_cells
 from ..io._datastructures import AirrCell
 from ..io._io import _infer_locus_from_gene_names, _IOLogger
 from ..io._legacy import upgrade_schema
+from ..pp import index_chains
 from ..util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
+from typing import cast
 
 
 @_doc_params(
@@ -106,6 +109,8 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
     ----------
     cached
         If `True`, attempt to read from the `data` directory before downloading
+    cache_path
+        Location where the h5ad object will be saved
 
     Returns
     -------
@@ -137,7 +142,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
     for idx, row in tqdm(
         df.iterrows(), total=df.shape[0], desc="Processing VDJDB entries"
     ):
-        cell = AirrCell(cell_id=idx)
+        cell = AirrCell(cell_id=str(idx))
         if not pd.isnull(row["cdr3.alpha"]):
             alpha_chain = AirrCell.empty_chain_dict()
             alpha_chain.update(
@@ -200,12 +205,13 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
 
     logging.info("Converting to AnnData object")
     adata = from_airr_cells(tcr_cells)
+    index_chains(adata)
 
     adata.uns["DB"] = {"name": "VDJDB", "date_downloaded": datetime.now().isoformat()}
 
     # store cache
     os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
-    adata.write_h5ad(cache_path)
+    adata.write_h5ad(cast(os.PathLike, cache_path))
 
     return adata
 
@@ -221,6 +227,8 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     ----------
     cached
         If `True`, attempt to read from the `data` directory before downloading
+    cache_path
+        Location where the h5ad object will be saved
 
     Returns
     -------
@@ -340,9 +348,10 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     iedb_df = iedb_df.set_index(iedb.obs.index)
 
     iedb.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
+    index_chains(iedb)
 
     # store cache
     os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
-    iedb.write_h5ad(cache_path)
+    iedb.write_h5ad(cast(os.PathLike, cache_path))
 
     return iedb

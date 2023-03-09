@@ -1,12 +1,13 @@
 ---
 jupyter:
   jupytext:
+    formats: md,ipynb
     notebook_metadata_filter: -kernelspec
     text_representation:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.11.4
+      jupytext_version: 1.14.4
 ---
 
 ```python
@@ -434,4 +435,8 @@ sc.pp.pca(adata, svd_solver="arpack")
 sc.pp.neighbors(adata)
 sc.tl.umap(adata)
 sc.pl.umap(adata, color=["has_ir", "CD3E", "sample"])
+```
+
+```python
+
 ```

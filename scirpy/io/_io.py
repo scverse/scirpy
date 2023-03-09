@@ -13,11 +13,17 @@ import pandas as pd
 from airr import RearrangementSchema
 from anndata import AnnData
 
-from ..util import _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
+from ..util import (
+    DataHandler,
+    _doc_params,
+    _is_na2,
+    _is_true,
+    _is_true2,
+    _translate_dna_to_protein,
+)
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
-from ._legacy import _check_upgrade_schema
 from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
 
 # patch sys.modules to enable pickle import.
@@ -370,7 +376,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
             "<CELL>/filtered_TCR_seqs/*.pkl"
         )
 
-    return from_airr_cells(airr_cells.values())
+    return from_airr_cells(airr_cells.values(), **kwargs)
 
 
 @_doc_params(
@@ -615,8 +621,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     return from_airr_cells(bcr_cells.values(), **kwargs)
 
 
-@_check_upgrade_schema()
-def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
+def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) -> None:
     """Export :term:`IR` data to :term:`AIRR` Rearrangement `tsv` format.
 
     Parameters
@@ -625,8 +630,10 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
         annotated data matrix
     filename
         destination filename
+    **kwargs
+        additional arguments passed to :func:`~scirpy.io.to_airr_cells`
     """
-    airr_cells = to_airr_cells(adata)
+    airr_cells = to_airr_cells(adata, **kwargs)
     try:
         fields = airr_cells[0].fields
         for tmp_cell in airr_cells[1:]:
@@ -646,14 +653,15 @@ def write_airr(adata: AnnData, filename: Union[str, Path]) -> None:
     writer.close()
 
 
-@_check_upgrade_schema()
-def to_dandelion(adata: AnnData):
+def to_dandelion(adata: DataHandler.TYPE, **kwargs):
     """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters
     ----------
     adata
         annotated data matrix with :term:`IR` annotations.
+    **kwargs
+        additional arguments passed to :func:`~scirpy.io.to_airr_cells`
 
     Returns
     -------
@@ -663,7 +671,7 @@ def to_dandelion(adata: AnnData):
         import dandelion as ddl
     except:
         raise ImportError("Please install dandelion: pip install sc-dandelion.")
-    airr_cells = to_airr_cells(adata)
+    airr_cells = to_airr_cells(adata, **kwargs)
 
     contig_dicts = {}
     for tmp_cell in airr_cells:

@@ -1,20 +1,20 @@
-from anndata import AnnData
 from typing import Optional
+
 import pandas as pd
-from pandas.core.arrays.categorical import Categorical
-from ..io._legacy import _check_upgrade_schema
-from ..util import _is_na
+
+from ..util import DataHandler
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def clonotype_convergence(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
     key_coarse: str,
     key_fine: str,
     key_added: str = "is_convergent",
     inplace=True,
-) -> Optional[Categorical]:
+    airr_mod: str = "airr",
+) -> Optional[pd.Series]:
     """
     Finds evidence for :term:`Convergent evolution of clonotypes`.
 
@@ -30,8 +30,7 @@ def clonotype_convergence(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix
+    {adata}
     key_coarse
         Key in adata.obs holding the "coarse" clonotype cluster defintion. E.g.
         `ct_cluster_aa_identity`.
@@ -49,9 +48,10 @@ def clonotype_convergence(
     Depending on the value of `inplace`, either returns or adds to `adata` a categorical
     vector indicating for each cell whether it belongs to a "convergent clonotype".
     """
+    params = DataHandler(adata, airr_mod)
+    obs = params.get_obs([key_coarse, key_fine])
     convergence_df = (
-        adata.obs.loc[:, [key_coarse, key_fine]]
-        .groupby([key_coarse, key_fine], observed=True)
+        obs.groupby([key_coarse, key_fine], observed=True)
         .size()
         .reset_index()
         .groupby(key_coarse)
@@ -59,13 +59,28 @@ def clonotype_convergence(
         .reset_index()
     )
     convergent_clonotypes = convergence_df.loc[convergence_df[0] > 1, key_coarse]
-    result = adata.obs[key_coarse].isin(convergent_clonotypes)
-    result = pd.Categorical(
-        ["convergent" if x else "not convergent" for x in result],
-        categories=["convergent", "not convergent", "nan"],
+    result = obs[key_coarse].isin(convergent_clonotypes)
+    result = pd.Series(
+        pd.Categorical(
+            ["convergent" if x else "not convergent" for x in result],
+            categories=["convergent", "not convergent"],
+        ),
+        index=obs.index,
     )
-    result[_is_na(adata.obs[key_fine]) | _is_na(adata.obs[key_coarse])] = "nan"
     if inplace:
-        adata.obs[key_added] = result
+        # Let's store in both anndata and mudata. Depending on which columns
+        # were chosen, they might originate from either mudata or anndata.
+        # TODO #356: can we do that more systematically and maybe handle through DataHandler?
+        # possibly add additional attribute where to store...
+        # A possible solution is to set the default key to e.g. `:is_convergent`.
+        # If we deal with AnnData, `:` is stripped.
+        # If we deal with MuData, it is written to the `{airr_mod}` modality and to
+        # mudata.obs["{airr_mod}:xxx"]
+        # If no `:` is present, it is written only to mudata.
+        try:
+            params.mdata.obs[f"{airr_mod}:{key_added}"] = result
+        except AttributeError:
+            pass
+        params.adata.obs[key_added] = result
     else:
         return result

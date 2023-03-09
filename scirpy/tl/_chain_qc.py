@@ -1,23 +1,25 @@
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union, cast
 
 import awkward as ak
 import numpy as np
-from anndata import AnnData
 from scanpy import logging
 
 from .. import get
-from ..io._legacy import _check_upgrade_schema
-from ..util import _is_na
+from ..util import DataHandler, _is_na
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def chain_qc(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     inplace: bool = True,
     key_added: Sequence[str] = ("receptor_type", "receptor_subtype", "chain_pairing"),
 ) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
-    """Perform quality control based on the receptor-chain pairing configuration.
+    """\
+    Perform quality control based on the receptor-chain pairing configuration.
 
     Categorizes cells into their receptor types and according to their chain pairing
     status. The function adds three columns to `adata.obs`, two containing a coarse
@@ -59,13 +61,15 @@ def chain_qc(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix
+    {adata}
     inplace
         If True, adds columns to to adata
     key_added
         Tuple specifying the column names for the coarse and fine receptor type
         annotation, respectively
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     Returns
     -------
@@ -73,20 +77,22 @@ def chain_qc(
     `adata.obs` or returns a tuple with three numpy arrays containing
     the annotations.
     """
-    x = adata.obs
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
     # initalize result arrays
     string_length = len("multichain")
-    res_receptor_type = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
-    res_receptor_subtype = np.empty(dtype=f"<U{string_length}", shape=(x.shape[0],))
-
-    mask_has_ir = get._has_ir(adata, "chain_indices")
-    mask_multichain = mask_has_ir & ak.to_numpy(
-        adata.obsm["chain_indices"]["multichain"]
+    res_receptor_type = np.empty(
+        dtype=f"<U{string_length}", shape=(params.adata.shape[0],)
+    )
+    res_receptor_subtype = np.empty(
+        dtype=f"<U{string_length}", shape=(params.adata.shape[0],)
     )
 
-    vj_loci = get.airr(adata, "locus", ["VJ_1", "VJ_2"]).values
-    vdj_loci = get.airr(adata, "locus", ["VDJ_1", "VDJ_2"]).values
+    mask_has_ir = get._has_ir(params)
+    mask_multichain = mask_has_ir & ak.to_numpy(params.chain_indices["multichain"])
+
+    vj_loci = cast(np.ndarray, get.airr(params, "locus", ["VJ_1", "VJ_2"]).values)
+    vdj_loci = cast(np.ndarray, get.airr(params, "locus", ["VDJ_1", "VDJ_2"]).values)
 
     # Build masks for receptor chains
     has_tra = (vj_loci == "TRA").any(axis=1)
@@ -130,20 +136,20 @@ def chain_qc(
     res_receptor_subtype[mask_multichain] = "multichain"
 
     res_chain_pairing = _chain_pairing(
-        adata, res_receptor_subtype == "ambiguous", mask_has_ir, mask_multichain
+        params, res_receptor_subtype == "ambiguous", mask_has_ir, mask_multichain
     )
 
     if inplace:
         col_receptor_type, col_receptor_subtype, col_chain_pairing = key_added
-        adata.obs[col_receptor_type] = res_receptor_type
-        adata.obs[col_receptor_subtype] = res_receptor_subtype
-        adata.obs[col_chain_pairing] = res_chain_pairing
+        params.adata.obs[col_receptor_type] = res_receptor_type
+        params.adata.obs[col_receptor_subtype] = res_receptor_subtype
+        params.adata.obs[col_chain_pairing] = res_chain_pairing
     else:
         return (res_receptor_type, res_receptor_subtype, res_chain_pairing)
 
 
 def _chain_pairing(
-    adata: AnnData,
+    params: DataHandler,
     mask_ambiguous: np.ndarray,
     mask_has_ir: np.ndarray,
     mask_multichain: np.ndarray,
@@ -157,14 +163,14 @@ def _chain_pairing(
         which cells have an ambiguous receptor configuration.
     """
     string_length = len("two full chains")
-    results = np.empty(dtype=f"<U{string_length}", shape=(adata.shape[0],))
+    results = np.empty(dtype=f"<U{string_length}", shape=(params.adata.shape[0],))
 
     logging.debug("Done initalizing")
 
-    mask_has_vj1 = ~_is_na(get.airr(adata, "junction_aa", "VJ_1").values)
-    mask_has_vdj1 = ~_is_na(get.airr(adata, "junction_aa", "VDJ_1").values)
-    mask_has_vj2 = ~_is_na(get.airr(adata, "junction_aa", "VJ_2").values)
-    mask_has_vdj2 = ~_is_na(get.airr(adata, "junction_aa", "VDJ_2").values)
+    mask_has_vj1 = ~_is_na(get.airr(params, "junction_aa", "VJ_1").values)
+    mask_has_vdj1 = ~_is_na(get.airr(params, "junction_aa", "VDJ_1").values)
+    mask_has_vj2 = ~_is_na(get.airr(params, "junction_aa", "VJ_2").values)
+    mask_has_vdj2 = ~_is_na(get.airr(params, "junction_aa", "VDJ_2").values)
 
     logging.debug("Done with masks")
 

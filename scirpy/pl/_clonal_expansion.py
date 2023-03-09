@@ -1,15 +1,13 @@
 from typing import Literal, Union
 
-from anndata import AnnData
-
 from .. import tl
-from ..io._legacy import _check_upgrade_schema
+from ..util import DataHandler
 from . import base
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def clonal_expansion(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     groupby: str,
     *,
     target_col: str = "clone_id",
@@ -19,9 +17,11 @@ def clonal_expansion(
     normalize: bool = True,
     show_nonexpanded: bool = True,
     viztype: Literal["bar", "barh"] = "bar",
+    airr_mod: str = "airr",
     **kwargs,
 ):
-    """Visualize clonal expansion.
+    """
+    Visualize clonal expansion.
 
     Plots the fraction of cells that belong to an expanded :term:`Clonotype` by
     a categorical variable.
@@ -33,8 +33,7 @@ def clonal_expansion(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     groupby
         Group by this categorical variable in `adata.obs`.
     target_col
@@ -58,11 +57,13 @@ def clonal_expansion(
         Whether or not to show the fraction of non-expanded cells/clonotypes
     viztype
         `bar` for bars, `barh` for horizontal bars.
+    {airr_mod}
     **kwargs
         Additional arguments passed to :func:`scirpy.pl.base.bar`
     """
+    params = DataHandler(adata, airr_mod)
     plot_df = tl.summarize_clonal_expansion(
-        adata,
+        params,
         groupby,
         target_col=target_col,
         summarize_by=summarize_by,
