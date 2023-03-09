@@ -1,6 +1,5 @@
 from typing import List, Literal, Union
 
-import numpy as np
 import pandas as pd
 
 from ..util import DataHandler, _is_na, _normalize_counts
@@ -64,7 +63,7 @@ def clonal_expansion(
     key_added: str = "clonal_expansion",
     inplace: bool = True,
     **kwargs,
-) -> Union[None, np.ndarray]:
+) -> Union[None, pd.Series]:
     """Adds a column to `obs` recording which clonotypes are expanded.
 
     `nan`s in the clonotype column remain `nan` in the output.
@@ -92,7 +91,7 @@ def clonal_expansion(
     Returns
     -------
     Depending on the value of inplace, adds a column to adata or returns
-    an array with the clipped count per cell.
+    a Series with the clipped count per cell.
     """
     return _clip_and_count(
         adata,

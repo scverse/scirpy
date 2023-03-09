@@ -518,7 +518,7 @@ for a certain, reactive T-cell clone. It, therefore, makes sense that CD8+ effec
 have the largest fraction of expanded clonotypes.
 
 ```python
-ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby=""gex:cluster",)
+ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby="gex:cluster")
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -528,7 +528,7 @@ Consistent with this observation, they have the lowest :func:`scirpy.pl.alpha_di
 <!-- #endraw -->
 
 ```python
-ax = ir.pl.alpha_diversity(
+_ = ir.pl.alpha_diversity(
     mdata, metric="normalized_shannon_entropy", groupby="gex:cluster"
 )
 ```
