@@ -22,7 +22,8 @@ def alpha_diversity(
     airr_mod: str = "airr",
     **kwargs,
 ) -> plt.Axes:
-    """Plot the alpha diversity per group.
+    """\
+    Plot the alpha diversity per group.
 
     Will execute :func:`scirpy.tl.alpha_diversity` on-the-fly.
 

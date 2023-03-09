@@ -63,7 +63,7 @@ def clonotype_modularity(
     .. warning::
         This is an experimental function that may change in the future
 
-     Parameters
+    Parameters
     ----------
     {adata}
     target_col

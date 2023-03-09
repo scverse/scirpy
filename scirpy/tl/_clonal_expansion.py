@@ -64,7 +64,8 @@ def clonal_expansion(
     inplace: bool = True,
     **kwargs,
 ) -> Union[None, pd.Series]:
-    """Adds a column to `obs` recording which clonotypes are expanded.
+    """\
+    Adds a column to `obs` recording which clonotypes are expanded.
 
     `nan`s in the clonotype column remain `nan` in the output.
 

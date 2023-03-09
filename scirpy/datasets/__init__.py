@@ -17,6 +17,7 @@ from ..io._convert_anndata import from_airr_cells
 from ..io._datastructures import AirrCell
 from ..io._io import _infer_locus_from_gene_names, _IOLogger
 from ..io._legacy import upgrade_schema
+from ..pp import index_chains
 from ..util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
@@ -204,6 +205,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
 
     logging.info("Converting to AnnData object")
     adata = from_airr_cells(tcr_cells)
+    index_chains(adata)
 
     adata.uns["DB"] = {"name": "VDJDB", "date_downloaded": datetime.now().isoformat()}
 
@@ -346,6 +348,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     iedb_df = iedb_df.set_index(iedb.obs.index)
 
     iedb.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
+    index_chains(iedb)
 
     # store cache
     os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)

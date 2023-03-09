@@ -311,6 +311,7 @@ def ir_query_annotate_df(
     )
 
 
+@DataHandler.inject_param_docs()
 def ir_query_annotate(
     adata: DataHandler.TYPE,
     reference: DataHandler.TYPE,

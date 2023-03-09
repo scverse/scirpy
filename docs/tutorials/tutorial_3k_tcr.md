@@ -578,6 +578,22 @@ _ = ir.pl.group_abundance(
 )
 ```
 
+### Convergent evolution
+
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+By comparing two levels of clonotype definitions (e.g. based on nucleotide sequences and based on amino-acid sequences), 
+we can identify receptors that are subject to :term:`convergent evolution <Convergent evolution of clonotypes>`. By that,
+we mean receptors that recognize the same antigen but have evolved from different clones. 
+<!-- #endraw -->
+
+```python tags=[]
+ir.tl.clonotype_convergence(mdata, key_coarse="cc_aa_alignment", key_fine="clone_id")
+```
+
+```python tags=[]
+mu.pl.embedding(mdata, "gex:umap", color="airr:is_convergent")
+```
+
 ## Gene usage
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -754,7 +770,7 @@ clonotypes_top_modularity = list(
 ```
 
 ```python
-mu.pl.embedding(
+test_ad = mu.pl.embedding(
     mdata,
     basis="gex:umap", 
     color="airr:cc_aa_alignment",
@@ -786,10 +802,6 @@ of the cells in the two clonotypes to the rest.
 ### Clonotype imbalance among cell clusters
 
 Using cell type annotation inferred from gene expression clusters, for example, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, can be compared.
-
-```python tags=[]
-stat
-```
 
 ```python
 freq, stat = ir.tl.clonotype_imbalance(
@@ -931,6 +943,14 @@ ir.tl.ir_query_annotate(
 ```python
 mdata.update_obs()
 mu.pl.embedding(mdata, "gex:umap", color="airr:antigen.species")
+```
+
+```python tags=[]
+ir.datasets.vdjdb()
+```
+
+```python tags=[]
+ir.datasets.iedb()
 ```
 
 ```python

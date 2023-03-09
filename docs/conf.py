@@ -78,6 +78,7 @@ intersphinx_mapping = dict(
     dandelion=("https://sc-dandelion.readthedocs.io/en/latest/", None),
     muon=("https://muon.readthedocs.io/en/latest", None),
     mudata=("https://mudata.readthedocs.io/en/latest/", None),
+    awkward=("https://awkward-array.org/doc/main/", None),
 )
 
 

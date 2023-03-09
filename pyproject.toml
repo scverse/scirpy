@@ -28,7 +28,7 @@ dependencies = [
     'anndata>=0.9rc1',
     'awkward>=2.1.0',
     'mudata>=0.2.1',
-    'scanpy>=1.6.0',
+    'scanpy>=1.9.3',
     'pandas>=1.0',
     'numpy>=1.17.0',
     'scipy',
