@@ -1,4 +1,4 @@
-from typing import List, Literal, Union, cast
+from typing import List, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ def _clip_and_count(
     key_added: Union[str, None] = None,
     fraction: bool = True,
     airr_mod="airr",
-) -> Union[None, np.ndarray]:
+) -> Union[None, pd.Series]:
     """Counts the number of identical entries in `target_col`
     for each group in `group_by`.
 
@@ -39,13 +39,11 @@ def _clip_and_count(
             ]
         )
     )
-    clipped_count = cast(
-        np.ndarray,
-        params.adata.obs.merge(clonotype_counts, how="left", on=groupby_cols)[
-            "tmp_count"
-        ].values,
-    )
+    clipped_count = params.adata.obs.merge(
+        clonotype_counts, how="left", on=groupby_cols
+    )["tmp_count"]
     clipped_count[_is_na(params.adata.obs[target_col])] = "nan"
+    clipped_count.index = params.adata.obs.index
 
     if inplace:
         key_added = (
@@ -153,7 +151,7 @@ def summarize_clonal_expansion(
     tmp_col = target_col + "_clipped_count"
     tmp_col_weight = target_col + "_weight"
 
-    obs = params.adata.obs.loc[:, [groupby, target_col]]
+    obs = params.get_obs([groupby, target_col])
     obs[tmp_col] = expansion
 
     # filter NA values

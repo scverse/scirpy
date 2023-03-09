@@ -408,7 +408,7 @@ The dots are colored by patient. We observe, that for instance, clonotypes `101`
 *public*, i.e. it is shared across patients *Lung1* and *Lung3*. 
 
 ```python
-ir.pl.clonotype_network(
+_ = ir.pl.clonotype_network(
     mdata, color="gex:patient", label_fontsize=9, panel_size=(7, 7), base_size=20
 )
 ```
@@ -497,10 +497,6 @@ ir.tl.clonal_expansion(mdata)
 The `clonotype_size` refers to the absolute number of cells in a clonotype.
 
 ```python tags=[]
-mdata.obs
-```
-
-```python tags=[]
 mdata.update_obs()
 ```
 
@@ -514,7 +510,7 @@ in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting fun
 <!-- #endraw -->
 
 ```python
-ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby="cluster", clip_at=4, normalize=False)
+_ = ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby="gex:cluster", clip_at=4, normalize=False)
 ```
 
 The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection
@@ -522,7 +518,7 @@ for a certain, reactive T-cell clone. It, therefore, makes sense that CD8+ effec
 have the largest fraction of expanded clonotypes.
 
 ```python
-ir.pl.clonal_expansion(mdata, "gex:cluster", target_col="airr:clone_id")
+ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby=""gex:cluster",)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
