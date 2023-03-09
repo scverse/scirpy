@@ -944,15 +944,3 @@ ir.tl.ir_query_annotate(
 mdata.update_obs()
 mu.pl.embedding(mdata, "gex:umap", color="airr:antigen.species")
 ```
-
-```python tags=[]
-ir.datasets.vdjdb()
-```
-
-```python tags=[]
-ir.datasets.iedb()
-```
-
-```python
-
-```

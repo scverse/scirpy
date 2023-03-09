@@ -2,6 +2,7 @@
 # jupyter:
 #   jupytext:
 #     cell_metadata_filter: -all
+#     formats: py:light,ipynb
 #     notebook_metadata_filter: -kernelspec
 #     text_representation:
 #       extension: .py
@@ -33,8 +34,8 @@ import scirpy as ir
 # + language="bash"
 # mkdir -p data
 # cd data
-# wget -O GSE139555_raw.tar "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file"
-# wget -O GSE139555_tcell_metadata.txt.gz "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file&file=GSE139555%5Ftcell%5Fmetadata%2Etxt%2Egz"
+# wget --no-verbose -O GSE139555_raw.tar "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file"
+# wget --no-verbose -O GSE139555_tcell_metadata.txt.gz "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE139555&format=file&file=GSE139555%5Ftcell%5Fmetadata%2Etxt%2Egz"
 # tar xvf GSE139555_raw.tar
 
 # + language="bash"
