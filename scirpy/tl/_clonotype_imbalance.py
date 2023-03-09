@@ -101,7 +101,7 @@ def clonotype_imbalance(
 
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
-        params.adata.obs,
+        params,
         replicate_col,
         groupby,
         additional_hue,
@@ -163,7 +163,7 @@ def clonotype_imbalance(
 
 
 def _create_case_control_groups(
-    df: pd.DataFrame,
+    params: DataHandler,
     replicate_col: str,
     groupby: str,
     additional_hue: Union[None, str, bool],
@@ -203,8 +203,9 @@ def _create_case_control_groups(
         hues = [None]
     else:
         group_cols.append(additional_hue)
-        hues = df[additional_hue].unique()
-    df = df.groupby(group_cols, observed=True).agg("size").reset_index()
+        hues = params.get_obs(additional_hue).unique()
+    obs = params.get_obs(group_cols)
+    df = obs.groupby(group_cols, observed=True).agg("size").reset_index()
 
     for hue in hues:
         if hue is None:

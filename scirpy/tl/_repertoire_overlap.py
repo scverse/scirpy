@@ -78,7 +78,7 @@ def repertoire_overlap(
 
     # Create a weighted matrix of clonotypes
     df = (
-        df.groupby([target_col, groupby], observed=True)
+        df.groupby([target_col, groupby], observed=False)
         .agg({"cell_weights": "sum"})
         .reset_index()
     )
