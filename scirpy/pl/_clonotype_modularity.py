@@ -2,7 +2,9 @@ from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 from adjustText import adjust_text
+from anndata import AnnData
 from matplotlib import patheffects
+from mudata import MuData
 
 from ..util import DataHandler
 from ._clonotypes import _plot_size_legend
@@ -19,7 +21,7 @@ def _rand_jitter(arr, jitter=None):
 
 @DataHandler.inject_param_docs()
 def clonotype_modularity(
-    adata,
+    adata: Union[AnnData, MuData],
     ax=None,
     target_col="clonotype_modularity",
     jitter: float = 0.01,
@@ -88,6 +90,7 @@ def clonotype_modularity(
     -------
     A list of axis objects
     """
+    # Doesn't need param handler, we only access attributes of MuData or a all-in-one AnnData.
     if ax is None:
         fig_kws = dict() if fig_kws is None else fig_kws
         fig_width = (

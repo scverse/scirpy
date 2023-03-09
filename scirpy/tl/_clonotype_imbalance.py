@@ -3,15 +3,16 @@ from typing import List, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from anndata import AnnData
-from mudata import MuData
 from scipy.stats import fisher_exact
 
+from ..util import DataHandler
 from ._repertoire_overlap import repertoire_overlap
 
 
+# TODO refactor these functions, see https://github.com/scverse/scirpy/issues/330
+@DataHandler.inject_param_docs()
 def clonotype_imbalance(
-    adata: Union[AnnData, MuData],
+    adata: DataHandler.TYPE,
     replicate_col: str,
     groupby: str,
     case_label: str,
@@ -23,8 +24,10 @@ def clonotype_imbalance(
     inplace: bool = True,
     overlap_key: Union[None, str] = None,
     key_added: str = "clonotype_imbalance",
+    airr_mod: str = "airr",
 ) -> Union[None, Tuple[pd.DataFrame, pd.DataFrame]]:
-    """Aims to find clonotypes that are the most enriched or depleted in a category.
+    """\
+    Aims to find clonotypes that are the most enriched or depleted in a category.
 
     Uses Fischer's exact test to rank clonotypes.
     Depends on execution of :func:`scirpy.tl.repertoire_overlap`.
@@ -36,8 +39,7 @@ def clonotype_imbalance(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     replicate_col
         Column with batch or sample labels.
     groupby
@@ -65,13 +67,13 @@ def clonotype_imbalance(
         By default it is None to ensure that the overlap tool is executed with the right parameters.
     key_added
         Results will be added to `uns` under this key.
-
+    {airr_mod}
 
     Returns
     -------
     Two dataframes: abundance of clonotypes per sample; pval and logFC for clonotypes.
     """
-
+    params = DataHandler(adata, airr_mod)
     # Retrieve clonotype presence matrix
     if overlap_key is None:
         sc.logging.warning(
@@ -79,7 +81,7 @@ def clonotype_imbalance(
             " previous runs of repertoire_overlap, so the tool is running now..."
         )
         clonotype_presence, dM, lM = repertoire_overlap(
-            adata,
+            params,
             groupby=replicate_col,
             target_col=target_col,
             fraction=fraction,
@@ -87,7 +89,7 @@ def clonotype_imbalance(
         )
     else:
         try:
-            clonotype_presence = adata.uns[overlap_key]["weighted"]
+            clonotype_presence = params.adata.uns[overlap_key]["weighted"]
         except KeyError:
             raise KeyError(
                 "Clonotype imbalance calculation depends on repertoire overlap, but the key"
@@ -99,7 +101,12 @@ def clonotype_imbalance(
 
     # Create a series of case-control groups for comparison
     case_control_groups = _create_case_control_groups(
-        adata.obs, replicate_col, groupby, additional_hue, case_label, control_label
+        params.adata.obs,
+        replicate_col,
+        groupby,
+        additional_hue,
+        case_label,
+        control_label,
     )
 
     #  Compare groups with Fischer's test
@@ -148,7 +155,7 @@ def clonotype_imbalance(
 
     if inplace:
         # Store calculated data
-        adata.uns[key_added] = {"abundance": clt_freq, "pvalues": clt_stats}
+        params.adata.uns[key_added] = {"abundance": clt_freq, "pvalues": clt_stats}
         return
 
     else:

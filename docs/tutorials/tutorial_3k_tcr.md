@@ -843,6 +843,10 @@ mu.pl.embedding(
 
 Just like comparing repertoire overlap among samples, Scirpy also offers comparison between gene expression clusters or cell subpopulations. As an example, repertoire overlap of the two cell types compared above is shown.
 
+```python tags=[]
+mdata.obs
+```
+
 ```python
 # ir.tl.repertoire_overlap(mdata, "gex:cluster")
 _ = ir.pl.repertoire_overlap(

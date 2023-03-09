@@ -71,20 +71,15 @@ def repertoire_overlap(
     Axes object
     """
     params = DataHandler(adata, airr_mod)
-    if added_key not in params.adata.uns:
-        # TODO this shouldn't silently write to `key_added`. If this function
-        # is called repeatedly with different arguments, it will show the same (wrong) results.
-        # Runtime is not much of an issue here, so it can run on-the-fly.
-        # This possibly affects other functions, too.
-        tl.repertoire_overlap(
-            adata,
-            groupby=groupby,
-            target_col=target_col,
-            overlap_measure=overlap_measure,
-            overlap_threshold=overlap_threshold,
-            fraction=fraction,
-            added_key=added_key,
-        )
+    tl.repertoire_overlap(
+        adata,
+        groupby=groupby,
+        target_col=target_col,
+        overlap_measure=overlap_measure,
+        overlap_threshold=overlap_threshold,
+        fraction=fraction,
+        added_key=added_key,
+    )
     df = params.adata.uns[added_key]["weighted"]
 
     if pair_to_plot is None:

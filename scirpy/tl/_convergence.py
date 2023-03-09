@@ -72,6 +72,11 @@ def clonotype_convergence(
         # were chosen, they might originate from either mudata or anndata.
         # TODO #356: can we do that more systematically and maybe handle through DataHandler?
         # possibly add additional attribute where to store...
+        # A possible solution is to set the default key to e.g. `:is_convergent`.
+        # If we deal with AnnData, `:` is stripped.
+        # If we deal with MuData, it is written to the `{airr_mod}` modality and to
+        # mudata.obs["{airr_mod}:xxx"]
+        # If no `:` is present, it is written only to mudata.
         try:
             params.mdata.obs[f"{airr_mod}:{key_added}"] = result
         except AttributeError:
