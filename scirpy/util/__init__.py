@@ -130,12 +130,19 @@ class DataHandler:
         can't be found or DataHandler is initalized without mudata
         object, AnnData.obs is tried.
         """
+        # TODO #356: not sure if this should return always the dimensions of MuData?
+        # currently the dimensions of the dataframe are inconsistent depending on which columns
+        # are requested.
         if isinstance(columns, str):
             return self._get_obs_col(columns)
         else:
-            df = pd.concat({c: self._get_obs_col(c) for c in columns}, axis=1)
-            assert df.index.is_unique, "Index not unique"
-            return df
+            if len(columns):
+                df = pd.concat({c: self._get_obs_col(c) for c in columns}, axis=1)
+                assert df.index.is_unique, "Index not unique"
+                return df
+            else:
+                # return empty dataframe (only index) if no columns are specified
+                return self.data.obs.loc[:, []]
 
     def _get_obs_col(self, column: str) -> pd.Series:
         try:

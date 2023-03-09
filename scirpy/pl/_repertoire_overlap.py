@@ -72,6 +72,10 @@ def repertoire_overlap(
     """
     params = DataHandler(adata, airr_mod)
     if added_key not in params.adata.uns:
+        # TODO this shouldn't silently write to `key_added`. If this function
+        # is called repeatedly with different arguments, it will show the same (wrong) results.
+        # Runtime is not much of an issue here, so it can run on-the-fly.
+        # This possibly affects other functions, too.
         tl.repertoire_overlap(
             adata,
             groupby=groupby,

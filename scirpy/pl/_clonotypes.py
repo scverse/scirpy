@@ -444,26 +444,28 @@ def _plot_clonotype_network_panel(
     cat_colors = None
     colorbar = False
 
+    # uniform color
+    if isinstance(color, str) and is_color_like(color):
+        color = [color for c in range(coords.shape[0])]
+
     if isinstance(params.data, MuData):
         # in the mudata case, we use a function internally used by muon
-        obs = _fetch_features_mudata(params, [color], use_raw)
+        obs = _fetch_features_mudata(
+            params, [color] if isinstance(color, str) else [], use_raw
+        )
     else:
         # ... in the anndata case, we retrieve expression from X or raw manually
         if use_raw is None:
             use_raw = params.adata.raw is not None
         obs = params.adata.obs
         # store gene expression in obs
-        if color not in obs.columns:
+        if isinstance(color, str) and color not in obs.columns:
             tmp_expr = (params.adata.raw if use_raw else params.adata)[:, color].X
             if sp.issparse(tmp_expr):
                 tmp_expr = cast(np.matrix, cast(sp.spmatrix, tmp_expr).todense()).A1
             else:
                 tmp_expr = np.ravel(cast(np.ndarray, tmp_expr))
             obs[color] = tmp_expr
-
-    # uniform color
-    if isinstance(color, str) and is_color_like(color):
-        color = [color for c in range(coords.shape[0])]
 
     def _aggregate_per_dot_continuous(values):
         x_color = []
@@ -489,7 +491,8 @@ def _plot_clonotype_network_panel(
     if isinstance(color, str) and color in obs and is_categorical_dtype(obs[color]):
         pie_colors = []
         values = obs[color]
-        values = values.cat.add_categories("nan")
+        if "nan" not in values.cat.categories:
+            values = values.cat.add_categories("nan")
         values = values.fillna("nan").values
         # cycle colors for categories with many values instead of
         # coloring them in grey

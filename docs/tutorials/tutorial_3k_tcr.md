@@ -787,11 +787,15 @@ of the cells in the two clonotypes to the rest.
 
 Using cell type annotation inferred from gene expression clusters, for example, clonotypes belonging to CD8+ effector T-cells and CD8+ tissue-resident memory T cells, can be compared.
 
+```python tags=[]
+stat
+```
+
 ```python
 freq, stat = ir.tl.clonotype_imbalance(
     mdata,
-    replicate_col="sample",
-    groupby="cluster",
+    replicate_col="gex:sample",
+    groupby="gex:cluster",
     case_label="CD8_Teff",
     control_label="CD8_Trm",
     inplace=False,
@@ -801,18 +805,23 @@ top_differential_clonotypes = stat["clone_id"].tolist()[:3]
 
 Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells. 
 
+```python tags=[]
+mdata.update()
+```
+
 ```python
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
-mu.pl.umap(mdata, color="gex:cluster", ax=ax1, show=False)
-mu.pl.umap(
+mu.pl.embedding(mdata, basis="gex:umap", color="gex:cluster", ax=ax1, show=False)
+mu.pl.embedding(
     mdata,
+    basis="gex:umap", 
     color="airr:clone_id",
     groups=top_differential_clonotypes,
     ax=ax2,
     # increase size of highlighted dots
     size=[
         80 if c in top_differential_clonotypes else 30
-        for c in mdata.obs["airr:clone_id"]
+        for c in mdata.obs["airr:clone_id"][mdata.mod["gex"].obs_names]
     ],
     palette=cycler(color=mpl_cm.Dark2_r.colors),
 )
@@ -823,9 +832,9 @@ mu.pl.umap(
 Just like comparing repertoire overlap among samples, Scirpy also offers comparison between gene expression clusters or cell subpopulations. As an example, repertoire overlap of the two cell types compared above is shown.
 
 ```python
-ir.tl.repertoire_overlap(mdata["airr"], "cluster")
-ir.pl.repertoire_overlap(
-    mdata["airr"], "cluster", pair_to_plot=["CD8_Teff", "CD8_Trm"], fig_kws={"dpi": 120}
+# ir.tl.repertoire_overlap(mdata, "gex:cluster")
+_ = ir.pl.repertoire_overlap(
+    mdata, "gex:cluster", pair_to_plot=["CD8_Teff", "CD8_Trm"], fig_kws={"dpi": 120}
 )
 ```
 
@@ -834,11 +843,12 @@ ir.pl.repertoire_overlap(
 Gene expression of cells belonging to individual clonotypes can also be compared using Scanpy. As an example, differential gene expression of two clonotypes, found to be specific to cell type clusters can also be analysed.
 
 ```python
-# TODO #356: deal with mdata
+# # TODO #356: deal with mdata - I don't think there's a "muon" way of doing this
+# # but can use `obs_context`.
 # sc.tl.rank_genes_groups(
-#     adata, "clone_id", groups=["101"], reference="68", method="wilcoxon"
+#     mdata, "airr:clone_id", groups=["101"], reference="68", method="wilcoxon"
 # )
-# sc.pl.rank_genes_groups_violin(adata, groups="101", n_genes=15)
+# sc.pl.rank_genes_groups_violin(mdata, groups="101", n_genes=15)
 ```
 
 ## Query epitope databases
@@ -874,12 +884,12 @@ vdjdb = ir.datasets.vdjdb()
 ```
 
 ```python
-ir.pp.ir_dist(mdata["airr"], vdjdb, metric="identity", sequence="aa")
+ir.pp.ir_dist(mdata, vdjdb, metric="identity", sequence="aa")
 ```
 
 ```python
 ir.tl.ir_query(
-    mdata["airr"],
+    mdata,
     vdjdb,
     metric="identity",
     sequence="aa",
@@ -894,7 +904,7 @@ ir.tl.ir_query(
 
 ```python
 ir.tl.ir_query_annotate_df(
-    mdata["airr"],
+    mdata,
     vdjdb,
     metric="identity",
     sequence="aa",
@@ -909,7 +919,7 @@ Alternatively, to break down the annotation to a single-value per cell, you can 
 
 ```python
 ir.tl.ir_query_annotate(
-    mdata["airr"],
+    mdata,
     vdjdb,
     metric="identity",
     sequence="aa",
@@ -920,7 +930,7 @@ ir.tl.ir_query_annotate(
 
 ```python
 mdata.update_obs()
-mu.pl.umap(mdata, color="airr:antigen.species")
+mu.pl.embedding(mdata, "gex:umap", color="airr:antigen.species")
 ```
 
 ```python
