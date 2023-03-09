@@ -138,8 +138,6 @@ class AirrCell(MutableMapping):
 
         if self._chain_fields is None:
             self._chain_fields = list(chain.keys())
-        elif self._chain_fields != list(chain.keys()):
-            raise ValueError("All chains must have the same fields!")
 
         if "locus" not in chain:
             self._logger.warning(
