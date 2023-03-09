@@ -14,6 +14,7 @@ from cycler import Cycler, cycler
 from matplotlib import patheffects, rcParams, ticker
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap, is_color_like
+from mudata import MuData
 from pandas.api.types import is_categorical_dtype
 from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
@@ -443,7 +444,7 @@ def _plot_clonotype_network_panel(
     cat_colors = None
     colorbar = False
 
-    if params.has_mdata:
+    if isinstance(params.data, MuData):
         # in the mudata case, we use a function internally used by muon
         obs = _fetch_features_mudata(params, [color], use_raw)
     else:
@@ -496,7 +497,7 @@ def _plot_clonotype_network_panel(
             if obs[color].nunique() > len(sc.pl.palettes.default_102):
                 palette = cycler(color=sc.pl.palettes.default_102)
         cat_colors = _get_colors(
-            params.mdata if params.has_mdata else params.adata,
+            params.data,
             obs_key=color,
             palette=palette,
         )

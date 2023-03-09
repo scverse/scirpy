@@ -4,6 +4,7 @@ import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
 
+from ..util import DataHandler
 from ._clonotypes import _plot_size_legend
 from .styling import _init_ax
 
@@ -16,6 +17,7 @@ def _rand_jitter(arr, jitter=None):
     return arr + np.random.randn(len(arr)) * stdev
 
 
+@DataHandler.inject_param_docs()
 def clonotype_modularity(
     adata,
     ax=None,
@@ -35,20 +37,19 @@ def clonotype_modularity(
     legend_width: float = 2,
     fig_kws: Union[dict, None] = None,
 ):
-    """
+    """\
     Plots the :term:`Clonotype modularity` score against the associated log10 p-value.
 
     Parameters
     ----------
-    adata
-        Annotated data matrix.
+    {adata}
     ax
         Add the plot to a predefined Axes object.
     target_col
         Column in `adata.obs` containing the clonotype modularity score and
         key in `adata.uns` containing the dictionary with parameters.
-        Will look for p-values or FDRs in `adata.obs["{target_col}_pvalue"]` or
-        `adata.obs["{target_col}_fdr"]`.
+        Will look for p-values or FDRs in `adata.obs["{{target_col}}_pvalue"]` or
+        `adata.obs["{{target_col}}_fdr"]`.
     jitter
         Add random jitter along the x axis to avoid overlapping point.
         Samples from `N(0, jitter * (max(arr) - min(arr)))`

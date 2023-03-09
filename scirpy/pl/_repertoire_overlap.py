@@ -96,9 +96,7 @@ def repertoire_overlap(
                     .reset_index()
                 )
                 # TODO refactor get_colors
-                colordict = _get_colors(
-                    params.mdata if params.has_mdata else params.adata, lbl
-                )
+                colordict = _get_colors(params.data, lbl)
                 if colordict is not None:
                     label_levels = labels[lbl].unique()
                     for e in label_levels:

@@ -180,8 +180,10 @@ class DataHandler:
                 )
 
     @property
-    def has_mdata(self) -> bool:
-        return isinstance(self._data, MuData)
+    def data(self) -> Union[MuData, AnnData]:
+        """Get the outermost container. If MuData is defined, return the MuData object.
+        Otherwise the AnnData object."""
+        return self._data
 
     @property
     def mdata(self) -> MuData:

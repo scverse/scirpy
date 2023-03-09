@@ -715,26 +715,23 @@ a high modularity score consist of cells that have a similar molecular phenotype
 <!-- #endraw -->
 
 ```python
-# TODO this needs to deal with mdata
-mdata.obsp["connectivities"] = mdata["gex"].obsp["connectivities"]
-ir.tl.clonotype_modularity(mdata, target_col="airr:cc_aa_alignment")
+ir.tl.clonotype_modularity(mdata, connectivity_key="gex:connectivities", target_col="airr:cc_aa_alignment")
 ```
 
 We can plot the clonotype modularity on top of a umap of clonotype network plot
 
 ```python
-sc.pl.umap(mdata, color="clonotype_modularity")
+mu.pl.embedding(mdata, basis="gex:umap", color="clonotype_modularity")
 ```
 
 ```python
-# TODO #356: how do we get the color back into the airr object / or work with mudata directly?
-# ir.pl.clonotype_network(
-#     mdata['airr'],
-#     color="clonotype_modularity",
-#     label_fontsize=9,
-#     panel_size=(6, 6),
-#     base_size=20,
-# )
+_ = ir.pl.clonotype_network(
+    mdata,
+    color="clonotype_modularity",
+    label_fontsize=9,
+    panel_size=(6, 6),
+    base_size=20,
+)
 ```
 
 We can also visualize the clonotype modularity together with the associated
@@ -757,8 +754,9 @@ clonotypes_top_modularity = list(
 ```
 
 ```python
-mu.pl.umap(
+mu.pl.embedding(
     mdata,
+    basis="gex:umap", 
     color="airr:cc_aa_alignment",
     groups=clonotypes_top_modularity,
     palette=cycler(color=mpl_cm.Dark2_r.colors),
@@ -791,7 +789,7 @@ Using cell type annotation inferred from gene expression clusters, for example, 
 
 ```python
 freq, stat = ir.tl.clonotype_imbalance(
-    mdata["airr"],
+    mdata,
     replicate_col="sample",
     groupby="cluster",
     case_label="CD8_Teff",
