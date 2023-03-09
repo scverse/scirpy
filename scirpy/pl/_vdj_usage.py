@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Callable, Sequence, Tuple, Union
+from typing import Callable, List, Sequence, Tuple, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -268,9 +268,9 @@ def vdj_usage(
 
 
 def _gapped_ribbons(
-    data: list,
+    data: List,
     *,
-    ax: Union[plt.axes, list, None] = None,
+    ax: Union[plt.Axes, List, None] = None,
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
@@ -325,6 +325,8 @@ def _gapped_ribbons(
         if isinstance(ax, list):
             ax = ax[0]
 
+    ax = cast(plt.Axes, ax)
+
     spread = 10
     xw = gapfreq - gapwidth
     slope = xw * 0.8
@@ -344,8 +346,8 @@ def _gapped_ribbons(
         y1 += np.zeros(10).tolist()
         y2 += np.zeros(10).tolist()
     if ribcol is None:
-        ax.fill_between(x, y1, y2, alpha=0.6)
+        ax.fill_between(x, y1, y2, alpha=0.6)  # type: ignore
     else:
-        ax.fill_between(x, y1, y2, color=ribcol, alpha=0.6)
+        ax.fill_between(x, y1, y2, color=ribcol, alpha=0.6)  # type: ignore
 
     return ax

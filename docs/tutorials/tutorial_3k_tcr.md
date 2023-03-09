@@ -542,7 +542,7 @@ ten largest clonotypes across the cell-type clusters.
 <!-- #endraw -->
 
 ```python
-ir.pl.group_abundance(
+_ = ir.pl.group_abundance(
     mdata, groupby="airr:clone_id", target_col="gex:cluster", max_cols=10
 )
 ```
@@ -551,7 +551,7 @@ It might be beneficial to normalize the counts
 to the number of cells per sample to mitigate biases due to different sample sizes:
 
 ```python
-ir.pl.group_abundance(
+_ = ir.pl.group_abundance(
     mdata,
     groupby="airr:clone_id",
     target_col="gex:cluster",
@@ -565,7 +565,7 @@ Some clonotypes are *private*, i.e. specific to a certain tissue,
 others are *public*, i.e. they are shared across different tissues.
 
 ```python
-ax = ir.pl.group_abundance(
+_ = ir.pl.group_abundance(
     mdata, groupby="airr:clone_id", target_col="gex:source", max_cols=15, figsize=(5, 3)
 )
 ```
@@ -573,7 +573,7 @@ ax = ir.pl.group_abundance(
 However, clonotypes that are shared between *patients* are rare:
 
 ```python
-ax = ir.pl.group_abundance(
+_ = ir.pl.group_abundance(
     mdata, groupby="airr:clone_id", target_col="gex:patient", max_cols=15, figsize=(5, 3)
 )
 ```
@@ -614,8 +614,8 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 <!-- #endraw -->
 
 ```python
-ax = ir.pl.vdj_usage(
-    mdata, full_combination=False, max_segments=None, max_ribbons=30
+_ = ir.pl.vdj_usage(
+    mdata, full_combination=False, max_segments=None, max_ribbons=30, fig_kws={"figsize": (8, 5)}
 )
 ```
 
@@ -634,10 +634,6 @@ ir.pl.vdj_usage(
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 :func:`~scirpy.pl.spectratype` plots give us information about the length distribution of CDR3 regions.
 <!-- #endraw -->
-
-```python tags=[]
-mdata.obs
-```
 
 ```python
 ir.pl.spectratype(mdata, color="gex:cluster", viztype="bar", fig_kws={"dpi": 120})
@@ -691,7 +687,7 @@ The distance matrix can be shown as a heatmap, while samples are reordered based
 
 ```python
 # TODO #356: missing heatmap labels
-ir.pl.repertoire_overlap(mdata, "gex:sample", heatmap_cats=["gex:patient", "gex:source"])
+ax = ir.pl.repertoire_overlap(mdata, "gex:sample", heatmap_cats=["gex:patient", "gex:source"])
 ```
 
 A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
