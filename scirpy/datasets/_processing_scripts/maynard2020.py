@@ -1,48 +1,86 @@
-# %env OPENBLAS_NUM_THREADS=16
-# %env OMP_NUM_THREADS=16
-# %env MKL_NUM_THREADS=16
-# %env OMP_NUM_cpus=16
-# %env MKL_NUM_cpus=16
-# %env OPENBLAS_NUM_cpus=16
-import sys
-
-sys.path.insert(0, "../../..")
-
-import scirpy as ir
-import scanpy as sc
-import pandas as pd
-import numpy as np
-from scipy.sparse import csr_matrix
+# +
+from glob import glob
+from multiprocessing import Pool
 from pathlib import Path
 
-# The dataset has been downloaded from ENA and then processed using the Smart-seq2 Pipeline:
-# https://github.com/nf-core/smartseq2/
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
+import scanpy as sc
+import scipy.sparse as sp
+import scirpy as ir
 
 DATASET_DIR = Path("/data/datasets/Maynard_Bivona_2020_NSCLC/")
+# -
 
-# ### Read counts and TPMs
+# The dataset has been downloaded from ENA and then processed using BraCer, TraCeR and the nf-core RNA-seq pipeline
+# using `salmon`. 
+#
+# We previously processed this dataset with STAR + featureCounts, but following up the discussion
+# on nf-core, featureCounts is not state-of-the art any more for estimating transcript abundances. 
+# We, therefore, switched to the nf-core RNA-seq pipeline and Salmon. 
 
-count_mat = pd.read_csv(
-    DATASET_DIR / "smartseq2_pipeline/resultCOUNT.txt",
-    sep="\t",
-    low_memory=False,
-    index_col="Geneid",
-)
+with open(
+    "/data/genomes/hg38/annotation/gencode/gencode.v33.primary_assembly.annotation.gtf",
+    "r",
+) as gtf:
+    entries = {}
+    for line in gtf:
+        if line.startswith("#"):
+            continue
+        attrs = line.split("\t")[8].strip("\n")
+        attrs = [item.strip().split(" ") for item in attrs.split(";")]
+        attrs = [(x[0], x[1].strip('"')) for x in attrs if len(x) == 2]
+        attrs = dict(attrs)
+        entries[attrs["gene_id"]] = attrs["gene_name"]
 
-tpm_mat = pd.read_csv(
-    DATASET_DIR / "smartseq2_pipeline/resultTPM.txt", sep="\t", low_memory=False
-)
 
-# summarize to gene symbol for the ~300 duplicated symbols.
-tpm_mat_symbol = tpm_mat.drop("gene_id", axis="columns").groupby("gene_symbol").sum()
+ensg2symbol = pd.DataFrame.from_dict(entries, orient="index", columns=["symbol"])
+# remove PAR_ genes and duplicated symbols (~80)
+ensg2symbol = ensg2symbol.loc[~ensg2symbol.index.str.contains("PAR_"), :]
+ensg2symbol = ensg2symbol.loc[~ensg2symbol.duplicated(), :]
+ensg2symbol
 
-# ### Read and sanitize metadata
+sample_paths = glob(str(DATASET_DIR / "rnaseq_pipeline/salmon/SRR*"))
 
-# +
-sample_info = pd.read_csv(DATASET_DIR / "scripts/sra_sample_info.csv", low_memory=False)
-cell_metadata = pd.read_csv(
-    DATASET_DIR / "scripts/cell_metadata.csv", low_memory=False, index_col=0
-)
+len(sample_paths)
+
+
+def read_salmon(path):
+    """quant type can be one of "tpm", "count", "count_scaled" """
+    path = Path(path)
+    df = pd.read_csv(Path(path / "quant.genes.sf"), sep="\t", index_col=0)
+    df = df.join(ensg2symbol, how="inner")
+    res = dict()
+    res["sample_id"] = path.name
+    res["var"] = (
+        df.reset_index().rename(columns={"index": "ensg"}).loc[:, ["ensg", "symbol"]]
+    )
+    res["count"] = sp.csc_matrix(df["NumReads"].values)
+    res["count_scaled"] = sp.csc_matrix(df["NumReads"].values / df["EffectiveLength"].values)
+    res["tpm"] = sp.csc_matrix(df["TPM"].values)
+
+    return res
+
+
+with Pool(42) as p:
+    res = p.map(read_salmon, sample_paths[:], chunksize=20)
+
+# check that gene symbols are the same in all arrays
+pdt.assert_frame_equal(res[0]["var"], res[-1]["var"])
+
+sample_ids = np.array([x["sample_id"].split("_")[0] for x in res])
+count_mat = sp.vstack([x["count"] for x in res]).tocsr()
+tpm_mat = sp.vstack([x["tpm"] for x in res]).tocsr()
+count_mat_scaled = sp.vstack([x["count_scaled"] for x in res]).tocsr()
+
+# ## Read and sanitize metadata
+
+# + endofcell="--"
+# # +
+sample_info = pd.read_csv(DATASET_DIR / "scripts/make_h5ad" /"sra_sample_info.csv", low_memory=False)
+cell_metadata = pd.read_csv(DATASET_DIR / "scripts/make_h5ad" /"cell_metadata.csv", low_memory=False, index_col=0)
 
 # combine metadata
 meta = sample_info.merge(
@@ -94,40 +132,100 @@ meta = meta.drop(
 )
 
 meta.tail()
+# --
 
-# ### Find all cells for which we have both counts, TPM and annotation
+meta.rename(
+    columns={
+        "sample_name": "sample",
+        "histolgy": "condition",
+        "patient_id": "patient",
+        "biopsy_site": "tissue",
+        "primary_or_metastaic": "origin",
+    },
+    inplace=True,
+)
 
-has_counts = set(count_mat.columns)
-has_tpm = set(tpm_mat.columns)
+meta["condition"] = [
+    {"Adenocarcinoma": "LUAD", "Squamous": "LSCC"}[x] for x in meta["condition"]
+]
+
+meta["tissue"] = ["lymph_node" if x == "LN" else x.lower() for x in meta["tissue"]]
+
+meta.loc[meta["origin"].isnull(), ["sample", "patient"]].drop_duplicates()
+
+meta["origin"] = [
+    {"Primary": "tumor_primary", "Metastatic": "tumor_metastasis"}.get(x, np.nan)
+    for x in meta["origin"]
+]
+
+meta.loc[:, ["sample", "patient", "tissue", "condition", "origin"]]
+
+for col in ["sample", "patient", "tissue", "condition", "origin"]:
+    print(col, meta[col].unique())
+
+# ## build adata object
+
+has_tx = set(sample_ids)
 has_meta = set(meta.index.values)
 
-cell_ids = np.array(list(has_counts & has_tpm & has_meta))
+has_all = has_tx & has_meta
 
-# ### Build adata
+len(has_tx), len(has_meta), len(has_all)
 
-var = (
-    pd.DataFrame(count_mat.index)
-    .rename({"Geneid": "gene_symbol"}, axis="columns")
-    .set_index("gene_symbol")
-    .sort_index()
-)
+sample_id_mask = np.isin(sample_ids, list(has_all))
 
 adata = sc.AnnData(
-    X=csr_matrix(tpm_mat_symbol.loc[var.index, cell_ids].values.T),
-    layers={"raw_counts": csr_matrix(count_mat.loc[var.index, cell_ids].values.T)},
-    var=var,
-    obs=meta.loc[cell_ids, :],
+    var=res[0]["var"],
+    X=count_mat[sample_id_mask, :],
+    obs=meta.loc[sample_ids[sample_id_mask], :],
 )
 
+adata.layers["tpm"] = tpm_mat[sample_id_mask, :]
+adata.layers["counts_length_scaled"] = count_mat_scaled[sample_id_mask, :]
+
+# ## add IR information
+
 adata_tcr = ir.io.read_tracer(
-    "/data/datasets/Maynard_Bivona_2020_NSCLC/smartseq2_pipeline/TraCeR"
+    DATASET_DIR / "smartseq2_pipeline/TraCeR"
 )
+
 adata_bcr = ir.io.read_bracer(
-    "/data/datasets/Maynard_Bivona_2020_NSCLC/smartseq2_pipeline/BraCeR/filtered_BCR_summary/changeodb.tab"
+    DATASET_DIR / "smartseq2_pipeline/BraCeR/filtered_BCR_summary/changeodb.tab"
 )
+
+adata_airr = ir.pp.merge_airr(adata_tcr,adata_bcr)
 
 ir.pp.merge_with_ir(adata, adata_tcr)
 ir.pp.merge_with_ir(adata, adata_bcr)
 
-# Write out the dataset
-adata.write_h5ad("maynard2020.h5ad", compression="lzf")
+adata.var.set_index("symbol", inplace=True)
+
+# ## check that all is right
+
+adata_vis = adata.copy()
+adata_vis.X = adata_vis.layers["tpm"]
+sc.pp.log1p(adata_vis)
+sc.pp.highly_variable_genes(adata_vis, n_top_genes=4000, flavor="cell_ranger")
+sc.tl.pca(adata_vis)
+sc.pp.neighbors(adata_vis)
+sc.tl.umap(adata_vis)
+
+sc.pl.umap(adata_vis, color=["sample", "patient", "origin"])
+
+# ## save adata
+
+adata.write_h5ad("../../h5ad_raw/maynard2020.h5ad", compression="lzf")
+
+adata.shape
+
+adata_sub = adata[
+    adata.obs["sample"].isin(
+        ["LT_S01", "LT_S28", "LT_S34", "LT_S23", "LT_S34", "LT_S13", "LT_S07"]
+    ),
+    :,
+].copy()
+adata_sub.shape
+
+adata.write_h5ad("../../h5ad_raw/maynard2020_7samples.h5ad", compression="gzip")
+
+
