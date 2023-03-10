@@ -1,3 +1,19 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: endofcell,-all
+#     formats: py:light,ipynb
+#     notebook_metadata_filter: -kernelspec
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.14.4
+# ---
+
+# %load_ext autoreload
+# %autoreload 2
+
 # +
 from glob import glob
 from multiprocessing import Pool
@@ -10,6 +26,7 @@ import pandas.testing as pdt
 import scanpy as sc
 import scipy.sparse as sp
 import scirpy as ir
+from mudata import MuData
 
 DATASET_DIR = Path("/data/datasets/Maynard_Bivona_2020_NSCLC/")
 # -
@@ -58,13 +75,15 @@ def read_salmon(path):
         df.reset_index().rename(columns={"index": "ensg"}).loc[:, ["ensg", "symbol"]]
     )
     res["count"] = sp.csc_matrix(df["NumReads"].values)
-    res["count_scaled"] = sp.csc_matrix(df["NumReads"].values / df["EffectiveLength"].values)
+    res["count_scaled"] = sp.csc_matrix(
+        df["NumReads"].values / df["EffectiveLength"].values
+    )
     res["tpm"] = sp.csc_matrix(df["TPM"].values)
 
     return res
 
 
-with Pool(42) as p:
+with Pool(16) as p:
     res = p.map(read_salmon, sample_paths[:], chunksize=20)
 
 # check that gene symbols are the same in all arrays
@@ -79,8 +98,14 @@ count_mat_scaled = sp.vstack([x["count_scaled"] for x in res]).tocsr()
 
 # + endofcell="--"
 # # +
-sample_info = pd.read_csv(DATASET_DIR / "scripts/make_h5ad" /"sra_sample_info.csv", low_memory=False)
-cell_metadata = pd.read_csv(DATASET_DIR / "scripts/make_h5ad" /"cell_metadata.csv", low_memory=False, index_col=0)
+sample_info = pd.read_csv(
+    DATASET_DIR / "scripts/make_h5ad" / "sra_sample_info.csv", low_memory=False
+)
+cell_metadata = pd.read_csv(
+    DATASET_DIR / "scripts/make_h5ad" / "cell_metadata.csv",
+    low_memory=False,
+    index_col=0,
+)
 
 # combine metadata
 meta = sample_info.merge(
@@ -176,56 +201,52 @@ sample_id_mask = np.isin(sample_ids, list(has_all))
 
 adata = sc.AnnData(
     var=res[0]["var"],
-    X=count_mat[sample_id_mask, :],
+    X=tpm_mat[sample_id_mask, :], 
     obs=meta.loc[sample_ids[sample_id_mask], :],
 )
 
-adata.layers["tpm"] = tpm_mat[sample_id_mask, :]
+adata.layers["counts"] = count_mat[sample_id_mask, :]
 adata.layers["counts_length_scaled"] = count_mat_scaled[sample_id_mask, :]
+
+adata.var.set_index("symbol", inplace=True)
 
 # ## add IR information
 
-adata_tcr = ir.io.read_tracer(
-    DATASET_DIR / "smartseq2_pipeline/TraCeR"
-)
+adata_tcr = ir.io.read_tracer(DATASET_DIR / "smartseq2_pipeline/TraCeR")
 
 adata_bcr = ir.io.read_bracer(
     DATASET_DIR / "smartseq2_pipeline/BraCeR/filtered_BCR_summary/changeodb.tab"
 )
 
-adata_airr = ir.pp.merge_airr(adata_tcr,adata_bcr)
+adata_airr = ir.pp.merge_airr(adata_tcr, adata_bcr)
 
-ir.pp.merge_with_ir(adata, adata_tcr)
-ir.pp.merge_with_ir(adata, adata_bcr)
-
-adata.var.set_index("symbol", inplace=True)
+mdata = MuData({"gex": adata, "airr": adata_airr})
 
 # ## check that all is right
 
-adata_vis = adata.copy()
-adata_vis.X = adata_vis.layers["tpm"]
+mdata_vis = mdata.copy()
+
+adata.layers
+
+adata_vis = mdata_vis["gex"].copy()
 sc.pp.log1p(adata_vis)
 sc.pp.highly_variable_genes(adata_vis, n_top_genes=4000, flavor="cell_ranger")
 sc.tl.pca(adata_vis)
 sc.pp.neighbors(adata_vis)
 sc.tl.umap(adata_vis)
 
-sc.pl.umap(adata_vis, color=["sample", "patient", "origin"])
+sc.pl.umap(adata_vis, color=["sample", "patient", "origin", "CD8A", "CD14"])
 
-# ## save adata
+ir.tl.chain_qc(mdata_vis)
 
-adata.write_h5ad("../../h5ad_raw/maynard2020.h5ad", compression="lzf")
+mdata_vis.update_obs()
 
-adata.shape
+_ = ir.pl.group_abundance(
+    mdata_vis, groupby="airr:receptor_subtype", target_col="gex:patient"
+)
 
-adata_sub = adata[
-    adata.obs["sample"].isin(
-        ["LT_S01", "LT_S28", "LT_S34", "LT_S23", "LT_S34", "LT_S13", "LT_S07"]
-    ),
-    :,
-].copy()
-adata_sub.shape
+_ = ir.pl.group_abundance(mdata_vis, groupby="airr:chain_pairing", target_col="gex:patient")
 
-adata.write_h5ad("../../h5ad_raw/maynard2020_7samples.h5ad", compression="gzip")
+# ## save MuData
 
-
+mdata.write_h5mu("maynard2020.h5mu", compression="lzf")
