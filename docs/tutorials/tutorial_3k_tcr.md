@@ -53,19 +53,11 @@ The dataset ships with the `scirpy` package. We can conveniently load it from th
 <!-- #endraw -->
 
 ```python
-# adata = ir.datasets.wu2020_3k()
-
-# TODO #356: In this mudata object, columns that belong to all modalities (e.g samples/patient) should be in the global obs. Columns that belong to onlyt gex (e.g. cluster) should be there and 
-# columns that belong only to AIRR should be in that modality. 
-mdata = mu.read_h5mu("../../scirpy/datasets/_processing_scripts/wu2020_3k.h5mu")
+adata = ir.datasets.wu2020_3k()
 ```
 
 ```python tags=[]
-mdata = mu.read_h5mu("../../scirpy/datasets/_processing_scripts/wu2020.h5mu")
-```
-
-```python tags=[]
-mdata = mu.pp.sample_obs(mdata, frac=0.05).copy()
+mdata = mu.pp.sample_obs(mdata, frac=0.2).copy()
 ```
 
 ```python tags=[]
@@ -126,6 +118,11 @@ For the _Wu2020_ dataset, the authors already provide clusters and UMAP coordina
 Instead of performing clustering and cluster annotation ourselves, we will just use
 the provided data. The clustering and annotation methodology is
 described in [their paper](https://doi.org/10.1038/s41586-020-2056-8).
+
+```python tags=[]
+# TODO #356
+sc.tl.umap(mdata["gex"])
+```
 
 ```python
 mdata["gex"].obsm["X_umap"] = mdata["gex"].obsm["X_umap_orig"]

@@ -4,6 +4,7 @@ import awkward as ak
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from mudata import MuData
 
 from scirpy import __version__
 from scirpy.io import AirrCell
@@ -36,7 +37,7 @@ def _squarify(matrix: Union[List[List], np.ndarray]):
     return matrix
 
 
-def _make_adata(obs: pd.DataFrame) -> AnnData:
+def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuData]:
     """Generate an AnnData object from a obs dataframe formatted according to the old obs-based scheam.
 
     This is used to convert test cases from unittests. Writing them from scratch
@@ -115,7 +116,10 @@ def _make_adata(obs: pd.DataFrame) -> AnnData:
         obsm={"chain_indices": chain_indices, "airr": airr_data},  # type:ignore
         uns={"scirpy_version": __version__},
     )
-    return adata
+    if mudata:
+        return MuData({"airr": adata})
+    else:
+        return adata
 
 
 def _make_airr_chains_valid(tmp_airr: List[List[Dict]]) -> List[List[Dict]]:

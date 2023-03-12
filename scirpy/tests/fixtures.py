@@ -8,8 +8,8 @@ import scirpy as ir
 from .util import _make_adata
 
 
-@pytest.fixture
-def adata_cdr3():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_cdr3(request):
     obs = pd.DataFrame(
         # fmt: off
         [
@@ -33,7 +33,7 @@ def adata_cdr3():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)
 
 
 @pytest.fixture
