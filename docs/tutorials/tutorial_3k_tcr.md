@@ -52,16 +52,8 @@ sc.logging.print_header()
 The dataset ships with the `scirpy` package. We can conveniently load it from the :mod:`~scirpy.datasets` module:
 <!-- #endraw -->
 
-```python
-adata = ir.datasets.wu2020_3k()
-```
-
 ```python tags=[]
-mdata = mu.pp.sample_obs(mdata, frac=0.2).copy()
-```
-
-```python tags=[]
-mdata
+mdata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->

@@ -49,6 +49,7 @@ dependencies = [
     'pytoml',
     'importlib_metadata>=0.7; python_version < "3.8"',
     'pycairo>=1.20; sys_platform == "win32"',
+    'pooch>=1.7.0',
 ]
 dynamic = ["version", "description"]
 

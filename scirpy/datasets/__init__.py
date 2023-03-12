@@ -10,6 +10,7 @@ from textwrap import indent
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
+from click import progressbar
 from scanpy import logging, settings
 from scanpy.readwrite import read
 
@@ -21,17 +22,55 @@ from ..pp import index_chains
 from ..util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
+from os import PathLike
+from textwrap import dedent
 from typing import cast
+
+import mudata
+import pooch
+from mudata import MuData
+
+from .. import __version__
+from ..util import tqdm
+
+FIGSHARE = pooch.create(
+    path=pooch.os_cache("scirpy"),
+    base_url="doi:10.6084/m9.figshare.22249894.v1",
+    version=__version__,
+    version_dev="main",
+    env="SCIRPY_DATA_DIR",
+    registry={
+        "wu2020.h5mu": "md5:ed30d9c1c44cae544f4c080a2451118b",
+        "wu2020_3k.h5mu": "md5:12c57c790f8a403751304c9de5a18cbf",
+        "maynard2020.h5mu": "md5:da64ac62e3e92c80eaf0e8eef6537ac7",
+    },
+)
+POOCH_INFO = dedent(
+    """\
+    .. note::
+        Scirpy example datasets are managed through `Pooch <https://github.com/fatiando/pooch>`_. 
+
+        By default, the dataset will be downloaded into your operating system's default
+        cache directory (See :func:`pooch.os_cache` for more details). If it has already been
+        downloaded, it will be retrieved from the cache. 
+
+        You can override the default cache dir by setting the `SCIRPY_DATA_DIR` environment variable
+        to a path of your preference. 
+    """
+)
 
 
 @_doc_params(
-    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020.py"), "   ")
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020.py"), "   "),
+    pooch_info=POOCH_INFO,
 )
-def wu2020() -> AnnData:
+def wu2020() -> MuData:
     """\
-    Return the dataset from :cite:`Wu2020` as AnnData object.
+    Return the dataset from :cite:`Wu2020` as MuData object.
 
-    200k cells, of which 100k have TCRs.
+    140k cells, of which 100k have TCRs.
+
+    {pooch_info}
 
     This is how the dataset was processed:
 
@@ -39,22 +78,22 @@ def wu2020() -> AnnData:
 
     {processing_code}
     """
-    url = "https://github.com/scverse/scirpy/releases/download/d0.1.0/wu2020.h5ad"
-    filename = settings.datasetdir / "wu2020.h5ad"
-    adata = read(filename, backup_url=url)
-    upgrade_schema(adata)
-    return adata
+    fname = cast(PathLike, FIGSHARE.fetch("wu2020.h5mu", progressbar=True))
+    return mudata.read_h5mu(fname)
 
 
 @_doc_params(
     processing_code=indent(
         _read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), "   "
-    )
+    ),
+    pooch_info=POOCH_INFO,
 )
-def wu2020_3k() -> AnnData:
+def wu2020_3k() -> MuData:
     """\
     Return the dataset from :cite:`Wu2020` as AnnData object, downsampled
     to 3000 TCR-containing cells.
+
+    {pooch_info}
 
     This is how the dataset was processed:
 
@@ -62,24 +101,24 @@ def wu2020_3k() -> AnnData:
 
     {processing_code}
     """
-    url = "https://github.com/scverse/scirpy/releases/download/d0.1.0/wu2020_3k.h5ad"
-    filename = settings.datasetdir / "wu2020_3k.h5ad"
-    adata = read(filename, backup_url=url)
-    upgrade_schema(adata)
-    return adata
+    fname = cast(PathLike, FIGSHARE.fetch("wu2020_3k.h5mu", progressbar=True))
+    return mudata.read_h5mu(fname)
 
 
 @_doc_params(
     processing_code=indent(
         _read_to_str(HERE / "_processing_scripts/maynard2020.py"), "   "
-    )
+    ),
+    pooch_info=POOCH_INFO,
 )
-def maynard2020() -> AnnData:
+def maynard2020() -> MuData:
     """\
     Return the dataset from :cite:`Maynard2020` as AnnData object.
 
     21k cells from NSCLC profiled with Smart-seq2, of which 3,500 have :term:`TCRs<TCR>`
     and 1,500 have :term:`BCRs<BCR>`.
+
+    {pooch_info}
 
     The raw FASTQ files have been obtained from `PRJNA591860 <https://www.ebi.ac.uk/ena/browser/view/PRJNA591860>`__
     and processed using the nf-core `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__.
@@ -91,11 +130,8 @@ def maynard2020() -> AnnData:
 
     {processing_code}
     """
-    url = "https://github.com/scverse/scirpy/releases/download/d0.1.0/maynard2020.h5ad"
-    filename = settings.datasetdir / "maynard2020.h5ad"
-    adata = read(filename, backup_url=url)
-    upgrade_schema(adata)
-    return adata
+    fname = cast(PathLike, FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
+    return mudata.read_h5mu(fname)
 
 
 def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:

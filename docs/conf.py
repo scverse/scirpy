@@ -79,6 +79,7 @@ intersphinx_mapping = dict(
     muon=("https://muon.readthedocs.io/en/latest", None),
     mudata=("https://mudata.readthedocs.io/en/latest/", None),
     awkward=("https://awkward-array.org/doc/main/", None),
+    pooch=("https://www.fatiando.org/pooch/latest/", None),
 )
 
 
