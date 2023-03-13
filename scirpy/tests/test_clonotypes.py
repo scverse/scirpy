@@ -1,5 +1,6 @@
 # pylama:ignore=W0611,W0404
 import sys
+from typing import cast
 
 import numpy as np
 import numpy.testing as npt
@@ -305,11 +306,14 @@ def test_clonotype_network_igraph(adata_clonotype_network):
 
 
 def test_clonotype_convergence(adata_clonotype):
-    res = ir.tl.clonotype_convergence(
-        adata_clonotype,
-        key_coarse="clonotype_cluster",
-        key_fine="clone_id",
-        inplace=False,
+    res = cast(
+        pd.Series,
+        ir.tl.clonotype_convergence(
+            adata_clonotype,
+            key_coarse="clonotype_cluster",
+            key_fine="clone_id",
+            inplace=False,
+        ),
     )
     ir.tl.clonotype_convergence(
         adata_clonotype,
@@ -318,29 +322,34 @@ def test_clonotype_convergence(adata_clonotype):
         inplace=True,
         key_added="is_convergent_",
     )
-    pdt.assert_extension_array_equal(res, adata_clonotype.obs["is_convergent_"].values)
+    pdt.assert_series_equal(
+        res, adata_clonotype.obs["is_convergent_"], check_names=False
+    )
     pdt.assert_extension_array_equal(
-        res,
+        res.values,
         pd.Categorical(
             ["not convergent"] * 3
-            + ["nan"] * 2
+            + [np.nan] * 2
             + ["not convergent"]
             + ["convergent"] * 2
             + ["not convergent"] * 2,
-            categories=["convergent", "not convergent", "nan"],
+            categories=["convergent", "not convergent"],
         ),
     )
 
-    res = ir.tl.clonotype_convergence(
-        adata_clonotype,
-        key_fine="clonotype_cluster",
-        key_coarse="clone_id",
-        inplace=False,
+    res = cast(
+        pd.Series,
+        ir.tl.clonotype_convergence(
+            adata_clonotype,
+            key_fine="clonotype_cluster",
+            key_coarse="clone_id",
+            inplace=False,
+        ),
     )
     pdt.assert_extension_array_equal(
-        res,
+        res.values,
         pd.Categorical(
-            ["not convergent"] * 3 + ["nan"] * 2 + ["not convergent"] * 5,
-            categories=["convergent", "not convergent", "nan"],
+            ["not convergent"] * 3 + [np.nan] * 2 + ["not convergent"] * 5,
+            categories=["convergent", "not convergent"],
         ),
     )

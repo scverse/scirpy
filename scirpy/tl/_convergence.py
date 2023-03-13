@@ -59,13 +59,15 @@ def clonotype_convergence(
         .reset_index()
     )
     convergent_clonotypes = convergence_df.loc[convergence_df[0] > 1, key_coarse]
-    result = obs[key_coarse].isin(convergent_clonotypes)
-    result = pd.Series(
-        pd.Categorical(
-            ["convergent" if x else "not convergent" for x in result],
-            categories=["convergent", "not convergent"],
-        ),
-        index=obs.index,
+    result = (
+        obs[key_coarse]
+        .map(
+            lambda x: "convergent"
+            if x in convergent_clonotypes.values
+            else "not convergent",
+            na_action="ignore",
+        )
+        .astype(pd.CategoricalDtype(categories=["convergent", "not convergent"]))
     )
     if inplace:
         # Let's store in both anndata and mudata. Depending on which columns

@@ -516,7 +516,7 @@ def adata_clonotype():
             ["cell1", "A", "ct1", "cc1"],
             ["cell2", "A", "ct1", "cc1"],
             ["cell3", "A", "ct1", "cc1"],
-            ["cell3.1", "A", "NaN", "NaN"],
+            ["cell3.1", "A", np.nan, np.nan],
             ["cell3.2", "A", np.nan, np.nan],
             ["cell4", "B", "ct1", "cc1"],
             ["cell5", "B", "ct2", "cc2"],
