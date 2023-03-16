@@ -8,7 +8,7 @@ import scirpy as ir
 from .util import _make_adata
 
 
-@pytest.fixture(params=["AnnData", "MuData", "MuData_custom_keys"])
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
 def adata_cdr3(request):
     obs = pd.DataFrame(
         # fmt: off

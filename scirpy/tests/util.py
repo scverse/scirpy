@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Union
 
 import awkward as ak
 import numpy as np
@@ -38,18 +37,7 @@ def _squarify(matrix: Union[List[List], np.ndarray]):
     return matrix
 
 
-@dataclass
-class DataWrapper:
-    """Holds Ann/MuData and kwargs that specify the keys for airr_mod/airr_key etc."""
-
-    kwargs: Dict
-    data: Union[AnnData, MuData]
-
-
-def _make_adata(
-    obs: pd.DataFrame,
-    return_type: Literal["AnnData", "MuData", "MuData_custom_keys"] = "AnnData",
-) -> DataWrapper:
+def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuData]:
     """Generate an AnnData object from a obs dataframe formatted according to the old obs-based scheam.
 
     This is used to convert test cases from unittests. Writing them from scratch
@@ -122,26 +110,16 @@ def _make_adata(
             chain_indices[k], int, including_unknown=True
         )
 
-    chain_idx_key = (
-        "chain_indices" if return_type != "MuData_custom_keys" else "custom_chain_idx"
-    )
-    airr_key = "airr" if return_type != "MuData_custom_keys" else "custom_airr_key"
-    airr_mod = "airr" if return_type != "MuData_custom_keys" else "custom_airr_mod"
     adata = AnnData(
         X=None,
         obs=obs.loc[:, ~obs.columns.isin(cols)].copy(),  # type:ignore
-        obsm={chain_idx_key: chain_indices, airr_key: airr_data},  # type:ignore
+        obsm={"chain_indices": chain_indices, "airr": airr_data},  # type:ignore
         uns={"scirpy_version": __version__},
     )
-    kwargs = {
-        "airr_key": airr_key,
-        "airr_mod": airr_mod,
-        "chain_idx_key": chain_idx_key,
-    }
-    if return_type != "AnnData":
-        return DataWrapper(kwargs, MuData({airr_mod: adata}))
+    if mudata:
+        return MuData({"airr": adata})
     else:
-        return DataWrapper(kwargs, AnnData)
+        return adata
 
 
 def _make_airr_chains_valid(tmp_airr: List[List[Dict]]) -> List[List[Dict]]:
