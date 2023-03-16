@@ -11,7 +11,7 @@ def clonotype_convergence(
     *,
     key_coarse: str,
     key_fine: str,
-    key_added: str = "is_convergent",
+    key_added: str = ":is_convergent",
     inplace=True,
     airr_mod: str = "airr",
 ) -> Optional[pd.Series]:
@@ -37,11 +37,8 @@ def clonotype_convergence(
     key_fine
         Key in adata.obs holding the "fine" clonotype/clonotype cluster definition.
         E.g. `clone_id`
-    key_added
-        Key under which the result is stored in `adata.obs`.
-    inplace
-        If True, a column with the result will be stored in `adata.obs`. Otherwise
-        the result is returned.
+    {key_added}
+    {inplace}
 
     Returns
     -------
@@ -70,19 +67,6 @@ def clonotype_convergence(
         .astype(pd.CategoricalDtype(categories=["convergent", "not convergent"]))
     )
     if inplace:
-        # Let's store in both anndata and mudata. Depending on which columns
-        # were chosen, they might originate from either mudata or anndata.
-        # TODO #356: can we do that more systematically and maybe handle through DataHandler?
-        # possibly add additional attribute where to store...
-        # A possible solution is to set the default key to e.g. `:is_convergent`.
-        # If we deal with AnnData, `:` is stripped.
-        # If we deal with MuData, it is written to the `{airr_mod}` modality and to
-        # mudata.obs["{airr_mod}:xxx"]
-        # If no `:` is present, it is written only to mudata.
-        try:
-            params.mdata.obs[f"{airr_mod}:{key_added}"] = result
-        except AttributeError:
-            pass
-        params.adata.obs[key_added] = result
+        params.set_obs(key_added, result)
     else:
         return result
