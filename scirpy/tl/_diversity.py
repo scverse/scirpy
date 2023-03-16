@@ -2,7 +2,6 @@ from typing import Callable, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
-from scanpy import logging
 
 from ..util import DataHandler, _is_na
 
@@ -96,11 +95,8 @@ def alpha_diversity(
     metric
         A metric used for diversity estimation out of `normalized_shannon_entropy`,
         `D50`, `DXX`, any of scikit-bio’s alpha diversity metrics, or a custom function.
-    inplace
-        If `True`, add a column to `obs`. Otherwise return a DataFrame
-        with the alpha diversities.
-    key_added
-        Key under which the alpha diversity will be stored if inplace is `True`.
+    {inplace} 
+    {key_added}
         Defaults to `alpha_diversity_{{target_col}}`.
     {airr_mod}
     **kwargs
@@ -167,7 +163,6 @@ def alpha_diversity(
     if inplace:
         metric_name = metric if isinstance(metric, str) else metric.__name__
         key_added = f"{metric_name}_{target_col}" if key_added is None else key_added
-        logging.info(f"Alpha diversity saved to `obs['{key_added}']")
-        params.adata.obs[key_added] = params.adata.obs[groupby].map(diversity)
+        params.set_obs(key_added, params.adata.obs[groupby].map(diversity))
     else:
         return pd.DataFrame().from_dict(diversity, orient="index")

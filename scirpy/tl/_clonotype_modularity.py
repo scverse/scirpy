@@ -79,8 +79,8 @@ def clonotype_modularity(
         Number of permutations used for the permutations test. Defaults to `1000` for
         the approx test, and to `10000` for the exact test. Note that for the exact
         test, the minimum achievable p-values is `1/n`.
-    key_added
-        Key under which the result will be stored in `adata.obs` if inplace is `True`.
+    {inplace}
+    {key_added}
     fdr_correction
         Whether to adjust the p-values for multiple testing using false-discovery-rate
         (FDR) correction.
@@ -162,22 +162,24 @@ def clonotype_modularity(
         }
 
     if inplace:
-        params.data.obs[key_added] = [
-            modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell
-        ]
+        params.set_obs(
+            key_added, [modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell]
+        )
         # remove the entries from previous run, should they exist
         # results can be inconsisten otherwise (old dangling "fdr" values when only
         # pvalues are calculated)
         for suffix in ["fdr", "pvalue"]:
-            try:
-                del params.data.obs[f"{key_added}_{suffix}"]
-            except:
-                pass
+            for d in [params.mdata, params.adata]:
+                try:
+                    del d.obs[f"{key_added}_{suffix}"]
+                except (AttributeError, KeyError):
+                    pass
 
         suffix = "fdr" if fdr_correction else "pvalue"
-        params.data.obs[f"{key_added}_{suffix}"] = [
-            modularity_pvalues.get(ct, np.nan) for ct in clonotype_per_cell
-        ]
+        params.set_obs(
+            f"{key_added}_{suffix}",
+            [modularity_pvalues.get(ct, np.nan) for ct in clonotype_per_cell],
+        )
         params.data.uns[key_added] = {
             "target_col": target_col,
             "permutation_test": permutation_test,

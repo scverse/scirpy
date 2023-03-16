@@ -150,36 +150,28 @@ class DataHandler:
         except (KeyError, AttributeError):
             return self.adata.obs[column]
 
-    def set_obs(self, key: str, value: Union[pd.Series, Sequence[Any]]) -> None:
-        """Store results in .obs of AnnData and/or MuData.
+    def set_obs(
+        self, key: str, value: Union[pd.Series, Sequence[Any], np.ndarray]
+    ) -> None:
+        """Store results in .obs of AnnData and MuData.
 
-        If `self.data` is a MuData object:
-         * If `key` starts with `:`, e.g. `:clone_id`, the result will be written to `mdata.obs["{airr_mod}:{key}"]`
-           and `adata.obs["key"]`
-         * Otherwise, the result will be written only to `mdata.obs[key]`.
-        If `self.data` is an AnnData object:
-         * A colon (`:`) at the start of `key` will be stripped.
-         * The result will only be written to adata.obs[key].
+        The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key].
         """
         if isinstance(self.data, MuData):
-            if key.startswith(":"):
-                # write to both AnnData and MuData
-                if self._airr_mod is None:
-                    raise ValueError(
-                        "Trying to write to both AnnData and Mudata, but no `airr_mod` is specified."
-                    )
-                mudata_key = self._airr_mod + key
-                adata_key = key[1:]
+            # write to both AnnData and MuData
+            if self._airr_mod is None:
+                raise ValueError(
+                    "Trying to write to both AnnData and Mudata, but no `airr_mod` is specified."
+                )
+            mudata_key = f"{self._airr_mod}:{key}"
+            adata_key = key
 
-                self.mdata.obs[mudata_key] = value
-                self.adata.obs[adata_key] = value
-            else:
-                # write only to MuData
-                self.mdata.obs[key] = value
+            self.mdata.obs[mudata_key] = value
+            self.adata.obs[adata_key] = value
+            logging.info(f'Stored result in `mdata.obs["{self._airr_mod}:{key}"]`.')
         else:
-            if key.startswith(":"):
-                key = key[1:]
             self.data.obs[key] = value
+            logging.info(f'Stored result in `adata.obs["{key}"]`.')
 
     @property
     def chain_indices(self) -> ak.Array:
@@ -289,10 +281,8 @@ class DataHandler:
         doc["key_added"] = dedent(
             """\
             Key under which the result will be stored in `obs`, if `inplace` is `True`. When the function is running 
-            on `~mudata.MuData`, a colon (`:`) prefixing the key signifies that the result will be stored in both
-            `MuData.obs["{airr_mod}{key}"]` and the corresponding `AnnData.obs[key]`. Without the colon, the result
-            is only stored in AnnData. When working directly on a `~anndata.AnnData` object, the colon will be stripped
-            and the result stored in `AnnData.obs[key]`. 
+            on `~mudata.MuData`, the result will be written to both `mdata.obs["{airr_mod}:{key_added}"]` and 
+            `mdata.mod[airr_mod].obs[key_added]`. 
             """
         )
         return _doc_params(**doc, **kwargs)

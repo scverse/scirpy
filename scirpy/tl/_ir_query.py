@@ -369,8 +369,8 @@ def ir_query_annotate(
         the key is automatically inferred based on `reference`, `sequence`, and `metric`.
         Additional arguments are passed to the last join.
     suffix
-        Suffix appended to columns from `reference.obs` in case their names
-        are conflicting with those in `adata.obs`.
+        Removed in v0.13. Has no effect.
+    {inplace}
     {airr_mod}
     airr_mod_ref
         Like `airr_mod`, but for `reference`.
@@ -421,8 +421,7 @@ def ir_query_annotate(
         df_res.loc[_is_na(df_res[col]), col] = np.nan
 
     if inplace:
-        params.adata.obs = params.adata.obs.join(
-            df_res, how="left", rsuffix=suffix
-        ).reindex(params.adata.obs_names)
+        for col in df_res:
+            params.set_obs(str(col), df_res[col])
     else:
         return df_res

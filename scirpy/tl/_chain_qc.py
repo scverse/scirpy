@@ -62,11 +62,8 @@ def chain_qc(
     Parameters
     ----------
     {adata}
-    inplace
-        If True, adds columns to to adata
-    key_added
-        Tuple specifying the column names for the coarse and fine receptor type
-        annotation, respectively
+    {inplace}
+    {key_added} 
     {airr_mod}
     {airr_key}
     {chain_idx_key}
@@ -141,9 +138,9 @@ def chain_qc(
 
     if inplace:
         col_receptor_type, col_receptor_subtype, col_chain_pairing = key_added
-        params.adata.obs[col_receptor_type] = res_receptor_type
-        params.adata.obs[col_receptor_subtype] = res_receptor_subtype
-        params.adata.obs[col_chain_pairing] = res_chain_pairing
+        params.set_obs(col_receptor_type, res_receptor_type)
+        params.set_obs(col_receptor_subtype, res_receptor_subtype)
+        params.set_obs(col_chain_pairing, res_chain_pairing)
     else:
         return (res_receptor_type, res_receptor_subtype, res_chain_pairing)
 

@@ -11,7 +11,7 @@ def clonotype_convergence(
     *,
     key_coarse: str,
     key_fine: str,
-    key_added: str = ":is_convergent",
+    key_added: str = "is_convergent",
     inplace=True,
     airr_mod: str = "airr",
 ) -> Optional[pd.Series]:

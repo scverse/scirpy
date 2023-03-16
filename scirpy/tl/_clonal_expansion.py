@@ -48,7 +48,7 @@ def _clip_and_count(
         key_added = (
             "{}_clipped_count".format(target_col) if key_added is None else key_added
         )
-        params.adata.obs[key_added] = clipped_count
+        params.set_obs(key_added, clipped_count)
     else:
         return clipped_count
 
@@ -82,11 +82,8 @@ def clonal_expansion(
     clip_at:
         All clonotypes with more than `clip_at` clones will be summarized into
         a single category
-    key_added
-        Key under which the results will be added to `obs`.
-    inplace
-        If True, adds a column to `obs`. Otherwise returns an array
-        with the clipped counts.
+    {key_added}
+    {inplace}
     {airr_mod}
 
     Returns
