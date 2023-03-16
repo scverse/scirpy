@@ -8,8 +8,6 @@ from . import base
 from .styling import _get_colors
 
 
-# TODO #356
-#
 def group_abundance(
     adata: AnnData,
     groupby: str,

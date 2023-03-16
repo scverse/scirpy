@@ -91,7 +91,7 @@ def _load_adata(path):
     adata.obs = adata.obs.join(obs.drop(columns=["clonotype_orig"]), how="inner")
     assert adata.shape[0] == umap_coords.shape[0]
     adata.obsm["X_umap_orig"] = umap_coords
-    # TODO #356: workaround for https://github.com/scverse/muon/issues/93
+    # #356: workaround for https://github.com/scverse/muon/issues/93
     adata_tcr.X = np.ones((adata_tcr.shape[0], 0))
     # clonotype orig column in TCR modality
     adata_tcr.obs = adata_tcr.obs.join(
