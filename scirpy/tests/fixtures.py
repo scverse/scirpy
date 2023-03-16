@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
+from mudata import MuData
 
 import scirpy as ir
 
@@ -36,8 +37,8 @@ def adata_cdr3(request):
     return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_cdr3_2():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_cdr3_2(request):
     obs = pd.DataFrame(
         [
             ["c1", "AAA", "AAA", "KKK", "KKK"],
@@ -52,13 +53,13 @@ def adata_cdr3_2():
             "IR_VDJ_2_junction_aa",
         ],
     ).set_index("cell_id")
-    adata = _make_adata(obs)
+    adata = _make_adata(obs, request.param)
     adata.uns["DB"] = {"name": "TESTDB"}
     return adata
 
 
-@pytest.fixture
-def adata_define_clonotypes():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_define_clonotypes(request):
     obs = pd.DataFrame(
         [
             ["cell1", "AAA", "ATA", "GGC", "CCC", "IGK", "IGH", "IGK", "IGH"],
@@ -79,11 +80,11 @@ def adata_define_clonotypes():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_define_clonotype_clusters():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_define_clonotype_clusters(request):
     obs = (
         pd.DataFrame(
             [
@@ -140,20 +141,22 @@ def adata_define_clonotype_clusters():
             ).set_index("cell_id")
         )
     )
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)
 
 
 @pytest.fixture
 def adata_clonotype_modularity(adata_define_clonotypes):
-    adata = adata_define_clonotypes
+    data = adata_define_clonotypes
+    adata = data.mod["airr"] if isinstance(data, MuData) else data
     adata.obs["clone_id"] = ["0", "1", "2", "2", "nan"]
-    adata.obs["clonotype_modularity_x"] = [0, 0, 4, 4, np.nan]
-    adata.obs["clonotype_modularity_x_fdr"] = [1, 1, 1e-6, 1e-6, np.nan]
-    adata.uns["clonotype_modularity_x"] = {
+    # Since the results depend on both GEX and TCR data, the results are stored in the mudata object directly.
+    data.obs["clonotype_modularity_x"] = [0, 0, 4, 4, np.nan]
+    data.obs["clonotype_modularity_x_fdr"] = [1, 1, 1e-6, 1e-6, np.nan]
+    data.uns["clonotype_modularity_x"] = {
         "target_col": "clone_id",
         "fdr_correction": True,
     }
-    return adata
+    return data
 
 
 @pytest.fixture
@@ -200,25 +203,45 @@ def adata_clonotype_network(adata_conn):
     adata derived from adata_conn that also contains some gene expression data
     for plotting.
     """
-    adata = AnnData(
-        var=pd.DataFrame().assign(gene_symbol=["CD8A", "CD4"]).set_index("gene_symbol"),
-        X=np.array(
-            [
-                [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
-                [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
-            ]
-        ).T,
-        obs=adata_conn.obs,
-        uns=adata_conn.uns,
-        obsm=adata_conn.obsm,
-    )
-    adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
-    ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
-    return adata
+    if isinstance(adata_conn, AnnData):
+        adata = AnnData(
+            var=pd.DataFrame()
+            .assign(gene_symbol=["CD8A", "CD4"])
+            .set_index("gene_symbol"),
+            X=np.array(
+                [
+                    [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
+                    [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
+                ]
+            ).T,
+            obs=adata_conn.obs,
+            uns=adata_conn.uns,
+            obsm=adata_conn.obsm,
+        )
+        adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
+        ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
+        return adata
+    else:
+        adata_gex = AnnData(
+            var=pd.DataFrame()
+            .assign(gene_symbol=["CD8A", "CD4"])
+            .set_index("gene_symbol"),
+            X=np.array(
+                [
+                    [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
+                    [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
+                ]
+            ).T,
+            obs=adata_conn.obs.loc[:, []],
+        )
+        mdata = MuData({"gex": adata_gex, "airr": adata_conn.mod["airr"]})
+        mdata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
+        ir.tl.clonotype_network(mdata, sequence="aa", metric="alignment")
+        return mdata
 
 
-@pytest.fixture
-def adata_tra():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_tra(request):
     obs = {
         "AAGGTTCCACCCAGTG-1": {
             "IR_VJ_1_junction_aa_length": 15.0,
@@ -348,11 +371,11 @@ def adata_tra():
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_vdj():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_vdj(request):
     obs = {
         "LT1_ACGGCCATCCGAGCCA-2-24": {
             "IR_VJ_1_j_call": "TRAJ42",
@@ -506,11 +529,11 @@ def adata_vdj():
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_clonotype():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_clonotype(request):
     obs = pd.DataFrame.from_records(
         [
             ["cell1", "A", "ct1", "cc1"],
@@ -526,11 +549,11 @@ def adata_clonotype():
         ],
         columns=["cell_id", "group", "clone_id", "clonotype_cluster"],
     ).set_index("cell_id")
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_diversity():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_diversity(request):
     obs = pd.DataFrame.from_records(
         [
             ["cell1", "A", "ct1"],
@@ -544,4 +567,4 @@ def adata_diversity():
         ],
         columns=["cell_id", "group", "clonotype_"],
     ).set_index("cell_id")
-    return _make_adata(obs)
+    return _make_adata(obs, request.param)

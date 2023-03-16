@@ -150,7 +150,7 @@ class DataHandler:
         except (KeyError, AttributeError):
             return self.adata.obs[column]
 
-    def set_obs(self, key: str, value: Union[pd.Series[Any], Sequence[Any]]) -> None:
+    def set_obs(self, key: str, value: Union[pd.Series, Sequence[Any]]) -> None:
         """Store results in .obs of AnnData and/or MuData.
 
         If `self.data` is a MuData object:

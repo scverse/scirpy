@@ -21,6 +21,8 @@ def _assert_frame_equal(left, right):
 
 @pytest.fixture
 def adata_cdr3_mock_distance_calculator():
+    """Mock distances for the adata_cdr3 fixture"""
+
     class MockDistanceCalculator(DistanceCalculator):
         def __init__(self, n_jobs=None):
             pass
