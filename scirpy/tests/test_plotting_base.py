@@ -43,14 +43,14 @@ def test_get_color(adata_obs):
     col1_color = {"bar": "#8dd3c7", "foo": "#ffed6f"}
     col2_color = {"foo": "#1f77b4", "nan": "#ff7f0e", "xxx": "#2ca02c"}
     assert (
-        pl.styling._get_colors(DataHandler.default(adata_obs), "col1", palette="Set3")
+        pl.styling._get_colors(DataHandler(adata_obs), "col1", palette="Set3")
         == col1_color
     )
-    assert pl.styling._get_colors(DataHandler.default(adata_obs), "col2") == col2_color
+    assert pl.styling._get_colors(DataHandler(adata_obs), "col2") == col2_color
     # check that it is the same color on repeated calling, even without specifying
     # the palette
-    assert pl.styling._get_colors(DataHandler.default(adata_obs), "col1") == col1_color
-    assert pl.styling._get_colors(DataHandler.default(adata_obs), "col2") == col2_color
+    assert pl.styling._get_colors(DataHandler(adata_obs), "col1") == col1_color
+    assert pl.styling._get_colors(DataHandler(adata_obs), "col2") == col2_color
 
 
 def test_bar(test_df):
