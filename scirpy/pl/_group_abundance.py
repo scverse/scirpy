@@ -2,6 +2,7 @@ from typing import Literal, Sequence, Union
 
 import matplotlib.pyplot as plt
 from anndata import AnnData
+from mudata import MuData
 
 from scirpy.util import DataHandler
 
@@ -11,7 +12,7 @@ from .styling import _get_colors
 
 
 def group_abundance(
-    adata: AnnData,
+    adata: Union[AnnData, MuData],
     groupby: str,
     target_col: str = "has_ir",
     *,

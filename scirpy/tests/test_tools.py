@@ -7,8 +7,10 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 import scanpy as sc
+from mudata import MuData
 
 import scirpy as ir
+from scirpy.util import DataHandler
 
 from .fixtures import (  # NOQA
     adata_clonotype,
@@ -128,8 +130,9 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     )
 
     # check if target_col works
-    adata.obs["new_col"] = adata.obs["clone_id"]
-    adata.obs.drop("clone_id", axis="columns", inplace=True)
+    params = DataHandler.default(adata)
+    params.adata.obs["new_col"] = params.adata.obs["clone_id"]
+    params.adata.obs.drop("clone_id", axis="columns", inplace=True)
 
     ir.tl._clonal_expansion._clip_and_count(
         adata,
@@ -138,7 +141,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
         clip_at=2,
     )
     npt.assert_equal(
-        adata.obs["new_col_clipped_count"],
+        params.adata.obs["new_col_clipped_count"],
         np.array([">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2),
     )
 
@@ -303,20 +306,23 @@ def test_alpha_diversity(adata_diversity):
         inplace=True,
     )
 
+    mdata_modifier = "airr:" if isinstance(adata_diversity, MuData) else ""
     npt.assert_equal(
-        adata_diversity.obs["normalized_shannon_entropy_clonotype_"].values,
+        adata_diversity.obs[
+            mdata_modifier + "normalized_shannon_entropy_clonotype_"
+        ].values,
         np.array([0.0] * 4 + [1.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["D50_clonotype_"].values,
+        adata_diversity.obs[mdata_modifier + "D50_clonotype_"].values,
         np.array([100.0] * 4 + [50.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["observed_otus_clonotype_"].values,
+        adata_diversity.obs[mdata_modifier + "observed_otus_clonotype_"].values,
         np.array([1] * 4 + [4] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["metric_func_clonotype_"].values,
+        adata_diversity.obs[mdata_modifier + "metric_func_clonotype_"].values,
         np.array([1] * 4 + [4] * 4),
     )
 
@@ -545,7 +551,10 @@ def test_clonotype_modularity(
     expected_scores,
     expected_pvalues,
 ):
-    sc.pp.neighbors(adata_clonotype_network)
+    if isinstance(adata_clonotype_network, MuData):
+        sc.pp.neighbors(adata_clonotype_network.mod["gex"])
+    else:
+        sc.pp.neighbors(adata_clonotype_network)
     scores, pvalues = ir.tl.clonotype_modularity(
         adata_clonotype_network,
         target_col="cc_aa_alignment",

@@ -35,7 +35,12 @@ def test_alpha_diversity(adata_diversity):
 
 
 def test_group_abundance(adata_clonotype):
-    p = pl.group_abundance(adata_clonotype, groupby="clone_id", target_col="group")
+    mdata_modifier = "airr:" if isinstance(adata_clonotype, MuData) else ""
+    p = pl.group_abundance(
+        adata_clonotype,
+        groupby=f"{mdata_modifier}clone_id",
+        target_col=f"{mdata_modifier}group",
+    )
     assert isinstance(p, plt.Axes)
 
 
