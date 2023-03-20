@@ -7,6 +7,7 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from mudata import MuData
 
 import scirpy as ir
 
@@ -322,9 +323,17 @@ def test_clonotype_convergence(adata_clonotype):
         inplace=True,
         key_added="is_convergent_",
     )
-    pdt.assert_series_equal(
-        res, adata_clonotype.obs["is_convergent_"], check_names=False
-    )
+    if isinstance(adata_clonotype, MuData):
+        pdt.assert_series_equal(
+            res, adata_clonotype.obs["airr:is_convergent_"], check_names=False
+        )
+        pdt.assert_series_equal(
+            res, adata_clonotype["airr"].obs["is_convergent_"], check_names=False
+        )
+    else:
+        pdt.assert_series_equal(
+            res, adata_clonotype.obs["is_convergent_"], check_names=False
+        )
     pdt.assert_extension_array_equal(
         res.values,
         pd.Categorical(

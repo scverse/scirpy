@@ -4,6 +4,7 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 import scipy.sparse
+from mudata import MuData
 
 import scirpy as ir
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
@@ -154,7 +155,11 @@ def test_ir_dist(
         metric=metric if metric != "mock" else adata_cdr3_mock_distance_calculator,
         sequence="aa",
     )
-    res = adata_cdr3.uns[expected_key]
+    res = (
+        adata_cdr3.mod["airr"].uns[expected_key]
+        if isinstance(adata_cdr3, MuData)
+        else adata_cdr3.uns[expected_key]
+    )
     npt.assert_array_equal(res["VJ"]["seqs"], expected_seq_vj)
     npt.assert_array_equal(res["VDJ"]["seqs"], expected_seq_vdj)
     npt.assert_array_equal(res["VJ"]["distances"].toarray(), expected_dist_vj)
@@ -430,9 +435,10 @@ def test_compute_distances_2(
 def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are no IR."""
     # reset chain indices such that they point to no chains whatsoever.
-    adata_cdr3.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
-    adata_cdr3.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
-    adata_cdr3.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
+    d = adata_cdr3.mod["airr"] if isinstance(adata_cdr3, MuData) else adata_cdr3
+    d.obsm["chain_indices"]["VJ"] = [[None, None] * d.shape[0]]
+    d.obsm["chain_indices"]["VDJ"] = [[None, None] * d.shape[0]]
+    d.obsm["chain_indices"]["multichain"] = [None] * d.shape[0]
 
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
@@ -556,7 +562,11 @@ def test_compute_distances_second_anndata(
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
-    adata_empty = adata_cdr3.copy()
+    adata_empty = (
+        adata_cdr3.mod["airr"].copy()
+        if isinstance(adata_cdr3, MuData)
+        else adata_cdr3.copy()
+    )
     # reset chain indices such that no chain will actually be used.
     adata_empty.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
     adata_empty.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
@@ -565,11 +575,12 @@ def test_ir_dist_empty_anndata(adata_cdr3, metric):
     ir.pp.ir_dist(
         adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
     )
-    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
-    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs2"]) == []
-    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs"]) == (
+    tmp_ad = adata_cdr3.mod["airr"] if isinstance(adata_cdr3, MuData) else adata_cdr3
+    assert list(tmp_ad.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
+    assert list(tmp_ad.uns["ir_dist"]["VJ"]["seqs2"]) == []
+    assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs"]) == (
         ["AAA", "KK", "KKK", "KKY", "LLL"]
     )
-    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs2"]) == []
-    assert adata_cdr3.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
-    assert adata_cdr3.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)
+    assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs2"]) == []
+    assert tmp_ad.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
+    assert tmp_ad.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)

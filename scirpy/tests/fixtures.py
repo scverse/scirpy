@@ -54,7 +54,8 @@ def adata_cdr3_2(request):
         ],
     ).set_index("cell_id")
     adata = _make_adata(obs, request.param)
-    adata.uns["DB"] = {"name": "TESTDB"}
+    uns_ = adata.mod["airr"].uns if isinstance(adata, MuData) else adata.uns
+    uns_["DB"] = {"name": "TESTDB"}
     return adata
 
 
