@@ -4,14 +4,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
-from anndata import AnnData
+
+from scirpy.util import DataHandler
 
 from .. import tl
 from .base import volcano
 
 
+@DataHandler.inject_param_docs()
 def clonotype_imbalance(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     replicate_col: str,
     groupby: str,
     case_label: str,
@@ -27,6 +29,7 @@ def clonotype_imbalance(
     xlab: str = "log2FoldChange",
     ylab: str = "-log10(p-value)",
     title: str = "Volcano plot",
+    airr_mod: str = "airr",
     **kwargs,
 ) -> plt.Axes:
     """Aims to find clonotypes that are the most enriched or depleted in a category.
@@ -68,10 +71,9 @@ def clonotype_imbalance(
     plot_type
         Whether a volcano plot of statistics or a box/bar/strip plot of frequencies
         should be shown.
-    inplace
-        Whether results should be added to `uns` or returned directly.
     key_added
         If the tools has already been run, the results are added to `uns` under this key.
+    {airr_mod}
     **kwargs
         Additional arguments passed to the base plotting function.
 
@@ -79,15 +81,15 @@ def clonotype_imbalance(
     -------
     Axes object
     """
-
-    if key_added not in adata.uns:
+    params = DataHandler(adata, airr_mod)
+    if key_added not in params.adata.uns:
         sc.logging.warning(
             f"Clonotype imbalance not found."
             " Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
         )
 
         tl.clonotype_imbalance(
-            adata,
+            params,
             replicate_col=replicate_col,
             groupby=groupby,
             case_label=case_label,
@@ -98,7 +100,7 @@ def clonotype_imbalance(
             key_added=key_added,
         )
 
-    df = adata.uns[key_added]["pvalues"]
+    df = params.adata.uns[key_added]["pvalues"]
 
     if plot_type == "volcano":
         df = df.loc[:, ["logFC", "logpValue"]]

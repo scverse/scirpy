@@ -449,10 +449,16 @@ def _plot_clonotype_network_panel(
         color = [color for c in range(coords.shape[0])]
 
     if isinstance(params.data, MuData):
+        _color_lst = [color] if isinstance(color, str) else []
         # in the mudata case, we use a function internally used by muon
-        obs = _fetch_features_mudata(
-            params, [color] if isinstance(color, str) else [], use_raw
-        )
+        obs = _fetch_features_mudata(params, _color_lst, use_raw)
+        # special case for scirpy: we also search mdata.mod["airr"].obs by default:
+        for c in _color_lst:
+            if c not in obs.columns:
+                try:
+                    obs[c] = params.get_obs(c)
+                except (AttributeError, KeyError):
+                    pass
     else:
         # ... in the anndata case, we retrieve expression from X or raw manually
         if use_raw is None:
@@ -500,7 +506,7 @@ def _plot_clonotype_network_panel(
             if obs[color].nunique() > len(sc.pl.palettes.default_102):
                 palette = cycler(color=sc.pl.palettes.default_102)
         cat_colors = _get_colors(
-            params.data,
+            params,
             obs_key=color,
             palette=palette,
         )

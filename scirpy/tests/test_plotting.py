@@ -1,6 +1,7 @@
 # pylama:ignore=W0611,W0404
 import matplotlib.pyplot as plt
 import pytest
+from mudata import MuData
 from scipy import sparse
 
 from scirpy import pl
@@ -79,10 +80,11 @@ def test_vdj_usage(adata_vdj, full_combination):
 @pytest.mark.parametrize("cmap", [None, "cividis"])
 def test_clonotype_network_gene(adata_clonotype_network, matrix_type, use_raw, cmap):
     adata = adata_clonotype_network
+    tmp_ad = adata.mod["gex"] if isinstance(adata, MuData) else adata
     if matrix_type == "csr":
-        adata.X = sparse.csr_matrix(adata.X)
+        tmp_ad.X = sparse.csr_matrix(tmp_ad.X)
     elif matrix_type == "csc":
-        adata.X = sparse.csc_matrix(adata.X)
+        tmp_ad.X = sparse.csc_matrix(tmp_ad.X)
     p = pl.clonotype_network(adata, color="CD8A", use_raw=use_raw, cmap=cmap)
     assert isinstance(p, plt.Axes)
 

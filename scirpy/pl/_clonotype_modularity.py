@@ -2,9 +2,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 from adjustText import adjust_text
-from anndata import AnnData
 from matplotlib import patheffects
-from mudata import MuData
 
 from ..util import DataHandler
 from ._clonotypes import _plot_size_legend
@@ -21,7 +19,7 @@ def _rand_jitter(arr, jitter=None):
 
 @DataHandler.inject_param_docs()
 def clonotype_modularity(
-    adata: Union[AnnData, MuData],
+    adata: DataHandler.TYPE,
     ax=None,
     target_col="clonotype_modularity",
     jitter: float = 0.01,
@@ -38,6 +36,7 @@ def clonotype_modularity(
     show_size_legend: bool = True,
     legend_width: float = 2,
     fig_kws: Union[dict, None] = None,
+    airr_mod: str = "airr",
 ):
     """\
     Plots the :term:`Clonotype modularity` score against the associated log10 p-value.
@@ -85,11 +84,14 @@ def clonotype_modularity(
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call
         if no `ax` is specified.
+    {airr_mod}
 
     Returns
     -------
     A list of axis objects
     """
+    params = DataHandler(adata, airr_mod)
+
     # Doesn't need param handler, we only access attributes of MuData or a all-in-one AnnData.
     if ax is None:
         fig_kws = dict() if fig_kws is None else fig_kws
@@ -119,7 +121,7 @@ def clonotype_modularity(
         size_legend_ax = fig.add_subplot(gs[1, 1])
         ax = fig.add_subplot(gs[:, 0])
 
-    modularity_params = adata.uns[target_col]
+    modularity_params = params.data.uns[target_col]
     clonotype_col = modularity_params["target_col"]
 
     if modularity_params["fdr_correction"]:
@@ -130,7 +132,8 @@ def clonotype_modularity(
         pvalue_type = "p-value"
 
     score_df = (
-        adata.obs.groupby([clonotype_col, target_col, pvalue_col], observed=True)
+        params.get_obs([clonotype_col, target_col, pvalue_col])
+        .groupby([clonotype_col, target_col, pvalue_col], observed=True)
         .size()
         .reset_index(name="clonotype_size")
         .assign(log_p=lambda x: -np.log10(x[pvalue_col]))

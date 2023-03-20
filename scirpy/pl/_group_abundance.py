@@ -3,6 +3,8 @@ from typing import Literal, Sequence, Union
 import matplotlib.pyplot as plt
 from anndata import AnnData
 
+from scirpy.util import DataHandler
+
 from .. import tl
 from . import base
 from .styling import _get_colors
@@ -73,7 +75,7 @@ def group_abundance(
     # TODO workaround for temporarily added has_ir column. Don't get colors in that case
     if target_col != "has_ir":
         if "color" not in kwargs:
-            colors = _get_colors(adata, target_col)
+            colors = _get_colors(DataHandler.default(adata), target_col)
             if colors is not None:
                 kwargs["color"] = [colors[cat] for cat in abundance.columns]
 

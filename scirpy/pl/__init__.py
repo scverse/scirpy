@@ -1,3 +1,4 @@
+from . import styling
 from ._clonal_expansion import clonal_expansion
 from ._clonotype_imbalance import clonotype_imbalance
 from ._clonotype_modularity import clonotype_modularity

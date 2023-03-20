@@ -84,7 +84,7 @@ def spectratype(
         ylab = "Number of cells"
 
     if "color" not in kwargs:
-        colors = _get_colors(params.data, color)
+        colors = _get_colors(params, color)
         if colors is not None:
             kwargs["color"] = [colors[cat] for cat in data.columns]
 

@@ -60,7 +60,7 @@ class DataHandler:
 
     @overload
     @staticmethod
-    def default(data: "DataHandler") -> "DataHandler":
+    def default(data: "DataHandler.TYPE") -> "DataHandler":
         ...
 
     @staticmethod
