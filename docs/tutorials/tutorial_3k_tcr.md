@@ -111,11 +111,6 @@ Instead of performing clustering and cluster annotation ourselves, we will just 
 the provided data. The clustering and annotation methodology is
 described in [their paper](https://doi.org/10.1038/s41586-020-2056-8).
 
-```python tags=[]
-# TODO #356
-sc.tl.umap(mdata["gex"])
-```
-
 ```python
 mdata["gex"].obsm["X_umap"] = mdata["gex"].obsm["X_umap_orig"]
 ```
@@ -159,7 +154,7 @@ We can confirm that the markers correspond to their respective cluster labels.
 mu.pl.embedding(
     mdata,
     basis="gex:umap",
-    color=["gex:sample", "gex:patient", "gex:cluster"], 
+    color=["gex:sample", "gex:patient", "gex:cluster"],
     ncols=3,
     wspace=0.7,
 )
@@ -204,9 +199,6 @@ mdata
 
 ```python
 ir.tl.chain_qc(mdata)
-# TODO #356: should chain_qc write the columns also to mdata.obs directly? 
-# e.g. params.update_obs(["explicit", "list", "of", "columns"]) that does nothing if we aren't working on mudata
-mdata.update()
 ```
 
 As expected, the dataset contains only α/β T-cell receptors:
@@ -242,7 +234,9 @@ Next, we visualize the :term:`Multichain-cells <Multichain-cell>` on the UMAP pl
 <!-- #endraw -->
 
 ```python
-mu.pl.embedding(mdata, basis="gex:umap", color="airr:chain_pairing", groups="multichain")
+mu.pl.embedding(
+    mdata, basis="gex:umap", color="airr:chain_pairing", groups="multichain"
+)
 ```
 
 ```python
@@ -406,17 +400,24 @@ We can now extract information (e.g. CDR3-sequences) from a specific clonotype c
 When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph. 
 
 ```python
-# TODO #356 need to decide on API for `obs_context` or use `.get.airr` here.
-# mdata['airr'].obs.loc[mdata['airr'].obs["cc_aa_alignment"] == "159", :].groupby(
-#     [
-#         "IR_VJ_1_junction_aa",
-#         "IR_VJ_2_junction_aa",
-#         "IR_VDJ_1_junction_aa",
-#         "IR_VDJ_2_junction_aa",
-#         "receptor_subtype",
-#     ],
-#     observed=True,
-# ).size().reset_index(name="n_cells")
+with ir.get.airr_context(mdata, "junction_aa", ["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]) as m:
+    cdr3_ct_159 = (
+        m.obs.loc[lambda x: x["airr:cc_aa_alignment"] == "159"]
+        .groupby(
+            [
+                "VJ_1_junction_aa",
+                "VDJ_1_junction_aa",
+                "VJ_2_junction_aa",
+                "VDJ_2_junction_aa",
+                "airr:receptor_subtype",
+            ],
+            observed=True,
+            dropna=False,
+        )
+        .size()
+        .reset_index(name="n_cells")
+    )
+cdr3_ct_159
 ```
 
 ### Including the V-gene in clonotype definition
@@ -439,16 +440,10 @@ ir.tl.define_clonotype_clusters(
 )
 ```
 
-```python tags=[]
-mdata.update()
-```
-
 ```python
 # find clonotypes with more than one `clonotype_same_v`
-ct_different_v = (
-    mdata
-    .obs.groupby("airr:cc_aa_alignment")
-    .apply(lambda x: x["airr:cc_aa_alignment_same_v"].nunique() > 1)
+ct_different_v = mdata.obs.groupby("airr:cc_aa_alignment").apply(
+    lambda x: x["airr:cc_aa_alignment_same_v"].nunique() > 1
 )
 ct_different_v = ct_different_v[ct_different_v].index.values.tolist()
 ct_different_v
@@ -457,15 +452,22 @@ ct_different_v
 Here, we see that the clonotype clusters `280` and `765` get split into `(280, 788)` and `(765, 1071)`, respectively, when the `same_v_gene` flag is set. 
 
 ```python
-# adata.obs.loc[
-#     adata.obs["cc_aa_alignment"].isin(ct_different_v),
-#     [
-#         "cc_aa_alignment",
-#         "cc_aa_alignment_same_v",
-#         "IR_VJ_1_v_call",
-#         "IR_VDJ_1_v_call",
-#     ],
-# ].sort_values("cc_aa_alignment").drop_duplicates().reset_index(drop=True)
+with ir.get.airr_context(mdata, "v_call", ["VJ_1", "VDJ_1"]) as m:
+    ct_different_v_df = (
+        m.obs.loc[
+            lambda x: x["airr:cc_aa_alignment"].isin(ct_different_v),
+            [
+                "airr:cc_aa_alignment",
+                "airr:cc_aa_alignment_same_v",
+                "VJ_1_v_call",
+                "VDJ_1_v_call",
+            ],
+        ]
+        .sort_values("airr:cc_aa_alignment")
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
+ct_different_v_df
 ```
 
 ## Clonotype analysis
@@ -485,12 +487,10 @@ ir.tl.clonal_expansion(mdata)
 `clonal_expansion` refers to expansion categories, i.e singleton clonotypes, clonotypes with 2 cells and more than 2 cells.
 The `clonotype_size` refers to the absolute number of cells in a clonotype.
 
-```python tags=[]
-mdata.update_obs()
-```
-
 ```python
-mu.pl.embedding(mdata, basis="gex:umap", color=["airr:clonal_expansion", "airr:clone_id_size"])
+mu.pl.embedding(
+    mdata, basis="gex:umap", color=["airr:clonal_expansion", "airr:clone_id_size"]
+)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -499,7 +499,9 @@ in a stacked bar plot, using the :func:`scirpy.pl.clonal_expansion` plotting fun
 <!-- #endraw -->
 
 ```python
-_ = ir.pl.clonal_expansion(mdata, target_col="clone_id", groupby="gex:cluster", clip_at=4, normalize=False)
+_ = ir.pl.clonal_expansion(
+    mdata, target_col="clone_id", groupby="gex:cluster", clip_at=4, normalize=False
+)
 ```
 
 The same plot, normalized to cluster size. Clonal expansion is a sign of positive selection
@@ -563,7 +565,11 @@ However, clonotypes that are shared between *patients* are rare:
 
 ```python
 _ = ir.pl.group_abundance(
-    mdata, groupby="airr:clone_id", target_col="gex:patient", max_cols=15, figsize=(5, 3)
+    mdata,
+    groupby="airr:clone_id",
+    target_col="gex:patient",
+    max_cols=15,
+    figsize=(5, 3),
 )
 ```
 
@@ -592,26 +598,27 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 <!-- #endraw -->
 
 ```python
-# TODO #356: use get api
-# ax = ir.pl.group_abundance(
-#     adata, groupby="IR_VJ_1_v_call", target_col="cluster", normalize=True, max_cols=10
-# )
+with ir.get.airr_context(mdata, "v_call") as m:
+    ir.pl.group_abundance(
+        m, groupby="VJ_1_v_call", target_col="gex:cluster", normalize=True, max_cols=10
+    )
 ```
 
 We can pre-select groups by filtering `adata`:
 
 ```python
-# ax = ir.pl.group_abundance(
-#     adata[
-#         adata.obs["IR_VDJ_1_v_call"].isin(
-#             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
-#         ),
-#         :,
-#     ],
-#     groupby="cluster",
-#     target_col="IR_VDJ_1_v_call",
-#     normalize=True,
-# )
+with ir.get.airr_context(mdata, "v_call") as m:
+    ir.pl.group_abundance(
+        m[
+            m.obs["VDJ_1_v_call"].isin(
+                ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
+            ),
+            :,
+        ],
+        groupby="gex:cluster",
+        target_col="VDJ_1_v_call",
+        normalize=True,
+    )
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -620,7 +627,11 @@ The exact combinations of VDJ genes can be visualized as a Sankey-plot using :fu
 
 ```python
 _ = ir.pl.vdj_usage(
-    mdata, full_combination=False, max_segments=None, max_ribbons=30, fig_kws={"figsize": (8, 5)}
+    mdata,
+    full_combination=False,
+    max_segments=None,
+    max_ribbons=30,
+    fig_kws={"figsize": (8, 5)},
 )
 ```
 
@@ -692,7 +703,9 @@ The distance matrix can be shown as a heatmap, while samples are reordered based
 
 ```python
 # TODO #356: missing heatmap labels
-ax = ir.pl.repertoire_overlap(mdata, "gex:sample", heatmap_cats=["gex:patient", "gex:source"])
+ax = ir.pl.repertoire_overlap(
+    mdata, "gex:sample", heatmap_cats=["gex:patient", "gex:source"]
+)
 ```
 
 A specific pair of samples can be compared on a scatterplot, where dot size corresponds to the number of clonotypes at a given coordinate.
@@ -720,7 +733,9 @@ a high modularity score consist of cells that have a similar molecular phenotype
 <!-- #endraw -->
 
 ```python
-ir.tl.clonotype_modularity(mdata, connectivity_key="gex:connectivities", target_col="airr:cc_aa_alignment")
+ir.tl.clonotype_modularity(
+    mdata, connectivity_key="gex:connectivities", target_col="airr:cc_aa_alignment"
+)
 ```
 
 We can plot the clonotype modularity on top of a umap of clonotype network plot
@@ -761,7 +776,7 @@ clonotypes_top_modularity = list(
 ```python
 test_ad = mu.pl.embedding(
     mdata,
-    basis="gex:umap", 
+    basis="gex:umap",
     color="airr:cc_aa_alignment",
     groups=clonotypes_top_modularity,
     palette=cycler(color=mpl_cm.Dark2_r.colors),
@@ -806,16 +821,12 @@ top_differential_clonotypes = stat["clone_id"].tolist()[:3]
 
 Showing top clonotypes on a UMAP clearly shows that clonotype 101 is featured by CD8+ tissue-resident memory T cells, while clonotype 68 by CD8+ effector and effector memory cells. 
 
-```python tags=[]
-mdata.update()
-```
-
 ```python
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"wspace": 0.6})
 mu.pl.embedding(mdata, basis="gex:umap", color="gex:cluster", ax=ax1, show=False)
 mu.pl.embedding(
     mdata,
-    basis="gex:umap", 
+    basis="gex:umap",
     color="airr:clone_id",
     groups=top_differential_clonotypes,
     ax=ax2,
@@ -930,6 +941,9 @@ ir.tl.ir_query_annotate(
 ```
 
 ```python
-mdata.update_obs()
 mu.pl.embedding(mdata, "gex:umap", color="airr:antigen.species")
+```
+
+```python
+
 ```

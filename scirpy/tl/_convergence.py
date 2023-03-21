@@ -58,6 +58,9 @@ def clonotype_convergence(
     convergent_clonotypes = convergence_df.loc[convergence_df[0] > 1, key_coarse]
     result = (
         obs[key_coarse]
+        .astype(
+            object
+        )  # unfortunately, map with 'NAs' is not implemented on categorical types.
         .map(
             lambda x: "convergent"
             if x in convergent_clonotypes.values

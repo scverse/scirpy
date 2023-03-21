@@ -180,6 +180,8 @@ def test_clonal_expansion_summary(adata_clonotype):
             {"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}
         ).set_index("group"),
         check_names=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
     # test the `expanded_in` parameter.
@@ -197,6 +199,8 @@ def test_clonal_expansion_summary(adata_clonotype):
             {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
         ).set_index("group"),
         check_names=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
     # test the `summarize_by` parameter.
@@ -214,6 +218,8 @@ def test_clonal_expansion_summary(adata_clonotype):
             {"group": ["A", "B"], "1": [0, 2 / 4], ">= 2": [1.0, 2 / 4]}
         ).set_index("group"),
         check_names=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
     res_counts = ir.tl.summarize_clonal_expansion(
@@ -227,6 +233,8 @@ def test_clonal_expansion_summary(adata_clonotype):
         ).set_index("group"),
         check_names=False,
         check_dtype=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
 

@@ -91,6 +91,7 @@ Get: `get`
 
    get.airr
    get.obs_context
+   get.airr_context
 
 Tools: `tl`
 -----------

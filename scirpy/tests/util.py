@@ -116,6 +116,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
         obsm={"chain_indices": chain_indices, "airr": airr_data},  # type:ignore
         uns={"scirpy_version": __version__},
     )
+    adata.strings_to_categoricals()
     if mudata:
         return MuData({"airr": adata})
     else:

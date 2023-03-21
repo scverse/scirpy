@@ -1,7 +1,7 @@
 import itertools
 from contextlib import contextmanager
 from enum import Enum, auto
-from typing import Literal, Sequence, Union, cast
+from typing import Any, Literal, Mapping, Sequence, Union, cast, overload
 
 import awkward as ak
 import numpy as np
@@ -19,12 +19,12 @@ ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 def airr(
     adata: DataHandler.TYPE,
     airr_variable: Union[str, Sequence[str]],
-    chain: Union[ChainType, Sequence[ChainType]],
+    chain: Union[ChainType, Sequence[ChainType]] = ("VJ_1", "VDJ_1", "VJ_2", "VDJ_2"),
     *,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
-) -> Union[pd.Series, pd.DataFrame]:
+):
     """\
     Retrieve AIRR variables for each cell, given a specific chain.
 
@@ -123,14 +123,92 @@ def _airr_col(
 
 
 @contextmanager
-def _obs_context(adata, **kwargs):
-    """Temporarily add columns to adata.obs"""
-    orig_obs = adata.obs.copy()
-    adata.obs = adata.obs.assign(**kwargs)
+def obs_context(
+    data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Mapping[str, Any]]
+):
+    """
+    Contextmanager that temporarily adds columns to obs.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        with ir.get.obs_context(mdata, {
+            "new_col_with_constant_value": "foo",
+            "new_col_with_sequence": range(len(mdata)),
+            "v_gene_primary_vj_chain": ir.get.airr(mdata, "v_call", "VJ_1")
+        }) as m:
+            ir.pl.group_abundance(m, groupby="v_gene_primary_vj_chain", target_col="new_col_with_constant_value")
+
+
+    Parameters
+    ----------
+    data
+        AnnData or MuData object
+    temp_cols
+        Dictionary where keys are column names and values are columns. Columns will be added
+        to obs using :func:`pandas.DataFrame.assign`. It is also possible to pass a :class:`~pandas.DataFrame` in
+        which case the columns of the DataFrame will be added to `obs` and matched based on the index.
+    """
+    orig_obs = data.obs.copy()
+    data.obs = data.obs.assign(**cast(Mapping, temp_cols))
+    data.strings_to_categoricals()
     try:
-        yield adata
+        yield data
     finally:
-        adata.obs = orig_obs
+        data.obs = orig_obs
+
+
+@DataHandler.inject_param_docs()
+def airr_context(
+    data: DataHandler.TYPE,
+    airr_variable: Union[str, Sequence[str]],
+    chain: Union[ChainType, Sequence[ChainType]] = ("VJ_1", "VDJ_1", "VJ_2", "VDJ_2"),
+    *,
+    airr_mod: str = "airr",
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
+):
+    """\
+    Contextmanager that temporarily adds AIRR information to obs.
+
+    This is essentially a wrapper around :func:`~scirpy.get.obs_context` and equivalent to
+
+    .. code-block:: python
+
+        ir.get.obs_context(data, ir.get.airr(airr_variable, chain))
+
+    Example
+    -------
+
+    To list all combinations of patient and V genes in the :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` chains: 
+
+    .. code-block:: python
+
+        with ir.get.airr_context(mdata, "v_call", chain=["VJ_1", "VDJ_1"]) as m:
+            combinations = m.obs.groupby(
+                ["patient", "VJ_1_v_call", "VDJ_1_v_call"], observed=True
+            ).size().reset_index(name="n")
+
+    Parameters
+    ----------
+    {adata}
+    airr_variable
+        One or multiple columns from the AIRR Rearrangment schema (see adata.var).
+        If multiple values are specified, a dataframe will be returned.
+    chain
+        choose the recptor arm (VJ/VDJ) and if you want to retrieve the primary or secondary chain.
+        If multiple chains are specified, a adataframe will be returned
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+    """
+    dh = DataHandler(data, airr_mod, airr_key, chain_idx_key)
+    # ensure this is a list and `get.airr` always returns a data frame
+    if isinstance(chain, str):
+        chain = cast(Sequence[ChainType], [chain])
+    return obs_context(dh.data, cast(pd.DataFrame, airr(dh, airr_variable, chain)))
 
 
 def _has_ir(params: DataHandler):
