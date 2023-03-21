@@ -99,9 +99,14 @@ def vdj_usage(
         ]
     )
 
+    tmp_obs = (
+        params.get_obs([normalize_to]).reindex(params.adata.obs_names)
+        if isinstance(normalize_to, str)
+        else params.adata.obs
+    )
     df = get_airr(params, airr_variables, chains).assign(
-        # TODO #356: normalize_to should potentially also work with mudata columns.
-        cell_weights=_normalize_counts(params.adata.obs, normalize_to)
+        # make sure this also works with mudata columns:
+        cell_weights=_normalize_counts(tmp_obs, normalize_to)
         if isinstance(normalize_to, (bool, str))
         else normalize_to
     )

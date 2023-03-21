@@ -129,17 +129,31 @@ class DataHandler:
         Checks if the column is available in MuData.obs. If it
         can't be found or DataHandler is initalized without mudata
         object, AnnData.obs is tried.
+
+        The returned object always has the dimensions and index of MuData, even if
+        only columns from AnnData are used. It is easy to subset to AnnData if required:
+
+        .. code-block:: python
+
+            params.get_obs([col1, col2]).reindex(params.adata.obs_names)
+
+        Parameters
+        ----------
+        columns
+            one or multiple columns.
+
+        Returns
+        -------
+        If this is a single column passed as `str`, a Series will be returned,
+        otherwise a `DataFrame`.
         """
-        # TODO #356: not sure if this should return always the dimensions of MuData?
-        # currently the dimensions of the dataframe are inconsistent depending on which columns
-        # are requested.
         if isinstance(columns, str):
             return self._get_obs_col(columns)
         else:
             if len(columns):
                 df = pd.concat({c: self._get_obs_col(c) for c in columns}, axis=1)
                 assert df.index.is_unique, "Index not unique"
-                return df
+                return df.reindex(self.data.obs_names)
             else:
                 # return empty dataframe (only index) if no columns are specified
                 return self.data.obs.loc[:, []]

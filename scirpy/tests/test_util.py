@@ -111,7 +111,9 @@ def test_data_handler_get_obs():
     # only retreiving from the airr modality results in fewer rows
     pdt.assert_frame_equal(
         params.get_obs(["airr_only"]),
-        pd.DataFrame(index=["c3", "c4", "c5"]).assign(airr_only=[3, 4, 5]),
+        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(
+            airr_only=[np.nan, np.nan, 3, 4, 5]
+        ),
     )
 
 
