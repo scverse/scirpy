@@ -743,7 +743,7 @@ ir.tl.clonotype_modularity(mdata, target_col="airr:cc_aa_alignment")
 We can plot the clonotype modularity on top of a umap of clonotype network plot
 
 ```python
-mu.pl.embedding(mdata, basis="gex:umap", color="clonotype_modularity")
+mu.pl.embedding(mdata, basis="gex:umap", color="airr:clonotype_modularity")
 ```
 
 ```python
@@ -768,7 +768,7 @@ Let's further inspect the two top scoring candidates. We can extract that inform
 ```python
 # TODO #356: helper function for this?
 clonotypes_top_modularity = list(
-    mdata.obs.set_index("airr:cc_aa_alignment")["clonotype_modularity"]
+    mdata.obs.set_index("airr:cc_aa_alignment")["airr:clonotype_modularity"]
     .sort_values(ascending=False)
     .index.unique()
     .values[:2]
@@ -790,19 +790,21 @@ scanpy's differential expression module, we can compare the gene expression
 of the cells in the two clonotypes to the rest. 
 
 ```python
-# TODO: how to deal with mudata here?
-# sc.tl.rank_genes_groups(
-#     mdata,
-#     "clone_id",
-#     groups=clonotypes_top_modularity,
-#     reference="rest",
-#     method="wilcoxon",
-# )
-# fig, axs = plt.subplots(1, 2, figsize=(8, 4))
-# for ct, ax in zip(clonotypes_top_modularity, axs):
-#     sc.pl.rank_genes_groups_violin(
-#         adata, groups=[ct], n_genes=15, ax=ax, show=False, strip=False
-#     )
+# Since sc.tl.rank_genes_group does not support MuData, we need to temporarily add
+# the AIRR columns to the gene expression AnnData object
+with ir.get.obs_context(mdata["gex"], {"clone_id": mdata.obs["airr:clone_id"]}) as tmp_ad:
+    sc.tl.rank_genes_groups(
+        tmp_ad,
+        "clone_id",
+        groups=clonotypes_top_modularity,
+        reference="rest",
+        method="wilcoxon",
+    )
+    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
+    for ct, ax in zip(clonotypes_top_modularity, axs):
+        sc.pl.rank_genes_groups_violin(
+            tmp_ad, groups=[ct], n_genes=15, ax=ax, show=False, strip=False
+        )
 ```
 
 ### Clonotype imbalance among cell clusters
@@ -857,12 +859,11 @@ _ = ir.pl.repertoire_overlap(
 Gene expression of cells belonging to individual clonotypes can also be compared using Scanpy. As an example, differential gene expression of two clonotypes, found to be specific to cell type clusters can also be analysed.
 
 ```python
-# # TODO #356: deal with mdata - I don't think there's a "muon" way of doing this
-# # but can use `obs_context`.
-# sc.tl.rank_genes_groups(
-#     mdata, "airr:clone_id", groups=["101"], reference="68", method="wilcoxon"
-# )
-# sc.pl.rank_genes_groups_violin(mdata, groups="101", n_genes=15)
+with ir.get.obs_context(mdata["gex"], {"clone_id": mdata.obs["airr:clone_id"]}) as tmp_ad:
+    sc.tl.rank_genes_groups(
+        tmp_ad, "clone_id", groups=["101"], reference="68", method="wilcoxon"
+    )
+    sc.pl.rank_genes_groups_violin(tmp_ad, groups="101", n_genes=15)
 ```
 
 ## Query epitope databases
@@ -944,8 +945,4 @@ ir.tl.ir_query_annotate(
 
 ```python
 mu.pl.embedding(mdata, "gex:umap", color="airr:antigen.species")
-```
-
-```python
-
 ```
