@@ -1,6 +1,7 @@
 # pylama:ignore=W0611,W0404
 import matplotlib.pyplot as plt
 import pytest
+import seaborn as sns
 from mudata import MuData
 from scipy import sparse
 
@@ -57,8 +58,8 @@ def test_spectratype(adata_tra):
 
 
 def test_repertoire_overlap(adata_tra):
-    p = pl.repertoire_overlap(adata_tra, groupby="sample", dendro_only=True)
-    assert isinstance(p, plt.Axes)
+    p = pl.repertoire_overlap(adata_tra, groupby="sample")
+    assert isinstance(p, sns.matrix.ClusterGrid)
 
 
 def test_clonotype_imbalance(adata_tra):

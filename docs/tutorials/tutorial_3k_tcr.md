@@ -702,9 +702,12 @@ df.head()
 The distance matrix can be shown as a heatmap, while samples are reordered based on hierarchical clustering.
 
 ```python
-# TODO #356: missing heatmap labels
 ax = ir.pl.repertoire_overlap(
-    mdata, "gex:sample", heatmap_cats=["gex:patient", "gex:source"]
+    mdata,
+    "gex:sample",
+    heatmap_cats=["gex:patient", "gex:source"],
+    yticklabels=True,
+    xticklabels=True,
 )
 ```
 

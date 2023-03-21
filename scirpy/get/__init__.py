@@ -112,16 +112,6 @@ def _airr_col(
     return result
 
 
-# TODO #356: do we want this?
-# def obs_context(adata, **kwargs):
-#     """A context manager that temporarily adds columns to adata.obs"""
-#     raise NotImplementedError
-#
-# def most_frequent(array: Sequence, n=10):
-#     """Get the most frequent categories of an Array"""
-#     return pd.Series(array).value_counts().index[:n].tolist()
-
-
 @contextmanager
 def obs_context(
     data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Mapping[str, Any]]
