@@ -66,7 +66,8 @@ def spectratype(
 
     # Get airr and remove NAs
     airr_df = get_airr(params, [cdr3_col], chain).dropna(how="any")
-    obs = params.get_obs([target_col])
+    obs_cols = [target_col] if not isinstance(fraction, str) else [target_col, fraction]
+    obs = params.get_obs(obs_cols)
 
     # Combine (potentially) multiple length columns into one
     obs["lengths"] = airr_df.applymap(len).apply(combine_fun, axis=1)

@@ -671,18 +671,19 @@ ir.pl.spectratype(
 A spectratype-plot by gene usage. To pre-select specific genes, we can simply filter the `adata` object before plotting.
 
 ```python
-# ir.pl.spectratype(
-#     adata[
-#         adata.obs["IR_VDJ_1_v_call"].isin(
-#             ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
-#         ),
-#         :,
-#     ],
-#     cdr3_col="IR_VDJ_1_junction_aa",
-#     color="IR_VDJ_1_v_call",
-#     normalize="sample",
-#     fig_kws={"dpi": 120},
-# )
+with ir.get.airr_context(mdata, "v_call") as m:
+    ir.pl.spectratype(
+        m[
+            m.obs["VDJ_1_v_call"].isin(
+                ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
+            ),
+            :,
+        ],
+        chain="VDJ_1",
+        color="VDJ_1_v_call",
+        normalize="gex:sample",
+        fig_kws={"dpi": 120},
+    )
 ```
 
 ## Comparing repertoires
@@ -736,9 +737,7 @@ a high modularity score consist of cells that have a similar molecular phenotype
 <!-- #endraw -->
 
 ```python
-ir.tl.clonotype_modularity(
-    mdata, connectivity_key="gex:connectivities", target_col="airr:cc_aa_alignment"
-)
+ir.tl.clonotype_modularity(mdata, target_col="airr:cc_aa_alignment")
 ```
 
 We can plot the clonotype modularity on top of a umap of clonotype network plot
