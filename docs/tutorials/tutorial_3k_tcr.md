@@ -6,7 +6,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: "1.3"
+      format_version: '1.3'
       jupytext_version: 1.14.4
 ---
 
@@ -420,9 +420,10 @@ We can now extract information (e.g. CDR3-sequences) from a specific clonotype c
 When extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph.
 
 ```python
-with ir.get.airr_context(mdata, "junction_aa", ["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]) as m:
+with ir.get.airr_context(mdata, "junction_aa", ["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]):
     cdr3_ct_159 = (
-        m.obs.loc[lambda x: x["airr:cc_aa_alignment"] == "159"]
+        # TODO astype(str) is required due to a bug in pandas ignoring `dropna=False`. It seems fixed in pandas 2.x
+        mdata.obs.loc[lambda x: x["airr:cc_aa_alignment"] == "159"].astype(str)
         .groupby(
             [
                 "VJ_1_junction_aa",
@@ -474,9 +475,9 @@ ct_different_v
 Here, we see that the clonotype clusters `280` and `765` get split into `(280, 788)` and `(765, 1071)`, respectively, when the `same_v_gene` flag is set.
 
 ```python
-with ir.get.airr_context(mdata, "v_call", ["VJ_1", "VDJ_1"]) as m:
+with ir.get.airr_context(mdata, "v_call", ["VJ_1", "VDJ_1"]):
     ct_different_v_df = (
-        m.obs.loc[
+        mdata.obs.loc[
             lambda x: x["airr:cc_aa_alignment"].isin(ct_different_v),
             [
                 "airr:cc_aa_alignment",
@@ -632,19 +633,19 @@ We use `max_col` to limit the plot to the 10 most abundant V-genes.
 <!-- #endraw -->
 
 ```python
-with ir.get.airr_context(mdata, "v_call") as m:
+with ir.get.airr_context(mdata, "v_call"):
     ir.pl.group_abundance(
-        m, groupby="VJ_1_v_call", target_col="gex:cluster", normalize=True, max_cols=10
+        mdata, groupby="VJ_1_v_call", target_col="gex:cluster", normalize=True, max_cols=10
     )
 ```
 
 We can pre-select groups by filtering `adata`:
 
 ```python
-with ir.get.airr_context(mdata, "v_call") as m:
+with ir.get.airr_context(mdata, "v_call"):
     ir.pl.group_abundance(
-        m[
-            m.obs["VDJ_1_v_call"].isin(
+        mdata[
+            mdata.obs["VDJ_1_v_call"].isin(
                 ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
             ),
             :,
@@ -709,10 +710,10 @@ ir.pl.spectratype(
 A spectratype-plot by gene usage. To pre-select specific genes, we can simply filter the `adata` object before plotting.
 
 ```python
-with ir.get.airr_context(mdata, "v_call") as m:
+with ir.get.airr_context(mdata, "v_call"):
     ir.pl.spectratype(
-        m[
-            m.obs["VDJ_1_v_call"].isin(
+        mdata[
+            mdata.obs["VDJ_1_v_call"].isin(
                 ["TRBV20-1", "TRBV7-2", "TRBV28", "TRBV5-1", "TRBV7-9"]
             ),
             :,
