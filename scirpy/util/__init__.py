@@ -1,5 +1,4 @@
 import warnings
-from lib2to3.pgen2.token import OP
 from textwrap import dedent
 from typing import Any, Callable, Mapping, Optional, Sequence, Union, cast, overload
 
