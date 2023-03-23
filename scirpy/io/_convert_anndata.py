@@ -25,9 +25,6 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
     ----------
     airr_cells
         A list of :class:`~scirpy.io.AirrCell` objects
-    index_chains
-        If `True`, automatically run :func:`~scirpy.pp.index_chains` with 
-        default parameters. 
 
     Returns
     -------

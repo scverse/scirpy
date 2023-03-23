@@ -117,7 +117,8 @@ def maynard2020() -> MuData:
     {pooch_info}
 
     The raw FASTQ files have been obtained from `PRJNA591860 <https://www.ebi.ac.uk/ena/browser/view/PRJNA591860>`__
-    and processed using the nf-core `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__.
+    and processed using the nf-core `RNA-seq pipeline <https://github.com/nf-core/rnaseq>`_ to obtain 
+    gene expression and TraCeR/BraCeR to reconstruct receptors. 
 
     The processed files have been imported and transformed into an :class:`anndata.AnnData`
     object using the following script:
