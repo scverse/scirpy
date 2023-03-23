@@ -10,14 +10,10 @@ from textwrap import indent
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
-from click import progressbar
-from scanpy import logging, settings
-from scanpy.readwrite import read
 
 from ..io._convert_anndata import from_airr_cells
 from ..io._datastructures import AirrCell
 from ..io._io import _infer_locus_from_gene_names, _IOLogger
-from ..io._legacy import upgrade_schema
 from ..pp import index_chains
 from ..util import _doc_params, _read_to_str, tqdm
 
@@ -33,7 +29,7 @@ from mudata import MuData
 from .. import __version__
 from ..util import tqdm
 
-FIGSHARE = pooch.create(
+_FIGSHARE = pooch.create(
     path=pooch.os_cache("scirpy"),
     base_url="doi:10.6084/m9.figshare.22249894.v1",
     version=__version__,
@@ -45,7 +41,7 @@ FIGSHARE = pooch.create(
         "maynard2020.h5mu": "md5:da64ac62e3e92c80eaf0e8eef6537ac7",
     },
 )
-POOCH_INFO = dedent(
+_POOCH_INFO = dedent(
     """\
     .. note::
         Scirpy example datasets are managed through `Pooch <https://github.com/fatiando/pooch>`_. 
@@ -62,7 +58,7 @@ POOCH_INFO = dedent(
 
 @_doc_params(
     processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020.py"), "   "),
-    pooch_info=POOCH_INFO,
+    pooch_info=_POOCH_INFO,
 )
 def wu2020() -> MuData:
     """\
@@ -78,7 +74,7 @@ def wu2020() -> MuData:
 
     {processing_code}
     """
-    fname = cast(PathLike, FIGSHARE.fetch("wu2020.h5mu", progressbar=True))
+    fname = cast(PathLike, _FIGSHARE.fetch("wu2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -86,7 +82,7 @@ def wu2020() -> MuData:
     processing_code=indent(
         _read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), "   "
     ),
-    pooch_info=POOCH_INFO,
+    pooch_info=_POOCH_INFO,
 )
 def wu2020_3k() -> MuData:
     """\
@@ -101,7 +97,7 @@ def wu2020_3k() -> MuData:
 
     {processing_code}
     """
-    fname = cast(PathLike, FIGSHARE.fetch("wu2020_3k.h5mu", progressbar=True))
+    fname = cast(PathLike, _FIGSHARE.fetch("wu2020_3k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -109,7 +105,7 @@ def wu2020_3k() -> MuData:
     processing_code=indent(
         _read_to_str(HERE / "_processing_scripts/maynard2020.py"), "   "
     ),
-    pooch_info=POOCH_INFO,
+    pooch_info=_POOCH_INFO,
 )
 def maynard2020() -> MuData:
     """\
@@ -130,7 +126,7 @@ def maynard2020() -> MuData:
 
     {processing_code}
     """
-    fname = cast(PathLike, FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
+    fname = cast(PathLike, _FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
