@@ -1,7 +1,42 @@
+
+Data structure and usage principles
+===================================
+
+Using scirpy
+------------
+
+Import scirpy as
+
+.. code-block:: python
+
+   import scanpy as sc
+   import scirpy as ir
+
+
+As an scverse core package, scirpy adheres to the workflow principles 
+`laid out by scanpy <https://scanpy.readthedocs.io/en/stable/usage-principles.html>`_.:
+
+ * The :ref:`API <api>` is divided into *preprocessing* (`pp`), *tools* (`tl`),
+   and *plotting* (`pl`).
+ * All functions work on :class:`~anndata.AnnData` or :class:`~mudata.MuData` objects.
+ * The :class:`~anndata.AnnData` instance is modified inplace, unless a function
+   is called with the keyword argument `inplace=False`.
+
+We decided to handle a few minor points differently to Scanpy:
+
+ * Plotting functions with inexpensive computations (e.g. :func:`scirpy.pl.clonal_expansion`)
+   call the corresponding tool (:func:`scirpy.tl.clonal_expansion`) on-the-fly and
+   don't store the results in the :class:`~anndata.AnnData` object.
+ * All plotting functions, by default, return a :class:`~matplotlib.axes.Axes` object,
+   or a list of such.
+
+
 .. _data-structure:
 
-Data structure
-==============
+Storing AIRR rearrangement data in AnnData
+------------------------------------------
+
+For instructions how to load data into scirpy, see :ref:`importing-data`.
 
 .. note:: 
 
@@ -9,18 +44,16 @@ Data structure
     data was expanded into columns in `adata.obs`, they are now stored as :term:`awkward array` in `adata.obsm`. 
     Fore more details ... # TODO
 
-For instructions how to load data into scirpy, see :ref:`importing-data`.
-
 Scirpy combines the `AIRR Rearrangement standard <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ 
 for representing adaptive immune receptor repertoire data with scverse's `AnnData <https://anndata.readthedocs.io/en/latest/>`_ data structure.
 
-AnnData combines a gene expression matrix (`.X`), gene-level annotations (`.var`) and
+`AnnData`` combines a gene expression matrix (`.X`), gene-level annotations (`.var`) and
 cell-level annotations (`.obs`) into a single object. Additionally, matrices aligned to the cells can be stored in `.obsm`.
 
 .. figure:: img/anndata.svg
    :width: 350px
 
-The AIRR rearrangement standard defines a set of fields to describe a single receptor chain. One cell can have 
+The AIRR rearrangement standard defines a set of fields to describe single receptor chains. One cell can have 
 multiple receptor chains. This relationship is represented as an :term:`awkward array` stored in `adata.obsm["airr"]`.
 
 The first dimension of the array represents the cells and is aligned to the `obs` axis of the `AnnData` object. 
@@ -40,13 +73,82 @@ is a :ref:~akward.RecordType` and represents fields defined in the rearrangement
     ]
 
 This allows to losslessly store a complete AIRR rearrangement table in AnnData. The purpose of scirpy's :ref:`IO module <api-io>`
-is to create AnnData objects of this structure. At this point, chains are neither filtered, nor separated by locus. 
-This allows adopting the datastructure and reusing the IO functions even for packages that do not adhere to the 
-:ref:`scirpy receptor model <receptor-model>`. 
+is to create AnnData objects with the corresponding `obsm` entries. At this point, chains are neither filtered, nor separated by locus. 
+This allows any scverse ecosystem package working with AIRR data to adopt the datastructure and to reuse scirpy's IO functions
+if they use :ref:`scirpy's receptor model <receptor-model>` or not. 
 
-chain indices
+Chain indices
 -------------
+The :ref:`scirpy receptor model <receptor-model>` allows up to two pairs of chains per cell. This representation 
+requires separation of chains by :term:`locus <Chain locus>` into :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` chains, 
+and (optionally) filtering non-productive chains. 
+
+The :func:`~scirpy.pp.index_chains` function serves for this purpose. It creates an additional :term:`awkward array` 
+in `adata.obsm` that has the following structure: 
+
+.. code-block:: python
+
+    # adata.obsm["chain_indices"]
+    [
+        # cell0: 
+        #   * 1 VJ chain which is at index 0 in `adata.obsm["airr"][0]`
+        #   * 1 VDJ chain which is at in dex 1 in `adata.obsm["airr"][0]`
+        #   * multichain = False, because the chains does not have more than 2 VJ or VDJ chains
+        {"VJ": [0], "VDJ": [1], "multichain": False}, # single pair
+        # cell1:
+        #   * primary VJ chain is at index 0 in `adata.obsm["airr"][1]`
+        #   * secondary VJ chain is at index 2 in `adata.obsm["airr"][1]`
+        #   * etc. 
+        {"VJ": [0, 2], "VDJ": [1,3], "multichain": False}, # dual IR
+    ]
+
+
+The `obsm["chain_indices"]` array could easily be adapted to other receptor models. For instance, 
+a library working with spatial :term:`TCR` data where each entry in `obs` corresponds to a "spot" with multiple cells rather
+than a single cell could have a list with an arbitrary number of indices for the `"VJ"` and `"VDJ"` entries, respectively. 
+
+
+Accessing AIRR data
+-------------------
+Any scirpy function accessing AIRR data uses these indices in `adata.obsm["chain_indices"]` to subset the awkward array in 
+`adata.obsm["airr"]`. To retreive AIRR data convenientely, we added the :func:`scirpy.get.airr` function. It allows
+to specify one or multiple fields and chains and returns a :class:`pandas.Series` or :class:`pandas.DataFrame`, respectively:
+
+.. code-block:: python
+
+    # retrieve the "locus" field of the primary VJ chain for each cell
+    >>> scirpy.get.airr(adata, "locus", "VJ_1")
+    AAACCTGAGAGTGAGA-1     TRA 
+    AAACCTGAGGCATTGG-1     TRA
+    AAACCTGCACCTCGTT-1    None
+    ...
+
+By using the :func:`~scirpy.get.airr_context` context manager, fields can be temporarily added to the `adata.obs`
+and used, e.g. for plotting: 
+
+.. code-block:: python
+    
+    with scirpy.get.airr_context(adata, "locus", "VJ_1"):
+        sc.pl.umap(adata, color="VJ_1_locus")
 
 
 Working with multimodal data
 ----------------------------
+
+
+
+
+Common function parameters
+--------------------------
+Wherever applicable, scirpy's function take the following arguments:
+
+ * `airr_mod` specifies the slot in `MuData` that contains the `AnnData` object with AIRR data. This parameter is 
+   ignored when working with AnnData directly. Defaults to `"airr"`.
+ * `airr_key` specifies the slot in `AnnData.obsm` that contains the awkward array with AIRR data. Defaults to `"airr"`. 
+ * `chain_idx_key` specifies the slot in `AnnData.obsm` thtat contains the chain indices. Defaults to `"chain_indices"`. 
+ * `inplace` defines if a function stores its results back in the AnnData/MuData object or returns them.
+ * `key_added` defines the key (e.g. in `.obs`) where a function's result is stored if `inplace=True`.
+
+The :class:`~scirpy.util.DataHandler` class ensures that these parameters are handled consistently across functions. 
+
+**For most use cases you can stick to the default and do not need to modify these parameters.**

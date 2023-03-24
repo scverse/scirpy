@@ -4,7 +4,6 @@
    :hidden:
 
    tutorials
-   usage-principles
    data-structure
    api
    ir-biology
