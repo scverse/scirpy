@@ -5,6 +5,12 @@ Glossary
 .. glossary::
     :sorted:
 
+    awkward array
+        Awkward arrays are a data structure that allows to represent nested, variable sized data (such as lists 
+        of lists, lists of dictionaries). It is computationally efficient and can be manipulated with NumPy-like idioms. 
+
+        For more details, check out the `awkward documentation <https://awkward-array.org/doc/main/getting-started/index.html>`_
+        
     TCR
         T-cell receptor. A TCR consists of one α and one β chain
         (or, alternatively, one γ and one δ chain). Each chain consists of a
