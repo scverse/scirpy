@@ -117,7 +117,7 @@ to specify one or multiple fields and chains and returns a :class:`pandas.Series
 .. code-block:: python
 
     # retrieve the "locus" field of the primary VJ chain for each cell
-    >>> scirpy.get.airr(adata, "locus", "VJ_1")
+    >>> ir.get.airr(adata, "locus", "VJ_1")
     AAACCTGAGAGTGAGA-1     TRA 
     AAACCTGAGGCATTGG-1     TRA
     AAACCTGCACCTCGTT-1    None
@@ -128,14 +128,38 @@ and used, e.g. for plotting:
 
 .. code-block:: python
     
-    with scirpy.get.airr_context(adata, "locus", "VJ_1"):
+    with ir.get.airr_context(adata, "locus", "VJ_1"):
         sc.pl.umap(adata, color="VJ_1_locus")
 
 
 Working with multimodal data
 ----------------------------
 
+The recommended way of working with paired gene expression (GEX) and AIRR data is to use the 
+`MuData <https://muon.readthedocs.io/en/latest/notebooks/quickstart_mudata.html>`_ container. `MuData` manages
+multiple `AnnData` objects that share observations and/or features. 
 
+After reading in AIRR data with the scirpy :ref:`IO module <api-io>` and gene expression data with scanpy, 
+they can be merged in a `MuData` object. For instance: 
+
+.. code-block:: python
+
+    adata_airr = ir.io.read_10x_vdj("all_contig_annotations.json")
+    adata_gex = sc.read_10x_h5("filtered_feature_bc_matrix.h5")
+    mdata = MuData({"airr": adata_airr, "gex": adata_gex})
+
+Scirpy functions can be applied directly to the MuData object. By default, it will retrieve AIRR data from the `"airr"`
+modality. 
+
+.. code-block:: python
+
+    ir.tl.chain_qc(mdata)
+
+All functions updating `obs` inplace update both `mdata.obs[f"airr:{key_added}"]` and `mata.mod["airr"].obs[key_added]`. 
+This means you usually do not need to call :py:meth:`mdata.update() <muon.MuData.update>` after running a scirpy function. 
+
+Should you prefer to not use MuData, this is entirely possible. All scirpy functions work as well on a single 
+`AnnData` object that contains gene expression data in `adata.X` and AIRR data in `adata.obsm["airr"]`.
 
 
 Common function parameters

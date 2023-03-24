@@ -11,8 +11,11 @@ build-backend = 'flit_core.buildapi'
 [project]
 name = 'scirpy'
 authors = [
-    {name = "Gregor Sturm", email="gregor.sturm@i-med.ac.at"},
-    {name= "Tamas Szabo"},
+    {name = "Gregor Sturm"},
+    {name = "Tamas Szabo"},
+]
+maintainers = [
+    {name = "Gregor Sturm", email="mail@gregor-sturm.de"}
 ]
 readme = {file = "README.rst", content-type="text/x-rst"}
 classifiers = [
