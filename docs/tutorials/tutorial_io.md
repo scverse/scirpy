@@ -474,7 +474,3 @@ mu.pl.embedding(mdata, basis="gex:umap", color="CD3E", ax=ax0, show=False)
 mu.pl.embedding(mdata, basis="gex:umap", color="sample", ax=ax1, show=False)
 mu.pl.embedding(mdata, basis="gex:umap", color="airr:receptor_type", ax=ax2)
 ```
-
-```python
-
-```
