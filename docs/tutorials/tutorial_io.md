@@ -10,6 +10,13 @@ jupyter:
       jupytext_version: 1.14.4
 ---
 
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+.. _importing-data:
+
+Loading adaptive immune receptor repertoire (:term:`AIRR`)-sequencing data with Scirpy
+======================================================================================
+<!-- #endraw -->
+
 ```python tags=["hide-cell"]
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
@@ -42,14 +49,9 @@ sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hint
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-.. _importing-data:
-
-Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
-=========================================================================
-
-In this notebook, we demonstrate how single-cell :term:`IR`-data can be imported into
-an :class:`~anndata.AnnData` or :class:`~mudata.MuData` object for the use with Scirpy. To learn more about
-AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data-structure>` section.
+In this notebook, we demonstrate how single-cell :term:`AIRR`-data can be imported into
+an :class:`~anndata.AnnData` object and merged with gene expression data in a :class:`~mudata.MuData` container for the use with Scirpy. 
+To learn more about how AIRR data is represented in AnnData, check out the :ref:`data structure <data-structure>` section.
 
 .. important:: **The scirpy data model**
 
@@ -66,8 +68,11 @@ AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data
      * Non-productive chains are ignored. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
+       
+    The :func:`~scirpy.pp.index_chains` function chooses the appropriate chains for each cell according to this model 
+    and stores references to those chains in `adata.obsm`.
 
-.. note:: **IR quality control**
+.. note:: **AIRR quality control**
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
        It will
@@ -154,11 +159,11 @@ sc.tl.umap(mdata["gex"])
 ```
 
 ```python tags=[]
+ir.pp.index_chains(mdata)
 ir.tl.chain_qc(mdata)
 ```
 
 ```python tags=[]
-# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
 fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
 mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
 mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
@@ -170,14 +175,13 @@ Read Smart-seq2 data processed with TraCeR
 
 `TraCeR <https://github.com/Teichlab/tracer>`__ (:cite:`Stubbington2016-kh`) is a method commonly used
 to extract TCR sequences from data generated with Smart-seq2 or other full-length single-cell sequencing protocols.
-`Nf-core <https://nf-co.re/>`_ provides a full `pipeline for processing Smart-seq2 sequencing data <https://github.com/nf-core/smartseq2/>`__.
 
 The :func:`scirpy.io.read_tracer` function obtains its TCR information from the `.pkl` file
 in the `filtered_TCR_seqs` folder TraCeR generates for each cell.
 
 For this example, we load the ~500 cells from triple-negative breast cancer patients from
 `GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`_ (:cite:`Chung2017`).
-The raw data has been processed using the aforementioned `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core.
+The raw data has been processed using the `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core.
 <!-- #endraw -->
 
 ```python
@@ -186,8 +190,9 @@ with tarfile.open("example_data/chung-park-2017.tar.bz2", "r:bz2") as tar:
     tar.extractall("example_data/chung-park-2017")
 ```
 
+First, we load the transcriptomics data from the `counts.tsv` file: 
+
 ```python
-# Load transcriptomics data from count matrix
 expr_chung = pd.read_csv("example_data/chung-park-2017/counts.tsv", sep="\t")
 # anndata needs genes in columns and samples in rows
 expr_chung = expr_chung.set_index("Geneid").T
@@ -195,12 +200,12 @@ adata = sc.AnnData(expr_chung)
 adata.shape
 ```
 
-```python
-# Load TCR data and merge it with transcriptomics data
-adata_tcr = ir.io.read_tracer("example_data/chung-park-2017/tracer/")
-```
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+Next, we load the TCR data and merge it with the transcriptomics data:
+<!-- #endraw -->
 
-```python tags=[]
+```python
+adata_tcr = ir.io.read_tracer("example_data/chung-park-2017/tracer/")
 mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
@@ -210,11 +215,11 @@ sc.pp.log1p(mdata["gex"])
 sc.pp.pca(mdata["gex"], svd_solver="arpack")
 sc.pp.neighbors(mdata["gex"])
 sc.tl.umap(mdata["gex"])
+ir.pp.index_chains(mdata)
 ir.tl.chain_qc(mdata)
 ```
 
 ```python tags=[]
-# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
 fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
 mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
 mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
@@ -239,6 +244,7 @@ adata = ir.io.read_airr(
         "example_data/immunesim_airr/immunesim_trb.tsv",
     ]
 )
+ir.pp.index_chains(adata)
 ir.tl.chain_qc(adata)
 ```
 
@@ -299,8 +305,8 @@ for a `read_XXX` function.
 
 For this example, we again load the triple-negative breast cancer data from :cite:`Chung2017`. However, this
 time, we retrieve the TCR data from a separate summary table containing the TCR information
-(we generated this table for the sake of the example, but it could as well
-be a supplementary file from the paper).
+(we generated this table for the sake of the example, but it could very well have been a 
+supplementary file from the paper).
 
 Such a table typically contains information about
 
@@ -326,16 +332,14 @@ tcr_table
 Our task is now to dissect the table into :class:`~scirpy.io.AirrCell` objects.
 Each :class:`~scirpy.io.AirrCell` can have an arbitrary number of chains. A chain is simply represented as a Python
 dictionary following the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
-
-When converting the :class:`~scirpy.io.AirrCell` objects into an :class:`~anndata.AnnData` object,
-scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
-this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`receptor-model`.
 <!-- #endraw -->
 
 ```python
 tcr_cells = []
-for idx, row in tcr_table.iterrows():
+for _, row in tcr_table.iterrows():
     cell = ir.io.AirrCell(cell_id=row["cell_id"])
+    # some fields are mandatory according to the Rearrangement standard, but can be set to NULL
+    # the `empty_chain_dict()` function provides a dictionary with all mandatory fields, but set to NULL.
     alpha_chain = ir.io.AirrCell.empty_chain_dict()
     beta_chain = ir.io.AirrCell.empty_chain_dict()
     alpha_chain.update(
@@ -375,10 +379,6 @@ adata_tcr = ir.io.from_airr_cells(tcr_cells)
 ```
 
 ```python
-adata_tcr.obsm
-```
-
-```python
 # We can re-use the transcriptomics data from above...
 adata = sc.AnnData(expr_chung)
 # ... and merge it with the TCR data
@@ -391,11 +391,11 @@ sc.pp.log1p(mdata["gex"])
 sc.pp.pca(mdata["gex"], svd_solver="arpack")
 sc.pp.neighbors(mdata["gex"])
 sc.tl.umap(mdata["gex"])
+ir.pp.index_chains(mdata)
 ir.tl.chain_qc(mdata)
 ```
 
 ```python tags=[]
-# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
 fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
 mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
 mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
@@ -410,7 +410,7 @@ To combine them into a single object, we load each sample independently using on
 in this document. Then, we combine them using :func:`anndata.concat`.
 
 MuData currently does not implement a `concat` function (see `scverse/mudata#20 <https://github.com/scverse/mudata/issues/20>`_). Therefore, we
-need to first concatenate each modality individually and build the MuData object as the last step. 
+need to first concatenate gene expression and AIRR data separately and create the MuData object as the last step. 
 
 Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
 <!-- #endraw -->
@@ -432,13 +432,9 @@ for sample, sample_meta in samples.items():
     gex_file = glob(f"example_data/liao-2019-covid19/*{sample}*.h5")[0]
     tcr_file = glob(f"example_data/liao-2019-covid19/*{sample}*.csv.gz")[0]
     adata_gex = sc.read_10x_h5(gex_file)
+    adata_tcr = ir.io.read_10x_vdj(tcr_file)
     # concatenation only works with unique gene names
     adata_gex.var_names_make_unique()
-    adata_tcr = ir.io.read_10x_vdj(tcr_file)
-    for ad in [adata_gex, adata_tcr]:
-        ad.obs["sample"] = sample
-        ad.obs["group"] = sample_meta["group"]
-
     adatas_tcr[sample] = adata_tcr
     adatas_gex[sample] = adata_gex
 ```
@@ -448,6 +444,10 @@ for sample, sample_meta in samples.items():
 adata_gex = anndata.concat(adatas_gex, index_unique="_")
 adata_tcr = anndata.concat(adatas_tcr, index_unique="_")
 mdata = mu.MuData({"gex": adata_gex, "airr": adata_tcr})
+
+# Set global metadata on `mdata.obs`
+mdata.obs["sample"] = mdata.obs_names.to_series().str.split("_", expand=True)[1]
+mdata.obs["group"] = mdata.obs["sample"].map(lambda x: samples[x]["group"])
 ```
 
 The data is now integrated in a single object.
@@ -455,27 +455,24 @@ Again, the detected TCRs coincide with `CD3E` gene expression.
 We clearly observe batch effects between the samples -- for a meaningful downstream analysis further
 processing steps such as highly-variable gene filtering and batch correction are necessary.
 
-```python
-sc.pp.log1p(mdata["gex"])
-sc.pp.pca(mdata["gex"], svd_solver="arpack")
-sc.pp.neighbors(mdata["gex"])
-sc.tl.umap(mdata["gex"])
-ir.tl.chain_qc(mdata)
-```
-
-```python tags=[]
-mdata.obs
-```
-
 ```python tags=[]
 mdata
 ```
 
 ```python
-# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
-fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
-mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
-mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+```
+
+```python
+fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(15, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color="CD3E", ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color="sample", ax=ax1, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color="airr:receptor_type", ax=ax2)
 ```
 
 ```python
