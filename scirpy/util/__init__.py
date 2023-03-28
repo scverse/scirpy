@@ -170,6 +170,9 @@ class DataHandler:
 
         The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key].
         """
+        # index series with AnnData (in case MuData has different dimensions)
+        if not isinstance(value, pd.Series):
+            value = pd.Series(value, index=self.adata.obs_names)
         if isinstance(self.data, MuData):
             # write to both AnnData and MuData
             if self._airr_mod is None:

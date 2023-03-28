@@ -21,7 +21,7 @@ For this tutorial, to speed up computations, we use a downsampled version of 3k 
 
 <!-- #endraw -->
 
-```python
+```python tags=["hide-cell"]
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2

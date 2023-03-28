@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from ..ir_dist import _ir_dist as ir_dist
 from ._index_chains import index_chains
 from ._merge_adata import merge_airr
@@ -7,7 +9,14 @@ __all__ = ["ir_dist", "index_chains", "merge_airr"]
 
 # TODO #356 refer to corresponding docs sections
 def merge_with_ir(*args, **kwargs):
-    raise NotImplementedError("This function has been removed in v0.13")
+    raise NotImplementedError(
+        dedent(
+            """\
+            This function has been removed in v0.13.
+            Use MuData instead: mdata = MuData({"gex": adata, "airr": adata_ir})
+            """
+        )
+    )
 
 
 def merge_airr_chains(*args, **kwargs):

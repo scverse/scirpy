@@ -117,6 +117,13 @@ def test_data_handler_get_obs():
     )
 
 
+def test_data_handler_initalize_from_object(adata_tra):
+    dh = DataHandler(adata_tra, "airr", "airr")
+    dh2 = DataHandler(dh)
+    assert dh._data is dh2._data is adata_tra
+    assert dh.adata is dh2.adata
+
+
 def test_is_symmetric():
     M = np.array([[1, 2, 2], [2, 1, 3], [2, 3, 1]])
     S_csr = scipy.sparse.csr_matrix(M)

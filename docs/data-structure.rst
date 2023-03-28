@@ -13,7 +13,7 @@ Import scirpy as
    import scirpy as ir
 
 
-As an scverse core package, scirpy adheres to the workflow principles 
+As a scverse core package, scirpy adheres to the workflow principles 
 `laid out by scanpy <https://scanpy.readthedocs.io/en/stable/usage-principles.html>`_.:
 
  * The :ref:`API <api>` is divided into *preprocessing* (`pp`), *tools* (`tl`),
@@ -40,7 +40,7 @@ For instructions how to load data into scirpy, see :ref:`importing-data`.
 
 .. note:: 
 
-    Scirpy's datastructure was fundamentally changed in version 0.13.0. While previously, immune receptor
+    Scirpy's data structure was fundamentally changed in version 0.13.0. While previously, immune receptor
     data was expanded into columns in `adata.obs`, they are now stored as :term:`awkward array` in `adata.obsm`. 
     Fore more details ... # TODO
 
@@ -164,7 +164,7 @@ Should you prefer to not use MuData, this is entirely possible. All scirpy funct
 
 Common function parameters
 --------------------------
-Wherever applicable, scirpy's function take the following arguments:
+Wherever applicable, scirpy's functions take the following arguments:
 
  * `airr_mod` specifies the slot in `MuData` that contains the `AnnData` object with AIRR data. This parameter is 
    ignored when working with AnnData directly. Defaults to `"airr"`.

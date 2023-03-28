@@ -10,13 +10,13 @@ jupyter:
       jupytext_version: 1.14.4
 ---
 
-```python
+```python tags=["hide-cell"]
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
 import anndata
 
-anndata.logging.anndata_logger.addFilter(
+anndata.logging.anndata_logger.addFilter( 
     lambda r: not r.getMessage().startswith("storing")
     and r.getMessage().endswith("as categorical.")
 )
@@ -29,11 +29,13 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 ```python
 import scirpy as ir
 import scanpy as sc
+import muon as mu
 from glob import glob
 import pandas as pd
 import tarfile
 import anndata
 import warnings
+import matplotlib.pyplot as plt
 
 sc.set_figure_params(figsize=(4, 4))
 sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hints (3)
@@ -46,16 +48,15 @@ Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
 =========================================================================
 
 In this notebook, we demonstrate how single-cell :term:`IR`-data can be imported into
-an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
+an :class:`~anndata.AnnData` or :class:`~mudata.MuData` object for the use with Scirpy. To learn more about
 AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data-structure>` section.
 
-The example data used in this notebook are available from the
-`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
+.. important:: **The scirpy data model**
 
-.. important:: **The Scirpy data model**
-
-    Currently, the Scirpy data model has the following constraints:
-
+    Since v0.13, there are no restrictions on the AIRR data that can be stored in the scirpy data structure, except that 
+    each receptor chain needs to be associated with a cell. However, for all analyses, the assumptions of the 
+    :ref:`receptor model <receptor-model>` still apply:
+    
      * BCR and TCR chains are supported. Chain loci must be valid :term:`Chain locus`,
        i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or
        `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). 
@@ -65,13 +66,6 @@ The example data used in this notebook are available from the
      * Non-productive chains are ignored. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
-     * Excess chains, non-productive chains, or chains with invalid loci
-       are serialized to JSON and stored in the `extra_chains` column. They are not 
-       used by scirpy except when exporting the `AnnData` object to :term:`AIRR` format. 
-     
-
-    For more information, see :ref:`receptor-model`.
-
 
 .. note:: **IR quality control**
 
@@ -126,6 +120,7 @@ adata_tcr = ir.io.read_10x_vdj(
 adata = sc.read_10x_h5(
     "example_data/liao-2019-covid19/GSM4339772_C144_filtered_feature_bc_matrix.h5"
 )
+adata.var_names_make_unique()
 ```
 
 This particular sample only has a detected TCR for a small fraction of the cells:
@@ -139,12 +134,12 @@ adata.shape
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Next, we integrate both the TCR and the transcriptomics data into a single :class:`anndata.AnnData` object
-using :func:`scirpy.pp.merge_with_ir`:
+Next, we integrate both the TCR and the transcriptomics data into a single :class:`~mudata.MuData` object. By convention, 
+gene expression data should be stored in the `gex` modality, immune receptor data in the `airr` modality. 
 <!-- #endraw -->
 
 ```python
-ir.pp.merge_with_ir(adata, adata_tcr)
+mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
 Now, we can use TCR-related variables together with the gene expression data.
@@ -152,11 +147,21 @@ Here, we visualize the cells with a detected TCR on the UMAP plot.
 It is reassuring that the TCRs coincide with the T-cell marker gene CD3.
 
 ```python
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E"])
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+```
+
+```python tags=[]
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -191,22 +196,28 @@ adata.shape
 ```
 
 ```python
-adata_tcr.obs
-```
-
-```python
 # Load TCR data and merge it with transcriptomics data
 adata_tcr = ir.io.read_tracer("example_data/chung-park-2017/tracer/")
-ir.pp.merge_with_ir(adata, adata_tcr)
+```
+
+```python tags=[]
+mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
 ```python
-sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=3000)
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E"])
+sc.pp.highly_variable_genes(mdata["gex"], flavor="cell_ranger", n_top_genes=3000)
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -364,23 +375,30 @@ adata_tcr = ir.io.from_airr_cells(tcr_cells)
 ```
 
 ```python
-adata_tcr.obs
+adata_tcr.obsm
 ```
 
 ```python
 # We can re-use the transcriptomics data from above...
 adata = sc.AnnData(expr_chung)
 # ... and merge it with the TCR data
-ir.pp.merge_with_ir(adata, adata_tcr)
+mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
 ```python
-sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=3000)
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E"])
+sc.pp.highly_variable_genes(mdata["gex"], flavor="cell_ranger", n_top_genes=3000)
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -390,6 +408,9 @@ Combining multiple samples
 It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
 in this document. Then, we combine them using :func:`anndata.concat`.
+
+MuData currently does not implement a `concat` function (see `scverse/mudata#20 <https://github.com/scverse/mudata/issues/20>`_). Therefore, we
+need to first concatenate each modality individually and build the MuData object as the last step. 
 
 Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
 <!-- #endraw -->
@@ -405,23 +426,28 @@ samples = {
 
 ```python
 # Create a list of AnnData objects (one for each sample)
-adatas = []
+adatas_tcr = {}
+adatas_gex = {}
 for sample, sample_meta in samples.items():
     gex_file = glob(f"example_data/liao-2019-covid19/*{sample}*.h5")[0]
     tcr_file = glob(f"example_data/liao-2019-covid19/*{sample}*.csv.gz")[0]
-    adata = sc.read_10x_h5(gex_file)
-    adata_tcr = ir.io.read_10x_vdj(tcr_file)
-    ir.pp.merge_with_ir(adata, adata_tcr)
-    adata.obs["sample"] = sample
-    adata.obs["group"] = sample_meta["group"]
+    adata_gex = sc.read_10x_h5(gex_file)
     # concatenation only works with unique gene names
-    adata.var_names_make_unique()
-    adatas.append(adata)
+    adata_gex.var_names_make_unique()
+    adata_tcr = ir.io.read_10x_vdj(tcr_file)
+    for ad in [adata_gex, adata_tcr]:
+        ad.obs["sample"] = sample
+        ad.obs["group"] = sample_meta["group"]
+
+    adatas_tcr[sample] = adata_tcr
+    adatas_gex[sample] = adata_gex
 ```
 
 ```python
 # Merge anndata objects
-adata = anndata.concat(adatas)
+adata_gex = anndata.concat(adatas_gex, index_unique="_")
+adata_tcr = anndata.concat(adatas_tcr, index_unique="_")
+mdata = mu.MuData({"gex": adata_gex, "airr": adata_tcr})
 ```
 
 The data is now integrated in a single object.
@@ -430,11 +456,26 @@ We clearly observe batch effects between the samples -- for a meaningful downstr
 processing steps such as highly-variable gene filtering and batch correction are necessary.
 
 ```python
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E", "sample"])
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+mdata.obs
+```
+
+```python tags=[]
+mdata
+```
+
+```python
+# TODO #356: this is a workaround for https://github.com/scverse/muon/issues/96
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 ```python
