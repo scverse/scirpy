@@ -108,7 +108,9 @@ in `adata.obsm` that has the following structure:
 
 The `obsm["chain_indices"]` array could easily be adapted to other receptor models. For instance, 
 a library working with spatial :term:`TCR` data where each entry in `obs` corresponds to a "spot" with multiple cells rather
-than a single cell could have a list with an arbitrary number of indices for the `"VJ"` and `"VDJ"` entries, respectively. 
+than a single cell could have a list with an arbitrary number of indices for the `"VJ"` and `"VDJ"` entries, respectively.
+By using a different function for chain indexing, it would also be very straightforward to support non-IMGT loci (e.g.
+from other species).  
 
 
 .. _accessing-airr-data:

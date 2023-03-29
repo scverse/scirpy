@@ -3,8 +3,8 @@
 .. toctree::
    :hidden:
 
-   tutorials
    data-structure
+   tutorials
    api
    ir-biology
    glossary
