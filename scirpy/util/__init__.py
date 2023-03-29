@@ -349,9 +349,13 @@ class DataHandler:
                     "the latest version. "
                 )
             else:
-                # TODO #356: refer to docs explaining new schema
                 raise KeyError(
-                    f"No AIRR data found in adata.obsm['{self._airr_key}']. "
+                    dedent(
+                        f"""\
+                        No AIRR data found in adata.obsm['{self._airr_key}']. 
+                        See https://scverse.org/scirpy/develop/data-structure.html for more info about the scirpy data structure.
+                        """
+                    )
                 )
 
 

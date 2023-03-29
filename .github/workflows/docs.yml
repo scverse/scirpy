@@ -17,9 +17,9 @@ jobs:
       matrix:
         python-version: [3.9]
         os:
-         - ubuntu-latest
-         # - macos-latest
-         - windows-latest
+          - ubuntu-latest
+          # - macos-latest
+          - windows-latest
     steps:
       - uses: actions/checkout@v2
         with:
@@ -67,9 +67,7 @@ jobs:
           pip install .[doc,test,rpack,dandelion]
       - name: run sphinx
         run: |
-          # cd docs && make html SPHINXOPTS="-W --keep-going"
-          # TODO do not ignore sphinx warnings
-          cd docs && make html
+          cd docs && make html SPHINXOPTS="-W --keep-going"
 
       - name: Get target folder for page deploy from github ref
         if: ( matrix.os == 'ubuntu-latest' ) &&  ( matrix.python-version == '3.8' )
