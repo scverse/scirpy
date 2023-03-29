@@ -188,7 +188,7 @@ ir.pp.index_chains(mdata)
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 
 While most of T cell receptors have exactly one pair of α and β chains, up to one third of
-T cells can have :term:`dual TCRs<Dual-IR>`, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
+T cells can have :term:`dual TCRs<Dual IR>`, i.e. two pairs of receptors originating from different alleles (:cite:`Schuldt2019`).
 
 Using the :func:`scirpy.tl.chain_qc` function, we can add a summary
 about the Immune cell-receptor compositions to `adata.obs`. We can visualize it using :func:`scirpy.pl.group_abundance`.
@@ -973,7 +973,7 @@ ir.tl.ir_query(
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
 
-:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve _all pairs cells with their of matching entries_. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell.
+:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve *all pairs cells with their of matching entries*. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell.
 
 <!-- #endraw -->
 

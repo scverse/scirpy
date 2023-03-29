@@ -32,7 +32,8 @@ def clonotype_imbalance(
     airr_mod: str = "airr",
     **kwargs,
 ) -> plt.Axes:
-    """Aims to find clonotypes that are the most enriched or depleted in a category.
+    """\
+    Aims to find clonotypes that are the most enriched or depleted in a category.
 
     Uses Fischer's exact test to rank clonotypes.
     Depends on execution of clonotype_overlap.
@@ -44,8 +45,7 @@ def clonotype_imbalance(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     replicate_col
         Column with batch or sample labels.
     groupby

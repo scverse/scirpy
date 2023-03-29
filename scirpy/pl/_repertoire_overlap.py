@@ -29,7 +29,8 @@ def repertoire_overlap(
     airr_mod: str = "airr",
     **kwargs,
 ) -> Union[sns.matrix.ClusterGrid, plt.Axes]:
-    """Visualizes overlap betwen a pair of samples on a scatter plot or
+    """\
+    Visualizes overlap betwen a pair of samples on a scatter plot or
     all samples on a heatmap or draws a dendrogram of samples only.
 
     .. warning::
@@ -37,8 +38,7 @@ def repertoire_overlap(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     groupby
         Column with group labels (e.g. samples, tissue source, diagnosis, etc).
     target_col

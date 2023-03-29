@@ -164,7 +164,7 @@ modality.
     ir.tl.chain_qc(mdata)
 
 All functions updating `obs` inplace update both `mdata.obs[f"airr:{key_added}"]` and `mata.mod["airr"].obs[key_added]`. 
-This means you usually do not need to call :py:meth:`mdata.update() <muon.MuData.update>` after running a scirpy function. 
+This means you usually do not need to call :py:meth:`mdata.update() <mudata.MuData.update>` after running a scirpy function. 
 
 Should you prefer to not use MuData, this is entirely possible. All scirpy functions work as well on a single 
 `AnnData` object that contains gene expression data in `adata.X` and AIRR data in `adata.obsm["airr"]`. 

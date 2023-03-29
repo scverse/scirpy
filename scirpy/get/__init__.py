@@ -138,7 +138,7 @@ def obs_context(
         AnnData or MuData object
     temp_cols
         Dictionary where keys are column names and values are columns. Columns will be added
-        to obs using :func:`pandas.DataFrame.assign`. It is also possible to pass a :class:`~pandas.DataFrame` in
+        to obs using :py:meth:`pandas.DataFrame.assign`. It is also possible to pass a :class:`~pandas.DataFrame` in
         which case the columns of the DataFrame will be added to `obs` and matched based on the index.
     """
     orig_obs = data.obs.copy()

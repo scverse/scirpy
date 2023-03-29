@@ -123,11 +123,11 @@ class DataHandler:
         ...
 
     def get_obs(self, columns):
-        """Get one or multiple obs columns from either MuData or AIRR Anndata
+        """\
+        Get one or multiple obs columns from either MuData or AIRR AnnData
 
-        Checks if the column is available in MuData.obs. If it
-        can't be found or DataHandler is initalized without mudata
-        object, AnnData.obs is tried.
+        Checks if the column is available in `MuData.obs`. If it can't be found or DataHandler is initalized without MuData
+        object, `AnnData.obs` is tried.
 
         The returned object always has the dimensions and index of MuData, even if
         only columns from AnnData are used. It is easy to subset to AnnData if required:
@@ -143,8 +143,8 @@ class DataHandler:
 
         Returns
         -------
-        If this is a single column passed as `str`, a Series will be returned,
-        otherwise a `DataFrame`.
+        If this is a single column passed as `str`, a :class:`~pandas.Series` will be returned,
+        otherwise a :class:`~pandas.DataFrame`.
         """
         if isinstance(columns, str):
             return self._get_obs_col(columns)
@@ -168,7 +168,7 @@ class DataHandler:
     ) -> None:
         """Store results in .obs of AnnData and MuData.
 
-        The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key].
+        The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key]`.
         """
         # index series with AnnData (in case MuData has different dimensions)
         if not isinstance(value, pd.Series):
@@ -271,7 +271,7 @@ class DataHandler:
             airr_mod
                 Name of the modality with :term:`AIRR` information is stored in 
                 the :class:`~mudata.MuData` object. if an :class:`~anndata.AnnData` object
-                is passed to the function, this parameter is ignored. 
+                is passed to the function, this parameter is ignored.
             """
         )
         doc["airr_key"] = dedent(
