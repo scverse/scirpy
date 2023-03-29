@@ -9,19 +9,12 @@ from scanpy import logging
 doc_working_model = """\
 
 .. note::
-    Reading data into *Scirpy* has the following constraints:
-     * Each cell can have up to four productive chains chains (:term:`Dual IR`):
-       two :term:`VJ<V(D)J>` and two :term:`VDJ<V(D)J>` chains.
-     * Excess chains are ignored (those with lowest read count/:term:`UMI` count)
-       and cells flagged as :term:`Multichain-cell`.
-     * Non-productive chains are ignored.
-     * Chain loci must be valid :term:`IMGT locus names<Chain locus>`.
-     * Excess chains, non-productive chains, chains without a CDR3 sequence,
-       or chains with invalid loci are serialized to JSON and stored in the
-       `extra_chains` column. They are not used by scirpy except when exporting
-       the `AnnData` object to AIRR format.
+    Since scirpy v0.13, there are no restrictions on the AIRR data that can be stored in the scirpy data structure, 
+    except that each receptor chain needs to be associated with a cell.
 
-    For more information, see :ref:`receptor-model`.
+    The scirpy :ref:`receptor-model` is now applied in later step using the :func:`~scirpy.pp.index_chains` function. 
+
+    For more information, see :ref:`data-structure`. 
 """
 
 

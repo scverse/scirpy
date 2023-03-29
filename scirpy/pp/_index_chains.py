@@ -25,9 +25,9 @@ def index_chains(
     key_added: str = "chain_indices",
 ) -> None:
     """\
-    Determine which chains are considered primary/secondary VJ/VDJ chains
-
-    This function goes through all chains stored in the :term:`awkward array` in
+    Selects primary/secondary VJ/VDJ cells per chain according to the :ref:`receptor-model`.
+    
+    This function iterates through all chains stored in the :term:`awkward array` in
     `adata.obsm[airr_key]` and
 
      * labels chains as primary/secondary VJ/VDJ chains
@@ -35,7 +35,7 @@ def index_chains(
 
     based on the expression level of the chains and if they are labelled as "productive" or not.
 
-    TODO #356 link to receptor model
+    For more details, please refer to the :ref:`receptor-model` and the :ref:`data structure <data-structure>`.
 
     Parameters
     ----------

@@ -27,7 +27,7 @@ Input/Output: `io`
     Previously, receptor data was expanded into columns of `adata.obs`, now they are stored as an :term:`awkward array` in `adata.obsm["airr"]`. 
     Moreover, we now use :class:`~mudata.MuData` to handle paired transcriptomics and :term:`AIRR` data. 
     
-    `AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
+    :class:`~anndata.AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
     
     Please check out
     

@@ -224,7 +224,7 @@ def read_10x_vdj(
     path: Union[str, Path], filtered: bool = True, include_fields: Any = None, **kwargs
 ) -> AnnData:
     """\
-    Read :term:`IR` data from 10x Genomics cell-ranger output.
+    Read :term:`AIRR` data from 10x Genomics cell-ranger output.
 
     Supports `all_contig_annotations.json` and
     `{{all,filtered}}_contig_annotations.csv`.
