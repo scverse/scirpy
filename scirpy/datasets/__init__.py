@@ -147,7 +147,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
 
     Returns
     -------
-    An anndata object containing all entries from VDJDB in `obs`.
+    An anndata object containing all entries from VDJDB in `obsm["airr"]`.
     Each entry is represented as if it was a cell, but without gene expression.
     Metadata is stored in `adata.uns["DB"]`.
     """
@@ -265,7 +265,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
 
     Returns
     -------
-    An anndata object containing all entries from IEDB in `obs`.
+    An anndata object containing all entries from IEDB in `obsm["airr"]`.
     Each entry is represented as if it was a cell, but without gene expression.
     Metadata is stored in `adata.uns["DB"]`.
     """

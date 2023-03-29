@@ -25,7 +25,7 @@ def merge_airr(
 
     Decomposes the IR information back into :class:`scirpy.io.AirrCell` objects
     and merges them on a chain-level. If both objects contain the same cell-id, and
-    the same chains, the corresponding row in `adata.obs` will be unchanged (if `drop_duplicate_chains` is `True`).
+    the same chains, the corresponding row in `adata.obsm["airr"]` will be unchanged (if `drop_duplicate_chains` is `True`).
     If both objects contain the same cell-id, but different chains, the chains
     will be merged into a single cell such that it can be annotated as
     :term:`ambiguous<Receptor type>` or :term:`multi-chain<Multichain-cell>`
@@ -33,11 +33,18 @@ def merge_airr(
     be kept and can be identified as `ambiguous` using the :func:`scirpy.tl.chain_qc`
     function.
 
-    The function performs a "full join", i.e. all cells from both objects
+    The function performs a "outer join", i.e. all cells from both objects
     will be retained. All information except `.obsm[airr_key]` and
     `.obs` will be lost.
 
-    TODO #356: refer to tutorial showing how to use MuData
+    .. note::
+
+        There is no need to use this function for the following use-cases: 
+
+         * If you want to merge AIRR data with transcriptomics data, use :class:`~mudata.MuData` instead, 
+           as shown in :ref:`multimodal-data`. 
+         * If you want to concatenante mutliple :class:`~anndata.AnnData` objects, use :func:`anndata.concat` instead, 
+           as shown in :ref:`combining-samples`. 
 
     Parameters
     ----------

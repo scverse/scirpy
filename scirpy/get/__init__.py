@@ -24,7 +24,7 @@ def airr(
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
-):
+) -> Union[pd.DataFrame, pd.Series]:
     """\
     Retrieve AIRR variables for each cell, given a specific chain.
 
@@ -43,8 +43,8 @@ def airr(
 
     Returns
     -------
-    a pandas series or dataframe aligned to adata.obs. Contains missing values in places where a cell
-    does not have the requested chain.
+    A :class:`~pandas.Series` or :class:`~pandas.DataFrame` aligned to `adata.obs`. 
+    Contains missing values in places where a cell does not have the requested chain.
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     multiple_vars = not isinstance(airr_variable, str)

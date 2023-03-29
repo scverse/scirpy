@@ -138,6 +138,7 @@ and used, e.g. for plotting:
     with ir.get.airr_context(adata, "locus", "VJ_1"):
         sc.pl.umap(adata, color="VJ_1_locus")
 
+.. _multimodal-data:
 
 Working with multimodal data
 ----------------------------

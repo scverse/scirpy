@@ -60,9 +60,6 @@ def clonotype_modularity(
     predefined clonotype clusters and checks if within those clusters, the transcriptomics
     neighborhood graph is more connected than expected by chance.
 
-    .. warning::
-        This is an experimental function that may change in the future
-
     Parameters
     ----------
     {adata}

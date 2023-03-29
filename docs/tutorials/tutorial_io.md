@@ -402,6 +402,8 @@ mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+.. _combining-samples:
+
 Combining multiple samples
 --------------------------
 

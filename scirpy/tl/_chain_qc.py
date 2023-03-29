@@ -63,7 +63,7 @@ def chain_qc(
     ----------
     {adata}
     {inplace}
-    {key_added} 
+    {key_added}
     {airr_mod}
     {airr_key}
     {chain_idx_key}

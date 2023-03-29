@@ -263,22 +263,22 @@ class DataHandler:
         doc["adata"] = dedent(
             """\
             adata
-                AnnData or MuData object that contains :term:`IR` information. 
+                AnnData or MuData object that contains :term:`AIRR` information. 
             """
         )
         doc["airr_mod"] = dedent(
             """\
             airr_mod
-                Name of the modality with :term:`IR` information is stored in 
-                the :class:`~mudata.MuData` object. if an `~anndata.AnnData` object
+                Name of the modality with :term:`AIRR` information is stored in 
+                the :class:`~mudata.MuData` object. if an :class:`~anndata.AnnData` object
                 is passed to the function, this parameter is ignored. 
             """
         )
         doc["airr_key"] = dedent(
             """\
             airr_key
-                Key under which the :term:`IR` information is stored in adata.obsm as an 
-                awkward array.
+                Key under which the :term:`AIRR` information is stored in adata.obsm as an 
+                :term:`awkward array`.
             """
         )
         doc["chain_idx_key"] = dedent(
@@ -291,14 +291,16 @@ class DataHandler:
         )
         doc["inplace"] = dedent(
             """\
-            If `True`, a column with the result will be stored in `obs`. Otherwise the result will be returned.  
+            inplace
+                If `True`, a column with the result will be stored in `obs`. Otherwise the result will be returned.  
             """
         )
         doc["key_added"] = dedent(
             """\
-            Key under which the result will be stored in `obs`, if `inplace` is `True`. When the function is running 
-            on `~mudata.MuData`, the result will be written to both `mdata.obs["{airr_mod}:{key_added}"]` and 
-            `mdata.mod[airr_mod].obs[key_added]`. 
+            key_added
+                Key under which the result will be stored in `obs`, if `inplace` is `True`. When the function is running 
+                on :class:`~mudata.MuData`, the result will be written to both `mdata.obs["{airr_mod}:{key_added}"]` and 
+                `mdata.mod[airr_mod].obs[key_added]`. 
             """
         )
         return _doc_params(**doc, **kwargs)

@@ -15,7 +15,7 @@ from ..util import _is_na2
 
 
 class AirrCell(MutableMapping):
-    """Data structure for a Cell with immune receptors. Represents one row of `adata.obs`.
+    """Data structure for a Cell with immune receptors. Represents one row of `adata.obsm["airr"]`.
 
     This data structure is compliant with the AIRR rearrangement schema v1.0.
     An AirrCell can hold multiple chains (i.e. rows from the rearrangement TSV)
@@ -31,7 +31,7 @@ class AirrCell(MutableMapping):
     ----------
     cell_id
         cell id or barcode.  Needs to match the cell id used for transcriptomics
-        data (i.e. the `adata.obs_names`)
+        data, if any.
     cell_attribute_fields
         List of field-names which are supposed to be stored at the cell-level
         rather than the chain level. If a chain with these fields is added

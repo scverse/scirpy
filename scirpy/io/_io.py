@@ -251,7 +251,7 @@ def read_10x_vdj(
 
     Returns
     -------
-    AnnData object with IR data in `obs` for each cell. For more details see
+    AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
     :ref:`data-structure`.
     """
     path = Path(path)
@@ -286,7 +286,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
 
     Returns
     -------
-    AnnData object with TCR data in `obs` for each cell. For more details see
+    AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
     :ref:`data-structure`.
     """
     logger = _IOLogger()
@@ -396,17 +396,14 @@ def read_airr(
     """\
     Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
 
-    The following columns are required by scirpy:
+    Even though data without these fields can be imported, the following columns are required by scirpy
+    for a meaningful analysis: 
+     
      * `cell_id`
      * `productive`
-     * `locus`
+     * `locus` containing a valid IMGT locus name
      * at least one of `consensus_count`, `duplicate_count`, or `umi_count`
      * at least one of `junction_aa` or `junction`.
-
-    Data should still import if one of these fields is missing, but they are required
-    by most of scirpy's processing functions. All chains for which the field
-    `junction_aa` is missing or empty, will be considered as non-productive and
-    will be moved to the `extra_chains` column.
 
     {doc_working_model}
 
@@ -435,8 +432,8 @@ def read_airr(
 
     Returns
     -------
-    AnnData object with IR data in `obs` for each cell. For more details see
-    :ref:`data-structure`.
+    AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
+    :ref:`data-structure`..
     """
     airr_cells = {}
     logger = _IOLogger()
@@ -554,7 +551,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
 
     Returns
     -------
-    AnnData object with BCR data in `obs` for each cell. For more details see
+    AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
     :ref:`data-structure`.
     """
     logger = _IOLogger()
@@ -709,7 +706,8 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
 
     Returns
     -------
-    A :class:`~anndata.AnnData` instance with AIRR information stored in `obs`.
+    AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
+    :ref:`data-structure`.
     """
     try:
         import dandelion as ddl
@@ -758,7 +756,8 @@ def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
 
     Returns
     -------
-    A :class:`~anndata.AnnData` instance with AIRR information stored in `obs`.
+    AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
+    :ref:`data-structure`.
     """
     df = pd.read_csv(path, comment="#", index_col=0)
 
