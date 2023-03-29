@@ -20,23 +20,23 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import numpy as np
-import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import scanpy as sc
 import scipy.sparse as sp
-import scirpy as ir
 from mudata import MuData
+
+import scirpy as ir
 
 DATASET_DIR = Path("/data/datasets/Maynard_Bivona_2020_NSCLC/")
 # -
 
 # The dataset has been downloaded from ENA and then processed using BraCer, TraCeR and the nf-core RNA-seq pipeline
-# using `salmon`. 
+# using `salmon`.
 #
 # We previously processed this dataset with STAR + featureCounts, but following up the discussion
-# on nf-core, featureCounts is not state-of-the art any more for estimating transcript abundances. 
-# We, therefore, switched to the nf-core RNA-seq pipeline and Salmon. 
+# on nf-core, featureCounts is not state-of-the art any more for estimating transcript abundances.
+# We, therefore, switched to the nf-core RNA-seq pipeline and Salmon.
 
 with open(
     "/data/genomes/hg38/annotation/gencode/gencode.v33.primary_assembly.annotation.gtf",
@@ -201,7 +201,7 @@ sample_id_mask = np.isin(sample_ids, list(has_all))
 
 adata = sc.AnnData(
     var=res[0]["var"],
-    X=tpm_mat[sample_id_mask, :], 
+    X=tpm_mat[sample_id_mask, :],
     obs=meta.loc[sample_ids[sample_id_mask], :],
 )
 
@@ -245,7 +245,9 @@ _ = ir.pl.group_abundance(
     mdata_vis, groupby="airr:receptor_subtype", target_col="gex:patient"
 )
 
-_ = ir.pl.group_abundance(mdata_vis, groupby="airr:chain_pairing", target_col="gex:patient")
+_ = ir.pl.group_abundance(
+    mdata_vis, groupby="airr:chain_pairing", target_col="gex:patient"
+)
 
 # ## save MuData
 
