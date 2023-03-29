@@ -77,6 +77,9 @@ is to create AnnData objects with the corresponding `obsm` entries. At this poin
 This allows any scverse ecosystem package working with AIRR data to adopt the datastructure and to reuse scirpy's IO functions
 if they use :ref:`scirpy's receptor model <receptor-model>` or not. 
 
+
+.. _chain-indices: 
+
 Chain indices
 -------------
 The :ref:`scirpy receptor model <receptor-model>` allows up to two pairs of chains per cell. This representation 
@@ -107,6 +110,8 @@ The `obsm["chain_indices"]` array could easily be adapted to other receptor mode
 a library working with spatial :term:`TCR` data where each entry in `obs` corresponds to a "spot" with multiple cells rather
 than a single cell could have a list with an arbitrary number of indices for the `"VJ"` and `"VDJ"` entries, respectively. 
 
+
+.. _accessing-airr-data:
 
 Accessing AIRR data
 -------------------
