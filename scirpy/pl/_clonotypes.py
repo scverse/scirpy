@@ -471,7 +471,7 @@ def _plot_clonotype_network_panel(
                 tmp_expr = cast(np.matrix, cast(sp.spmatrix, tmp_expr).todense()).A1
             else:
                 tmp_expr = np.ravel(cast(np.ndarray, tmp_expr))
-            obs[color] = tmp_expr
+            obs[color] = np.array(tmp_expr)
 
     def _aggregate_per_dot_continuous(values):
         x_color = []
