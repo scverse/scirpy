@@ -55,8 +55,7 @@ jobs:
         run: |
           # Workaround issue with scikit-bio
           # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
-          # TODO pandas workaround
-          pip install git+https://github.com/grst/scikit-bio.git@main "pandas<2"
+          pip install git+https://github.com/grst/scikit-bio.git@main
           pip install .[test,rpack,dandelion]
       - name: Install dependencies (no optional) on other OS
         if: matrix.config.os != 'ubuntu-latest'

@@ -63,8 +63,7 @@ jobs:
           python -m pip install --upgrade "pip!=22.1"
           # TODO this is to workaround an issue with the skbio dependency
           # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
-          # TODO pandas workaround
-          pip install git+https://github.com/grst/scikit-bio.git@main "pandas<2"
+          pip install git+https://github.com/grst/scikit-bio.git@main
           pip install .[doc,test,rpack,dandelion]
       - name: run sphinx
         run: |
