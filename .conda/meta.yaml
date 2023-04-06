@@ -27,7 +27,7 @@ requirements:
     - python >=3.7
     - anndata >=0.7.6
     - scanpy >=1.6.0
-    - pandas >=1.0
+    - pandas >=1.0,<2
     - numpy >=1.17.0
     - scipy
     - parasail-python
