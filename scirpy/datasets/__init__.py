@@ -25,6 +25,7 @@ from typing import cast
 import mudata
 import pooch
 from mudata import MuData
+from scanpy import logging
 
 from .. import __version__
 from ..util import tqdm
