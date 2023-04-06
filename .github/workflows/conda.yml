@@ -15,6 +15,9 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
         os: ["ubuntu-latest", "macos-latest"]
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v2

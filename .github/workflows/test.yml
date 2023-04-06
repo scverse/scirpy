@@ -23,7 +23,9 @@ jobs:
           # - { python-version: "3.11", os: ubuntu-latest }
           #           - { python-version: 3.9, os: macos-latest }
           - { python-version: 3.9, os: windows-latest }
-
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v2
         with:

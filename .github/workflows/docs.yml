@@ -20,6 +20,9 @@ jobs:
           - ubuntu-latest
           # - macos-latest
           - windows-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v2
         with:
