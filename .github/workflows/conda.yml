@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
@@ -15,9 +19,6 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
         os: ["ubuntu-latest", "macos-latest"]
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v2
