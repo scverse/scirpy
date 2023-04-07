@@ -30,7 +30,7 @@ requires-python = '>= 3.8'
 dependencies = [
     'anndata>=0.9rc1',
     'awkward>=2.1.0',
-    'mudata>=0.2.1',
+    'mudata>=0.2.2',
     'scanpy>=1.9.3',
     'pandas>=1.5,<2',
     'numpy>=1.17.0',
@@ -50,7 +50,6 @@ dependencies = [
     # for getting the version
     'setuptools_scm',
     'pytoml',
-    'importlib_metadata>=0.7; python_version < "3.8"',
     'pycairo>=1.20; sys_platform == "win32"',
     'pooch>=1.7.0',
 ]
@@ -75,7 +74,6 @@ doc = [
     'sphinx>=4.2,<4.3',
     'sphinx-rtd-theme>=0.3.1',
     'scanpydoc[typehints]>=0.7.4',
-    'typing_extensions; python_version < "3.8"',  # for `Literal`,
     'sphinxcontrib-bibtex>=1.0.0',
     # for tutorial
     'leidenalg',
@@ -86,6 +84,9 @@ doc = [
     'ipykernel',
     'sc-dandelion',
     'muon>=0.1.3',
+    # I don't know why this would be needed, but it complains about zarr missing when building 
+    # the documentation. Probably related to importing some types from anndata. 
+    'zarr'
 ]
 
 [project.urls]
