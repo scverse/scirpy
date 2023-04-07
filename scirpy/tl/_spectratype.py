@@ -1,33 +1,44 @@
-from anndata import AnnData
-from typing import Callable, Union, Collection
+from typing import Callable, Literal, Sequence, Union
+
 import numpy as np
 import pandas as pd
+
+from ..get import airr as get_airr
+from ..util import DataHandler
 from ._group_abundance import _group_abundance
-from ..util import _is_na
-from ..io._util import _check_upgrade_schema
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def spectratype(
-    adata: AnnData,
-    groupby: Union[str, Collection[str]] = "IR_VJ_1_junction_aa",
+    adata: DataHandler.TYPE,
+    chain: Union[
+        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
+        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
+    ] = "VJ_1",
     *,
     target_col: str,
+    cdr3_col: str = "junction_aa",
     combine_fun: Callable = np.sum,
     fraction: Union[None, str, bool] = None,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
+    **kwargs,
 ) -> pd.DataFrame:
-    """Summarizes the distribution of :term:`CDR3` region lengths.
+    """\
+    Summarizes the distribution of :term:`CDR3` region lengths.
 
     Ignores NaN values.
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
-    groupby
-        Column(s) containing CDR3 sequences.
+    {adata}
+    chain
+        One or multiple chains from which to use CDR3 sequences
     target_col
         Color by this column from `obs`. E.g. sample or diagnosis
+    cdr3_col
+        AIRR rearrangement column from which sequences are obtained
     combine_fun
         A function definining how the groupby columns should be merged
         (e.g. sum, mean, median, etc).
@@ -35,34 +46,38 @@ def spectratype(
         If True, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
 
     Returns
     -------
     A DataFrame with spectratype information.
     """
-    if len(np.intersect1d(adata.obs.columns, groupby)) < 1:
+    if "groupby" in kwargs or "IR_" in str(cdr3_col) or "IR_" in str(chain):
         raise ValueError(
-            "`groupby` not found in obs. Where do you store CDR3 length information?"
+            """\
+            The function signature has been updated when the scirpy 0.13 datastructure was introduced. 
+            Please use the `chain` attribute to choose `VJ_1`, `VDJ_1`, `VJ_2`, or `VDJ_2` chain(s). 
+            """
         )
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
-    if isinstance(groupby, str):
-        groupby = [groupby]
-    else:
-        groupby = list(set(groupby))
-
-    # Remove NAs
-    ir_obs = adata.obs.loc[~np.any(_is_na(adata.obs[groupby].values), axis=1), :].copy()
+    # Get airr and remove NAs
+    airr_df = get_airr(params, [cdr3_col], chain).dropna(how="any")
+    obs_cols = [target_col] if not isinstance(fraction, str) else [target_col, fraction]
+    obs = params.get_obs(obs_cols)
 
     # Combine (potentially) multiple length columns into one
-    ir_obs["lengths"] = ir_obs.loc[:, groupby].applymap(len).apply(combine_fun, axis=1)
+    obs["lengths"] = airr_df.applymap(len).apply(combine_fun, axis=1)
 
     cdr3_lengths = _group_abundance(
-        ir_obs, groupby="lengths", target_col=target_col, fraction=fraction
+        obs, groupby="lengths", target_col=target_col, fraction=fraction
     )
 
     # Should include all lengths, not just the abundant ones
-    cdr3_lengths = cdr3_lengths.reindex(range(int(ir_obs["lengths"].max()) + 1)).fillna(
+    cdr3_lengths = cdr3_lengths.reindex(range(int(obs["lengths"].max()) + 1)).fillna(
         value=0.0
     )
 

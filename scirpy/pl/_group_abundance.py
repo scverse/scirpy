@@ -1,16 +1,18 @@
+from typing import Literal, Sequence, Union
+
 import matplotlib.pyplot as plt
-from typing import Literal
 from anndata import AnnData
+from mudata import MuData
+
+from scirpy.util import DataHandler
+
 from .. import tl
 from . import base
-from typing import Union, Sequence
 from .styling import _get_colors
-from ..io._util import _check_upgrade_schema
 
 
-@_check_upgrade_schema()
 def group_abundance(
-    adata: Union[dict, AnnData],
+    adata: Union[AnnData, MuData],
     groupby: str,
     target_col: str = "has_ir",
     *,
@@ -62,6 +64,7 @@ def group_abundance(
     abundance = tl.group_abundance(
         adata, groupby, target_col=target_col, fraction=normalize, sort=sort
     )
+
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(
             "Attempting to plot more than 100 columns. "
@@ -70,9 +73,12 @@ def group_abundance(
     if max_cols is not None and max_cols > 0:
         abundance = abundance.iloc[:max_cols, :]
 
-    if "color" not in kwargs:
-        colors = _get_colors(adata, target_col)
-        kwargs["color"] = [colors[cat] for cat in abundance.columns]
+    # TODO workaround for temporarily added has_ir column. Don't get colors in that case
+    if target_col != "has_ir":
+        if "color" not in kwargs:
+            colors = _get_colors(DataHandler.default(adata), target_col)
+            if colors is not None:
+                kwargs["color"] = [colors[cat] for cat in abundance.columns]
 
     # Create text for default labels
     if normalize:

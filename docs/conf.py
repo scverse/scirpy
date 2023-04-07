@@ -76,6 +76,10 @@ intersphinx_mapping = dict(
     sklearn=("https://scikit-learn.org/stable/", None),
     networkx=("https://networkx.org/documentation/networkx-1.10/", None),
     dandelion=("https://sc-dandelion.readthedocs.io/en/latest/", None),
+    muon=("https://muon.readthedocs.io/en/latest", None),
+    mudata=("https://mudata.readthedocs.io/en/latest/", None),
+    awkward=("https://awkward-array.org/doc/main/", None),
+    pooch=("https://www.fatiando.org/pooch/latest/", None),
 )
 
 
@@ -130,7 +134,8 @@ nitpick_ignore = [
     ("py:class", "D.get(k,d), also set D[k]=d if k not in D"),
     ("py:class", "None.  Update D from mapping/iterable E and F."),
     ("py:class", "an object providing a view on D's values"),
-    # Will work once scipy 1.8 is released
-    ("py:class", "scipy.sparse.base.spmatrix"),
-    ("py:class", "scipy.sparse.csr.csr_matrix"),
+    # don't know why these are not working
+    ("py:class", "seaborn.matrix.ClusterGrid"),
+    ("py:meth", "mudata.MuData.update"),
+    ("py:class", "awkward.highlevel.Array"),
 ]

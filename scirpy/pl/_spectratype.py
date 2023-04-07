@@ -1,38 +1,47 @@
+from typing import Callable, List, Literal, Sequence, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Literal
 from anndata import AnnData
+
 from .. import tl
+from ..util import DataHandler
 from . import base
-from typing import Union, List, Collection, Callable
 from .styling import _get_colors
-from ..io._util import _check_upgrade_schema
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def spectratype(
-    adata: Union[dict, AnnData],
-    cdr3_col: Union[str, Collection[str]] = ["IR_VJ_1_junction_aa"],
+    adata: DataHandler.TYPE,
+    chain: Union[
+        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
+        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
+    ] = "VJ_1",
     *,
     color: str,
+    cdr3_col: str = "junction_aa",
     combine_fun: Callable = np.sum,
     normalize: Union[None, str, bool] = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
-    kde_kws: Union[dict, None] = None,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     **kwargs,
 ) -> Union[List[plt.Axes], AnnData]:
-    """Show the distribution of CDR3 region lengths.
+    """\
+    Show the distribution of CDR3 region lengths.
 
     Ignores NaN values.
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
-    cdr3_col
-        Column(s) containing CDR3 lengths.
+    {adata}
+    chain
+        One or multiple chains to include in the plot.
     color
         Color by this column from `obs`. E.g. sample or diagnosis
+    cdr3_col
+        AIRR rearrangement column from which sequences are obtained
     combine_fun
         A function definining how the `cdr3_col` columns should be merged,
         in case multiple ones were specified.
@@ -44,6 +53,9 @@ def spectratype(
         the values will be normalized.
     viztype
         Type of plot to produce.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
     **kwargs
         Additional parameters passed to the base plotting function
 
@@ -52,10 +64,11 @@ def spectratype(
     -------
     Axes object
     """
-
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     data = tl.spectratype(
-        adata,
-        cdr3_col,
+        params,
+        chain=chain,
+        cdr3_col=cdr3_col,
         target_col=color,
         combine_fun=combine_fun,
         fraction=normalize,
@@ -71,8 +84,9 @@ def spectratype(
         ylab = "Number of cells"
 
     if "color" not in kwargs:
-        colors = _get_colors(adata, color)
-        kwargs["color"] = [colors[cat] for cat in data.columns]
+        colors = _get_colors(params, color)
+        if colors is not None:
+            kwargs["color"] = [colors[cat] for cat in data.columns]
 
     # For KDE curves, we need to convert the contingency tables back
     if viztype == "curve":

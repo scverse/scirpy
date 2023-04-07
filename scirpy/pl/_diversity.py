@@ -1,34 +1,35 @@
-from anndata import AnnData
-from typing import Literal
-from . import base
-from .. import tl
-import numpy as np
+from typing import Callable, Literal, Mapping, Optional, Union
+
 import matplotlib.pyplot as plt
-from ..io._util import _check_upgrade_schema
-from typing import Union, Callable, Mapping
+import numpy as np
+
+from .. import tl
+from ..util import DataHandler
+from . import base
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def alpha_diversity(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     groupby: str,
     *,
     target_col: str = "clone_id",
     metric: Union[
         str, Callable[[np.ndarray], Union[int, float]]
     ] = "normalized_shannon_entropy",
-    metric_kwargs: Mapping = None,
+    metric_kwargs: Optional[Mapping] = None,
     vistype: Literal["bar"] = "bar",
+    airr_mod: str = "airr",
     **kwargs,
 ) -> plt.Axes:
-    """Plot the alpha diversity per group.
+    """\
+    Plot the alpha diversity per group.
 
-    Calls :func:`scirpy.tl.alpha_diversity`.
+    Will execute :func:`scirpy.tl.alpha_diversity` on-the-fly.
 
     Parameters
     ----------
-    adata
-        Annotated data matrix. Will execute :func:`scirpy.tl.alpha_diversity` on-the-fly.
+    {adata}
     groupby
         Column of `obs` by which the grouping will be performed
     target_col
@@ -41,11 +42,13 @@ def alpha_diversity(
         Dictionary of additional parameters passed to the metric function.
     vistype
         Visualization type. Currently only 'bar' is supported.
+    {airr_mod}
     **kwargs
         Additional parameters passed to :func:`scirpy.pl.base.bar`
     """
+    params = DataHandler(adata, airr_mod)
     diversity = tl.alpha_diversity(
-        adata,
+        params,
         groupby,
         target_col=target_col,
         metric=metric,
@@ -59,8 +62,8 @@ def alpha_diversity(
     }
     if "style_kws" in kwargs:
         default_style_kws.update(kwargs["style_kws"])
+
+    assert diversity is not None
     ax = base.bar(diversity, style_kws=default_style_kws, **kwargs)
-    # commented out the line below to use default settings to
-    # accommodate values from various metrics
-    # ax.set_ylim(np.min(diversity.values) - 0.05, 1.0)
+    ax.get_legend().remove()  # type: ignore
     return ax

@@ -1,11 +1,12 @@
-from numpy.core.fromnumeric import amax
-from .styling import _init_ax, apply_style_to_axes
-from typing import Literal
-from ._clonotypes import _plot_size_legend
-from typing import Tuple, Union, Optional, Sequence
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
+
+from ..util import DataHandler
+from ._clonotypes import _plot_size_legend
+from .styling import _init_ax
 
 
 def _rand_jitter(arr, jitter=None):
@@ -16,8 +17,9 @@ def _rand_jitter(arr, jitter=None):
     return arr + np.random.randn(len(arr)) * stdev
 
 
+@DataHandler.inject_param_docs()
 def clonotype_modularity(
-    adata,
+    adata: DataHandler.TYPE,
     ax=None,
     target_col="clonotype_modularity",
     jitter: float = 0.01,
@@ -34,21 +36,21 @@ def clonotype_modularity(
     show_size_legend: bool = True,
     legend_width: float = 2,
     fig_kws: Union[dict, None] = None,
+    airr_mod: str = "airr",
 ):
-    """
+    """\
     Plots the :term:`Clonotype modularity` score against the associated log10 p-value.
 
     Parameters
     ----------
-    adata
-        Annotated data matrix.
+    {adata}
     ax
         Add the plot to a predefined Axes object.
     target_col
         Column in `adata.obs` containing the clonotype modularity score and
         key in `adata.uns` containing the dictionary with parameters.
-        Will look for p-values or FDRs in `adata.obs["{target_col}_pvalue"]` or
-        `adata.obs["{target_col}_fdr"]`.
+        Will look for p-values or FDRs in `adata.obs["{{target_col}}_pvalue"]` or
+        `adata.obs["{{target_col}}_fdr"]`.
     jitter
         Add random jitter along the x axis to avoid overlapping point.
         Samples from `N(0, jitter * (max(arr) - min(arr)))`
@@ -82,11 +84,15 @@ def clonotype_modularity(
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call
         if no `ax` is specified.
+    {airr_mod}
 
     Returns
     -------
     A list of axis objects
     """
+    params = DataHandler(adata, airr_mod)
+
+    # Doesn't need param handler, we only access attributes of MuData or a all-in-one AnnData.
     if ax is None:
         fig_kws = dict() if fig_kws is None else fig_kws
         fig_width = (
@@ -115,7 +121,7 @@ def clonotype_modularity(
         size_legend_ax = fig.add_subplot(gs[1, 1])
         ax = fig.add_subplot(gs[:, 0])
 
-    modularity_params = adata.uns[target_col]
+    modularity_params = params.data.uns[target_col]
     clonotype_col = modularity_params["target_col"]
 
     if modularity_params["fdr_correction"]:
@@ -126,7 +132,8 @@ def clonotype_modularity(
         pvalue_type = "p-value"
 
     score_df = (
-        adata.obs.groupby([clonotype_col, target_col, pvalue_col], observed=True)
+        params.get_obs([clonotype_col, target_col, pvalue_col])
+        .groupby([clonotype_col, target_col, pvalue_col], observed=True)
         .size()
         .reset_index(name="clonotype_size")
         .assign(log_p=lambda x: -np.log10(x[pvalue_col]))

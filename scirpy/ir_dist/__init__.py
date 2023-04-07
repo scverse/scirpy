@@ -1,15 +1,16 @@
 """Compute distances between immune receptor sequences"""
-from anndata import AnnData
-from typing import Optional, Sequence, Union
-from typing import Literal
-import numpy as np
-from scanpy import logging
-from ..util import _is_na, deprecated
-from scipy.sparse import csr_matrix
-from ..util import _doc_params
-from . import metrics
-from ..io._util import _check_upgrade_schema
 import itertools
+from typing import Literal, Optional, Sequence, Union
+
+import numpy as np
+from anndata import AnnData
+from mudata import MuData
+from scanpy import logging
+from scipy.sparse import csr_matrix
+
+from ..get import airr as get_airr
+from ..util import DataHandler, _doc_params, _is_na, deprecated
+from . import metrics
 
 
 @deprecated(
@@ -101,11 +102,12 @@ def _get_distance_calculator(
     return dist_calc
 
 
-@_check_upgrade_schema()
-@_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
+@DataHandler.inject_param_docs(
+    metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat
+)
 def _ir_dist(
-    adata: AnnData,
-    reference: AnnData = None,
+    adata: DataHandler.TYPE,
+    reference: Optional[DataHandler.TYPE] = None,
     *,
     metric: MetricType = "identity",
     cutoff: Union[int, None] = None,
@@ -113,8 +115,14 @@ def _ir_dist(
     key_added: Union[str, None] = None,
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
+    airr_mod: str = "airr",
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
+    airr_mod_ref: str = "airr",
+    airr_key_ref: str = "airr",
+    chain_idx_key_ref: str = "chain_indices",
 ) -> Union[dict, None]:
-    """
+    """\
     Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
     :term:`CDR3` sequences and between all unique :term:`VDJ <Chain locus>`
     :term:`CDR3` sequences.
@@ -126,8 +134,7 @@ def _ir_dist(
 
     Parameters
     ----------
-    adata
-        annotated data matrix
+    {adata}
     reference
         Another :class:`~anndata.AnnData` object, can be either a second dataset with
         :term:`IR` information or a epitope database.
@@ -152,6 +159,15 @@ def _ir_dist(
     n_jobs
         Number of cores to use for distance calculation. Passed on to
         :class:`scirpy.ir_dist.metrics.DistanceCalculator`.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
+    airr_mod_ref
+        Like `airr_mod`, but for `reference`.
+    airr_key_ref
+        Like `airr_key`, but for `reference`.
+    chain_idx_key_ref
+        Like `chain_idx_key`, but for `reference`.
 
     Returns
     -------
@@ -165,10 +181,16 @@ def _ir_dist(
         "VDJ": dict(),
         "params": {"metric": str(metric), "sequence": sequence, "cutoff": cutoff},
     }
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
+    params_ref = (
+        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
+        if reference is not None
+        else None
+    )
     if inplace and key_added is None:
-        if reference is not None:
+        if params_ref is not None:
             try:
-                db_info = reference.uns["DB"]
+                db_info = params_ref.adata.uns["DB"]
                 key_added = (
                     f"ir_dist_{db_info['name']}_{sequence}_{_get_metric_key(metric)}"
                 )
@@ -179,31 +201,28 @@ def _ir_dist(
                 )
         else:
             key_added = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
-    if reference is not None:
+    if params_ref is not None:
         try:
-            result["params"]["DB"] = reference.uns["DB"]
+            result["params"]["DB"] = params_ref.adata.uns["DB"]
         except KeyError:
             result["params"]["DB"] = "AnnData without `.uns['DB'] metadata."
 
     # get all unique seqs for VJ and VDJ
     def _get_unique_seqs(tmp_adata, chain_type):
         """Get all unique sequences for a chain type"""
-        obs_col = "IR_{chain_type}_{chain_id}_{key}"
         tmp_seqs = np.concatenate(
             [
-                tmp_adata.obs[
-                    obs_col.format(chain_type=chain_type, chain_id=chain_id, key=key)
-                ].values
+                get_airr(tmp_adata, key, f"{chain_type}_{chain_id}").values
                 for chain_id in ["1", "2"]
-            ]
+            ]  # type: ignore
         )
         return np.unique([x.upper() for x in tmp_seqs[~_is_na(tmp_seqs)]])
 
-    for i, tmp_adata in enumerate([adata, reference]):
-        if tmp_adata is not None:
+    for i, tmp_params in enumerate([params, params_ref]):
+        if tmp_params is not None:
             for chain_type in ["VJ", "VDJ"]:
                 tmp_key = "seqs2" if i == 1 else "seqs"
-                unique_seqs = _get_unique_seqs(tmp_adata, chain_type)
+                unique_seqs = _get_unique_seqs(tmp_params.adata, chain_type)
                 if tmp_key == "seqs2" and not len(unique_seqs):
                     logging.warning(
                         "No sequences found in reference anndata object. "
@@ -223,7 +242,7 @@ def _ir_dist(
 
     # return or store results
     if inplace:
-        adata.uns[key_added] = result
+        params.adata.uns[key_added] = result
     else:
         return result
 

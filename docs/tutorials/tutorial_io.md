@@ -1,21 +1,29 @@
 ---
 jupyter:
   jupytext:
+    formats: md,ipynb
     notebook_metadata_filter: -kernelspec
     text_representation:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.11.4
+      jupytext_version: 1.14.4
 ---
 
-```python
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+.. _importing-data:
+
+Loading adaptive immune receptor repertoire (:term:`AIRR`)-sequencing data with Scirpy
+======================================================================================
+<!-- #endraw -->
+
+```python tags=["hide-cell"]
 # This cell is for development only. Don't copy this to your notebook.
 %load_ext autoreload
 %autoreload 2
 import anndata
 
-anndata.logging.anndata_logger.addFilter(
+anndata.logging.anndata_logger.addFilter( 
     lambda r: not r.getMessage().startswith("storing")
     and r.getMessage().endswith("as categorical.")
 )
@@ -28,33 +36,29 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 ```python
 import scirpy as ir
 import scanpy as sc
+import muon as mu
 from glob import glob
 import pandas as pd
 import tarfile
 import anndata
 import warnings
+import matplotlib.pyplot as plt
 
 sc.set_figure_params(figsize=(4, 4))
 sc.settings.verbosity = 2  # verbosity: errors (0), warnings (1), info (2), hints (3)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-.. _importing-data:
+In this notebook, we demonstrate how single-cell :term:`AIRR`-data can be imported into
+an :class:`~anndata.AnnData` object and merged with gene expression data in a :class:`~mudata.MuData` container for the use with Scirpy. 
+To learn more about how AIRR data is represented in AnnData, check out the :ref:`data structure <data-structure>` section.
 
-Loading adaptive Immune Receptor (:term:`IR`)-sequencing data with Scirpy
-=========================================================================
+.. important:: **The scirpy data model**
 
-In this notebook, we demonstrate how single-cell :term:`IR`-data can be imported into
-an :class:`~anndata.AnnData` object for the use with Scirpy. To learn more about
-AnnData and how Scirpy makes use of it, check out the :ref:`data structure <data-structure>` section.
-
-The example data used in this notebook are available from the
-`Scirpy repository <https://github.com/icbi-lab/scirpy/tree/master/docs/tutorials/example_data>`__.
-
-.. important:: **The Scirpy data model**
-
-    Currently, the Scirpy data model has the following constraints:
-
+    Since v0.13, there are no restrictions on the AIRR data that can be stored in the scirpy data structure, except that 
+    each receptor chain needs to be associated with a cell. However, for all analyses, the assumptions of the 
+    :ref:`receptor model <receptor-model>` still apply:
+    
      * BCR and TCR chains are supported. Chain loci must be valid :term:`Chain locus`,
        i.e. one of `TRA`, `TRG`, `IGK`, or `IGL` (chains with a :term:`VJ<V(D)J>` junction) or
        `TRB`, `TRD`, or `IGH` (chains with a :term:`VDJ<V(D)J>` junction). 
@@ -64,15 +68,11 @@ The example data used in this notebook are available from the
      * Non-productive chains are ignored. *CellRanger*, *TraCeR*, and the *AIRR rearrangment format*
        flag these cells appropriately. When reading :ref:`custom formats <importing-custom-formats>`,
        you need to pass the flag explicitly or filter the chains beforehand.
-     * Excess chains, non-productive chains, or chains with invalid loci
-       are serialized to JSON and stored in the `extra_chains` column. They are not 
-       used by scirpy except when exporting the `AnnData` object to :term:`AIRR` format. 
-     
+       
+    The :func:`~scirpy.pp.index_chains` function chooses the appropriate chains for each cell according to this model 
+    and stores references to those chains in `adata.obsm`.
 
-    For more information, see :ref:`receptor-model`.
-
-
-.. note:: **IR quality control**
+.. note:: **AIRR quality control**
 
      * After importing the data, we recommend running the :func:`scirpy.tl.chain_qc` function.
        It will
@@ -125,6 +125,7 @@ adata_tcr = ir.io.read_10x_vdj(
 adata = sc.read_10x_h5(
     "example_data/liao-2019-covid19/GSM4339772_C144_filtered_feature_bc_matrix.h5"
 )
+adata.var_names_make_unique()
 ```
 
 This particular sample only has a detected TCR for a small fraction of the cells:
@@ -138,12 +139,12 @@ adata.shape
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-Next, we integrate both the TCR and the transcriptomics data into a single :class:`anndata.AnnData` object
-using :func:`scirpy.pp.merge_with_ir`:
+Next, we integrate both the TCR and the transcriptomics data into a single :class:`~mudata.MuData` object. By convention, 
+gene expression data should be stored in the `gex` modality, immune receptor data in the `airr` modality. 
 <!-- #endraw -->
 
 ```python
-ir.pp.merge_with_ir(adata, adata_tcr)
+mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
 Now, we can use TCR-related variables together with the gene expression data.
@@ -151,11 +152,21 @@ Here, we visualize the cells with a detected TCR on the UMAP plot.
 It is reassuring that the TCRs coincide with the T-cell marker gene CD3.
 
 ```python
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E"])
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+```
+
+```python tags=[]
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -164,14 +175,13 @@ Read Smart-seq2 data processed with TraCeR
 
 `TraCeR <https://github.com/Teichlab/tracer>`__ (:cite:`Stubbington2016-kh`) is a method commonly used
 to extract TCR sequences from data generated with Smart-seq2 or other full-length single-cell sequencing protocols.
-`Nf-core <https://nf-co.re/>`_ provides a full `pipeline for processing Smart-seq2 sequencing data <https://github.com/nf-core/smartseq2/>`__.
 
 The :func:`scirpy.io.read_tracer` function obtains its TCR information from the `.pkl` file
 in the `filtered_TCR_seqs` folder TraCeR generates for each cell.
 
 For this example, we load the ~500 cells from triple-negative breast cancer patients from
 `GSE75688 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75688>`_ (:cite:`Chung2017`).
-The raw data has been processed using the aforementioned `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core.
+The raw data has been processed using the `Smart-seq2 pipeline <https://github.com/nf-core/smartseq2/>`__ from nf-core.
 <!-- #endraw -->
 
 ```python
@@ -180,8 +190,9 @@ with tarfile.open("example_data/chung-park-2017.tar.bz2", "r:bz2") as tar:
     tar.extractall("example_data/chung-park-2017")
 ```
 
+First, we load the transcriptomics data from the `counts.tsv` file: 
+
 ```python
-# Load transcriptomics data from count matrix
 expr_chung = pd.read_csv("example_data/chung-park-2017/counts.tsv", sep="\t")
 # anndata needs genes in columns and samples in rows
 expr_chung = expr_chung.set_index("Geneid").T
@@ -189,23 +200,29 @@ adata = sc.AnnData(expr_chung)
 adata.shape
 ```
 
-```python
-adata_tcr.obs
-```
+<!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
+Next, we load the TCR data and merge it with the transcriptomics data:
+<!-- #endraw -->
 
 ```python
-# Load TCR data and merge it with transcriptomics data
 adata_tcr = ir.io.read_tracer("example_data/chung-park-2017/tracer/")
-ir.pp.merge_with_ir(adata, adata_tcr)
+mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
 ```python
-sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=3000)
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E"])
+sc.pp.highly_variable_genes(mdata["gex"], flavor="cell_ranger", n_top_genes=3000)
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
@@ -227,6 +244,7 @@ adata = ir.io.read_airr(
         "example_data/immunesim_airr/immunesim_trb.tsv",
     ]
 )
+ir.pp.index_chains(adata)
 ir.tl.chain_qc(adata)
 ```
 
@@ -287,8 +305,8 @@ for a `read_XXX` function.
 
 For this example, we again load the triple-negative breast cancer data from :cite:`Chung2017`. However, this
 time, we retrieve the TCR data from a separate summary table containing the TCR information
-(we generated this table for the sake of the example, but it could as well
-be a supplementary file from the paper).
+(we generated this table for the sake of the example, but it could very well have been a 
+supplementary file from the paper).
 
 Such a table typically contains information about
 
@@ -314,16 +332,14 @@ tcr_table
 Our task is now to dissect the table into :class:`~scirpy.io.AirrCell` objects.
 Each :class:`~scirpy.io.AirrCell` can have an arbitrary number of chains. A chain is simply represented as a Python
 dictionary following the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#fields>`__. 
-
-When converting the :class:`~scirpy.io.AirrCell` objects into an :class:`~anndata.AnnData` object,
-scirpy will only retain at most two alpha and two beta chains per cell and flag cells which exceed
-this number as :term:`multichain cells <Multichain-cell>`. For more information, check the page about our :ref:`receptor-model`.
 <!-- #endraw -->
 
 ```python
 tcr_cells = []
-for idx, row in tcr_table.iterrows():
+for _, row in tcr_table.iterrows():
     cell = ir.io.AirrCell(cell_id=row["cell_id"])
+    # some fields are mandatory according to the Rearrangement standard, but can be set to NULL
+    # the `empty_chain_dict()` function provides a dictionary with all mandatory fields, but set to NULL.
     alpha_chain = ir.io.AirrCell.empty_chain_dict()
     beta_chain = ir.io.AirrCell.empty_chain_dict()
     alpha_chain.update(
@@ -363,32 +379,40 @@ adata_tcr = ir.io.from_airr_cells(tcr_cells)
 ```
 
 ```python
-adata_tcr.obs
-```
-
-```python
 # We can re-use the transcriptomics data from above...
 adata = sc.AnnData(expr_chung)
 # ... and merge it with the TCR data
-ir.pp.merge_with_ir(adata, adata_tcr)
+mdata = mu.MuData({"gex": adata, "airr": adata_tcr})
 ```
 
 ```python
-sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=3000)
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E"])
+sc.pp.highly_variable_genes(mdata["gex"], flavor="cell_ranger", n_top_genes=3000)
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+```
+
+```python tags=[]
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color=["CD3E"], ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color=["airr:receptor_type"], ax=ax1)
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+.. _combining-samples:
+
 Combining multiple samples
 --------------------------
 
 It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
 in this document. Then, we combine them using :func:`anndata.concat`.
+
+MuData currently does not implement a `concat` function (see `scverse/mudata#20 <https://github.com/scverse/mudata/issues/20>`_). Therefore, we
+need to first concatenate gene expression and AIRR data separately and create the MuData object as the last step. 
 
 Here is a full example loading and combining three samples from the COVID19 study by :cite:`Liao2020`.
 <!-- #endraw -->
@@ -404,23 +428,28 @@ samples = {
 
 ```python
 # Create a list of AnnData objects (one for each sample)
-adatas = []
+adatas_tcr = {}
+adatas_gex = {}
 for sample, sample_meta in samples.items():
     gex_file = glob(f"example_data/liao-2019-covid19/*{sample}*.h5")[0]
     tcr_file = glob(f"example_data/liao-2019-covid19/*{sample}*.csv.gz")[0]
-    adata = sc.read_10x_h5(gex_file)
+    adata_gex = sc.read_10x_h5(gex_file)
     adata_tcr = ir.io.read_10x_vdj(tcr_file)
-    ir.pp.merge_with_ir(adata, adata_tcr)
-    adata.obs["sample"] = sample
-    adata.obs["group"] = sample_meta["group"]
     # concatenation only works with unique gene names
-    adata.var_names_make_unique()
-    adatas.append(adata)
+    adata_gex.var_names_make_unique()
+    adatas_tcr[sample] = adata_tcr
+    adatas_gex[sample] = adata_gex
 ```
 
 ```python
 # Merge anndata objects
-adata = anndata.concat(adatas)
+adata_gex = anndata.concat(adatas_gex, index_unique="_")
+adata_tcr = anndata.concat(adatas_tcr, index_unique="_")
+mdata = mu.MuData({"gex": adata_gex, "airr": adata_tcr})
+
+# Set global metadata on `mdata.obs`
+mdata.obs["sample"] = mdata.obs_names.to_series().str.split("_", expand=True)[1]
+mdata.obs["group"] = mdata.obs["sample"].map(lambda x: samples[x]["group"])
 ```
 
 The data is now integrated in a single object.
@@ -428,10 +457,22 @@ Again, the detected TCRs coincide with `CD3E` gene expression.
 We clearly observe batch effects between the samples -- for a meaningful downstream analysis further
 processing steps such as highly-variable gene filtering and batch correction are necessary.
 
+```python tags=[]
+mdata
+```
+
 ```python
-sc.pp.log1p(adata)
-sc.pp.pca(adata, svd_solver="arpack")
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
-sc.pl.umap(adata, color=["has_ir", "CD3E", "sample"])
+sc.pp.log1p(mdata["gex"])
+sc.pp.pca(mdata["gex"], svd_solver="arpack")
+sc.pp.neighbors(mdata["gex"])
+sc.tl.umap(mdata["gex"])
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+```
+
+```python
+fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(15, 4), gridspec_kw={"wspace": 0.5})
+mu.pl.embedding(mdata, basis="gex:umap", color="CD3E", ax=ax0, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color="sample", ax=ax1, show=False)
+mu.pl.embedding(mdata, basis="gex:umap", color="airr:receptor_type", ax=ax2)
 ```

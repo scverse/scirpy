@@ -1,16 +1,18 @@
-import pytest
-from scirpy.ir_dist.metrics import DistanceCalculator
-from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 import numpy as np
 import numpy.testing as npt
-import scirpy as ir
+import pandas as pd
+import pandas.testing as pdt
+import pytest
 import scipy.sparse
+from mudata import MuData
+
+import scirpy as ir
+from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from scirpy.ir_dist.metrics import DistanceCalculator
+from scirpy.util import DataHandler, _is_symmetric
+
 from .fixtures import adata_cdr3, adata_cdr3_2  # NOQA
 from .util import _squarify
-from scirpy.util import _is_symmetric
-import pandas.testing as pdt
-import pandas as pd
-from anndata import AnnData
 
 
 def _assert_frame_equal(left, right):
@@ -20,6 +22,8 @@ def _assert_frame_equal(left, right):
 
 @pytest.fixture
 def adata_cdr3_mock_distance_calculator():
+    """Mock distances for the adata_cdr3 fixture"""
+
     class MockDistanceCalculator(DistanceCalculator):
         def __init__(self, n_jobs=None):
             pass
@@ -151,7 +155,11 @@ def test_ir_dist(
         metric=metric if metric != "mock" else adata_cdr3_mock_distance_calculator,
         sequence="aa",
     )
-    res = adata_cdr3.uns[expected_key]
+    res = (
+        adata_cdr3.mod["airr"].uns[expected_key]
+        if isinstance(adata_cdr3, MuData)
+        else adata_cdr3.uns[expected_key]
+    )
     npt.assert_array_equal(res["VJ"]["seqs"], expected_seq_vj)
     npt.assert_array_equal(res["VDJ"]["seqs"], expected_seq_vdj)
     npt.assert_array_equal(res["VJ"]["distances"].toarray(), expected_dist_vj)
@@ -167,11 +175,10 @@ def test_ir_dist(
             "test single chain with identity distance",
             "identity",
             {"receptor_arms": "VJ", "dual_ir": "primary_only"},
-            {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
+            {"VJ_1_junction_aa": ["AAA", "AHA"]},
             [
-                [1, 0, 0],
-                [0, 1, 0],
-                [0, 0, 0],
+                [1, 0],
+                [0, 1],
             ],
         ],
         [
@@ -179,26 +186,24 @@ def test_ir_dist(
             "identity",
             {"receptor_arms": "VJ", "dual_ir": "any"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
             },
             [
-                [1, 1, 0, 1, 1],
-                [1, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-                [1, 0, 0, 1, 1],
-                [1, 0, 0, 1, 1],
+                [1, 1, 1, 1],
+                [1, 1, 0, 0],
+                [1, 0, 1, 1],
+                [1, 0, 1, 1],
             ],
         ],
         [
             """test single chain with custom distance""",
             "custom",
             {"receptor_arms": "VJ", "dual_ir": "primary_only"},
-            {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
+            {"VJ_1_junction_aa": ["AAA", "AHA"]},
             [
-                [1, 4, 0],
-                [4, 1, 0],
-                [0, 0, 0],
+                [1, 4],
+                [4, 1],
             ],
         ],
         [
@@ -206,15 +211,14 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "VJ", "dual_ir": "any"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
             },
             [
-                [1, 1, 0, 1, 1],
-                [1, 1, 0, 4, 4],
-                [0, 0, 0, 0, 0],
-                [1, 4, 0, 1, 1],
-                [1, 4, 0, 1, 1],
+                [1, 1, 1, 1],
+                [1, 1, 4, 4],
+                [1, 4, 1, 1],
+                [1, 4, 1, 1],
             ],
         ],
         [
@@ -222,15 +226,14 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "VJ", "dual_ir": "all"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
             },
             [
-                [1, 0, 0, 4, 0],
-                [0, 1, 0, 0, 4],
-                [0, 0, 0, 0, 0],
-                [4, 0, 0, 1, 0],
-                [0, 4, 0, 0, 1],
+                [1, 0, 4, 0],
+                [0, 1, 0, 4],
+                [4, 0, 1, 0],
+                [0, 4, 0, 1],
             ],
         ],
         [
@@ -238,14 +241,13 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "all", "dual_ir": "primary_only"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL"],
             },
             [
-                [1, 10, 0, 0],
-                [10, 1, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 1],
+                [1, 10, 0],
+                [10, 1, 0],
+                [0, 0, 1],
             ],
         ],
         [
@@ -253,14 +255,13 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "any", "dual_ir": "primary_only"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL"],
             },
             [
-                [1, 4, 0, 1],
-                [4, 1, 0, 4],
-                [0, 0, 0, 0],
-                [1, 4, 0, 1],
+                [1, 4, 1],
+                [4, 1, 4],
+                [1, 4, 1],
             ],
         ],
         [
@@ -268,35 +269,33 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "any", "dual_ir": "all"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL", "LLL"],
+                "VDJ_2_junction_aa": ["KKK", "KKK", "AAA", "nan"],
             },
             [
-                [1, 10, 0, 4, 0],
-                [10, 1, 0, 0, 4],
-                [0, 0, 0, 0, 0],
-                [4, 0, 0, 1, 0],
-                [0, 4, 0, 0, 1],
+                [1, 10, 4, 0],
+                [10, 1, 0, 4],
+                [4, 0, 1, 0],
+                [0, 4, 0, 1],
             ],
         ],
         [
-            "Test with any receptor amrms, any chains",
+            "Test with any receptor arms, any chains",
             "custom",
             {"receptor_arms": "any", "dual_ir": "any"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL", "LLL"],
+                "VDJ_2_junction_aa": ["KKK", "KKK", "AAA", "nan"],
             },
             [
-                [1, 1, 0, 1, 1],
-                [1, 1, 0, 4, 4],
-                [0, 0, 0, 0, 0],
-                [1, 4, 0, 1, 1],
-                [1, 4, 0, 1, 1],
+                [1, 1, 1, 1],
+                [1, 1, 4, 4],
+                [1, 4, 1, 1],
+                [1, 4, 1, 1],
             ],
         ],
         [
@@ -304,17 +303,16 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "all", "dual_ir": "any"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL", "LLL"],
+                "VDJ_2_junction_aa": ["KKK", "KKK", "AAA", "nan"],
             },
             [
-                [1, 1, 0, 0, 0],
-                [1, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1],
-                [0, 0, 0, 1, 1],
+                [1, 1, 0, 0],
+                [1, 1, 0, 0],
+                [0, 0, 1, 1],
+                [0, 0, 1, 1],
             ],
         ],
         [
@@ -322,17 +320,16 @@ def test_ir_dist(
             "custom",
             {"receptor_arms": "all", "dual_ir": "all"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL", "LLL"],
+                "VDJ_2_junction_aa": ["KKK", "KKK", "AAA", "nan"],
             },
             [
-                [1, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 1],
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
             ],
         ],
     ),
@@ -357,8 +354,8 @@ def test_compute_distances(
         adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3,
-        adata2,
+        DataHandler.default(adata_cdr3),
+        DataHandler.default(adata2),
         distance_key=distance_key,
         sequence_key="junction_aa",
         n_jobs=n_jobs,
@@ -398,7 +395,7 @@ def test_compute_distances(
                 ]
             ),
         ),
-        ("VJ", np.array([[1, 0], [0, 0]])),
+        ("VJ", np.array([[1]])),
         ("VDJ", np.array([[1, 0], [0, 1]])),
     ],
 )
@@ -421,8 +418,8 @@ def test_compute_distances_2(
         key_added="ir_dist_aa_custom",
     )
     cn = ClonotypeNeighbors(
-        adata_cdr3_2,
-        adata2,
+        DataHandler.default(adata_cdr3_2),
+        DataHandler.default(adata2),
         receptor_arms=receptor_arms,
         dual_ir=dual_ir,
         distance_key="ir_dist_aa_custom",
@@ -435,53 +432,19 @@ def test_compute_distances_2(
     npt.assert_equal(dist, expected)
 
 
-@pytest.mark.parametrize("with_adata2", [False, True])
-def test_compute_distances_no_dist(
-    adata_cdr3, adata_cdr3_mock_distance_calculator, with_adata2
-):
-    adata2 = adata_cdr3 if with_adata2 else None
-    """Test for #174. Gracefully handle the case when there are no distances."""
-    adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
-    adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
-    # test both receptor arms, primary chain only
-    ir.pp.ir_dist(
-        adata_cdr3,
-        adata2,
-        metric=adata_cdr3_mock_distance_calculator,
-        sequence="aa",
-        key_added="ir_dist_aa_custom",
-    )
-    cn = ClonotypeNeighbors(
-        adata_cdr3,
-        adata2,
-        receptor_arms="all",
-        dual_ir="primary_only",
-        distance_key="ir_dist_aa_custom",
-        sequence_key="junction_aa",
-    )
-    _assert_frame_equal(
-        cn.clonotypes,
-        pd.DataFrame(
-            {
-                "IR_VJ_1_junction_aa": ["nan"],
-                "IR_VDJ_1_junction_aa": ["nan"],
-            }
-        ),
-    )
-    dist = cn.compute_distances()
-    npt.assert_equal(dist.toarray(), np.zeros((1, 1)))
-
-
 def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator):
     """Test for #174. Gracefully handle the case when there are no IR."""
-    adata_cdr3.obs["IR_VJ_1_junction_aa"] = np.nan
-    adata_cdr3.obs["IR_VDJ_1_junction_aa"] = np.nan
-    adata_cdr3.obs["has_ir"] = "False"
+    # reset chain indices such that they point to no chains whatsoever.
+    d = adata_cdr3.mod["airr"] if isinstance(adata_cdr3, MuData) else adata_cdr3
+    d.obsm["chain_indices"]["VJ"] = [[None, None] * d.shape[0]]
+    d.obsm["chain_indices"]["VDJ"] = [[None, None] * d.shape[0]]
+    d.obsm["chain_indices"]["multichain"] = [None] * d.shape[0]
+
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     with pytest.raises(ValueError):
         cn = ClonotypeNeighbors(
-            adata_cdr3,
+            DataHandler.default(adata_cdr3),
             receptor_arms="all",
             dual_ir="primary_only",
             distance_key="ir_dist_aa_custom",
@@ -497,28 +460,23 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
             "VJ, primary_only",
             "identity",
             {"receptor_arms": "VJ", "dual_ir": "primary_only"},
-            {"IR_VJ_1_junction_aa": ["AAA", "AHA", "nan"]},
-            {"IR_VJ_1_junction_aa": ["AAA", "nan"]},
-            [
-                [1, 0],
-                [0, 0],
-                [0, 0],
-            ],
+            {"VJ_1_junction_aa": ["AAA", "AHA"]},
+            {"VJ_1_junction_aa": ["AAA"]},
+            [[1], [0]],
         ],
         [
             "receptor_arms=all, dual_ir=primary_only",
             "identity",
             {"receptor_arms": "all", "dual_ir": "primary_only"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL"],
             },
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKK", "LLL", "LLL"],
+                "VJ_1_junction_aa": ["AAA", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKK", "LLL", "LLL"],
             },
             [
-                [0, 0, 0],
                 [0, 0, 0],
                 [0, 0, 0],
                 [0, 1, 0],
@@ -529,20 +487,19 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
             "identity",
             {"receptor_arms": "all", "dual_ir": "any"},
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AHA", "nan", "AAA", "AAA"],
-                "IR_VJ_2_junction_aa": ["AHA", "nan", "nan", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKY", "KK", "nan", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "KKK", "nan", "AAA", "nan"],
+                "VJ_1_junction_aa": ["AAA", "AHA", "AAA", "AAA"],
+                "VJ_2_junction_aa": ["AHA", "nan", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKY", "KK", "LLL", "LLL"],
+                "VDJ_2_junction_aa": ["KKK", "KKK", "AAA", "nan"],
             },
             {
-                "IR_VJ_1_junction_aa": ["AAA", "AAA", "nan"],
-                "IR_VJ_2_junction_aa": ["AAA", "AAA", "nan"],
-                "IR_VDJ_1_junction_aa": ["KKK", "LLL", "LLL"],
-                "IR_VDJ_2_junction_aa": ["KKK", "LLL", "LLL"],
+                "VJ_1_junction_aa": ["AAA", "AAA", "nan"],
+                "VJ_2_junction_aa": ["AAA", "AAA", "nan"],
+                "VDJ_1_junction_aa": ["KKK", "LLL", "LLL"],
+                "VDJ_2_junction_aa": ["KKK", "LLL", "LLL"],
             },
             [
                 [1, 0, 0],
-                [0, 0, 0],
                 [0, 0, 0],
                 [0, 1, 0],
                 [0, 1, 0],
@@ -573,8 +530,8 @@ def test_compute_distances_second_anndata(
         query, reference, metric=metric, sequence="aa", key_added=distance_key
     )
     cn = ClonotypeNeighbors(
-        query,
-        reference,
+        DataHandler.default(query),
+        DataHandler.default(reference),
         distance_key=distance_key,
         sequence_key="junction_aa",
         **ctn_kwargs,
@@ -605,15 +562,25 @@ def test_compute_distances_second_anndata(
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
-    adata_empty = AnnData(obs=pd.DataFrame(columns=adata_cdr3.obs.columns))
+    adata_empty = (
+        adata_cdr3.mod["airr"].copy()
+        if isinstance(adata_cdr3, MuData)
+        else adata_cdr3.copy()
+    )
+    # reset chain indices such that no chain will actually be used.
+    adata_empty.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_empty.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
+    adata_empty.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
+
     ir.pp.ir_dist(
         adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
     )
-    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
-    assert list(adata_cdr3.uns["ir_dist"]["VJ"]["seqs2"]) == []
-    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs"]) == (
+    tmp_ad = adata_cdr3.mod["airr"] if isinstance(adata_cdr3, MuData) else adata_cdr3
+    assert list(tmp_ad.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
+    assert list(tmp_ad.uns["ir_dist"]["VJ"]["seqs2"]) == []
+    assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs"]) == (
         ["AAA", "KK", "KKK", "KKY", "LLL"]
     )
-    assert list(adata_cdr3.uns["ir_dist"]["VDJ"]["seqs2"]) == []
-    assert adata_cdr3.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
-    assert adata_cdr3.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)
+    assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs2"]) == []
+    assert tmp_ad.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
+    assert tmp_ad.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)

@@ -1,12 +1,15 @@
-from typing import Literal
+from typing import Dict, Literal, Optional, Sequence, Union
+
 import matplotlib.pyplot as plt
-from typing import Union, Sequence, Dict
+from cycler import Cycler
+from mudata import MuData
 from scanpy.plotting._utils import (
     _set_colors_for_categorical_obs,
     _set_default_colors_for_categorical_obs,
     _validate_palette,
 )
-from cycler import Cycler
+
+from scirpy.util import DataHandler
 
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
@@ -118,8 +121,10 @@ def style_axes(
 
 
 def _get_colors(
-    adata, obs_key: str, palette: Union[str, Sequence[str], Cycler, None] = None
-) -> Dict[str, str]:
+    params: DataHandler,
+    obs_key: str,
+    palette: Union[str, Sequence[str], Cycler, None] = None,
+) -> Optional[Dict[str, str]]:
     """Return colors for a category stored in AnnData.
 
     If colors are not stored, new ones are assigned.
@@ -132,17 +137,28 @@ def _get_colors(
     should be changed in the future.
     """
     # required to turn into categoricals
-    adata._sanitize()
-    values = adata.obs[obs_key].values
-    color_key = f"{obs_key}_colors"
-    if palette is not None:
-        _set_colors_for_categorical_obs(adata, obs_key, palette)
-    elif color_key not in adata.uns or len(adata.uns[color_key]) < len(
-        values.categories
-    ):
-        #  set a default palette in case that no colors or few colors are found
-        _set_default_colors_for_categorical_obs(adata, obs_key)
-    else:
-        _validate_palette(adata, obs_key)
+    params.data.strings_to_categoricals()
 
-    return {cat: col for cat, col in zip(values.categories, adata.uns[color_key])}
+    # we can only get a palette for columns that are now categorical. Boolean/int/... won't work
+    if isinstance(params.data, MuData):
+        if obs_key in params.data.obs.columns:
+            uns_lookup = params.data
+        else:
+            uns_lookup = params.adata
+    else:
+        uns_lookup = params.adata
+    if uns_lookup.obs[obs_key].dtype.name == "category":
+        values = uns_lookup.obs[obs_key].values
+        categories = values.categories  # type: ignore
+        color_key = f"{obs_key}_colors"
+        if palette is not None:
+            _set_colors_for_categorical_obs(uns_lookup, obs_key, palette)
+        elif color_key not in uns_lookup.uns or len(uns_lookup.uns[color_key]) < len(
+            categories
+        ):
+            #  set a default palette in case that no colors or few colors are found
+            _set_default_colors_for_categorical_obs(uns_lookup, obs_key)
+        else:
+            _validate_palette(uns_lookup, obs_key)
+
+        return {cat: col for cat, col in zip(categories, uns_lookup.uns[color_key])}

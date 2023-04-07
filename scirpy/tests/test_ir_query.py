@@ -1,3 +1,11 @@
+import json
+
+import numpy as np
+import numpy.testing as npt
+import pytest
+from mudata import MuData
+
+from scirpy.pp import ir_dist
 from scirpy.tl._ir_query import (
     _reduce_json,
     _reduce_most_frequent,
@@ -6,12 +14,8 @@ from scirpy.tl._ir_query import (
     ir_query_annotate,
     ir_query_annotate_df,
 )
-from scirpy.pp import ir_dist
-import numpy as np
-import numpy.testing as npt
-import pytest
-import json
-from .fixtures import adata_cdr3, adata_cdr3_2, adata_define_clonotype_clusters
+
+from .fixtures import adata_cdr3, adata_cdr3_2, adata_define_clonotype_clusters  # NOQA
 
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein"])
@@ -29,9 +33,10 @@ def test_ir_query(adata_cdr3, adata_cdr3_2, metric, key1, key2):
     )
 
     tmp_key2 = f"ir_query_TESTDB_aa_{metric}" if key2 is None else key2
-    assert adata_cdr3.uns[tmp_key2]["distances"].shape == (5, 3)
-    assert len(adata_cdr3.uns[tmp_key2]["cell_indices"]) == 5
-    assert len(adata_cdr3.uns[tmp_key2]["cell_indices_reference"]) == 3
+    tmp_ad = adata_cdr3.mod["airr"] if isinstance(adata_cdr3, MuData) else adata_cdr3
+    assert tmp_ad.uns[tmp_key2]["distances"].shape == (4, 3)
+    assert len(tmp_ad.uns[tmp_key2]["cell_indices"]) == 4
+    assert len(tmp_ad.uns[tmp_key2]["cell_indices_reference"]) == 3
 
 
 @pytest.mark.parametrize(
@@ -90,7 +95,8 @@ def query_reference(adata_define_clonotype_clusters):
     ].copy()
     reference = adata_define_clonotype_clusters.copy()
     reference.obs["some_annotation"] = reference.obs_names.str.upper()
-    reference.uns["DB"] = {"name": "TESTDB"}
+    uns_ = reference.mod["airr"].uns if isinstance(reference, MuData) else reference.uns
+    uns_["DB"] = {"name": "TESTDB"}
 
     return query, reference
 
@@ -232,7 +238,8 @@ def test_ir_query_annotate(query_reference, strategy, expected):
         strategy=strategy,
     )
 
-    actual = list(query.obs["some_annotation"].items())
+    key = "airr:some_annotation" if isinstance(query, MuData) else "some_annotation"
+    actual = list(query.obs[key].items())
     print(actual)
 
     assert actual == expected

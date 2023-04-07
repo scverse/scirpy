@@ -1,21 +1,19 @@
 import itertools
 import random
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Tuple, Union, cast
 
 import igraph as ig
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 from anndata import AnnData
 from scanpy import logging
-import scipy.sparse as sp
 
-from typing import Literal
-from ..pp import ir_dist
 from ..ir_dist import MetricType, _get_metric_key
 from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from ..util import _doc_params
+from ..pp import ir_dist
+from ..util import DataHandler
 from ..util.graph import igraph_from_sparse_matrix, layout_components
-from ..io._util import _check_upgrade_schema
 
 _common_doc = """\
 receptor_arms
@@ -187,8 +185,7 @@ def _validate_parameters(
     return match_columns, distance_key, key_added
 
 
-@_check_upgrade_schema()
-@_doc_params(
+@DataHandler.inject_param_docs(
     common_doc=_common_doc,
     within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
@@ -196,7 +193,7 @@ def _validate_parameters(
     paralellism=_common_doc_parallelism,
 )
 def define_clonotype_clusters(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
@@ -212,6 +209,9 @@ def define_clonotype_clusters(
     inplace: bool = True,
     n_jobs: Union[int, None] = None,
     chunksize: int = 2000,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
 ) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
@@ -228,8 +228,7 @@ def define_clonotype_clusters(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix
+    {adata}
     sequence
         The sequence parameter used when running :func:`scirpy.pp.ir_dist`
     metric
@@ -269,11 +268,15 @@ def define_clonotype_clusters(
     inplace
         If `True`, adds the results to anndata, otherwise returns them.
     {paralellism}
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     {return_values}
     """
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     within_group, distance_key, key_added = _validate_parameters(
-        adata,
+        params.adata,
         None,
         receptor_arms,
         dual_ir,
@@ -285,9 +288,9 @@ def define_clonotype_clusters(
     )
 
     ctn = ClonotypeNeighbors(
-        adata,
-        receptor_arms=receptor_arms,
-        dual_ir=dual_ir,
+        params,
+        receptor_arms=receptor_arms,  # type: ignore
+        dual_ir=dual_ir,  # type: ignore
         same_v_gene=same_v_gene,
         match_columns=within_group,
         distance_key=distance_key,
@@ -307,9 +310,11 @@ def define_clonotype_clusters(
     else:
         part = g.clusters(mode="weak")
 
-    clonotype_cluster_series = pd.Series(data=None, index=adata.obs_names, dtype=str)
+    clonotype_cluster_series = pd.Series(
+        data=None, index=params.adata.obs_names, dtype=str
+    )
     clonotype_cluster_size_series = pd.Series(
-        data=None, index=adata.obs_names, dtype=int
+        data=None, index=params.adata.obs_names, dtype=int
     )
 
     # clonotype cluster = graph partition
@@ -319,7 +324,9 @@ def define_clonotype_clusters(
             for ct_id, clonotype_cluster in enumerate(part.membership)
         )
     )
-    clonotype_cluster_series = pd.Series(values, index=idx).reindex(adata.obs_names)
+    clonotype_cluster_series = pd.Series(values, index=idx).reindex(
+        params.adata.obs_names
+    )
     clonotype_cluster_size_series = clonotype_cluster_series.groupby(
         clonotype_cluster_series
     ).transform("count")
@@ -330,10 +337,9 @@ def define_clonotype_clusters(
         "cell_indices": ctn.cell_indices,
     }
     if inplace:
-        adata.obs[key_added] = clonotype_cluster_series
-        adata.obs[key_added + "_size"] = clonotype_cluster_size_series
-        adata.uns[key_added] = clonotype_distance_res
-        logging.info(f'Stored clonal assignments in `adata.obs["{key_added}"]`.')
+        params.set_obs(key_added, clonotype_cluster_series)
+        params.set_obs(key_added + "_size", clonotype_cluster_size_series)
+        params.adata.uns[key_added] = clonotype_distance_res
     else:
         return (
             clonotype_cluster_series,
@@ -342,8 +348,7 @@ def define_clonotype_clusters(
         )
 
 
-@_check_upgrade_schema()
-@_doc_params(
+@DataHandler.inject_param_docs(
     common_doc=_common_doc,
     within_group=_common_doc_within_group,
     clonotype_definition=_doc_clonotype_definition,
@@ -351,10 +356,13 @@ def define_clonotype_clusters(
     paralellism=_common_doc_parallelism,
 )
 def define_clonotypes(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
     key_added: str = "clone_id",
     distance_key: Union[str, None] = None,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     **kwargs,
 ) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
     """
@@ -371,8 +379,7 @@ def define_clonotypes(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix
+    {adata}
     {common_doc}
     {within_group}
     key_added
@@ -382,11 +389,15 @@ def define_clonotypes(
     inplace
         If `True`, adds the results to anndata, otherwise return them.
     {paralellism}
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     {return_values}
 
     """
-    if distance_key is None and "ir_dist_nt_identity" not in adata.uns:
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
+    if distance_key is None and "ir_dist_nt_identity" not in params.adata.uns:
         # For the case of "clonotypes" we want to compute the distance automatically
         # if it doesn't exist yet. Since it's just a sparse ID matrix, this
         # should be instant.
@@ -394,10 +405,10 @@ def define_clonotypes(
             "ir_dist for sequence='nt' and metric='identity' not found. "
             "Computing with default parameters."
         )  # type: ignore
-        ir_dist(adata, metric="identity", sequence="nt", key_added=distance_key)
+        ir_dist(params, metric="identity", sequence="nt", key_added=distance_key)
 
     return define_clonotype_clusters(
-        adata,
+        params,
         key_added=key_added,
         sequence="nt",
         metric="identity",
@@ -406,10 +417,9 @@ def define_clonotypes(
     )
 
 
-@_check_upgrade_schema()
-@_doc_params(clonotype_network=_doc_clonotype_network)
+@DataHandler.inject_param_docs(clonotype_network=_doc_clonotype_network)
 def clonotype_network(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "nt",
     metric: Literal[
@@ -426,6 +436,7 @@ def clonotype_network(
     key_added: str = "clonotype_network",
     inplace: bool = True,
     random_state=42,
+    airr_mod="airr",
 ) -> Union[None, pd.DataFrame]:
     """
     Computes the layout of the clonotype network.
@@ -447,8 +458,7 @@ def clonotype_network(
 
     Parameters
     ----------
-    adata
-        annotated data matrix
+    {adata}
     sequence
         The `sequence` parameter :func:`scirpy.tl.define_clonotypes` was ran with.
     metric
@@ -486,12 +496,14 @@ def clonotype_network(
         If `True`, store the coordinates in `adata.obsm`, otherwise return them.
     random_state
         Random seed set before computing the layout.
+    {airr_mod}
 
     Returns
     -------
     Depending on the value of `inplace` returns either nothing or the computed
     coordinates.
     """
+    params = DataHandler(adata, airr_mod)
     if size_aware and layout != "components":
         raise ValueError(
             "The `size_aware` option is only compatible with the `components` layout."
@@ -507,7 +519,7 @@ def clonotype_network(
             clonotype_key = f"cc_{sequence}_{metric}"
 
     try:
-        clonotype_res = adata.uns[clonotype_key]
+        clonotype_res = params.adata.uns[clonotype_key]
     except KeyError:
         raise ValueError(
             "Connectivity data not found. Did you run `tl.define_clonotypes` "
@@ -577,23 +589,23 @@ def clonotype_network(
         )
     )
     coord_df = pd.DataFrame(data=coords, index=idx, columns=["x", "y"]).reindex(
-        adata.obs_names
+        params.adata.obs_names
     )
 
     # Store results or return
     if inplace:
-        adata.obsm[f"X_{key_added}"] = coord_df
+        params.adata.obsm[f"X_{key_added}"] = coord_df
         params_dict["clonotype_key"] = clonotype_key
         params_dict["base_size"] = base_size
         params_dict["size_power"] = size_power
-        adata.uns[key_added] = params_dict
+        params.adata.uns[key_added] = params_dict
     else:
         return coord_df
 
 
 def _graph_from_coordinates(
     adata: AnnData, clonotype_key: str
-) -> [pd.DataFrame, sp.spmatrix]:
+) -> Tuple[pd.DataFrame, sp.csr_matrix]:
     """
     Given an AnnData object on which `tl.clonotype_network` was ran, and
     the corresponding `clonotype_key`, extract a data-frame
@@ -616,7 +628,7 @@ def _graph_from_coordinates(
 
     # Retrieve coordinates and reduce them to one coordinate per node
     coords = (
-        adata.obsm["X_clonotype_network"]
+        cast(pd.DataFrame, adata.obsm["X_clonotype_network"])
         .dropna(axis=0, how="any")
         .join(dist_idx_lookup)
         .join(clonotype_label_lookup)
@@ -633,9 +645,11 @@ def _graph_from_coordinates(
     return coords, adj_mat
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def clonotype_network_igraph(
-    adata: AnnData, basis="clonotype_network"
+    adata: DataHandler.TYPE,
+    basis="clonotype_network",
+    airr_mod="airr",
 ) -> Tuple[ig.Graph, ig.Layout]:
     """
     Get an `igraph` object representing the clonotype network.
@@ -645,10 +659,10 @@ def clonotype_network_igraph(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix.
+    {adata}
     basis
         Key in `adata.obsm` where the network layout is stored.
+    {airr_mod}
 
     Returns
     -------
@@ -659,17 +673,19 @@ def clonotype_network_igraph(
     """
     from ..util.graph import igraph_from_sparse_matrix
 
+    params = DataHandler(adata, airr_mod)
+
     try:
-        clonotype_key = adata.uns[basis]["clonotype_key"]
+        clonotype_key = params.adata.uns[basis]["clonotype_key"]
     except KeyError:
         raise KeyError(
             f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
         )
-    if f"X_{basis}" not in adata.obsm_keys():
+    if f"X_{basis}" not in params.adata.obsm_keys():
         raise KeyError(
             f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
         )
-    coords, adj_mat = _graph_from_coordinates(adata, clonotype_key)
+    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
 
     graph = igraph_from_sparse_matrix(adj_mat, matrix_type="distance")
     # flip y axis to be consistent with networkx

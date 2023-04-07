@@ -1,19 +1,23 @@
 # pylama:ignore=W0611,W0404
-from scipy import sparse
-from scirpy import pl
-from .fixtures import (
-    adata_tra,
-    adata_clonotype,
-    adata_diversity,
-    adata_vdj,
-    adata_conn,
-    adata_define_clonotype_clusters,
-    adata_clonotype_network,
-    adata_define_clonotypes,
-    adata_clonotype_modularity,
-)
 import matplotlib.pyplot as plt
 import pytest
+import seaborn as sns
+from mudata import MuData
+from scipy import sparse
+
+from scirpy import pl
+
+from .fixtures import (  # NOQA
+    adata_clonotype,
+    adata_clonotype_modularity,
+    adata_clonotype_network,
+    adata_conn,
+    adata_define_clonotype_clusters,
+    adata_define_clonotypes,
+    adata_diversity,
+    adata_tra,
+    adata_vdj,
+)
 
 
 def test_clonal_expansion(adata_clonotype):
@@ -32,7 +36,12 @@ def test_alpha_diversity(adata_diversity):
 
 
 def test_group_abundance(adata_clonotype):
-    p = pl.group_abundance(adata_clonotype, groupby="clone_id", target_col="group")
+    mdata_modifier = "airr:" if isinstance(adata_clonotype, MuData) else ""
+    p = pl.group_abundance(
+        adata_clonotype,
+        groupby=f"{mdata_modifier}clone_id",
+        target_col=f"{mdata_modifier}group",
+    )
     assert isinstance(p, plt.Axes)
 
 
@@ -40,10 +49,17 @@ def test_spectratype(adata_tra):
     p = pl.spectratype(adata_tra, color="sample")
     assert isinstance(p, plt.Axes)
 
+    # test if error message highlighting the API change is raised
+    with pytest.raises(ValueError):
+        pl.spectratype(adata_tra, ["IR_VJ_1_junction_aa"], color="sample")
+
+    with pytest.raises(ValueError):
+        pl.spectratype(adata_tra, cdr3_col="IR_VJ_1_junction_aa", color="sample")
+
 
 def test_repertoire_overlap(adata_tra):
-    p = pl.repertoire_overlap(adata_tra, groupby="sample", dendro_only=True)
-    assert isinstance(p, plt.Axes)
+    p = pl.repertoire_overlap(adata_tra, groupby="sample")
+    assert isinstance(p, sns.matrix.ClusterGrid)
 
 
 def test_clonotype_imbalance(adata_tra):
@@ -70,10 +86,11 @@ def test_vdj_usage(adata_vdj, full_combination):
 @pytest.mark.parametrize("cmap", [None, "cividis"])
 def test_clonotype_network_gene(adata_clonotype_network, matrix_type, use_raw, cmap):
     adata = adata_clonotype_network
+    tmp_ad = adata.mod["gex"] if isinstance(adata, MuData) else adata
     if matrix_type == "csr":
-        adata.X = sparse.csr_matrix(adata.X)
+        tmp_ad.X = sparse.csr_matrix(tmp_ad.X)
     elif matrix_type == "csc":
-        adata.X = sparse.csc_matrix(adata.X)
+        tmp_ad.X = sparse.csc_matrix(tmp_ad.X)
     p = pl.clonotype_network(adata, color="CD8A", use_raw=use_raw, cmap=cmap)
     assert isinstance(p, plt.Axes)
 

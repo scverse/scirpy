@@ -4,10 +4,11 @@ is aware of node sizes.
 Adapted from https://stackoverflow.com/questions/57423743/networkx-is-there-a-way-to-scale-a-position-of-nodes-in-a-graph-according-to-n/57432240#57432240
 """
 
-from typing import Mapping, Optional, Sequence, Tuple, Union
-import numpy as np
 import warnings
+from typing import Mapping, Optional, Sequence, Tuple
+
 import igraph as ig
+import numpy as np
 
 
 def layout_fr_size_aware(

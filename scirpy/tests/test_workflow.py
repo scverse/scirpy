@@ -8,16 +8,15 @@ Bioconda-CI when building the container as a quick consistency check.
 The tests need to be quick in order not to overload the bioconda CI,
 but AIRR-compliance mandates to have these tests.
 """
-from . import TESTDATA
-import scirpy as ir
-import pytest
-import pandas.testing as pdt
 import pandas as pd
-from scirpy.util import _is_na
-import numpy as np
-from .util import _normalize_df_types
-import tempfile
+import pandas.testing as pdt
+import pytest
 import scanpy as sc
+
+import scirpy as ir
+
+from . import TESTDATA
+from .util import _normalize_df_types
 
 
 @pytest.mark.conda
@@ -31,7 +30,7 @@ import scanpy as sc
             TESTDATA / "test_workflow/adata_10x_pbmc3_t.obs.expected.pkl.gz",
         ),
         (
-            TESTDATA / "wu2020_200_old_schema.h5ad",
+            TESTDATA / "wu2020_200_v0_11.h5ad",
             True,
             TESTDATA / "test_workflow/adata_wu_200_old_schema.obs.expected.pkl.gz",
         ),

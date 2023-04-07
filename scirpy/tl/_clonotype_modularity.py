@@ -1,29 +1,31 @@
-from logging import log
-from multiprocessing import cpu_count
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Literal, Optional, Sequence, Tuple
+
 import numpy as np
-from ..util.graph import _get_igraph_from_adjacency
-from ..util._negative_binomial import fit_nbinom
-from typing import Literal
-import scipy.stats
 import scipy.sparse
-from statsmodels.stats.multitest import fdrcorrection
-from ..util import tqdm, _is_na
+import scipy.stats
+from mudata import MuData
 from scanpy import logging
+from statsmodels.stats.multitest import fdrcorrection
+
+from ..util import DataHandler, _is_na, tqdm
+from ..util._negative_binomial import fit_nbinom
+from ..util.graph import _get_igraph_from_adjacency
 
 
+@DataHandler.inject_param_docs()
 def clonotype_modularity(
-    adata,
+    adata: DataHandler.TYPE,
     target_col="clone_id",
-    connectivity_key="connectivities",
+    connectivity_key="gex:connectivities",
     permutation_test: Literal["approx", "exact"] = "approx",
     n_permutations: Optional[int] = None,
     key_added: str = "clonotype_modularity",
     inplace: bool = True,
     fdr_correction: bool = True,
     random_state: int = 0,
+    airr_mod: str = "airr",
 ) -> Optional[Tuple[Dict[str, float], Dict[str, float]]]:
-    """
+    """\
     Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance by computing the
     :term:`Clonotype modularity`.
@@ -39,12 +41,12 @@ def clonotype_modularity(
 
     .. math::
 
-        \\text{connectivity score} = \\log_2 \\frac{
-                                                    |E|_{\\text{actual}} + 1
-                                                }{
-                                                    |E|_{\\text{expected}} + 1
-                                                }
-
+        \\text{{connectivity score}} = \\log_2 \\frac{{ 
+                |E|_{{\\text{{actual}}}} + 1 
+            }}{{ 
+                |E|_{{\\text{{expected}}}} + 1 
+            }}
+        
     For each unique clonotype size, the expected number of edges is derived by
     randomly sampling `n_permutation` subgraphs from the transcriptomics neighborhood
     graph. This background distribution is also used to calculate p-values for the
@@ -58,13 +60,9 @@ def clonotype_modularity(
     predefined clonotype clusters and checks if within those clusters, the transcriptomics
     neighborhood graph is more connected than expected by chance.
 
-    .. warning::
-        This is an experimental function that may change in the future
-
     Parameters
     ----------
-    adata
-        annotated data matrix
+    {adata}
     target_col
         Column in `adata.obs` containing the clonotype annotation.
     connectivity_key
@@ -78,13 +76,14 @@ def clonotype_modularity(
         Number of permutations used for the permutations test. Defaults to `1000` for
         the approx test, and to `10000` for the exact test. Note that for the exact
         test, the minimum achievable p-values is `1/n`.
-    key_added
-        Key under which the result will be stored in `adata.obs` if inplace is `True`.
+    {inplace}
+    {key_added}
     fdr_correction
         Whether to adjust the p-values for multiple testing using false-discovery-rate
         (FDR) correction.
     random_state
         random seed for permutation test
+    {airr_mod}
 
     Returns
     -------
@@ -92,26 +91,47 @@ def clonotype_modularity(
     a single modularity score and p-value per clonotype. Otherwise, adds two columns
     to `adata.obs`
 
-       * `adata.obs["{key_added}"]`: the modularity scores for each cell
-       * `adata.obs["{key_added}_pvalue"]` or `adata.obs["{key_added}_fdr"]` with the
+       * `adata.obs["{{key_added}}"]`: the modularity scores for each cell
+       * `adata.obs["{{key_added}}_pvalue"]` or `adata.obs["{{key_added}}_fdr"]` with the
          raw p-values or false discovery rates, respectively, depending on the value
          of `fdr_correction`.
 
     and a dictionary to `adata.uns`
 
-       * `adata.uns["{key_added}]`: A dictionary holding the parameters this
+       * `adata.uns["{{key_added}}"]`: A dictionary holding the parameters this
          function was called with.
     """
+    params = DataHandler(adata, airr_mod)
     if n_permutations is None:
         n_permutations = 1000 if permutation_test == "approx" else 10000
 
-    clonotype_per_cell = adata.obs[target_col]
-    na_mask = ~_is_na(clonotype_per_cell.values)
+    clonotype_per_cell = params.get_obs(target_col)
+    cells_with_valid_clonotype = clonotype_per_cell[
+        ~_is_na(clonotype_per_cell.values)
+    ].index
+    data_subset = params.data[cells_with_valid_clonotype.values, :]
+    try:
+        connectivities = data_subset.obsp[connectivity_key]
+    except KeyError:
+        if isinstance(params.data, MuData):
+            # try again by getting connectivities from modality
+            gex_mod, connectivity_key = connectivity_key.split(":")
+            # Since we are now taking the connectivities from the GEX modality,
+            # we need to subset valid cells to the intersection with the GEX modality
+            cells_with_valid_clonotype = cells_with_valid_clonotype[
+                cells_with_valid_clonotype.isin(data_subset.mod[gex_mod].obs_names)
+            ]
+            data_subset = data_subset[cells_with_valid_clonotype.values, :]
+            connectivities = data_subset.mod[gex_mod].obsp[connectivity_key]
+        else:
+            # for backwards compatibility, try default value without 'gex'
+            connectivities = data_subset.obsp[connectivity_key.replace("gex:", "")]
 
     logging.info("Initalizing clonotype subgraphs...")  # type: ignore
+
     cm = _ClonotypeModularity(
-        clonotype_per_cell[na_mask],
-        adata.obsp[connectivity_key][na_mask, :][:, na_mask],
+        clonotype_per_cell[cells_with_valid_clonotype].values,  # type: ignore
+        connectivities,  # type: ignore
         random_state=random_state,
     )
     start = logging.info("Computing background distributions...")  # type: ignore
@@ -139,23 +159,25 @@ def clonotype_modularity(
         }
 
     if inplace:
-        adata.obs[key_added] = [
-            modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell
-        ]
+        params.set_obs(
+            key_added, [modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell]
+        )
         # remove the entries from previous run, should they exist
         # results can be inconsisten otherwise (old dangling "fdr" values when only
         # pvalues are calculated)
         for suffix in ["fdr", "pvalue"]:
-            try:
-                del adata.obs[f"{key_added}_{suffix}"]
-            except:
-                pass
+            for d in [params.mdata, params.adata]:
+                try:
+                    del d.obs[f"{key_added}_{suffix}"]
+                except (AttributeError, KeyError):
+                    pass
 
         suffix = "fdr" if fdr_correction else "pvalue"
-        adata.obs[f"{key_added}_{suffix}"] = [
-            modularity_pvalues.get(ct, np.nan) for ct in clonotype_per_cell
-        ]
-        adata.uns[key_added] = {
+        params.set_obs(
+            f"{key_added}_{suffix}",
+            [modularity_pvalues.get(ct, np.nan) for ct in clonotype_per_cell],
+        )
+        params.data.uns[key_added] = {
             "target_col": target_col,
             "permutation_test": permutation_test,
             "n_permutations": n_permutations,
@@ -316,7 +338,7 @@ class _ClonotypeModularity:
                 nb_dist = distributions_per_size[subgraph.vcount()]
                 # restrict pvalues to float precision
                 pvalue_dict[clonotype] = max(
-                    1 - nb_dist.cdf(subgraph.ecount() - 1), np.finfo(np.float32).tiny
+                    1 - nb_dist.cdf(subgraph.ecount() - 1), np.finfo(np.float32).tiny  # type: ignore
                 )
 
         return pvalue_dict

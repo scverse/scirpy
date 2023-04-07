@@ -1,97 +1,51 @@
 # pylama:ignore=W0611,W0404
-import pandas as pd
-import scirpy as ir
-from scanpy import AnnData
-import pytest
-import numpy.testing as npt
-import pandas.testing as pdt
-import numpy as np
-import scanpy as sc
 import itertools
-from .fixtures import (
+
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
+import pytest
+import scanpy as sc
+from mudata import MuData
+
+import scirpy as ir
+from scirpy.util import DataHandler
+
+from .fixtures import (  # NOQA
     adata_clonotype,
-    adata_tra,
-    adata_vdj,
-    adata_diversity,
-    adata_conn,
     adata_clonotype_network,
+    adata_conn,
     adata_define_clonotype_clusters,
+    adata_diversity,
+    adata_tra,
 )
-
-
-def test_chain_pairing():
-    obs = pd.DataFrame.from_records(
-        [
-            ["False", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-            ["True", "True", "AA", "BB", "CC", "DD", "TRA", "TRA", "TRA", "TRB"],
-            ["True", "False", "AA", "BB", "CC", "DD", "TRA", "TRA", "TRB", "TRB"],
-            ["True", "False", "AA", "nan", "nan", "nan", "TRA", "nan", "nan", "nan"],
-            ["True", "False", "AA", "nan", "CC", "nan", "TRA", "nan", "TRB", "nan"],
-            ["True", "False", "AA", "BB", "nan", "nan", "TRA", "TRA", "nan", "nan"],
-            ["True", "False", "AA", "BB", "CC", "nan", "TRA", "TRA", "TRB", "TRB"],
-            ["True", "False", "nan", "nan", "CC", "nan", "nan", "nan", "TRB", "nan"],
-            ["True", "False", "nan", "nan", "CC", "DD", "nan", "nan", "TRB", "TRB"],
-            ["True", "False", "AA", "nan", "CC", "DD", "TRA", "nan", "TRB", "TRB"],
-            ["True", "False", "AA", "nan", "CC", "DD", "TRA", "nan", "TRB", "IGH"],
-        ],
-        columns=[
-            "has_ir",
-            "multi_chain",
-            "IR_VJ_1_junction_aa",
-            "IR_VJ_2_junction_aa",
-            "IR_VDJ_1_junction_aa",
-            "IR_VDJ_2_junction_aa",
-            "IR_VJ_1_locus",
-            "IR_VJ_2_locus",
-            "IR_VDJ_1_locus",
-            "IR_VDJ_2_locus",
-        ],
-    )
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    res = ir.tl.chain_pairing(adata, inplace=False)
-    npt.assert_equal(
-        res,
-        [
-            "no IR",
-            "multichain",
-            "two full chains",
-            "orphan VJ",
-            "single pair",
-            "orphan VJ",
-            "extra VJ",
-            "orphan VDJ",
-            "orphan VDJ",
-            "extra VDJ",
-            "ambiguous",
-        ],
-    )
+from .util import _make_adata
 
 
 def test_chain_qc():
     obs = pd.DataFrame.from_records(
         [
-            ["False", "nan", "nan", "nan", "nan", "nan"],
-            ["True", "True", "TRA", "TRB", "TRA", "TRB"],
+            [False, "nan", "nan", "nan", "nan"],
+            [True, "TRA", "TRB", "TRA", "TRB"],
             # multichain takes precedencee over ambiguous
-            ["True", "True", "TRA", "IGH", "nan", "nan"],
-            ["True", "False", "TRA", "TRB", "nan", "nan"],
-            ["True", "False", "TRA", "TRB", "TRA", "nan"],
-            ["True", "False", "TRA", "TRB", "nan", "TRB"],
-            ["True", "False", "TRA", "TRB", "TRA", "TRB"],
-            ["True", "False", "IGK", "IGH", "nan", "nan"],
-            ["True", "False", "IGL", "IGH", "IGL", "IGH"],
-            ["True", "False", "IGL", "IGH", "IGK", "IGH"],
-            ["True", "False", "nan", "IGH", "nan", "IGH"],
-            ["True", "False", "TRA", "TRB", "TRG", "TRB"],
-            ["True", "False", "IGK", "TRB", "nan", "nan"],
-            ["True", "False", "TRA", "nan", "nan", "nan"],
-            ["True", "False", "IGL", "nan", "nan", "nan"],
-            ["True", "False", "nan", "TRD", "nan", "nan"],
+            [True, "TRA", "IGH", "nan", "nan"],
+            [False, "TRA", "TRB", "nan", "nan"],
+            [False, "TRA", "TRB", "TRA", "nan"],
+            [False, "TRA", "TRB", "nan", "TRB"],
+            [False, "TRA", "TRB", "TRA", "TRB"],
+            [False, "IGK", "IGH", "nan", "nan"],
+            [False, "IGL", "IGH", "IGL", "IGH"],
+            [False, "IGL", "IGH", "IGK", "IGH"],
+            [False, "nan", "IGH", "nan", "IGH"],
+            [False, "TRA", "TRB", "TRG", "TRB"],
+            [False, "IGK", "TRB", "nan", "nan"],
+            [False, "TRA", "nan", "nan", "nan"],
+            [False, "IGL", "nan", "nan", "nan"],
+            [False, "nan", "TRD", "nan", "nan"],
         ],
         columns=[
-            "has_ir",
-            "multi_chain",
+            "_multi_chain",
             "IR_VJ_1_locus",
             "IR_VDJ_1_locus",
             "IR_VJ_2_locus",
@@ -104,8 +58,7 @@ def test_chain_qc():
             "AAA" if x != "nan" else "nan"
             for x in obs[f"IR_{chain}_{chain_number}_locus"]
         ]
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
+    adata = _make_adata(obs)
 
     ir.tl.chain_qc(adata, key_added=("rec_type", "rec_subtype", "ch_pairing"))
 
@@ -177,8 +130,9 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     )
 
     # check if target_col works
-    adata.obs["new_col"] = adata.obs["clone_id"]
-    adata.obs.drop("clone_id", axis="columns", inplace=True)
+    params = DataHandler.default(adata)
+    params.adata.obs["new_col"] = params.adata.obs["clone_id"]
+    params.adata.obs.drop("clone_id", axis="columns", inplace=True)
 
     ir.tl._clonal_expansion._clip_and_count(
         adata,
@@ -187,7 +141,7 @@ def test_clip_and_count_clonotypes(adata_clonotype):
         clip_at=2,
     )
     npt.assert_equal(
-        adata.obs["new_col_clipped_count"],
+        params.adata.obs["new_col_clipped_count"],
         np.array([">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2),
     )
 
@@ -226,6 +180,8 @@ def test_clonal_expansion_summary(adata_clonotype):
             {"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}
         ).set_index("group"),
         check_names=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
     # test the `expanded_in` parameter.
@@ -243,6 +199,8 @@ def test_clonal_expansion_summary(adata_clonotype):
             {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
         ).set_index("group"),
         check_names=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
     # test the `summarize_by` parameter.
@@ -260,6 +218,8 @@ def test_clonal_expansion_summary(adata_clonotype):
             {"group": ["A", "B"], "1": [0, 2 / 4], ">= 2": [1.0, 2 / 4]}
         ).set_index("group"),
         check_names=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
     res_counts = ir.tl.summarize_clonal_expansion(
@@ -273,6 +233,8 @@ def test_clonal_expansion_summary(adata_clonotype):
         ).set_index("group"),
         check_names=False,
         check_dtype=False,
+        check_index_type=False,
+        check_categorical=False,
     )
 
 
@@ -352,20 +314,23 @@ def test_alpha_diversity(adata_diversity):
         inplace=True,
     )
 
+    mdata_modifier = "airr:" if isinstance(adata_diversity, MuData) else ""
     npt.assert_equal(
-        adata_diversity.obs["normalized_shannon_entropy_clonotype_"].values,
+        adata_diversity.obs[
+            mdata_modifier + "normalized_shannon_entropy_clonotype_"
+        ].values,
         np.array([0.0] * 4 + [1.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["D50_clonotype_"].values,
+        adata_diversity.obs[mdata_modifier + "D50_clonotype_"].values,
         np.array([100.0] * 4 + [50.0] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["observed_otus_clonotype_"].values,
+        adata_diversity.obs[mdata_modifier + "observed_otus_clonotype_"].values,
         np.array([1] * 4 + [4] * 4),
     )
     npt.assert_equal(
-        adata_diversity.obs["metric_func_clonotype_"].values,
+        adata_diversity.obs[mdata_modifier + "metric_func_clonotype_"].values,
         np.array([1] * 4 + [4] * 4),
     )
 
@@ -382,7 +347,7 @@ def test_group_abundance():
         ],
         columns=["cell_id", "group", "clone_id"],
     ).set_index("cell_id")
-    adata = AnnData(obs=obs)
+    adata = _make_adata(obs)
 
     # Check counts
     res = ir.tl.group_abundance(
@@ -426,17 +391,29 @@ def test_group_abundance():
 
 def test_spectratype(adata_tra):
     # Check numbers
+    adata_tra.obs["IR_VJ_1_junction_aa"] = ir.get.airr(adata_tra, "junction_aa", "VJ_1")
+
+    # Old API calls should raise a value error
+    with pytest.raises(ValueError):
+        res1 = ir.tl.spectratype(
+            adata_tra,
+            chain="IR_VJ_1_junction_aa",
+            target_col="sample",
+            fraction=False,
+        )
+    with pytest.raises(ValueError):
+        res2 = ir.tl.spectratype(
+            adata_tra,
+            chain=("IR_VJ_1_junction_aa",),
+            target_col="sample",
+            fraction=False,
+        )
+
     res1 = ir.tl.spectratype(
-        adata_tra,
-        groupby="IR_VJ_1_junction_aa",
-        target_col="sample",
-        fraction=False,
+        adata_tra, chain="VJ_1", target_col="sample", fraction=False
     )
     res2 = ir.tl.spectratype(
-        adata_tra,
-        groupby=("IR_VJ_1_junction_aa",),
-        target_col="sample",
-        fraction=False,
+        adata_tra, chain=["VJ_1"], target_col="sample", fraction=False
     )
     expected_count = pd.DataFrame.from_dict(
         {
@@ -466,7 +443,7 @@ def test_spectratype(adata_tra):
 
     # Check fractions
     res = ir.tl.spectratype(
-        adata_tra, groupby="IR_VJ_1_junction_aa", target_col="sample", fraction="sample"
+        adata_tra, chain="VJ_1", target_col="sample", fraction="sample"
     )
     expected_frac = pd.DataFrame.from_dict(
         {
@@ -558,20 +535,20 @@ def test_repertoire_overlap(adata_tra):
         (
             "approx",
             True,
-            {"0": -0.12942433525186176, "1": -0.2258918616903405, "2": 0.0},
-            {"0": 1.0, "1": 1.0, "2": 1.0},
+            {"0": -0.12697285625776547, "1": -0.22712493444992585},
+            {"0": 0.7373836252618164, "1": 0.7373836252618164},
         ),
         (
             "approx",
             False,
-            {"0": -0.12942433525186176, "1": -0.2258918616903405, "2": 0.0},
-            {"0": 0.6508188059730626, "1": 0.736430451770643, "2": 1.0},
+            {"0": -0.12697285625776547, "1": -0.22712493444992585},
+            {"0": 0.6417000000890838, "1": 0.7373836252618164},
         ),
         (
             "exact",
             False,
-            {"0": -0.1302531239444782, "1": -0.22422553993839395, "2": 0.0},
-            {"0": 0.9223, "1": 0.9481, "2": 1.0},
+            {"0": -0.1302531239444782, "1": -0.22422553993839395},
+            {"0": 0.8583, "1": 0.929},
         ),
     ],
 )
@@ -582,7 +559,10 @@ def test_clonotype_modularity(
     expected_scores,
     expected_pvalues,
 ):
-    sc.pp.neighbors(adata_clonotype_network)
+    if isinstance(adata_clonotype_network, MuData):
+        sc.pp.neighbors(adata_clonotype_network.mod["gex"])
+    else:
+        sc.pp.neighbors(adata_clonotype_network)
     scores, pvalues = ir.tl.clonotype_modularity(
         adata_clonotype_network,
         target_col="cc_aa_alignment",
@@ -590,6 +570,8 @@ def test_clonotype_modularity(
         fdr_correction=fdr_correction,
         inplace=False,
     )  # type: ignore
+    # print(scores)
+    # print(pvalues)
     assert scores == pytest.approx(expected_scores, abs=0.02)
     assert pvalues == pytest.approx(expected_pvalues, abs=0.02)
 

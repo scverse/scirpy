@@ -50,7 +50,7 @@ The case study from our paper is available `here <https://icbi-lab.github.io/sci
 
 Installation
 ^^^^^^^^^^^^
-You need to have Python 3.7 or newer installed on your system. If you don't have
+You need to have Python 3.8 or newer installed on your system. If you don't have
 Python installed, we recommend installing `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_.
 
 There are several alternative options to install scirpy:

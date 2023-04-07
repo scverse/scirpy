@@ -1,81 +1,26 @@
-import pytest
-import pandas as pd
-from anndata import AnnData
 import numpy as np
-import scanpy
-from scipy import sparse
-from scipy.sparse.csr import csr_matrix
-from scirpy.util import _is_symmetric
+import pandas as pd
+import pytest
+from anndata import AnnData
+from mudata import MuData
+
 import scirpy as ir
 
+from .util import _make_adata
 
-@pytest.fixture
-def adata_cdr3():
+
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_cdr3(request):
     obs = pd.DataFrame(
+        # fmt: off
         [
-            [
-                "cell1",
-                "AAA",
-                "AHA",
-                "KKY",
-                "KKK",
-                "GCGGCGGCG",
-                "TRA",
-                "TRB",
-                "TRA",
-                "TRB",
-            ],
-            [
-                "cell2",
-                "AHA",
-                "nan",
-                "KK",
-                "KKK",
-                "GCGAUGGCG",
-                "TRA",
-                "TRB",
-                "TRA",
-                "TRB",
-            ],
-            # This row has no chains, but "has_ir" = True. That can happen if
-            # the user does not filter the data.
-            [
-                "cell3",
-                "nan",
-                "nan",
-                "nan",
-                "nan",
-                "nan",
-                "nan",
-                "nan",
-                "nan",
-                "nan",
-            ],
-            [
-                "cell4",
-                "AAA",
-                "AAA",
-                "LLL",
-                "AAA",
-                "GCUGCUGCU",
-                "TRA",
-                "TRB",
-                "TRA",
-                "TRB",
-            ],
-            [
-                "cell5",
-                "AAA",
-                "nan",
-                "LLL",
-                "nan",
-                "nan",
-                "nan",
-                "TRB",
-                "TRA",
-                "nan",
-            ],
+            [ "cell1", "AAA", "AHA", "KKY", "KKK", "GCGGCGGCG", "TRA", "TRB", "TRA", "TRB"],
+            [ "cell2", "AHA", "nan", "KK", "KKK", "GCGAUGGCG", "TRA", "TRB", "TRA", "TRB"],
+            [ "cell3", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            [ "cell4", "AAA", "AAA", "LLL", "AAA", "GCUGCUGCU", "TRA", "TRB", "TRA", "TRB"],
+            [ "cell5", "AAA", "nan", "LLL", "nan", "nan", "nan", "TRB", "TRA", "nan"],
         ],
+        # fmt: on
         columns=[
             "cell_id",
             "IR_VJ_1_junction_aa",
@@ -89,15 +34,11 @@ def adata_cdr3():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
-    obs["has_ir"] = "True"
-    adata = AnnData(obs=obs)
-    adata._sanitize()
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_cdr3_2():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_cdr3_2(request):
     obs = pd.DataFrame(
         [
             ["c1", "AAA", "AAA", "KKK", "KKK"],
@@ -112,15 +53,14 @@ def adata_cdr3_2():
             "IR_VDJ_2_junction_aa",
         ],
     ).set_index("cell_id")
-    obs["has_ir"] = "True"
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    adata.uns["DB"] = {"name": "TESTDB"}
+    adata = _make_adata(obs, request.param)
+    uns_ = adata.mod["airr"].uns if isinstance(adata, MuData) else adata.uns
+    uns_["DB"] = {"name": "TESTDB"}
     return adata
 
 
-@pytest.fixture
-def adata_define_clonotypes():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_define_clonotypes(request):
     obs = pd.DataFrame(
         [
             ["cell1", "AAA", "ATA", "GGC", "CCC", "IGK", "IGH", "IGK", "IGH"],
@@ -141,14 +81,11 @@ def adata_define_clonotypes():
             "IR_VDJ_2_locus",
         ],
     ).set_index("cell_id")
-    obs["has_ir"] = "True"
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_define_clonotype_clusters():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_define_clonotype_clusters(request):
     obs = (
         pd.DataFrame(
             [
@@ -157,11 +94,13 @@ def adata_define_clonotype_clusters():
                 ["cell3", "BBB", "AHA", "KKY", "KKK", "TRA", "TRB", "TRA", "TRB"],
                 ["cell4", "BBB", "AHA", "BBB", "KKK", "TRA", "TRB", "TRA", "TRB"],
                 ["cell5", "AAA", "nan", "KKY", "KKK", "TRA", "nan", "TRA", "TRB"],
+                # cell5 has no receptor data whatsoever
                 ["cell5.noir", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
                 ["cell6", "AAA", "nan", "KKY", "CCC", "TRA", "nan", "TRA", "TRB"],
                 ["cell7", "AAA", "AHA", "ZZZ", "nan", "TRA", "TRB", "TRA", "nan"],
                 ["cell8", "AAA", "nan", "KKK", "nan", "TRA", "nan", "TRB", "nan"],
                 ["cell9", "nan", "nan", "KKK", "nan", "nan", "nan", "TRB", "nan"],
+                # while cell 10 has no CDR3 sequences, but v-calls and a receptor type.
                 ["cell10", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
             ],
             columns=[
@@ -180,17 +119,17 @@ def adata_define_clonotype_clusters():
         .join(
             pd.DataFrame(
                 [
-                    ["cell1", "A", "B", "A", "B", "TCR", "True"],
-                    ["cell2", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell3", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell4", "C", "C", "C", "C", "BCR", "True"],
-                    ["cell5", "A", "A", "A", "A", "BCR", "True"],
-                    ["cell5.noir", "A", "A", "A", "A", "nan", "False"],
-                    ["cell6", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell7", "A", "A", "A", "A", "TCR", "True"],
-                    ["cell8", "A", "A", "X", "A", "TCR", "True"],
-                    ["cell9", "A", "A", "A", "A", "BCR", "True"],
-                    ["cell10", "A", "A", "A", "A", "BCR", "True"],
+                    ["cell1", "A", "B", "A", "B", "TCR"],
+                    ["cell2", "A", "A", "A", "A", "TCR"],
+                    ["cell3", "A", "A", "A", "A", "TCR"],
+                    ["cell4", "C", "C", "C", "C", "BCR"],
+                    ["cell5", "A", "A", "A", "A", "BCR"],
+                    ["cell5.noir", "nan", "nan", "nan", "nan", "nan"],
+                    ["cell6", "A", "A", "A", "A", "TCR"],
+                    ["cell7", "A", "A", "A", "A", "TCR"],
+                    ["cell8", "A", "A", "X", "A", "TCR"],
+                    ["cell9", "A", "A", "A", "A", "BCR"],
+                    ["cell10", "A", "A", "A", "A", "BCR"],
                 ],
                 columns=[
                     "cell_id",
@@ -199,27 +138,26 @@ def adata_define_clonotype_clusters():
                     "IR_VDJ_1_v_call",
                     "IR_VDJ_2_v_call",
                     "receptor_type",
-                    "has_ir",
                 ],
             ).set_index("cell_id")
         )
     )
-    adata = AnnData(obs=obs, X=np.empty((obs.shape[0], 0)))
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)
 
 
 @pytest.fixture
 def adata_clonotype_modularity(adata_define_clonotypes):
-    adata = adata_define_clonotypes
+    data = adata_define_clonotypes
+    adata = data.mod["airr"] if isinstance(data, MuData) else data
     adata.obs["clone_id"] = ["0", "1", "2", "2", "nan"]
-    adata.obs["clonotype_modularity_x"] = [0, 0, 4, 4, np.nan]
-    adata.obs["clonotype_modularity_x_fdr"] = [1, 1, 1e-6, 1e-6, np.nan]
-    adata.uns["clonotype_modularity_x"] = {
+    # Since the results depend on both GEX and TCR data, the results are stored in the mudata object directly.
+    data.obs["clonotype_modularity_x"] = [0, 0, 4, 4, np.nan]
+    data.obs["clonotype_modularity_x_fdr"] = [1, 1, 1e-6, 1e-6, np.nan]
+    data.uns["clonotype_modularity_x"] = {
         "target_col": "clone_id",
         "fdr_correction": True,
     }
-    return adata
+    return data
 
 
 @pytest.fixture
@@ -230,7 +168,6 @@ def adata_conn(adata_define_clonotype_clusters):
     ir.tl.define_clonotype_clusters(
         adata, sequence="aa", metric="alignment", receptor_arms="any", dual_ir="any"
     )
-    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -239,8 +176,8 @@ def adata_define_clonotype_clusters_singletons():
     """Adata where every cell belongs to a singleton clonotype.
     Required for a regression test for #236.
     """
-    adata = AnnData(
-        obs=pd.DataFrame()
+    obs = (
+        pd.DataFrame()
         .assign(
             cell_id=["cell1", "cell2", "cell3", "cell4"],
             IR_VJ_1_junction_aa=["AAA", "BBB", "CCC", "DDD"],
@@ -252,12 +189,11 @@ def adata_define_clonotype_clusters_singletons():
             IR_VJ_2_v_call=["A", "B", "C", "D"],
             IR_VDJ_2_v_call=["A", "B", "C", "D"],
             receptor_type=["TCR", "TCR", "TCR", "TCR"],
-            has_ir=["True", "True", "True", "True"],
         )
         .set_index("cell_id")
     )
+    adata = _make_adata(obs)
     ir.pp.ir_dist(adata, metric="identity", sequence="aa")
-    adata.uns["scirpy_version"] = "0.7"
     return adata
 
 
@@ -268,26 +204,45 @@ def adata_clonotype_network(adata_conn):
     adata derived from adata_conn that also contains some gene expression data
     for plotting.
     """
-    adata = AnnData(
-        var=pd.DataFrame().assign(gene_symbol=["CD8A", "CD4"]).set_index("gene_symbol"),
-        X=np.array(
-            [
-                [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
-                [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
-            ]
-        ).T,
-        obs=adata_conn.obs,
-        uns=adata_conn.uns,
-        obsm=adata_conn.obsm,
-    )
-    adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
-    ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    if isinstance(adata_conn, AnnData):
+        adata = AnnData(
+            var=pd.DataFrame()
+            .assign(gene_symbol=["CD8A", "CD4"])
+            .set_index("gene_symbol"),
+            X=np.array(
+                [
+                    [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
+                    [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
+                ]
+            ).T,
+            obs=adata_conn.obs,
+            uns=adata_conn.uns,
+            obsm=adata_conn.obsm,
+        )
+        adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
+        ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
+        return adata
+    else:
+        adata_gex = AnnData(
+            var=pd.DataFrame()
+            .assign(gene_symbol=["CD8A", "CD4"])
+            .set_index("gene_symbol"),
+            X=np.array(
+                [
+                    [3, 4, 0, 0, 3, 3, 1, 0, 2, 2, 0],
+                    [0, 0, 1, 1, 2, 0, 0, 0, 1, 0, 0],
+                ]
+            ).T,
+            obs=adata_conn.obs.loc[:, []],
+        )
+        mdata = MuData({"gex": adata_gex, "airr": adata_conn.mod["airr"]})
+        mdata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
+        ir.tl.clonotype_network(mdata, sequence="aa", metric="alignment")
+        return mdata
 
 
-@pytest.fixture
-def adata_tra():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_tra(request):
     obs = {
         "AAGGTTCCACCCAGTG-1": {
             "IR_VJ_1_junction_aa_length": 15.0,
@@ -417,13 +372,11 @@ def adata_tra():
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_vdj():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_vdj(request):
     obs = {
         "LT1_ACGGCCATCCGAGCCA-2-24": {
             "IR_VJ_1_j_call": "TRAJ42",
@@ -577,19 +530,17 @@ def adata_vdj():
         },
     }
     obs = pd.DataFrame.from_dict(obs, orient="index")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_clonotype():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_clonotype(request):
     obs = pd.DataFrame.from_records(
         [
             ["cell1", "A", "ct1", "cc1"],
             ["cell2", "A", "ct1", "cc1"],
             ["cell3", "A", "ct1", "cc1"],
-            ["cell3", "A", "NaN", "NaN"],
+            ["cell3.1", "A", np.nan, np.nan],
             ["cell3.2", "A", np.nan, np.nan],
             ["cell4", "B", "ct1", "cc1"],
             ["cell5", "B", "ct2", "cc2"],
@@ -599,19 +550,17 @@ def adata_clonotype():
         ],
         columns=["cell_id", "group", "clone_id", "clonotype_cluster"],
     ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)
 
 
-@pytest.fixture
-def adata_diversity():
+@pytest.fixture(params=[False, True], ids=["AnnData", "MuData"])
+def adata_diversity(request):
     obs = pd.DataFrame.from_records(
         [
             ["cell1", "A", "ct1"],
             ["cell2", "A", "ct1"],
             ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
+            ["cell3.1", "A", "NaN"],
             ["cell4", "B", "ct1"],
             ["cell5", "B", "ct2"],
             ["cell6", "B", "ct3"],
@@ -619,6 +568,4 @@ def adata_diversity():
         ],
         columns=["cell_id", "group", "clonotype_"],
     ).set_index("cell_id")
-    adata = AnnData(obs=obs)
-    adata.uns["scirpy_version"] = "0.7"
-    return adata
+    return _make_adata(obs, request.param)

@@ -1,3 +1,5 @@
+.. _api:
+
 API
 ===
 
@@ -20,10 +22,17 @@ Input/Output: `io`
 .. currentmodule:: scirpy
 
 .. note::
-   In scirpy v0.7.0 the way VDJ data is stored in `adata.obs` has changed to
-   be fully compliant with the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__
-   schema. Please use :func:`~scirpy.io.upgrade_schema` to make `AnnData` objects
-   from previous scirpy versions compatible with the most recent scirpy workflow.
+    **scirpy's data structure has been updated in v0.13.0.**
+    
+    Previously, receptor data was expanded into columns of `adata.obs`, now they are stored as an :term:`awkward array` in `adata.obsm["airr"]`. 
+    Moreover, we now use :class:`~mudata.MuData` to handle paired transcriptomics and :term:`AIRR` data. 
+    
+    :class:`~anndata.AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
+    
+    Please check out
+    
+     * the `release notes <https://github.com/scverse/scirpy/releases/tag/v0.13.0>`_ for details about the changes and
+     * the documentation about :ref:`Scirpy's data structure <data-structure>`
 
    .. autosummary::
       :toctree: ./generated
@@ -37,6 +46,7 @@ formats.
 .. autosummary::
    :toctree: ./generated
 
+   io.read_h5mu
    io.read_h5ad
    io.read_10x_vdj
    io.read_tracer
@@ -75,10 +85,25 @@ Preprocessing: `pp`
 .. autosummary::
    :toctree: ./generated
 
-   pp.merge_with_ir
-   pp.merge_airr_chains
+   pp.index_chains
+   pp.merge_airr
    pp.ir_dist
 
+Get: `get`
+----------
+
+The `get` module allows retrieving :term:`AIRR` data stored in `adata.obsm["airr"]` as a per-cell :class:`~pandas.DataFrame`
+or :class:`~pandas.Series`. 
+
+.. module:: scirpy.get
+.. currentmodule:: scirpy
+
+.. autosummary::
+   :toctree: ./generated
+
+   get.airr
+   get.obs_context
+   get.airr_context
 
 Tools: `tl`
 -----------
@@ -211,6 +236,9 @@ Datasets: `datasets`
 .. module:: scirpy.datasets
 .. currentmodule:: scirpy
 
+Example datasets
+^^^^^^^^^^^^^^^^
+
 .. autosummary::
    :toctree: ./generated
 
@@ -241,6 +269,7 @@ Utility functions: `util`
 .. autosummary::
    :toctree: ./generated
 
+   util.DataHandler
    util.graph.layout_components
    util.graph.layout_fr_size_aware
    util.graph.igraph_from_sparse_matrix

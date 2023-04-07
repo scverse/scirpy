@@ -1,13 +1,13 @@
-from anndata import AnnData
-import matplotlib.pyplot as plt
-from typing import Callable, Union, Tuple, Sequence
-import numpy as np
-from ..util import _normalize_counts, _is_na
-from .styling import _init_ax
-from ..io import AirrCell
-from itertools import islice
 from copy import deepcopy
-from ..io._util import _check_upgrade_schema
+from typing import Callable, List, Sequence, Tuple, Union, cast
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from ..get import airr as get_airr
+from ..io import AirrCell
+from ..util import DataHandler, _is_na, _normalize_counts
+from .styling import _init_ax
 
 
 def _sanitize_gene_name(gene_text):
@@ -17,16 +17,16 @@ def _sanitize_gene_name(gene_text):
     return gene_text
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def vdj_usage(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     *,
     vdj_cols: Sequence = (
-        "IR_VJ_1_v_call",
-        "IR_VJ_1_j_call",
-        "IR_VDJ_1_v_call",
-        "IR_VDJ_1_d_call",
-        "IR_VDJ_1_j_call",
+        "VJ_1_v_call",
+        "VJ_1_j_call",
+        "VDJ_1_v_call",
+        "VDJ_1_d_call",
+        "VDJ_1_j_call",
     ),
     normalize_to: Union[bool, str, Sequence[float]] = False,
     ax: Union[plt.Axes, None] = None,
@@ -37,15 +37,18 @@ def vdj_usage(
     draw_bars: bool = True,
     full_combination: bool = True,
     fig_kws: Union[dict, None] = None,
+    airr_mod: str = "airr",
+    airr_key: str = "airr",
+    chain_idx_key: str = "chain_indices",
 ) -> plt.Axes:
-    """Creates a ribbon plot of the most abundant VDJ combinations.
+    """\
+    Creates a ribbon plot of the most abundant VDJ combinations.
 
     Currently works with primary alpha and beta chains only.
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     vdj_cols
         Columns containing gene segment information.
         Overwrite default only if you know what you are doing!
@@ -77,19 +80,39 @@ def vdj_usage(
     fig_kws
         Dictionary of keyword args that will be passed to the matplotlib
         figure (e.g. `figsize`)
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
 
     Returns
     -------
     Axes object.
     """
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
+    vdj_cols = [x.replace("IR_", "") for x in vdj_cols]
+    chains, airr_variables = zip(
+        *[
+            (f"{arm}_{chain}", airr_variable)
+            for arm, chain, airr_variable in map(
+                lambda x: x.split("_", maxsplit=2), vdj_cols
+            )
+        ]
+    )
 
-    vdj_cols = list(vdj_cols)
-
-    df = adata.obs.assign(
-        cell_weights=_normalize_counts(adata.obs, normalize_to)
+    tmp_obs = (
+        params.get_obs([normalize_to]).reindex(params.adata.obs_names)
+        if isinstance(normalize_to, str)
+        else params.adata.obs
+    )
+    df = get_airr(params, airr_variables, chains).assign(
+        # make sure this also works with mudata columns:
+        cell_weights=_normalize_counts(tmp_obs, normalize_to)
         if isinstance(normalize_to, (bool, str))
         else normalize_to
     )
+    for col in df.columns:
+        if col.startswith("VJ") or col.startswith("VDJ"):
+            df[col] = df[col].astype(str)
 
     # Init figure
     default_figargs = {"figsize": (7, 4)}
@@ -250,9 +273,9 @@ def vdj_usage(
 
 
 def _gapped_ribbons(
-    data: list,
+    data: List,
     *,
-    ax: Union[plt.axes, list, None] = None,
+    ax: Union[plt.Axes, List, None] = None,
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
@@ -307,6 +330,8 @@ def _gapped_ribbons(
         if isinstance(ax, list):
             ax = ax[0]
 
+    ax = cast(plt.Axes, ax)
+
     spread = 10
     xw = gapfreq - gapwidth
     slope = xw * 0.8
@@ -326,8 +351,8 @@ def _gapped_ribbons(
         y1 += np.zeros(10).tolist()
         y2 += np.zeros(10).tolist()
     if ribcol is None:
-        ax.fill_between(x, y1, y2, alpha=0.6)
+        ax.fill_between(x, y1, y2, alpha=0.6)  # type: ignore
     else:
-        ax.fill_between(x, y1, y2, color=ribcol, alpha=0.6)
+        ax.fill_between(x, y1, y2, color=ribcol, alpha=0.6)  # type: ignore
 
     return ax

@@ -1,20 +1,21 @@
+from typing import Sequence, Union
+
 import matplotlib.pyplot as plt
-from anndata import AnnData
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.spatial import distance as sc_distance
 from scipy.cluster import hierarchy as sc_hierarchy
-from typing import Union, Sequence
+from scipy.spatial import distance as sc_distance
+
 from .. import tl
-from .styling import _init_ax, _get_colors
+from ..util import DataHandler
 from .base import ol_scatter
-from ..io._util import _check_upgrade_schema
+from .styling import _get_colors
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def repertoire_overlap(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     groupby: str,
     *,
     target_col: str = "clone_id",
@@ -25,9 +26,11 @@ def repertoire_overlap(
     overlap_threshold: Union[None, float] = None,
     fraction: Union[None, str, bool] = None,
     added_key: str = "repertoire_overlap",
+    airr_mod: str = "airr",
     **kwargs,
-) -> plt.Axes:
-    """Visualizes overlap betwen a pair of samples on a scatter plot or
+) -> Union[sns.matrix.ClusterGrid, plt.Axes]:
+    """\
+    Visualizes overlap betwen a pair of samples on a scatter plot or
     all samples on a heatmap or draws a dendrogram of samples only.
 
     .. warning::
@@ -35,8 +38,7 @@ def repertoire_overlap(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     groupby
         Column with group labels (e.g. samples, tissue source, diagnosis, etc).
     target_col
@@ -60,91 +62,81 @@ def repertoire_overlap(
         to all cells.
     added_key
         If the tools has already been run, the results are added to `uns` under this key.
+    {airr_mod}
     **kwargs
-        Additional arguments passed to the base plotting function.
+        Additional arguments passed to the base plotting function (scatter or seaborn.clustermap, repsectively).
 
     Returns
     -------
     Axes object
     """
+    if dendro_only is True:
+        raise NotImplementedError("This functionality was removed in scirpy v0.13.")
 
-    if added_key not in adata.uns:
-        tl.repertoire_overlap(
-            adata,
-            groupby=groupby,
-            target_col=target_col,
-            overlap_measure=overlap_measure,
-            overlap_threshold=overlap_threshold,
-            fraction=fraction,
-            added_key=added_key,
-        )
-    df = adata.uns[added_key]["weighted"]
+    params = DataHandler(adata, airr_mod)
+    tl.repertoire_overlap(
+        adata,
+        groupby=groupby,
+        target_col=target_col,
+        overlap_measure=overlap_measure,
+        overlap_threshold=overlap_threshold,
+        fraction=fraction,
+        added_key=added_key,
+    )
+    df = params.adata.uns[added_key]["weighted"]
 
     if pair_to_plot is None:
-        linkage = adata.uns[added_key]["linkage"]
+        linkage = params.adata.uns[added_key]["linkage"]
 
+        color_dicts = {}
+        row_colors = pd.DataFrame(index=df.index)
         if heatmap_cats is not None:
-            clust_colors, leg_colors = [], []
             for lbl in heatmap_cats:
-                labels = (
-                    adata.obs.groupby([groupby, lbl], observed=True)
-                    .agg("size")
-                    .reset_index()
-                )
-                colordict = _get_colors(adata, lbl)
-                label_levels = labels[lbl].unique()
-                for e in label_levels:
-                    leg_colors.append((lbl + ": " + e, colordict[e]))
-                labels[lbl] = labels[lbl].astype(str)
-                labels[lbl] = labels.loc[:, lbl].map(colordict)
-                labels = labels.loc[:, [groupby, lbl]].set_index(groupby)
-                clust_colors.append(labels[lbl])
-                colordict = labels.to_dict()
-                colordict = colordict[lbl]
+                try:
+                    labels = (
+                        params.get_obs([groupby, lbl])
+                        .drop_duplicates()
+                        .set_index(groupby)
+                        .reindex(df.index)
+                    )
+                except ValueError as e:
+                    if "duplicate labels" in str(e):
+                        raise ValueError(
+                            "Cannot color by category that is not unique for the categories in `groupby`."
+                        )
+                    else:
+                        raise
 
-        if dendro_only:
-            ax = _init_ax()
-            sc_hierarchy.dendrogram(linkage, labels=df.index, ax=ax)
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["bottom"].set_visible(False)
-            ax.spines["left"].set_visible(False)
-            if heatmap_cats is not None:
-                for lbl in ax.get_xticklabels():
-                    lbl.set_color(colordict[lbl.get_text()])
-            ax.get_yaxis().set_ticks([])
+                # TODO refactor get_colors
+                color_dicts[lbl] = _get_colors(params, lbl)
+                for label in labels[lbl]:
+                    row_colors[lbl] = labels[lbl].map(color_dicts[lbl])
+
+        distM = params.adata.uns[added_key]["distance"]
+        distM = sc_distance.squareform(distM)
+        np.fill_diagonal(distM, np.nan)
+        distM = pd.DataFrame(distM, index=df.index, columns=df.index)
+        dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
+        distM = distM.iloc[dd["leaves"], :]
+        if heatmap_cats is None:
+            ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
         else:
-            distM = adata.uns[added_key]["distance"]
-            distM = sc_distance.squareform(distM)
-            np.fill_diagonal(distM, 1)
-            scaling_factor = distM.min()
-            np.fill_diagonal(distM, scaling_factor)
-            distM = pd.DataFrame(distM, index=df.index, columns=df.index)
-            dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
-            distM = distM.iloc[dd["leaves"], :]
-            if heatmap_cats is None:
-                ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
-            else:
-                _clust_colors, annotation_labels = [], []
-                for cl in clust_colors:
-                    _clust_colors.append(cl.loc[distM.index.values])
-                    annotation_labels.append(cl.name)
-                clust_colors = _clust_colors
-                ax = sns.clustermap(
-                    1 - distM,
-                    col_linkage=linkage,
-                    row_cluster=False,
-                    row_colors=clust_colors,
-                )
-                for i, a in enumerate(annotation_labels):
-                    ax.ax_row_colors.text(i + 0.3, -0.4, a, rotation=90)
-                lax = ax.ax_row_dendrogram
-                for e, c in leg_colors:
-                    lax.bar(0, 0, color=c, label=e, linewidth=0)
-                lax.legend(loc="lower left")
-            b, t = ax.ax_row_dendrogram.get_ylim()
-            l, r = ax.ax_row_dendrogram.get_xlim()
-            ax.ax_row_dendrogram.text(l, 0.9 * t, f"1-distance ({overlap_measure})")
+            ax = sns.clustermap(
+                1 - distM,
+                col_linkage=linkage,
+                row_cluster=False,
+                row_colors=row_colors,
+                **kwargs,
+            )
+            lax = ax.ax_row_dendrogram
+            for column, tmp_color_dict in color_dicts.items():
+                for cat, color in tmp_color_dict.items():
+                    lax.bar(0, 0, color=color, label=f"{column}: {cat}", linewidth=0)
+            lax.legend(loc="lower right")
+        b, t = ax.ax_row_dendrogram.get_ylim()
+        l, r = ax.ax_row_dendrogram.get_xlim()
+        ax.ax_row_dendrogram.text(l, 0.9 * t, f"1-distance ({overlap_measure})")
+
     else:
         invalid_pair_warning = (
             "Did you supply two valid "

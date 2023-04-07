@@ -1,15 +1,50 @@
+from typing import Callable, Optional, Union, cast
+
 import numpy as np
-from ..util import _is_na
-from anndata import AnnData
 import pandas as pd
-from typing import Union, Callable, Optional
-from ..io._util import _check_upgrade_schema
-from scanpy import logging
+
+from ..util import DataHandler, _is_na
 
 
-@_check_upgrade_schema()
+def _shannon_entropy(counts: np.ndarray):
+    """Normalized shannon entropy according to
+    https://math.stackexchange.com/a/945172
+    """
+    freqs = counts / np.sum(counts)
+    np.testing.assert_almost_equal(np.sum(freqs), 1)
+
+    if len(freqs) == 1:
+        # the formula below is not defined for n==1
+        return 0
+    else:
+        return -np.sum((freqs * np.log(freqs)) / np.log(len(freqs)))
+
+
+def _dxx(counts: np.ndarray, *, percentage: int):
+    """
+    D50/DXX according to https://patents.google.com/patent/WO2012097374A1/en
+
+    Parameters
+    ----------
+    percentage
+        Percentage of J
+    """
+    freqs = counts / np.sum(counts)
+    np.testing.assert_almost_equal(np.sum(freqs), 1)
+
+    freqs = np.sort(freqs)[::-1]
+    prop, i = 0, 0
+
+    while prop < (percentage / 100):
+        prop += freqs[i]
+        i += 1
+
+    return i / len(freqs) * 100
+
+
+@DataHandler.inject_param_docs()
 def alpha_diversity(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     groupby: str,
     *,
     target_col: str = "clone_id",
@@ -18,9 +53,11 @@ def alpha_diversity(
     ] = "normalized_shannon_entropy",
     inplace: bool = True,
     key_added: Union[None, str] = None,
+    airr_mod: str = "airr",
     **kwargs,
 ) -> Optional[pd.DataFrame]:
-    """Computes the alpha diversity of clonotypes within a group.
+    """\
+    Computes the alpha diversity of clonotypes within a group.
 
     Use a metric out of  `normalized_shannon_entropy`, `D50`, `DXX`, and `scikit-bio’s alpha diversity metrics
     <http://scikit-bio.org/docs/latest/generated/skbio.diversity.alpha.html#module-skbio.diversity.alpha>`__.
@@ -50,8 +87,7 @@ def alpha_diversity(
 
     Parameters
     ----------
-    adata
-        Annotated data matrix
+    {adata}
     groupby
         Column of `obs` by which the grouping will be performed.
     target_col
@@ -59,12 +95,10 @@ def alpha_diversity(
     metric
         A metric used for diversity estimation out of `normalized_shannon_entropy`,
         `D50`, `DXX`, any of scikit-bio’s alpha diversity metrics, or a custom function.
-    inplace
-        If `True`, add a column to `obs`. Otherwise return a DataFrame
-        with the alpha diversities.
-    key_added
-        Key under which the alpha diversity will be stored if inplace is `True`.
-        Defaults to `alpha_diversity_{target_col}`.
+    {inplace} 
+    {key_added}
+        Defaults to `alpha_diversity_{{target_col}}`.
+    {airr_mod}
     **kwargs
         Additional arguments passed to the metric function.
 
@@ -73,42 +107,9 @@ def alpha_diversity(
     Depending on the value of inplace returns a DataFrame with the alpha diversity
     for each group or adds a column to `adata.obs`.
     """
-
-    def _shannon_entropy(counts):
-        """Normalized shannon entropy according to
-        https://math.stackexchange.com/a/945172
-        """
-        freqs = counts / np.sum(counts)
-        np.testing.assert_almost_equal(np.sum(freqs), 1)
-
-        if len(freqs) == 1:
-            # the formula below is not defined for n==1
-            return 0
-        else:
-            return -np.sum((freqs * np.log(freqs)) / np.log(len(freqs)))
-
-    def _dxx(counts, *, percentage):
-        """
-        D50/DXX according to https://patents.google.com/patent/WO2012097374A1/en
-
-        Parameters
-        ----------
-        percentage
-            Percentage of J
-        """
-        freqs = counts / np.sum(counts)
-        np.testing.assert_almost_equal(np.sum(freqs), 1)
-
-        freqs = np.sort(freqs)[::-1]
-        prop, i = 0, 0
-
-        while prop < (percentage / 100):
-            prop += freqs[i]
-            i += 1
-
-        return i / len(freqs) * 100
-
-    ir_obs = adata.obs.loc[~_is_na(adata.obs[target_col]), :]
+    params = DataHandler(adata, airr_mod)
+    ir_obs = params.get_obs([target_col, groupby])
+    ir_obs = ir_obs.loc[~_is_na(ir_obs[target_col]), :]
     clono_counts = (
         ir_obs.groupby([groupby, target_col], observed=True)
         .size()
@@ -116,8 +117,13 @@ def alpha_diversity(
     )
 
     diversity = dict()
-    for k in sorted(ir_obs[groupby].unique()):
-        tmp_counts = clono_counts.loc[clono_counts[groupby] == k, "count"].values
+    for k in sorted(ir_obs[groupby].dropna().unique()):
+        tmp_counts = cast(
+            np.ndarray,
+            cast(
+                pd.Series, clono_counts.loc[clono_counts[groupby] == k, "count"]
+            ).values,
+        )
 
         if isinstance(metric, str):
             if metric == "normalized_shannon_entropy":
@@ -126,7 +132,9 @@ def alpha_diversity(
                 diversity[k] = _dxx(tmp_counts, percentage=50)
             elif metric == "DXX":
                 if "percentage" in kwargs:
-                    diversity[k] = _dxx(tmp_counts, percentage=kwargs.get("percentage"))
+                    diversity[k] = _dxx(
+                        tmp_counts, percentage=cast(int, kwargs.get("percentage"))
+                    )
                 else:
                     raise ValueError(
                         "DXX requires the `percentage` keyword argument, which can "
@@ -155,7 +163,6 @@ def alpha_diversity(
     if inplace:
         metric_name = metric if isinstance(metric, str) else metric.__name__
         key_added = f"{metric_name}_{target_col}" if key_added is None else key_added
-        logging.info(f"Alpha diversity saved to `obs['{key_added}']")
-        adata.obs[key_added] = adata.obs[groupby].map(diversity)
+        params.set_obs(key_added, params.adata.obs[groupby].map(diversity))
     else:
         return pd.DataFrame().from_dict(diversity, orient="index")

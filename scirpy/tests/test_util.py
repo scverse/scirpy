@@ -1,28 +1,127 @@
+import warnings
+from itertools import combinations
+from typing import cast
+
+import igraph as ig
+import numpy as np
+import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
+import pytest
+import scipy.sparse
+from anndata import AnnData, read_h5ad
+from mudata import MuData
+
+import scirpy as ir
 from scirpy.util import (
-    _is_na,
+    DataHandler,
     _is_false,
+    _is_na,
+    _is_symmetric,
     _is_true,
     _normalize_counts,
-    _is_symmetric,
     _translate_dna_to_protein,
 )
 from scirpy.util._negative_binomial import fit_nbinom
 from scirpy.util.graph import (
-    igraph_from_sparse_matrix,
-    layout_components,
     _distance_to_connectivity,
     _get_sparse_from_igraph,
+    igraph_from_sparse_matrix,
+    layout_components,
 )
-from itertools import combinations
-import igraph as ig
-import numpy as np
-import pandas as pd
-import numpy.testing as npt
-import pytest
-import scipy.sparse
-from .fixtures import adata_tra
 
-import warnings
+from . import TESTDATA
+from .fixtures import adata_tra  # NOQA
+
+
+def test_data_handler_upgrade_schema_pre_scirpy_v0_7():
+    """Test that running a function on very old (pre v0.7) schema
+    raises an error"""
+    adata = read_h5ad(TESTDATA / "wu2020_200_v0_6.h5ad")
+    with pytest.raises(ValueError):
+        DataHandler(adata, "airr", "airr")
+
+    # Trying to run check upgrade schema raises an error
+    with pytest.raises(ValueError):
+        ir.io.upgrade_schema(adata)
+
+
+def test_data_handler_upgrade_schema_pre_scirpy_v0_12():
+    """Test that running a functon on an old anndata object raises an error
+    Also test that the function can successfully be ran after calling `upgrade_schema`.
+    """
+    adata = read_h5ad(TESTDATA / "wu2020_200_v0_11.h5ad")
+    with pytest.raises(ValueError):
+        params = DataHandler(adata, "airr", "airr")
+
+    ir.io.upgrade_schema(adata)
+    params = DataHandler(adata, "airr", "airr")
+    assert params.adata is adata
+
+
+def test_data_handler_no_airr():
+    """Test that a key error is raised if DataHandler is executed
+    on an anndata without AirrData"""
+    adata = AnnData(np.ones((10, 10)))
+    with pytest.raises(KeyError, match=r"No AIRR data found.*"):
+        DataHandler(adata, "airr", "airr")
+
+
+def test_data_handler_get_obs():
+    adata_gex = AnnData(
+        obs=pd.DataFrame(index=["c1", "c2", "c3"]).assign(both=[11, 12, 13])
+    )
+    adata_airr = AnnData(
+        obs=pd.DataFrame(index=["c3", "c4", "c5"]).assign(both=[14, 15, 16])
+    )
+    mdata = MuData({"gex": adata_gex, "airr": adata_airr})
+    mdata["airr"].obs["airr_only"] = [3, 4, 5]
+
+    mdata.obs["mudata_only"] = [1, 2, 3, 4, 5]
+    mdata.obs["both"] = [np.nan, np.nan, 114, 115, 116]
+
+    params = DataHandler(mdata, "airr")
+    # can retrieve value from mudata
+    npt.assert_equal(params.get_obs("mudata_only").values, np.array([1, 2, 3, 4, 5]))
+    # Mudata takes precedence
+    npt.assert_equal(
+        params.get_obs("both").values, np.array([np.nan, np.nan, 114, 115, 116])
+    )
+    # can retrieve value from anndata
+    npt.assert_equal(params.get_obs("airr_only").values, np.array([3, 4, 5]))
+
+    # generates dataframe if sequence is specified
+    pdt.assert_frame_equal(
+        params.get_obs(["mudata_only"]),
+        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(
+            mudata_only=[1, 2, 3, 4, 5]
+        ),
+    )
+
+    # multiple columns are concatenated into a dataframe
+    pdt.assert_frame_equal(
+        params.get_obs(["mudata_only", "both", "airr_only"]),
+        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(
+            mudata_only=[1, 2, 3, 4, 5],
+            both=[np.nan, np.nan, 114, 115, 116],
+            airr_only=[np.nan, np.nan, 3, 4, 5],
+        ),
+    )
+
+    # only retreiving from the airr modality results in fewer rows
+    pdt.assert_frame_equal(
+        params.get_obs(["airr_only"]),
+        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(
+            airr_only=[np.nan, np.nan, 3, 4, 5]
+        ),
+    )
+
+
+def test_data_handler_initalize_from_object(adata_tra):
+    dh = DataHandler(adata_tra, "airr", "airr")
+    dh2 = DataHandler(dh)
+    assert dh._data is dh2._data is adata_tra
+    assert dh.adata is dh2.adata
 
 
 def test_is_symmetric():
@@ -204,9 +303,10 @@ def test_layout_components(arrange_boxes, component_layout):
 
 def test_translate_dna_to_protein(adata_tra):
     for nt, aa in zip(
-        adata_tra.obs["IR_VJ_1_junction"], adata_tra.obs["IR_VJ_1_junction_aa"]
+        ir.get.airr(adata_tra, "junction", "VJ_1"),
+        ir.get.airr(adata_tra, "junction_aa", "VJ_1"),
     ):
-        assert _translate_dna_to_protein(nt) == aa
+        assert _translate_dna_to_protein(cast(str, nt)) == aa
 
 
 @pytest.mark.parametrize(

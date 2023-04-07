@@ -1,10 +1,5 @@
 from packaging import version
 
-try:
-    pass
-except ImportError:
-    pass
-
 
 def pkg_metadata(package):
     from importlib.metadata import metadata as m

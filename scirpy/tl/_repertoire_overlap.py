@@ -1,26 +1,29 @@
-from anndata import AnnData
-from typing import Union, Tuple
-from scipy.spatial import distance as sc_distance
-from scipy.cluster import hierarchy as sc_hierarchy
-import pandas as pd
+from locale import normalize
+from typing import Tuple, Union
+
 import numpy as np
-from ..util import _is_na, _normalize_counts
-from ..io._util import _check_upgrade_schema
+import pandas as pd
+from scipy.cluster import hierarchy as sc_hierarchy
+from scipy.spatial import distance as sc_distance
+
+from ..util import DataHandler, _is_na, _normalize_counts
 
 
-@_check_upgrade_schema()
+@DataHandler.inject_param_docs()
 def repertoire_overlap(
-    adata: AnnData,
+    adata: DataHandler.TYPE,
     groupby: str,
     *,
     target_col: str = "clone_id",
     overlap_measure: str = "jaccard",
     overlap_threshold: Union[None, float] = None,
-    fraction: Union[None, str, bool] = None,
+    fraction: Union[str, bool] = False,
     inplace: bool = True,
     added_key: str = "repertoire_overlap",
+    airr_mod: str = "airr",
 ) -> Union[None, Tuple[pd.DataFrame, np.ndarray, np.ndarray]]:
-    """Compute distance between cell groups based on clonotype overlap.
+    """\
+    Compute distance between cell groups based on clonotype overlap.
 
     Adds parwise overlaps, distance matrix and linkage to `uns`.
 
@@ -30,8 +33,7 @@ def repertoire_overlap(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     groupby
         Column with group labels (e.g. samples, tussue source, diagnosis, etc).
     target_col
@@ -45,22 +47,27 @@ def repertoire_overlap(
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column
         name can be provided according to that the values will be normalized or an iterable
-        providing cell weights directly. Setting it to `False` or `None` assigns equal weight
+        providing cell weights directly. Setting it to `False`, assigns equal weight
         to all cells.
     inplace
         Whether results should be added to `uns` or returned directly.
     added_key
         Results will be added to `uns` under this key.
+    {airr_mod}
 
 
     Returns
     -------
     A DataFrame used by the pairwise scatterplot, distance matrix and linkage.
     """
+    params = DataHandler(adata, airr_mod)
+    obs = params.get_obs([groupby, target_col])
+    if isinstance(normalize, str):
+        obs[normalize] = params.get_obs(normalize)
 
     # Remove NA rows
-    na_mask = _is_na(adata.obs[groupby]) | _is_na(adata.obs[target_col])
-    df = adata.obs.loc[~na_mask, :].copy()
+    na_mask = _is_na(obs[groupby]) | _is_na(obs[target_col])
+    df = obs.loc[~na_mask, :].copy()
 
     # Normalize to fractions
     df["cell_weights"] = (
@@ -86,12 +93,12 @@ def repertoire_overlap(
     pr_df = df.applymap(lambda x: 1 if x > overlap_threshold else 0)
 
     # Compute distances and linkage
-    distM = sc_distance.pdist(pr_df, overlap_measure)
+    distM = sc_distance.pdist(pr_df, overlap_measure)  # type:ignore
     linkage = sc_hierarchy.linkage(distM)
 
     if inplace:
         # Store calculated data
-        adata.uns[added_key] = {
+        params.adata.uns[added_key] = {
             "weighted": df,
             "distance": distM,
             "linkage": linkage,
