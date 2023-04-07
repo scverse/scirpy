@@ -1,0 +1,8 @@
+:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/util/__init__.py#L166-L190
+
+scirpy.util.DataHandler.set\_obs
+================================
+
+.. currentmodule:: scirpy.util
+
+.. automethod:: DataHandler.set_obs

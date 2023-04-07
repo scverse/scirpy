@@ -1,0 +1,8 @@
+:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/util/__init__.py#L308-L327
+
+scirpy.util.DataHandler.check\_schema\_pre\_v0\_7
+=================================================
+
+.. currentmodule:: scirpy.util
+
+.. automethod:: DataHandler.check_schema_pre_v0_7

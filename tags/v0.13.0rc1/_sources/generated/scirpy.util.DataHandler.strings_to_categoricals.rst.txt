@@ -1,0 +1,8 @@
+:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/util/__init__.py#L244-L249
+
+scirpy.util.DataHandler.strings\_to\_categoricals
+=================================================
+
+.. currentmodule:: scirpy.util
+
+.. automethod:: DataHandler.strings_to_categoricals

@@ -1,0 +1,8 @@
+:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/util/__init__.py#L251-L306
+
+scirpy.util.DataHandler.inject\_param\_docs
+===========================================
+
+.. currentmodule:: scirpy.util
+
+.. automethod:: DataHandler.inject_param_docs

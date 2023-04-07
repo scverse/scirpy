@@ -1,0 +1,8 @@
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\mudata\_core\io.py#L341-L400
+
+scirpy.io.read\_h5mu
+====================
+
+.. currentmodule:: scirpy.io
+
+.. autofunction:: read_h5mu
