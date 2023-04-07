@@ -16,7 +16,7 @@ build:
 
 requirements:
   host:
-    - python >=3.7
+    - python >=3.8
     - pip!=22.1 # https://github.com/pypa/pip/issues/11110
     - flit
     - setuptools_scm
@@ -24,9 +24,11 @@ requirements:
     - importlib_metadata
 
   run:
-    - python >=3.7
-    - anndata >=0.7.6
-    - scanpy >=1.6.0
+    - python >=3.8
+    - anndata >=0.9rc1
+    - awkward >=2.1.0
+    - mudata >=0.2.2
+    - scanpy >=1.9.3
     - pandas >=1.5,<2
     - numpy >=1.17.0
     - scipy
@@ -34,12 +36,13 @@ requirements:
     - scikit-learn
     - python-levenshtein
     - python-igraph !=0.10.0,!=0.10.1
-    - adjusttext >=0.7
     - networkx >=2.5
     - squarify
-    - tqdm >=4.44.1
     - airr >=1.2
+    - tqdm >=4.63
+    - adjusttext >=0.7
     - numba >=0.41.0
+    - pooch >=1.7.0
 
 test:
   source_files:

@@ -47,11 +47,11 @@ dependencies = [
     'tqdm>=4.63', # https://github.com/tqdm/tqdm/issues/1082
     'adjustText>=0.7',
     'numba>=0.41.0',
+    'pooch>=1.7.0',
     # for getting the version
     'setuptools_scm',
     'pytoml',
     'pycairo>=1.20; sys_platform == "win32"',
-    'pooch>=1.7.0',
 ]
 dynamic = ["version", "description"]
 
