@@ -105,4 +105,28 @@ Please use the `issue tracker <https://github.com/scverse/scirpy/issues>`_.
 Citation
 ^^^^^^^^
 
-    Sturm, G. Tamas, GS, ..., Finotello, F. (2020). Scirpy: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data. Bioinformatics. doi:`10.1093/bioinformatics/btaa611 <https://doi.org/10.1093/bioinformatics/btaa611>`_
+If you use ``scirpy`` in your work, please cite the ``scirpy``
+publication as follows:
+
+   **Scirpy: A Scanpy extension for analyzing single-cell T-cell
+   receptor sequencing data**
+
+   Gregor Sturm, Tamas Szabo, Georgios Fotakis, Marlene Haider, Dietmar
+   Rieder, Zlatko Trajanoski, Francesca Finotello
+
+   *Bioinformatics* 2020 Sep 15. doi:
+   `10.1093/bioinformatics/btaa611 <https://doi.org/10.1093/bioinformatics/btaa611>`__.
+
+You can cite the scverse publication as follows:
+
+   **The scverse project provides a computational ecosystem for
+   single-cell omics data analysis**
+
+   Isaac Virshup, Danila Bredikhin, Lukas Heumos, Giovanni Palla, Gregor
+   Sturm, Adam Gayoso, Ilia Kats, Mikaela Koutrouli, Scverse Community,
+   Bonnie Berger, Dana Pe’er, Aviv Regev, Sarah A. Teichmann, Francesca
+   Finotello, F. Alexander Wolf, Nir Yosef, Oliver Stegle & Fabian J.
+   Theis
+
+   *Nat Biotechnol.* 2022 Apr 10. doi:
+   `10.1038/s41587-023-01733-8 <https://doi.org/10.1038/s41587-023-01733-8>`__.
