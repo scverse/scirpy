@@ -49,11 +49,10 @@ def test_index_chains(airr_chains, expected_index):
 
 
 @pytest.mark.parametrize(
-    "productive,require_junction_aa,sort_chains_by,expected_index",
+    "filter,sort_chains_by,expected_index",
     [
         (
-            True,
-            True,
+            ["productive", "require_junction_aa"],
             {
                 "duplicate_count": 0,
                 "consensus_count": 0,
@@ -63,28 +62,34 @@ def test_index_chains(airr_chains, expected_index):
             {"VJ": [3, 0], "VDJ": [None, None], "multichain": False},
         ),
         (
-            False,
-            True,
+            ["require_junction_aa"],
             {"junction_aa": ""},
             {"VJ": [3, 1], "VDJ": [None, None], "multichain": True},
         ),
         (
-            True,
-            False,
+            ["productive"],
             {"junction_aa": ""},
             {"VJ": [3, 0], "VDJ": [None, None], "multichain": True},
         ),
         (
-            False,
-            False,
+            (),
             {"junction_aa": ""},
             {"VJ": [3, 1], "VDJ": [None, None], "multichain": True},
         ),
         (
-            True,
-            False,
+            ["productive"],
             {"sort": 10000},
             {"VJ": [2, 3], "VDJ": [None, None], "multichain": True},
+        ),
+        (
+            lambda x: x["productive"],
+            {"junction_aa": ""},
+            {"VJ": [3, 0], "VDJ": [None, None], "multichain": True},
+        ),
+        (
+            [lambda x: x["productive"], lambda x: x["productive"]],
+            {"junction_aa": ""},
+            {"VJ": [3, 0], "VDJ": [None, None], "multichain": True},
         ),
     ],
     ids=[
@@ -93,11 +98,11 @@ def test_index_chains(airr_chains, expected_index):
         "require_junction_aa = False",
         "productive = False & require_junction_aa = False",
         "custom sort function",
+        "custom callback function",
+        "custom callback functions",
     ],
 )
-def test_index_chains_custom_parameters(
-    productive, require_junction_aa, sort_chains_by, expected_index
-):
+def test_index_chains_custom_parameters(filter, sort_chains_by, expected_index):
     """Test that parameters for chain indexing work as intended (Single data, different params)"""
     airr_chains = [
         [
@@ -113,8 +118,7 @@ def test_index_chains_custom_parameters(
     adata.obsm["airr"] = ak.Array(airr_chains)
     index_chains(
         adata,
-        productive=productive,
-        require_junction_aa=require_junction_aa,
+        filter=filter,
         sort_chains_by=sort_chains_by,
     )
     assert expected_index == ak.to_list(adata.obsm["chain_indices"])[0]
