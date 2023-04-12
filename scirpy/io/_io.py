@@ -30,7 +30,7 @@ from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
 sys.modules["tracerlib"] = _tracerlib
 
-DEFAULT_AIRR_CELL_ATTRIBUTES = ("is_cell", "high_confidence")
+DEFAULT_AIRR_CELL_ATTRIBUTES = "is_cell"
 
 
 def _cdr3_from_junction(junction_aa, junction_nt):
@@ -63,22 +63,22 @@ def _read_10x_vdj_json(
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
     logger = _IOLogger()
     with open(path, "r") as f:
-        cells = json.load(f)
+        contigs = json.load(f)
 
     airr_cells: Dict[str, AirrCell] = {}
-    for cell in cells:
-        if filtered and not (cell["is_cell"] and cell["high_confidence"]):
+    for contig in contigs:
+        if filtered and not (contig["is_cell"] and contig["high_confidence"]):
             continue
-        barcode = cell["barcode"]
+        barcode = contig["barcode"]
         if barcode not in airr_cells:
-            ir_obj = AirrCell(
+            cell = AirrCell(
                 barcode,
                 logger=logger,
-                cell_attribute_fields=["is_cell", "high_confidence"],
+                cell_attribute_fields=("is_cell"),
             )
-            airr_cells[barcode] = ir_obj
+            airr_cells[barcode] = cell
         else:
-            ir_obj = airr_cells[barcode]
+            cell = airr_cells[barcode]
 
         # AIRR-compliant chain dict
         chain = AirrCell.empty_chain_dict()
@@ -90,7 +90,7 @@ def _read_10x_vdj_json(
             "J-REGION": "j",
             "C-REGION": "c",
         }
-        for annot in cell["annotations"]:
+        for annot in contig["annotations"]:
             feat = annot["feature"]
             if feat["region_type"] in mapping:
                 region = mapping[feat["region_type"]]
@@ -140,28 +140,28 @@ def _read_10x_vdj_json(
             chain["np2_length"] = genes["j"]["start"] - genes["d"]["end"]
 
         chain["locus"] = chain_type
-        chain["junction"] = cell["cdr3_seq"]
-        chain["junction_aa"] = cell["cdr3"]
-        chain["duplicate_count"] = cell["umi_count"]
-        chain["consensus_count"] = cell["read_count"]
-        chain["productive"] = cell["productive"]
-        chain["is_cell"] = cell["is_cell"]
-        chain["high_confidence"] = cell["high_confidence"]
+        chain["junction"] = contig["cdr3_seq"]
+        chain["junction_aa"] = contig["cdr3"]
+        chain["duplicate_count"] = contig["umi_count"]
+        chain["consensus_count"] = contig["read_count"]
+        chain["productive"] = contig["productive"]
+        chain["is_cell"] = contig["is_cell"]
+        chain["high_confidence"] = contig["high_confidence"]
 
         # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
         fwrs = [f"fwr{i}" for i in range(1, 5)]
         cdrs = [f"cdr{i}" for i in range(1, 3)]
 
         for col in fwrs + cdrs:
-            if col in cell.keys():
-                chain[col] = cell[col].get("nt_seq") if cell[col] else None
-                chain[col + "_aa"] = cell[col].get("aa_seq") if cell[col] else None
+            if col in contig.keys():
+                chain[col] = contig[col].get("nt_seq") if contig[col] else None
+                chain[col + "_aa"] = contig[col].get("aa_seq") if contig[col] else None
 
         chain["cdr3_aa"], chain["cdr3"] = _cdr3_from_junction(
             chain["junction_aa"], chain["junction"]
         )
 
-        ir_obj.add_chain(chain)
+        cell.add_chain(chain)
 
     return airr_cells.values()
 
@@ -178,9 +178,7 @@ def _read_10x_vdj_csv(
     if filtered:
         df = df.loc[_is_true(df["is_cell"]) & _is_true(df["high_confidence"]), :]
     for barcode, cell_df in df.groupby("barcode"):
-        ir_obj = AirrCell(
-            barcode, logger=logger, cell_attribute_fields=("is_cell", "high_confidence")
-        )
+        ir_obj = AirrCell(barcode, logger=logger, cell_attribute_fields=("is_cell"))
         for _, chain_series in cell_df.iterrows():
             chain_dict = AirrCell.empty_chain_dict()
             chain_dict.update(
