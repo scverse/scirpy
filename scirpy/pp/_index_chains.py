@@ -164,7 +164,7 @@ def _key_sort_chains(
             v = chain[k]
             if v is None:
                 v = default
-        except IndexError:
+        except (IndexError, KeyError):
             v = default
         sort_key.append(v)
     return sort_key
