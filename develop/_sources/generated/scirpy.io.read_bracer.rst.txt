@@ -1,4 +1,4 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L535-L618
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L533-L616
 
 scirpy.io.read\_bracer
 ======================

@@ -45,7 +45,7 @@
               <img src="_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.12.2.dev185+ge9f3a68
+                0.13.0rc2.dev5+gf6ef57e
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -241,7 +241,7 @@ as closely as possible.</p>
 <div><p><strong>scirpy’s data structure has been updated in v0.13.0.</strong></p>
 <p>Previously, receptor data was expanded into columns of <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code>, now they are stored as an <a class="reference internal" href="glossary.html#term-awkward-array"><span class="xref std std-term">awkward array</span></a> in <code class="docutils literal notranslate"><span class="pre">adata.obsm[&quot;airr&quot;]</span></code>.
 Moreover, we now use <a class="reference external" href="https://mudata.readthedocs.io/en/latest/api/generated/mudata.MuData.html#mudata.MuData" title="(in mudata)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MuData</span></code></a> to handle paired transcriptomics and <a class="reference internal" href="glossary.html#term-AIRR"><span class="xref std std-term">AIRR</span></a> data.</p>
-<p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> objects created with older versions of scirpy can be upgraded with <a class="reference internal" href="generated/scirpy.io.upgrade_schema.html#scirpy.io.upgrade_schema" title="scirpy.io.upgrade_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.io.upgrade_schema()</span></code></a> to be compatible with the latest version of scirpy.</p>
+<p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> objects created with older versions of scirpy can be upgraded with <a class="reference internal" href="generated/scirpy.io.upgrade_schema.html#scirpy.io.upgrade_schema" title="scirpy.io.upgrade_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.io.upgrade_schema()</span></code></a> to be compatible with the latest version of scirpy.</p>
 <p>Please check out</p>
 <blockquote>
 <div><ul class="simple">
@@ -314,7 +314,7 @@ formats.</p>
 </table>
 <p>To convert own formats into the scirpy <a class="reference internal" href="data-structure.html#data-structure"><span class="std std-ref">Storing AIRR rearrangement data in AnnData</span></a>, we recommend building
 a list of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects first, and then converting them into
-an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object using <a class="reference internal" href="generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_airr_cells()</span></code></a>.
+an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object using <a class="reference internal" href="generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_airr_cells()</span></code></a>.
 For more details, check the <a class="reference internal" href="tutorials/tutorial_io.html#importing-data"><span class="std std-ref">Data loading tutorial</span></a>.</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -326,7 +326,7 @@ For more details, check the <a class="reference internal" href="tutorials/tutori
 <td><p>Data structure for a Cell with immune receptors.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.from_airr_cells</span></code></a>(airr_cells[, key_added])</p></td>
-<td><p>Convert a collection of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
+<td><p>Convert a collection of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.io.to_airr_cells.html#scirpy.io.to_airr_cells" title="scirpy.io.to_airr_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">io.to_airr_cells</span></code></a>(adata, *[, airr_mod, airr_key])</p></td>
 <td><p>Convert an adata object with IR information back to a list of <a class="reference internal" href="generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects.</p></td>
@@ -342,7 +342,7 @@ For more details, check the <a class="reference internal" href="tutorials/tutori
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.pp.index_chains.html#scirpy.pp.index_chains" title="scirpy.pp.index_chains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pp.index_chains</span></code></a>(adata, *[, productive, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/scirpy.pp.index_chains.html#scirpy.pp.index_chains" title="scirpy.pp.index_chains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pp.index_chains</span></code></a>(adata, *[, filter, ...])</p></td>
 <td><p>Selects primary/secondary VJ/VDJ cells per chain according to the <a class="reference internal" href="ir-biology.html#receptor-model"><span class="std std-ref">Immune receptor (IR) model</span></a>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/scirpy.pp.merge_airr.html#scirpy.pp.merge_airr" title="scirpy.pp.merge_airr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pp.merge_airr</span></code></a>(adata, adata2, *[, airr_mod, ...])</p></td>
@@ -378,7 +378,7 @@ or <a class="reference external" href="https://pandas.pydata.org/pandas-docs/sta
 </section>
 <section id="module-scirpy.tl">
 <span id="tools-tl"></span><h2>Tools: <code class="docutils literal notranslate"><span class="pre">tl</span></code><a class="headerlink" href="#module-scirpy.tl" title="Permalink to this headline"></a></h2>
-<p>Tools add an interpretable annotation to the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object
+<p>Tools add an interpretable annotation to the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object
 which usually can be visualized by a corresponding plotting function.</p>
 <section id="generic">
 <h3>Generic<a class="headerlink" href="#generic" title="Permalink to this headline"></a></h3>
@@ -519,7 +519,7 @@ which usually can be visualized by a corresponding plotting function.</p>
 <p>Every of these plotting functions has a corresponding <em>tool</em> in the <a class="reference internal" href="#module-scirpy.tl" title="scirpy.tl"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scirpy.tl</span></code></a>
 section. Depending on the computational load, tools are either invoked on-the-fly
 when calling the plotting function or need to be precomputed and stored in
-<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> previously.</p>
+<a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> previously.</p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />

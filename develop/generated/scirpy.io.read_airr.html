@@ -45,7 +45,7 @@
               <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.12.2.dev185+ge9f3a68
+                0.13.0rc2.dev5+gf6ef57e
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -105,7 +105,7 @@
       <li class="breadcrumb-item active">scirpy.io.read_airr</li>
       <li class="wy-breadcrumbs-aside">
               <!-- User defined GitHub URL -->
-              <a href="https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L382-L492" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L380-L490" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -117,7 +117,7 @@
 <h1>scirpy.io.read_airr<a class="headerlink" href="#scirpy-io-read-airr" title="Permalink to this headline"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="scirpy.io.read_airr">
-<span class="sig-prename descclassname"><span class="pre">scirpy.io.</span></span><span class="sig-name descname"><span class="pre">read_airr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_umi_count_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infer_locus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('is_cell',</span> <span class="pre">'high_confidence')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scirpy.io.read_airr" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">scirpy.io.</span></span><span class="sig-name descname"><span class="pre">read_airr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_umi_count_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infer_locus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'is_cell'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scirpy.io.read_airr" title="Permalink to this definition"></a></dt>
 <dd><p>Read data from <a class="reference external" href="https://docs.airr-community.org/en/latest/datarep/rearrangements.html">AIRR rearrangement</a> format.</p>
 <p>Even though data without these fields can be imported, the following columns are required by scirpy
 for a meaningful analysis:</p>
@@ -152,9 +152,9 @@ no <code class="docutils literal notranslate"><span class="pre">duplicate_count<
 </dd>
 <dt><strong>infer_locus</strong> : <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> (default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</dt><dd><p>Try to infer the <code class="docutils literal notranslate"><span class="pre">locus</span></code> column from gene names, in case it is not specified.</p>
 </dd>
-<dt><strong>cell_attributes</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Collection" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">('is_cell',</span> <span class="pre">'high_confidence')</span></code>)</dt><dd><p>Fields in the rearrangement schema that are specific for a cell rather
+<dt><strong>cell_attributes</strong> : <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Collection" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] (default: <code class="docutils literal notranslate"><span class="pre">'is_cell'</span></code>)</dt><dd><p>Fields in the rearrangement schema that are specific for a cell rather
 than a chain. The values must be identical over all records belonging to a
-cell. This defaults to <code class="docutils literal notranslate"><span class="pre">(&quot;is_cell&quot;,&quot;high_confidence&quot;)</span></code>.</p>
+cell. This defaults to <code class="docutils literal notranslate"><span class="pre">(&quot;i&quot;,&quot;s&quot;,&quot;_&quot;,&quot;c&quot;,&quot;e&quot;,&quot;l&quot;,&quot;l&quot;)</span></code>.</p>
 </dd>
 <dt><strong>include_fields</strong> : <span class="annotation terse"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span><span class="annotation full"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span> (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</dt><dd><p>Deprecated. Does not have any effect as of v0.13.</p>
 </dd>
@@ -163,7 +163,7 @@ cell. This defaults to <code class="docutils literal notranslate"><span class="p
 </dl>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a></p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>AnnData object with <a class="reference internal" href="../glossary.html#term-AIRR"><span class="xref std std-term">AIRR</span></a> data in <code class="docutils literal notranslate"><span class="pre">obsm[&quot;airr&quot;]</span></code> for each cell. For more details see

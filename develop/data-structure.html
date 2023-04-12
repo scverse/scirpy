@@ -45,7 +45,7 @@
               <img src="_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.12.2.dev185+ge9f3a68
+                0.13.0rc2.dev5+gf6ef57e
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -113,8 +113,8 @@
 <div><ul class="simple">
 <li><p>The <a class="reference internal" href="api.html#api"><span class="std std-ref">API</span></a> is divided into <em>preprocessing</em> (<code class="docutils literal notranslate"><span class="pre">pp</span></code>), <em>tools</em> (<code class="docutils literal notranslate"><span class="pre">tl</span></code>),
 and <em>plotting</em> (<code class="docutils literal notranslate"><span class="pre">pl</span></code>).</p></li>
-<li><p>All functions work on <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> or <a class="reference external" href="https://mudata.readthedocs.io/en/latest/api/generated/mudata.MuData.html#mudata.MuData" title="(in mudata)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MuData</span></code></a> objects.</p></li>
-<li><p>The <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> instance is modified inplace, unless a function
+<li><p>All functions work on <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> or <a class="reference external" href="https://mudata.readthedocs.io/en/latest/api/generated/mudata.MuData.html#mudata.MuData" title="(in mudata)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MuData</span></code></a> objects.</p></li>
+<li><p>The <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> instance is modified inplace, unless a function
 is called with the keyword argument <code class="docutils literal notranslate"><span class="pre">inplace=False</span></code>.</p></li>
 </ul>
 </div></blockquote>
@@ -123,7 +123,7 @@ is called with the keyword argument <code class="docutils literal notranslate"><
 <div><ul class="simple">
 <li><p>Plotting functions with inexpensive computations (e.g. <a class="reference internal" href="generated/scirpy.pl.clonal_expansion.html#scirpy.pl.clonal_expansion" title="scirpy.pl.clonal_expansion"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.pl.clonal_expansion()</span></code></a>)
 call the corresponding tool (<a class="reference internal" href="generated/scirpy.tl.clonal_expansion.html#scirpy.tl.clonal_expansion" title="scirpy.tl.clonal_expansion"><code class="xref py py-func docutils literal notranslate"><span class="pre">scirpy.tl.clonal_expansion()</span></code></a>) on-the-fly and
-don’t store the results in the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p></li>
+don’t store the results in the <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p></li>
 <li><p>All plotting functions, by default, return a <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.7.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Axes</span></code></a> object,
 or a list of such.</p></li>
 </ul>

@@ -48,7 +48,7 @@
               <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.12.2.dev185+ge9f3a68
+                0.13.0rc2.dev5+gf6ef57e
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -120,7 +120,7 @@
              
   <section id="Loading-adaptive-immune-receptor-repertoire-(AIRR)-sequencing-data-with-Scirpy">
 <span id="importing-data"></span><h1>Loading adaptive immune receptor repertoire (<a class="reference internal" href="../glossary.html#term-AIRR"><span class="xref std std-term">AIRR</span></a>)-sequencing data with Scirpy<a class="headerlink" href="#Loading-adaptive-immune-receptor-repertoire-(AIRR)-sequencing-data-with-Scirpy" title="Permalink to this headline"></a></h1>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
@@ -139,15 +139,6 @@
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\anndata\experimental\pytorch\_annloader.py:18: UserWarning: Сould not load pytorch.
-  warnings.warn(&#34;Сould not load pytorch.&#34;)
-</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -178,7 +169,7 @@ C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\tqdm\auto.py:21: 
 </pre></div></div>
 </div>
 <p>In this notebook, we demonstrate how single-cell <a class="reference internal" href="../glossary.html#term-AIRR"><span class="xref std std-term">AIRR</span></a>-data can be imported into
-an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object and merged with gene expression data in a <a class="reference external" href="https://mudata.readthedocs.io/en/latest/api/generated/mudata.MuData.html#mudata.MuData" title="(in mudata)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MuData</span></code></a> container for the use with Scirpy.
+an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object and merged with gene expression data in a <a class="reference external" href="https://mudata.readthedocs.io/en/latest/api/generated/mudata.MuData.html#mudata.MuData" title="(in mudata)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MuData</span></code></a> container for the use with Scirpy.
 To learn more about how AIRR data is represented in AnnData, check out the <a class="reference internal" href="../data-structure.html#data-structure"><span class="std std-ref">data structure</span></a> section.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
@@ -360,12 +351,12 @@ gene expression data should be stored in the <cite>gex</cite> modality, immune r
 <div class="highlight"><pre>
 computing PCA
     with n_comps=50
-    finished (0:00:01)
+    finished (0:00:02)
 computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
-    finished (0:00:03)
+    finished (0:00:04)
 computing UMAP
-    finished (0:00:07)
+    finished (0:00:09)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -382,7 +373,7 @@ computing UMAP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 136/136 [00:00&lt;00:00, 791.39it/s]
+100%|██████████| 136/136 [00:00&lt;00:00, 621.72it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -511,7 +502,7 @@ computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
     finished (0:00:00)
 computing UMAP
-    finished (0:00:01)
+    finished (0:00:02)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -519,7 +510,7 @@ computing UMAP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 563/563 [00:00&lt;00:00, 1796.49it/s]
+100%|██████████| 563/563 [00:00&lt;00:00, 1200.18it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -594,7 +585,7 @@ the import.</p>
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 100/100 [00:00&lt;00:00, 426.31it/s]
+100%|██████████| 100/100 [00:00&lt;00:00, 246.03it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -642,7 +633,7 @@ Computing sequence x sequence distance matrix for VJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 3/3 [00:18&lt;00:00,  6.16s/it]
+100%|██████████| 3/3 [00:22&lt;00:00,  7.49s/it]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -658,7 +649,7 @@ Computing sequence x sequence distance matrix for VDJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 3/3 [00:18&lt;00:00,  6.17s/it]
+100%|██████████| 3/3 [00:22&lt;00:00,  7.45s/it]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -698,7 +689,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 100/100 [00:00&lt;00:00, 710.79it/s]
+100%|██████████| 100/100 [00:00&lt;00:00, 533.49it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -740,7 +731,7 @@ Stored result in `adata.obs[&#34;cc_aa_alignment_size&#34;]`.
 <span id="importing-custom-formats"></span><h2>Creating AnnData objects from other formats<a class="headerlink" href="#Creating-AnnData-objects-from-other-formats" title="Permalink to this headline"></a></h2>
 <p>Often, immune receptor (IR) data are just provided as a simple table listing the <a class="reference internal" href="../glossary.html#term-CDR3"><span class="xref std std-term">CDR3</span></a> sequences for each cell.
 We provide a generic data structure for cells with IRs, which can then be converted into
-an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p>
+an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a> object.</p>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -751,7 +742,7 @@ an <a class="reference external" href="https://anndata.readthedocs.io/en/stable/
 <td><p>Data structure for a Cell with immune receptors.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/scirpy.io.from_airr_cells.html#scirpy.io.from_airr_cells" title="scirpy.io.from_airr_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_airr_cells</span></code></a>(airr_cells[, key_added])</p></td>
-<td><p>Convert a collection of <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
+<td><p>Convert a collection of <a class="reference internal" href="../generated/scirpy.io.AirrCell.html#scirpy.io.AirrCell" title="scirpy.io.AirrCell"><code class="xref py py-class docutils literal notranslate"><span class="pre">AirrCell</span></code></a> objects to <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnnData</span></code></a>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1111,7 +1102,7 @@ computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
     finished (0:00:00)
 computing UMAP
-    finished (0:00:01)
+    finished (0:00:02)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1119,7 +1110,7 @@ computing UMAP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 90/90 [00:00&lt;00:00, 287.99it/s]
+100%|██████████| 90/90 [00:00&lt;00:00, 359.98it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1171,7 +1162,7 @@ C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\scanpy\plotting\_
 <span id="combining-samples"></span><h2>Combining multiple samples<a class="headerlink" href="#Combining-multiple-samples" title="Permalink to this headline"></a></h2>
 <p>It is quite common that the sequncing data is split up in multiple samples.
 To combine them into a single object, we load each sample independently using one of the approaches described
-in this document. Then, we combine them using <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.concat.html#anndata.concat" title="(in anndata v0.8.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">anndata.concat()</span></code></a>.</p>
+in this document. Then, we combine them using <a class="reference external" href="https://anndata.readthedocs.io/en/stable/generated/anndata.concat.html#anndata.concat" title="(in anndata v0.9.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">anndata.concat()</span></code></a>.</p>
 <p>MuData currently does not implement a <cite>concat</cite> function (see <a class="reference external" href="https://github.com/scverse/mudata/issues/20">scverse/mudata#20</a>). Therefore, we
 need to first concatenate gene expression and AIRR data separately and create the MuData object as the last step.</p>
 <p>Here is a full example loading and combining three samples from the COVID19 study by <span id="id9">[<a class="reference internal" href="../zzz_bibliography.html#id18" title="Mingfeng Liao, Yang Liu, Jing Yuan, Yanling Wen, Gang Xu, Juanjuan Zhao, Lin Cheng, Jinxiu Li, Xin Wang, Fuxiang Wang, Lei Liu, Ido Amit, Shuye Zhang, and Zheng Zhang. Single-cell landscape of bronchoalveolar immune cells in patients with COVID-19. Nature Medicine, May 2020. URL: https://doi.org/10.1038/s41591-020-0901-9, doi:10.1038/s41591-020-0901-9.">LLY+20</a>]</span>.</p>
@@ -1296,7 +1287,6 @@ C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\anndata\_core\ann
   2 modalities
     gex:    10706 x 33539
     airr:   581 x 0
-      obs:  &#x27;high_confidence&#x27;, &#x27;is_cell&#x27;
       obsm: &#x27;airr&#x27;</pre></div>
 </div>
 <div class="nbinput docutils container">
@@ -1322,9 +1312,9 @@ computing PCA
     finished (0:00:07)
 computing neighbors
     using &#39;X_pca&#39; with n_pcs = 50
-    finished (0:00:20)
+    finished (0:00:25)
 computing UMAP
-    finished (0:00:09)
+    finished (0:00:11)
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1332,23 +1322,7 @@ computing UMAP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 581/581 [00:00&lt;00:00, 826.13it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Stored result in `mdata.obs[&#34;airr:receptor_type&#34;]`.
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-
+100%|██████████| 581/581 [00:00&lt;00:00, 700.89it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1356,6 +1330,7 @@ Stored result in `mdata.obs[&#34;airr:receptor_type&#34;]`.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
+Stored result in `mdata.obs[&#34;airr:receptor_type&#34;]`.
 Stored result in `mdata.obs[&#34;airr:receptor_subtype&#34;]`.
 Stored result in `mdata.obs[&#34;airr:chain_pairing&#34;]`.
 </pre></div></div>

@@ -48,7 +48,7 @@
               <img src="../_static/scirpy_logo_bright.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.12.2.dev185+ge9f3a68
+                0.13.0rc2.dev5+gf6ef57e
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -172,8 +172,6 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\anndata\experimental\pytorch\_annloader.py:18: UserWarning: Сould not load pytorch.
-  warnings.warn(&#34;Сould not load pytorch.&#34;)
 C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\tqdm\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div></div>
@@ -191,7 +189,7 @@ C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\tqdm\auto.py:21: 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-scanpy==1.9.3 anndata==0.9.0rc1 umap==0.5.3 numpy==1.23.5 scipy==1.10.1 pandas==1.5.3 scikit-learn==1.2.2 statsmodels==0.13.5 python-igraph==0.10.4 pynndescent==0.5.8
+scanpy==1.9.3 anndata==0.9.0 umap==0.5.3 numpy==1.23.5 scipy==1.10.1 pandas==1.5.3 scikit-learn==1.2.2 statsmodels==0.13.5 python-igraph==0.10.4 pynndescent==0.5.8
 </pre></div></div>
 </div>
 <p>In this tutorial, we re-analyze single-cell TCR/RNA-seq data from Wu et al. (<span id="id1">[<a class="reference internal" href="../zzz_bibliography.html#id4" title="Thomas D. Wu, Shravan Madireddi, Patricia E. de Almeida, Romain Banchereau, Ying-Jiun J. Chen, Avantika S. Chitre, Eugene Y. Chiang, Hina Iftikhar, William E. O'Gorman, Amelia Au-Yeung, Chikara Takahashi, Leonard D. Goldstein, Chungkee Poon, Shilpa Keerthivasan, Denise E. de Almeida Nagata, Xiangnan Du, Hyang-Mi Lee, Karl L. Banta, Sanjeev Mariathasan, Meghna Das Thakur, Mahrukh A. Huseni, Marcus Ballinger, Ivette Estay, Patrick Caplazi, Zora Modrusan, Lélia Delamarre, Ira Mellman, Richard Bourgon, and Jane L. Grogan. Peripheral t cell expansion predicts tumour infiltration and clinical response. Nature, 579(7798):274–278, February 2020. URL: https://doi.org/10.1038/s41586-020-2056-8, doi:10.1038/s41586-020-2056-8.">WMdA+20</a>]</span>)
@@ -232,7 +230,7 @@ Moreover, we now use <a class="reference external" href="https://mudata.readthed
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
 Downloading file &#39;wu2020_3k.h5mu&#39; from &#39;doi:10.6084/m9.figshare.22249894.v1/wu2020_3k.h5mu&#39; to &#39;C:\Users\runneradmin\AppData\Local\scirpy\scirpy\Cache\main&#39;.
-100%|#####################################| 17.3M/17.3M [00:00&lt;00:00, 1.11GB/s]
+100%|#############################################| 17.3M/17.3M [00:00&lt;?, ?B/s]
 C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\anndata\_core\aligned_mapping.py:54: ExperimentalFeatureWarning: Support for Awkward Arrays is currently experimental. Behavior may change in the future. Please report any issues you may encounter!
   warnings.warn(
 </pre></div></div>
@@ -431,7 +429,7 @@ selected chains in <cite>adata.obsm[“chain_indices”]</cite>.</p>
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 3000/3000 [00:03&lt;00:00, 803.01it/s]
+100%|██████████| 3000/3000 [00:04&lt;00:00, 732.47it/s]
 </pre></div></div>
 </div>
 </section>
@@ -697,7 +695,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1526/1526 [00:02&lt;00:00, 702.39it/s]
+100%|██████████| 1526/1526 [00:02&lt;00:00, 659.46it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -807,7 +805,7 @@ Computing sequence x sequence distance matrix for VJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 496/496 [00:30&lt;00:00, 16.46it/s]
+100%|██████████| 496/496 [00:35&lt;00:00, 14.03it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -823,7 +821,7 @@ Computing sequence x sequence distance matrix for VDJ sequences.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 496/496 [00:30&lt;00:00, 16.41it/s]
+100%|██████████| 496/496 [00:35&lt;00:00, 13.91it/s]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -850,7 +848,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1549/1549 [00:05&lt;00:00, 272.12it/s]
+100%|██████████| 1549/1549 [00:06&lt;00:00, 225.55it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1049,16 +1047,24 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1549/1549 [00:06&lt;00:00, 245.86it/s]
+100%|██████████| 1549/1549 [00:07&lt;00:00, 199.31it/s]
 </pre></div></div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Stored result in `mdata.obs[&#34;airr:cc_aa_alignment_same_v&#34;]`.
 Stored result in `mdata.obs[&#34;airr:cc_aa_alignment_same_v_size&#34;]`.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1922,7 +1928,7 @@ Initalizing clonotype subgraphs...
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1487/1487 [00:00&lt;00:00, 31722.02it/s]
+100%|██████████| 1487/1487 [00:00&lt;00:00, 31681.58it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -1939,7 +1945,7 @@ Computing background distributions...
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
 
-100%|██████████| 1000/1000 [00:01&lt;00:00, 798.86it/s]
+100%|██████████| 1000/1000 [00:01&lt;00:00, 658.71it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2088,7 +2094,7 @@ C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\scanpy\plotting\_
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 ranking genes
-    finished (0:00:03)
+    finished (0:00:04)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2301,7 +2307,7 @@ Downloading latest version of VDJDB
 <div class="highlight"><pre>
 C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\site-packages\scirpy\datasets\__init__.py:173: DtypeWarning: Columns (20,29,30) have mixed types. Specify dtype option on import or set low_memory=False.
   df = pd.read_csv(d / &#34;vdjdb_full.txt&#34;, sep=&#34;\t&#34;)
-Processing VDJDB entries: 100%|██████████| 60055/60055 [00:14&lt;00:00, 4267.96it/s]
+Processing VDJDB entries: 100%|██████████| 60055/60055 [00:17&lt;00:00, 3484.20it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2318,7 +2324,7 @@ Converting to AnnData object
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
 
-100%|██████████| 60055/60055 [01:26&lt;00:00, 698.15it/s]
+100%|██████████| 60055/60055 [02:27&lt;00:00, 408.03it/s]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -2367,7 +2373,7 @@ Computing clonotype x clonotype distances.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 1549/1549 [00:04&lt;00:00, 385.52it/s]
+100%|██████████| 1549/1549 [00:04&lt;00:00, 326.96it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -2480,7 +2486,7 @@ Stored IR distance matrix in `adata.uns[&#34;ir_query_VDJDB_aa_identity&#34;]`.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 315/315 [00:00&lt;00:00, 4012.53it/s]
+100%|██████████| 315/315 [00:00&lt;00:00, 2879.92it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">

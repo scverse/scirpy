@@ -1,4 +1,4 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/pp/_index_chains.py#L14-L128
+﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/pp/_index_chains.py#L14-L137
 
 scirpy.pp.index\_chains
 =======================
