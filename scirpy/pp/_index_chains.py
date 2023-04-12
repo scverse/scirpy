@@ -1,6 +1,6 @@
 from functools import partial
 from types import MappingProxyType
-from typing import Any, Dict, List, Mapping, Sequence, cast
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Union, cast
 
 import awkward as ak
 from scanpy import logging
@@ -15,8 +15,12 @@ SCIRPY_DUAL_IR_MODEL = "scirpy_dual_ir_v0.13"
 def index_chains(
     adata: DataHandler.TYPE,
     *,
-    productive: bool = True,
-    require_junction_aa: bool = True,
+    filter: Union[
+        Callable[[Mapping], bool], Sequence[Union[str, Callable[[Mapping], bool]]]
+    ] = (
+        "productive",
+        "require_junction_aa",
+    ),
     sort_chains_by: Mapping[str, Any] = MappingProxyType(
         {"duplicate_count": 0, "consensus_count": 0, "junction": "", "junction_aa": ""}
     ),
@@ -33,22 +37,28 @@ def index_chains(
      * labels chains as primary/secondary VJ/VDJ chains
      * labels cells as multichain cells
 
-    based on the expression level of the chains and if they are labelled as "productive" or not.
+    based on the expression level of the chains and the specified filtering option. 
+    By default, non-productive chains and chains without a valid CDR3 amino acid sequence are filtered out. 
+    
+    Additionally, chains without a valid IMGT locus are always filtered out. 
 
     For more details, please refer to the :ref:`receptor-model` and the :ref:`data structure <data-structure>`.
 
     Parameters
     ----------
     {adata}
-    productive
-        If True, ignore non-productive chains. In that case, non-productive chains will also not count towards
-        calling "multichain" cells.
-    require_junction_aa
-        If True, ignore chains that don't have a junction_aa (CDR3) amino acid sequence. In that case, these
-        chains will also not count towards calling "multichain" cells
+    filter
+        Option to filter chains. Can be either
+          * a callback function that takes a chain-dictionary as input and returns a boolean (True to keep, False to discard)
+          * a list of "filtering presets". Possible values are `"productive"` and `"require_junction_aa"`. 
+            `"productive"` removes non-productive chains and `"require_junction_aa"` removes chains that don't have 
+            a CDR3 amino acid sequence. 
+          * a list with a combination of both. 
+
+        Multiple presets/functions are combined using `and`. Filtered chains do not count towards calling "multichain" cells. 
     sort_chains_by
         A list of sort keys used to determine an ordering of chains. The chain with the highest value
-        of this tuple willl be the primary chain, second-highest the secondary chain. If there are more chains, they
+        of this tuple will be the primary chain, second-highest the secondary chain. If there are more chains, they
         will not be indexed, and the cell receives the "multichain" flag.
     {airr_mod}
     {airr_key}
@@ -61,6 +71,15 @@ def index_chains(
     """
     chain_index_list = []
     params = DataHandler(adata, airr_mod, airr_key)
+
+    # prepare filter functions
+    if isinstance(filter, Callable):
+        filter = [filter]
+    filter_presets = {
+        "productive": lambda x: x["productive"],
+        "require_junction_aa": lambda x: not _is_na2(x["junction_aa"]),
+    }
+    filter = [filter_presets[f] if isinstance(f, str) else f for f in filter]
 
     # only warn if those fields are in the key (i.e. this should give a warning if those are missing with
     # default settings. If the user specifies their own dictionary, they are on their own)
@@ -78,20 +97,11 @@ def index_chains(
         # Split chains into VJ and VDJ chains
         chain_indices: Dict[str, Any] = {"VJ": list(), "VDJ": list()}
         for i, tmp_chain in enumerate(cell_chains):
-            if "locus" not in params.airr.fields:
-                continue
-            if (
-                tmp_chain["locus"] in AirrCell.VJ_LOCI
-                and (tmp_chain["productive"] or not productive)
-                and (not _is_na2(tmp_chain["junction_aa"]) or not require_junction_aa)
-            ):
-                chain_indices["VJ"].append(i)
-            elif (
-                tmp_chain["locus"] in AirrCell.VDJ_LOCI
-                and (tmp_chain["productive"] or not productive)
-                and (not _is_na2(tmp_chain["junction_aa"]) or not require_junction_aa)
-            ):
-                chain_indices["VDJ"].append(i)
+            if all(f(tmp_chain) for f in filter) and "locus" in params.airr.fields:
+                if tmp_chain["locus"] in AirrCell.VJ_LOCI:
+                    chain_indices["VJ"].append(i)
+                elif tmp_chain["locus"] in AirrCell.VDJ_LOCI:
+                    chain_indices["VDJ"].append(i)
 
         # Order chains by expression (or whatever was specified in sort_chains_by)
         for junction_type in ["VJ", "VDJ"]:
@@ -121,8 +131,7 @@ def index_chains(
     # store metadata in .uns
     params.adata.uns[key_added] = {
         "model": SCIRPY_DUAL_IR_MODEL,  # can be used to distinguish different receptor models that may be added in the future.
-        "productive": productive,
-        "require_junction_aa": require_junction_aa,
+        "filter": str(filter),
         "airr_key": airr_key,
         "sort_chains_by": str(sort_chains_by),
     }
