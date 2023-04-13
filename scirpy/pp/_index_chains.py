@@ -1,6 +1,6 @@
 from functools import partial
 from types import MappingProxyType
-from typing import Any, Callable, Dict, List, Mapping, Sequence, Union, cast
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
 
 import awkward as ak
 from scanpy import logging
@@ -91,30 +91,36 @@ def index_chains(
             logging.warning(
                 "No expression information available. Cannot rank chains by expression. "
             )  # type: ignore
-    for cell_chains in tqdm(params.airr):
-        cell_chains = cast(List[ak.Record], cell_chains)
 
-        # Split chains into VJ and VDJ chains
-        chain_indices: Dict[str, Any] = {"VJ": list(), "VDJ": list()}
-        for i, tmp_chain in enumerate(cell_chains):
-            if all(f(tmp_chain) for f in filter) and "locus" in params.airr.fields:
-                if tmp_chain["locus"] in AirrCell.VJ_LOCI:
-                    chain_indices["VJ"].append(i)
-                elif tmp_chain["locus"] in AirrCell.VDJ_LOCI:
-                    chain_indices["VDJ"].append(i)
+    # in chunks of 5000-10000 this is fastest. Not sure why there is additional
+    # overhead when running `to_list` on the full array. It's anyway friendlier to memory this way.
+    CHUNKSIZE = 5000
+    for i in tqdm(range(0, len(params.airr), CHUNKSIZE)):
+        cells = ak.to_list(params.airr[i : i + CHUNKSIZE])
+        for cell_chains in cells:
+            # cell_chains = cast(List[ak.Record], cell_chains)
 
-        # Order chains by expression (or whatever was specified in sort_chains_by)
-        for junction_type in ["VJ", "VDJ"]:
-            chain_indices[junction_type] = sorted(
-                chain_indices[junction_type],
-                key=partial(_key_sort_chains, cell_chains, sort_chains_by),  # type: ignore
-                reverse=True,
+            # Split chains into VJ and VDJ chains
+            chain_indices: Dict[str, Any] = {"VJ": list(), "VDJ": list()}
+            for i, tmp_chain in enumerate(cell_chains):
+                if all(f(tmp_chain) for f in filter) and "locus" in params.airr.fields:
+                    if tmp_chain["locus"] in AirrCell.VJ_LOCI:
+                        chain_indices["VJ"].append(i)
+                    elif tmp_chain["locus"] in AirrCell.VDJ_LOCI:
+                        chain_indices["VDJ"].append(i)
+
+            # Order chains by expression (or whatever was specified in sort_chains_by)
+            for junction_type in ["VJ", "VDJ"]:
+                chain_indices[junction_type] = sorted(
+                    chain_indices[junction_type],
+                    key=partial(_key_sort_chains, cell_chains, sort_chains_by),  # type: ignore
+                    reverse=True,
+                )
+
+            chain_indices["multichain"] = (
+                len(chain_indices["VJ"]) > 2 or len(chain_indices["VDJ"]) > 2
             )
-
-        chain_indices["multichain"] = (
-            len(chain_indices["VJ"]) > 2 or len(chain_indices["VDJ"]) > 2
-        )
-        chain_index_list.append(chain_indices)
+            chain_index_list.append(chain_indices)
 
     chain_index_awk = ak.Array(chain_index_list)
     for k in ["VJ", "VDJ"]:
@@ -158,7 +164,7 @@ def _key_sort_chains(
             v = chain[k]
             if v is None:
                 v = default
-        except IndexError:
+        except (IndexError, KeyError):
             v = default
         sort_key.append(v)
     return sort_key
