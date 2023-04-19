@@ -15,23 +15,29 @@ from scipy.special import factorial, gammaln, psi
 
 
 def fit_nbinom(
-    X: np.ndarray, initial_params: Optional[Tuple[Number, Number]] = None
+    X: np.ndarray, initial_params: Optional[Tuple[Number, Number]] = None, max_iterations: Optional[int] = None
 ) -> Tuple[float, float]:
     """Fit a negative binomial distribution.
 
     Parameters
     ----------
     X
-        data to fit
+        Data to fit. Should contain only non-negative integers.
     initial_params
         Tuple with initial `size` and `prob` parameters.
+    max_iterations
+        Maximum number of iterations for the optimization algorithm.
 
     Returns
     -------
+    Tuple with the estimated `size` and `prob` parameters.
     """
+    if not np.issubdtype(X.dtype, np.integer) or (X < 0).any():
+        raise ValueError("Input data should contain only non-negative integers")
+
     infinitesimal = np.finfo(float).eps
 
-    def log_likelihood(params, *args):
+    def negative_binomial_log_likelihood(params, *args):
         r, p = params
         X = args[0]
         N = X.size
@@ -48,7 +54,7 @@ def fit_nbinom(
 
         return -result
 
-    def log_likelihood_deriv(params, *args):
+    def negative_binomial_log_likelihood_deriv(params, *args):
         r, p = params
         X = args[0]
         N = X.size
@@ -62,7 +68,7 @@ def fit_nbinom(
         # reasonable initial values (from fitdistr function in R)
         m = np.mean(X)
         v = np.var(X)
-        size = (m**2) / (v - m) if v > m else 10
+        size = (m ** 2) / (v - m) if v > m else 10
 
         # convert mu/size parameterization to prob/size
         p0 = size / ((size + m) if size + m != 0 else 1)
@@ -72,14 +78,11 @@ def fit_nbinom(
     initial_params = np.array(initial_params)
 
     bounds = [(infinitesimal, None), (infinitesimal, 1)]
-    optimres = optim(
-        log_likelihood,
-        x0=initial_params,
-        # fprime=log_likelihood_deriv,
-        args=(X,),
-        approx_grad=1,
-        bounds=bounds,
-    )
+    optim_args = (X,)
+    optim_kwargs = {"approx_grad": True, "bounds": bounds}
+    if max_iterations is not None:
+        optim_kwargs["maxiter"] = max_iterations
+    optimres = optim(negative_binomial_log_likelihood, x0=initial_params, fprime=negative_binomial_log_likelihood_deriv, *optim_args, **optim_kwargs)
 
     params = optimres[0]
     return params[0], params[1]
