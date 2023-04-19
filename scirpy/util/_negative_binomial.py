@@ -15,7 +15,9 @@ from scipy.special import factorial, gammaln, psi
 
 
 def fit_nbinom(
-    X: np.ndarray, initial_params: Optional[Tuple[Number, Number]] = None, max_iterations: Optional[int] = None
+    X: np.ndarray,
+    initial_params: Optional[Tuple[Number, Number]] = None,
+    max_iterations: Optional[int] = None,
 ) -> Tuple[float, float]:
     """Fit a negative binomial distribution.
 
@@ -68,7 +70,7 @@ def fit_nbinom(
         # reasonable initial values (from fitdistr function in R)
         m = np.mean(X)
         v = np.var(X)
-        size = (m ** 2) / (v - m) if v > m else 10
+        size = (m**2) / (v - m) if v > m else 10
 
         # convert mu/size parameterization to prob/size
         p0 = size / ((size + m) if size + m != 0 else 1)
@@ -82,7 +84,13 @@ def fit_nbinom(
     optim_kwargs = {"approx_grad": True, "bounds": bounds}
     if max_iterations is not None:
         optim_kwargs["maxiter"] = max_iterations
-    optimres = optim(negative_binomial_log_likelihood, x0=initial_params, fprime=negative_binomial_log_likelihood_deriv, *optim_args, **optim_kwargs)
+    optimres = optim(
+        negative_binomial_log_likelihood,
+        x0=initial_params,
+        fprime=negative_binomial_log_likelihood_deriv,
+        *optim_args,
+        **optim_kwargs,
+    )
 
     params = optimres[0]
     return params[0], params[1]
