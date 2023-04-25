@@ -6,7 +6,7 @@ import pandas as pd
 from anndata import AnnData
 
 from .. import __version__
-from ..util import DataHandler, _doc_params
+from ..util import DataHandler, _doc_params, tqdm
 from ._datastructures import AirrCell
 from ._util import _IOLogger, doc_working_model
 
@@ -78,13 +78,21 @@ def to_airr_cells(
 
     params = DataHandler(adata, airr_mod, airr_key)
 
-    for (cell_id, row), chains in zip(params.adata.obs.iterrows(), params.airr):
-        tmp_cell = AirrCell(cast(str, cell_id), logger=logger)
-        # add cell-level metadata
-        tmp_cell.update(row)
-        # convert awkward records to list of dicts
-        for chain in ak.to_list(chains):
-            tmp_cell.add_chain(chain)
-        cells.append(tmp_cell)
+    # in chunks of 5000-10000 this is fastest. Not sure why there is additional
+    # overhead when running `to_list` on the full array. It's anyway friendlier to memory this way.
+    # see also: index_chains
+    CHUNKSIZE = 5000
+    for i in tqdm(range(0, len(params.airr), CHUNKSIZE)):
+        tmp_airr = ak.to_list(params.airr[i : i + CHUNKSIZE])
+        tmp_obs = params.adata.obs.iloc[i : i + CHUNKSIZE].to_dict(orient="index")
+
+        for (cell_id, row), chains in zip(tmp_obs.items(), tmp_airr):
+            tmp_cell = AirrCell(cast(str, cell_id), logger=logger)
+            # add cell-level metadata
+            tmp_cell.update(row)
+            # convert awkward records to list of dicts
+            for chain in chains:
+                tmp_cell.add_chain(chain)
+            cells.append(tmp_cell)
 
     return cells
