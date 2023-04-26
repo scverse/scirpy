@@ -275,25 +275,41 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
             return sc.read_h5ad(cache_path)
         except OSError:
             pass
-
     logger = _IOLogger()
-    iedb_df = pd.read_csv(
-        "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip",
-        index_col=None,
-        sep=",",
-        na_values=["None"],
-        true_values=["True"],
-        low_memory=False,
-    )
 
+    url = "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip"
+
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        urllib.request.urlretrieve(url, d / "receptor_full_v3.zip")
+        with zipfile.ZipFile(d / "receptor_full_v3.zip") as zf:
+            zf.extractall(d)
+        iedb_df = pd.concat(
+            [
+                pd.read_csv(
+                    d / x,
+                    index_col=None,
+                    header=[0, 1],
+                    sep=",",
+                    na_values=["None"],
+                    true_values=["True"],
+                    low_memory=False,
+                )
+                for x in ["tcr_full_v3.csv", "bcr_full_v3.csv"]
+            ]
+        ).reset_index(drop=True)
+
+    # deal with multiindex (join by " " to single index). This is how columns were
+    # named before an IEDB update in 2023-04
+    iedb_df.columns = iedb_df.columns.to_series().apply(lambda x: " ".join(x))
     iedb_df = iedb_df.drop_duplicates()
     iedb_df = iedb_df.drop_duplicates(
         [
             "Chain 1 CDR3 Curated",
             "Chain 2 CDR3 Curated",
-            "Organism",
-            "Antigen",
-            "Response Type",
+            "Epitope Source Organism",
+            "Epitope Source Molecule",
+            "Receptor Reference Name",
             "Chain 1 Type",
             "Chain 2 Type",
         ]
@@ -309,9 +325,9 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         iedb_df[input_2] = iedb_df[input_2].str.upper()
 
     replace_curated("Chain 1 CDR3 Curated", "Chain 2 CDR3 Curated")
-    replace_curated("Curated Chain 1 V Gene", "Curated Chain 2 V Gene")
-    replace_curated("Curated Chain 1 D Gene", "Curated Chain 2 D Gene")
-    replace_curated("Curated Chain 1 J Gene", "Curated Chain 2 J Gene")
+    replace_curated("Chain 1 Curated V Gene", "Chain 2 Curated V Gene")
+    replace_curated("Chain 1 Curated D Gene", "Chain 2 Curated D Gene")
+    replace_curated("Chain 1 Curated J Gene", "Chain 2 Curated J Gene")
 
     iedb_df["cell_id"] = iedb_df.reset_index(drop=True).index
 
@@ -336,21 +352,21 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         cell = AirrCell(cell_id=row["cell_id"], logger=logger)
         chain1 = AirrCell.empty_chain_dict()
         chain2 = AirrCell.empty_chain_dict()
-        cell["Receptor ID"] = row["Receptor ID"]
-        cell["Antigen"] = row["Antigen"]
-        cell["Organism"] = row["Organism"]
-        cell["Response Type"] = row["Response Type"]
-        cell["Reference IRI"] = row["Reference IRI"]
-        cell["Epitope IRI"] = row["Epitope IRI"]
+        cell["Receptor IEDB Receptor ID"] = row["Receptor IEDB Receptor ID"]
+        cell["Epitope Source Molecule"] = row["Epitope Source Molecule"]
+        cell["Epitope Source Organism"] = row["Epitope Source Organism"]
+        cell["Receptor Reference Namee"] = row["Receptor Reference Name"]
+        cell["Reference IEDB IRI"] = row["Reference IEDB IRI"]
+        cell["Epitope IEDB IRI"] = row["Epitope IEDB IRI"]
         chain1.update(
             {
                 "locus": receptor_dict[row["Chain 1 Type"]],
                 "junction_aa": row["Chain 1 CDR3 Curated"],
                 "junction": None,
                 "consensus_count": None,
-                "v_call": row["Curated Chain 1 V Gene"],
+                "v_call": row["Chain 1 Curated V Gene"],
                 "d_call": None,
-                "j_call": row["Curated Chain 1 J Gene"],
+                "j_call": row["Chain 1 Curated J Gene"],
                 "productive": True,
             }
         )
@@ -360,9 +376,9 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
                 "junction_aa": row["Chain 2 CDR3 Curated"],
                 "junction": None,
                 "consensus_count": None,
-                "v_call": row["Curated Chain 2 V Gene"],
-                "d_call": row["Curated Chain 2 D Gene"],
-                "j_call": row["Curated Chain 2 J Gene"],
+                "v_call": row["Chain 2 Curated V Gene"],
+                "d_call": row["Chain 2 Curated D Gene"],
+                "j_call": row["Chain 2 Curated J Gene"],
                 "productive": True,
             }
         )
