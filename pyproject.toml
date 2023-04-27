@@ -1,12 +1,6 @@
 [build-system]
-requires = [
-    'flit_core >=2,<4',
-    'setuptools_scm',
-    'pytoml',
-    'wheel',
-    'importlib_metadata>=0.7; python_version < "3.8"'
-]
-build-backend = 'flit_core.buildapi'
+build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 name = 'scirpy'
@@ -94,6 +88,8 @@ Documentation = 'https://scverse.org/scirpy/'
 Home-page = 'https://scverse.org/scirpy/'
 Source = "https://github.com/scverse/scirpy"
 
+[tool.hatch.version]
+source = "vcs"
 
 [tool.pytest.ini_options]
 markers = [
