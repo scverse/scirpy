@@ -4,7 +4,6 @@ from multiprocessing import cpu_count
 from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
-import parasail
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
@@ -453,6 +452,8 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         self.gap_extend = gap_extend
 
     def _compute_block(self, seqs1, seqs2, origin):
+        import parasail
+
         subst_mat = parasail.Matrix(self.subst_mat)
         origin_row, origin_col = origin
 
@@ -486,6 +487,8 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     def _self_alignment_scores(self, seqs: Sequence) -> dict:
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists"""
+        import parasail
+
         return np.fromiter(
             (
                 parasail.nw_scan_16(
