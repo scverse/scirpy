@@ -463,7 +463,13 @@ def read_airr(
 
         for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
-
+            chain_dict.update(
+                {
+                    req: None
+                    for req in RearrangementSchema.required
+                    if req not in chain_dict
+                }
+            )
             try:
                 tmp_cell = airr_cells[cell_id]
             except KeyError:
