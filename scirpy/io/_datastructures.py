@@ -121,7 +121,7 @@ class AirrCell(MutableMapping):
                 )
         except KeyError:
             self._cell_attrs[k] = v
-    
+
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain to the cell.
 
