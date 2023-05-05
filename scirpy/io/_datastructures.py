@@ -94,7 +94,14 @@ class AirrCell(MutableMapping):
         del self._cell_attrs[key]
 
     def __getitem__(self, key):
-        return self._cell_attrs[key]
+        if key == "cell_id":
+            return self._cell_attrs[key]
+        else:
+            chain_field_attrs = []
+            for sub_dict in self._chains:
+                if key in sub_dict:
+                    chain_field_attrs.append(sub_dict[key])
+            return chain_field_attrs
 
     def __iter__(self) -> Iterator:
         return iter(self._cell_attrs)
@@ -114,7 +121,7 @@ class AirrCell(MutableMapping):
                 )
         except KeyError:
             self._cell_attrs[k] = v
-
+    
     def add_chain(self, chain: Mapping) -> None:
         """Add a chain to the cell.
 
