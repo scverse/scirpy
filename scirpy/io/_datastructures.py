@@ -94,14 +94,7 @@ class AirrCell(MutableMapping):
         del self._cell_attrs[key]
 
     def __getitem__(self, key):
-        if key == "cell_id":
-            return self._cell_attrs[key]
-        else:
-            chain_field_attrs = []
-            for sub_dict in self._chains:
-                if key in sub_dict:
-                    chain_field_attrs.append(sub_dict[key])
-            return chain_field_attrs
+        return self._cell_attrs[key]
 
     def __iter__(self) -> Iterator:
         return iter(self._cell_attrs)
