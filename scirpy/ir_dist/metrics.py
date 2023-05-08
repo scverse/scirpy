@@ -8,8 +8,7 @@ import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from Levenshtein import hamming as hamming_dist
-from scipy.sparse import coo_matrix
-from scipy.sparse.csr import csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 from tqdm.contrib.concurrent import process_map
 
 from ..util import _doc_params, tqdm
