@@ -173,11 +173,11 @@ def layout_fr_size_aware(
         node_size = np.zeros((total_nodes))
 
     if fixed_nodes is None:
-        is_mobile = np.ones((len(unique_nodes)), dtype=np.bool)
+        is_mobile = np.ones((len(unique_nodes)), dtype=bool)
     else:
         is_mobile = np.array(
             [False if node in fixed_nodes else True for node in unique_nodes],
-            dtype=np.bool,
+            dtype=bool,
         )
 
     adjacency = _edge_list_to_adjacency_matrix(edge_list)
@@ -318,7 +318,7 @@ def _rescale_to_frame(node_positions, origin, scale):
 
 def _set_diagonal(square_matrix, value=0):
     n = len(square_matrix)
-    is_diagonal = np.diag(np.ones((n), dtype=np.bool))
+    is_diagonal = np.diag(np.ones((n), dtype=bool))
     square_matrix[is_diagonal] = value
     return square_matrix
 

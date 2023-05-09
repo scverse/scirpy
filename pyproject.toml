@@ -33,7 +33,7 @@ dependencies = [
     'mudata>=0.2.2',
     'scanpy>=1.9.3',
     'pandas>=1.5,<2',
-    'numpy>=1.17.0',
+    'numpy>=1.17.0,<1.23', # unping max version after muon is fixed!
     'scipy',
     # parasail 1.2.1 fails to be installd on MacOS
     'parasail != 1.2.1',

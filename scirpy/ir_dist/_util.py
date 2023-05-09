@@ -6,8 +6,7 @@ from typing import Dict, Hashable, Literal, Mapping, Optional, Sequence, Tuple, 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
-from scipy.sparse.coo import coo_matrix
-from scipy.sparse.csr import csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 
 
 def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
