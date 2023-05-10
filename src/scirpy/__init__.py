@@ -1,8 +1,7 @@
-"""Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"""
+from importlib.metadata import version
 
-from ._metadata import __version__, within_flit
+from . import datasets, get, io, ir_dist, pl, pp, tl, util
 
-if not within_flit():
-    from scanpy import AnnData, read_h5ad
+__all__ = ["datasets", "get", "io", "ir_dist", "pl", "pp", "tl", "util"]
 
-    from . import datasets, get, io, ir_dist, pl, pp, tl, util
+__version__ = version("scirpy")
