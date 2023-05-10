@@ -3,8 +3,9 @@ from typing import Callable, Literal, Sequence, Union
 import numpy as np
 import pandas as pd
 
-from ..get import airr as get_airr
-from ..util import DataHandler
+from scirpy.get import airr as get_airr
+from scirpy.util import DataHandler
+
 from ._group_abundance import _group_abundance
 
 
@@ -58,8 +59,8 @@ def spectratype(
     if "groupby" in kwargs or "IR_" in str(cdr3_col) or "IR_" in str(chain):
         raise ValueError(
             """\
-            The function signature has been updated when the scirpy 0.13 datastructure was introduced. 
-            Please use the `chain` attribute to choose `VJ_1`, `VDJ_1`, `VJ_2`, or `VDJ_2` chain(s). 
+            The function signature has been updated when the scirpy 0.13 datastructure was introduced.
+            Please use the `chain` attribute to choose `VJ_1`, `VDJ_1`, `VJ_2`, or `VDJ_2` chain(s).
             """
         )
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
@@ -72,14 +73,10 @@ def spectratype(
     # Combine (potentially) multiple length columns into one
     obs["lengths"] = airr_df.applymap(len).apply(combine_fun, axis=1)
 
-    cdr3_lengths = _group_abundance(
-        obs, groupby="lengths", target_col=target_col, fraction=fraction
-    )
+    cdr3_lengths = _group_abundance(obs, groupby="lengths", target_col=target_col, fraction=fraction)
 
     # Should include all lengths, not just the abundant ones
-    cdr3_lengths = cdr3_lengths.reindex(range(int(obs["lengths"].max()) + 1)).fillna(
-        value=0.0
-    )
+    cdr3_lengths = cdr3_lengths.reindex(range(int(obs["lengths"].max()) + 1)).fillna(value=0.0)
 
     cdr3_lengths.sort_index(axis=1, inplace=True)
 

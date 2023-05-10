@@ -15,7 +15,7 @@ from .util import _squarify
 
 
 def _assert_frame_equal(left, right):
-    """alias to pandas.testing.assert_frame_equal configured for the tests in this file"""
+    """Alias to pandas.testing.assert_frame_equal configured for the tests in this file"""
     pdt.assert_frame_equal(left, right, check_dtype=False, check_categorical=False)
 
 
@@ -29,7 +29,8 @@ def adata_cdr3_mock_distance_calculator():
 
         def calc_dist_mat(self, seqs, seqs2=None):
             """Don't calculate distances, but return the
-            hard-coded distance matrix needed for the test"""
+            hard-coded distance matrix needed for the test
+            """
             mat_seqs = np.array(["AAA", "AHA", "KK", "KKK", "KKY", "LLL"])
             mask = np.isin(mat_seqs, seqs)
             dist_mat = scipy.sparse.csr_matrix(
@@ -436,7 +437,7 @@ def test_compute_distances_no_ir(adata_cdr3, adata_cdr3_mock_distance_calculator
     # test both receptor arms, primary chain only
     ir.pp.ir_dist(adata_cdr3, metric=adata_cdr3_mock_distance_calculator, sequence="aa")
     with pytest.raises(ValueError):
-        cn = ClonotypeNeighbors(
+        ClonotypeNeighbors(
             DataHandler.default(adata_cdr3),
             receptor_arms="all",
             dual_ir="primary_only",

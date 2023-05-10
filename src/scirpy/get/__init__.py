@@ -9,7 +9,7 @@ import pandas as pd
 from anndata import AnnData
 from mudata import MuData
 
-from ..util import DataHandler
+from scirpy.util import DataHandler
 
 _VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
@@ -43,7 +43,7 @@ def airr(
 
     Returns
     -------
-    A :class:`~pandas.Series` or :class:`~pandas.DataFrame` aligned to `adata.obs`. 
+    A :class:`~pandas.Series` or :class:`~pandas.DataFrame` aligned to `adata.obs`.
     Contains missing values in places where a cell does not have the requested chain.
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
@@ -69,9 +69,7 @@ def airr(
         )
     else:
         return pd.Series(
-            _airr_col(
-                params.airr, params.chain_indices, airr_variable, cast(ChainType, chain)
-            ),
+            _airr_col(params.airr, params.chain_indices, airr_variable, cast(ChainType, chain)),
             index=params.adata.obs_names,
         )
 
@@ -82,12 +80,10 @@ def _airr_col(
     airr_variable: str,
     chain: ChainType,
 ) -> np.ndarray:
-    """called by `airr()` to retrieve a single column"""
+    """Called by `airr()` to retrieve a single column"""
     chain = chain.upper()  # type: ignore
     if chain not in _VALID_CHAINS:
-        raise ValueError(
-            f"Invalid value for chain. Valid values are {', '.join(_VALID_CHAINS)}"
-        )
+        raise ValueError(f"Invalid value for chain. Valid values are {', '.join(_VALID_CHAINS)}")
 
     # split VJ_1 into ("VJ", 0)
     receptor_arm, chain_i = chain.split("_")
@@ -113,9 +109,7 @@ def _airr_col(
 
 
 @contextmanager
-def obs_context(
-    data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Mapping[str, Any]]
-):
+def obs_context(data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Mapping[str, Any]]):
     """
     Contextmanager that temporarily adds columns to obs.
 
@@ -124,12 +118,17 @@ def obs_context(
 
     .. code-block:: python
 
-        with ir.get.obs_context(mdata, {
-            "new_col_with_constant_value": "foo",
-            "new_col_with_sequence": range(len(mdata)),
-            "v_gene_primary_vj_chain": ir.get.airr(mdata, "v_call", "VJ_1")
-        }) as m:
-            ir.pl.group_abundance(m, groupby="v_gene_primary_vj_chain", target_col="new_col_with_constant_value")
+        with ir.get.obs_context(
+            mdata,
+            {
+                "new_col_with_constant_value": "foo",
+                "new_col_with_sequence": range(len(mdata)),
+                "v_gene_primary_vj_chain": ir.get.airr(mdata, "v_call", "VJ_1"),
+            },
+        ) as m:
+            ir.pl.group_abundance(
+                m, groupby="v_gene_primary_vj_chain", target_col="new_col_with_constant_value"
+            )
 
 
     Parameters
@@ -172,14 +171,16 @@ def airr_context(
     Example
     -------
 
-    To list all combinations of patient and V genes in the :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` chains: 
+    To list all combinations of patient and V genes in the :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` chains:
 
     .. code-block:: python
 
         with ir.get.airr_context(mdata, "v_call", chain=["VJ_1", "VDJ_1"]) as m:
-            combinations = m.obs.groupby(
-                ["patient", "VJ_1_v_call", "VDJ_1_v_call"], observed=True
-            ).size().reset_index(name="n")
+            combinations = (
+                m.obs.groupby(["patient", "VJ_1_v_call", "VDJ_1_v_call"], observed=True)
+                .size()
+                .reset_index(name="n")
+            )
 
     Parameters
     ----------
@@ -204,9 +205,5 @@ def airr_context(
 def _has_ir(params: DataHandler):
     """Return a mask of all cells that have a valid IR configuration"""
     return ak.to_numpy(
-        (
-            ak.count(params.chain_indices["VJ"], axis=1)
-            + ak.count(params.chain_indices["VDJ"], axis=1)
-        )
-        > 0
+        (ak.count(params.chain_indices["VJ"], axis=1) + ak.count(params.chain_indices["VDJ"], axis=1)) > 0
     )

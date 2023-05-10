@@ -5,7 +5,8 @@ import pandas as pd
 import scanpy as sc
 from scipy.stats import fisher_exact
 
-from ..util import DataHandler
+from scirpy.util import DataHandler
+
 from ._repertoire_overlap import repertoire_overlap
 
 
@@ -119,8 +120,7 @@ def clonotype_imbalance(
         tdf1 = clonotype_presence.loc[cases,]
         tdf2 = clonotype_presence.loc[controls,]
         suspects = set(
-            tdf1.loc[:, tdf1.sum() > 0].columns.values.tolist()
-            + tdf2.loc[:, tdf2.sum() > 0].columns.values.tolist()
+            tdf1.loc[:, tdf1.sum() > 0].columns.values.tolist() + tdf2.loc[:, tdf2.sum() > 0].columns.values.tolist()
         )
         for suspect in suspects:
             p, logfoldchange, rel_case_sizes, rel_control_sizes = _calculate_imbalance(
@@ -148,9 +148,7 @@ def clonotype_imbalance(
             "Normalized abundance",
         ],
     )
-    clt_stats = pd.DataFrame.from_records(
-        clt_stats, columns=[target_col, "pValue", "logpValue", "logFC"]
-    )
+    clt_stats = pd.DataFrame.from_records(clt_stats, columns=[target_col, "pValue", "logpValue", "logFC"])
     clt_stats = clt_stats.sort_values(by="pValue")
 
     if inplace:
@@ -196,7 +194,6 @@ def _create_case_control_groups(
     A list, where each item consist of a hue, list of cases, list of controls,
     number of cases, number of controls.
     """
-
     case_control_groups = []
     group_cols = [groupby, replicate_col]
     if additional_hue is None:
@@ -259,7 +256,6 @@ def _calculate_imbalance(
     The p-value of a Fischers exact test and a logFoldChange of the case frequency
     compared to the control frequency and the relative sizes for case and control groups.
     """
-
     rel_case_sizes = case_sizes / np.array(ncase)
     rel_control_sizes = control_sizes / np.array(ncontrol)
     case_mean_freq = np.mean((case_sizes) / np.array(ncase))
@@ -272,12 +268,8 @@ def _calculate_imbalance(
     control_absence = ncontrol.sum() - control_presence
     if control_absence < 0:
         control_absence = 0
-    oddsratio, p = fisher_exact(
-        [[case_presence, control_presence], [case_absence, control_absence]]
-    )
-    logfoldchange = np.log2(
-        (case_mean_freq + global_minimum) / (control_mean_freq + global_minimum)
-    )
+    oddsratio, p = fisher_exact([[case_presence, control_presence], [case_absence, control_absence]])
+    logfoldchange = np.log2((case_mean_freq + global_minimum) / (control_mean_freq + global_minimum))
     return p, logfoldchange, rel_case_sizes, rel_control_sizes
 
 
@@ -314,11 +306,8 @@ def _extend_clt_freq(
     The extended list, where each item is a tuple of the tested clonotype, hue label,
     group label, replicate name, group size (frequency).
     """
-
     for e in rel_case_sizes.index.values:
         clt_freq.append((suspect, hue, case_label, e, rel_case_sizes.loc[e].mean()))
     for e in rel_control_sizes.index.values:
-        clt_freq.append(
-            (suspect, hue, control_label, e, rel_control_sizes.loc[e].mean())
-        )
+        clt_freq.append((suspect, hue, control_label, e, rel_control_sizes.loc[e].mean()))
     return clt_freq

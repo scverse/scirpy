@@ -1,8 +1,9 @@
 import sys
-from pathlib import Path
-from datetime import datetime
-import jupytext
 import warnings
+from datetime import datetime
+from pathlib import Path
+
+import jupytext
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent))
@@ -60,27 +61,27 @@ napoleon_use_ivar = True
 napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
 
-intersphinx_mapping = dict(
-    scanpy=("https://scanpy.readthedocs.io/en/stable/", None),
-    anndata=("https://anndata.readthedocs.io/en/stable/", None),
-    h5py=("https://docs.h5py.org/en/stable/", None),
-    cycler=("https://matplotlib.org/cycler/", None),
-    ipython=("https://ipython.readthedocs.io/en/stable/", None),
-    leidenalg=("https://leidenalg.readthedocs.io/en/latest/", None),
-    matplotlib=("https://matplotlib.org/stable", None),
-    numpy=("https://numpy.org/doc/stable/", None),
-    pandas=("https://pandas.pydata.org/pandas-docs/stable/", None),
-    python=("https://docs.python.org/3", None),
-    scipy=("https://docs.scipy.org/doc/scipy/reference/", None),
-    seaborn=("https://seaborn.pydata.org/", None),
-    sklearn=("https://scikit-learn.org/stable/", None),
-    networkx=("https://networkx.org/documentation/networkx-1.10/", None),
-    dandelion=("https://sc-dandelion.readthedocs.io/en/latest/", None),
-    muon=("https://muon.readthedocs.io/en/latest", None),
-    mudata=("https://mudata.readthedocs.io/en/latest/", None),
-    awkward=("https://awkward-array.org/doc/main/", None),
-    pooch=("https://www.fatiando.org/pooch/latest/", None),
-)
+intersphinx_mapping = {
+    "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
+    "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
+    "h5py": ("https://docs.h5py.org/en/stable/", None),
+    "cycler": ("https://matplotlib.org/cycler/", None),
+    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
+    "leidenalg": ("https://leidenalg.readthedocs.io/en/latest/", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "python": ("https://docs.python.org/3", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "seaborn": ("https://seaborn.pydata.org/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "networkx": ("https://networkx.org/documentation/networkx-1.10/", None),
+    "dandelion": ("https://sc-dandelion.readthedocs.io/en/latest/", None),
+    "muon": ("https://muon.readthedocs.io/en/latest", None),
+    "mudata": ("https://mudata.readthedocs.io/en/latest/", None),
+    "awkward": ("https://awkward-array.org/doc/main/", None),
+    "pooch": ("https://www.fatiando.org/pooch/latest/", None),
+}
 
 
 # -- nbsphinx Tutorials ----------------------------------------------------------------
@@ -104,15 +105,15 @@ html_theme = "scanpydoc"
 # https://stackoverflow.com/a/43186995/2340703
 html_static_path = ["_static"]
 pygments_style = "sphinx"
-html_context = dict(
-    display_github=True,  # Integrate GitHub
-    github_user="scverse",  # Username
-    github_repo=project,  # Repo name
-    github_version="master",  # Version
-    conf_py_path="/docs/",  # Path in the checkout to the docs root
-)
+html_context = {
+    "display_github": True,  # Integrate GitHub
+    "github_user": "scverse",  # Username
+    "github_repo": project,  # Repo name
+    "github_version": "master",  # Version
+    "conf_py_path": "/docs/",  # Path in the checkout to the docs root
+}
 html_logo = "img/scirpy_logo_bright.png"
-html_theme_options = dict(navigation_depth=4, logo_only=True)
+html_theme_options = {"navigation_depth": 4, "logo_only": True}
 
 
 def setup(app):

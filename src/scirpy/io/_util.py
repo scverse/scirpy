@@ -9,12 +9,12 @@ from scanpy import logging
 doc_working_model = """\
 
 .. note::
-    Since scirpy v0.13, there are no restrictions on the AIRR data that can be stored in the scirpy data structure, 
+    Since scirpy v0.13, there are no restrictions on the AIRR data that can be stored in the scirpy data structure,
     except that each receptor chain needs to be associated with a cell.
 
-    The scirpy :ref:`receptor-model` is now applied in later step using the :func:`~scirpy.pp.index_chains` function. 
+    The scirpy :ref:`receptor-model` is now applied in later step using the :func:`~scirpy.pp.index_chains` function.
 
-    For more information, see :ref:`data-structure`. 
+    For more information, see :ref:`data-structure`.
 """
 
 

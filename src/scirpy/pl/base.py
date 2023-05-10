@@ -11,7 +11,8 @@ from cycler import Cycler
 from matplotlib import cycler, rcParams
 from sklearn.neighbors import KernelDensity
 
-from ..util import _doc_params
+from scirpy.util import _doc_params
+
 from .styling import DEFAULT_FIG_KWS, _init_ax, apply_style_to_axes
 
 _common_doc = """\
@@ -58,7 +59,6 @@ def bar(
     -------
     Axes object
     """
-
     if ax is None:
         ax = _init_ax(fig_kws)
     if "grid" not in kwargs:
@@ -107,7 +107,7 @@ def line(
         kwargs["grid"] = False
     ax = data.plot.line(ax=ax, **kwargs)
     if style_kws is None:
-        style_kws = dict()
+        style_kws = {}
     style_kws["change_xticks"] = False
     apply_style_to_axes(ax, style, style_kws)
     return ax
@@ -199,7 +199,7 @@ def curve(
         ax = _init_ax(fig_kws)
 
     xmax = 0
-    for k, v in data.items():
+    for _k, v in data.items():
         mx = np.amax(v)
         if mx > xmax:
             xmax = mx
@@ -213,7 +213,7 @@ def curve(
         order = list(data.keys())
 
     if kernel_kws is None:
-        kernel_kws = dict()
+        kernel_kws = {}
     if "kernel" not in kernel_kws:
         kernel_kws["kernel"] = "gaussian"
     if "bandwidth" not in kernel_kws:
@@ -252,7 +252,7 @@ def curve(
             ax.plot(x, y, label=label, color=tmp_color)
 
     if style_kws is None:
-        style_kws = dict()
+        style_kws = {}
     style_kws["change_xticks"] = False
     if kde_norm:
         style_kws["ylab"] = "Probability"
@@ -295,7 +295,6 @@ def ol_scatter(
     -------
     Axes object
     """
-
     if ax is None:
         ax = _init_ax(fig_kws)
     axlim = data["x"].max() + 1
@@ -305,7 +304,7 @@ def ol_scatter(
     ax.set_xlim(0, axlim)
     ax.set_ylim(0, axlim)
     if style_kws is None:
-        style_kws = dict()
+        style_kws = {}
     style_kws["change_xticks"] = False
     apply_style_to_axes(ax, style, style_kws)
     return ax
@@ -337,7 +336,6 @@ def volcano(
     -------
     Axes object
     """
-
     if ax is None:
         ax = _init_ax(fig_kws)
 
@@ -355,7 +353,7 @@ def volcano(
     ax.set_xlim(-axlim, axlim)
     ax.set_ylim(0, 1.1 * (data["y"].max()))
     if style_kws is None:
-        style_kws = dict()
+        style_kws = {}
     style_kws["change_xticks"] = False
     apply_style_to_axes(ax, style, style_kws)
     return ax
@@ -430,18 +428,14 @@ def embedding(
         A list of axes objects, containing one
         element for each `color`, or None if `show == True`.
 
-    See also
+    See Also
     --------
     :func:`scanpy.pl.embedding`
     """
     adata._sanitize()
 
     def _make_iterable(var, singleton_types=(str,)):
-        return (
-            itertools.repeat(var)
-            if isinstance(var, singleton_types) or var is None
-            else list(var)
-        )
+        return itertools.repeat(var) if isinstance(var, singleton_types) or var is None else list(var)
 
     color = [color] if isinstance(color, str) or color is None else list(color)
     basis = _make_iterable(basis)
@@ -453,12 +447,8 @@ def embedding(
         n_panels = len(color)
         nrows = int(np.ceil(float(n_panels) / ncols))
         ncols = np.min((n_panels, ncols))
-        hspace = (
-            rcParams.get("figure.subplot.hspace", 0.0) if hspace is None else hspace
-        )
-        wspace = (
-            rcParams.get("figure.subplot.wspace", 0.0) if wspace is None else wspace
-        )
+        hspace = rcParams.get("figure.subplot.hspace", 0.0) if hspace is None else hspace
+        wspace = rcParams.get("figure.subplot.wspace", 0.0) if wspace is None else wspace
         # Don't ask about +/- 1 but appears to be most faithful to the panel size
         fig_width = panel_size[0] * ncols + hspace * (ncols + 1)
         fig_height = panel_size[1] * nrows + wspace * (nrows - 1)
@@ -475,9 +465,7 @@ def embedding(
         fig = axs[0].get_figure()
 
     # use the scanpy plotting api to fill individual components
-    for ax, tmp_color, tmp_basis, tmp_legend_loc, tmp_palette in zip(
-        axs, color, basis, legend_loc, palette
-    ):
+    for ax, tmp_color, tmp_basis, tmp_legend_loc, tmp_palette in zip(axs, color, basis, legend_loc, palette):
         # cycle colors for categories with many values instead of
         # coloring them in grey
         if tmp_palette is None and tmp_color is not None:

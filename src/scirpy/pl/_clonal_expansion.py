@@ -1,7 +1,8 @@
 from typing import Literal, Union
 
-from .. import tl
-from ..util import DataHandler
+from scirpy import tl
+from scirpy.util import DataHandler
+
 from . import base
 
 

@@ -14,9 +14,7 @@ from scirpy.util import DataHandler
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
 
-def apply_style_to_axes(
-    ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]
-) -> None:
+def apply_style_to_axes(ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]) -> None:
     """Apply a predefined style to an axis object.
 
     Parameters
@@ -31,11 +29,11 @@ def apply_style_to_axes(
         override the defaults provided by the style.
     """
     if style is not None:
-        style_kws = dict() if style_kws is None else style_kws
+        style_kws = {} if style_kws is None else style_kws
         if style == "default":
             return style_axes(ax, **style_kws)
         else:
-            raise ValueError("Unknown style: {}".format(style))
+            raise ValueError(f"Unknown style: {style}")
 
 
 def _init_ax(fig_kws: Union[dict, None] = None) -> plt.Axes:
@@ -87,22 +85,16 @@ def style_axes(
     add_legend
         Font size of the axis tick labels.
     """
-    ax.set_title(
-        title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
-    )
+    ax.set_title(title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc)
     ax.set_xlabel(xlab, fontsize=label_fontsize)
     # ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize)
     ax.set_ylabel(ylab, fontsize=label_fontsize)
     # ax.set_yticklabels(ax.get_yticklabels(), fontsize=tick_fontsize)
 
-    ax.set_title(
-        title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc
-    )
+    ax.set_title(title, fontdict={"fontsize": title_fontsize}, pad=title_pad, loc=title_loc)
     ax.set_xlabel(xlab, fontsize=label_fontsize)
     if change_xticks:
-        ax.set_xticklabels(
-            ax.get_xticklabels(), fontsize=tick_fontsize, rotation=30, ha="right"
-        )
+        ax.set_xticklabels(ax.get_xticklabels(), fontsize=tick_fontsize, rotation=30, ha="right")
         xax = ax.get_xaxis()
         xax.set_tick_params(length=0)
     ax.tick_params(axis="both", labelsize=tick_fontsize)
@@ -153,12 +145,10 @@ def _get_colors(
         color_key = f"{obs_key}_colors"
         if palette is not None:
             _set_colors_for_categorical_obs(uns_lookup, obs_key, palette)
-        elif color_key not in uns_lookup.uns or len(uns_lookup.uns[color_key]) < len(
-            categories
-        ):
+        elif color_key not in uns_lookup.uns or len(uns_lookup.uns[color_key]) < len(categories):
             #  set a default palette in case that no colors or few colors are found
             _set_default_colors_for_categorical_obs(uns_lookup, obs_key)
         else:
             _validate_palette(uns_lookup, obs_key)
 
-        return {cat: col for cat, col in zip(categories, uns_lookup.uns[color_key])}
+        return dict(zip(categories, uns_lookup.uns[color_key]))

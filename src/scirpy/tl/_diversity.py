@@ -3,7 +3,7 @@ from typing import Callable, Optional, Union, cast
 import numpy as np
 import pandas as pd
 
-from ..util import DataHandler, _is_na
+from scirpy.util import DataHandler, _is_na
 
 
 def _shannon_entropy(counts: np.ndarray):
@@ -48,9 +48,7 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: Union[
-        str, Callable[[np.ndarray], Union[int, float]]
-    ] = "normalized_shannon_entropy",
+    metric: Union[str, Callable[[np.ndarray], Union[int, float]]] = "normalized_shannon_entropy",
     inplace: bool = True,
     key_added: Union[None, str] = None,
     airr_mod: str = "airr",
@@ -95,7 +93,7 @@ def alpha_diversity(
     metric
         A metric used for diversity estimation out of `normalized_shannon_entropy`,
         `D50`, `DXX`, any of scikit-bio’s alpha diversity metrics, or a custom function.
-    {inplace} 
+    {inplace}
     {key_added}
         Defaults to `alpha_diversity_{{target_col}}`.
     {airr_mod}
@@ -110,19 +108,13 @@ def alpha_diversity(
     params = DataHandler(adata, airr_mod)
     ir_obs = params.get_obs([target_col, groupby])
     ir_obs = ir_obs.loc[~_is_na(ir_obs[target_col]), :]
-    clono_counts = (
-        ir_obs.groupby([groupby, target_col], observed=True)
-        .size()
-        .reset_index(name="count")
-    )
+    clono_counts = ir_obs.groupby([groupby, target_col], observed=True).size().reset_index(name="count")
 
-    diversity = dict()
+    diversity = {}
     for k in sorted(ir_obs[groupby].dropna().unique()):
         tmp_counts = cast(
             np.ndarray,
-            cast(
-                pd.Series, clono_counts.loc[clono_counts[groupby] == k, "count"]
-            ).values,
+            cast(pd.Series, clono_counts.loc[clono_counts[groupby] == k, "count"]).values,
         )
 
         if isinstance(metric, str):
@@ -132,13 +124,10 @@ def alpha_diversity(
                 diversity[k] = _dxx(tmp_counts, percentage=50)
             elif metric == "DXX":
                 if "percentage" in kwargs:
-                    diversity[k] = _dxx(
-                        tmp_counts, percentage=cast(int, kwargs.get("percentage"))
-                    )
+                    diversity[k] = _dxx(tmp_counts, percentage=cast(int, kwargs.get("percentage")))
                 else:
                     raise ValueError(
-                        "DXX requires the `percentage` keyword argument, which can "
-                        "range from 0 to 100."
+                        "DXX requires the `percentage` keyword argument, which can " "range from 0 to 100."
                     )
             else:
                 # make skbio an optional dependency
@@ -153,9 +142,7 @@ def alpha_diversity(
                 else:
                     # skbio.diversity takes count vectors as input and
                     # takes care of unknown metrics
-                    diversity[k] = skbio.diversity.alpha_diversity(
-                        metric, tmp_counts
-                    ).values[0]
+                    diversity[k] = skbio.diversity.alpha_diversity(metric, tmp_counts).values[0]
         else:
             # calculate diversity using custom function
             diversity[k] = metric(tmp_counts)

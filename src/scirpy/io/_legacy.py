@@ -1,14 +1,15 @@
-"""Code to support older version of the scipy data structure. """
+"""Code to support older version of the scipy data structure."""
 
 import itertools
+from importlib.metadata import version
 from typing import List, cast
 
 import awkward as ak
-from anndata import AnnData
 import packaging.version
-from importlib.metadata import version
+from anndata import AnnData
 
-from ..util import DataHandler, _is_na2
+from scirpy.util import DataHandler, _is_na2
+
 from ._datastructures import AirrCell
 from ._util import _IOLogger
 
@@ -84,7 +85,7 @@ def _obs_schema_to_airr_cells(adata: AnnData) -> List[AirrCell]:
             # in the old schema, these chains are productive by definition
             tmp_chain["productive"] = True
             # Don't add empty chains!
-            if not all([_is_na2(x) for x in tmp_chain.values()]):
+            if not all(_is_na2(x) for x in tmp_chain.values()):
                 tmp_ir_cell.add_chain(tmp_chain)
 
         try:

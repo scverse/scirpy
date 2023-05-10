@@ -6,7 +6,7 @@ import pandas as pd
 from scipy.cluster import hierarchy as sc_hierarchy
 from scipy.spatial import distance as sc_distance
 
-from ..util import DataHandler, _is_na, _normalize_counts
+from scirpy.util import DataHandler, _is_na, _normalize_counts
 
 
 @DataHandler.inject_param_docs()
@@ -71,24 +71,16 @@ def repertoire_overlap(
 
     # Normalize to fractions
     df["cell_weights"] = (
-        _normalize_counts(df, fraction)
-        if isinstance(fraction, (bool, str)) or fraction is None
-        else fraction
+        _normalize_counts(df, fraction) if isinstance(fraction, (bool, str)) or fraction is None else fraction
     )
 
     # Create a weighted matrix of clonotypes
-    df = (
-        df.groupby([target_col, groupby], observed=True)
-        .agg({"cell_weights": "sum"})
-        .reset_index()
-    )
+    df = df.groupby([target_col, groupby], observed=True).agg({"cell_weights": "sum"}).reset_index()
     df = df.pivot(index=groupby, columns=target_col, values="cell_weights")
     df = df.fillna(0)
 
     # Create a table of clonotype presence
-    if (
-        overlap_threshold is None
-    ):  # Consider a fuction that finds an optimal threshold...
+    if overlap_threshold is None:  # Consider a fuction that finds an optimal threshold...
         overlap_threshold = 0
     pr_df = df.applymap(lambda x: 1 if x > overlap_threshold else 0)
 

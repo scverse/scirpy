@@ -11,7 +11,7 @@ from Levenshtein import hamming as hamming_dist
 from scipy.sparse import coo_matrix, csr_matrix
 from tqdm.contrib.concurrent import process_map
 
-from ..util import _doc_params, tqdm
+from scirpy.util import _doc_params, tqdm
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -55,16 +55,12 @@ class DistanceCalculator(abc.ABC):
 
     def __init__(self, cutoff: Union[int, None]):
         if cutoff > 255:
-            raise ValueError(
-                "Using a cutoff > 255 is not possible due to the `uint8` dtype used"
-            )
+            raise ValueError("Using a cutoff > 255 is not possible due to the `uint8` dtype used")
         self.cutoff = cutoff
 
     @_doc_params(dist_mat=_doc_dist_mat)
     @abc.abstractmethod
-    def calc_dist_mat(
-        self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
-    ) -> csr_matrix:
+    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
         """\
         Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`.
 
@@ -93,16 +89,10 @@ class DistanceCalculator(abc.ABC):
         The input matrix *must* be upper triangular to begin with, otherwise
         the results will be incorrect. No guard rails!
         """
-        assert (
-            triangular_matrix.shape[0] == triangular_matrix.shape[1]
-        ), "needs to be square matrix"
+        assert triangular_matrix.shape[0] == triangular_matrix.shape[1], "needs to be square matrix"
         # The matrix is already upper diagonal. Use the transpose method, see
         # https://stackoverflow.com/a/58806735/2340703.
-        return (
-            triangular_matrix
-            + triangular_matrix.T
-            - scipy.sparse.diags(triangular_matrix.diagonal())
-        )
+        return triangular_matrix + triangular_matrix.T - scipy.sparse.diags(triangular_matrix.diagonal())
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
@@ -149,7 +139,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
             row, col coordinates of the origin of the block.
 
         Returns
-        ------
+        -------
         List of (distance, row, col) tuples for all elements with distance != 0.
         row, col must be the coordinates in the final matrix (they can be derived using
         `origin`). Can't be a generator because this needs to be picklable.
@@ -196,16 +186,13 @@ class ParallelDistanceCalculator(DistanceCalculator):
                     # diagonal.
                     yield seqs1[row : row + block_size], None, (row, row)
                 else:
-                    yield seqs1[row : row + block_size], seqs2[
-                        col : col + block_size
-                    ], (row, col)
+                    yield seqs1[row : row + block_size], seqs2[col : col + block_size], (row, col)
 
-    def calc_dist_mat(
-        self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None
-    ) -> csr_matrix:
+    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
         """Calculate the distance matrix.
 
-        See :meth:`DistanceCalculator.calc_dist_mat`."""
+        See :meth:`DistanceCalculator.calc_dist_mat`.
+        """
         # precompute blocks as list to have total number of blocks for progressbar
         blocks = list(self._block_iter(seqs, seqs2, self.block_size))
 
@@ -225,9 +212,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
             dists, rows, cols = (), (), ()
 
         shape = (len(seqs), len(seqs2)) if seqs2 is not None else (len(seqs), len(seqs))
-        score_mat = scipy.sparse.coo_matrix(
-            (dists, (rows, cols)), dtype=self.DTYPE, shape=shape
-        )
+        score_mat = scipy.sparse.coo_matrix((dists, (rows, cols)), dtype=self.DTYPE, shape=shape)
         score_mat.eliminate_zeros()
         score_mat = score_mat.tocsr()
 
@@ -264,16 +249,15 @@ class IdentityDistanceCalculator(DistanceCalculator):
     def calc_dist_mat(self, seqs: np.ndarray, seqs2: np.ndarray = None) -> csr_matrix:
         """In this case, the offseted distance matrix is the identity matrix.
 
-        More details: :meth:`DistanceCalculator.calc_dist_mat`"""
+        More details: :meth:`DistanceCalculator.calc_dist_mat`
+        """
         if seqs2 is None:
             # In this case, the offsetted distance matrix is the identity matrix
             return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="csr")
         else:
             # actually compare the values
             def coord_generator():
-                for (i1, s1), (i2, s2) in itertools.product(
-                    enumerate(seqs), enumerate(seqs2)
-                ):
+                for (i1, s1), (i2, s2) in itertools.product(enumerate(seqs), enumerate(seqs2)):
                     if s1 == s2:
                         yield 1, i1, i2
 
@@ -283,9 +267,7 @@ class IdentityDistanceCalculator(DistanceCalculator):
                 # happens when there is no match at all
                 d, row, col = (), (), ()
 
-            return coo_matrix(
-                (d, (row, col)), dtype=self.DTYPE, shape=(len(seqs), len(seqs2))
-            ).tocsr()
+            return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(len(seqs), len(seqs2))).tocsr()
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
@@ -324,9 +306,7 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
             coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
         else:
             # compute only upper triangle in this case
-            coord_iterator = itertools.combinations_with_replacement(
-                enumerate(seqs1), r=2
-            )
+            coord_iterator = itertools.combinations_with_replacement(enumerate(seqs1), r=2)
 
         result = []
         for (row, s1), (col, s2) in coord_iterator:
@@ -375,9 +355,7 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
             coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
         else:
             # compute only upper triangle in this case
-            coord_iterator = itertools.combinations_with_replacement(
-                enumerate(seqs1), r=2
-            )
+            coord_iterator = itertools.combinations_with_replacement(enumerate(seqs1), r=2)
 
         result = []
         for (row, s1), (col, s2) in coord_iterator:
@@ -471,12 +449,8 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
             col_start = row if square_matrix else 0
             for col, s2 in enumerate(seqs2[col_start:], start=col_start):
                 profile = parasail.profile_create_16(s1, subst_mat)
-                r = parasail.nw_scan_profile_16(
-                    profile, s2, self.gap_open, self.gap_extend
-                )
-                max_score = np.min(
-                    [self_alignment_scores1[row], self_alignment_scores2[col]]
-                )
+                r = parasail.nw_scan_profile_16(profile, s2, self.gap_open, self.gap_extend)
+                max_score = np.min([self_alignment_scores1[row], self_alignment_scores2[col]])
                 d = max_score - r.score
                 if d <= self.cutoff:
                     result.append((d + 1, origin_row + row, origin_col + col))
@@ -485,7 +459,8 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     def _self_alignment_scores(self, seqs: Sequence) -> dict:
         """Calculate self-alignments. We need them as reference values
-        to turn scores into dists"""
+        to turn scores into dists
+        """
         import parasail
 
         return np.fromiter(

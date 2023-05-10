@@ -6,7 +6,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.14.4
 ---
 
@@ -42,35 +42,38 @@ sc.logging.print_header()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 In this tutorial, we re-analyze single-cell TCR/RNA-seq data from Wu et al. (:cite:`Wu2020`)
 generated on the 10x Genomics platform. The original dataset consists of >140k T cells
 from 14 treatment-naive patients across four different types of cancer.
 For this tutorial, to speed up computations, we use a downsampled version of 3k cells.
+
 <!-- #endraw -->
 
 ## Importing data
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
+
 `Scirpy` natively supports reading :term:`IR` data from `Cellranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`_ (10x), `TraCeR <https://github.com/Teichlab/tracer>`_ (Smart-seq2)
-or the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`__ and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details.
+or the `AIRR rearrangement schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`\_\_ and provides helper functions to import other data types. We provide a :ref:`dedicated tutorial on data loading <importing-data>` with more details.
 
 .. warning::
 
     **scirpy's data structure has been updated in v0.13.0.**
-    
-    Previously, receptor data was expanded into columns of `adata.obs`, now they are stored as an :term:`awkward array` in `adata.obsm["airr"]`. 
-    Moreover, we now use :class:`~mudata.MuData` to handle paired transcriptomics and :term:`AIRR` data. 
-    
+
+    Previously, receptor data was expanded into columns of `adata.obs`, now they are stored as an :term:`awkward array` in `adata.obsm["airr"]`.
+    Moreover, we now use :class:`~mudata.MuData` to handle paired transcriptomics and :term:`AIRR` data.
+
     `AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
-    
+
     Please check out
-    
+
      * The `release notes <https://github.com/scverse/scirpy/releases/tag/v0.13.0>`_ for details about the changes
      * The documentation about :ref:`Scirpy's data structure <data-structure>` and
-     * :ref:`Scirpy's receptor model <receptor-model>`. 
+     * :ref:`Scirpy's receptor model <receptor-model>`.
 
+The example dataset for this tutorial ships with the `scirpy` package. We can conveniently load it from the :mod:`~scirpy.datasets` module:
 
-The example dataset for this tutorial ships with the `scirpy` package. We can conveniently load it from the :mod:`~scirpy.datasets` module: 
 <!-- #endraw -->
 
 ```python tags=[]
@@ -78,7 +81,9 @@ mdata = ir.datasets.wu2020_3k()
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
-`mdata` is a :class:`~mudata.MuData` object with two modalities: `gex` for gene expression and `airr` for immune-receptor data. 
+
+`mdata` is a :class:`~mudata.MuData` object with two modalities: `gex` for gene expression and `airr` for immune-receptor data.
+
 <!-- #endraw -->
 
 ```python
@@ -168,15 +173,17 @@ mu.pl.embedding(
 ## Creating chain indices
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
-As a first step, we need to create :ref:`chain indices <chain-indices>` for the receptor data. 
 
-By importing :term:`IR` data, essentially, for each cell a list of receptor chains is stored in `adata.obsm["airr"]`. 
-The :ref:`scirpy receptor model <receptor-model>` allows up to two pairs of chains per cell. This representation 
-requires separation of chains by :term:`locus <Chain locus>` into :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` chains, 
-and (optionally) filtering non-productive chains. 
+As a first step, we need to create :ref:`chain indices <chain-indices>` for the receptor data.
 
-The :func:`~scirpy.pp.index_chains` function applies the scirpy receptor model by storing references to the 
-selected chains in `adata.obsm["chain_indices"]`. 
+By importing :term:`IR` data, essentially, for each cell a list of receptor chains is stored in `adata.obsm["airr"]`.
+The :ref:`scirpy receptor model <receptor-model>` allows up to two pairs of chains per cell. This representation
+requires separation of chains by :term:`locus <Chain locus>` into :term:`VJ <V(D)J>` and :term:`VDJ <V(D)J>` chains,
+and (optionally) filtering non-productive chains.
+
+The :func:`~scirpy.pp.index_chains` function applies the scirpy receptor model by storing references to the
+selected chains in `adata.obsm["chain_indices"]`.
+
 <!-- #endraw -->
 
 ```python tags=[]
@@ -281,15 +288,16 @@ ax = ir.pl.group_abundance(mdata, groupby="airr:chain_pairing", target_col="gex:
 ## Define clonotypes and clonotype clusters
 
 <!-- #raw raw_mimetype="text/restructuredtext" -->
-.. _define-clonotypes-tutorial:
+
+.. \_define-clonotypes-tutorial:
 
 In this section, we will define and visualize :term:`clonotypes <Clonotype>` and :term:`clonotype clusters <Clonotype cluster>`.
 
-*Scirpy* implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with *Scanpy*.
+_Scirpy_ implements a network-based approach for clonotype definition. The steps to create and visualize the clonotype-network are analogous to the construction of a neighborhood graph from transcriptomics data with _Scanpy_.
 
 .. list-table:: Analysis steps on IR data
-    :widths: 40 60
-    :header-rows: 1
+:widths: 40 60
+:header-rows: 1
 
     - - scirpy function
       - objective
@@ -373,9 +381,9 @@ We can now re-compute the clonotype network based on amino-acid sequence similar
 and define :term:`clonotype clusters <Clonotype cluster>`.
 
 To this end, we need to change set `metric="alignment"` and specify a `cutoff` parameter.
-The distance is based on the `BLOSUM62 <https://en.wikipedia.org/wiki/BLOSUM>`_ matrix.
+The distance is based on the `BLOSUM62 <https://en.wikipedia.org/wiki/BLOSUM>`\_ matrix.
 For instance, a distance of `10` is equivalent to 2 Rs mutating into N.
-This appoach was initially proposed as *TCRdist* by Dash et al. (:cite:`TCRdist`).
+This appoach was initially proposed as _TCRdist_ by Dash et al. (:cite:`TCRdist`).
 
 All cells with a distance between their CDR3 sequences lower than `cutoff` will be connected in the network.
 
@@ -414,7 +422,8 @@ _ = ir.pl.clonotype_network(
 ```
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
-.. note:: 
+
+.. note::
 
     Since v0.13, AIRR data is not by default included in `obs`. We can retrieve a per-cell data frame with AIRR information
     using :func:`scirpy.get.airr`, or temporarily add columns to `obs` using the :func:`scirpy.get.airr_context` context
@@ -422,6 +431,7 @@ _ = ir.pl.clonotype_network(
 
 We can now extract information (e.g. CDR3-sequences) from a specific clonotype cluster by subsetting `MuData`.
 By extracting the CDR3 sequences of clonotype cluster `159`, we retreive five different receptor configurations with different numbers of cells, corresponding to the five points in the graph.
+
 <!-- #endraw -->
 
 ```python
@@ -633,7 +643,7 @@ mu.pl.embedding(mdata, "gex:umap", color="airr:is_convergent")
 <!-- #raw raw_mimetype="text/restructuredtext" -->
 
 :func:`scirpy.tl.group_abundance` can also give us some information on VDJ usage.
-We first add information about `v_call` to `obs` using :func:`~scirpy.get.airr_context` and then generate a bar plot by the `VJ_1_v_call` variable. 
+We first add information about `v_call` to `obs` using :func:`~scirpy.get.airr_context` and then generate a bar plot by the `VJ_1_v_call` variable.
 We use `max_col` to limit the plot to the 10 most abundant V-genes.
 
 <!-- #endraw -->
@@ -933,8 +943,8 @@ to build a custom reference database, if it is not available from :mod:`scirpy.d
 Querying reference datasets uses the same logic as :ref:`defining clonotypes <define-clonotypes-tutorial>`:
 
 .. list-table:: Analysis steps on IR data
-    :widths: 40 60
-    :header-rows: 1
+:widths: 40 60
+:header-rows: 1
 
     - - scirpy function
       - objective
@@ -973,7 +983,7 @@ ir.tl.ir_query(
 
 <!-- #raw raw_mimetype="text/restructuredtext" tags=[] -->
 
-:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve *all pairs cells with their of matching entries*. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell.
+:func:`~scirpy.tl.ir_query_annotate_df` allows us to retrieve _all pairs cells with their of matching entries_. If a cell matches multiple entires from the reference database, the resulting data frame will contain multiple rows for the same cell.
 
 <!-- #endraw -->
 

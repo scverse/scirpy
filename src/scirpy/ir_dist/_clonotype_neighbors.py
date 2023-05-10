@@ -8,9 +8,10 @@ import scipy.sparse as sp
 from scanpy import logging
 from tqdm.contrib.concurrent import process_map
 
-from ..get import _has_ir
-from ..get import airr as get_airr
-from ..util import DataHandler, tqdm
+from scirpy.get import _has_ir
+from scirpy.get import airr as get_airr
+from scirpy.util import DataHandler, tqdm
+
 from ._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
 
@@ -30,7 +31,8 @@ class ClonotypeNeighbors:
         chunksize: int = 2000,
     ):
         """Computes pairwise distances between cells with identical
-        receptor configuration and calls clonotypes from this distance matrix"""
+        receptor configuration and calls clonotypes from this distance matrix
+        """
         self.same_v_gene = same_v_gene
         self.match_columns = match_columns
         self.receptor_arms = receptor_arms
@@ -40,11 +42,7 @@ class ClonotypeNeighbors:
         self.n_jobs = n_jobs
         self.chunksize = chunksize
 
-        self._receptor_arm_cols = (
-            ["VJ", "VDJ"]
-            if self.receptor_arms in ["all", "any"]
-            else [self.receptor_arms]
-        )
+        self._receptor_arm_cols = ["VJ", "VDJ"] if self.receptor_arms in ["all", "any"] else [self.receptor_arms]
         self._dual_ir_cols = ["1"] if self.dual_ir == "primary_only" else ["1", "2"]
 
         # Initialize the DoubleLookupNeighborFinder and all lookup tables
@@ -58,16 +56,12 @@ class ClonotypeNeighbors:
         else:
             self.cell_indices2, self.clonotypes2, self._chain_count2 = None, None, None
 
-        self.neighbor_finder = DoubleLookupNeighborFinder(
-            self.clonotypes, self.clonotypes2
-        )
+        self.neighbor_finder = DoubleLookupNeighborFinder(self.clonotypes, self.clonotypes2)
         self._add_distance_matrices()
         self._add_lookup_tables()
         logging.hint("Done initializing lookup tables.", time=start)  # type: ignore
 
-    def _make_clonotype_table(
-        self, params: DataHandler
-    ) -> Tuple[Mapping, pd.DataFrame]:
+    def _make_clonotype_table(self, params: DataHandler) -> Tuple[Mapping, pd.DataFrame]:
         """Define 'preliminary' clonotypes based identical IR features."""
         if not params.adata.obs_names.is_unique:
             raise ValueError("Obs names need to be unique!")
@@ -75,12 +69,7 @@ class ClonotypeNeighbors:
         airr_variables = [self.sequence_key]
         if self.same_v_gene:
             airr_variables.append("v_call")
-        chains = [
-            f"{arm}_{chain}"
-            for arm, chain in itertools.product(
-                self._receptor_arm_cols, self._dual_ir_cols
-            )
-        ]
+        chains = [f"{arm}_{chain}" for arm, chain in itertools.product(self._receptor_arm_cols, self._dual_ir_cols)]
 
         obs = get_airr(params, airr_variables, chains)
         # remove entries without receptor (e.g. only non-productive chains) or no sequences
@@ -130,9 +119,7 @@ class ClonotypeNeighbors:
         # make 'within group' a single column of tuples (-> only one distance
         # matrix instead of one per column.)
         if self.match_columns is not None:
-            match_columns_col = list(
-                clonotypes.loc[:, self.match_columns].itertuples(index=False, name=None)
-            )
+            match_columns_col = list(clonotypes.loc[:, self.match_columns].itertuples(index=False, name=None))
             for tmp_col in self.match_columns:
                 del clonotypes[tmp_col]
             clonotypes["match_columns"] = match_columns_col
@@ -142,9 +129,7 @@ class ClonotypeNeighbors:
         if "2" in self._dual_ir_cols:
             for tmp_arm in self._receptor_arm_cols:
                 primary_is_nan = clonotypes[f"{tmp_arm}_1_{self.sequence_key}"] == "nan"
-                secondary_is_nan = (
-                    clonotypes[f"{tmp_arm}_2_{self.sequence_key}"] == "nan"
-                )
+                secondary_is_nan = clonotypes[f"{tmp_arm}_2_{self.sequence_key}"] == "nan"
                 assert not np.sum(
                     ~secondary_is_nan[primary_is_nan]
                 ), "There must not be a secondary chain if there is no primary one"
@@ -188,18 +173,14 @@ class ClonotypeNeighbors:
             )
 
     @staticmethod
-    def _unique_values_in_multiple_columns(
-        df: pd.DataFrame, columns: Sequence[str]
-    ) -> set:
+    def _unique_values_in_multiple_columns(df: pd.DataFrame, columns: Sequence[str]) -> set:
         """Return the Union of unique values of multiple columns of a dataframe"""
         return set(np.concatenate([df[c].values.astype(str) for c in columns]))
 
     def _add_lookup_tables(self) -> None:
         """Add all required lookup tables to the DoubleLookupNeighborFinder"""
         for arm, i in itertools.product(self._receptor_arm_cols, self._dual_ir_cols):
-            self.neighbor_finder.add_lookup_table(
-                f"{arm}_{i}", f"{arm}_{i}_{self.sequence_key}", arm
-            )
+            self.neighbor_finder.add_lookup_table(f"{arm}_{i}", f"{arm}_{i}_{self.sequence_key}", arm)
             if self.same_v_gene:
                 self.neighbor_finder.add_lookup_table(
                     f"{arm}_{i}_v_call",
@@ -215,24 +196,15 @@ class ClonotypeNeighbors:
 
     def _make_chain_count(self, clonotype_table) -> Dict[str, int]:
         """Compute how many chains there are of each type."""
-        cols = {
-            arm: [f"{arm}_{c}_{self.sequence_key}" for c in self._dual_ir_cols]
-            for arm in self._receptor_arm_cols
-        }
-        cols["arms"] = [
-            f"{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols
-        ]
-        return {
-            step: np.sum(clonotype_table.loc[:, cols].values != "nan", axis=1)
-            for step, cols in cols.items()
-        }
+        cols = {arm: [f"{arm}_{c}_{self.sequence_key}" for c in self._dual_ir_cols] for arm in self._receptor_arm_cols}
+        cols["arms"] = [f"{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols]
+        return {step: np.sum(clonotype_table.loc[:, cols].values != "nan", axis=1) for step, cols in cols.items()}
 
     def compute_distances(self) -> sp.csr_matrix:
         """Compute the distances between clonotypes.
-        Returns a clonotype x clonotype2 sparse distance matrix."""
-        start = logging.info(
-            "Computing clonotype x clonotype distances."
-        )  # type: ignore
+        Returns a clonotype x clonotype2 sparse distance matrix.
+        """
+        start = logging.info("Computing clonotype x clonotype distances.")  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
 
         # only use multiprocessing for sufficiently large datasets
@@ -244,8 +216,7 @@ class ClonotypeNeighbors:
             )
         else:
             logging.info(
-                "NB: Computation happens in chunks. The progressbar only advances "
-                "when a chunk has finished. "
+                "NB: Computation happens in chunks. The progressbar only advances " "when a chunk has finished. "
             )  # type: ignore
 
             dist_rows = process_map(
@@ -273,17 +244,11 @@ class ClonotypeNeighbors:
         match ("and"), the higher one should count.
         """
         # Lookup distances for current row
-        tmp_clonotypes = (
-            self.clonotypes2 if self.clonotypes2 is not None else self.clonotypes
-        )
-        lookup = dict()  # CDR3 distances
-        lookup_v = dict()  # V-gene distances
+        tmp_clonotypes = self.clonotypes2 if self.clonotypes2 is not None else self.clonotypes
+        lookup = {}  # CDR3 distances
+        lookup_v = {}  # V-gene distances
         for tmp_arm in self._receptor_arm_cols:
-            chain_ids = (
-                [(1, 1)]
-                if self.dual_ir == "primary_only"
-                else [(1, 1), (2, 2), (1, 2), (2, 1)]
-            )
+            chain_ids = [(1, 1)] if self.dual_ir == "primary_only" else [(1, 1), (2, 2), (1, 2), (2, 1)]
             for c1, c2 in chain_ids:
                 lookup[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
                     ct_id,
@@ -302,9 +267,7 @@ class ClonotypeNeighbors:
         # convert to csr matrices to iterate over indices
         lookup = {k: v.tocsr() for k, v in lookup.items()}
 
-        def _lookup_dist_for_chains(
-            tmp_arm: Literal["VJ", "VDJ"], c1: Literal[1, 2], c2: Literal[1, 2]
-        ):
+        def _lookup_dist_for_chains(tmp_arm: Literal["VJ", "VDJ"], c1: Literal[1, 2], c2: Literal[1, 2]):
             """Lookup the distance between two chains of a given receptor
             arm. Only considers those columns in the current row that
             have an entry in `has_distance`. Returns a dense
@@ -312,11 +275,7 @@ class ClonotypeNeighbors:
             of entries in `has_distance`.
             """
             ct_col2 = tmp_clonotypes[f"{tmp_arm}_{c2}_{self.sequence_key}"].values
-            tmp_array = (
-                lookup[(tmp_arm, c1, c2)][0, has_distance.indices]
-                .todense()
-                .A1.astype(np.float16)
-            )
+            tmp_array = lookup[(tmp_arm, c1, c2)][0, has_distance.indices].todense().A1.astype(np.float16)
             tmp_array[ct_col2[has_distance.indices] == "nan"] = np.nan
             if self.same_v_gene:
                 mask_v_gene = lookup_v[(tmp_arm, c1, c2)][0, has_distance.indices]
@@ -358,9 +317,7 @@ class ClonotypeNeighbors:
         res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
 
         if self.match_columns is not None:
-            match_columns_mask = self.neighbor_finder.lookup(
-                ct_id, "match_columns", "match_columns"
-            )
+            match_columns_mask = self.neighbor_finder.lookup(ct_id, "match_columns", "match_columns")
             res = np.multiply(res, match_columns_mask[0, has_distance.indices])
 
         final_res = has_distance.copy()

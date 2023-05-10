@@ -50,9 +50,7 @@ def igraph_from_sparse_matrix(
     return _get_igraph_from_adjacency(matrix, simplify=simplify)
 
 
-def _distance_to_connectivity(
-    distances: csr_matrix, *, max_value: float = None
-) -> csr_matrix:
+def _distance_to_connectivity(distances: csr_matrix, *, max_value: float = None) -> csr_matrix:
     """Get a weighted adjacency matrix from a distance matrix.
 
     A distance of 1 (in the sparse matrix) corresponds to an actual distance of 0.
@@ -111,8 +109,7 @@ def _get_igraph_from_adjacency(adj: csr_matrix, simplify=True):
 
     if g.vcount() != adj.shape[0]:
         logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. "
-            "Your adjacency matrix contained redundant nodes."
+            f"The constructed graph has only {g.vcount()} nodes. " "Your adjacency matrix contained redundant nodes."
         )  # type: ignore
 
     if simplify:
@@ -150,12 +147,7 @@ def _get_sparse_from_igraph(graph, *, simplified, weight_attr=None):
         adj_mat = csr_matrix((weights, zip(*edges)), shape=shape)
         if simplified:
             # make symmetrical and add diagonal
-            adj_mat = (
-                adj_mat
-                + adj_mat.T
-                - sparse.diags(adj_mat.diagonal())
-                + sparse.diags(np.ones(adj_mat.shape[0]))
-            )
+            adj_mat = adj_mat + adj_mat.T - sparse.diags(adj_mat.diagonal()) + sparse.diags(np.ones(adj_mat.shape[0]))
         return adj_mat
     else:
         return csr_matrix(shape)

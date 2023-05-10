@@ -2,9 +2,9 @@
 
 Adapted from scanpy (c) Philipp Angerer
 """
-from pathlib import Path
-from typing import List, Any
 import re
+from pathlib import Path
+from typing import Any, List
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import Options

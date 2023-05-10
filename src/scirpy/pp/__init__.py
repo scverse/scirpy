@@ -1,6 +1,7 @@
 from textwrap import dedent
 
-from ..ir_dist import _ir_dist as ir_dist
+from scirpy.ir_dist import _ir_dist as ir_dist
+
 from ._index_chains import index_chains
 from ._merge_adata import merge_airr
 

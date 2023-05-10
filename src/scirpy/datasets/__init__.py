@@ -11,13 +11,14 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 
-from ..io._convert_anndata import from_airr_cells
-from ..io._datastructures import AirrCell
-from ..io._io import _infer_locus_from_gene_names, _IOLogger
-from ..pp import index_chains
-from ..util import _doc_params, _read_to_str, tqdm
+from scirpy.io._convert_anndata import from_airr_cells
+from scirpy.io._datastructures import AirrCell
+from scirpy.io._io import _infer_locus_from_gene_names, _IOLogger
+from scirpy.pp import index_chains
+from scirpy.util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
+from importlib.metadata import version
 from os import PathLike
 from textwrap import dedent
 from typing import cast
@@ -27,8 +28,7 @@ import pooch
 from mudata import MuData
 from scanpy import logging
 
-from importlib.metadata import version
-from ..util import tqdm
+from scirpy.util import tqdm
 
 _FIGSHARE = pooch.create(
     path=pooch.os_cache("scirpy"),
@@ -45,14 +45,14 @@ _FIGSHARE = pooch.create(
 _POOCH_INFO = dedent(
     """\
     .. note::
-        Scirpy example datasets are managed through `Pooch <https://github.com/fatiando/pooch>`_. 
+        Scirpy example datasets are managed through `Pooch <https://github.com/fatiando/pooch>`_.
 
         By default, the dataset will be downloaded into your operating system's default
         cache directory (See :func:`pooch.os_cache` for more details). If it has already been
-        downloaded, it will be retrieved from the cache. 
+        downloaded, it will be retrieved from the cache.
 
         You can override the default cache dir by setting the `SCIRPY_DATA_DIR` environment variable
-        to a path of your preference. 
+        to a path of your preference.
     """
 )
 
@@ -114,8 +114,8 @@ def maynard2020() -> MuData:
     {pooch_info}
 
     The raw FASTQ files have been obtained from `PRJNA591860 <https://www.ebi.ac.uk/ena/browser/view/PRJNA591860>`__
-    and processed using the nf-core `RNA-seq pipeline <https://github.com/nf-core/rnaseq>`_ to obtain 
-    gene expression and TraCeR/BraCeR to reconstruct receptors. 
+    and processed using the nf-core `RNA-seq pipeline <https://github.com/nf-core/rnaseq>`_ to obtain
+    gene expression and TraCeR/BraCeR to reconstruct receptors.
 
     The processed files have been imported and transformed into an :class:`anndata.AnnData`
     object using the following script:

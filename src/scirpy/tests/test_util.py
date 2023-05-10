@@ -36,7 +36,8 @@ from . import TESTDATA
 @pytest.mark.filterwarnings("ignore::anndata.OldFormatWarning")
 def test_data_handler_upgrade_schema_pre_scirpy_v0_7():
     """Test that running a function on very old (pre v0.7) schema
-    raises an error"""
+    raises an error
+    """
     adata = read_h5ad(TESTDATA / "wu2020_200_v0_6.h5ad")
     with pytest.raises(ValueError):
         DataHandler(adata, "airr", "airr")
@@ -61,7 +62,8 @@ def test_data_handler_upgrade_schema_pre_scirpy_v0_12():
 
 def test_data_handler_no_airr():
     """Test that a key error is raised if DataHandler is executed
-    on an anndata without AirrData"""
+    on an anndata without AirrData
+    """
     adata = AnnData(np.ones((10, 10)))
     with pytest.raises(KeyError, match=r"No AIRR data found.*"):
         DataHandler(adata, "airr", "airr")
@@ -150,7 +152,7 @@ def test_is_na():
     assert _is_na("nan")
     assert not _is_na(42)
     assert not _is_na("Foobar")
-    assert not _is_na(dict())
+    assert not _is_na({})
     array_test = np.array(["None", "nan", None, np.nan, "foobar"])
     array_expect = np.array([True, True, True, True, False])
     array_test_bool = np.array([True, False, True])

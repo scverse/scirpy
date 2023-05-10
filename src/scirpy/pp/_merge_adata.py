@@ -3,9 +3,9 @@ from typing import Dict
 
 from anndata import AnnData
 
-from ..io._convert_anndata import from_airr_cells, to_airr_cells
-from ..io._datastructures import AirrCell
-from ..util import DataHandler
+from scirpy.io._convert_anndata import from_airr_cells, to_airr_cells
+from scirpy.io._datastructures import AirrCell
+from scirpy.util import DataHandler
 
 
 @DataHandler.inject_param_docs()
@@ -39,12 +39,12 @@ def merge_airr(
 
     .. note::
 
-        There is no need to use this function for the following use-cases: 
+        There is no need to use this function for the following use-cases:
 
-         * If you want to merge AIRR data with transcriptomics data, use :class:`~mudata.MuData` instead, 
-           as shown in :ref:`multimodal-data`. 
-         * If you want to concatenante mutliple :class:`~anndata.AnnData` objects, use :func:`anndata.concat` instead, 
-           as shown in :ref:`combining-samples`. 
+         * If you want to merge AIRR data with transcriptomics data, use :class:`~mudata.MuData` instead,
+           as shown in :ref:`multimodal-data`.
+         * If you want to concatenante mutliple :class:`~anndata.AnnData` objects, use :func:`anndata.concat` instead,
+           as shown in :ref:`combining-samples`.
 
     Parameters
     ----------
@@ -71,7 +71,7 @@ def merge_airr(
     ir_objs1 = to_airr_cells(adata, airr_mod=airr_mod, airr_key=airr_key)
     ir_objs2 = to_airr_cells(adata2, airr_mod=airr_mod2, airr_key=airr_key2)
 
-    cell_dict: Dict[str, AirrCell] = dict()
+    cell_dict: Dict[str, AirrCell] = {}
     for cell in itertools.chain(ir_objs1, ir_objs2):
         try:
             tmp_cell = cell_dict[cell.cell_id]
@@ -89,8 +89,6 @@ def merge_airr(
         #
         # use dict.fromkeys() instead of set() to obtain a reproducible ordering
         for cell in cell_dict.values():
-            cell._chains = [
-                dict(t) for t in dict.fromkeys(tuple(d.items()) for d in cell.chains)
-            ]
+            cell._chains = [dict(t) for t in dict.fromkeys(tuple(d.items()) for d in cell.chains)]
 
     return from_airr_cells(cell_dict.values(), **kwargs)

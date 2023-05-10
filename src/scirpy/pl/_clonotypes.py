@@ -20,14 +20,13 @@ from scanpy import settings
 from scanpy.plotting._utils import ticks_formatter
 from scipy.sparse import issparse
 
-from ..tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
-from ..util import DataHandler
-from ..util.graph import _distance_to_connectivity
+from scirpy.tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
+from scirpy.util import DataHandler
+from scirpy.util.graph import _distance_to_connectivity
+
 from .styling import _get_colors, _init_ax
 
-COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list(
-    "grey2", ["#CCCCCC", "#000000"]
-)
+COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list("grey2", ["#CCCCCC", "#000000"])
 
 
 @DataHandler.inject_param_docs(clonotype_network=_doc_clonotype_network)
@@ -172,20 +171,12 @@ def clonotype_network(
     params.strings_to_categoricals()
     try:
         clonotype_key = params.adata.uns[basis]["clonotype_key"]
-        base_size = (
-            params.adata.uns[basis]["base_size"] if base_size is None else base_size
-        )
-        size_power = (
-            params.adata.uns[basis]["size_power"] if size_power is None else size_power
-        )
+        base_size = params.adata.uns[basis]["base_size"] if base_size is None else base_size
+        size_power = params.adata.uns[basis]["size_power"] if size_power is None else size_power
     except KeyError:
-        raise KeyError(
-            f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?"
-        )
+        raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?")
     if f"X_{basis}" not in params.adata.obsm_keys():
-        raise KeyError(
-            f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
-        )
+        raise KeyError(f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?")
     if clonotype_key not in params.adata.obs.columns:
         raise KeyError(f"{clonotype_key} not found in adata.obs.")
     if clonotype_key not in params.adata.uns:
@@ -213,12 +204,8 @@ def clonotype_network(
 
     # Prepare figure
     if ax is None:
-        fig_kws = dict() if fig_kws is None else fig_kws
-        fig_width = (
-            panel_size[0]
-            if not (show_legend or show_size_legend)
-            else panel_size[0] + legend_width + 0.5
-        )
+        fig_kws = {} if fig_kws is None else fig_kws
+        fig_width = panel_size[0] if not (show_legend or show_size_legend) else panel_size[0] + legend_width + 0.5
         fig_kws.update({"figsize": (fig_width, panel_size[1])})
         ax = _init_ax(fig_kws)
 
@@ -323,21 +310,19 @@ def _fetch_features_mudata(
     obs = data.obs.loc[params.adata.obs.index.values]
 
     # Fetch respective features
-    if not all([key in obs for key in keys]):
+    if not all(key in obs for key in keys):
         # {'rna': [True, False], 'prot': [False, True]}
-        keys_in_mod = {
-            m: [key in data.mod[m].var_names for key in keys] for m in data.mod
-        }
+        keys_in_mod = {m: [key in data.mod[m].var_names for key in keys] for m in data.mod}
 
         # .raw slots might have exclusive var_names
         if use_raw is None or use_raw:
             for i, k in enumerate(keys):
                 for m in data.mod:
-                    if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
+                    if keys_in_mod[m][i] is False and data.mod[m].raw is not None:
                         keys_in_mod[m][i] = k in data.mod[m].raw.var_names
 
         # e.g. color="rna:CD8A" - especially relevant for mdata.axis == -1
-        mod_key_modifier: dict[str, str] = dict()
+        mod_key_modifier: dict[str, str] = {}
         for i, k in enumerate(keys):
             mod_key_modifier[k] = k
             for m in data.mod:
@@ -349,7 +334,7 @@ def _fetch_features_mudata(
 
                     keys_in_mod[m][i] = k_clean in data.mod[m].var_names
                     if use_raw is None or use_raw:
-                        if keys_in_mod[m][i] == False and data.mod[m].raw is not None:
+                        if keys_in_mod[m][i] is False and data.mod[m].raw is not None:
                             keys_in_mod[m][i] = k_clean in data.mod[m].raw.var_names
 
         for m in data.mod:
@@ -367,9 +352,7 @@ def _fetch_features_mudata(
                         )
                     else:
                         if use_raw:
-                            warnings.warn(
-                                f"Attibute .raw is None for the modality {m}, using .X instead"
-                            )
+                            warnings.warn(f"Attibute .raw is None for the modality {m}, using .X instead")
                         fmod_adata = data.mod[m][:, mod_keys]
                 else:
                     fmod_adata = data.mod[m][:, mod_keys]
@@ -381,25 +364,15 @@ def _fetch_features_mudata(
                             x = data.mod[m][:, mod_keys].layers[m_layer]
                             fmod_adata.X = x.todense() if issparse(x) else x
                             if use_raw:
-                                warnings.warn(
-                                    f"Layer='{layer}' superseded use_raw={use_raw}"
-                                )
+                                warnings.warn(f"Layer='{layer}' superseded use_raw={use_raw}")
                     elif layer in data.mod[m].layers:
                         x = data.mod[m][:, mod_keys].layers[layer]
                         fmod_adata.X = x.todense() if issparse(x) else x
                         if use_raw:
-                            warnings.warn(
-                                f"Layer='{layer}' superseded use_raw={use_raw}"
-                            )
+                            warnings.warn(f"Layer='{layer}' superseded use_raw={use_raw}")
                     else:
-                        warnings.warn(
-                            f"Layer {layer} is not present for the modality {m}, using count matrix instead"
-                        )
-                x = (
-                    cast(sp.spmatrix, fmod_adata.X).toarray()
-                    if issparse(fmod_adata.X)
-                    else fmod_adata.X
-                )
+                        warnings.warn(f"Layer {layer} is not present for the modality {m}, using count matrix instead")
+                x = cast(sp.spmatrix, fmod_adata.X).toarray() if issparse(fmod_adata.X) else fmod_adata.X
                 obs = obs.join(
                     pd.DataFrame(x, columns=mod_keys, index=fmod_adata.obs_names),
                     how="left",
@@ -514,9 +487,7 @@ def _plot_clonotype_network_panel(
             cat_colors["nan"] = "lightgrey"
         for dist_idx in coords["dist_idx"]:
             cell_ids = cell_indices[dist_idx]
-            unique, counts = np.unique(
-                values[obs.index.isin(cell_ids)], return_counts=True
-            )
+            unique, counts = np.unique(values[obs.index.isin(cell_ids)], return_counts=True)
             fracs = counts / np.sum(counts)
             if cat_colors is not None:
                 pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs)})
@@ -533,9 +504,7 @@ def _plot_clonotype_network_panel(
         if fig_height < colorbar_height + size_legend_height:
             raise ValueError("Figure size too small. Must be at least 3 inches high.")
         if colorbar:
-            spacer_height = (
-                (fig_height - colorbar_height - size_legend_height) / 2 / fig_height
-            )
+            spacer_height = (fig_height - colorbar_height - size_legend_height) / 2 / fig_height
             height_ratios = [
                 spacer_height * 2,
                 colorbar_height / fig_height,
@@ -586,9 +555,7 @@ def _plot_clonotype_network_panel(
             legend_ax.xaxis.set_tick_params(labelsize="small")
 
     else:
-        for xx, yy, tmp_size, tmp_color in zip(
-            coords["x"], coords["y"], sizes, pie_colors
-        ):
+        for xx, yy, tmp_size, tmp_color in zip(coords["x"], coords["y"], sizes, pie_colors):
             # tmp_color is a mapping (color) -> (fraction)
             cumsum = np.cumsum(list(tmp_color.values()))
             cumsum = cumsum / cumsum[-1]
@@ -602,17 +569,13 @@ def _plot_clonotype_network_panel(
                 xy = np.column_stack([x, y])
                 s = np.abs(xy).max()
 
-                sct = ax.scatter(
-                    [xx], [yy], marker=xy, color=color, s=s**2 * tmp_size
-                )
+                sct = ax.scatter([xx], [yy], marker=xy, color=color, s=s**2 * tmp_size)
 
     # plot edges
     if edges:
         if edges_color is None:
             if edges_cmap is not None:
-                edges_color = [
-                    nx_graph.get_edge_data(*x)["weight"] for x in nx_graph.edges
-                ]
+                edges_color = [nx_graph.get_edge_data(*x)["weight"] for x in nx_graph.edges]
             else:
                 edges_color = "grey"
         edge_collection = nx.draw_networkx_edges(
@@ -629,13 +592,11 @@ def _plot_clonotype_network_panel(
 
     # add clonotype labels
     if show_labels:
-        text_kwds = dict()
+        text_kwds = {}
         if label_fontsize is None:
             label_fontsize = rcParams["legend.fontsize"]
         if label_fontoutline is not None:
-            text_kwds["path_effects"] = [
-                patheffects.withStroke(linewidth=label_fontoutline, foreground="w")
-            ]
+            text_kwds["path_effects"] = [patheffects.withStroke(linewidth=label_fontoutline, foreground="w")]
         for label, group_df in coords.groupby("label", observed=True):
             # add label at centroid
             ax.text(

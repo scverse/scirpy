@@ -56,17 +56,13 @@ mtx_paths = glob("data/GSM*")
 
 mtx_paths
 
-metadata_all = pd.read_csv(
-    "data/GSE139555_tcell_metadata.txt.gz", sep="\t", index_col=0
-)
+metadata_all = pd.read_csv("data/GSE139555_tcell_metadata.txt.gz", sep="\t", index_col=0)
 
 umap = metadata_all[["UMAP_1", "UMAP_2"]]
 
 metadata = metadata_all[["ident", "patient", "sample", "source", "clonotype"]]
 
-metadata = metadata.rename(
-    columns={"clonotype": "clonotype_orig", "ident": "cluster_orig"}
-)
+metadata = metadata.rename(columns={"clonotype": "clonotype_orig", "ident": "cluster_orig"})
 
 metadata
 
@@ -76,15 +72,9 @@ def _load_adata(path):
     obs = metadata.loc[metadata["sample"] == sample_id, :]
     umap_coords = umap.loc[metadata["sample"] == sample_id, :].values
     adata = sc.read_10x_mtx(path)
-    adata_tcr = ir.io.read_10x_vdj(
-        os.path.join(path, "filtered_contig_annotations.csv.gz")
-    )
-    adata.obs_names = [
-        "{}_{}".format(sample_id, barcode) for barcode in adata.obs_names
-    ]
-    adata_tcr.obs_names = [
-        "{}_{}".format(sample_id, barcode) for barcode in adata_tcr.obs_names
-    ]
+    adata_tcr = ir.io.read_10x_vdj(os.path.join(path, "filtered_contig_annotations.csv.gz"))
+    adata.obs_names = [f"{sample_id}_{barcode}" for barcode in adata.obs_names]
+    adata_tcr.obs_names = [f"{sample_id}_{barcode}" for barcode in adata_tcr.obs_names]
     # subset to cells with annotated metadata only
     adata = adata[obs.index, :].copy()
     # all metadata except clonotyp_orig in GEX modality
@@ -94,9 +84,7 @@ def _load_adata(path):
     # #356: workaround for https://github.com/scverse/muon/issues/93
     adata_tcr.X = np.ones((adata_tcr.shape[0], 0))
     # clonotype orig column in TCR modality
-    adata_tcr.obs = adata_tcr.obs.join(
-        obs.loc[:, ["clonotype_orig"]], how="left", validate="one_to_one"
-    )
+    adata_tcr.obs = adata_tcr.obs.join(obs.loc[:, ["clonotype_orig"]], how="left", validate="one_to_one")
     return adata, adata_tcr
 
 
@@ -111,9 +99,7 @@ adata = anndata.concat(adatas)
 adata_airr = anndata.concat(adatas_airr)
 
 # inverse umap X -coordinate
-adata.obsm["X_umap_orig"][:, 0] = (
-    np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
-)
+adata.obsm["X_umap_orig"][:, 0] = np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 
 mdata = MuData({"gex": adata, "airr": adata_airr})
 

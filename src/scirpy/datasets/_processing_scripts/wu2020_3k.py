@@ -16,7 +16,7 @@ import pandas as pd
 # Use this list of 3k barcodes for consistency with previous versions
 barcodes = pd.read_csv("./3k_barcodes.csv", header=None)[0].values
 
-barcodes = pd.Series(barcodes).str.replace("-\d+$", "", regex=True).values
+barcodes = pd.Series(barcodes).str.replace("-\\d+$", "", regex=True).values
 
 mdata = mu.read_h5mu("wu2020.h5mu")
 

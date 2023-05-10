@@ -4,9 +4,10 @@ import pandas.testing as pdt
 import pytest
 from anndata import AnnData
 
-from ..io import AirrCell, read_10x_vdj
-from ..pp import index_chains
-from ..pp._merge_adata import merge_airr
+from scirpy.io import AirrCell, read_10x_vdj
+from scirpy.pp import index_chains
+from scirpy.pp._merge_adata import merge_airr
+
 from . import TESTDATA
 from .util import _make_airr_chains_valid
 
@@ -40,9 +41,7 @@ from .util import _make_airr_chains_valid
 )
 def test_index_chains(airr_chains, expected_index):
     """Test that chain indexing works as expected (default parameters)"""
-    adata = AnnData(
-        X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])  # type: ignore
-    )
+    adata = AnnData(X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))]))  # type: ignore
     adata.obsm["airr2"] = ak.Array(airr_chains)
     index_chains(adata, airr_key="airr2", key_added="chain_indices2")
     assert expected_index == ak.to_list(adata.obsm["chain_indices2"])
@@ -112,9 +111,7 @@ def test_index_chains_custom_parameters(filter, sort_chains_by, expected_index):
             {"locus": "TRA", "junction_aa": "AAD", "sort": 3, "productive": True},
         ]
     ]
-    adata = AnnData(
-        X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))])
-    )
+    adata = AnnData(X=None, obs=pd.DataFrame(index=[f"cell_{i}" for i in range(len(airr_chains))]))
     adata.obsm["airr"] = ak.Array(airr_chains)
     index_chains(
         adata,

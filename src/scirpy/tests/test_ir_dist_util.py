@@ -6,12 +6,7 @@ import pandas as pd
 import pytest
 import scipy.sparse as sp
 
-from scirpy.ir_dist._util import (
-    DoubleLookupNeighborFinder,
-    merge_coo_matrices,
-    reduce_and,
-    reduce_or,
-)
+from scirpy.ir_dist._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
 
 @pytest.fixture
@@ -48,9 +43,7 @@ def dlnf_rectangle():
         VJ=["A", "B", "B", "D", "A"],
         VDJ=["A", "B", "nan", "A", "E"],
     )
-    dlnf = DoubleLookupNeighborFinder(
-        feature_table=clonotypes, feature_table2=clonotypes2
-    )
+    dlnf = DoubleLookupNeighborFinder(feature_table=clonotypes, feature_table2=clonotypes2)
     dlnf.add_distance_matrix(
         name="test",
         distance_matrix=sp.csr_matrix(
@@ -210,9 +203,7 @@ def test_dlnf_lookup_table(dlnf, feature_col, name, forward_expected, reverse_ex
     assert dist_mat == "test"
     npt.assert_array_equal(forward, forward_expected)
     assert len(reverse.lookup) == len(reverse_expected)
-    for (k, v), (k_expected, v_expected) in zip(
-        reverse.lookup.items(), reverse_expected.items()
-    ):
+    for (k, v), (k_expected, v_expected) in zip(reverse.lookup.items(), reverse_expected.items()):
         assert k == k_expected
         assert list(v.todense().A1) == v_expected
 
@@ -224,9 +215,7 @@ def test_dlnf_lookup(dlnf_with_lookup):
         == list(dlnf_with_lookup.lookup(4, "VJ_test").todense().A1)
         == [1, 0, 0, 0, 1, 0, 0, 0]
     )
-    assert list(dlnf_with_lookup.lookup(1, "VJ_test").todense().A1) == (
-        [0, 2, 0, 0, 0, 0, 0, 1]
-    )
+    assert list(dlnf_with_lookup.lookup(1, "VJ_test").todense().A1) == ([0, 2, 0, 0, 0, 0, 0, 1])
     assert (
         list(dlnf_with_lookup.lookup(2, "VJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(5, "VJ_test").todense().A1)
@@ -261,9 +250,7 @@ def test_dlnf_lookup_rect(dlnf_with_lookup):
 
 @pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_square"], indirect=True)
 def test_dlnf_lookup_nan(dlnf_with_lookup):
-    assert list(dlnf_with_lookup.lookup(0, "VDJ_test").todense().A1) == (
-        [1, 0, 0, 0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(0, "VDJ_test").todense().A1) == ([1, 0, 0, 0, 0, 0, 0, 0])
     assert (
         list(dlnf_with_lookup.lookup(3, "VDJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(5, "VDJ_test").todense().A1)
@@ -278,9 +265,7 @@ def test_dlnf_lookup_nan(dlnf_with_lookup):
 
 @pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_rectangle"], indirect=True)
 def test_dlnf_lookup_nan_rect(dlnf_with_lookup):
-    assert list(dlnf_with_lookup.lookup(0, "VDJ_test").todense().A1) == (
-        [1, 0, 0, 1, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(0, "VDJ_test").todense().A1) == ([1, 0, 0, 1, 0])
     assert (
         list(dlnf_with_lookup.lookup(3, "VDJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(5, "VDJ_test").todense().A1)
@@ -293,35 +278,25 @@ def test_dlnf_lookup_nan_rect(dlnf_with_lookup):
     )
 
 
-@pytest.mark.parametrize(
-    "dlnf_with_lookup", ["dlnf_square", "dlnf_rectangle"], indirect=True
-)
+@pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_square", "dlnf_rectangle"], indirect=True)
 @pytest.mark.parametrize("clonotype_id", range(8))
-def test_dnlf_lookup_with_two_identical_forward_and_reverse_tables(
-    dlnf_with_lookup, clonotype_id
-):
+def test_dnlf_lookup_with_two_identical_forward_and_reverse_tables(dlnf_with_lookup, clonotype_id):
     npt.assert_array_equal(
         list(dlnf_with_lookup.lookup(clonotype_id, "VJ_test").todense().A1),
         list(dlnf_with_lookup.lookup(clonotype_id, "VJ_test", "VJ_test").todense().A1),
     )
     npt.assert_array_equal(
         list(dlnf_with_lookup.lookup(clonotype_id, "VDJ_test").todense().A1),
-        list(
-            dlnf_with_lookup.lookup(clonotype_id, "VDJ_test", "VDJ_test").todense().A1
-        ),
+        list(dlnf_with_lookup.lookup(clonotype_id, "VDJ_test", "VDJ_test").todense().A1),
     )
 
 
 @pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_square"], indirect=True)
 def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup):
     # if entries don't exist the the other lookup table, should return empty iterator.
-    assert list(dlnf_with_lookup.lookup(7, "VDJ_test", "VJ_test").todense().A1) == (
-        [0, 0, 0, 0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(7, "VDJ_test", "VJ_test").todense().A1) == ([0, 0, 0, 0, 0, 0, 0, 0])
 
-    assert list(dlnf_with_lookup.lookup(7, "VJ_test", "VDJ_test").todense().A1) == (
-        [0, 1, 0, 0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(7, "VJ_test", "VDJ_test").todense().A1) == ([0, 1, 0, 0, 0, 0, 0, 0])
     assert (
         list(dlnf_with_lookup.lookup(0, "VJ_test", "VDJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(4, "VJ_test", "VDJ_test").todense().A1)
@@ -332,9 +307,7 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup)
         == list(dlnf_with_lookup.lookup(6, "VJ_test", "VDJ_test").todense().A1)
         == [0, 0, 4, 3, 0, 3, 0, 0]
     )
-    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test").todense().A1) == (
-        [0, 0, 3, 4, 0, 3, 4, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test").todense().A1) == ([0, 0, 3, 4, 0, 3, 4, 0])
     assert (
         list(dlnf_with_lookup.lookup(4, "VDJ_test", "VJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(6, "VDJ_test", "VJ_test").todense().A1)
@@ -345,13 +318,9 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables(dlnf_with_lookup)
 @pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_rectangle"], indirect=True)
 def test_dlnf_lookup_with_different_forward_and_reverse_tables_rect(dlnf_with_lookup):
     # if entries don't exist the the other lookup table, should return empty iterator.
-    assert list(dlnf_with_lookup.lookup(7, "VDJ_test", "VJ_test").todense().A1) == (
-        [0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(7, "VDJ_test", "VJ_test").todense().A1) == ([0, 0, 0, 0, 0])
 
-    assert list(dlnf_with_lookup.lookup(7, "VJ_test", "VDJ_test").todense().A1) == (
-        [0, 1, 0, 0, 5]
-    )
+    assert list(dlnf_with_lookup.lookup(7, "VJ_test", "VDJ_test").todense().A1) == ([0, 1, 0, 0, 5])
     assert (
         list(dlnf_with_lookup.lookup(0, "VJ_test", "VDJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(4, "VJ_test", "VDJ_test").todense().A1)
@@ -362,9 +331,7 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables_rect(dlnf_with_lo
         == list(dlnf_with_lookup.lookup(6, "VJ_test", "VDJ_test").todense().A1)
         == [0, 0, 0, 0, 0]
     )
-    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test").todense().A1) == (
-        [0, 0, 0, 0, 0]
-    )
+    assert list(dlnf_with_lookup.lookup(2, "VDJ_test", "VJ_test").todense().A1) == ([0, 0, 0, 0, 0])
     assert (
         list(dlnf_with_lookup.lookup(4, "VDJ_test", "VJ_test").todense().A1)
         == list(dlnf_with_lookup.lookup(6, "VDJ_test", "VJ_test").todense().A1)

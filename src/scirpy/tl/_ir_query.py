@@ -6,20 +6,14 @@ import numpy as np
 import pandas as pd
 from scanpy import logging
 
-from ..ir_dist import MetricType, _get_metric_key
-from ..ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from ..util import DataHandler, _is_na, tqdm
-from ._clonotypes import (
-    _common_doc,
-    _common_doc_parallelism,
-    _doc_clonotype_definition,
-    _validate_parameters,
-)
+from scirpy.ir_dist import MetricType, _get_metric_key
+from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
+from scirpy.util import DataHandler, _is_na, tqdm
+
+from ._clonotypes import _common_doc, _common_doc_parallelism, _doc_clonotype_definition, _validate_parameters
 
 
-def _validate_ir_query_annotate_params(
-    params_ref: DataHandler, sequence, metric, query_key
-):
+def _validate_ir_query_annotate_params(params_ref: DataHandler, sequence, metric, query_key):
     """Validate and sanitize parameters for `ir_query_annotate`"""
 
     def _get_db_name():
@@ -39,7 +33,8 @@ def _validate_ir_query_annotate_params(
 def _reduce_unique_only(values: np.ndarray):
     """If values only contains a single unique value, return that value.
     If values contains multiple different values, return 'ambiguous'.
-    If values is empty, return `None`"""
+    If values is empty, return `None`
+    """
     values = values[~pd.isnull(values)]
     if values.size == 0:
         return np.nan
@@ -51,7 +46,8 @@ def _reduce_unique_only(values: np.ndarray):
 
 def _reduce_most_frequent(values: np.ndarray):
     """Return the most frequent value in values. If two values are equally frequent,
-    return "ambiguous". If values is empty, return `None`."""
+    return "ambiguous". If values is empty, return `None`.
+    """
     values = values[~pd.isnull(values)]
     if values.size == 0:
         return np.nan
@@ -177,9 +173,7 @@ def ir_query(
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     params_ref = (
-        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
-        if reference is not None
-        else None
+        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref) if reference is not None else None
     )
     match_columns, distance_key, key_added = _validate_parameters(
         params.adata,
@@ -284,9 +278,7 @@ def ir_query_annotate_df(
     params = DataHandler(adata, airr_mod)
     params_ref = DataHandler(reference, airr_mod_ref)
 
-    query_key = _validate_ir_query_annotate_params(
-        params_ref, sequence, metric, query_key
-    )
+    query_key = _validate_ir_query_annotate_params(params_ref, sequence, metric, query_key)
     res = params.adata.uns[query_key]
     dist = res["distances"]
 
@@ -306,9 +298,7 @@ def ir_query_annotate_df(
     assert "query_idx" not in reference_obs.columns
     reference_obs = reference_obs.join(df.set_index("reference_idx"), how="inner")
 
-    return query_obs.join(
-        reference_obs.set_index("query_idx"), rsuffix=suffix, how="inner"
-    )
+    return query_obs.join(reference_obs.set_index("query_idx"), rsuffix=suffix, how="inner")
 
 
 @DataHandler.inject_param_docs()
@@ -410,11 +400,7 @@ def ir_query_annotate(
 
         except KeyError:
             raise ValueError("Invalid value for `strategy`.")
-        df_res = (
-            df.groupby("_query_cell_index")
-            .aggregate(reduce_fun)
-            .reindex(params.adata.obs_names)
-        )
+        df_res = df.groupby("_query_cell_index").aggregate(reduce_fun).reindex(params.adata.obs_names)
 
     # convert nan-equivalents to real nan values.
     for col in df_res:

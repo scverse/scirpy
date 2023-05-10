@@ -11,7 +11,7 @@ from typing import Any, Collection, Iterable, Iterator, List, Mapping
 import scanpy
 from airr import RearrangementSchema
 
-from ..util import _is_na2
+from scirpy.util import _is_na2
 
 
 class AirrCell(MutableMapping):
@@ -65,9 +65,9 @@ class AirrCell(MutableMapping):
         # rather than the chain level
         self._cell_attribute_fields = cell_attribute_fields
         # storage for these values, accessible through MutableMapping interface
-        self._cell_attrs = dict()
+        self._cell_attrs = {}
         # A list of AIRR compliant dictionaries
-        self._chains = list()
+        self._chains = []
         self["cell_id"] = cell_id
 
     def __repr__(self):
@@ -152,7 +152,8 @@ class AirrCell(MutableMapping):
         """Add chains serialized as JSON.
 
         The JSON object needs to be a list of dicts. If `serialized_chains` is
-        a value interpreted as NA, the function passes silently and does nothing."""
+        a value interpreted as NA, the function passes silently and does nothing.
+        """
         if not _is_na2(serialized_chains):
             tmp_chains = json.loads(serialized_chains)
             for chain in tmp_chains:
@@ -179,5 +180,6 @@ class AirrCell(MutableMapping):
     @staticmethod
     def empty_chain_dict() -> dict:
         """Generate an empty chain dictionary, containing all required AIRR
-        columns, but set to `None`"""
+        columns, but set to `None`
+        """
         return {field: None for field in RearrangementSchema.required}

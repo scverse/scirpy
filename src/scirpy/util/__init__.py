@@ -65,7 +65,8 @@ class DataHandler:
     @staticmethod
     def default(data):
         """Initailize a DataHandler object with default keys. Returns None if `data` is None.
-        Particularly useful for testing."""
+        Particularly useful for testing.
+        """
         if data is not None:
             return DataHandler(data, "airr", "airr", "chain_indices")
 
@@ -103,16 +104,14 @@ class DataHandler:
             and self._chain_idx_key not in self.adata.obsm
         ):
             # import here to avoid circular import
-            from ..pp import index_chains
+            from scirpy.pp import index_chains
 
             logging.warning(
                 f"No chain indices found under adata.obsm['{self._chain_idx_key}']. "
                 "Running scirpy.pp.index_chains with default parameters. ",
             )
 
-            index_chains(
-                self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key
-            )
+            index_chains(self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key)
 
     @overload
     def get_obs(self, columns: str) -> pd.Series:
@@ -163,9 +162,7 @@ class DataHandler:
         except (KeyError, AttributeError):
             return self.adata.obs[column]
 
-    def set_obs(
-        self, key: str, value: Union[pd.Series, Sequence[Any], np.ndarray]
-    ) -> None:
+    def set_obs(self, key: str, value: Union[pd.Series, Sequence[Any], np.ndarray]) -> None:
         """Store results in .obs of AnnData and MuData.
 
         The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key]`.
@@ -176,9 +173,7 @@ class DataHandler:
         if isinstance(self.data, MuData):
             # write to both AnnData and MuData
             if self._airr_mod is None:
-                raise ValueError(
-                    "Trying to write to both AnnData and Mudata, but no `airr_mod` is specified."
-                )
+                raise ValueError("Trying to write to both AnnData and Mudata, but no `airr_mod` is specified.")
             mudata_key = f"{self._airr_mod}:{key}"
             adata_key = key
 
@@ -193,7 +188,8 @@ class DataHandler:
     def chain_indices(self) -> ak.Array:
         """Reference to the chain indices
 
-        Raises an AttributeError if chain indices are not available."""
+        Raises an AttributeError if chain indices are not available.
+        """
         if self._chain_idx_key is not None:
             return cast(ak.Array, self.adata.obsm[self._chain_idx_key])
         else:
@@ -201,7 +197,7 @@ class DataHandler:
 
     @property
     def airr(self) -> ak.Array:
-        """reference to the awkward array with AIRR information."""
+        """Reference to the awkward array with AIRR information."""
         if self._airr_key is not None:
             return cast(ak.Array, self.adata.obsm[self._airr_key])
         else:
@@ -217,25 +213,23 @@ class DataHandler:
                 try:
                     return self._data.mod[self._airr_mod]
                 except KeyError:
-                    raise KeyError(
-                        f"There is no AIRR modality in MuData under key '{self._airr_mod}'"
-                    )
+                    raise KeyError(f"There is no AIRR modality in MuData under key '{self._airr_mod}'")
             else:
-                raise AttributeError(
-                    "DataHandler was initalized with MuData, but without specifying a modality"
-                )
+                raise AttributeError("DataHandler was initalized with MuData, but without specifying a modality")
 
     @property
     def data(self) -> Union[MuData, AnnData]:
         """Get the outermost container. If MuData is defined, return the MuData object.
-        Otherwise the AnnData object."""
+        Otherwise the AnnData object.
+        """
         return self._data
 
     @property
     def mdata(self) -> MuData:
         """Reference to the MuData object.
 
-        Raises an attribute error if only AnnData is available."""
+        Raises an attribute error if only AnnData is available.
+        """
         if isinstance(self._data, MuData):
             return self._data
         else:
@@ -263,13 +257,13 @@ class DataHandler:
         doc["adata"] = dedent(
             """\
             adata
-                AnnData or MuData object that contains :term:`AIRR` information. 
+                AnnData or MuData object that contains :term:`AIRR` information.
             """
         )
         doc["airr_mod"] = dedent(
             """\
             airr_mod
-                Name of the modality with :term:`AIRR` information is stored in 
+                Name of the modality with :term:`AIRR` information is stored in
                 the :class:`~mudata.MuData` object. if an :class:`~anndata.AnnData` object
                 is passed to the function, this parameter is ignored.
             """
@@ -277,30 +271,30 @@ class DataHandler:
         doc["airr_key"] = dedent(
             """\
             airr_key
-                Key under which the :term:`AIRR` information is stored in adata.obsm as an 
+                Key under which the :term:`AIRR` information is stored in adata.obsm as an
                 :term:`awkward array`.
             """
         )
         doc["chain_idx_key"] = dedent(
             """\
             chain_idx_key
-                Key under which the chain indices are stored in adata.obsm. 
+                Key under which the chain indices are stored in adata.obsm.
                 If chain indices are not present, :func:`~scirpy.pp.index_chains` is
-                run with default parameters. 
+                run with default parameters.
             """
         )
         doc["inplace"] = dedent(
             """\
             inplace
-                If `True`, a column with the result will be stored in `obs`. Otherwise the result will be returned.  
+                If `True`, a column with the result will be stored in `obs`. Otherwise the result will be returned.
             """
         )
         doc["key_added"] = dedent(
             """\
             key_added
-                Key under which the result will be stored in `obs`, if `inplace` is `True`. When the function is running 
-                on :class:`~mudata.MuData`, the result will be written to both `mdata.obs["{airr_mod}:{key_added}"]` and 
-                `mdata.mod[airr_mod].obs[key_added]`. 
+                Key under which the result will be stored in `obs`, if `inplace` is `True`. When the function is running
+                on :class:`~mudata.MuData`, the result will be written to both `mdata.obs["{airr_mod}:{key_added}"]` and
+                `mdata.mod[airr_mod].obs[key_added]`.
             """
         )
         return _doc_params(**doc, **kwargs)
@@ -313,10 +307,7 @@ class DataHandler:
             # there might be cases where it gets lost (e.g. when rebuilding AnnData).
             # If a `v_call` is present, that's a safe sign that it is the AIRR schema, too
             "has_ir" in adata.obs.columns
-            and (
-                "IR_VJ_1_v_call" not in adata.obs.columns
-                and "IR_VDJ_1_v_call" not in adata.obs.columns
-            )
+            and ("IR_VJ_1_v_call" not in adata.obs.columns and "IR_VDJ_1_v_call" not in adata.obs.columns)
             and "scirpy_version" not in adata.uns
         ):
             raise ValueError(
@@ -352,7 +343,7 @@ class DataHandler:
                 raise KeyError(
                     dedent(
                         f"""\
-                        No AIRR data found in adata.obsm['{self._airr_key}']. 
+                        No AIRR data found in adata.obsm['{self._airr_key}'].
                         See https://scverse.org/scirpy/develop/data-structure.html for more info about the scirpy data structure.
                         """
                     )
@@ -381,7 +372,7 @@ def _allclose_sparse(A, B, atol=1e-8):
 
 
 def _is_symmetric(M) -> bool:
-    """check if matrix M is symmetric"""
+    """Check if matrix M is symmetric"""
     if issparse(M):
         return _allclose_sparse(M, M.T)
     else:
@@ -408,7 +399,8 @@ def _is_true2(x):
     Everything that evaluates to _is_na(x) evaluates evaluate to False.
 
     The function is vectorized over numpy arrays or pandas Series
-    but also works for single values."""
+    but also works for single values.
+    """
     return not _is_false2(x) and not _is_na2(x)
 
 
@@ -421,13 +413,12 @@ def _is_false2(x):
 
     Everything that is NA as defined in `is_na()` evaluates to False.
 
-    but also works for single values."""
+    but also works for single values.
+    """
     return (x in ("False", "false", "0") or not bool(x)) and not _is_na2(x)
 
 
-_is_false = np.vectorize(
-    lambda x: _is_false2(np.array(x).astype(object)), otypes=[bool]
-)
+_is_false = np.vectorize(lambda x: _is_false2(np.array(x).astype(object)), otypes=[bool])
 
 
 def _normalize_counts(
@@ -454,14 +445,12 @@ def _normalize_counts(
         raise ValueError("No colname specified in either `normalize` or `default_col")
 
     # https://stackoverflow.com/questions/29791785/python-pandas-add-a-column-to-my-dataframe-that-counts-a-variable
-    return 1 / cast(
-        np.ndarray, obs.groupby(normalize_col)[normalize_col].transform("count").values
-    )
+    return 1 / cast(np.ndarray, obs.groupby(normalize_col)[normalize_col].transform("count").values)
 
 
 def _read_to_str(path):
     """Read a file into a string"""
-    with open(path, "r") as f:
+    with open(path) as f:
         return f.read()
 
 

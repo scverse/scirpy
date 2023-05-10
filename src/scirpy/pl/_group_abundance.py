@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from anndata import AnnData
 from mudata import MuData
 
+from scirpy import tl
 from scirpy.util import DataHandler
 
-from .. import tl
 from . import base
 from .styling import _get_colors
 
@@ -61,9 +61,7 @@ def group_abundance(
     -------
     Axes object
     """
-    abundance = tl.group_abundance(
-        adata, groupby, target_col=target_col, fraction=normalize, sort=sort
-    )
+    abundance = tl.group_abundance(adata, groupby, target_col=target_col, fraction=normalize, sort=sort)
 
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(

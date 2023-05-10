@@ -4,8 +4,8 @@ import awkward as ak
 import numpy as np
 from scanpy import logging
 
-from .. import get
-from ..util import DataHandler, _is_na
+from scirpy import get
+from scirpy.util import DataHandler, _is_na
 
 
 @DataHandler.inject_param_docs()
@@ -78,12 +78,8 @@ def chain_qc(
 
     # initalize result arrays
     string_length = len("multichain")
-    res_receptor_type = np.empty(
-        dtype=f"<U{string_length}", shape=(params.adata.shape[0],)
-    )
-    res_receptor_subtype = np.empty(
-        dtype=f"<U{string_length}", shape=(params.adata.shape[0],)
-    )
+    res_receptor_type = np.empty(dtype=f"<U{string_length}", shape=(params.adata.shape[0],))
+    res_receptor_subtype = np.empty(dtype=f"<U{string_length}", shape=(params.adata.shape[0],))
 
     mask_has_ir = get._has_ir(params)
     mask_multichain = mask_has_ir & ak.to_numpy(params.chain_indices["multichain"])
@@ -132,9 +128,7 @@ def chain_qc(
     res_receptor_subtype[subtype_is_ighk] = "IGH+IGK"
     res_receptor_subtype[mask_multichain] = "multichain"
 
-    res_chain_pairing = _chain_pairing(
-        params, res_receptor_subtype == "ambiguous", mask_has_ir, mask_multichain
-    )
+    res_chain_pairing = _chain_pairing(params, res_receptor_subtype == "ambiguous", mask_has_ir, mask_multichain)
 
     if inplace:
         col_receptor_type, col_receptor_subtype, col_chain_pairing = key_added
@@ -153,8 +147,8 @@ def _chain_pairing(
 ) -> np.ndarray:
     """Annotate chain pairing categories.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     mask_ambiguous
         boolean array of the same length as `adata.obs`, marking
         which cells have an ambiguous receptor configuration.
@@ -181,9 +175,7 @@ def _chain_pairing(
     results[mask_has_vj1 & mask_has_vdj1] = "single pair"
     results[mask_has_vj1 & mask_has_vdj1 & mask_has_vj2] = "extra VJ"
     results[mask_has_vj1 & mask_has_vdj1 & mask_has_vdj2] = "extra VDJ"
-    results[
-        mask_has_vj1 & mask_has_vdj1 & mask_has_vj2 & mask_has_vdj2
-    ] = "two full chains"
+    results[mask_has_vj1 & mask_has_vdj1 & mask_has_vj2 & mask_has_vdj2] = "two full chains"
     results[mask_ambiguous] = "ambiguous"
     results[mask_multichain] = "multichain"
 

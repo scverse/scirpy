@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from typing import Any, Dict, List, Union
 
 import awkward as ak
@@ -6,12 +7,8 @@ import pandas as pd
 from anndata import AnnData
 from mudata import MuData
 
-
 from scirpy.io import AirrCell
-from scirpy.util import _is_na2
-
-from ..util import _is_na
-from importlib.metadata import version
+from scirpy.util import _is_na, _is_na2
 
 
 def _normalize_df_types(df: pd.DataFrame):
@@ -62,7 +59,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
     # ensure that the columns are ordered, i.e. for each variable, VJ_1, VJ_2, VDJ1, ... come in the same order.
     obs.sort_index(axis=1, inplace=True)
     cols = [x for x in obs.columns if x.startswith("IR_")]
-    unique_variables = set(c.split("_", 3)[3] for c in cols)
+    unique_variables = {c.split("_", 3)[3] for c in cols}
 
     def _sanitize_value(v):
         """Nans are represented as the string `"nan"` in most test cases for historical reasons"""
@@ -119,7 +116,8 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
 
 def _make_airr_chains_valid(tmp_airr: List[List[Dict]]) -> List[List[Dict]]:
     """Take a list of lists of Airr chain dictionaries, and add empty fields that are required
-    as per the rearrangement standard"""
+    as per the rearrangement standard
+    """
     new_airr = []
     for row in tmp_airr:
         new_row = []

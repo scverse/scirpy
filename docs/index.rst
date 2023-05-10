@@ -11,4 +11,3 @@
    developer_docs
    versions
    zzz_bibliography
-

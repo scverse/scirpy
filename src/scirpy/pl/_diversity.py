@@ -3,8 +3,9 @@ from typing import Callable, Literal, Mapping, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .. import tl
-from ..util import DataHandler
+from scirpy import tl
+from scirpy.util import DataHandler
+
 from . import base
 
 
@@ -14,9 +15,7 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: Union[
-        str, Callable[[np.ndarray], Union[int, float]]
-    ] = "normalized_shannon_entropy",
+    metric: Union[str, Callable[[np.ndarray], Union[int, float]]] = "normalized_shannon_entropy",
     metric_kwargs: Optional[Mapping] = None,
     vistype: Literal["bar"] = "bar",
     airr_mod: str = "airr",
@@ -53,10 +52,10 @@ def alpha_diversity(
         target_col=target_col,
         metric=metric,
         inplace=False,
-        **(dict() if metric_kwargs is None else metric_kwargs),
+        **({} if metric_kwargs is None else metric_kwargs),
     )
     default_style_kws = {
-        "title": "Alpha diversity of {} by {}".format(target_col, groupby),
+        "title": f"Alpha diversity of {target_col} by {groupby}",
         # convert snake case to title case
         "ylab": metric.replace("_", " ").title(),
     }

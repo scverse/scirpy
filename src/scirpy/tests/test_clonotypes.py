@@ -49,7 +49,8 @@ def test_define_clonotype_clusters_return_values(adata_define_clonotype_clusters
 @pytest.mark.parametrize("dual_ir", ["primary_only", "all", "any"])
 def test_define_clonotypes_diagonal_connectivities(adata_define_clonotype_clusters_singletons, receptor_arms, dual_ir):
     """Regression test for #236. Computing the clonotypes when
-    no cells are connected in the clonotype neighborhood graph should not fail."""
+    no cells are connected in the clonotype neighborhood graph should not fail.
+    """
     clonotype, clonotype_size, _ = ir.tl.define_clonotype_clusters(
         adata_define_clonotype_clusters_singletons,
         receptor_arms=receptor_arms,
@@ -65,7 +66,8 @@ def test_define_clonotypes_diagonal_connectivities(adata_define_clonotype_cluste
 
 def test_clonotypes_end_to_end1(adata_define_clonotypes):
     """Test that default parameters of define_clonotypes yields
-    clonotypes based on nt-identity."""
+    clonotypes based on nt-identity.
+    """
     ir.pp.ir_dist(adata_define_clonotypes)
     clonotypes, clonotype_size, _ = ir.tl.define_clonotypes(
         adata_define_clonotypes,

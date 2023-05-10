@@ -1,9 +1,9 @@
 """Minimal port of `tracerlib`
 to enable loading of pickled objects
-from the Tracer output. 
+from the Tracer output.
 
 Originally published at https://github.com/Teichlab/tracer
-under Apache 2.0 License. 
+under Apache 2.0 License.
 
 Copyright (c) 2015 EMBL - European Bioinformatics Institute
 Modified 2020 - Gregor Sturm
@@ -15,11 +15,11 @@ the License at
 
      http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, 
-software distributed under the License is distributed on 
-an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY 
-KIND, either express or implied. See the License for the 
-specific language governing permissions and limitations 
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
 under the License.
 """
 
@@ -32,7 +32,7 @@ import six
 # import pdb
 
 
-class Cell(object):
+class Cell:
     """Class to describe T cells containing A and B loci"""
 
     def __init__(
@@ -85,9 +85,7 @@ class Cell(object):
         loci_of_interest = set(loci)
         loci_in_cell = set()
         for l in loci:
-            if l in recombinants and (
-                recombinants[l] is not None and len(recombinants[l]) > 0
-            ):
+            if l in recombinants and (recombinants[l] is not None and len(recombinants[l]) > 0):
                 loci_in_cell.add(l)
         if len(loci_of_interest.intersection(loci_in_cell)) == 0:
             return True
@@ -141,7 +139,7 @@ class Cell(object):
         #           'D': {'productive': '#984ea3', 'non-productive': "#deace5"}}
         # locus_names = ['A', 'B', 'G', 'D']
 
-        recombinants = dict()
+        recombinants = {}
         final_string = '<<FONT POINT-SIZE="16"><B>' + self.name + "</B></FONT>"
         for locus, recombinant_list in six.iteritems(self.recombinants[receptor]):
             recombinant_set = set()
@@ -152,10 +150,7 @@ class Cell(object):
                     else:
                         i = 1
                     recombinant_set.add(
-                        "<BR/>"
-                        + '<FONT COLOR = "{}">'.format(colours[receptor][locus][i])
-                        + recombinant.identifier
-                        + "</FONT>"
+                        "<BR/>" + f'<FONT COLOR = "{colours[receptor][locus][i]}">' + recombinant.identifier + "</FONT>"
                     )
 
                 recombinants[locus] = recombinant_set
@@ -174,11 +169,11 @@ class Cell(object):
         #           'D': {'productive': '#984ea3', 'non-productive': "#deace5"}}
         # locus_names = ['A', 'B', 'G', 'D']
 
-        recombinants = dict()
+        recombinants = {}
         final_string = '<<table cellspacing="6px" border="0" cellborder="0">'
         # final_string = "<"
         for locus, recombinant_list in six.iteritems(self.recombinants[receptor]):
-            recombinant_set = list()
+            recombinant_set = []
             if recombinant_list is not None:
                 for recombinant in recombinant_list:
                     if recombinant.productive:
@@ -186,9 +181,7 @@ class Cell(object):
                     else:
                         i = 1
                     recombinant_set.append(
-                        '<tr><td height="10" width="40" bgcolor="{}"></td></tr>'.format(
-                            colours[receptor][locus][i]
-                        )
+                        f'<tr><td height="10" width="40" bgcolor="{colours[receptor][locus][i]}"></td></tr>'
                     )
 
                 recombinants[locus] = recombinant_set
@@ -209,28 +202,28 @@ class Cell(object):
         # pdb.set_trace()
         return_list = [self.name, "#TCRA#"]
 
-        if not self.A_recombinants is None:
+        if self.A_recombinants is not None:
             for recombinant in self.A_recombinants:
                 return_list.append(str(recombinant))
         else:
             return_list.append("No TCRA recombinants")
 
         return_list.append("\n#TCRB#")
-        if not self.B_recombinants is None:
+        if self.B_recombinants is not None:
             for recombinant in self.B_recombinants:
                 return_list.append(str(recombinant))
         else:
             return_list.append("No TCRB recombinants")
 
         return_list.append("\n#TCRG#")
-        if not self.G_recombinants is None:
+        if self.G_recombinants is not None:
             for recombinant in self.G_recombinants:
                 return_list.append(str(recombinant))
         else:
             return_list.append("No TCRG recombinants")
 
         return_list.append("\n#TCRD#")
-        if not self.D_recombinants is None:
+        if self.D_recombinants is not None:
             for recombinant in self.D_recombinants:
                 return_list.append(str(recombinant))
         else:
@@ -277,7 +270,7 @@ class Cell(object):
             for rec in recs:
                 if rec.productive:
                     prod_count += 1
-            return "{}/{}".format(prod_count, total_count)
+            return f"{prod_count}/{total_count}"
 
     def filter_recombinants(self):
         for receptor, locus_dict in six.iteritems(self.recombinants):
@@ -320,14 +313,14 @@ class Cell(object):
         return lengths
 
     def has_excess_recombinants(self, max_r=2):
-        for receptor, locus_dict in six.iteritems(self.recombinants):
-            for locus, recs in six.iteritems(locus_dict):
+        for _receptor, locus_dict in six.iteritems(self.recombinants):
+            for _locus, recs in six.iteritems(locus_dict):
                 if recs is not None:
                     if len(recs) > max_r:
                         return True
 
 
-class Recombinant(object):
+class Recombinant:
     """Class to describe a recombined TCR locus as determined from the single-cell pipeline"""
 
     def __init__(
@@ -376,28 +369,22 @@ class Recombinant(object):
         return "{} {} {} {}".format(self.identifier, self.productive, self.TPM)
 
     def get_summary(self):
-        summary_string = "##{contig_name}##\n".format(contig_name=self.contig_name)
+        summary_string = f"##{self.contig_name}##\n"
         if not self.has_D_segment:
             V_segment = self.summary[0]
             J_segment = self.summary[1]
-            segments_string = (
-                "V segment:\t{V_segment}\n"
-                "J segment:\t{J_segment}\n".format(
-                    V_segment=V_segment, J_segment=J_segment
-                )
+            segments_string = "V segment:\t{V_segment}\n" "J segment:\t{J_segment}\n".format(
+                V_segment=V_segment, J_segment=J_segment
             )
         else:
             V_segment = self.summary[0]
             D_segment = self.summary[1]
             J_segment = self.summary[2]
-            segments_string = (
-                "V segment:\t{V_segment}\nD segment:\t{D_segment}\n"
-                "J segment:\t{J_segment}\n".format(
-                    V_segment=V_segment, D_segment=D_segment, J_segment=J_segment
-                )
+            segments_string = "V segment:\t{V_segment}\nD segment:\t{D_segment}\n" "J segment:\t{J_segment}\n".format(
+                V_segment=V_segment, D_segment=D_segment, J_segment=J_segment
             )
         summary_string += segments_string
-        summary_string += "ID:\t{}\n".format(self.identifier)
+        summary_string += f"ID:\t{self.identifier}\n"
         summary_string += (
             "TPM:\t{TPM}\nProductive:\t{productive}\nStop codon:"
             "\t{stop_codon}\nIn frame:\t{in_frame}\n".format(
@@ -415,7 +402,7 @@ class Recombinant(object):
             cdr3 = cdr3.lower()
             cdr3nt = cdr3nt.lower()
 
-        summary_string += "CDR3aa:\t{}\nCDR3nt:\t{}\n\n".format(cdr3, cdr3nt)
+        summary_string += f"CDR3aa:\t{cdr3}\nCDR3nt:\t{cdr3nt}\n\n"
 
         summary_string += (
             "Segment\tquery_id\tsubject_id\t% identity\t"
@@ -427,7 +414,7 @@ class Recombinant(object):
         return summary_string
 
 
-class Invar_cell(object):
+class Invar_cell:
     """Class to describe invariant cells and their specific sequences"""
 
     def __init__(self, d):
@@ -452,9 +439,7 @@ class Invar_cell(object):
                         v = ident[0]
                         j = ident[2]
                         for ivr in invariant_recs:
-                            if (v == ivr["V"] or ivr["V"] == "*") and (
-                                j == ivr["J"] or ivr["J"] == "*"
-                            ):
+                            if (v == ivr["V"] or ivr["V"] == "*") and (j == ivr["J"] or ivr["J"] == "*"):
                                 found_locus = True
                                 found_identifiers.add("_".join(ident))
 

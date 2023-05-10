@@ -1,6 +1,6 @@
 """Taken from scanpy (c) Philipp Angerer"""
 from types import MappingProxyType
-from typing import Any, Mapping, Sequence, NamedTuple
+from typing import Any, Mapping, NamedTuple, Sequence
 
 from docutils import nodes
 from docutils.parsers.rst.directives import class_option
@@ -28,9 +28,9 @@ class AutoLink(NamedTuple):
         url = self.url_template.format(text)
         title = self.title_template.format(text)
         options = {
-            **dict(
-                classes=[self.class_name],
-            ),
+            **{
+                "classes": [self.class_name],
+            },
             **options,
         }
         node = nodes.reference(rawtext, title, refuri=url, **options)
@@ -38,9 +38,7 @@ class AutoLink(NamedTuple):
 
 
 def register_links(app: Sphinx, config: Config):
-    gh_url = "https://github.com/{github_user}/{github_repo}".format_map(
-        config.html_context
-    )
+    gh_url = "https://github.com/{github_user}/{github_repo}".format_map(config.html_context)
     app.add_role("pr", AutoLink("pr", f"{gh_url}/pull/{{}}", "PR {}"))
     app.add_role("issue", AutoLink("issue", f"{gh_url}/issues/{{}}", "issue {}"))
     app.add_role("noteversion", AutoLink("noteversion", f"{gh_url}/releases/tag/{{}}"))

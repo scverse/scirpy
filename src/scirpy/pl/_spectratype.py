@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
 
-from .. import tl
-from ..util import DataHandler
+from scirpy import tl
+from scirpy.util import DataHandler
+
 from . import base
 from .styling import _get_colors
 
@@ -91,9 +92,7 @@ def spectratype(
     # For KDE curves, we need to convert the contingency tables back
     if viztype == "curve":
         if normalize:
-            data = (
-                10 * data
-            ) / data.min()  # Scales up data so that even fraction become an integer count
+            data = (10 * data) / data.min()  # Scales up data so that even fraction become an integer count
         countable = {}
         for cn in data.columns:
             counts = data[cn].round()

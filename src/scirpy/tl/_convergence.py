@@ -2,7 +2,7 @@ from typing import Optional
 
 import pandas as pd
 
-from ..util import DataHandler
+from scirpy.util import DataHandler
 
 
 @DataHandler.inject_param_docs()
@@ -48,23 +48,14 @@ def clonotype_convergence(
     params = DataHandler(adata, airr_mod)
     obs = params.get_obs([key_coarse, key_fine])
     convergence_df = (
-        obs.groupby([key_coarse, key_fine], observed=True)
-        .size()
-        .reset_index()
-        .groupby(key_coarse)
-        .size()
-        .reset_index()
+        obs.groupby([key_coarse, key_fine], observed=True).size().reset_index().groupby(key_coarse).size().reset_index()
     )
     convergent_clonotypes = convergence_df.loc[convergence_df[0] > 1, key_coarse]
     result = (
         obs[key_coarse]
-        .astype(
-            object
-        )  # unfortunately, map with 'NAs' is not implemented on categorical types.
+        .astype(object)  # unfortunately, map with 'NAs' is not implemented on categorical types.
         .map(
-            lambda x: "convergent"
-            if x in convergent_clonotypes.values
-            else "not convergent",
+            lambda x: "convergent" if x in convergent_clonotypes.values else "not convergent",
             na_action="ignore",
         )
         .astype(pd.CategoricalDtype(categories=["convergent", "not convergent"]))

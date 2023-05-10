@@ -40,7 +40,6 @@ DATASET_DIR = Path("/data/datasets/Maynard_Bivona_2020_NSCLC/")
 
 with open(
     "/data/genomes/hg38/annotation/gencode/gencode.v33.primary_assembly.annotation.gtf",
-    "r",
 ) as gtf:
     entries = {}
     for line in gtf:
@@ -65,19 +64,15 @@ len(sample_paths)
 
 
 def read_salmon(path):
-    """quant type can be one of "tpm", "count", "count_scaled" """
+    """Quant type can be one of "tpm", "count", "count_scaled" """
     path = Path(path)
     df = pd.read_csv(Path(path / "quant.genes.sf"), sep="\t", index_col=0)
     df = df.join(ensg2symbol, how="inner")
-    res = dict()
+    res = {}
     res["sample_id"] = path.name
-    res["var"] = (
-        df.reset_index().rename(columns={"index": "ensg"}).loc[:, ["ensg", "symbol"]]
-    )
+    res["var"] = df.reset_index().rename(columns={"index": "ensg"}).loc[:, ["ensg", "symbol"]]
     res["count"] = sp.csc_matrix(df["NumReads"].values)
-    res["count_scaled"] = sp.csc_matrix(
-        df["NumReads"].values / df["EffectiveLength"].values
-    )
+    res["count_scaled"] = sp.csc_matrix(df["NumReads"].values / df["EffectiveLength"].values)
     res["tpm"] = sp.csc_matrix(df["TPM"].values)
 
     return res
@@ -98,9 +93,7 @@ count_mat_scaled = sp.vstack([x["count_scaled"] for x in res]).tocsr()
 
 # + endofcell="--"
 # # +
-sample_info = pd.read_csv(
-    DATASET_DIR / "scripts/make_h5ad" / "sra_sample_info.csv", low_memory=False
-)
+sample_info = pd.read_csv(DATASET_DIR / "scripts/make_h5ad" / "sra_sample_info.csv", low_memory=False)
 cell_metadata = pd.read_csv(
     DATASET_DIR / "scripts/make_h5ad" / "cell_metadata.csv",
     low_memory=False,
@@ -108,9 +101,7 @@ cell_metadata = pd.read_csv(
 )
 
 # combine metadata
-meta = sample_info.merge(
-    cell_metadata, left_on="cell_ID", right_on="cell_id"
-).set_index("Run")
+meta = sample_info.merge(cell_metadata, left_on="cell_ID", right_on="cell_id").set_index("Run")
 # -
 
 meta = meta.drop(
@@ -170,18 +161,13 @@ meta.rename(
     inplace=True,
 )
 
-meta["condition"] = [
-    {"Adenocarcinoma": "LUAD", "Squamous": "LSCC"}[x] for x in meta["condition"]
-]
+meta["condition"] = [{"Adenocarcinoma": "LUAD", "Squamous": "LSCC"}[x] for x in meta["condition"]]
 
 meta["tissue"] = ["lymph_node" if x == "LN" else x.lower() for x in meta["tissue"]]
 
 meta.loc[meta["origin"].isnull(), ["sample", "patient"]].drop_duplicates()
 
-meta["origin"] = [
-    {"Primary": "tumor_primary", "Metastatic": "tumor_metastasis"}.get(x, np.nan)
-    for x in meta["origin"]
-]
+meta["origin"] = [{"Primary": "tumor_primary", "Metastatic": "tumor_metastasis"}.get(x, np.nan) for x in meta["origin"]]
 
 meta.loc[:, ["sample", "patient", "tissue", "condition", "origin"]]
 
@@ -214,9 +200,7 @@ adata.var.set_index("symbol", inplace=True)
 
 adata_tcr = ir.io.read_tracer(DATASET_DIR / "smartseq2_pipeline/TraCeR")
 
-adata_bcr = ir.io.read_bracer(
-    DATASET_DIR / "smartseq2_pipeline/BraCeR/filtered_BCR_summary/changeodb.tab"
-)
+adata_bcr = ir.io.read_bracer(DATASET_DIR / "smartseq2_pipeline/BraCeR/filtered_BCR_summary/changeodb.tab")
 
 adata_airr = ir.pp.merge_airr(adata_tcr, adata_bcr)
 
@@ -241,13 +225,9 @@ ir.tl.chain_qc(mdata_vis)
 
 mdata_vis.update_obs()
 
-_ = ir.pl.group_abundance(
-    mdata_vis, groupby="airr:receptor_subtype", target_col="gex:patient"
-)
+_ = ir.pl.group_abundance(mdata_vis, groupby="airr:receptor_subtype", target_col="gex:patient")
 
-_ = ir.pl.group_abundance(
-    mdata_vis, groupby="airr:chain_pairing", target_col="gex:patient"
-)
+_ = ir.pl.group_abundance(mdata_vis, groupby="airr:chain_pairing", target_col="gex:patient")
 
 # ## save MuData
 

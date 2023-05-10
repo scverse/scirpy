@@ -4,7 +4,8 @@ import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
 
-from ..util import DataHandler
+from scirpy.util import DataHandler
+
 from ._clonotypes import _plot_size_legend
 from .styling import _init_ax
 
@@ -94,12 +95,8 @@ def clonotype_modularity(
 
     # Doesn't need param handler, we only access attributes of MuData or a all-in-one AnnData.
     if ax is None:
-        fig_kws = dict() if fig_kws is None else fig_kws
-        fig_width = (
-            panel_size[0]
-            if not show_size_legend
-            else panel_size[0] + legend_width + 0.5
-        )
+        fig_kws = {} if fig_kws is None else fig_kws
+        fig_width = panel_size[0] if not show_size_legend else panel_size[0] + legend_width + 0.5
         fig_kws.update({"figsize": (fig_width, panel_size[1])})
         ax = _init_ax(fig_kws)
 
@@ -166,9 +163,7 @@ def clonotype_modularity(
         if labels is None:
             qm = np.quantile(score_df[target_col].unique(), labels_quantile_cutoff[0])
             qp = np.quantile(score_df["log_p"].unique(), labels_quantile_cutoff[1])
-            labels = score_df[clonotype_col][
-                (score_df[target_col] >= qm) & (score_df["log_p"] >= qp)
-            ]
+            labels = score_df[clonotype_col][(score_df[target_col] >= qm) & (score_df["log_p"] >= qp)]
 
         path_effect = (
             [patheffects.withStroke(linewidth=label_fontoutline, foreground="w")]
@@ -194,7 +189,7 @@ def clonotype_modularity(
                 label_objs,
                 score_df["xs"].values,
                 score_df["ys"].values,
-                arrowprops=dict(arrowstyle="-", color="k", lw=0.5),
+                arrowprops={"arrowstyle": "-", "color": "k", "lw": 0.5},
                 force_text=(0.3, 0.3),
                 force_points=(0.4, 0.4),
             )

@@ -47,9 +47,7 @@ def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
 
     data, row, col = zip(*((x.data, x.row, x.col) for x in mats))
 
-    return sp.coo_matrix(
-        (np.hstack(data), (np.hstack(row), np.hstack(col))), shape=shape
-    )
+    return sp.coo_matrix((np.hstack(data), (np.hstack(row), np.hstack(col))), shape=shape)
 
 
 def reduce_or(*args, chain_count=None):
@@ -119,7 +117,7 @@ class ReverseLookupTable:
             raise ValueError("invalid dist_type")
         self.dist_type = dist_type
         self.size = size
-        self.lookup: Dict[Hashable, sp.coo_matrix] = dict()
+        self.lookup: Dict[Hashable, sp.coo_matrix] = {}
 
     @staticmethod
     def from_dict_of_indices(
@@ -162,7 +160,8 @@ class ReverseLookupTable:
 
     def empty(self):
         """Create an empty row with same dimensions as those stored
-        in the lookup. Respects the distance type"""
+        in the lookup. Respects the distance type
+        """
         if self.is_boolean:
             return np.zeros((1, self.size), dtype=bool)
         else:
@@ -174,9 +173,7 @@ class ReverseLookupTable:
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(
-        self, feature_table: pd.DataFrame, feature_table2: Optional[pd.DataFrame] = None
-    ):
+    def __init__(self, feature_table: pd.DataFrame, feature_table2: Optional[pd.DataFrame] = None):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -208,24 +205,22 @@ class DoubleLookupNeighborFinder:
             between the rows of the first feature table
         """
         self.feature_table = feature_table
-        self.feature_table2 = (
-            feature_table2 if feature_table2 is not None else feature_table
-        )
+        self.feature_table2 = feature_table2 if feature_table2 is not None else feature_table
 
         # n_feature x n_feature sparse m x k distance matrices
         # where m is the number of unique features in feature_table and
         # k is the number if unique features in feature_table2
-        self.distance_matrices: Dict[str, sp.csr_matrix] = dict()
+        self.distance_matrices: Dict[str, sp.csr_matrix] = {}
         # mapping feature_label -> feature_index with len = n_feature for feature_table
         # (rows of the distance matrix)
-        self.distance_matrix_labels: Dict[str, dict] = dict()
+        self.distance_matrix_labels: Dict[str, dict] = {}
         # ... for feature_table2 (columns of the distance matrix)
-        self.distance_matrix_labels2: Dict[str, dict] = dict()
+        self.distance_matrix_labels2: Dict[str, dict] = {}
         # tuples (dist_mat, forward, reverse)
         # dist_mat: name of associated distance matrix
         # forward: clonotype -> feature_index lookups
         # reverse: feature_index -> clonotype lookups
-        self.lookups: Dict[str, Tuple[str, np.ndarray, ReverseLookupTable]] = dict()
+        self.lookups: Dict[str, Tuple[str, np.ndarray, ReverseLookupTable]] = {}
 
     @property
     def n_rows(self):
@@ -268,14 +263,9 @@ class DoubleLookupNeighborFinder:
         distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
 
         if reverse_lookup_table is not None:
-            distance_matrix_name_reverse, _, reverse = self.lookups[
-                reverse_lookup_table
-            ]
+            distance_matrix_name_reverse, _, reverse = self.lookups[reverse_lookup_table]
             if distance_matrix_name != distance_matrix_name_reverse:
-                raise ValueError(
-                    "Forward and reverse lookup tablese must be defined "
-                    "on the same distance matrices."
-                )
+                raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
         idx_in_dist_mat = forward[object_id]
@@ -294,10 +284,7 @@ class DoubleLookupNeighborFinder:
                 # ... and get column indices directly from sparse row
                 # sum concatenates coo matrices
                 return merge_coo_matrices(
-                    (
-                        reverse[i] * multiplier
-                        for i, multiplier in zip(row.indices, row.data)  # type: ignore
-                    ),
+                    (reverse[i] * multiplier for i, multiplier in zip(row.indices, row.data)),  # type: ignore
                     shape=(1, reverse.size),
                 )
 
@@ -358,24 +345,18 @@ class DoubleLookupNeighborFinder:
         distance_matrix
             name of a distance matrix previously added via `add_distance_matrix`
         name
-            unique identifier of the lookup table"""
+        unique identifier of the lookup table
+        """
         forward = self._build_forward_lookup_table(feature_col, distance_matrix)
-        reverse = self._build_reverse_lookup_table(
-            feature_col, distance_matrix, dist_type=dist_type
-        )
+        reverse = self._build_reverse_lookup_table(feature_col, distance_matrix, dist_type=dist_type)
         self.lookups[name] = (distance_matrix, forward, reverse)
 
-    def _build_forward_lookup_table(
-        self, feature_col: str, distance_matrix: str
-    ) -> np.ndarray:
+    def _build_forward_lookup_table(self, feature_col: str, distance_matrix: str) -> np.ndarray:
         """Create a lookup array that maps each clonotype to the respective
         index in the feature distance matrix.
         """
         return np.array(
-            [
-                self.distance_matrix_labels[distance_matrix][k]
-                for k in self.feature_table[feature_col]
-            ],
+            [self.distance_matrix_labels[distance_matrix][k] for k in self.feature_table[feature_col]],
         )
 
     def _build_reverse_lookup_table(
@@ -390,7 +371,7 @@ class DoubleLookupNeighborFinder:
         If the dist_type is numeric, will use a sparse numeric matrix.
         If the dist_type is boolean, use a dense boolean.
         """
-        tmp_reverse_lookup = dict()
+        tmp_reverse_lookup = {}
         tmp_index_lookup = self.distance_matrix_labels2[distance_matrix]
 
         # Build reverse lookup
@@ -403,6 +384,4 @@ class DoubleLookupNeighborFinder:
             except KeyError:
                 tmp_reverse_lookup[tmp_key] = [i]
 
-        return ReverseLookupTable.from_dict_of_indices(
-            tmp_reverse_lookup, dist_type, self.n_cols
-        )
+        return ReverseLookupTable.from_dict_of_indices(tmp_reverse_lookup, dist_type, self.n_cols)

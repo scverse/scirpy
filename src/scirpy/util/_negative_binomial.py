@@ -1,6 +1,6 @@
-"""Function to fit a negative binomial distribution. 
+"""Function to fit a negative binomial distribution.
 
-Adapted from https://github.com/gokceneraslan/fit_nbinom 
+Adapted from https://github.com/gokceneraslan/fit_nbinom
 Copyright (C) 2014 Gokcen Eraslan
 Permission granted to include it in Scirpy under BSD-License in
 https://github.com/gokceneraslan/fit_nbinom/issues/5
@@ -14,9 +14,7 @@ from scipy.optimize import fmin_l_bfgs_b as optim
 from scipy.special import factorial, gammaln, psi
 
 
-def fit_nbinom(
-    X: np.ndarray, initial_params: Optional[Tuple[Number, Number]] = None
-) -> Tuple[float, float]:
+def fit_nbinom(X: np.ndarray, initial_params: Optional[Tuple[Number, Number]] = None) -> Tuple[float, float]:
     """Fit a negative binomial distribution.
 
     Parameters

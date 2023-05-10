@@ -8,8 +8,9 @@ from mudata import MuData
 from scanpy import logging
 from scipy.sparse import csr_matrix
 
-from ..get import airr as get_airr
-from ..util import DataHandler, _doc_params, _is_na, deprecated
+from scirpy.get import airr as get_airr
+from scirpy.util import DataHandler, _doc_params, _is_na, deprecated
+
 from . import metrics
 
 
@@ -27,8 +28,7 @@ def TcrNeighbors(*args, **kwargs):
 
 def IrNeighbors(*args, **kwargs):
     raise RuntimeError(
-        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` "
-        "or `sequence_dist` for that functionality. "
+        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` " "or `sequence_dist` for that functionality. "
     )
 
 
@@ -67,15 +67,12 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(
-    metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs
-):
+def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
     A cutoff of 0 will always use the identity metric.
     """
-
     if cutoff == 0 or metric == "identity":
         metric = "identity"
         cutoff = 0
@@ -83,28 +80,20 @@ def _get_distance_calculator(
     if isinstance(metric, metrics.DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
-        dist_calc = metrics.AlignmentDistanceCalculator(
-            cutoff=cutoff, n_jobs=n_jobs, **kwargs
-        )
+        dist_calc = metrics.AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
     elif metric == "identity":
         dist_calc = metrics.IdentityDistanceCalculator(cutoff=cutoff, **kwargs)
     elif metric == "levenshtein":
-        dist_calc = metrics.LevenshteinDistanceCalculator(
-            cutoff=cutoff, n_jobs=n_jobs, **kwargs
-        )
+        dist_calc = metrics.LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
-        dist_calc = metrics.HammingDistanceCalculator(
-            cutoff=cutoff, n_jobs=n_jobs, **kwargs
-        )
+        dist_calc = metrics.HammingDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 
     return dist_calc
 
 
-@DataHandler.inject_param_docs(
-    metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat
-)
+@DataHandler.inject_param_docs(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: DataHandler.TYPE,
     reference: Optional[DataHandler.TYPE] = None,
@@ -177,23 +166,19 @@ def _ir_dist(
     """
     key = "junction_aa" if sequence == "aa" else "junction"
     result = {
-        "VJ": dict(),
-        "VDJ": dict(),
+        "VJ": {},
+        "VDJ": {},
         "params": {"metric": str(metric), "sequence": sequence, "cutoff": cutoff},
     }
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     params_ref = (
-        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref)
-        if reference is not None
-        else None
+        DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref) if reference is not None else None
     )
     if inplace and key_added is None:
         if params_ref is not None:
             try:
                 db_info = params_ref.adata.uns["DB"]
-                key_added = (
-                    f"ir_dist_{db_info['name']}_{sequence}_{_get_metric_key(metric)}"
-                )
+                key_added = f"ir_dist_{db_info['name']}_{sequence}_{_get_metric_key(metric)}"
             except KeyError:
                 raise ValueError(
                     'If reference does not contain a `.uns["DB"]["name"]` entry, '
@@ -211,10 +196,7 @@ def _ir_dist(
     def _get_unique_seqs(tmp_adata, chain_type):
         """Get all unique sequences for a chain type"""
         tmp_seqs = np.concatenate(
-            [
-                get_airr(tmp_adata, key, f"{chain_type}_{chain_id}").values
-                for chain_id in ["1", "2"]
-            ]  # type: ignore
+            [get_airr(tmp_adata, key, f"{chain_type}_{chain_id}").values for chain_id in ["1", "2"]]  # type: ignore
         )
         return np.unique([x.upper() for x in tmp_seqs[~_is_na(tmp_seqs)]])
 
@@ -233,9 +215,7 @@ def _ir_dist(
     # compute distance matrices
     dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs)
     for chain_type in ["VJ", "VDJ"]:
-        logging.info(
-            f"Computing sequence x sequence distance matrix for {chain_type} sequences."
-        )  # type: ignore
+        logging.info(f"Computing sequence x sequence distance matrix for {chain_type} sequences.")  # type: ignore
         result[chain_type]["distances"] = dist_calc.calc_dist_mat(
             result[chain_type]["seqs"], result[chain_type].get("seqs2", None)
         ).tocsr()
@@ -308,9 +288,7 @@ def sequence_dist(
     dist_mat = dist_mat.tocsr()
 
     logging.hint("Expanding non-unique sequences to sequence x sequence matrix")
-    i, j = np.meshgrid(
-        seqs_unique_inverse, seqs2_unique_inverse, sparse=True, indexing="ij"
-    )
+    i, j = np.meshgrid(seqs_unique_inverse, seqs2_unique_inverse, sparse=True, indexing="ij")
     dist_mat = dist_mat[i, j]
 
     return dist_mat

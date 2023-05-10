@@ -4,9 +4,10 @@ from typing import Callable, List, Sequence, Tuple, Union, cast
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..get import airr as get_airr
-from ..io import AirrCell
-from ..util import DataHandler, _is_na, _normalize_counts
+from scirpy.get import airr as get_airr
+from scirpy.io import AirrCell
+from scirpy.util import DataHandler, _is_na, _normalize_counts
+
 from .styling import _init_ax
 
 
@@ -93,9 +94,7 @@ def vdj_usage(
     chains, airr_variables = zip(
         *[
             (f"{arm}_{chain}", airr_variable)
-            for arm, chain, airr_variable in map(
-                lambda x: x.split("_", maxsplit=2), vdj_cols
-            )
+            for arm, chain, airr_variable in (x.split("_", maxsplit=2) for x in vdj_cols)
         ]
     )
 
@@ -130,8 +129,8 @@ def vdj_usage(
         max_labelled_segments = df.shape[0]
 
     # Store segments and colors of segments for each column individually.
-    gene_tops = {col: dict() for col in vdj_cols}
-    gene_colors = {col: dict() for col in vdj_cols}
+    gene_tops = {col: {} for col in vdj_cols}
+    gene_colors = {col: {} for col in vdj_cols}
 
     # Draw a stacked bar for every gene loci and save positions on the bar
     for col_idx, col_name in enumerate(vdj_cols):
@@ -163,9 +162,7 @@ def vdj_usage(
             bottom = 0
 
         # Draw gene segments
-        for i, (segment_size, gene) in list(enumerate(zip(segment_sizes, genes)))[
-            :max_segments
-        ][::-1]:
+        for i, (segment_size, gene) in list(enumerate(zip(segment_sizes, genes)))[:max_segments][::-1]:
             if _is_na(gene):
                 gene = "none"
             gene_tops[col_name][gene] = bottom + segment_size
@@ -280,8 +277,7 @@ def _gapped_ribbons(
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
     ribcol: Union[str, Tuple, None] = None,
-    fun: Callable = lambda x: x[3]
-    + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
+    fun: Callable = lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
     figsize: Tuple[float, float] = (3.44, 2.58),
     dpi: int = 300,
 ) -> plt.Axes:
@@ -323,7 +319,6 @@ def _gapped_ribbons(
     -------
     Axes object.
     """
-
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     else:

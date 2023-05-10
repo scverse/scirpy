@@ -5,9 +5,9 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 
+from scirpy import tl
 from scirpy.util import DataHandler
 
-from .. import tl
 from .base import volcano
 
 
@@ -84,8 +84,7 @@ def clonotype_imbalance(
     params = DataHandler(adata, airr_mod)
     if key_added not in params.adata.uns:
         sc.logging.warning(
-            f"Clonotype imbalance not found."
-            " Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
+            "Clonotype imbalance not found." " Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
         )
 
         tl.clonotype_imbalance(

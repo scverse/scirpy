@@ -69,9 +69,7 @@ def test_block_iter():
     b1 = list(ParallelDistanceCalculator._block_iter(seqs1, block_size=2))
     b2 = list(ParallelDistanceCalculator._block_iter(seqs1, seqs2, block_size=3))
     b3 = list(ParallelDistanceCalculator._block_iter(seqs1, seqs2, block_size=50))
-    b4 = list(
-        ParallelDistanceCalculator._block_iter(list("ABC"), list("ABC"), block_size=1)
-    )
+    b4 = list(ParallelDistanceCalculator._block_iter(list("ABC"), list("ABC"), block_size=1))
     L = list
     assert b1 == [
         (L("AB"), None, (0, 0)),
@@ -196,9 +194,7 @@ def test_levensthein_dist():
 
 def test_levensthein_dist_with_two_seq_arrays():
     levenshtein10 = LevenshteinDistanceCalculator(2)
-    res = levenshtein10.calc_dist_mat(
-        np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
-    )
+    res = levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"]))
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
     npt.assert_almost_equal(
@@ -209,9 +205,7 @@ def test_levensthein_dist_with_two_seq_arrays():
 
 def test_hamming_dist():
     hamming10 = HammingDistanceCalculator(2)
-    res = hamming10.calc_dist_mat(
-        np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"])
-    )
+    res = hamming10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"]))
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
     npt.assert_almost_equal(
@@ -243,28 +237,20 @@ def test_alignment_dist():
 
     res = aligner.calc_dist_mat(seqs)
     assert isinstance(res, scipy.sparse.csr_matrix)
-    npt.assert_almost_equal(
-        res.toarray(), _squarify(np.array([[1, 7, 25], [0, 1, 19], [0, 0, 1]]))
-    )
+    npt.assert_almost_equal(res.toarray(), _squarify(np.array([[1, 7, 25], [0, 1, 19], [0, 0, 1]])))
 
     res = aligner10.calc_dist_mat(seqs)
     assert isinstance(res, scipy.sparse.csr_matrix)
-    npt.assert_almost_equal(
-        res.toarray(), _squarify(np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]]))
-    )
+    npt.assert_almost_equal(res.toarray(), _squarify(np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]])))
 
 
 def test_alignment_dist_with_two_seq_arrays():
     aligner = AlignmentDistanceCalculator(cutoff=10, n_jobs=1)
-    res = aligner.calc_dist_mat(
-        ["AAAA", "AATA", "HHHH", "WWWW"], ["WWWW", "AAAA", "ATAA"]
-    )
+    res = aligner.calc_dist_mat(["AAAA", "AATA", "HHHH", "WWWW"], ["WWWW", "AAAA", "ATAA"])
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (4, 3)
 
-    npt.assert_almost_equal(
-        res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]])
-    )
+    npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
 
 @pytest.mark.parametrize("metric", ["alignment", "identity", "hamming", "levenshtein"])
@@ -275,7 +261,5 @@ def test_sequence_dist_all_metrics(metric):
     dist_mat = ir.ir_dist.sequence_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
     assert dist_mat.shape == (5, 5)
 
-    dist_mat = ir.ir_dist.sequence_dist(
-        unique_seqs, seqs2, metric=metric, cutoff=8, n_jobs=2
-    )
+    dist_mat = ir.ir_dist.sequence_dist(unique_seqs, seqs2, metric=metric, cutoff=8, n_jobs=2)
     assert dist_mat.shape == (5, 3)

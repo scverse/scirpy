@@ -36,12 +36,11 @@ from .util import _normalize_df_types
         ),
     ],
 )
-def test_workflow(
-    adata_path, save_intermediates, upgrade_schema, obs_expected, tmp_path
-):
+def test_workflow(adata_path, save_intermediates, upgrade_schema, obs_expected, tmp_path):
     def _save_and_load(adata):
         """If save_intermediates is True, save the anndata to a temporary location
-        and re-load it from disk."""
+        and re-load it from disk.
+        """
         if save_intermediates:
             adata.write_h5ad(tmp_path / "tmp_adata.h5ad")
             return sc.read_h5ad(tmp_path / "tmp_adata.h5ad")
@@ -75,6 +74,4 @@ def test_workflow(
     # # Use this code to re-generate the "expected file", if necessary.
     # adata.obs.to_pickle(obs_expected, protocol=4)
 
-    pdt.assert_frame_equal(
-        adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False
-    )
+    pdt.assert_frame_equal(adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False)

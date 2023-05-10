@@ -1,12 +1,13 @@
 """Convert IrCells to AnnData and vice-versa"""
+from importlib.metadata import version
 from typing import Iterable, List, cast
 
 import awkward as ak
 import pandas as pd
 from anndata import AnnData
 
-from importlib.metadata import version
-from ..util import DataHandler, _doc_params, tqdm
+from scirpy.util import DataHandler, _doc_params, tqdm
+
 from ._datastructures import AirrCell
 from ._util import _IOLogger, doc_working_model
 
@@ -41,7 +42,7 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
     obs.index = obs.index.astype(str)
 
     obsm = {
-        key_added: ak.Array((c.chains for c in airr_cells)),
+        key_added: ak.Array(c.chains for c in airr_cells),
     }
 
     adata = AnnData(

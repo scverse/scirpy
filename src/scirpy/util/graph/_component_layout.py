@@ -48,15 +48,13 @@ def layout_components(
 
     """
     if layout_kwargs is None:
-        layout_kwargs = dict()
+        layout_kwargs = {}
     # assign the original vertex id, it will otherwise get lost by decomposition
     for i, v in enumerate(graph.vs):
         v["id"] = i
     components = np.array(graph.decompose(mode="weak"))
     try:
-        component_sizes = np.array(
-            [sum(component.vs["size"]) for component in components]
-        )
+        component_sizes = np.array([sum(component.vs["size"]) for component in components])
     except KeyError:
         component_sizes = np.array([len(component.vs) for component in components])
     order = np.argsort(component_sizes)
@@ -65,9 +63,7 @@ def layout_components(
     vertex_ids = [v["id"] for comp in components for v in comp.vs]
     vertex_sorter = np.argsort(vertex_ids)
 
-    bbox_fun = {"rpack": _bbox_rpack, "size": _bbox_sorted, "squarify": _bbox_squarify}[
-        arrange_boxes
-    ]
+    bbox_fun = {"rpack": _bbox_rpack, "size": _bbox_sorted, "squarify": _bbox_squarify}[arrange_boxes]
     bboxes = bbox_fun(component_sizes, pad_x, pad_y)
 
     component_layouts = [
@@ -96,10 +92,7 @@ def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
 
     dimensions = [_get_bbox_dimensions(n, power=0.8) for n in component_sizes]
     # rpack only works on integers; sizes should be in descending order
-    dimensions = [
-        (int(width + pad_x), int(height + pad_y))
-        for (width, height) in dimensions[::-1]
-    ]
+    dimensions = [(int(width + pad_x), int(height + pad_y)) for (width, height) in dimensions[::-1]]
     origins = rpack.pack(dimensions)
     outer_dimensions = rpack.enclosing_size(dimensions, origins)
     aspect_ratio = outer_dimensions[0] / outer_dimensions[1]
@@ -155,7 +148,8 @@ def _bbox_squarify(component_sizes, pad_x=10, pad_y=10):
 
 def _bbox_sorted(component_sizes, pad_x=1.0, pad_y=1.0):
     """Compute bounding boxes for individual components
-    by arranging them by component size"""
+    by arranging them by component size
+    """
     bboxes = []
     x, y = (0, 0)
     current_n = 1
@@ -183,9 +177,7 @@ def _layout_component(component, bbox, component_layout_func, layout_kwargs):
     if component_layout_func == "fr_size_aware":
         coords = layout_fr_size_aware(component, **layout_kwargs)
     else:
-        coords = np.array(
-            component.layout(component_layout_func, **layout_kwargs).coords
-        )
+        coords = np.array(component.layout(component_layout_func, **layout_kwargs).coords)
     rescaled_pos = _rescale_layout(coords, bbox)
     return rescaled_pos
 

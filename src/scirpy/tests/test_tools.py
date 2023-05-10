@@ -12,7 +12,6 @@ from mudata import MuData
 import scirpy as ir
 from scirpy.util import DataHandler
 
-
 from .util import _make_adata
 
 

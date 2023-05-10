@@ -46,7 +46,8 @@ def _read_anndata_from_10x_sample(path):
 @pytest.fixture
 def anndata_from_10x_sample(request):
     """Make a copy for each function. Using this construct saves time compared
-    to reading in the 10x files for each request to the fixture"""
+    to reading in the 10x files for each request to the fixture
+    """
     return _read_anndata_from_10x_sample(request.param).copy()
 
 
@@ -69,7 +70,8 @@ def test_cdr3_from_junction(junction_aa, junction_nt, cdr3_aa, cdr3_nt):
 
 def test_airr_cell():
     """Test that an AirrCell can be properly initialized, and cell attributes
-    are stored and validated properly"""
+    are stored and validated properly
+    """
     ac = AirrCell("cell1", cell_attribute_fields=("fieldA", "fieldB"))
     ac["fieldA"] = "a"
     ac["fieldC"] = "c"
@@ -98,7 +100,8 @@ def test_airr_cell():
 
 def test_airr_cell_empty():
     """An empty airr cell should still be convertable to an airr record or a scirpy
-    record"""
+    record
+    """
     ac = AirrCell("cell1")
     airr_record = list(ac.to_airr_records())
     assert airr_record == []
@@ -201,15 +204,14 @@ def test_read_and_convert_10x_example(anndata_from_10x_sample):
 )
 def test_ir_objs_roundtrip_conversion(anndata_from_10x_sample):
     """Check that an anndata object can be converted to ir_objs and back
-    without loss"""
+    without loss
+    """
     anndata = anndata_from_10x_sample
     ir_objs = to_airr_cells(anndata)
     anndata2 = from_airr_cells(ir_objs)
     _normalize_df_types(anndata.obs)
     _normalize_df_types(anndata2.obs)
-    pdt.assert_frame_equal(
-        anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
-    )
+    pdt.assert_frame_equal(anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False)
 
 
 @pytest.mark.parametrize(
@@ -223,16 +225,15 @@ def test_ir_objs_roundtrip_conversion(anndata_from_10x_sample):
 )
 def test_airr_roundtrip_conversion(anndata_from_10x_sample, tmp_path):
     """Test that writing and reading to and from AIRR format results in the
-    identity"""
+    identity
+    """
     anndata = anndata_from_10x_sample
     tmp_file = tmp_path / "test.airr.tsv"
     write_airr(anndata, tmp_file)
     anndata2 = read_airr(tmp_file, include_fields=None)
     _normalize_df_types(anndata.obs)
     _normalize_df_types(anndata2.obs)
-    pdt.assert_frame_equal(
-        anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False
-    )
+    pdt.assert_frame_equal(anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False)
 
 
 @pytest.mark.extra
@@ -333,15 +334,12 @@ def test_read_10x_csv():
 @pytest.mark.parametrize(
     "testfile",
     [
-        TESTDATA
-        / "10x/10k_BMMNC_5pv2_nextgem_Multiplex_vdj_t_all_contig_annotations_small.csv",
-        TESTDATA
-        / "10x/10k_BMMNC_5pv2_nextgem_Multiplex_vdj_t_all_contig_annotations_small.json",
+        TESTDATA / "10x/10k_BMMNC_5pv2_nextgem_Multiplex_vdj_t_all_contig_annotations_small.csv",
+        TESTDATA / "10x/10k_BMMNC_5pv2_nextgem_Multiplex_vdj_t_all_contig_annotations_small.json",
     ],
 )
 def test_read_10x_cr6(testfile):
     """Test additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}"""
-
     anndata = read_10x_vdj(
         testfile,
         include_fields=None,
@@ -373,10 +371,7 @@ def test_read_10x_cr6(testfile):
 
     assert cell1.name == "AAACCTGCACAGGTTT-1"
     assert cell1["VDJ_1_fwr1_aa"] == "KAGVTQTPRYLIKTRGQQVTLSCSPI"
-    assert (
-        cell1["VDJ_1_fwr1"]
-        == "AAGGCTGGAGTCACTCAAACTCCAAGATATCTGATCAAAACGAGAGGACAGCAAGTGACACTGAGCTGCTCCCCTATC"
-    )
+    assert cell1["VDJ_1_fwr1"] == "AAGGCTGGAGTCACTCAAACTCCAAGATATCTGATCAAAACGAGAGGACAGCAAGTGACACTGAGCTGCTCCCCTATC"
     assert cell1["VDJ_1_cdr1_aa"] == "SGHRS"
     assert cell1["VDJ_1_cdr1"] == "TCTGGGCATAGGAGT"
     assert cell1["VDJ_1_fwr2_aa"] == "VSWYQQTPGQGLQFLFE"
@@ -394,10 +389,7 @@ def test_read_10x_cr6(testfile):
     assert cell1["VDJ_1_fwr4"] == "GGACAAGGCACCAGACTCACAGTTGTAG"
 
     assert cell1["VJ_1_fwr1_aa"] == "AQTVTQSQPEMSVQEAETVTLSCTYD"
-    assert (
-        cell1["VJ_1_fwr1"]
-        == "GCTCAGACAGTCACTCAGTCTCAACCAGAGATGTCTGTGCAGGAGGCAGAGACCGTGACCCTGAGCTGCACATATGAC"
-    )
+    assert cell1["VJ_1_fwr1"] == "GCTCAGACAGTCACTCAGTCTCAACCAGAGATGTCTGTGCAGGAGGCAGAGACCGTGACCCTGAGCTGCACATATGAC"
     assert cell1["VJ_1_cdr1_aa"] == "TSESDYY"
     assert cell1["VJ_1_cdr1"] == "ACCAGTGAGAGTGATTATTAT"
     assert cell1["VJ_1_fwr2_aa"] == "LFWYKQPPSRQMILVIR"
@@ -417,9 +409,7 @@ def test_read_10x_cr6(testfile):
 
 @pytest.mark.conda
 def test_read_10x():
-    anndata = read_10x_vdj(
-        TESTDATA / "10x/all_contig_annotations.json", include_fields=None
-    )
+    anndata = read_10x_vdj(TESTDATA / "10x/all_contig_annotations.json", include_fields=None)
     obs = anndata.obs.join(
         ir.get.airr(
             anndata,
@@ -448,9 +438,7 @@ def test_read_10x():
 
     assert cell1.name == "AAACCTGAGACCTTTG-2"
     assert cell1["VDJ_1_junction_aa"] == "CASSPPSQGLSTGELFF"
-    assert (
-        cell1["VDJ_1_junction"] == "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT"
-    )
+    assert cell1["VDJ_1_junction"] == "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT"
     assert cell1["VDJ_1_np1_length"] == 4
     assert cell1["VDJ_1_np2_length"] == 7
     assert cell1["VDJ_1_duplicate_count"] == 1
@@ -460,9 +448,7 @@ def test_read_10x():
     assert cell1["VDJ_1_j_call"] == "TRBJ2-2"
     assert cell1["VDJ_1_c_call"] == "TRBC2"
     assert anndata.obsm["chain_indices"]["multichain"][0].item() is False
-    assert np.all(
-        _is_na(cell1[["VJ_1_junction_aa", "VDJ_2_junction_aa", "VJ_1_np1_length"]])
-    )
+    assert np.all(_is_na(cell1[["VJ_1_junction_aa", "VDJ_2_junction_aa", "VJ_1_np1_length"]]))
 
     assert cell2.name == "AAACCTGAGTACGCCC-1"
     assert cell2["VJ_1_junction_aa"] == "CAMRVGGSQGNLIF"
@@ -559,9 +545,7 @@ def test_read_airr():
     )
 
     # test some fundamental values
-    obs = ir.get.airr(
-        anndata, ["junction_aa", "locus"], ["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]
-    )
+    obs = ir.get.airr(anndata, ["junction_aa", "locus"], ["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"])
     assert obs.shape[0] == 5
 
     cell1 = obs.loc["cell1", :]
@@ -866,10 +850,7 @@ def test_read_bracer():
 
     assert cell2.name == "SRR10788834"
     assert cell2["VDJ_1_junction_aa"] == "CARDHIVVLEPTPKRYGMDVW"
-    assert (
-        cell2["VDJ_1_junction"]
-        == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
-    )
+    assert cell2["VDJ_1_junction"] == "TGTGCGAGAGATCATATTGTAGTCTTGGAACCTACCCCTAAGAGATACGGTATGGACGTCTGG"
     assert cell2["VDJ_1_np1_length"] == 2
     assert cell2["VDJ_1_np2_length"] == 22
 

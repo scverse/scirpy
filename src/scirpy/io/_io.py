@@ -13,14 +13,8 @@ import pandas as pd
 from airr import RearrangementSchema
 from anndata import AnnData
 
-from ..util import (
-    DataHandler,
-    _doc_params,
-    _is_na2,
-    _is_true,
-    _is_true2,
-    _translate_dna_to_protein,
-)
+from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
+
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
@@ -41,11 +35,7 @@ def _cdr3_from_junction(junction_aa, junction_nt):
     See also https://github.com/scverse/scirpy/pull/290.
     """
     cdr3_aa, cdr3_nt = None, None
-    if (
-        not _is_na2(junction_aa)
-        and junction_aa[0] == "C"
-        and junction_aa[-1] in ("W", "F")
-    ):
+    if not _is_na2(junction_aa) and junction_aa[0] == "C" and junction_aa[-1] in ("W", "F"):
         cdr3_aa = junction_aa[1:-1]
     if (
         not _is_na2(junction_nt)
@@ -62,7 +52,7 @@ def _read_10x_vdj_json(
 ) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
     logger = _IOLogger()
-    with open(path, "r") as f:
+    with open(path) as f:
         contigs = json.load(f)
 
     airr_cells: Dict[str, AirrCell] = {}
@@ -83,7 +73,7 @@ def _read_10x_vdj_json(
         # AIRR-compliant chain dict
         chain = AirrCell.empty_chain_dict()
 
-        genes = dict()
+        genes = {}
         mapping = {
             "L-REGION+V-REGION": "v",
             "D-REGION": "d",
@@ -95,7 +85,7 @@ def _read_10x_vdj_json(
             if feat["region_type"] in mapping:
                 region = mapping[feat["region_type"]]
                 assert region not in genes, region
-                genes[region] = dict()
+                genes[region] = {}
                 genes[region]["chain"] = feat["chain"]
                 genes[region]["gene"] = feat["gene_name"]
                 genes[region]["start"] = annot["contig_match_start"]
@@ -121,14 +111,8 @@ def _read_10x_vdj_json(
         # of inserted nucleotides.
         chain["np1_length"] = None
         chain["np2_length"] = None
-        if (
-            chain_type in AirrCell.VJ_LOCI
-            and chain["v_call"] is not None
-            and chain["j_call"] is not None
-        ):
-            assert (
-                chain["d_call"] is None
-            ), "TRA, TRG or IG-light chains should not have a D region"
+        if chain_type in AirrCell.VJ_LOCI and chain["v_call"] is not None and chain["j_call"] is not None:
+            assert chain["d_call"] is None, "TRA, TRG or IG-light chains should not have a D region"
             chain["np1_length"] = genes["j"]["start"] - genes["v"]["end"]
         elif (
             chain_type in AirrCell.VDJ_LOCI
@@ -157,9 +141,7 @@ def _read_10x_vdj_json(
                 chain[col] = contig[col].get("nt_seq") if contig[col] else None
                 chain[col + "_aa"] = contig[col].get("aa_seq") if contig[col] else None
 
-        chain["cdr3_aa"], chain["cdr3"] = _cdr3_from_junction(
-            chain["junction_aa"], chain["junction"]
-        )
+        chain["cdr3_aa"], chain["cdr3"] = _cdr3_from_junction(chain["junction_aa"], chain["junction"])
 
         cell.add_chain(chain)
 
@@ -218,9 +200,7 @@ def _read_10x_vdj_csv(
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj(
-    path: Union[str, Path], filtered: bool = True, include_fields: Any = None, **kwargs
-) -> AnnData:
+def read_10x_vdj(path: Union[str, Path], filtered: bool = True, include_fields: Any = None, **kwargs) -> AnnData:
     """\
     Read :term:`AIRR` data from 10x Genomics cell-ranger output.
 
@@ -243,9 +223,9 @@ def read_10x_vdj(
         If using `filtered_contig_annotations.csv` already, this option
         is futile.
     include_fields
-        Deprecated. Does not have any effect as of v0.13. 
+        Deprecated. Does not have any effect as of v0.13.
     **kwargs
-        are passed to :func:`~scirpy.io.from_airr_cells`. 
+        are passed to :func:`~scirpy.io.from_airr_cells`.
 
     Returns
     -------
@@ -280,7 +260,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
     path
         Path to the TraCeR output folder.
     **kwargs
-        are passed to :func:`~scirpy.io.from_airr_cells`. 
+        are passed to :func:`~scirpy.io.from_airr_cells`.
 
     Returns
     -------
@@ -322,16 +302,12 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
                     assert chain_dict[call_key][3] == call_key[0].upper()
 
             chain_dict["np1_length"] = (
-                len(tmp_chain.junction_details[1])
-                if tmp_chain.junction_details[1] != "N/A"
-                else None
+                len(tmp_chain.junction_details[1]) if tmp_chain.junction_details[1] != "N/A" else None
             )
             try:
                 # only in VDJ
                 chain_dict["np2_length"] = (
-                    len(tmp_chain.junction_details[3])
-                    if tmp_chain.junction_details[3] != "N/A"
-                    else None
+                    len(tmp_chain.junction_details[3]) if tmp_chain.junction_details[3] != "N/A" else None
                 )
             except IndexError:
                 chain_dict["np2_length"] = None
@@ -344,9 +320,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
 
             yield chain_dict
 
-    for summary_file in iglob(
-        os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True
-    ):
+    for summary_file in iglob(os.path.join(path, "**/filtered_TCR_seqs/*.pkl"), recursive=True):
         cell_name = summary_file.split(os.sep)[-3]
         airr_cell = AirrCell(cell_name, logger=logger)
         try:
@@ -355,20 +329,16 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
                 chains = tracer_obj.recombinants["TCR"]
                 for chain_id in "ABGD":
                     if chain_id in chains and chains[chain_id] is not None:
-                        for tmp_chain in _process_chains(
-                            chains[chain_id], f"TR{chain_id}"
-                        ):
+                        for tmp_chain in _process_chains(chains[chain_id], f"TR{chain_id}"):
                             airr_cell.add_chain(tmp_chain)
         except ImportError as e:
             # except Exception as e:
-            raise Exception(
-                "Error loading TCR data from cell {}".format(summary_file)
-            ) from e
+            raise Exception(f"Error loading TCR data from cell {summary_file}") from e
 
         airr_cells[cell_name] = airr_cell
 
     if not len(airr_cells):
-        raise IOError(
+        raise OSError(
             "Could not find any TraCeR *.pkl files. Make sure you are "
             "using a TraCeR output folder that looks like "
             "<CELL>/filtered_TCR_seqs/*.pkl"
@@ -382,9 +352,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
     cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
 )
 def read_airr(
-    path: Union[
-        str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]
-    ],
+    path: Union[str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]],
     use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
@@ -395,8 +363,8 @@ def read_airr(
     Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
 
     Even though data without these fields can be imported, the following columns are required by scirpy
-    for a meaningful analysis: 
-     
+    for a meaningful analysis:
+
      * `cell_id`
      * `productive`
      * `locus` containing a valid IMGT locus name
@@ -424,9 +392,9 @@ def read_airr(
         than a chain. The values must be identical over all records belonging to a
         cell. This defaults to {cell_attributes}.
     include_fields
-        Deprecated. Does not have any effect as of v0.13. 
+        Deprecated. Does not have any effect as of v0.13.
     **kwargs
-        are passed to :func:`~scirpy.io.from_airr_cells`. 
+        are passed to :func:`~scirpy.io.from_airr_cells`.
 
     Returns
     -------
@@ -441,14 +409,8 @@ def read_airr(
 
     def _decide_use_umi_count_col(chain_dict):
         """Logic to decide whether or not to use counts form the `umi_counts` column."""
-        if (
-            "umi_count" in chain_dict
-            and use_umi_count_col == "auto"
-            and "duplicate_count" not in chain_dict
-        ):
-            logger.warning(
-                "Renaming the non-standard `umi_count` column to `duplicate_count`. "
-            )  # type: ignore
+        if "umi_count" in chain_dict and use_umi_count_col == "auto" and "duplicate_count" not in chain_dict:
+            logger.warning("Renaming the non-standard `umi_count` column to `duplicate_count`. ")  # type: ignore
             return True
         elif use_umi_count_col is True:
             return True
@@ -463,13 +425,7 @@ def read_airr(
 
         for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
-            chain_dict.update(
-                {
-                    req: None
-                    for req in RearrangementSchema.required
-                    if req not in chain_dict
-                }
-            )
+            chain_dict.update({req: None for req in RearrangementSchema.required if req not in chain_dict})
             try:
                 tmp_cell = airr_cells[cell_id]
             except KeyError:
@@ -481,9 +437,7 @@ def read_airr(
                 airr_cells[cell_id] = tmp_cell
 
             if _decide_use_umi_count_col(chain_dict):
-                chain_dict["duplicate_count"] = RearrangementSchema.to_int(
-                    chain_dict.pop("umi_count")
-                )
+                chain_dict["duplicate_count"] = RearrangementSchema.to_int(chain_dict.pop("umi_count"))
 
             if infer_locus and "locus" not in chain_dict:
                 logger.warning(
@@ -496,16 +450,12 @@ def read_airr(
     return from_airr_cells(airr_cells.values(), **kwargs)
 
 
-def _infer_locus_from_gene_names(
-    chain_dict, *, keys=("v_call", "d_call", "j_call", "c_call")
-):
+def _infer_locus_from_gene_names(chain_dict, *, keys=("v_call", "d_call", "j_call", "c_call")):
     """Infer the IMGT locus name from VDJ calls"""
     keys = list(keys)
     # TRAV.*/DV is misleading as it actually points to a delta locus
     # See #285
-    if not _is_na2(chain_dict["v_call"]) and re.search(
-        "TRAV.*/DV", chain_dict["v_call"]
-    ):
+    if not _is_na2(chain_dict["v_call"]) and re.search("TRAV.*/DV", chain_dict["v_call"]):
         keys.remove("v_call")
 
     genes = []
@@ -551,7 +501,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     path
         Path to the `changeodb.tab` file.
     **kwargs
-        are passed to :func:`~scirpy.io.from_airr_cells`.  
+        are passed to :func:`~scirpy.io.from_airr_cells`.
 
     Returns
     -------
@@ -561,7 +511,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     logger = _IOLogger()
     changeodb = pd.read_csv(path, sep="\t", na_values=["None"])
 
-    bcr_cells = dict()
+    bcr_cells = {}
     for _, row in changeodb.iterrows():
         cell_id = row["CELL"]
         try:
@@ -575,9 +525,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
         chain_dict["v_call"] = row["V_CALL"] if not pd.isnull(row["V_CALL"]) else None
         chain_dict["d_call"] = row["D_CALL"] if not pd.isnull(row["D_CALL"]) else None
         chain_dict["j_call"] = row["J_CALL"] if not pd.isnull(row["J_CALL"]) else None
-        chain_dict["c_call"] = (
-            row["C_CALL"].split("*")[0] if not pd.isnull(row["C_CALL"]) else None
-        )
+        chain_dict["c_call"] = row["C_CALL"].split("*")[0] if not pd.isnull(row["C_CALL"]) else None
         chain_dict["locus"] = "IG" + row["LOCUS"]
 
         chain_dict["np1_length"] = None
@@ -587,32 +535,20 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
             and not pd.isnull(row["V_SEQ_START"])
             and not pd.isnull(row["J_SEQ_START"])
         ):
-            assert pd.isnull(
-                row["D_SEQ_START"]
-            ), "TRA, TRG or IG-light chains should not have a D region" + str(row)
-            chain_dict["np1_length"] = row["J_SEQ_START"] - (
-                row["V_SEQ_START"] + row["V_SEQ_LENGTH"]
-            )  # type: ignore
+            assert pd.isnull(row["D_SEQ_START"]), "TRA, TRG or IG-light chains should not have a D region" + str(row)
+            chain_dict["np1_length"] = row["J_SEQ_START"] - (row["V_SEQ_START"] + row["V_SEQ_LENGTH"])  # type: ignore
         elif (
             chain_dict["locus"] in AirrCell.VDJ_LOCI
             and not pd.isnull(row["V_SEQ_START"])
             and not pd.isnull(row["D_SEQ_START"])
             and not pd.isnull(row["J_SEQ_START"])
         ):
-            chain_dict["np1_length"] = row["D_SEQ_START"] - (
-                row["V_SEQ_START"] + row["V_SEQ_LENGTH"]
-            )  # type: ignore
-            chain_dict["np2_length"] = row["J_SEQ_START"] - (
-                row["D_SEQ_START"] + row["D_SEQ_LENGTH"]
-            )  # type: ignore
+            chain_dict["np1_length"] = row["D_SEQ_START"] - (row["V_SEQ_START"] + row["V_SEQ_LENGTH"])  # type: ignore
+            chain_dict["np2_length"] = row["J_SEQ_START"] - (row["D_SEQ_START"] + row["D_SEQ_LENGTH"])  # type: ignore
 
-        chain_dict["junction"] = (
-            row["JUNCTION"] if not pd.isnull(row["JUNCTION"]) else None
-        )
+        chain_dict["junction"] = row["JUNCTION"] if not pd.isnull(row["JUNCTION"]) else None
         chain_dict["junction_aa"] = (
-            _translate_dna_to_protein(chain_dict["junction"])
-            if chain_dict["junction"] is not None
-            else None
+            _translate_dna_to_protein(chain_dict["junction"]) if chain_dict["junction"] is not None else None
         )
         chain_dict["consensus_count"] = row["TPM"]
         chain_dict["productive"] = row["FUNCTIONAL"]
@@ -726,9 +662,7 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     adata = read_airr(dandelion_df, **kwargs)
 
     if transfer:
-        ddl.tl.transfer(
-            adata, dandelion
-        )  # need to make a version that is not so verbose?
+        ddl.tl.transfer(adata, dandelion)  # need to make a version that is not so verbose?
     return adata
 
 
@@ -756,7 +690,7 @@ def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
     path:
         Path to the `perCellChain` or `Contigs` file generated by the BD Rhapsody analysis pipeline. May be gzipped.
     **kwargs
-        are passed to :func:`~scirpy.io.from_airr_cells`. 
+        are passed to :func:`~scirpy.io.from_airr_cells`.
 
     Returns
     -------

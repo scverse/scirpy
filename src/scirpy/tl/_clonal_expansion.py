@@ -2,7 +2,7 @@ from typing import List, Literal, Union
 
 import pandas as pd
 
-from ..util import DataHandler, _is_na, _normalize_counts
+from scirpy.util import DataHandler, _is_na, _normalize_counts
 
 
 def _clip_and_count(
@@ -32,22 +32,15 @@ def _clip_and_count(
         .size()
         .reset_index(name="tmp_count")
         .assign(
-            tmp_count=lambda X: [
-                ">= {}".format(min(n, clip_at)) if n >= clip_at else str(n)
-                for n in X["tmp_count"].values
-            ]
+            tmp_count=lambda X: [f">= {min(n, clip_at)}" if n >= clip_at else str(n) for n in X["tmp_count"].values]
         )
     )
-    clipped_count = params.adata.obs.merge(
-        clonotype_counts, how="left", on=groupby_cols
-    )["tmp_count"]
+    clipped_count = params.adata.obs.merge(clonotype_counts, how="left", on=groupby_cols)["tmp_count"]
     clipped_count[_is_na(params.adata.obs[target_col])] = "nan"
     clipped_count.index = params.adata.obs.index
 
     if inplace:
-        key_added = (
-            "{}_clipped_count".format(target_col) if key_added is None else key_added
-        )
+        key_added = f"{target_col}_clipped_count" if key_added is None else key_added
         params.set_obs(key_added, clipped_count)
     else:
         return clipped_count

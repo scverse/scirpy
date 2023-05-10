@@ -7,8 +7,9 @@ import seaborn as sns
 from scipy.cluster import hierarchy as sc_hierarchy
 from scipy.spatial import distance as sc_distance
 
-from .. import tl
-from ..util import DataHandler
+from scirpy import tl
+from scirpy.util import DataHandler
+
 from .base import ol_scatter
 from .styling import _get_colors
 
@@ -93,23 +94,16 @@ def repertoire_overlap(
         if heatmap_cats is not None:
             for lbl in heatmap_cats:
                 try:
-                    labels = (
-                        params.get_obs([groupby, lbl])
-                        .drop_duplicates()
-                        .set_index(groupby)
-                        .reindex(df.index)
-                    )
+                    labels = params.get_obs([groupby, lbl]).drop_duplicates().set_index(groupby).reindex(df.index)
                 except ValueError as e:
                     if "duplicate labels" in str(e):
-                        raise ValueError(
-                            "Cannot color by category that is not unique for the categories in `groupby`."
-                        )
+                        raise ValueError("Cannot color by category that is not unique for the categories in `groupby`.")
                     else:
                         raise
 
                 # TODO refactor get_colors
                 color_dicts[lbl] = _get_colors(params, lbl)
-                for label in labels[lbl]:
+                for _label in labels[lbl]:
                     row_colors[lbl] = labels[lbl].map(color_dicts[lbl])
 
         distM = params.adata.uns[added_key]["distance"]
@@ -139,10 +133,7 @@ def repertoire_overlap(
 
     else:
         invalid_pair_warning = (
-            "Did you supply two valid "
-            + groupby
-            + " names? Current indices are: "
-            + ";".join(df.index.values)
+            "Did you supply two valid " + groupby + " names? Current indices are: " + ";".join(df.index.values)
         )
         valid_pairs = False
         try:
@@ -173,10 +164,7 @@ def repertoire_overlap(
                 kwargs["style_kws"] = default_style_kws
                 ax = ol_scatter(o_df, **kwargs)
             else:
-                raise ValueError(
-                    "Wrong number of members. A pair is exactly two items! "
-                    + invalid_pair_warning
-                )
+                raise ValueError("Wrong number of members. A pair is exactly two items! " + invalid_pair_warning)
         else:
             raise ValueError(invalid_pair_warning)
 

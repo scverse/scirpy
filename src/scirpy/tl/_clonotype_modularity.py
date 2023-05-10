@@ -7,9 +7,9 @@ from mudata import MuData
 from scanpy import logging
 from statsmodels.stats.multitest import fdrcorrection
 
-from ..util import DataHandler, _is_na, tqdm
-from ..util._negative_binomial import fit_nbinom
-from ..util.graph import _get_igraph_from_adjacency
+from scirpy.util import DataHandler, _is_na, tqdm
+from scirpy.util._negative_binomial import fit_nbinom
+from scirpy.util.graph import _get_igraph_from_adjacency
 
 
 @DataHandler.inject_param_docs()
@@ -41,12 +41,12 @@ def clonotype_modularity(
 
     .. math::
 
-        \\text{{connectivity score}} = \\log_2 \\frac{{ 
-                |E|_{{\\text{{actual}}}} + 1 
-            }}{{ 
-                |E|_{{\\text{{expected}}}} + 1 
+        \\text{{connectivity score}} = \\log_2 \\frac{{
+                |E|_{{\\text{{actual}}}} + 1
+            }}{{
+                |E|_{{\\text{{expected}}}} + 1
             }}
-        
+
     For each unique clonotype size, the expected number of edges is derived by
     randomly sampling `n_permutation` subgraphs from the transcriptomics neighborhood
     graph. This background distribution is also used to calculate p-values for the
@@ -106,9 +106,7 @@ def clonotype_modularity(
         n_permutations = 1000 if permutation_test == "approx" else 10000
 
     clonotype_per_cell = params.get_obs(target_col)
-    cells_with_valid_clonotype = clonotype_per_cell[
-        ~_is_na(clonotype_per_cell.values)
-    ].index
+    cells_with_valid_clonotype = clonotype_per_cell[~_is_na(clonotype_per_cell.values)].index
     data_subset = params.data[cells_with_valid_clonotype.values, :]
     try:
         connectivities = data_subset.obsp[connectivity_key]
@@ -136,32 +134,23 @@ def clonotype_modularity(
     )
     start = logging.info("Computing background distributions...")  # type: ignore
     cm.estimate_edges_background_distribution(n_permutations=n_permutations)
-    logging.debug(
-        "Finished computing background distributions", time=start
-    )  # type:ignore
+    logging.debug("Finished computing background distributions", time=start)  # type:ignore
 
     logging.debug("Computing modularity scores")  # type: ignore
     modularity_scores = cm.get_scores()
     logging.debug("Computing modularity pvalues")  # type: ignore
-    modularity_pvalues = (
-        cm.get_approx_pvalues()
-        if permutation_test == "approx"
-        else cm.get_exact_pvalues()
-    )
+    modularity_pvalues = cm.get_approx_pvalues() if permutation_test == "approx" else cm.get_exact_pvalues()
 
     if fdr_correction:
-        modularity_pvalues = {
-            k: v
-            for k, v in zip(
+        modularity_pvalues = dict(
+            zip(
                 modularity_pvalues.keys(),
                 fdrcorrection(list(modularity_pvalues.values()))[1],
             )
-        }
+        )
 
     if inplace:
-        params.set_obs(
-            key_added, [modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell]
-        )
+        params.set_obs(key_added, [modularity_scores.get(ct, np.nan) for ct in clonotype_per_cell])
         # remove the entries from previous run, should they exist
         # results can be inconsisten otherwise (old dangling "fdr" values when only
         # pvalues are calculated)
@@ -214,15 +203,11 @@ class _ClonotypeModularity:
         clonotypes = np.unique(clonotype_per_cell)
         # Dissect the connectivity graph into one subgraph per clonotype.
         self._clonotype_subgraphs = {
-            clonotype: self.graph.subgraph(
-                np.flatnonzero(clonotype_per_cell == clonotype)
-            )
+            clonotype: self.graph.subgraph(np.flatnonzero(clonotype_per_cell == clonotype))
             for clonotype in tqdm(clonotypes)
         }
         # Unique clonotype sizes
-        self._clonotype_sizes = np.unique(
-            [g.vcount() for g in self._clonotype_subgraphs.values()]
-        )
+        self._clonotype_sizes = np.unique([g.vcount() for g in self._clonotype_subgraphs.values()])
         self.random_state = random_state
         self.edges_background_distribution = None
 
@@ -236,9 +221,7 @@ class _ClonotypeModularity:
         res = []
         np.random.seed(self.random_state + i)
         for subgraph_size in self._clonotype_sizes:
-            subgraph = self.graph.subgraph(
-                np.random.choice(self.n_cells, subgraph_size, replace=False)
-            )
+            subgraph = self.graph.subgraph(np.random.choice(self.n_cells, subgraph_size, replace=False))
             res.append(subgraph.ecount())
         return np.array(res)
 
@@ -272,8 +255,7 @@ class _ClonotypeModularity:
 
         # convert n_iter x clonotype_sizes array to dictionary
         self.edges_background_distribution = {
-            s: background_distribution[:, i]
-            for i, s in enumerate(self._clonotype_sizes)
+            s: background_distribution[:, i] for i, s in enumerate(self._clonotype_sizes)
         }
 
     def get_scores(self) -> Dict[str, float]:
@@ -288,7 +270,8 @@ class _ClonotypeModularity:
         does not make sense since the value would also depend on the connectivity
         of the rest of the network rather than the clonotype only.
 
-        See also
+        See Also
+        --------
          * https://stats.stackexchange.com/questions/508577/given-a-graph-test-if-some-vertices-are-more-connected-than-the-background
          * https://en.wikipedia.org/wiki/Modularity_(networks)
 
@@ -302,8 +285,7 @@ class _ClonotypeModularity:
         score_dict = {}
         for clonotype, subgraph in self._clonotype_subgraphs.items():
             score_dict[clonotype] = np.log2(
-                (subgraph.ecount() + 1)
-                / (np.mean(self.edges_background_distribution[subgraph.vcount()]) + 1)
+                (subgraph.ecount() + 1) / (np.mean(self.edges_background_distribution[subgraph.vcount()]) + 1)
             )
 
         return score_dict
@@ -330,7 +312,7 @@ class _ClonotypeModularity:
             n, p = fit_nbinom(np.array(bg))
             distributions_per_size[tmp_size] = scipy.stats.nbinom(n, p)
 
-        pvalue_dict = dict()
+        pvalue_dict = {}
         for clonotype, subgraph in self._clonotype_subgraphs.items():
             if subgraph.vcount() <= 2:
                 pvalue_dict[clonotype] = 1.0
@@ -358,13 +340,10 @@ class _ClonotypeModularity:
         if self.edges_background_distribution is None:
             raise ValueError("Need to run `estimate_background_distribution` first. ")
 
-        pvalue_dict = dict()
+        pvalue_dict = {}
         for clonotype, subgraph in self._clonotype_subgraphs.items():
             p = (
-                np.sum(
-                    np.array(self.edges_background_distribution[subgraph.vcount()])
-                    >= subgraph.ecount()
-                )
+                np.sum(np.array(self.edges_background_distribution[subgraph.vcount()]) >= subgraph.ecount())
                 / self.n_permutations
             )
             # If the pvalue is 0 return 1 / n_permutations instead (the minimal "resolution")

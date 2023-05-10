@@ -5,8 +5,8 @@ import pandas as pd
 from anndata import AnnData
 from mudata import MuData
 
-from ..get import _has_ir
-from ..util import DataHandler, _is_na, _normalize_counts
+from scirpy.get import _has_ir
+from scirpy.util import DataHandler, _is_na, _normalize_counts
 
 
 def _group_abundance(
@@ -35,31 +35,21 @@ def _group_abundance(
         .rename(columns={"weight": "weighted_count"})
     )
 
-    result_df = group_counts.pivot(
-        index=groupby, columns=target_col, values="weighted_count"
-    ).fillna(value=0.0)
+    result_df = group_counts.pivot(index=groupby, columns=target_col, values="weighted_count").fillna(value=0.0)
 
     # required that we can still sort by abundance even if normalized
-    result_df_count = group_counts.pivot(
-        index=groupby, columns=target_col, values="count"
-    ).fillna(value=0.0)
+    result_df_count = group_counts.pivot(index=groupby, columns=target_col, values="count").fillna(value=0.0)
 
     # By default, the most abundant group should be the first on the plot,
     # therefore we need their order
     if isinstance(sort, str) and sort == "alphabetical":
         ranked_target = sorted(result_df.index)
     elif isinstance(sort, str) and sort == "count":
-        ranked_target = (
-            result_df_count.apply(np.sum, axis=1)
-            .sort_values(ascending=False)
-            .index.values
-        )
+        ranked_target = result_df_count.apply(np.sum, axis=1).sort_values(ascending=False).index.values
     else:
         ranked_target = sort
 
-    ranked_groups = (
-        result_df_count.apply(np.sum, axis=0).sort_values(ascending=False).index.values
-    )
+    ranked_groups = result_df_count.apply(np.sum, axis=0).sort_values(ascending=False).index.values
     result_df = result_df.loc[ranked_target, ranked_groups]
 
     return result_df
@@ -118,6 +108,4 @@ def group_abundance(
     if target_col not in ir_obs.columns:
         raise ValueError("`target_col` not found in obs`")
 
-    return _group_abundance(
-        ir_obs, groupby, target_col=target_col, fraction=fraction, sort=sort
-    )
+    return _group_abundance(ir_obs, groupby, target_col=target_col, fraction=fraction, sort=sort)
