@@ -34,6 +34,7 @@ from . import TESTDATA
 from .fixtures import adata_tra  # NOQA
 
 
+@pytest.mark.filterwarnings("ignore::anndata.OldFormatWarning")
 def test_data_handler_upgrade_schema_pre_scirpy_v0_7():
     """Test that running a function on very old (pre v0.7) schema
     raises an error"""

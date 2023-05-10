@@ -170,7 +170,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
         urllib.request.urlretrieve(url, d / "vdjdb.tar.gz")
         with zipfile.ZipFile(d / "vdjdb.tar.gz") as zf:
             zf.extractall(d)
-        df = pd.read_csv(d / "vdjdb_full.txt", sep="\t")
+        df = pd.read_csv(d / "vdjdb_full.txt", sep="\t", low_memory=False)
 
     tcr_cells = []
     for idx, row in tqdm(
