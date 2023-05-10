@@ -6,11 +6,12 @@ import pandas as pd
 from anndata import AnnData
 from mudata import MuData
 
-from scirpy import __version__
+
 from scirpy.io import AirrCell
 from scirpy.util import _is_na2
 
 from ..util import _is_na
+from importlib.metadata import version
 
 
 def _normalize_df_types(df: pd.DataFrame):
@@ -90,12 +91,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
             receptor_arm, chain_i = chain.split("_")
             chain_i = int(chain_i) - 1
             if row_has_chain:
-                tmp_chains.append(
-                    {
-                        v: _sanitize_value(row.get(f"IR_{chain}_{v}", None))
-                        for v in unique_variables
-                    }
-                )
+                tmp_chains.append({v: _sanitize_value(row.get(f"IR_{chain}_{v}", None)) for v in unique_variables})
                 tmp_chain_idx[receptor_arm][chain_i] = len(tmp_chains) - 1
         tmp_chain_idx["multichain"] = row.get("_multi_chain", False)
 
@@ -106,15 +102,13 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
     chain_indices = ak.Array(chain_idx_list)
     for k in ["VJ", "VDJ"]:
         # ensure chain indices are alwasy int (even when all values are None)
-        chain_indices[k] = ak.values_astype(
-            chain_indices[k], int, including_unknown=True
-        )
+        chain_indices[k] = ak.values_astype(chain_indices[k], int, including_unknown=True)
 
     adata = AnnData(
         X=None,
         obs=obs.loc[:, ~obs.columns.isin(cols)].copy(),  # type:ignore
         obsm={"chain_indices": chain_indices, "airr": airr_data},  # type:ignore
-        uns={"scirpy_version": __version__},
+        uns={"scirpy_version": version("scirpy")},
     )
     adata.strings_to_categoricals()
     if mudata:

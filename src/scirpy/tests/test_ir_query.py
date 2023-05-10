@@ -15,8 +15,6 @@ from scirpy.tl._ir_query import (
     ir_query_annotate_df,
 )
 
-from .fixtures import adata_cdr3, adata_cdr3_2, adata_define_clonotype_clusters  # NOQA
-
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein"])
 @pytest.mark.parametrize("key1", [None, "foo"])
@@ -90,9 +88,7 @@ def test_reduce_json(input, expected):
 
 @pytest.fixture
 def query_reference(adata_define_clonotype_clusters):
-    query = adata_define_clonotype_clusters[
-        ["cell2", "cell3", "cell4", "cell10"], :
-    ].copy()
+    query = adata_define_clonotype_clusters[["cell2", "cell3", "cell4", "cell10"], :].copy()
     reference = adata_define_clonotype_clusters.copy()
     reference.obs["some_annotation"] = reference.obs_names.str.upper()
     uns_ = reference.mod["airr"].uns if isinstance(reference, MuData) else reference.uns
@@ -204,9 +200,7 @@ def test_ir_query_annotate_df(query_reference, same_v_gene, match_columns, expec
             [
                 (
                     "cell2",
-                    json.dumps(
-                        {"CELL1": 1, "CELL2": 1, "CELL6": 1, "CELL7": 1, "CELL8": 1}
-                    ),
+                    json.dumps({"CELL1": 1, "CELL2": 1, "CELL6": 1, "CELL7": 1, "CELL8": 1}),
                 ),
                 ("cell3", json.dumps({"CELL3": 1})),
                 ("cell4", json.dumps({"CELL4": 1})),

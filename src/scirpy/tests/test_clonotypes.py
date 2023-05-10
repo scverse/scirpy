@@ -11,21 +11,10 @@ from mudata import MuData
 
 import scirpy as ir
 
-from .fixtures import (  # NOQA
-    adata_clonotype,
-    adata_clonotype_network,
-    adata_conn,
-    adata_define_clonotype_clusters,
-    adata_define_clonotype_clusters_singletons,
-    adata_define_clonotypes,
-)
-
 
 @pytest.mark.parametrize("key_added", [None, "my_key"])
 @pytest.mark.parametrize("inplace", [True, False])
-def test_define_clonotype_clusters_return_values(
-    adata_define_clonotype_clusters_singletons, key_added, inplace
-):
+def test_define_clonotype_clusters_return_values(adata_define_clonotype_clusters_singletons, key_added, inplace):
     """Test that key_added and inplace work as expected"""
     adata = adata_define_clonotype_clusters_singletons
     res = ir.tl.define_clonotype_clusters(
@@ -58,9 +47,7 @@ def test_define_clonotype_clusters_return_values(
 
 @pytest.mark.parametrize("receptor_arms", ["VJ", "VDJ", "all", "any"])
 @pytest.mark.parametrize("dual_ir", ["primary_only", "all", "any"])
-def test_define_clonotypes_diagonal_connectivities(
-    adata_define_clonotype_clusters_singletons, receptor_arms, dual_ir
-):
+def test_define_clonotypes_diagonal_connectivities(adata_define_clonotype_clusters_singletons, receptor_arms, dual_ir):
     """Regression test for #236. Computing the clonotypes when
     no cells are connected in the clonotype neighborhood graph should not fail."""
     clonotype, clonotype_size, _ = ir.tl.define_clonotype_clusters(
@@ -214,9 +201,7 @@ def test_clonotype_clusters_end_to_end(
         same_v_gene=same_v_gene,
     )  # type: ignore
     print(clonotypes)
-    npt.assert_equal(
-        list(clonotypes.values), [str(x) if not np.isnan(x) else x for x in expected]
-    )
+    npt.assert_equal(list(clonotypes.values), [str(x) if not np.isnan(x) else x for x in expected])
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
@@ -267,9 +252,7 @@ def test_clonotype_clusters_end_to_end(
         ],
     ),
 )
-def test_clonotype_network(
-    adata_conn, min_cells, min_nodes, layout, size_aware, expected
-):
+def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware, expected):
     coords = ir.tl.clonotype_network(
         adata_conn,
         sequence="aa",
@@ -324,24 +307,14 @@ def test_clonotype_convergence(adata_clonotype):
         key_added="is_convergent_",
     )
     if isinstance(adata_clonotype, MuData):
-        pdt.assert_series_equal(
-            res, adata_clonotype.obs["airr:is_convergent_"], check_names=False
-        )
-        pdt.assert_series_equal(
-            res, adata_clonotype["airr"].obs["is_convergent_"], check_names=False
-        )
+        pdt.assert_series_equal(res, adata_clonotype.obs["airr:is_convergent_"], check_names=False)
+        pdt.assert_series_equal(res, adata_clonotype["airr"].obs["is_convergent_"], check_names=False)
     else:
-        pdt.assert_series_equal(
-            res, adata_clonotype.obs["is_convergent_"], check_names=False
-        )
+        pdt.assert_series_equal(res, adata_clonotype.obs["is_convergent_"], check_names=False)
     pdt.assert_extension_array_equal(
         res.values,
         pd.Categorical(
-            ["not convergent"] * 3
-            + [np.nan] * 2
-            + ["not convergent"]
-            + ["convergent"] * 2
-            + ["not convergent"] * 2,
+            ["not convergent"] * 3 + [np.nan] * 2 + ["not convergent"] + ["convergent"] * 2 + ["not convergent"] * 2,
             categories=["convergent", "not convergent"],
         ),
     )

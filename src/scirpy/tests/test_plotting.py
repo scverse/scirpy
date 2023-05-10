@@ -7,26 +7,12 @@ from scipy import sparse
 
 from scirpy import pl
 
-from .fixtures import (  # NOQA
-    adata_clonotype,
-    adata_clonotype_modularity,
-    adata_clonotype_network,
-    adata_conn,
-    adata_define_clonotype_clusters,
-    adata_define_clonotypes,
-    adata_diversity,
-    adata_tra,
-    adata_vdj,
-)
-
 
 def test_clonal_expansion(adata_clonotype):
     p = pl.clonal_expansion(adata_clonotype, groupby="group")
     assert isinstance(p, plt.Axes)
 
-    p = pl.clonal_expansion(
-        adata_clonotype, groupby="group", show_nonexpanded=False, viztype="barh"
-    )
+    p = pl.clonal_expansion(adata_clonotype, groupby="group", show_nonexpanded=False, viztype="barh")
     assert isinstance(p, plt.Axes)
 
 
@@ -75,9 +61,7 @@ def test_clonotype_imbalance(adata_tra):
 
 @pytest.mark.parametrize("full_combination", [True, False])
 def test_vdj_usage(adata_vdj, full_combination):
-    p = pl.vdj_usage(
-        adata_vdj, normalize_to="sample", full_combination=full_combination
-    )
+    p = pl.vdj_usage(adata_vdj, normalize_to="sample", full_combination=full_combination)
     assert isinstance(p, plt.Axes)
 
 
@@ -99,9 +83,7 @@ def test_clonotype_network_gene(adata_clonotype_network, matrix_type, use_raw, c
 @pytest.mark.parametrize("show_size_legend", [True, False])
 @pytest.mark.parametrize("show_labels", [True, False])
 @pytest.mark.parametrize("labels", [None, ["2"]])
-def test_clonotype_modularity(
-    adata_clonotype_modularity, jitter, show_size_legend, show_labels, labels
-):
+def test_clonotype_modularity(adata_clonotype_modularity, jitter, show_size_legend, show_labels, labels):
     pl.clonotype_modularity(
         adata_clonotype_modularity,
         target_col="clonotype_modularity_x",

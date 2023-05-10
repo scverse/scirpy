@@ -4,8 +4,6 @@ import pytest
 
 from scirpy import get
 
-from .fixtures import adata_cdr3  # NOQA
-
 
 def test_obs_context(adata_cdr3):
     adata_cdr3.obs["foo"] = "xxx"

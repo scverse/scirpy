@@ -5,7 +5,7 @@ import awkward as ak
 import pandas as pd
 from anndata import AnnData
 
-from .. import __version__
+from importlib.metadata import version
 from ..util import DataHandler, _doc_params, tqdm
 from ._datastructures import AirrCell
 from ._util import _IOLogger, doc_working_model
@@ -48,16 +48,14 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
         X=None,
         obs=obs,
         obsm=obsm,
-        uns={"scirpy_version": __version__},
+        uns={"scirpy_version": version("scirpy")},
     )
 
     return adata
 
 
 @DataHandler.inject_param_docs()
-def to_airr_cells(
-    adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr"
-) -> List[AirrCell]:
+def to_airr_cells(adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr") -> List[AirrCell]:
     """\
     Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
     objects.

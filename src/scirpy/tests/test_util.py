@@ -31,7 +31,6 @@ from scirpy.util.graph import (
 )
 
 from . import TESTDATA
-from .fixtures import adata_tra  # NOQA
 
 
 @pytest.mark.filterwarnings("ignore::anndata.OldFormatWarning")
@@ -69,12 +68,8 @@ def test_data_handler_no_airr():
 
 
 def test_data_handler_get_obs():
-    adata_gex = AnnData(
-        obs=pd.DataFrame(index=["c1", "c2", "c3"]).assign(both=[11, 12, 13])
-    )
-    adata_airr = AnnData(
-        obs=pd.DataFrame(index=["c3", "c4", "c5"]).assign(both=[14, 15, 16])
-    )
+    adata_gex = AnnData(obs=pd.DataFrame(index=["c1", "c2", "c3"]).assign(both=[11, 12, 13]))
+    adata_airr = AnnData(obs=pd.DataFrame(index=["c3", "c4", "c5"]).assign(both=[14, 15, 16]))
     mdata = MuData({"gex": adata_gex, "airr": adata_airr})
     mdata["airr"].obs["airr_only"] = [3, 4, 5]
 
@@ -85,18 +80,14 @@ def test_data_handler_get_obs():
     # can retrieve value from mudata
     npt.assert_equal(params.get_obs("mudata_only").values, np.array([1, 2, 3, 4, 5]))
     # Mudata takes precedence
-    npt.assert_equal(
-        params.get_obs("both").values, np.array([np.nan, np.nan, 114, 115, 116])
-    )
+    npt.assert_equal(params.get_obs("both").values, np.array([np.nan, np.nan, 114, 115, 116]))
     # can retrieve value from anndata
     npt.assert_equal(params.get_obs("airr_only").values, np.array([3, 4, 5]))
 
     # generates dataframe if sequence is specified
     pdt.assert_frame_equal(
         params.get_obs(["mudata_only"]),
-        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(
-            mudata_only=[1, 2, 3, 4, 5]
-        ),
+        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(mudata_only=[1, 2, 3, 4, 5]),
     )
 
     # multiple columns are concatenated into a dataframe
@@ -112,9 +103,7 @@ def test_data_handler_get_obs():
     # only retreiving from the airr modality results in fewer rows
     pdt.assert_frame_equal(
         params.get_obs(["airr_only"]),
-        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(
-            airr_only=[np.nan, np.nan, 3, 4, 5]
-        ),
+        pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(airr_only=[np.nan, np.nan, 3, 4, 5]),
     )
 
 
@@ -195,9 +184,7 @@ def test_is_false():
         dtype=object,
     )
     array_test_str = array_test.astype("str")
-    array_expect = np.array(
-        [True, True, True, False, False, True, False, False, False, False]
-    )
+    array_expect = np.array([True, True, True, False, False, True, False, False, False, False])
     array_test_bool = np.array([True, False, True])
     array_expect_bool = np.array([False, True, False])
 
@@ -231,9 +218,7 @@ def test_is_true():
         dtype=object,
     )
     array_test_str = array_test.astype("str")
-    array_expect = np.array(
-        [False, False, False, True, True, False, True, True, False, False]
-    )
+    array_expect = np.array([False, False, False, True, True, False, True, True, False, False])
     array_test_bool = np.array([True, False, True])
     array_expect_bool = np.array([True, False, True])
 
@@ -258,12 +243,8 @@ def test_normalize_counts(group_df):
         _normalize_counts(group_df, True, None)
 
     npt.assert_equal(_normalize_counts(group_df, False), [1] * 6)
-    npt.assert_equal(
-        _normalize_counts(group_df, "sample"), [0.25, 0.5, 0.25, 0.25, 0.25, 0.5]
-    )
-    npt.assert_equal(
-        _normalize_counts(group_df, True, "sample"), [0.25, 0.5, 0.25, 0.25, 0.25, 0.5]
-    )
+    npt.assert_equal(_normalize_counts(group_df, "sample"), [0.25, 0.5, 0.25, 0.25, 0.25, 0.5])
+    npt.assert_equal(_normalize_counts(group_df, True, "sample"), [0.25, 0.5, 0.25, 0.25, 0.25, 0.5])
 
 
 @pytest.mark.filterwarnings("ignore:UserWarning")
@@ -292,13 +273,10 @@ def test_layout_components(arrange_boxes, component_layout):
         n += ii
 
     try:
-        layout_components(
-            g, arrange_boxes=arrange_boxes, component_layout=component_layout
-        )
+        layout_components(g, arrange_boxes=arrange_boxes, component_layout=component_layout)
     except ImportError:
         warnings.warn(
-            f"The '{component_layout}' layout-test was skipped because rectangle "
-            "packer is not installed. "
+            f"The '{component_layout}' layout-test was skipped because rectangle " "packer is not installed. "
         )
 
 
@@ -382,9 +360,7 @@ def test_igraph_from_adjacency(matrix, is_symmetric, simplify):
     matrix = scipy.sparse.csr_matrix(matrix)
     g = igraph_from_sparse_matrix(matrix, matrix_type="connectivity", simplify=simplify)
     assert len(list(g.vs)) == matrix.shape[0]
-    matrix_roundtrip = _get_sparse_from_igraph(
-        g, simplified=simplify, weight_attr="weight"
-    )
+    matrix_roundtrip = _get_sparse_from_igraph(g, simplified=simplify, weight_attr="weight")
     if simplify and not is_symmetric:
         with pytest.raises(AssertionError):
             npt.assert_equal(matrix.toarray(), matrix_roundtrip.toarray())

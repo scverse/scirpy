@@ -11,7 +11,6 @@ from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from scirpy.ir_dist.metrics import DistanceCalculator
 from scirpy.util import DataHandler, _is_symmetric
 
-from .fixtures import adata_cdr3, adata_cdr3_2  # NOQA
 from .util import _squarify
 
 
@@ -155,11 +154,7 @@ def test_ir_dist(
         metric=metric if metric != "mock" else adata_cdr3_mock_distance_calculator,
         sequence="aa",
     )
-    res = (
-        adata_cdr3.mod["airr"].uns[expected_key]
-        if isinstance(adata_cdr3, MuData)
-        else adata_cdr3.uns[expected_key]
-    )
+    res = adata_cdr3.mod["airr"].uns[expected_key] if isinstance(adata_cdr3, MuData) else adata_cdr3.uns[expected_key]
     npt.assert_array_equal(res["VJ"]["seqs"], expected_seq_vj)
     npt.assert_array_equal(res["VDJ"]["seqs"], expected_seq_vdj)
     npt.assert_array_equal(res["VJ"]["distances"].toarray(), expected_dist_vj)
@@ -350,9 +345,7 @@ def test_compute_distances(
     metric = adata_cdr3_mock_distance_calculator if metric == "custom" else metric
     adata2 = adata_cdr3 if with_adata2 else None
     expected_dist = np.array(expected_dist)
-    ir.pp.ir_dist(
-        adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key
-    )
+    ir.pp.ir_dist(adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key)
     cn = ClonotypeNeighbors(
         DataHandler.default(adata_cdr3),
         DataHandler.default(adata2),
@@ -526,9 +519,7 @@ def test_compute_distances_second_anndata(
     reference = adata_cdr3_2 if not swap_query_reference else adata_cdr3
     distance_key = f"ir_dist_aa_{metric}"
     expected_dist = np.array(expected_dist)
-    ir.pp.ir_dist(
-        query, reference, metric=metric, sequence="aa", key_added=distance_key
-    )
+    ir.pp.ir_dist(query, reference, metric=metric, sequence="aa", key_added=distance_key)
     cn = ClonotypeNeighbors(
         DataHandler.default(query),
         DataHandler.default(reference),
@@ -538,49 +529,31 @@ def test_compute_distances_second_anndata(
     )
     _assert_frame_equal(
         cn.clonotypes,
-        pd.DataFrame(
-            expected_clonotype_df
-            if not swap_query_reference
-            else expected_clonotype_df2
-        ),
+        pd.DataFrame(expected_clonotype_df if not swap_query_reference else expected_clonotype_df2),
     )
     _assert_frame_equal(
         cn.clonotypes2,
-        pd.DataFrame(
-            expected_clonotype_df2
-            if not swap_query_reference
-            else expected_clonotype_df
-        ),
+        pd.DataFrame(expected_clonotype_df2 if not swap_query_reference else expected_clonotype_df),
     )
     dist = cn.compute_distances()
     dist = dist.toarray()
     print(dist)
-    npt.assert_equal(
-        dist, expected_dist if not swap_query_reference else expected_dist.T
-    )
+    npt.assert_equal(dist, expected_dist if not swap_query_reference else expected_dist.T)
 
 
 @pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
-    adata_empty = (
-        adata_cdr3.mod["airr"].copy()
-        if isinstance(adata_cdr3, MuData)
-        else adata_cdr3.copy()
-    )
+    adata_empty = adata_cdr3.mod["airr"].copy() if isinstance(adata_cdr3, MuData) else adata_cdr3.copy()
     # reset chain indices such that no chain will actually be used.
     adata_empty.obsm["chain_indices"]["VJ"] = [[None, None] * adata_cdr3.shape[0]]
     adata_empty.obsm["chain_indices"]["VDJ"] = [[None, None] * adata_cdr3.shape[0]]
     adata_empty.obsm["chain_indices"]["multichain"] = [None] * adata_cdr3.shape[0]
 
-    ir.pp.ir_dist(
-        adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist"
-    )
+    ir.pp.ir_dist(adata_cdr3, adata_empty, metric=metric, sequence="aa", key_added="ir_dist")
     tmp_ad = adata_cdr3.mod["airr"] if isinstance(adata_cdr3, MuData) else adata_cdr3
     assert list(tmp_ad.uns["ir_dist"]["VJ"]["seqs"]) == ["AAA", "AHA"]
     assert list(tmp_ad.uns["ir_dist"]["VJ"]["seqs2"]) == []
-    assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs"]) == (
-        ["AAA", "KK", "KKK", "KKY", "LLL"]
-    )
+    assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs"]) == (["AAA", "KK", "KKK", "KKY", "LLL"])
     assert list(tmp_ad.uns["ir_dist"]["VDJ"]["seqs2"]) == []
     assert tmp_ad.uns["ir_dist"]["VJ"]["distances"].shape == (2, 0)
     assert tmp_ad.uns["ir_dist"]["VDJ"]["distances"].shape == (5, 0)

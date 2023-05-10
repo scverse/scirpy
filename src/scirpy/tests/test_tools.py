@@ -12,14 +12,7 @@ from mudata import MuData
 import scirpy as ir
 from scirpy.util import DataHandler
 
-from .fixtures import (  # NOQA
-    adata_clonotype,
-    adata_clonotype_network,
-    adata_conn,
-    adata_define_clonotype_clusters,
-    adata_diversity,
-    adata_tra,
-)
+
 from .util import _make_adata
 
 
@@ -55,8 +48,7 @@ def test_chain_qc():
     # fake chains
     for chain, chain_number in itertools.product(["VJ", "VDJ"], ["1", "2"]):
         obs[f"IR_{chain}_{chain_number}_junction_aa"] = [
-            "AAA" if x != "nan" else "nan"
-            for x in obs[f"IR_{chain}_{chain_number}_locus"]
+            "AAA" if x != "nan" else "nan" for x in obs[f"IR_{chain}_{chain_number}_locus"]
         ]
     adata = _make_adata(obs)
 
@@ -117,17 +109,11 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     res = ir.tl._clonal_expansion._clip_and_count(
         adata, groupby="group", target_col="clone_id", clip_at=2, inplace=False
     )
-    npt.assert_equal(
-        res, np.array([">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2)
-    )
+    npt.assert_equal(res, np.array([">= 2"] * 3 + ["nan"] * 2 + ["1"] * 3 + [">= 2"] * 2))
 
     # check without group
-    res = ir.tl._clonal_expansion._clip_and_count(
-        adata, target_col="clone_id", clip_at=5, inplace=False
-    )
-    npt.assert_equal(
-        res, np.array(["4"] * 3 + ["nan"] * 2 + ["4"] + ["1"] * 2 + ["2"] * 2)
-    )
+    res = ir.tl._clonal_expansion._clip_and_count(adata, target_col="clone_id", clip_at=5, inplace=False)
+    npt.assert_equal(res, np.array(["4"] * 3 + ["nan"] * 2 + ["4"] + ["1"] * 2 + ["2"] * 2))
 
     # check if target_col works
     params = DataHandler.default(adata)
@@ -164,21 +150,15 @@ def test_clip_and_count_clonotypes(adata_clonotype):
     ],
 )
 def test_clonal_expansion(adata_clonotype, expanded_in, expected):
-    res = ir.tl.clonal_expansion(
-        adata_clonotype, expanded_in=expanded_in, clip_at=2, inplace=False
-    )
+    res = ir.tl.clonal_expansion(adata_clonotype, expanded_in=expanded_in, clip_at=2, inplace=False)
     npt.assert_equal(res, np.array(expected))
 
 
 def test_clonal_expansion_summary(adata_clonotype):
-    res = ir.tl.summarize_clonal_expansion(
-        adata_clonotype, "group", target_col="clone_id", clip_at=2, normalize=True
-    )
+    res = ir.tl.summarize_clonal_expansion(adata_clonotype, "group", target_col="clone_id", clip_at=2, normalize=True)
     pdt.assert_frame_equal(
         res,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}
-        ).set_index("group"),
+        pd.DataFrame.from_dict({"group": ["A", "B"], "1": [0, 2 / 5], ">= 2": [1.0, 3 / 5]}).set_index("group"),
         check_names=False,
         check_index_type=False,
         check_categorical=False,
@@ -195,9 +175,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
     pdt.assert_frame_equal(
         res,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}
-        ).set_index("group"),
+        pd.DataFrame.from_dict({"group": ["A", "B"], "1": [0, 3 / 5], ">= 2": [1.0, 2 / 5]}).set_index("group"),
         check_names=False,
         check_index_type=False,
         check_categorical=False,
@@ -214,9 +192,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     )
     pdt.assert_frame_equal(
         res,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 2 / 4], ">= 2": [1.0, 2 / 4]}
-        ).set_index("group"),
+        pd.DataFrame.from_dict({"group": ["A", "B"], "1": [0, 2 / 4], ">= 2": [1.0, 2 / 4]}).set_index("group"),
         check_names=False,
         check_index_type=False,
         check_categorical=False,
@@ -228,9 +204,7 @@ def test_clonal_expansion_summary(adata_clonotype):
     print(res_counts)
     pdt.assert_frame_equal(
         res_counts,
-        pd.DataFrame.from_dict(
-            {"group": ["A", "B"], "1": [0, 2], ">= 2": [3, 3]}
-        ).set_index("group"),
+        pd.DataFrame.from_dict({"group": ["A", "B"], "1": [0, 2], ">= 2": [3, 3]}).set_index("group"),
         check_names=False,
         check_dtype=False,
         check_index_type=False,
@@ -241,9 +215,7 @@ def test_clonal_expansion_summary(adata_clonotype):
 @pytest.mark.extra
 def test_alpha_diversity(adata_diversity):
     # normalized_shannon_entropy by default
-    res = ir.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_", inplace=False
-    )
+    res = ir.tl.alpha_diversity(adata_diversity, groupby="group", target_col="clonotype_", inplace=False)
     assert res.to_dict(orient="index") == {"A": {0: 0.0}, "B": {0: 1.0}}
 
     # D50
@@ -280,9 +252,7 @@ def test_alpha_diversity(adata_diversity):
     )
     assert res.to_dict(orient="index") == {"A": {0: 1}, "B": {0: 4}}
 
-    ir.tl.alpha_diversity(
-        adata_diversity, groupby="group", target_col="clonotype_", inplace=True
-    )
+    ir.tl.alpha_diversity(adata_diversity, groupby="group", target_col="clonotype_", inplace=True)
     ir.tl.alpha_diversity(
         adata_diversity,
         groupby="group",
@@ -316,9 +286,7 @@ def test_alpha_diversity(adata_diversity):
 
     mdata_modifier = "airr:" if isinstance(adata_diversity, MuData) else ""
     npt.assert_equal(
-        adata_diversity.obs[
-            mdata_modifier + "normalized_shannon_entropy_clonotype_"
-        ].values,
+        adata_diversity.obs[mdata_modifier + "normalized_shannon_entropy_clonotype_"].values,
         np.array([0.0] * 4 + [1.0] * 4),
     )
     npt.assert_equal(
@@ -350,9 +318,7 @@ def test_group_abundance():
     adata = _make_adata(obs)
 
     # Check counts
-    res = ir.tl.group_abundance(
-        adata, groupby="clone_id", target_col="group", fraction=False
-    )
+    res = ir.tl.group_abundance(adata, groupby="clone_id", target_col="group", fraction=False)
     expected_count = pd.DataFrame.from_dict(
         {
             "ct1": {"A": 3.0, "B": 1.0},
@@ -363,9 +329,7 @@ def test_group_abundance():
     npt.assert_equal(res.values, expected_count.values)
 
     # Check fractions
-    res = ir.tl.group_abundance(
-        adata, groupby="clone_id", target_col="group", fraction=True
-    )
+    res = ir.tl.group_abundance(adata, groupby="clone_id", target_col="group", fraction=True)
     expected_frac = pd.DataFrame.from_dict(
         {
             "ct1": {"A": 0.75, "B": 0.25},
@@ -376,9 +340,7 @@ def test_group_abundance():
     npt.assert_equal(res.values, expected_frac.values)
 
     # Check swapped
-    res = ir.tl.group_abundance(
-        adata, groupby="group", target_col="clone_id", fraction=True
-    )
+    res = ir.tl.group_abundance(adata, groupby="group", target_col="clone_id", fraction=True)
     expected_frac = pd.DataFrame.from_dict(
         {
             "A": {"ct1": 1.0, "ct2": 0.0},
@@ -409,12 +371,8 @@ def test_spectratype(adata_tra):
             fraction=False,
         )
 
-    res1 = ir.tl.spectratype(
-        adata_tra, chain="VJ_1", target_col="sample", fraction=False
-    )
-    res2 = ir.tl.spectratype(
-        adata_tra, chain=["VJ_1"], target_col="sample", fraction=False
-    )
+    res1 = ir.tl.spectratype(adata_tra, chain="VJ_1", target_col="sample", fraction=False)
+    res2 = ir.tl.spectratype(adata_tra, chain=["VJ_1"], target_col="sample", fraction=False)
     expected_count = pd.DataFrame.from_dict(
         {
             0: {1: 0.0, 3: 0.0, 5: 0.0},
@@ -442,9 +400,7 @@ def test_spectratype(adata_tra):
     npt.assert_equal(res2.values, expected_count.values)
 
     # Check fractions
-    res = ir.tl.spectratype(
-        adata_tra, chain="VJ_1", target_col="sample", fraction="sample"
-    )
+    res = ir.tl.spectratype(adata_tra, chain="VJ_1", target_col="sample", fraction="sample")
     expected_frac = pd.DataFrame.from_dict(
         {
             0: {1: 0.0, 3: 0.0, 5: 0.0},

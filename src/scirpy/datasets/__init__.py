@@ -27,13 +27,13 @@ import pooch
 from mudata import MuData
 from scanpy import logging
 
-from .. import __version__
+from importlib.metadata import version
 from ..util import tqdm
 
 _FIGSHARE = pooch.create(
     path=pooch.os_cache("scirpy"),
     base_url="doi:10.6084/m9.figshare.22249894.v1",
-    version=__version__,
+    version=version("scirpy"),
     version_dev="main",
     env="SCIRPY_DATA_DIR",
     registry={
@@ -80,9 +80,7 @@ def wu2020() -> MuData:
 
 
 @_doc_params(
-    processing_code=indent(
-        _read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), "   "
-    ),
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), "   "),
     pooch_info=_POOCH_INFO,
 )
 def wu2020_3k() -> MuData:
@@ -103,9 +101,7 @@ def wu2020_3k() -> MuData:
 
 
 @_doc_params(
-    processing_code=indent(
-        _read_to_str(HERE / "_processing_scripts/maynard2020.py"), "   "
-    ),
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/maynard2020.py"), "   "),
     pooch_info=_POOCH_INFO,
 )
 def maynard2020() -> MuData:
@@ -173,9 +169,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
         df = pd.read_csv(d / "vdjdb_full.txt", sep="\t", low_memory=False)
 
     tcr_cells = []
-    for idx, row in tqdm(
-        df.iterrows(), total=df.shape[0], desc="Processing VDJDB entries"
-    ):
+    for idx, row in tqdm(df.iterrows(), total=df.shape[0], desc="Processing VDJDB entries"):
         cell = AirrCell(cell_id=str(idx))
         if not pd.isnull(row["cdr3.alpha"]):
             alpha_chain = AirrCell.empty_chain_dict()
@@ -332,10 +326,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     iedb_df["cell_id"] = iedb_df.reset_index(drop=True).index
 
     accepted_chains = ["alpha", "beta", "heavy", "light", "gamma", "delta"]
-    iedb_df = iedb_df[
-        (iedb_df["Chain 1 Type"].isin(accepted_chains))
-        & (iedb_df["Chain 2 Type"].isin(accepted_chains))
-    ]
+    iedb_df = iedb_df[(iedb_df["Chain 1 Type"].isin(accepted_chains)) & (iedb_df["Chain 2 Type"].isin(accepted_chains))]
 
     receptor_dict = {
         "alpha": "TRA",
@@ -386,9 +377,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
             # Since IEDB does not distinguish between lambda and kappa light chains, we need
             # to call them from the gene names
             if chain_dict["locus"] is None:
-                chain_dict["locus"] = _infer_locus_from_gene_names(
-                    chain_dict, keys=("v_call", "d_call", "j_call")
-                )
+                chain_dict["locus"] = _infer_locus_from_gene_names(chain_dict, keys=("v_call", "d_call", "j_call"))
             cell.add_chain(chain_dict)
 
         tcr_cells.append(cell)
