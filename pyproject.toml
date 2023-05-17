@@ -51,17 +51,20 @@ dev = [
     "pre-commit"
 ]
 doc = [
-    'sphinx>=4.2,<4.3',
-    'sphinx-rtd-theme>=0.3.1',
-    'scanpydoc[typehints]>=0.7.4',
+    'sphinx>=4',
+    "sphinx-book-theme>=1.0.0",
+    "myst-nb",
     'sphinxcontrib-bibtex>=1.0.0',
+    "sphinx-autodoc-typehints",
     # for tutorial
+    'ipykernel',
+    'ipython',
+    "sphinx-copybutton",
     'leidenalg',
-    'nbsphinx>=0.6.0',
+    'myst_nb',
     'jupytext',
     'pycairo',
     'jupyter_client',
-    'ipykernel',
     'sc-dandelion',
     'muon>=0.1.3',
     # I don't know why this would be needed, but it complains about zarr missing when building
