@@ -33,7 +33,10 @@ Methods table
 {% endblock %}
 
 {% block attributes_documentation %}
-{% if attributes %}
+{# WORKAROUND: generating the attributes in DataHandler leads to an infinite
+   loop and I don't understand why. I already wasted an evening on it,
+   so let's just not show this table for that class #}
+{% if attributes and objname != "DataHandler" %}
 Attributes
 ~~~~~~~~~~~
 

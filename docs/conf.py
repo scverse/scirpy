@@ -105,7 +105,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "python": ("https://docs.python.org/3", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "seaborn": ("https://seaborn.pydata.org/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "networkx": ("https://networkx.org/documentation/networkx-1.10/", None),
