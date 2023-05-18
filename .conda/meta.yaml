@@ -17,14 +17,11 @@ build:
 requirements:
   host:
     - python >=3.8
-    - pip!=22.1 # https://github.com/pypa/pip/issues/11110
-    - flit
-    - setuptools_scm
-    - pytoml
-    - importlib_metadata
+    - hatchling
+    - hatch_vcs
 
   run:
-    - python >=3.8
+    - python >=3.9
     - anndata >=0.9
     - awkward >=2.1.0
     - mudata >=0.2.2
