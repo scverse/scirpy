@@ -73,6 +73,7 @@ doc = [
 ]
 test = [
     'pytest',
+    'pytest-cov',
     'black',
 ]
 dandelion = [
