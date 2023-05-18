@@ -4,12 +4,19 @@ import tempfile
 import urllib.request
 import zipfile
 from datetime import datetime
+from importlib.metadata import version
+from os import PathLike
 from pathlib import Path
-from textwrap import indent
+from textwrap import dedent, indent
+from typing import cast
 
+import mudata
 import pandas as pd
+import pooch
 import scanpy as sc
 from anndata import AnnData
+from mudata import MuData
+from scanpy import logging
 
 from scirpy.io._convert_anndata import from_airr_cells
 from scirpy.io._datastructures import AirrCell
@@ -18,17 +25,6 @@ from scirpy.pp import index_chains
 from scirpy.util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
-from importlib.metadata import version
-from os import PathLike
-from textwrap import dedent
-from typing import cast
-
-import mudata
-import pooch
-from mudata import MuData
-from scanpy import logging
-
-from scirpy.util import tqdm
 
 _FIGSHARE = pooch.create(
     path=pooch.os_cache("scirpy"),
