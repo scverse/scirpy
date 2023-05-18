@@ -2,28 +2,34 @@ name: conda
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  tests:
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+  test:
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -e {0} # -e to fail on error
+
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-        os: ["ubuntu-latest", "macos-latest"]
+        include:
+          - os: ubuntu-latest
+            python: "3.9"
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python }}
 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0 # required for setuptools-scm
+      - uses: actions/checkout@v3
 
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v2

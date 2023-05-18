@@ -48,8 +48,10 @@ class DataHandler:
     {airr_mod}
     {airr_key}
     {chain_idx_key}
+
     """
 
+    #: Supported Data types
     TYPE = Union[AnnData, MuData, "DataHandler"]
 
     @overload

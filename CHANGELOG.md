@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Other changes
 
 - adopt [cookiecutter-scverse](https://github.com/scverse/cookiecutter-scverse) template.
+- require python >= 3.9 in line with NEP 29.
 
 ## v0.13.0rc1 - new data structure based on awkward arrays
 

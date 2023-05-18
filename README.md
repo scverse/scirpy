@@ -1,4 +1,4 @@
-# scirpy
+# scirpy: single-cell immune receptor analysis in Python
 
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
