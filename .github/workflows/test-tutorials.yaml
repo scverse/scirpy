@@ -53,4 +53,4 @@ jobs:
           PLATFORM: ${{ matrix.os }}
           DISPLAY: :42
         run: |
-          nbconvert --execute docs/tutorials/${{ matrix.notebook }}
+          jupytext -k python3 --execute docs/tutorials/${{ matrix.notebook }}

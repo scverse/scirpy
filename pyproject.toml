@@ -69,7 +69,7 @@ doc = [
     'muon>=0.1.3',
     # I don't know why this would be needed, but it complains about zarr missing when building
     # the documentation. Probably related to importing some types from anndata.
-    'zarr'
+    'zarr',
 ]
 test = [
     'pytest',
