@@ -42,7 +42,8 @@ For instructions how to load data into scirpy, see :ref:`importing-data`.
 
     Scirpy's data structure was fundamentally changed in version 0.13.0. While previously, immune receptor
     data was expanded into columns in `adata.obs`, they are now stored as :term:`awkward array` in `adata.obsm`.
-    Fore more details ... # TODO
+    The new data structure is explained below. For more information about the change, please refer to the
+    corresponding :ref:`release notes <v0.13>`.
 
 Scirpy combines the `AIRR Rearrangement standard <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_
 for representing adaptive immune receptor repertoire data with scverse's `AnnData <https://anndata.readthedocs.io/en/latest/>`_ data structure.
@@ -65,7 +66,10 @@ is a :ref:~akward.RecordType` and represents fields defined in the rearrangement
     # adata.obsm["airr"]
     [
         # cell0: 2 chains
-        [{"locus": "TRA", "junction_aa": "CADASGT..."}, {"locus": "TRB", "junction_aa": "CTFDD..."}],
+        [
+            {"locus": "TRA", "junction_aa": "CADASGT..."},
+            {"locus": "TRB", "junction_aa": "CTFDD..."},
+        ],
         # cell1: 1 chain
         [{"locus": "IGH", "junction_aa": "CDGFFA..."}],
         # cell2: 0 chains
@@ -97,12 +101,12 @@ in `adata.obsm` that has the following structure:
         #   * 1 VJ chain which is at index 0 in `adata.obsm["airr"][0]`
         #   * 1 VDJ chain which is at in dex 1 in `adata.obsm["airr"][0]`
         #   * multichain = False, because the chains does not have more than 2 VJ or VDJ chains
-        {"VJ": [0], "VDJ": [1], "multichain": False}, # single pair
+        {"VJ": [0], "VDJ": [1], "multichain": False},  # single pair
         # cell1:
         #   * primary VJ chain is at index 0 in `adata.obsm["airr"][1]`
         #   * secondary VJ chain is at index 2 in `adata.obsm["airr"][1]`
         #   * etc.
-        {"VJ": [0, 2], "VDJ": [1,3], "multichain": False}, # dual IR
+        {"VJ": [0, 2], "VDJ": [1, 3], "multichain": False},  # dual IR
     ]
 
 
@@ -121,7 +125,7 @@ Any scirpy function accessing AIRR data uses these indices in `adata.obsm["chain
 `adata.obsm["airr"]`. To retreive AIRR data convenientely, we added the :func:`scirpy.get.airr` function. It allows
 to specify one or multiple fields and chains and returns a :class:`pandas.Series` or :class:`pandas.DataFrame`, respectively:
 
-.. code-block:: python
+.. code-block:: pycon
 
     # retrieve the "locus" field of the primary VJ chain for each cell
     >>> ir.get.airr(adata, "locus", "VJ_1")
@@ -174,8 +178,9 @@ Here is one way how the AIRR data can be merged into an AnnData object that alre
 
     # Map each cell barcode to its respective numeric index (assumes obs_names are unique)
     barcode2idx = {barcode: i for i, barcode in enumerate(adata_airr.obs_names)}
-    # Generate a slice for the awkward array that retrieves the corresponding row from `adata_airr` for each
-    # barcode in `adata_gex`. `-1` will generate all "None"s for barcodes that are not in `adata_airr`
+    # Generate a slice for the awkward array that retrieves the corresponding row
+    # from `adata_airr` for each barcode in `adata_gex`. `-1` will generate all
+    # "None"s for barcodes that are not in `adata_airr`
     idx = [barcode2idx.get(barcode, -1) for barcode in adata_gex.obs_names]
     adata_gex.obsm["airr"] = adata_airr.obsm["airr"][idx]
 

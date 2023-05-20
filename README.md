@@ -1,4 +1,4 @@
-# scirpy: single-cell immune receptor analysis in Python
+# Scirpy: single-cell immune receptor analysis in Python
 
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
@@ -112,5 +112,6 @@ You can cite the scverse publication as follows:
 [changelog]: https://scirpy.readthedocs.io/latest/changelog.html
 [link-docs]: https://scirpy.readthedocs.io
 [link-api]: https://scirpy.readthedocs.io/latest/api.html
+[link-tutorial]: https://scverse.org/scirpy/latest/tutorials.html
 [Docker]: https://www.docker.com/
 [Podman]: https://podman.io/
