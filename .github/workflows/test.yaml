@@ -47,7 +47,10 @@ jobs:
           python -m pip install --upgrade pip wheel
       - name: Install dependencies
         run: |
-          pip install ${{ matrix.pip-flags }} ".[dev,test]"
+          # Workaround issue with scikit-bio
+          # This will work in the next release, see https://github.com/biocore/scikit-bio/pull/1813
+          pip install git+https://github.com/grst/scikit-bio.git@main
+          pip install ${{ matrix.pip-flags }} ".[dev,test,rpack,dandelion]"
       - name: Test
         env:
           MPLBACKEND: agg
