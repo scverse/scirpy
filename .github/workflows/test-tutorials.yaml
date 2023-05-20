@@ -23,8 +23,10 @@ jobs:
         tutorial:
           - tutorial_3k_tcr.ipynb
           - tutorial_io.ipynb
-        os: ubuntu-latest
-        python: "3.10"
+        os:
+          - ubuntu-latest
+        python:
+          - "3.10"
 
     env:
       OS: ${{ matrix.os }}
