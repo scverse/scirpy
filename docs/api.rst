@@ -230,34 +230,34 @@ Plot styling: `pl.styling`
    pl.styling.style_axes
 
 
-Datasets: `datasets`
---------------------
+.. Datasets: `datasets`
+.. --------------------
 
-.. module:: scirpy.datasets
-.. currentmodule:: scirpy
+.. .. module:: scirpy.datasets
+.. .. currentmodule:: scirpy
 
-Example datasets
-^^^^^^^^^^^^^^^^
+.. Example datasets
+.. ^^^^^^^^^^^^^^^^
 
-.. autosummary::
-   :toctree: ./generated
+.. .. autosummary::
+..    :toctree: ./generated
 
-   datasets.wu2020
-   datasets.wu2020_3k
-   datasets.maynard2020
+..    datasets.wu2020
+..    datasets.wu2020_3k
+..    datasets.maynard2020
 
-Reference databases
-^^^^^^^^^^^^^^^^^^^
+.. Reference databases
+.. ^^^^^^^^^^^^^^^^^^^
 
-.. autosummary::
-   :toctree: ./generated
+.. .. autosummary::
+..    :toctree: ./generated
 
-   datasets.vdjdb
-   datasets.iedb
+..    datasets.vdjdb
+..    datasets.iedb
 
-A reference database is also just a :ref:`Scirpy-formatted AnnData object<data-structure>`.
-This means you can follow the instructions in the :ref:`data loading tutorial <importing-custom-formats>`
-to build a custom reference database.
+.. A reference database is also just a :ref:`Scirpy-formatted AnnData object<data-structure>`.
+.. This means you can follow the instructions in the :ref:`data loading tutorial <importing-custom-formats>`
+.. to build a custom reference database.
 
 
 Utility functions: `util`
