@@ -157,6 +157,10 @@ ignore = [
     "D203",
     # We want docstrings to start immediately after the opening triple quote
     "D213",
+    # missing docstring in public function
+    "D103",
+    # 1 blank line required between summary line and description
+    "D205"
 ]
 
 [tool.ruff.pydocstyle]
@@ -166,6 +170,7 @@ convention = "numpy"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
+"src/scirpy/datasets/_processing_scripts/*" = ["B018", "E402"]
 
 [tool.cruft]
 skip = [
