@@ -16,19 +16,17 @@ Import scirpy as
 As a scverse core package, scirpy adheres to the workflow principles
 `laid out by scanpy <https://scanpy.readthedocs.io/en/stable/usage-principles.html>`_.:
 
- * The :ref:`API <api>` is divided into *preprocessing* (`pp`), *tools* (`tl`),
-   and *plotting* (`pl`).
- * All functions work on :class:`~anndata.AnnData` or :class:`~mudata.MuData` objects.
- * The :class:`~anndata.AnnData` instance is modified inplace, unless a function
-   is called with the keyword argument `inplace=False`.
+* The :ref:`API <api>` is divided into *preprocessing* (`pp`), *tools* (`tl`), and *plotting* (`pl`).
+
+* All functions work on :class:`~anndata.AnnData` or :class:`~mudata.MuData` objects.
+
+* The :class:`~anndata.AnnData` instance is modified inplace, unless a function is called with the keyword argument `inplace=False`.
 
 We decided to handle a few minor points differently to Scanpy:
 
- * Plotting functions with inexpensive computations (e.g. :func:`scirpy.pl.clonal_expansion`)
-   call the corresponding tool (:func:`scirpy.tl.clonal_expansion`) on-the-fly and
-   don't store the results in the :class:`~anndata.AnnData` object.
- * All plotting functions, by default, return a :class:`~matplotlib.axes.Axes` object,
-   or a list of such.
+* Plotting functions with inexpensive computations (e.g. :func:`scirpy.pl.clonal_expansion`) call the corresponding tool (:func:`scirpy.tl.clonal_expansion`) on-the-fly and don't store the results in the :class:`~anndata.AnnData` object.
+
+* All plotting functions, by default, return a :class:`~matplotlib.axes.Axes` object, or a list of such.
 
 
 .. _data-structure:
@@ -189,12 +187,15 @@ Common function parameters
 --------------------------
 Wherever applicable, scirpy's functions take the following arguments:
 
- * `airr_mod` specifies the slot in `MuData` that contains the `AnnData` object with AIRR data. This parameter is
-   ignored when working with AnnData directly. Defaults to `"airr"`.
- * `airr_key` specifies the slot in `AnnData.obsm` that contains the awkward array with AIRR data. Defaults to `"airr"`.
- * `chain_idx_key` specifies the slot in `AnnData.obsm` thtat contains the chain indices. Defaults to `"chain_indices"`.
- * `inplace` defines if a function stores its results back in the AnnData/MuData object or returns them.
- * `key_added` defines the key (e.g. in `.obs`) where a function's result is stored if `inplace=True`.
+* `airr_mod` specifies the slot in `MuData` that contains the `AnnData` object with AIRR data. This parameter is ignored when working with AnnData directly. Defaults to `"airr"`.
+
+* `airr_key` specifies the slot in `AnnData.obsm` that contains the awkward array with AIRR data. Defaults to `"airr"`.
+
+* `chain_idx_key` specifies the slot in `AnnData.obsm` thtat contains the chain indices. Defaults to `"chain_indices"`.
+
+* `inplace` defines if a function stores its results back in the AnnData/MuData object or returns them.
+
+* `key_added` defines the key (e.g. in `.obs`) where a function's result is stored if `inplace=True`.
 
 The :class:`~scirpy.util.DataHandler` class ensures that these parameters are handled consistently across functions.
 

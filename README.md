@@ -37,31 +37,31 @@ Python installed, we recommend installing [Mambaforge](https://github.com/conda-
 
 There are several alternative options to install scirpy:
 
-1. Install the latest release of `scirpy` from `PyPI <https://pypi.org/project/scirpy/>`\_:
+1. Install the latest release of `scirpy` from [PyPI](https://pypi.org/project/scirpy/):
 
-```bash
-pip install scirpy
-```
+   ```bash
+   pip install scirpy
+   ```
 
 2. Get it from [Bioconda][link-bioconda]:
 
-First **setup conda channels [as described here](https://bioconda.github.io/#usage)**. Then install scirpy:
+   First **setup conda channels [as described here](https://bioconda.github.io/#usage)**. Then install scirpy:
 
-```bash
-conda install scirpy
-```
+   ```bash
+   conda install scirpy
+   ```
 
 3. Install the latest development version:
 
-```bash
-pip install git+https://github.com/grst/scirpy.git@main
-```
+   ```bash
+   pip install git+https://github.com/grst/scirpy.git@main
+   ```
 
 4. Run it in a container using [Docker][] or [Podman][]:
 
-```bash
-docker pull quay.io/biocontainers/scirpy:<tag>
-```
+   ```bash
+   docker pull quay.io/biocontainers/scirpy:<tag>
+   ```
 
 where `tag` is one of [these tags](https://quay.io/repository/biocontainers/scirpy?tab=tags).
 
