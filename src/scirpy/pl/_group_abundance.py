@@ -1,4 +1,5 @@
-from typing import Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Union
 
 import matplotlib.pyplot as plt
 from anndata import AnnData

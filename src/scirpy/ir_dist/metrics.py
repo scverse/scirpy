@@ -1,7 +1,8 @@
 import abc
 import itertools
+from collections.abc import Sequence
 from multiprocessing import cpu_count
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import scipy.sparse
@@ -124,8 +125,8 @@ class ParallelDistanceCalculator(DistanceCalculator):
         self,
         seqs1: Sequence[str],
         seqs2: Union[Sequence[str], None],
-        origin: Tuple[int, int],
-    ) -> Tuple[int, int, int]:
+        origin: tuple[int, int],
+    ) -> tuple[int, int, int]:
         """Compute the distances for a block of the matrix
 
         Parameters
@@ -150,7 +151,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         seqs1: Sequence[str],
         seqs2: Optional[Sequence[str]] = None,
         block_size: Optional[int] = 50,
-    ) -> Tuple[Sequence[str], Union[Sequence[str], None], Tuple[int, int]]:
+    ) -> tuple[Sequence[str], Union[Sequence[str], None], tuple[int, int]]:
         """Iterate over sequences in blocks.
 
         Parameters

@@ -1,6 +1,8 @@
 import itertools
 import json
-from typing import Counter, Literal, Optional, Sequence, Union
+from collections import Counter
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd

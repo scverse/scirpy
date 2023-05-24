@@ -5,8 +5,8 @@ See also discussion at https://github.com/theislab/anndata/issues/115
 """
 
 import json
-from collections.abc import MutableMapping
-from typing import Any, Collection, Iterable, Iterator, List, Mapping
+from collections.abc import Collection, Iterable, Iterator, Mapping, MutableMapping
+from typing import Any
 
 import scanpy
 from airr import RearrangementSchema
@@ -79,12 +79,12 @@ class AirrCell(MutableMapping):
         return self["cell_id"]
 
     @property
-    def chains(self) -> List[dict]:
+    def chains(self) -> list[dict]:
         """List of chain-dictionaries added to the cell."""
         return self._chains
 
     @property
-    def fields(self) -> List[str]:
+    def fields(self) -> list[str]:
         """Return a list of all fields (chain-level and cell-level)"""
         if self._chain_fields is None:
             return list(self)

@@ -1,6 +1,7 @@
 """Base plotting functions"""
 import itertools
-from typing import Literal, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -364,7 +365,7 @@ def embedding(
     basis: str,
     *,
     color: Union[str, Sequence[str], None] = None,
-    panel_size: Tuple[float, float] = (4, 4),
+    panel_size: tuple[float, float] = (4, 4),
     palette: Union[str, Cycler, Sequence[str], Sequence[Cycler], None] = None,
     legend_loc: str = "right margin",
     ax: Optional[Union[plt.Axes, Sequence[plt.Axes]]] = None,

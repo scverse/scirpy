@@ -1,5 +1,5 @@
 from importlib.metadata import version
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 import awkward as ak
 import numpy as np
@@ -25,7 +25,7 @@ def _normalize_df_types(df: pd.DataFrame):
         df.loc[df[col] == "False", col] = False
 
 
-def _squarify(matrix: Union[List[List], np.ndarray]):
+def _squarify(matrix: Union[list[list], np.ndarray]):
     """Squarify a upper triangular matrix"""
     matrix = np.array(matrix)
     assert matrix.shape[0] == matrix.shape[1], "only works for square matrices"
@@ -114,7 +114,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
         return adata
 
 
-def _make_airr_chains_valid(tmp_airr: List[List[Dict]]) -> List[List[Dict]]:
+def _make_airr_chains_valid(tmp_airr: list[list[dict]]) -> list[list[dict]]:
     """Take a list of lists of Airr chain dictionaries, and add empty fields that are required
     as per the rearrangement standard
     """

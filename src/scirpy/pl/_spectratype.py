@@ -1,4 +1,5 @@
-from typing import Callable, List, Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Callable, Literal, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +29,7 @@ def spectratype(
     airr_key="airr",
     chain_idx_key="chain_indices",
     **kwargs,
-) -> Union[List[plt.Axes], AnnData]:
+) -> Union[list[plt.Axes], AnnData]:
     """\
     Show the distribution of CDR3 region lengths.
 

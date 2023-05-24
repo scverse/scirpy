@@ -3,9 +3,10 @@ import os.path
 import pickle
 import re
 import sys
+from collections.abc import Collection, Iterable, Sequence
 from glob import iglob
 from pathlib import Path
-from typing import Any, Collection, Dict, Iterable, List, Literal, Sequence, Union
+from typing import Any, Literal, Union
 
 import airr
 import numpy as np
@@ -55,7 +56,7 @@ def _read_10x_vdj_json(
     with open(path) as f:
         contigs = json.load(f)
 
-    airr_cells: Dict[str, AirrCell] = {}
+    airr_cells: dict[str, AirrCell] = {}
     for contig in contigs:
         if filtered and not (contig["is_cell"] and contig["high_confidence"]):
             continue
@@ -405,7 +406,7 @@ def read_airr(
     logger = _IOLogger()
 
     if isinstance(path, (str, Path, pd.DataFrame)):
-        path: List[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
+        path: list[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
 
     def _decide_use_umi_count_col(chain_dict):
         """Logic to decide whether or not to use counts form the `umi_counts` column."""

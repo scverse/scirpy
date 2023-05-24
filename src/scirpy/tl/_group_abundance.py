@@ -1,4 +1,5 @@
-from typing import Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Union
 
 import numpy as np
 import pandas as pd

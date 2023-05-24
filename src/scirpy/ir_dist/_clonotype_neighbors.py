@@ -1,6 +1,7 @@
 import itertools
+from collections.abc import Mapping, Sequence
 from multiprocessing import cpu_count
-from typing import Dict, Literal, Mapping, Optional, Sequence, Tuple, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -61,7 +62,7 @@ class ClonotypeNeighbors:
         self._add_lookup_tables()
         logging.hint("Done initializing lookup tables.", time=start)  # type: ignore
 
-    def _make_clonotype_table(self, params: DataHandler) -> Tuple[Mapping, pd.DataFrame]:
+    def _make_clonotype_table(self, params: DataHandler) -> tuple[Mapping, pd.DataFrame]:
         """Define 'preliminary' clonotypes based identical IR features."""
         if not params.adata.obs_names.is_unique:
             raise ValueError("Obs names need to be unique!")
@@ -194,7 +195,7 @@ class ClonotypeNeighbors:
                 "match_columns", "match_columns", "match_columns", dist_type="boolean"
             )
 
-    def _make_chain_count(self, clonotype_table) -> Dict[str, int]:
+    def _make_chain_count(self, clonotype_table) -> dict[str, int]:
         """Compute how many chains there are of each type."""
         cols = {arm: [f"{arm}_{c}_{self.sequence_key}" for c in self._dual_ir_cols] for arm in self._receptor_arm_cols}
         cols["arms"] = [f"{arm}_1_{self.sequence_key}" for arm in self._receptor_arm_cols]

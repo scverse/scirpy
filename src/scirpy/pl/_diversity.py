@@ -1,4 +1,5 @@
-from typing import Callable, Literal, Mapping, Optional, Union
+from collections.abc import Mapping
+from typing import Callable, Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np

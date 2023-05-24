@@ -1,6 +1,7 @@
 import itertools
 import random
-from typing import List, Literal, Optional, Sequence, Tuple, Union, cast
+from collections.abc import Sequence
+from typing import Literal, Optional, Union, cast
 
 import igraph as ig
 import numpy as np
@@ -131,7 +132,7 @@ def _validate_parameters(
     sequence,
     metric,
     key_added,
-) -> Tuple[Optional[List[str]], str, str]:
+) -> tuple[Optional[list[str]], str, str]:
     """Validate and sanitze parameters for `define_clonotypes`"""
 
     def _get_db_name():
@@ -206,7 +207,7 @@ def define_clonotype_clusters(
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
-) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
+) -> Optional[tuple[pd.Series, pd.Series, dict]]:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
 
@@ -350,7 +351,7 @@ def define_clonotypes(
     airr_key="airr",
     chain_idx_key="chain_indices",
     **kwargs,
-) -> Optional[Tuple[pd.Series, pd.Series, dict]]:
+) -> Optional[tuple[pd.Series, pd.Series, dict]]:
     """
     Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
     sequence identity.
@@ -576,7 +577,7 @@ def clonotype_network(
         return coord_df
 
 
-def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> Tuple[pd.DataFrame, sp.csr_matrix]:
+def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
     """
     Given an AnnData object on which `tl.clonotype_network` was ran, and
     the corresponding `clonotype_key`, extract a data-frame
@@ -618,7 +619,7 @@ def clonotype_network_igraph(
     adata: DataHandler.TYPE,
     basis="clonotype_network",
     airr_mod="airr",
-) -> Tuple[ig.Graph, ig.Layout]:
+) -> tuple[ig.Graph, ig.Layout]:
     """
     Get an `igraph` object representing the clonotype network.
 

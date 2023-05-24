@@ -1,6 +1,7 @@
 """Convert IrCells to AnnData and vice-versa"""
+from collections.abc import Iterable
 from importlib.metadata import version
-from typing import Iterable, List, cast
+from typing import cast
 
 import awkward as ak
 import pandas as pd
@@ -56,7 +57,7 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
 
 
 @DataHandler.inject_param_docs()
-def to_airr_cells(adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr") -> List[AirrCell]:
+def to_airr_cells(adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: str = "airr") -> list[AirrCell]:
     """\
     Convert an adata object with IR information back to a list of :class:`~scirpy.io.AirrCell`
     objects.

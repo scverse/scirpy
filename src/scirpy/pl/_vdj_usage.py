@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import Callable, List, Sequence, Tuple, Union, cast
+from typing import Callable, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -270,15 +271,15 @@ def vdj_usage(
 
 
 def _gapped_ribbons(
-    data: List,
+    data: list,
     *,
-    ax: Union[plt.Axes, List, None] = None,
+    ax: Union[plt.Axes, list, None] = None,
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
-    ribcol: Union[str, Tuple, None] = None,
+    ribcol: Union[str, tuple, None] = None,
     fun: Callable = lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
-    figsize: Tuple[float, float] = (3.44, 2.58),
+    figsize: tuple[float, float] = (3.44, 2.58),
     dpi: int = 300,
 ) -> plt.Axes:
     """Draws ribbons using `fill_between`

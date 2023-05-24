@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 from cycler import Cycler
@@ -116,7 +117,7 @@ def _get_colors(
     params: DataHandler,
     obs_key: str,
     palette: Union[str, Sequence[str], Cycler, None] = None,
-) -> Optional[Dict[str, str]]:
+) -> Optional[dict[str, str]]:
     """Return colors for a category stored in AnnData.
 
     If colors are not stored, new ones are assigned.

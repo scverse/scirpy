@@ -5,7 +5,8 @@ Adapted from https://stackoverflow.com/questions/57423743/networkx-is-there-a-wa
 """
 
 import warnings
-from typing import Mapping, Optional, Sequence, Tuple
+from collections.abc import Mapping, Sequence
+from typing import Optional
 
 import igraph as ig
 import numpy as np
@@ -15,11 +16,11 @@ def layout_fr_size_aware(
     graph: ig.Graph,
     *,
     k: Optional[float] = None,
-    scale: Optional[Tuple[float, float]] = None,
-    origin: Optional[Tuple[float, float]] = None,
+    scale: Optional[tuple[float, float]] = None,
+    origin: Optional[tuple[float, float]] = None,
     total_iterations: int = 50,
     initial_temperature: float = 1.0,
-    node_positions: Optional[Mapping[int, Tuple[float, float]]] = None,
+    node_positions: Optional[Mapping[int, tuple[float, float]]] = None,
     fixed_nodes: Optional[Sequence] = None,
     base_node_size: float = 1e-2,
     size_power: float = 0.5,

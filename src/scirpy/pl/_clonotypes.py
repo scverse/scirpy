@@ -1,5 +1,6 @@
 import warnings
-from typing import Dict, Optional, Sequence, Tuple, Union, cast
+from collections.abc import Sequence
+from typing import Optional, Union, cast
 
 import matplotlib
 import matplotlib.colors
@@ -35,7 +36,7 @@ def clonotype_network(
     *,
     color: Union[str, Sequence[str], None] = None,
     basis: str = "clonotype_network",
-    panel_size: Tuple[float, float] = (10, 10),
+    panel_size: tuple[float, float] = (10, 10),
     color_by_n_cells: bool = False,
     scale_by_n_cells: bool = True,
     base_size: Optional[float] = None,
@@ -358,7 +359,7 @@ def _fetch_features_mudata(
                     fmod_adata = data.mod[m][:, mod_keys]
 
                 if layer is not None:
-                    if isinstance(layer, Dict):
+                    if isinstance(layer, dict):
                         m_layer = layer.get(m, None)
                         if m_layer is not None:
                             x = data.mod[m][:, mod_keys].layers[m_layer]

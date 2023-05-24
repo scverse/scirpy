@@ -1,5 +1,4 @@
 import itertools
-from typing import Dict
 
 from anndata import AnnData
 
@@ -71,7 +70,7 @@ def merge_airr(
     ir_objs1 = to_airr_cells(adata, airr_mod=airr_mod, airr_key=airr_key)
     ir_objs2 = to_airr_cells(adata2, airr_mod=airr_mod2, airr_key=airr_key2)
 
-    cell_dict: Dict[str, AirrCell] = {}
+    cell_dict: dict[str, AirrCell] = {}
     for cell in itertools.chain(ir_objs1, ir_objs2):
         try:
             tmp_cell = cell_dict[cell.cell_id]

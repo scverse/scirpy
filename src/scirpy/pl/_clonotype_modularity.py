@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
 from adjustText import adjust_text
@@ -24,11 +25,11 @@ def clonotype_modularity(
     ax=None,
     target_col="clonotype_modularity",
     jitter: float = 0.01,
-    panel_size: Tuple[float, float] = (6, 4),
+    panel_size: tuple[float, float] = (6, 4),
     base_size: float = 2,
     size_power: Optional[float] = 1,
     show_labels: bool = True,
-    labels_quantile_cutoff: Tuple[float, float] = (0.9, 0.9),
+    labels_quantile_cutoff: tuple[float, float] = (0.9, 0.9),
     labels: Sequence[str] = None,
     label_fontsize: Optional[int] = 10,
     label_fontweight: Union[str, float] = 300,

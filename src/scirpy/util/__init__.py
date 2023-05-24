@@ -1,6 +1,7 @@
 import warnings
+from collections.abc import Mapping, Sequence
 from textwrap import dedent
-from typing import Any, Callable, Mapping, Optional, Sequence, Union, cast, overload
+from typing import Any, Callable, Optional, Union, cast, overload
 
 import awkward as ak
 import numpy as np

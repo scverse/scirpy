@@ -1,6 +1,7 @@
+from collections.abc import Mapping, Sequence
 from functools import partial
 from types import MappingProxyType
-from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
+from typing import Any, Callable, Union
 
 import awkward as ak
 from scanpy import logging
@@ -94,7 +95,7 @@ def index_chains(
             # cell_chains = cast(List[ak.Record], cell_chains)
 
             # Split chains into VJ and VDJ chains
-            chain_indices: Dict[str, Any] = {"VJ": [], "VDJ": []}
+            chain_indices: dict[str, Any] = {"VJ": [], "VDJ": []}
             for i, tmp_chain in enumerate(cell_chains):
                 if all(f(tmp_chain) for f in filter) and "locus" in params.airr.fields:
                     if tmp_chain["locus"] in AirrCell.VJ_LOCI:
@@ -134,7 +135,7 @@ def index_chains(
     }
 
 
-def _key_sort_chains(chains: List[Mapping], sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
+def _key_sort_chains(chains: list[Mapping], sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
     """Get key to sort chains by expression.
 
     Parameters

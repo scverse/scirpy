@@ -1,7 +1,8 @@
 import warnings
+from collections.abc import Hashable, Mapping, Sequence
 from functools import reduce
 from operator import mul
-from typing import Dict, Hashable, Literal, Mapping, Optional, Sequence, Tuple, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -117,7 +118,7 @@ class ReverseLookupTable:
             raise ValueError("invalid dist_type")
         self.dist_type = dist_type
         self.size = size
-        self.lookup: Dict[Hashable, sp.coo_matrix] = {}
+        self.lookup: dict[Hashable, sp.coo_matrix] = {}
 
     @staticmethod
     def from_dict_of_indices(
@@ -210,17 +211,17 @@ class DoubleLookupNeighborFinder:
         # n_feature x n_feature sparse m x k distance matrices
         # where m is the number of unique features in feature_table and
         # k is the number if unique features in feature_table2
-        self.distance_matrices: Dict[str, sp.csr_matrix] = {}
+        self.distance_matrices: dict[str, sp.csr_matrix] = {}
         # mapping feature_label -> feature_index with len = n_feature for feature_table
         # (rows of the distance matrix)
-        self.distance_matrix_labels: Dict[str, dict] = {}
+        self.distance_matrix_labels: dict[str, dict] = {}
         # ... for feature_table2 (columns of the distance matrix)
-        self.distance_matrix_labels2: Dict[str, dict] = {}
+        self.distance_matrix_labels2: dict[str, dict] = {}
         # tuples (dist_mat, forward, reverse)
         # dist_mat: name of associated distance matrix
         # forward: clonotype -> feature_index lookups
         # reverse: feature_index -> clonotype lookups
-        self.lookups: Dict[str, Tuple[str, np.ndarray, ReverseLookupTable]] = {}
+        self.lookups: dict[str, tuple[str, np.ndarray, ReverseLookupTable]] = {}
 
     @property
     def n_rows(self):

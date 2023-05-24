@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import Literal, Union
 
 import pandas as pd
 
@@ -9,7 +9,7 @@ def _clip_and_count(
     adata: DataHandler.TYPE,
     target_col: str,
     *,
-    groupby: Union[str, None, List[str]] = None,
+    groupby: Union[str, None, list[str]] = None,
     clip_at: int = 3,
     inplace: bool = True,
     key_added: Union[str, None] = None,

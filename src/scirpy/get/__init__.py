@@ -1,7 +1,8 @@
 import itertools
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from enum import Enum, auto
-from typing import Any, Literal, Mapping, Sequence, Union, cast, overload
+from typing import Any, Literal, Union, cast, overload
 
 import awkward as ak
 import numpy as np

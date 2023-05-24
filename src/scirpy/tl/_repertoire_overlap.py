@@ -1,5 +1,5 @@
 from locale import normalize
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ def repertoire_overlap(
     inplace: bool = True,
     added_key: str = "repertoire_overlap",
     airr_mod: str = "airr",
-) -> Union[None, Tuple[pd.DataFrame, np.ndarray, np.ndarray]]:
+) -> Union[None, tuple[pd.DataFrame, np.ndarray, np.ndarray]]:
     """\
     Compute distance between cell groups based on clonotype overlap.
 

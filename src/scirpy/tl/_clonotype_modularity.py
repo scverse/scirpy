@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Literal, Optional
 
 import numpy as np
 import scipy.sparse
@@ -24,7 +25,7 @@ def clonotype_modularity(
     fdr_correction: bool = True,
     random_state: int = 0,
     airr_mod: str = "airr",
-) -> Optional[Tuple[Dict[str, float], Dict[str, float]]]:
+) -> Optional[tuple[dict[str, float], dict[str, float]]]:
     """\
     Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance by computing the
@@ -258,7 +259,7 @@ class _ClonotypeModularity:
             s: background_distribution[:, i] for i, s in enumerate(self._clonotype_sizes)
         }
 
-    def get_scores(self) -> Dict[str, float]:
+    def get_scores(self) -> dict[str, float]:
         """Return the connectivity score for all clonotypes.
 
         The connectivity score is ispired by network modularity and
@@ -290,7 +291,7 @@ class _ClonotypeModularity:
 
         return score_dict
 
-    def get_approx_pvalues(self) -> Dict[str, float]:
+    def get_approx_pvalues(self) -> dict[str, float]:
         """Compute pvalue for clonotype being more connected than random.
 
         Approximate permutation test.
@@ -325,7 +326,7 @@ class _ClonotypeModularity:
 
         return pvalue_dict
 
-    def get_exact_pvalues(self) -> Dict[str, float]:
+    def get_exact_pvalues(self) -> dict[str, float]:
         """Compute pvalue for clonotype being more connected than random.
 
         Exact permutation test, see http://rasbt.github.io/mlxtend/user_guide/evaluate/permutation_test/

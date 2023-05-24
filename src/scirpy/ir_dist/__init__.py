@@ -1,6 +1,7 @@
 """Compute distances between immune receptor sequences"""
 import itertools
-from typing import Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import numpy as np
 from anndata import AnnData

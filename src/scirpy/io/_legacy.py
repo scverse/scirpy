@@ -2,7 +2,7 @@
 
 import itertools
 from importlib.metadata import version
-from typing import List, cast
+from typing import cast
 
 import awkward as ak
 import packaging.version
@@ -41,7 +41,7 @@ def upgrade_schema(adata: AnnData) -> AnnData:
     adata.obs = tmp_adata.obs
 
 
-def _obs_schema_to_airr_cells(adata: AnnData) -> List[AirrCell]:
+def _obs_schema_to_airr_cells(adata: AnnData) -> list[AirrCell]:
     """
     Convert a legacy adata object with IR information in adata.obs back to a list of
     :class:`~scirpy.io.AirrCell` objects.
