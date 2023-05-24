@@ -7,7 +7,7 @@ build:
 sphinx:
   configuration: docs/conf.py
   # disable this for more lenient docs builds
-  fail_on_warning: false
+  fail_on_warning: true
 python:
   install:
     - method: pip
