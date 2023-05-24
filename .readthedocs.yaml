@@ -5,6 +5,10 @@ build:
   tools:
     python: "3.10"
   jobs:
+    # workaround to properly install the airr package with all dependencies
+    pre_install:
+      - python -m pip install airr
+    # additional debugging information
     pre_build:
       - python -c "import scirpy"
       - pip freeze
