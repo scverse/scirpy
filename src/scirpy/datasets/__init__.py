@@ -54,7 +54,7 @@ _POOCH_INFO = dedent(
 
 
 @_doc_params(
-    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020.py"), "   "),
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020.py"), " " * 8),
     pooch_info=_POOCH_INFO,
 )
 def wu2020() -> MuData:
@@ -69,14 +69,14 @@ def wu2020() -> MuData:
 
     .. code-block:: python
 
-    {processing_code}
+        {processing_code}
     """
     fname = cast(PathLike, _FIGSHARE.fetch("wu2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
 @_doc_params(
-    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), "   "),
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/wu2020_3k.py"), " " * 8),
     pooch_info=_POOCH_INFO,
 )
 def wu2020_3k() -> MuData:
@@ -90,14 +90,14 @@ def wu2020_3k() -> MuData:
 
     .. code-block:: python
 
-    {processing_code}
+        {processing_code}
     """
     fname = cast(PathLike, _FIGSHARE.fetch("wu2020_3k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
 @_doc_params(
-    processing_code=indent(_read_to_str(HERE / "_processing_scripts/maynard2020.py"), "   "),
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/maynard2020.py"), " " * 8),
     pooch_info=_POOCH_INFO,
 )
 def maynard2020() -> MuData:
@@ -118,7 +118,7 @@ def maynard2020() -> MuData:
 
     .. code-block:: python
 
-    {processing_code}
+        {processing_code}
     """
     fname = cast(PathLike, _FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
