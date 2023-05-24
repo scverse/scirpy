@@ -22,17 +22,17 @@ Input/Output: `io`
 .. currentmodule:: scirpy
 
 .. note::
-    **scirpy's data structure has been updated in v0.13.0.**
-    
-    Previously, receptor data was expanded into columns of `adata.obs`, now they are stored as an :term:`awkward array` in `adata.obsm["airr"]`. 
-    Moreover, we now use :class:`~mudata.MuData` to handle paired transcriptomics and :term:`AIRR` data. 
-    
-    :class:`~anndata.AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
-    
-    Please check out
-    
-     * the `release notes <https://github.com/scverse/scirpy/releases/tag/v0.13.0>`_ for details about the changes and
-     * the documentation about :ref:`Scirpy's data structure <data-structure>`
+   **scirpy's data structure has been updated in v0.13.0.**
+
+   Previously, receptor data was expanded into columns of `adata.obs`, now they are stored as an :term:`awkward array` in `adata.obsm["airr"]`.
+   Moreover, we now use :class:`~mudata.MuData` to handle paired transcriptomics and :term:`AIRR` data.
+
+   :class:`~anndata.AnnData` objects created with older versions of scirpy can be upgraded with :func:`scirpy.io.upgrade_schema` to be compatible with the latest version of scirpy.
+
+   Please check out
+
+   * the `release notes <https://github.com/scverse/scirpy/releases/tag/v0.13.0>`_ for details about the changes and
+   * the documentation about :ref:`Scirpy's data structure <data-structure>`
 
    .. autosummary::
       :toctree: ./generated
@@ -62,6 +62,7 @@ Scirpy can export data to the following formats:
 
    io.write_airr
    io.to_dandelion
+
 
 To convert own formats into the scirpy :ref:`data-structure`, we recommend building
 a list of :class:`~scirpy.io.AirrCell` objects first, and then converting them into
@@ -93,7 +94,7 @@ Get: `get`
 ----------
 
 The `get` module allows retrieving :term:`AIRR` data stored in `adata.obsm["airr"]` as a per-cell :class:`~pandas.DataFrame`
-or :class:`~pandas.Series`. 
+or :class:`~pandas.Series`.
 
 .. module:: scirpy.get
 .. currentmodule:: scirpy
@@ -300,4 +301,3 @@ distance metrics
    ir_dist.metrics.LevenshteinDistanceCalculator
    ir_dist.metrics.HammingDistanceCalculator
    ir_dist.metrics.AlignmentDistanceCalculator
-

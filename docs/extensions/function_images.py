@@ -2,9 +2,9 @@
 
 Adapted from scanpy (c) Philipp Angerer
 """
-from pathlib import Path
-from typing import List, Any
 import re
+from pathlib import Path
+from typing import Any
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import Options
@@ -22,7 +22,7 @@ def insert_function_images(
     name: str,
     obj: Any,
     options: Options,
-    lines: List[str],
+    lines: list[str],
 ):
     for ext in ["png", "svg"]:
         path = app.config.api_dir / f"{name}.{ext}"

@@ -6,11 +6,11 @@ Glossary
     :sorted:
 
     awkward array
-        Awkward arrays are a data structure that allows to represent nested, variable sized data (such as lists 
-        of lists, lists of dictionaries). It is computationally efficient and can be manipulated with NumPy-like idioms. 
+        Awkward arrays are a data structure that allows to represent nested, variable sized data (such as lists
+        of lists, lists of dictionaries). It is computationally efficient and can be manipulated with NumPy-like idioms.
 
         For more details, check out the `awkward documentation <https://awkward-array.org/doc/main/getting-started/index.html>`_
-        
+
     TCR
         T-cell receptor. A TCR consists of one α and one β chain
         (or, alternatively, one γ and one δ chain). Each chain consists of a
@@ -212,10 +212,10 @@ Glossary
         page about our :ref:`IR model<receptor-model>`.
 
     AIRR
-        Adaptive Immune Receptor Repertoire. Within the Scirpy documentation, we simply 
+        Adaptive Immune Receptor Repertoire. Within the Scirpy documentation, we simply
         speak of :term:`immune receptors (IR)<IR>`.
 
-        The `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_ 
+        The `AIRR community <https://www.antibodysociety.org/the-airr-community/>`_
         defines standards around AIRR data. Scirpy supports the `AIRR Rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_
         schema and complies with the `AIRR Software Guidelines <https://docs.airr-community.org/en/latest/swtools/airr_swtools_standard.html>`_.
 
@@ -240,8 +240,8 @@ Glossary
         A B cell with two pairs of :term:`IG` chains. See :term:`Dual IR`.
 
     Clonotype modularity
-        The clonotype modularity measures how densly connected the transcriptomics 
+        The clonotype modularity measures how densly connected the transcriptomics
         neighborhood graph underlying the cells in a clonotype is. Clonotypes with
-        a high modularity consist of cells that are transcriptionally more similar 
-        than that of a clonotype with a low modularity. 
+        a high modularity consist of cells that are transcriptionally more similar
+        than that of a clonotype with a low modularity.
         See also :func:`scirpy.tl.clonotype_modularity`

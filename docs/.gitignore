@@ -2,6 +2,5 @@ _build
 scirpy.*.rst
 tutorials/*-Copy*
 tutorials/data
-tutorials/*.ipynb
 generated
 __latexindent*
