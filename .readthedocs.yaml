@@ -6,10 +6,8 @@ build:
     python: "3.10"
   jobs:
     # workaround to properly install the airr package with all dependencies
-    pre_install:
-      - python -m pip install --upgrade --no-cache-dir pip setuptools
-      - python -m pip install --no-cache-dir airr
-      - python -c "import airr"
+    post_install:
+      - python -m pip install --no-cache-dir yamlordereddictloader
     # additional debugging information
     pre_build:
       - python -c "import scirpy"
