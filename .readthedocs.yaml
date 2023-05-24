@@ -7,7 +7,9 @@ build:
   jobs:
     # workaround to properly install the airr package with all dependencies
     pre_install:
-      - python -m pip install airr
+      - python -m pip install --upgrade --no-cache-dir pip setuptools
+      - python -m pip install --no-cache-dir airr
+      - python -c "import airr"
     # additional debugging information
     pre_build:
       - python -c "import scirpy"
