@@ -27,8 +27,8 @@ It seamlessly integrates with [scanpy][] and [mudata][] and provides various mod
 
 Please refer to the [documentation][link-docs]. In particular, the
 
-- [Tutorial][link-tutorial], and the
-- [API documentation][link-api].
+-   [Tutorial][link-tutorial], and the
+-   [API documentation][link-api].
 
 ## Installation
 
@@ -39,29 +39,29 @@ There are several alternative options to install scirpy:
 
 1. Install the latest release of `scirpy` from [PyPI](https://pypi.org/project/scirpy/):
 
-   ```bash
-   pip install scirpy
-   ```
+    ```bash
+    pip install scirpy
+    ```
 
 2. Get it from [Bioconda][link-bioconda]:
 
-   First **setup conda channels [as described here](https://bioconda.github.io/#usage)**. Then install scirpy:
+    First **setup conda channels [as described here](https://bioconda.github.io/#usage)**. Then install scirpy:
 
-   ```bash
-   conda install scirpy
-   ```
+    ```bash
+    conda install scirpy
+    ```
 
 3. Install the latest development version:
 
-   ```bash
-   pip install git+https://github.com/grst/scirpy.git@main
-   ```
+    ```bash
+    pip install git+https://github.com/grst/scirpy.git@main
+    ```
 
 4. Run it in a container using [Docker][] or [Podman][]:
 
-   ```bash
-   docker pull quay.io/biocontainers/scirpy:<tag>
-   ```
+    ```bash
+    docker pull quay.io/biocontainers/scirpy:<tag>
+    ```
 
 where `tag` is one of [these tags](https://quay.io/repository/biocontainers/scirpy?tab=tags).
 
@@ -73,8 +73,8 @@ See the [changelog][changelog].
 
 We are happy to assist with problems when using scirpy.
 
-- If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the [scverse discourse][scverse-discourse].
-- For bug report or feature requests, please use the [issue tracker][issue-tracker].
+-   If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the [scverse discourse][scverse-discourse].
+-   For bug report or feature requests, please use the [issue tracker][issue-tracker].
 
 We try to respond within two working days, however fixing bugs or implementing new features
 can take substantially longer, depending on the availability of our developers.
