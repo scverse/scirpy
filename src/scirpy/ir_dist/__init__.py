@@ -184,7 +184,7 @@ def _ir_dist(
                 raise ValueError(
                     'If reference does not contain a `.uns["DB"]["name"]` entry, '
                     "you need to manually specify `key_added`."
-                )
+                ) from None
         else:
             key_added = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
     if params_ref is not None:

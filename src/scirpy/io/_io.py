@@ -607,8 +607,8 @@ def to_dandelion(adata: DataHandler.TYPE, **kwargs):
     """
     try:
         import dandelion as ddl
-    except:
-        raise ImportError("Please install dandelion: pip install sc-dandelion.")
+    except ImportError:
+        raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
     airr_cells = to_airr_cells(adata, **kwargs)
 
     contig_dicts = {}
@@ -653,7 +653,7 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     try:
         import dandelion as ddl
     except ImportError:
-        raise ImportError("Please install dandelion: pip install sc-dandelion.")
+        raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
     dandelion_df = dandelion.data.copy()
     # replace "unassigned" with None

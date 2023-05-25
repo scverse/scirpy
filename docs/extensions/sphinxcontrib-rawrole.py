@@ -3,10 +3,11 @@
 https://doughellmann.com/posts/defining-custom-roles-in-sphinx/
 """
 
+from types import MappingProxyType
 from docutils import nodes
 
 
-def html_raw_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
+def html_raw_role(typ, rawtext, text, lineno, inliner, options=MappingProxyType({}), content=()):
     return [nodes.raw("", text, format="html")], []
 
 

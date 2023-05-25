@@ -64,7 +64,7 @@ len(sample_paths)
 
 
 def read_salmon(path):
-    """Quant type can be one of "tpm", "count", "count_scaled" """
+    """Quant type can be one of "tpm", "count", "count_scaled"."""
     path = Path(path)
     df = pd.read_csv(Path(path / "quant.genes.sf"), sep="\t", index_col=0)
     df = df.join(ensg2symbol, how="inner")
