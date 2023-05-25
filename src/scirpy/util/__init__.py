@@ -18,8 +18,8 @@ __all__ = ["tqdm"]
 
 
 def _doc_params(**kwds):
-    r"""\
-    Docstrings should start with "\" in the first line for proper formatting.
+    """\
+    Docstrings should start with "\\" in the first line for proper formatting.
     """
 
     def dec(obj):

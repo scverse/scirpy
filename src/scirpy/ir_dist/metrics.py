@@ -372,13 +372,13 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
-    r"""\
+    """\
     Calculates distance between sequences based on pairwise sequence alignment.
 
     The distance between two sequences is defined as :math:`S_{{1,2}}^{{max}} - S_{{1,2}}`,
     where :math:`S_{{1,2}}` is the alignment score of sequences 1 and 2 and
     :math:`S_{{1,2}}^{{max}}` is the max. achievable alignment score of sequences 1 and 2.
-    :math:`S_{{1,2}}^{{max}}` is defined as :math:`\min(S_{{1,1}}, S_{{2,2}})`.
+    :math:`S_{{1,2}}^{{max}}` is defined as :math:`\\min(S_{{1,1}}, S_{{2,2}})`.
 
     The use of alignment-based distances is heavily inspired by :cite:`TCRdist`.
 

@@ -26,7 +26,7 @@ def clonotype_modularity(
     random_state: int = 0,
     airr_mod: str = "airr",
 ) -> Optional[tuple[dict[str, float], dict[str, float]]]:
-    r"""\
+    """\
     Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance by computing the
     :term:`Clonotype modularity`.
@@ -42,10 +42,10 @@ def clonotype_modularity(
 
     .. math::
 
-        \text{{connectivity score}} = \log_2 \frac{{
-                |E|_{{\text{{actual}}}} + 1
+        \\text{{connectivity score}} = \\log_2 \\frac{{
+                |E|_{{\\text{{actual}}}} + 1
             }}{{
-                |E|_{{\text{{expected}}}} + 1
+                |E|_{{\\text{{expected}}}} + 1
             }}
 
     For each unique clonotype size, the expected number of edges is derived by
