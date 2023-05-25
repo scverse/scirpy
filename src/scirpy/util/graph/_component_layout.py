@@ -88,7 +88,7 @@ def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
             "Using the 'components layout' requires the installation of "
             "the `rectangle-packer`. You can install it with "
             "`pip install rectangle-packer`."
-        )
+        ) from None
 
     dimensions = [_get_bbox_dimensions(n, power=0.8) for n in component_sizes]
     # rpack only works on integers; sizes should be in descending order
@@ -121,7 +121,7 @@ def _bbox_squarify(component_sizes, pad_x=10, pad_y=10):
             "Using the 'components layout' requires the installation"
             "of the `squarify` package. You can install it with "
             "`pip install squarify`"
-        )
+        ) from None
     order = np.argsort(-component_sizes)
     undo_order = np.argsort(order)
     component_sizes = component_sizes[order]

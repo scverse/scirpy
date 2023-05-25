@@ -160,7 +160,11 @@ ignore = [
     # missing docstring in public function
     "D103",
     # 1 blank line required between summary line and description
-    "D205"
+    "D205",
+    # no explicit `stackelvel` keywork argument found
+    "B028",
+    # Use `r"""` if any backslashes in a docstring
+    "D301"
 ]
 
 [tool.ruff.pydocstyle]

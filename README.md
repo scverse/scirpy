@@ -15,8 +15,8 @@ It seamlessly integrates with [scanpy][] and [mudata][] and provides various mod
 [badge-docs]: https://img.shields.io/readthedocs/scirpy
 [badge-pypi]: https://img.shields.io/pypi/v/scirpy?logo=PyPI
 [link-pypi]: https://pypi.org/project/scirpy/
-[badge-bioconda]: http://bioconda.github.io/recipes/scirpy/README.html
-[link-bioconda]: https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat
+[link-bioconda]: http://bioconda.github.io/recipes/scirpy/README.html
+[badge-bioconda]: https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat
 [badge-airr]: https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=flat
 [link-airr]: https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html
 [scverse]: https://scverse.org

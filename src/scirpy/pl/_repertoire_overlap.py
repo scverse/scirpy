@@ -98,7 +98,9 @@ def repertoire_overlap(
                     labels = params.get_obs([groupby, lbl]).drop_duplicates().set_index(groupby).reindex(df.index)
                 except ValueError as e:
                     if "duplicate labels" in str(e):
-                        raise ValueError("Cannot color by category that is not unique for the categories in `groupby`.")
+                        raise ValueError(
+                            "Cannot color by category that is not unique for the categories in `groupby`."
+                        ) from None
                     else:
                         raise
 

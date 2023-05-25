@@ -366,7 +366,7 @@ class Recombinant:
         self.cdr3 = cdr3
 
     def __str__(self):
-        return "{} {} {} {}".format(self.identifier, self.productive, self.TPM)
+        return f"{self.identifier} {self.productive} {self.TPM}"
 
     def get_summary(self):
         summary_string = f"##{self.contig_name}##\n"

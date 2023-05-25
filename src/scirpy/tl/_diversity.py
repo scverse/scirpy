@@ -138,7 +138,7 @@ def alpha_diversity(
                         "Using scikit-bio’s alpha diversity metrics requires the "
                         "installation of `scikit-bio`. You can install it with "
                         "`pip install scikit-bio`."
-                    )
+                    ) from None
                 else:
                     # skbio.diversity takes count vectors as input and
                     # takes care of unknown metrics

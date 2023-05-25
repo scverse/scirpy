@@ -134,7 +134,7 @@ def test_merge_airr_identity():
     airr_merged = ak.to_list(adata_merged.obsm["airr"])
 
     pdt.assert_frame_equal(obs_merged, obs_expected)
-    airr_expected == airr_merged
+    assert airr_expected == airr_merged
 
 
 @pytest.mark.parametrize(

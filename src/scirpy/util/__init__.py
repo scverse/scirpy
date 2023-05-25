@@ -19,7 +19,7 @@ __all__ = ["tqdm"]
 
 def _doc_params(**kwds):
     """\
-    Docstrings should start with "\" in the first line for proper formatting.
+    Docstrings should start with "\\" in the first line for proper formatting.
     """
 
     def dec(obj):
@@ -216,7 +216,7 @@ class DataHandler:
                 try:
                     return self._data.mod[self._airr_mod]
                 except KeyError:
-                    raise KeyError(f"There is no AIRR modality in MuData under key '{self._airr_mod}'")
+                    raise KeyError(f"There is no AIRR modality in MuData under key '{self._airr_mod}'") from None
             else:
                 raise AttributeError("DataHandler was initalized with MuData, but without specifying a modality")
 

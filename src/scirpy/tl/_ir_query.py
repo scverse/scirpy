@@ -25,7 +25,7 @@ def _validate_ir_query_annotate_params(params_ref: DataHandler, sequence, metric
             raise ValueError(
                 'If reference does not contain a `.uns["DB"]["name"]` entry, '
                 "you need to manually specify `distance_key` and `key_added`."
-            )
+            ) from None
 
     if query_key is None:
         query_key = f"ir_query_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
@@ -401,7 +401,7 @@ def ir_query_annotate(
                 )
 
         except KeyError:
-            raise ValueError("Invalid value for `strategy`.")
+            raise ValueError("Invalid value for `strategy`.") from None
         df_res = df.groupby("_query_cell_index").aggregate(reduce_fun).reindex(params.adata.obs_names)
 
     # convert nan-equivalents to real nan values.
