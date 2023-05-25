@@ -26,6 +26,7 @@ def fit_nbinom(X: np.ndarray, initial_params: Optional[tuple[Number, Number]] = 
 
     Returns
     -------
+    fitted values
     """
     infinitesimal = np.finfo(float).eps
 

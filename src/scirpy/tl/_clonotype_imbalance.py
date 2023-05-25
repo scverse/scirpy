@@ -96,7 +96,7 @@ def clonotype_imbalance(
             raise KeyError(
                 "Clonotype imbalance calculation depends on repertoire overlap, but the key"
                 " you specified does not belong to a previous run of that tool."
-            )
+            ) from None
 
     global_minimum = clonotype_presence.min().min() / clonotype_presence.shape[0]
     global_minimum = global_minimum * 0.01

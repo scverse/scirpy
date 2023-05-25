@@ -341,7 +341,7 @@ def test_compute_distances(
     n_jobs,
     with_adata2,
 ):
-    f"""{comment}"""
+    """Test that distances are calculated correctly with different settings"""
     distance_key = f"ir_dist_aa_{metric}"
     metric = adata_cdr3_mock_distance_calculator if metric == "custom" else metric
     adata2 = adata_cdr3 if with_adata2 else None
@@ -512,10 +512,7 @@ def test_compute_distances_second_anndata(
     expected_dist,
     swap_query_reference,
 ):
-    f"""
-    Test that the distance calculation works with two different anndata objects
-    {comment}
-    """
+    """Test that the distance calculation works with two different anndata objects"""
     query = adata_cdr3 if not swap_query_reference else adata_cdr3_2
     reference = adata_cdr3_2 if not swap_query_reference else adata_cdr3
     distance_key = f"ir_dist_aa_{metric}"

@@ -186,7 +186,7 @@ def layout_fr_size_aware(
     # --------------------------------------------------------------------------------
     # main loop
 
-    for ii, temperature in enumerate(temperatures):
+    for temperature in temperatures:
         node_positions_as_array[is_mobile] = _fruchterman_reingold(
             adjacency,
             node_positions_as_array,
@@ -231,7 +231,7 @@ def _fruchterman_reingold(adjacency, node_positions, origin, scale, temperature,
         warnings.warn("Some nodes have the same position; repulsion between the nodes is undefined.")
         rand_delta = np.random.rand(*delta.shape) * 1e-9
         is_zero = distance <= 0
-        delta[is_zero] = rand_delta[is_zeros]
+        delta[is_zero] = rand_delta[is_zero]
         distance = np.linalg.norm(delta, axis=-1)
 
     # subtract node radii from distances to prevent nodes from overlapping

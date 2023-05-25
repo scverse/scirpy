@@ -142,7 +142,7 @@ def _validate_parameters(
             raise ValueError(
                 'If reference does not contain a `.uns["DB"]["name"]` entry, '
                 "you need to manually specify `distance_key` and `key_added`."
-            )
+            ) from None
 
     if receptor_arms not in ["VJ", "VDJ", "all", "any"]:
         raise ValueError(
@@ -506,7 +506,7 @@ def clonotype_network(
         raise ValueError(
             "Connectivity data not found. Did you run `tl.define_clonotypes` "
             "or `tl.define_clonotype_clusters`, respectively?"
-        )
+        ) from None
 
     graph = igraph_from_sparse_matrix(clonotype_res["distances"], matrix_type="distance")
 
@@ -647,7 +647,7 @@ def clonotype_network_igraph(
     try:
         clonotype_key = params.adata.uns[basis]["clonotype_key"]
     except KeyError:
-        raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?")
+        raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?") from None
     if f"X_{basis}" not in params.adata.obsm_keys():
         raise KeyError(f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?")
     coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
