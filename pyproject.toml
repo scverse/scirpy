@@ -22,7 +22,7 @@ urls.Home-page = "https://github.com/scverse/scirpy"
 dependencies = [
     'anndata>=0.9',
     'awkward>=2.1.0',
-    'mudata @ https://github.com/scverse/mudata.git@master',
+    'mudata@git+https://github.com/scverse/mudata.git@master',
     'scanpy>=1.9.3',
     'pandas>=1.5,<2',
     'numpy>=1.17.0,<1.23', # unping max version after muon is fixed!
@@ -90,6 +90,9 @@ rpack = [
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.coverage.run]
 source = ["scirpy"]
