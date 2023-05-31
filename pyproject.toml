@@ -22,7 +22,7 @@ urls.Home-page = "https://github.com/scverse/scirpy"
 dependencies = [
     'anndata>=0.9',
     'awkward>=2.1.0',
-    'mudata@git+https://github.com/scverse/mudata.git@master',
+    'mudata@git+https://github.com/scverse/mudata.git@pandas2.0',
     'scanpy>=1.9.3',
     'pandas',
     'numpy>=1.17.0,<1.23', # unping max version after muon is fixed!
