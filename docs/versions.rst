@@ -11,7 +11,6 @@ the following list:
 .. raw:: html
 
    <ul id="versions_container">
-	<li><a href="https://scirpy.scverse.org/">latest release</a></li>
    </ul>
    <script type="text/javascript">
    	fetch("https://scverse.org/scirpy/versions/versions.json")
