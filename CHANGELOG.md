@@ -10,22 +10,17 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
-### Other changes
-
--   adopt [cookiecutter-scverse](https://github.com/scverse/cookiecutter-scverse) template.
--   require python >= 3.9 in line with NEP 29.
-
 (v0.13)=
 
-## v0.13.0rc1 - new data structure based on awkward arrays
+## v0.13.0 - new data structure based on awkward arrays
 
 This update introduces a new datastructure based on [awkward arrays](https://awkward-array.org/doc/main/).
-The new datastructure is described in more detail [in the documentation](https://scverse.org/scirpy/tags/v0.13.0rc1/data-structure.html) and is considered the "official" way of representing AIRR data for scverse core and ecosystem packages.
+The new datastructure is described in more detail [in the documentation](https://scirpy.scverse.org/en/latest/data-structure.html) and is considered the "official" way of representing AIRR data for scverse core and ecosystem packages.
 
 Benefits of the new data structure include:
 
 -   a more natural, lossless representation of [AIRR Rearrangement data](https://docs.airr-community.org/en/latest/datarep/rearrangements.html)
--   separation of AIRR data and the [receptor model](https://scverse.org/scirpy/tags/v0.13.0rc1/ir-biology.html), thereby getting rid of previous limitations (e.g. "only productive chains") and enabling other use-cases (e.g. spatial AIRR data) in the future.
+-   separation of AIRR data and the [receptor model](https://scirpy.scverse.org/en/latest/ir-biology.html), thereby getting rid of previous limitations (e.g. "only productive chains") and enabling other use-cases (e.g. spatial AIRR data) in the future.
 -   clean `adata.obs` as AIRR data is not expanded into columns
 -   support for [MuData](https://mudata.readthedocs.io/en/latest/) for working with paired gene expression and AIRR data as separate modalities.
 
@@ -101,11 +96,16 @@ New functions:
 
 ### Documentation
 
-The documentation has been updated to reflect the changes described above, in particular the [tutorials](https://scverse.org/scirpy/tags/v0.13.0rc1/tutorials.html) and the page about the [data structure](https://scverse.org/scirpy/tags/v0.13.0rc1/data-structure.html).
+The documentation has been updated to reflect the changes described above, in particular the [tutorials](https://scirpy.scverse.org/en/latest/tutorials.html) and the page about the [data structure](https://scirpy.scverse.org/en/latest/data-structure.html).
+
+Moreover, the documentation now uses a new design and moved from GitHub pages to ReadTheDocs.org.
+Older versions of the documentation are still [accessible from github pages](https://scirpy.scverse.org/en/latest/versions.html).
 
 ### Other changes
 
--   The minimum required Python version is now 3.8 (#381)
+-   Scirpy now adopts the [cookiecutter-scverse](https://github.com/scverse/cookiecutter-scverse) template. The structure
+    of this repository has ben adapted accordingly. Also code was reformatted in accordance with the template defaults.
+-   The minimum required Python version is now 3.9 in accordance with NEP 29
 -   Increased the minium version of tqdm to 4.63 (See https://github.com/tqdm/tqdm/issues/1082)
 -   `pl.repertoire_overlap` now _always_ runs `tl.repertoire_overlap` internally and doesn't rely on cached values.
 -   The mode `dendro_only` in `pl.repertoire_overlap` has been removed.
