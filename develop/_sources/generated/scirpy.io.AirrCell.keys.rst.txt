@@ -1,8 +1,0 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/C:\hostedtoolcache\windows\Python\3.9.13\x64\lib\collections\abc.py#L775-L777
-
-scirpy.io.AirrCell.keys
-=======================
-
-.. currentmodule:: scirpy.io
-
-.. automethod:: AirrCell.keys

@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L619-L648
-
-scirpy.io.write\_airr
-=====================
-
-.. currentmodule:: scirpy.io
-
-.. autofunction:: write_airr

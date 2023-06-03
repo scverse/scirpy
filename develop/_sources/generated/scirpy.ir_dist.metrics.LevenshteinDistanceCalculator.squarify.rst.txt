@@ -1,8 +1,0 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/ir_dist/metrics.py#L91-L107
-
-scirpy.ir\_dist.metrics.LevenshteinDistanceCalculator.squarify
-==============================================================
-
-.. currentmodule:: scirpy.ir_dist.metrics
-
-.. automethod:: LevenshteinDistanceCalculator.squarify

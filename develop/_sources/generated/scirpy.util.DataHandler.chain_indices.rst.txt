@@ -1,8 +1,0 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/util/__init__.py
-
-scirpy.util.DataHandler.chain\_indices
-======================================
-
-.. currentmodule:: scirpy.util
-
-.. autoproperty:: DataHandler.chain_indices

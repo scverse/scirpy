@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/get/__init__.py#L153-L201
-
-scirpy.get.airr\_context
-========================
-
-.. currentmodule:: scirpy.get
-
-.. autofunction:: airr_context

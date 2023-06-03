@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_io.py#L380-L490
-
-scirpy.io.read\_airr
-====================
-
-.. currentmodule:: scirpy.io
-
-.. autofunction:: read_airr

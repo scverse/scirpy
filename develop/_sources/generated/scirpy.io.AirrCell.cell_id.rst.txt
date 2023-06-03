@@ -1,8 +1,0 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_datastructures.py
-
-scirpy.io.AirrCell.cell\_id
-===========================
-
-.. currentmodule:: scirpy.io
-
-.. autoproperty:: AirrCell.cell_id
