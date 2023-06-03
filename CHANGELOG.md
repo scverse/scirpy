@@ -116,6 +116,8 @@ Older versions of the documentation are still [accessible from github pages](htt
 -   In `pl.spectratype`, the parameter `groupby` has been replaced by `chain`.
 -   We now use [isort](https://pycqa.github.io/isort/) to organize imports.
 -   Static typing has been improved internally (using pylance). It's not perfectly consistent yet, but we will keep working on this in the future.
+-   Fix IEDB data loader after update of IEDB data formats (#401) and add tests for database import functions.
+-   `io.read_airr` now tolerates if fields required according to the AIRR standard are missing. The respective fields will be initalized with `None` (#407 by @zktuong).
 
 ## v0.12.2
 
