@@ -347,7 +347,7 @@ class DataHandler:
                     dedent(
                         f"""\
                         No AIRR data found in adata.obsm['{self._airr_key}'].
-                        See https://scverse.org/scirpy/develop/data-structure.html for more info about the scirpy data structure.
+                        See https://scirpy.scverse.org/en/latest/data-structure.html for more info about the scirpy data structure.
                         """
                     )
                 )

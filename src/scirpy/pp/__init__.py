@@ -14,8 +14,7 @@ def merge_with_ir(*args, **kwargs):
             """\
             This function has been removed in v0.13.
             Use MuData instead: mdata = MuData({"gex": adata, "airr": adata_ir})
-            See https://scverse.org/scirpy/latest/data-structure.html
-            """
+            See https://scirpy.scverse.org/en/latest/data-structure.html"""
         )
     )
 

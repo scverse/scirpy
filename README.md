@@ -112,6 +112,6 @@ You can cite the scverse publication as follows:
 [changelog]: https://scirpy.readthedocs.io/latest/changelog.html
 [link-docs]: https://scirpy.readthedocs.io
 [link-api]: https://scirpy.readthedocs.io/latest/api.html
-[link-tutorial]: https://scverse.org/scirpy/latest/tutorials.html
+[link-tutorial]: https://scirpy.scverse.org/en/latest/tutorials.html
 [Docker]: https://www.docker.com/
 [Podman]: https://podman.io/

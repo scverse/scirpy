@@ -59,7 +59,7 @@ test:
     - pytest --pyargs scirpy -m "not extra"
 
 about:
-  home: https://scverse.org/scirpy
+  home: https://scirpy.scverse.org
   dev_url: https://github.com/scverse/scirpy
   license: BSD-3
   license_family: BSD
