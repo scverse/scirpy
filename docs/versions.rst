@@ -2,7 +2,7 @@ Other versions
 ==============
 
 .. note::
-    **Versions of the documentation :math:`\gt` v0.13 are hosted on readthedocs and can be accessed via
+    **Versions of the documentation ≥v0.13 are hosted on readthedocs and can be accessed via
     sidebar menu at the bottom**
 
 Older versions of the documentation are hosted on GitHub pages for historical reasons and can be accessed via
