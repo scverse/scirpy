@@ -63,7 +63,7 @@ doc = [
     'pycairo',
     'jupyter_client',
     'sc-dandelion',
-    'muon>=0.1.4',
+    'muon>=0.1.5',
     # for executing notebooks on CI
     'nbconvert',
     # I don't know why this would be needed, but it complains about zarr missing when building

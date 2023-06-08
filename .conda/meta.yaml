@@ -52,7 +52,7 @@ test:
     - jupyter_client
     - ipykernel
     - nbconvert
-    - muon >= 0.1.4
+    - muon >= 0.1.5
   imports:
     - scirpy
   commands:
