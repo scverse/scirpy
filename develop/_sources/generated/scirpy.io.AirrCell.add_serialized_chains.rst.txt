@@ -1,8 +1,0 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_datastructures.py#L151-L161
-
-scirpy.io.AirrCell.add\_serialized\_chains
-==========================================
-
-.. currentmodule:: scirpy.io
-
-.. automethod:: AirrCell.add_serialized_chains

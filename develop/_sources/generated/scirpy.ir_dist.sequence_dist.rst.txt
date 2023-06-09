@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/ir_dist/__init__.py#L250-L316
-
-scirpy.ir\_dist.sequence\_dist
-==============================
-
-.. currentmodule:: scirpy.ir_dist
-
-.. autofunction:: sequence_dist

@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/io/_convert_anndata.py#L57-L90
-
-scirpy.io.to\_airr\_cells
-=========================
-
-.. currentmodule:: scirpy.io
-
-.. autofunction:: to_airr_cells

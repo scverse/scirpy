@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/pl/_vdj_usage.py#L20-L272
-
-scirpy.pl.vdj\_usage
-====================
-
-.. currentmodule:: scirpy.pl
-
-.. autofunction:: vdj_usage

@@ -1,8 +1,0 @@
-﻿:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/tl/_group_abundance.py#L68-L123
-
-scirpy.tl.group\_abundance
-==========================
-
-.. currentmodule:: scirpy.tl
-
-.. autofunction:: group_abundance

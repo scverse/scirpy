@@ -1,8 +1,0 @@
-:github_url: https://github.com/scverse/scirpy/tree/master/scirpy/ir_dist/metrics.py#L205-L239
-
-scirpy.ir\_dist.metrics.AlignmentDistanceCalculator.calc\_dist\_mat
-===================================================================
-
-.. currentmodule:: scirpy.ir_dist.metrics
-
-.. automethod:: AlignmentDistanceCalculator.calc_dist_mat
