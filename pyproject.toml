@@ -22,10 +22,10 @@ urls.Home-page = "https://github.com/scverse/scirpy"
 dependencies = [
     'anndata>=0.9',
     'awkward>=2.1.0',
-    'mudata>=0.2.2',
+    'mudata>=0.2.3',
     'scanpy>=1.9.3',
-    'pandas>=1.5,<2',
-    'numpy>=1.17.0,<1.23', # unping max version after muon is fixed!
+    'pandas>=1.5',
+    'numpy>=1.17.0',
     'scipy',
     # parasail 1.2.1 fails to be installd on MacOS
     'parasail != 1.2.1',
@@ -40,9 +40,6 @@ dependencies = [
     'adjustText>=0.7',
     'numba>=0.41.0',
     'pooch>=1.7.0',
-    # for getting the version
-    'setuptools_scm',
-    'pytoml',
     'pycairo>=1.20; sys_platform == "win32"',
 ]
 
@@ -66,7 +63,7 @@ doc = [
     'pycairo',
     'jupyter_client',
     'sc-dandelion',
-    'muon>=0.1.3',
+    'muon>=0.1.5',
     # for executing notebooks on CI
     'nbconvert',
     # I don't know why this would be needed, but it complains about zarr missing when building
