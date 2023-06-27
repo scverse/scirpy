@@ -156,9 +156,9 @@ def clonotype_modularity(
         # results can be inconsisten otherwise (old dangling "fdr" values when only
         # pvalues are calculated)
         for suffix in ["fdr", "pvalue"]:
-            for d in [params.mdata, params.adata]:
+            for d in ["mdata", "adata"]:
                 try:
-                    del d.obs[f"{key_added}_{suffix}"]
+                    del getattr(params, d).obs[f"{key_added}_{suffix}"]
                 except (AttributeError, KeyError):
                     pass
 
