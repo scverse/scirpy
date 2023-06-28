@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+### Fixes
+ * Fix that clonotype_modularity could not run with AnnData object ([#421](https://github.com/scverse/scirpy/pull/421)). 
+
 (v0.13)=
 
 ## v0.13.0 - new data structure based on awkward arrays
