@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 -   Fix that clonotype_modularity could not run with AnnData object ([#421](https://github.com/scverse/scirpy/pull/421)).
+-   Fix usage of wrong column in 3k tutorial ([#423](https://github.com/scverse/scirpy/pull/423))
 
 (v0.13)=
 
