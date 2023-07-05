@@ -35,7 +35,6 @@ Input/Output: `io`
    * the documentation about :ref:`Scirpy's data structure <data-structure>`
 
    .. autosummary::
-      :toctree: ./generated
 
       io.upgrade_schema
 
@@ -44,7 +43,6 @@ The following functions allow to import :term:`V(D)J` information from various
 formats.
 
 .. autosummary::
-   :toctree: ./generated
 
    io.read_h5mu
    io.read_h5ad
@@ -58,7 +56,6 @@ formats.
 Scirpy can export data to the following formats:
 
 .. autosummary::
-   :toctree: ./generated
 
    io.write_airr
    io.to_dandelion
@@ -70,7 +67,6 @@ an :class:`~anndata.AnnData` object using :func:`~scirpy.io.from_airr_cells`.
 For more details, check the :ref:`Data loading tutorial <importing-data>`.
 
 .. autosummary::
-   :toctree: ./generated
 
    io.AirrCell
    io.from_airr_cells
@@ -84,7 +80,6 @@ Preprocessing: `pp`
 .. currentmodule:: scirpy
 
 .. autosummary::
-   :toctree: ./generated
 
    pp.index_chains
    pp.merge_airr
@@ -100,7 +95,6 @@ or :class:`~pandas.Series`.
 .. currentmodule:: scirpy
 
 .. autosummary::
-   :toctree: ./generated
 
    get.airr
    get.obs_context
@@ -118,21 +112,18 @@ which usually can be visualized by a corresponding plotting function.
 Generic
 ^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    tl.group_abundance
 
 Quality control
 ^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    tl.chain_qc
 
 Define and visualize clonotypes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    tl.define_clonotypes
    tl.define_clonotype_clusters
@@ -143,7 +134,6 @@ Define and visualize clonotypes
 Analyse clonal diversity
 ^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    tl.clonal_expansion
    tl.summarize_clonal_expansion
@@ -155,7 +145,6 @@ Analyse clonal diversity
 Query reference databases
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    tl.ir_query
    tl.ir_query_annotate
@@ -164,7 +153,6 @@ Query reference databases
 V(D)J gene usage
 ^^^^^^^^^^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    tl.spectratype
 
@@ -180,7 +168,6 @@ Plotting: `pl`
 Generic
 ^^^^^^^
 .. autosummary::
-   :toctree: ./generated
 
    pl.embedding
 
@@ -193,7 +180,6 @@ when calling the plotting function or need to be precomputed and stored in
 :class:`~anndata.AnnData` previously.
 
 .. autosummary::
-   :toctree: ./generated
 
    pl.alpha_diversity
    pl.clonal_expansion
@@ -212,7 +198,6 @@ Base plotting functions: `pl.base`
 
 
 .. autosummary::
-   :toctree: ./generated
 
    pl.base.bar
    pl.base.line
@@ -225,7 +210,6 @@ Plot styling: `pl.styling`
 
 
 .. autosummary::
-   :toctree: ./generated
 
    pl.styling.apply_style_to_axes
    pl.styling.style_axes
@@ -241,7 +225,6 @@ Example datasets
 ^^^^^^^^^^^^^^^^
 
 .. autosummary::
-   :toctree: ./generated
 
    datasets.wu2020
    datasets.wu2020_3k
@@ -251,7 +234,6 @@ Reference databases
 ^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
-   :toctree: ./generated
 
    datasets.vdjdb
    datasets.iedb
@@ -268,7 +250,6 @@ Utility functions: `util`
 .. currentmodule:: scirpy
 
 .. autosummary::
-   :toctree: ./generated
 
    util.DataHandler
    util.graph.layout_components
@@ -283,7 +264,6 @@ IR distance utilities: `ir_dist`
 .. currentmodule:: scirpy
 
 .. autosummary::
-   :toctree: ./generated
 
    ir_dist.sequence_dist
 
@@ -293,7 +273,6 @@ distance metrics
 
 
 .. autosummary::
-   :toctree: ./generated
 
    ir_dist.metrics.DistanceCalculator
    ir_dist.metrics.ParallelDistanceCalculator

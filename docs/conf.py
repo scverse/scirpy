@@ -35,7 +35,7 @@ nitpicky = True  # Warn about broken links
 needs_sphinx = "4.0"
 
 api_dir = HERE / "_static" / "api"
-api_rel_dir = "../_static/api"
+api_rel_dir = "_static/api"
 
 html_context = {
     "display_github": True,  # Integrate GitHub
