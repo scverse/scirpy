@@ -5,10 +5,23 @@
 [![PyPI][badge-pypi]][link-pypi]
 [![bioconda][badge-bioconda]][link-bioconda]
 [![airr][badge-airr]][link-airr]
+[![Powered by NumFOCUS][badge-numfocus]][link-numfocus]
 
-Scirpy is a scverse core package to analyse T cell receptor (TCR) or B cell receptor (BCR)
+Scirpy is a package to analyse T cell receptor (TCR) or B cell receptor (BCR)
 repertoires from single-cell RNA sequencing (scRNA-seq) data in Python.
 It seamlessly integrates with [scanpy][] and [mudata][] and provides various modules for data import, analysis and visualization.
+
+[//]: # "numfocus-fiscal-sponsor-attribution"
+
+Scirpy is part of the scverse project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
+Please consider making a tax-deductible [donation](https://numfocus.org/donate-to-scverse) to help the project pay for developer time, professional services, travel, workshops, and a variety of other needs.
+
+<a href="https://numfocus.org/project/scverse">
+  <img
+    src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
+    width="200"
+  >
+</a>
 
 [badge-tests]: https://img.shields.io/github/actions/workflow/status/grst/scirpy/test.yaml?branch=main
 [link-tests]: https://github.com/scverse/scirpy/actions/workflows/test.yml
@@ -22,6 +35,8 @@ It seamlessly integrates with [scanpy][] and [mudata][] and provides various mod
 [scverse]: https://scverse.org
 [scanpy]: https://scanpy.readthedocs.io/
 [mudata]: https://github.com/scverse/mudata
+[badge-numfocus]: https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
+[link-numfocus]: http://numfocus.org
 
 ## Getting started
 
