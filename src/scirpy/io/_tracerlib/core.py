@@ -238,12 +238,7 @@ class Cell:
             for locus, recombinants in six.iteritems(locus_dict):
                 if recombinants is not None:
                     for rec in recombinants:
-                        name = ">TRACER|{receptor}|{locus}|{contig_name}|{identifier}".format(
-                            contig_name=rec.contig_name,
-                            receptor=receptor,
-                            locus=locus,
-                            identifier=rec.identifier,
-                        )
+                        name = f">TRACER|{receptor}|{locus}|{rec.contig_name}|{rec.identifier}"
                         seq = rec.dna_seq
                         seq_string.append("\n".join([name, seq]))
 
