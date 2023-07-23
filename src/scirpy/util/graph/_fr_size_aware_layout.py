@@ -104,9 +104,7 @@ def layout_fr_size_aware(
 
     assert len(origin) == len(
         scale
-    ), "Arguments `origin` (d={}) and `scale` (d={}) need to have the same number of dimensions!".format(
-        len(origin), len(scale)
-    )
+    ), f"Arguments `origin` (d={len(origin)}) and `scale` (d={len(scale)}) need to have the same number of dimensions!"
     dimensionality = len(origin)
 
     unique_nodes = _get_unique_nodes(edge_list)
