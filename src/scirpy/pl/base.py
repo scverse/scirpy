@@ -16,7 +16,7 @@ from scirpy.util import _doc_params
 
 from .styling import DEFAULT_FIG_KWS, _init_ax, apply_style_to_axes
 
-_common_doc = """\
+_common_doc = f"""\
 style
     Style to apply to the axes. Currently supported are `None` (disable styling)
     and default (default style).
@@ -24,10 +24,8 @@ style_kws
     Parameters passed to :func:`scirpy.pl.styling.style_axes`
 fig_kws
     Parameters passed to the :func:`matplotlib.pyplot.figure` call
-    if no `ax` is specified. Defaults to `{}` if None.
-""".format(
-    str(DEFAULT_FIG_KWS)
-)
+    if no `ax` is specified. Defaults to `{str(DEFAULT_FIG_KWS)}` if None.
+"""
 
 
 @_doc_params(common_doc=_common_doc)
