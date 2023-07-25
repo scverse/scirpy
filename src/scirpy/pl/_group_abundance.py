@@ -75,7 +75,7 @@ def group_abundance(
     # TODO workaround for temporarily added has_ir column. Don't get colors in that case
     if target_col != "has_ir":
         if "color" not in kwargs:
-            colors = _get_colors(DataHandler.default(adata), target_col)
+            colors = _get_colors(DataHandler(adata), target_col)
             if colors is not None:
                 kwargs["color"] = [colors[cat] for cat in abundance.columns]
 
