@@ -1,4 +1,6 @@
-from typing import Literal, Union
+import warnings
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import pandas as pd
 
@@ -10,10 +12,9 @@ def _clip_and_count(
     target_col: str,
     *,
     groupby: Union[str, None, list[str]] = None,
-    clip_at: int = 3,
+    breakpoints: Sequence[int] = (1, 2, 3),
     inplace: bool = True,
     key_added: Union[str, None] = None,
-    fraction: bool = True,
     airr_mod="airr",
 ) -> Union[None, pd.Series]:
     """Counts the number of identical entries in `target_col`
@@ -52,7 +53,8 @@ def clonal_expansion(
     *,
     target_col: str = "clone_id",
     expanded_in: Union[str, None] = None,
-    clip_at: int = 3,
+    breakpoints: Sequence[int] = (1, 2),
+    clip_at: Optional[int] = None,
     key_added: str = "clonal_expansion",
     inplace: bool = True,
     **kwargs,
@@ -72,9 +74,17 @@ def clonal_expansion(
         this to the column containing sample annotation. If set to None,
         a clonotype counts as expanded if there's any cell of the same clonotype
         across the entire dataset.
-    clip_at:
-        All clonotypes with more than `clip_at` clones will be summarized into
-        a single category
+    breakpoints
+        summarize clonotypes with a size smaller or equal than the specified numbers
+        into groups. For instance, if this is (1, 2, 5), there will be four categories:
+         * all clonotypes with a size of 1 (singletons)
+         * all clonotypes with a size of 2
+         * all clonotypes with a size between 3 and 5 (inclusive)
+         * all clonotypes with a size > 5
+    clip_at
+        This argument is superseded by `breakpoints` and is only kept for backwards-compatibility.
+        Specifying a value of `clip_at = N` equals to specifying `breakpoints = (1, 2, 3, ..., N)`
+        Specifying both `clip_at` overrides `breakpoints`.
     {key_added}
     {inplace}
     {airr_mod}
@@ -84,11 +94,14 @@ def clonal_expansion(
     Depending on the value of inplace, adds a column to adata or returns
     a Series with the clipped count per cell.
     """
+    if clip_at is not None:
+        breakpoints = list(range(1, clip_at))
+        warnings.warn("The argument `clip_at` is deprecated. Please use `brekpoints` instead.", category=FutureWarning)
     return _clip_and_count(
         adata,
         target_col,
         groupby=expanded_in,
-        clip_at=clip_at,
+        breakpoints=breakpoints,
         key_added=key_added,
         inplace=inplace,
         **kwargs,
