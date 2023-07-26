@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+### Additions
+
+-   The `clonal_expansion` function now supports a `breakpoints` argument for more flexible "expansion categories".
+    The `breakpoints` argument supersedes the `clip_at` parameter, which is now deprecated. ([#439](https://github.com/scverse/scirpy/pull/439))
+
 ### Fixes
 
 -   Fix that clonotype_modularity could not run with AnnData object ([#421](https://github.com/scverse/scirpy/pull/421)).
