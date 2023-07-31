@@ -6,6 +6,7 @@ from typing import Any, Callable, Union
 
 import awkward as ak
 import numba as nb
+import numpy as np
 from scanpy import logging
 
 from scirpy.io._datastructures import AirrCell
@@ -224,11 +225,9 @@ def index_chains_numba(
     keep_keys.append("locus")
     airr = airr[keep_keys]
 
-    is_multichain = ak.zeros_like(airr["locus"], dtype=bool)
-    ab = ak.ArrayBuilder()
-    ab.begin_record()
+    res = {}
+    is_multichain = np.zeros(len(airr), dtype=bool)
     for chain_type in ["VJ", "VDJ"]:
-        ab.field(chain_type)
         locus_names = {"VJ": AirrCell.VJ_LOCI, "VDJ": AirrCell.VDJ_LOCI}[chain_type]
         airr_for_locus = airr[_awkward_isin(airr["locus"], locus_names)]
 
@@ -237,15 +236,12 @@ def index_chains_numba(
         for k, default in reversed(sort_chains_by.items()):
             idx = ak.argsort(ak.fill_none(prev_arr[k], default), stable=True, axis=-1)
             prev_arr = airr_for_locus[idx]
-        # is_multichain &= _awkward_len(airr_for_locus)
+        res[chain_type] = ak.pad_none(idx, 2, axis=1, clip=True)
+        is_multichain &= ak.to_numpy(_awkward_len(idx)) > 2
 
-        ab.append(ak.pad_none(idx, 2, axis=1, clip=True))
-
-    ab.field("multichain")
-    ab.append(is_multichain)
-    ab.end_record()
-
-    return ab.snapshot()
+    res["multichain"] = is_multichain
+    # return res
+    return ak.zip(res, depth_limit=1)
 
     vj = airr[_is_vj(airr)]
 
