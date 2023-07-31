@@ -41,8 +41,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: install conda build
+        # TODO pinning conda-build version because it stopped working for no good reason in 3.25 or 3.26. 
         run: |
-          mamba install -y conda-build conda-verify
+          mamba install -y conda-build=3.24.0 conda-verify
         shell: bash
 
       - name: build and test package
