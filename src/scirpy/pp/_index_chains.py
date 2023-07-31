@@ -1,5 +1,6 @@
+import operator
 from collections.abc import Mapping, Sequence
-from functools import partial
+from functools import partial, reduce
 from types import MappingProxyType
 from typing import Any, Callable, Union
 
@@ -143,7 +144,7 @@ def index_chains(
 def index_chains_numba(
     adata: DataHandler.TYPE,
     *,
-    filter: Union[Callable[[Mapping], bool], Sequence[Union[str, Callable[[Mapping], bool]]]] = (
+    filter: Union[Callable[[ak.Array], bool], Sequence[Union[str, Callable[[ak.Array], bool]]]] = (
         "productive",
         "require_junction_aa",
     ),
@@ -202,7 +203,7 @@ def index_chains_numba(
         filter = [filter]
     filter_presets = {
         "productive": lambda x: x["productive"],
-        "require_junction_aa": lambda x: not _is_na2(x["junction_aa"]),
+        "require_junction_aa": lambda x: ~ak.is_none(x["junction_aa"], axis=-1),
     }
     filter = [filter_presets[f] if isinstance(f, str) else f for f in filter]
 
@@ -212,7 +213,55 @@ def index_chains_numba(
         if "duplicate_count" not in params.airr.fields and "consensus_count" not in params.airr.fields:
             logging.warning("No expression information available. Cannot rank chains by expression. ")  # type: ignore
 
-    chain_index_awk = _index_chains_inner(params.airr, ak.ArrayBuilder()).snapshot()
+    if "locus" not in params.airr.fields:
+        raise ValueError("The scirpy receptor model requires a `locus` field to be specified in the AIRR data.")
+
+    # Filter out chains that do not match the filter criteria
+    airr = params.airr
+    airr = params.airr[reduce(operator.and_, (f(airr) for f in filter))]
+    # from now on, only need the keys required for sorting
+    keep_keys = list(sort_chains_by.keys())
+    keep_keys.append("locus")
+    airr = airr[keep_keys]
+
+    is_multichain = ak.zeros_like(airr["locus"], dtype=bool)
+    ab = ak.ArrayBuilder()
+    ab.begin_record()
+    for chain_type in ["VJ", "VDJ"]:
+        ab.field(chain_type)
+        locus_names = {"VJ": AirrCell.VJ_LOCI, "VDJ": AirrCell.VDJ_LOCI}[chain_type]
+        airr_for_locus = airr[_awkward_isin(airr["locus"], locus_names)]
+
+        # sort array
+        prev_arr = airr_for_locus
+        for k, default in reversed(sort_chains_by.items()):
+            idx = ak.argsort(ak.fill_none(prev_arr[k], default), stable=True, axis=-1)
+            prev_arr = airr_for_locus[idx]
+        # is_multichain &= _awkward_len(airr_for_locus)
+
+        ab.append(ak.pad_none(idx, 2, axis=1, clip=True))
+
+    ab.field("multichain")
+    ab.append(is_multichain)
+    ab.end_record()
+
+    return ab.snapshot()
+
+    vj = airr[_is_vj(airr)]
+
+    # sort array
+    prev_arr = vj
+    for k, default in reversed(sort_chains_by.items()):
+        idx = ak.argsort(ak.fill_none(prev_arr[k], default), stable=True, axis=-1)
+        prev_arr = vj[idx]
+
+    ak.Array({})
+    multichain = _awkward_len(vj) > 2
+    vj = ak.pad_none(idx, 2, axis=1, clip=True)
+
+    return vj, multichain
+
+    chain_index_awk = _index_chains_inner(airr_filtered, ak.ArrayBuilder(), sort_chains_by).snapshot()
 
     return chain_index_awk
 
@@ -228,21 +277,48 @@ def index_chains_numba(
 
 
 @nb.njit
-def _index_chains_inner(cells: ak.Array, ab: ak.ArrayBuilder):
+def _awkward_len_inner(arr, ab):
+    for row in arr:
+        ab.append(len(row))
+    return ab
+
+
+def _awkward_len(arr):
+    return _awkward_len_inner(arr, ak.ArrayBuilder()).snapshot()
+
+
+@nb.njit()
+def _awkward_isin_inner(arr, haystack, ab):
+    for row in arr:
+        ab.begin_list()
+        for v in row:
+            ab.append(v in haystack)
+        ab.end_list()
+    return ab
+
+
+def _awkward_isin(arr, haystack):
+    haystack = tuple(haystack)
+    return _awkward_isin_inner(arr, haystack, ak.ArrayBuilder()).snapshot()
+
+
+@nb.njit
+def _index_chains_inner(cells: ak.Array, ab: ak.ArrayBuilder, sort_chains_by: tuple):
     for cell_chains in cells:
         # Split chains into VJ and VDJ chains
+
         vj_indices = nb.typed.List()
         vdj_indices = nb.typed.List()
-        # TODO use prange
+        # TODO can this be solved faster with np ufuncs?
         for i, tmp_chain in enumerate(cell_chains):
-            if True:  # all(f(tmp_chain) for f in filter) and "locus" in params.airr.fields:
-                if tmp_chain["locus"] in _VJ_LOCI:
-                    vj_indices.append(i)
-                elif tmp_chain["locus"] in _VDJ_LOCI:
-                    vdj_indices.append(i)
+            if tmp_chain["locus"] in _VJ_LOCI:
+                vj_indices.append(i)
+            elif tmp_chain["locus"] in _VDJ_LOCI:
+                vdj_indices.append(i)
 
         # Order chains by expression (or whatever was specified in sort_chains_by)
         # TODO proper sorting
+        vj_indices = sorted(vj_indices, key=partial(_key_sort_chains_numba, cell_chains, sort_chains_by), reverse=True)
         vj_indices = sorted(vj_indices)
         vdj_indices = sorted(vdj_indices)
 
@@ -275,7 +351,33 @@ def _index_chains_inner(cells: ak.Array, ab: ak.ArrayBuilder):
     return ab
 
 
-def _key_sort_chains(chains: list[Mapping], sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
+@nb.njit
+def _key_sort_chains_numba(chains, sort_chains_by, idx: int) -> Sequence:
+    """Get key to sort chains by expression.
+
+    Parameters
+    ----------
+    chains
+        List of dictionaries with chains
+    keys
+        Dictionary with sort keys and default values should the key not be found
+    idx
+        The chain index of the current chain in `chains`
+    """
+    chain = chains[idx]
+    sort_key = nb.typed.List()
+    for k, default in sort_chains_by:
+        try:
+            v = chain[k]
+            if v is None:
+                v = default
+        except (IndexError, KeyError):
+            v = default
+        sort_key.append(v)
+    return sort_key
+
+
+def _key_sort_chains(chains, sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
     """Get key to sort chains by expression.
 
     Parameters
