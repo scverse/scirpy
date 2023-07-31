@@ -21,8 +21,22 @@ def test_alpha_diversity(adata_diversity):
     assert isinstance(p, plt.Axes)
 
 
+@pytest.mark.parametrize("adata_clonotype", [True], indirect=["adata_clonotype"], ids=["MuData"])
+def test_group_abundance_default(adata_clonotype):
+    """Regression test for #435"""
+    # Change to 'tcr' as airr_mod instead of the default 'airr'.
+    adata_clonotype = MuData({"tcr": adata_clonotype["airr"]})
+    p = pl.group_abundance(
+        adata_clonotype,
+        groupby="tcr:clone_id",
+        target_col="tcr:group",
+    )
+    assert isinstance(p, plt.Axes)
+
+
 def test_group_abundance(adata_clonotype):
     mdata_modifier = "airr:" if isinstance(adata_clonotype, MuData) else ""
+
     p = pl.group_abundance(
         adata_clonotype,
         groupby=f"{mdata_modifier}clone_id",
