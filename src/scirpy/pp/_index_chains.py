@@ -5,7 +5,6 @@ from types import MappingProxyType
 from typing import Any, Callable, Union
 
 import awkward as ak
-import numba as nb
 import numpy as np
 from scanpy import logging
 
@@ -220,6 +219,7 @@ def index_chains_numba(
     # Filter out chains that do not match the filter criteria
     airr = params.airr
     airr_idx = ak.local_index(airr, axis=1)
+    # TODO use ak.all
     airr_idx = airr_idx[reduce(operator.and_, (f(airr) for f in filter))]
 
     # # from now on, only need the keys required for sorting + locus
@@ -234,8 +234,10 @@ def index_chains_numba(
 
         # sort array - take advantage of the fact that the sorting algorithm is stable.
         for k, default in reversed(sort_chains_by.items()):
-            tmp_idx = ak.argsort(ak.fill_none(airr[k][idx], default), stable=True, axis=-1)
-            idx = idx[tmp_idx]
+            # skip this round of sorting altogether if field not present
+            if k in airr.fields:
+                tmp_idx = ak.argsort(ak.fill_none(airr[k][idx], default), stable=True, axis=-1)
+                idx = idx[tmp_idx]
         res[chain_type] = ak.pad_none(idx, 2, axis=1, clip=True)
         is_multichain &= ak.to_numpy(_awkward_len(idx)) > 2
 
@@ -272,105 +274,38 @@ def index_chains_numba(
     }
 
 
-@nb.njit
-def _awkward_len_inner(arr, ab):
-    for row in arr:
-        ab.append(len(row))
-    return ab
+# @nb.njit
+# def _awkward_len_inner(arr, ab):
+#     for row in arr:
+#         ab.append(len(row))
+#     return ab
+
+
+# def _awkward_len(arr):
+#     return _awkward_len_inner(arr, ak.ArrayBuilder()).snapshot()
 
 
 def _awkward_len(arr):
-    return _awkward_len_inner(arr, ak.ArrayBuilder()).snapshot()
-
-
-@nb.njit()
-def _awkward_isin_inner(arr, haystack, ab):
-    for row in arr:
-        ab.begin_list()
-        for v in row:
-            ab.append(v in haystack)
-        ab.end_list()
-    return ab
+    return ak.max(ak.local_index(arr, axis=1), axis=1)
 
 
 def _awkward_isin(arr, haystack):
-    haystack = tuple(haystack)
-    return _awkward_isin_inner(arr, haystack, ak.ArrayBuilder()).snapshot()
+    return reduce(operator.or_, (arr == el for el in haystack))
 
 
-@nb.njit
-def _index_chains_inner(cells: ak.Array, ab: ak.ArrayBuilder, sort_chains_by: tuple):
-    for cell_chains in cells:
-        # Split chains into VJ and VDJ chains
-
-        vj_indices = nb.typed.List()
-        vdj_indices = nb.typed.List()
-        # TODO can this be solved faster with np ufuncs?
-        for i, tmp_chain in enumerate(cell_chains):
-            if tmp_chain["locus"] in _VJ_LOCI:
-                vj_indices.append(i)
-            elif tmp_chain["locus"] in _VDJ_LOCI:
-                vdj_indices.append(i)
-
-        # Order chains by expression (or whatever was specified in sort_chains_by)
-        # TODO proper sorting
-        vj_indices = sorted(vj_indices, key=partial(_key_sort_chains_numba, cell_chains, sort_chains_by), reverse=True)
-        vj_indices = sorted(vj_indices)
-        vdj_indices = sorted(vdj_indices)
-
-        N_CHAINS = 2
-        n_vj = min(2, len(vj_indices))
-        n_vdj = min(2, len(vdj_indices))
-
-        # build awkward array with chain indices
-        ab.begin_record()
-        ab.field("VJ")
-        ab.begin_list()
-        # Add up to two chains
-        for i in vj_indices[:n_vj]:
-            ab.append(i)
-        # pad with None such thatwe have exactly 2 entries
-        for _ in range(N_CHAINS - n_vj):
-            ab.append(None)
-        ab.end_list()
-        ab.field("VDJ")
-        ab.begin_list()
-        for i in vdj_indices[:n_vdj]:
-            ab.append(i)
-        for _ in range(N_CHAINS - n_vdj):
-            ab.append(None)
-        ab.end_list()
-        ab.field("multichain")
-        ab.boolean(len(vj_indices) > 2 or len(vdj_indices) > 2)
-        ab.end_record()
-
-    return ab
+# @nb.njit()
+# def _awkward_isin_inner(arr, haystack, ab):
+#     for row in arr:
+#         ab.begin_list()
+#         for v in row:
+#             ab.append(v in haystack)
+#         ab.end_list()
+#     return ab
 
 
-@nb.njit
-def _key_sort_chains_numba(chains, sort_chains_by, idx: int) -> Sequence:
-    """Get key to sort chains by expression.
-
-    Parameters
-    ----------
-    chains
-        List of dictionaries with chains
-    keys
-        Dictionary with sort keys and default values should the key not be found
-    idx
-        The chain index of the current chain in `chains`
-    """
-    chain = chains[idx]
-    sort_key = nb.typed.List()
-    for k, default in sort_chains_by:
-        try:
-            v = chain[k]
-            if v is None:
-                v = default
-        except (IndexError, KeyError):
-            v = default
-        sort_key.append(v)
-    return sort_key
+# def _awkward_isin(arr, haystack):
+#     haystack = tuple(haystack)
+#     return _awkward_isin_inner(arr, haystack, ak.ArrayBuilder()).snapshot()
 
 
 def _key_sort_chains(chains, sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
