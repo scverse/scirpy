@@ -18,7 +18,7 @@ _VDJ_LOCI = tuple(AirrCell.VDJ_LOCI)
 
 
 @DataHandler.inject_param_docs()
-def index_chains(
+def index_chains_legacy(
     adata: DataHandler.TYPE,
     *,
     filter: Union[Callable[[Mapping], bool], Sequence[Union[str, Callable[[Mapping], bool]]]] = (
@@ -141,7 +141,7 @@ def index_chains(
 
 
 @DataHandler.inject_param_docs()
-def index_chains_numba(
+def index_chains(
     adata: DataHandler.TYPE,
     *,
     filter: Union[Callable[[ak.Array], bool], Sequence[Union[str, Callable[[ak.Array], bool]]]] = (
@@ -176,7 +176,9 @@ def index_chains_numba(
     {adata}
     filter
         Option to filter chains. Can be either
-          * a callback function that takes a chain-dictionary as input and returns a boolean (True to keep, False to discard)
+          * a callback function that takes the full awkward array with AIRR chains as input and returns
+            another awkward array that is a boolean mask which can be used to index the former.
+            (True to keep, False to discard)
           * a list of "filtering presets". Possible values are `"productive"` and `"require_junction_aa"`.
             `"productive"` removes non-productive chains and `"require_junction_aa"` removes chains that don't have
             a CDR3 amino acid sequence.
@@ -216,54 +218,43 @@ def index_chains_numba(
     if "locus" not in params.airr.fields:
         raise ValueError("The scirpy receptor model requires a `locus` field to be specified in the AIRR data.")
 
-    # Filter out chains that do not match the filter criteria
     airr = params.airr
+    logging.info("Filtering chains...")
+    # Get the numeric indices pre-filtering - these are the indices we need in the final output as
+    # .obsm["airr"] is and remains unfiltered.
     airr_idx = ak.local_index(airr, axis=1)
-    # TODO use ak.all
+    # Filter out chains that do not match the filter criteria
     airr_idx = airr_idx[reduce(operator.and_, (f(airr) for f in filter))]
-
-    # # from now on, only need the keys required for sorting + locus
-    # keep_keys = list(sort_chains_by.keys())
-    # keep_keys.append("locus")
-    # airr = airr[keep_keys]
 
     res = {}
     is_multichain = np.zeros(len(airr), dtype=bool)
     for chain_type, locus_names in {"VJ": AirrCell.VJ_LOCI, "VDJ": AirrCell.VDJ_LOCI}.items():
+        logging.info(f"Indexing {chain_type} chains...")
+        # get the indices for all VJ / VDJ chains, respectively
         idx = airr_idx[_awkward_isin(airr["locus"][airr_idx], locus_names)]
 
-        # sort array - take advantage of the fact that the sorting algorithm is stable.
+        # Now we need to sort the chains by the keys specified in `sort_chains_by`.
+        # since `argsort` doesn't support composite keys, we take advantage of the
+        # fact that the sorting algorithm is stable and sort the same array several times,
+        # starting with the lowest priority key up to the highest priority key.
         for k, default in reversed(sort_chains_by.items()):
             # skip this round of sorting altogether if field not present
             if k in airr.fields:
+                logging.debug(f"Sorting chains by {k}")
                 tmp_idx = ak.argsort(ak.fill_none(airr[k][idx], default), stable=True, axis=-1)
                 idx = idx[tmp_idx]
+            else:
+                logging.debug(f"Skip sorting by {k} because field not present")
+
+        # We want the result to be lists of exactly 2 - clip if longer, pad with None if shorter.
         res[chain_type] = ak.pad_none(idx, 2, axis=1, clip=True)
         is_multichain &= ak.to_numpy(_awkward_len(idx)) > 2
 
+    # build results
+    logging.info("build result array")
     res["multichain"] = is_multichain
-    # return res
-    return ak.zip(res, depth_limit=1)
 
-    vj = airr[_is_vj(airr)]
-
-    # sort array
-    prev_arr = vj
-    for k, default in reversed(sort_chains_by.items()):
-        idx = ak.argsort(ak.fill_none(prev_arr[k], default), stable=True, axis=-1)
-        prev_arr = vj[idx]
-
-    ak.Array({})
-    multichain = _awkward_len(vj) > 2
-    vj = ak.pad_none(idx, 2, axis=1, clip=True)
-
-    return vj, multichain
-
-    chain_index_awk = _index_chains_inner(airr_filtered, ak.ArrayBuilder(), sort_chains_by).snapshot()
-
-    return chain_index_awk
-
-    params.adata.obsm[key_added] = chain_index_awk  # type: ignore
+    params.adata.obsm[key_added] = ak.zip(res, depth_limit=1)  # type: ignore
 
     # store metadata in .uns
     params.adata.uns[key_added] = {
@@ -285,14 +276,6 @@ def index_chains_numba(
 #     return _awkward_len_inner(arr, ak.ArrayBuilder()).snapshot()
 
 
-def _awkward_len(arr):
-    return ak.max(ak.local_index(arr, axis=1), axis=1)
-
-
-def _awkward_isin(arr, haystack):
-    return reduce(operator.or_, (arr == el for el in haystack))
-
-
 # @nb.njit()
 # def _awkward_isin_inner(arr, haystack, ab):
 #     for row in arr:
@@ -306,6 +289,14 @@ def _awkward_isin(arr, haystack):
 # def _awkward_isin(arr, haystack):
 #     haystack = tuple(haystack)
 #     return _awkward_isin_inner(arr, haystack, ak.ArrayBuilder()).snapshot()
+
+
+def _awkward_len(arr):
+    return ak.max(ak.local_index(arr, axis=1), axis=1)
+
+
+def _awkward_isin(arr, haystack):
+    return reduce(operator.or_, (arr == el for el in haystack))
 
 
 def _key_sort_chains(chains, sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
