@@ -5,6 +5,7 @@ from types import MappingProxyType
 from typing import Any, Callable, Union
 
 import awkward as ak
+import numba as nb
 import numpy as np
 from scanpy import logging
 
@@ -224,7 +225,8 @@ def index_chains(
     # .obsm["airr"] is and remains unfiltered.
     airr_idx = ak.local_index(airr, axis=1)
     # Filter out chains that do not match the filter criteria
-    airr_idx = airr_idx[reduce(operator.and_, (f(airr) for f in filter))]
+    # we need an initial value that selects all chains in case filter is an empty list
+    airr_idx = airr_idx[reduce(operator.and_, (f(airr) for f in filter), ak.ones_like(airr_idx, dtype=bool))]
 
     res = {}
     is_multichain = np.zeros(len(airr), dtype=bool)
@@ -241,14 +243,14 @@ def index_chains(
             # skip this round of sorting altogether if field not present
             if k in airr.fields:
                 logging.debug(f"Sorting chains by {k}")
-                tmp_idx = ak.argsort(ak.fill_none(airr[k][idx], default), stable=True, axis=-1)
+                tmp_idx = ak.argsort(ak.fill_none(airr[k][idx], default), stable=True, axis=-1, ascending=False)
                 idx = idx[tmp_idx]
             else:
                 logging.debug(f"Skip sorting by {k} because field not present")
 
         # We want the result to be lists of exactly 2 - clip if longer, pad with None if shorter.
         res[chain_type] = ak.pad_none(idx, 2, axis=1, clip=True)
-        is_multichain &= ak.to_numpy(_awkward_len(idx)) > 2
+        is_multichain |= ak.to_numpy(_awkward_len(idx)) > 2
 
     # build results
     logging.info("build result array")
@@ -265,38 +267,39 @@ def index_chains(
     }
 
 
-# @nb.njit
-# def _awkward_len_inner(arr, ab):
-#     for row in arr:
-#         ab.append(len(row))
-#     return ab
-
-
-# def _awkward_len(arr):
-#     return _awkward_len_inner(arr, ak.ArrayBuilder()).snapshot()
-
-
-# @nb.njit()
-# def _awkward_isin_inner(arr, haystack, ab):
-#     for row in arr:
-#         ab.begin_list()
-#         for v in row:
-#             ab.append(v in haystack)
-#         ab.end_list()
-#     return ab
-
-
-# def _awkward_isin(arr, haystack):
-#     haystack = tuple(haystack)
-#     return _awkward_isin_inner(arr, haystack, ak.ArrayBuilder()).snapshot()
+@nb.njit
+def _awkward_len_inner(arr, ab):
+    for row in arr:
+        ab.append(len(row))
+    return ab
 
 
 def _awkward_len(arr):
-    return ak.max(ak.local_index(arr, axis=1), axis=1)
+    return _awkward_len_inner(arr, ak.ArrayBuilder()).snapshot()
+
+
+@nb.njit()
+def _awkward_isin_inner(arr, haystack, ab):
+    for row in arr:
+        ab.begin_list()
+        for v in row:
+            ab.append(v in haystack)
+        ab.end_list()
+    return ab
 
 
 def _awkward_isin(arr, haystack):
-    return reduce(operator.or_, (arr == el for el in haystack))
+    haystack = tuple(haystack)
+    return _awkward_isin_inner(arr, haystack, ak.ArrayBuilder()).snapshot()
+
+
+# For future reference, here would be two alternative implementations that are a bit
+# slower, but work without the need for numba.
+# def _awkward_len(arr):
+#     return ak.max(ak.local_index(arr, axis=1), axis=1)
+#
+# def _awkward_isin(arr, haystack):
+#     return reduce(operator.or_, (arr == el for el in haystack))
 
 
 def _key_sort_chains(chains, sort_chains_by: Mapping[str, Any], idx: int) -> Sequence:
