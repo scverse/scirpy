@@ -1,0 +1,28 @@
+diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
+@@ -31,11 +31,13 @@ dev = [
+     "twine>=4.0.2"
+ ]
+ doc = [
++    "docutils>=0.8,!=0.18.*,!=0.19.*",
+     "sphinx>=4",
+     "sphinx-book-theme>=1.0.0",
+     "myst-nb",
+     "sphinxcontrib-bibtex>=1.0.0",
+     "sphinx-autodoc-typehints",
++    "sphinxext-opengraph",
+     # For notebooks
+     "ipykernel",
+     "ipython",
+@@ -61,12 +63,10 @@ addopts = [
+ 
+ [tool.black]
+ line-length = 120
+-target-version = ["py38"]
+ 
+ [tool.ruff]
+ src = ["src"]
+ line-length = 120
+-target-version = "py38"
+ select = [
+     "F",  # Errors detected by Pyflakes
+     "E",  # Error detected by Pycodestyle

@@ -1,0 +1,10 @@
+diff a/.pre-commit-config.yaml b/.pre-commit-config.yaml	(rejected hunks)
+@@ -24,7 +24,7 @@ repos:
+         # See https://github.com/scverse/cookiecutter-scverse/issues/143 and
+         # https://github.com/jupyterlab/jupyterlab/issues/12675
+         language_version: "17.9.1"
+-  - repo: https://github.com/charliermarsh/ruff-pre-commit
++  - repo: https://github.com/astral-sh/ruff-pre-commit
+     rev: v0.0.284
+     hooks:
+       - id: ruff
