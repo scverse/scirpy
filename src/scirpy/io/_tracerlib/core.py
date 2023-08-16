@@ -368,26 +368,17 @@ class Recombinant:
         if not self.has_D_segment:
             V_segment = self.summary[0]
             J_segment = self.summary[1]
-            segments_string = "V segment:\t{V_segment}\n" "J segment:\t{J_segment}\n".format(
-                V_segment=V_segment, J_segment=J_segment
-            )
+            segments_string = f"V segment:\t{V_segment}\n" f"J segment:\t{J_segment}\n"
         else:
             V_segment = self.summary[0]
             D_segment = self.summary[1]
             J_segment = self.summary[2]
-            segments_string = "V segment:\t{V_segment}\nD segment:\t{D_segment}\n" "J segment:\t{J_segment}\n".format(
-                V_segment=V_segment, D_segment=D_segment, J_segment=J_segment
-            )
+            segments_string = f"V segment:\t{V_segment}\nD segment:\t{D_segment}\n" f"J segment:\t{J_segment}\n"
         summary_string += segments_string
         summary_string += f"ID:\t{self.identifier}\n"
         summary_string += (
-            "TPM:\t{TPM}\nProductive:\t{productive}\nStop codon:"
-            "\t{stop_codon}\nIn frame:\t{in_frame}\n".format(
-                TPM=self.TPM,
-                productive=self.productive,
-                stop_codon=self.stop_codon,
-                in_frame=self.in_frame,
-            )
+            f"TPM:\t{self.TPM}\nProductive:\t{self.productive}\nStop codon:"
+            f"\t{self.stop_codon}\nIn frame:\t{self.in_frame}\n"
         )
 
         # lowercase CDR3 sequences if non-productive
