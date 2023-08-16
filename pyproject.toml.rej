@@ -14,11 +14,11 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
      "ipykernel",
      "ipython",
 @@ -61,12 +63,10 @@ addopts = [
- 
+
  [tool.black]
  line-length = 120
 -target-version = ["py38"]
- 
+
  [tool.ruff]
  src = ["src"]
  line-length = 120
