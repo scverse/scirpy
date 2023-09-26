@@ -478,3 +478,191 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
             dtype=int,
             count=len(seqs),
         )
+
+@_doc_params(params=_doc_params_parallel_distance_calculator)
+class FastAlignmentDistanceCalculator(ir.ir_dist.metrics.ParallelDistanceCalculator):
+    """\
+    Calculates distance between sequences based on pairwise sequence alignment.
+    
+    This is a variation of the AlignmentDistanceCalculator which pre-filters sequence pairs based on
+        a) differences in sequence length
+        b) the number of different characters, based on estimate of the mismatch penalty
+    
+    Depending on the setup, alignment may be performed significantly faster, but be advised that some sequence pairs may be filtered out incorrectly.
+    Default values for BLOSUM and PAM matrices are provided, but finding an adequate estimated_penalty for your given setup is encouraged.
+    
+    The distance between two sequences is defined as :math:`S_{{1,2}}^{{max}} - S_{{1,2}}`,
+    where :math:`S_{{1,2}}` is the alignment score of sequences 1 and 2 and
+    :math:`S_{{1,2}}^{{max}}` is the max. achievable alignment score of sequences 1 and 2.
+    :math:`S_{{1,2}}^{{max}}` is defined as :math:`\\min(S_{{1,1}}, S_{{2,2}})`.
+
+    The use of alignment-based distances is heavily inspired by :cite:`TCRdist`.
+
+    High-performance sequence alignments are calculated leveraging
+    the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).
+
+    Choosing a cutoff:
+        Alignment distances need to be viewed in the light of the substitution matrix.
+        The alignment distance is the difference between the actual alignment
+        score and the max. achievable alignment score. For instance, a mutation
+        from *Leucine* (`L`) to *Isoleucine* (`I`) results in a BLOSUM62 score of `2`.
+        An `L` aligned with `L` achieves a score of `4`. The distance is, therefore, `2`.
+
+        On the other hand, a single *Tryptophane* (`W`) mutating into, e.g.
+        *Proline* (`P`) already results in a distance of `15`.
+
+        We are still lacking empirical data up to which distance a CDR3 sequence still
+        is likely to recognize the same antigen, but reasonable cutoffs are `<15`.
+
+    Choosing an expected penalty:
+        The choice of an expected penalty is likely influenced by similar considerations as the
+        other parameters. Essentially, this can be thought of as a superficial (dis)similarity
+        measure. A higher value more strongly penalizes mismatching characters and is more in line
+        with looking for closely related sequence paris, while a lower value is more forgiving
+        and better suited when looking for more distantly related sequence pairs.
+
+    Parameters
+    ----------
+    cutoff
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices. The default cutoff is `10`.
+    {params}
+    subst_mat
+        Name of parasail substitution matrix
+    gap_open
+        Gap open penalty
+    gap_extend
+        Gap extend penatly
+    estimated_penalty
+        Estimate of the average mismatch penalty
+    """
+
+    def __init__(
+        self,
+        cutoff: Union[None, int] = None,
+        *,
+        n_jobs: Union[int, None] = None,
+        block_size: int = 50,
+        subst_mat: str = "blosum62",
+        gap_open: int = 11,
+        gap_extend: int = 11,
+        estimated_penalty: float = None
+                ):
+        if cutoff is None:
+            cutoff = 10
+        super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
+        self.subst_mat = subst_mat
+        self.gap_open = gap_open
+        self.gap_extend = gap_extend
+        
+        penalty_dict = {
+            "blosum30":4.0, 
+            "blosum35":4.0, 
+            "blosum40":4.0, 
+            "blosum45":4.0, 
+            "blosum50":4.0, 
+            "blosum55":4.0, 
+            "blosum60":4.0, 
+            "blosum62":4.0, 
+            "blosum65":4.0,
+            "blosum70":4.0,
+            "blosum75":4.0,
+            "blosum80":4.0,
+            "blosum85":4.0,
+            "blosum90":4.0,
+            "pam10":8.0,
+            "pam20":8.0,
+            "pam30":8.0,
+            "pam40":8.0,
+            "pam50":8.0,
+            "pam60":4.0,
+            "pam70":4.0,
+            "pam80":4.0,
+            "pam90":4.0,
+            "pam100":4.0,
+            "pam110":2.0,
+            "pam120":2.0,
+            "pam130":2.0,
+            "pam140":2.0,
+            "pam150":2.0,
+            "pam160":2.0,
+            "pam170":2.0,
+            "pam180":2.0,
+            "pam190":2.0,
+            "pam200":2.0}
+        
+        self.estimated_penalty = estimated_penalty if estimated_penalty is not None else penalty_dict[subst_mat] if subst_mat in penalty_dict.keys() else 0.0
+
+
+    def _compute_block(self, seqs1, seqs2, origin):
+        subst_mat = parasail.Matrix(self.subst_mat)
+        origin_row, origin_col = origin
+
+        square_matrix = seqs2 is None
+        if square_matrix:
+            seqs2 = seqs1
+
+        self_alignment_scores1 = self._self_alignment_scores(seqs1)
+        if square_matrix:
+            self_alignment_scores2 = self_alignment_scores1
+        else:
+            self_alignment_scores2 = self._self_alignment_scores(seqs2)
+
+        max_len_diff = ((self.cutoff - self.gap_open) / self.gap_extend) + 1        
+        
+        result = []
+        for row, s1 in enumerate(seqs1):
+            col_start = row if square_matrix else 0
+            profile = parasail.profile_create_16(s1, subst_mat)
+            len1 = len(s1)
+            
+            for col, s2 in enumerate(seqs2[col_start:], start=col_start):
+                len_diff = abs(len1-len(s2))
+                """ No need to calculate diagonal values """
+                if s1 == s2:
+                    result.append((1, origin_row + row, origin_col + col))
+               """ Dismiss sequences if they will not pass below the cutoff
+               due to their length differences"""
+                elif len_diff <= max_len_diff:                   
+                    """ Dismiss sequences if they will not pass below the cutoff
+                    based on the number of different characters and the estimated penalty"""
+                    if self._num_different_characters(s1, s2, len_diff) * self.estimated_penalty + len_diff * self.gap_extend <= self.cutoff:
+                        r = parasail.nw_scan_profile_16(
+                            profile, s2, self.gap_open, self.gap_extend
+                        )
+                        max_score = np.min(
+                            [self_alignment_scores1[row], self_alignment_scores2[col]]
+                        )
+                        d = max_score - r.score
+
+                        if d <= self.cutoff:
+                            result.append((d + 1, origin_row + row, origin_col + col))
+
+
+        return result
+
+    def _self_alignment_scores(self, seqs: Sequence) -> dict:
+        """Calculate self-alignments. We need them as reference values
+        to turn scores into dists"""
+        return np.fromiter(
+            (
+                parasail.nw_scan_16(
+                    s,
+                    s,
+                    self.gap_open,
+                    self.gap_extend,
+                    parasail.Matrix(self.subst_mat),
+                ).score
+                for s in seqs
+            ),
+            dtype=int,
+            count=len(seqs),
+        )
+    
+    def _num_different_characters(self, s1, s2, len_diff):
+        longer, shorter = (s1, s2) if len(s1)>=len(s2) else (s2, s1)
+
+        for c in shorter:
+            if c in longer:
+                longer = longer.replace(c, "", 1)   
+        return len(longer)-len_diff
