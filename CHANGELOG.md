@@ -10,10 +10,14 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+## v0.13.1
+
 ### Fixes
 
--   Fix that clonotype_modularity could not run with AnnData object ([#421](https://github.com/scverse/scirpy/pull/421)).
+-   Fix that `clonotype_modularity` could not run with AnnData object ([#421](https://github.com/scverse/scirpy/pull/421)).
 -   Fix usage of wrong column in 3k tutorial ([#423](https://github.com/scverse/scirpy/pull/423))
+-   Change igraph dependency from `python-igraph` to `igraph` ([#436](https://github.com/scverse/scirpy/pull/436))
+-   Fix that `group_abundance` didn't work when AIRR data was stored in a different MuData slot than `airr` ([#438](https://github.com/scverse/scirpy/pull/438))
 
 (v0.13)=
 
