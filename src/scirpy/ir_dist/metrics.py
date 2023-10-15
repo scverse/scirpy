@@ -14,6 +14,7 @@ from tqdm.contrib.concurrent import process_map
 
 from scirpy.util import _doc_params, tqdm
 
+
 _doc_params_parallel_distance_calculator = """\
 n_jobs
     Number of jobs to use for the pairwise distance calculation.
@@ -480,7 +481,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         )
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
-class FastAlignmentDistanceCalculator(ir.ir_dist.metrics.ParallelDistanceCalculator):
+class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
     Calculates distance between sequences based on pairwise sequence alignment.
     
@@ -595,6 +596,8 @@ class FastAlignmentDistanceCalculator(ir.ir_dist.metrics.ParallelDistanceCalcula
 
 
     def _compute_block(self, seqs1, seqs2, origin):
+        import parasail
+
         subst_mat = parasail.Matrix(self.subst_mat)
         origin_row, origin_col = origin
 
@@ -618,14 +621,12 @@ class FastAlignmentDistanceCalculator(ir.ir_dist.metrics.ParallelDistanceCalcula
             
             for col, s2 in enumerate(seqs2[col_start:], start=col_start):
                 len_diff = abs(len1-len(s2))
-                """ No need to calculate diagonal values """
+                # No need to calculate diagonal values
                 if s1 == s2:
                     result.append((1, origin_row + row, origin_col + col))
-               """ Dismiss sequences if they will not pass below the cutoff
-               due to their length differences"""
+                # Dismiss sequences based on length
                 elif len_diff <= max_len_diff:                   
-                    """ Dismiss sequences if they will not pass below the cutoff
-                    based on the number of different characters and the estimated penalty"""
+                    # Dismiss sequences that are too different
                     if self._num_different_characters(s1, s2, len_diff) * self.estimated_penalty + len_diff * self.gap_extend <= self.cutoff:
                         r = parasail.nw_scan_profile_16(
                             profile, s2, self.gap_open, self.gap_extend
@@ -644,6 +645,8 @@ class FastAlignmentDistanceCalculator(ir.ir_dist.metrics.ParallelDistanceCalcula
     def _self_alignment_scores(self, seqs: Sequence) -> dict:
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists"""
+        import parasail
+
         return np.fromiter(
             (
                 parasail.nw_scan_16(
