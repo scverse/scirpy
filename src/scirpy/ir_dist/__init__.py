@@ -34,7 +34,7 @@ def IrNeighbors(*args, **kwargs):
 
 
 MetricType = Union[
-    Literal["alignment", "identity", "levenshtein", "hamming"],
+    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming"],
     metrics.DistanceCalculator,
 ]
 
@@ -51,6 +51,10 @@ metric
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.AlignmentDistanceCalculator`.
+        * `fastalignment` -- Distance based on pairwise sequence alignments using the
+        BLOSUM62 matrix. Faster implementation of `alignment` with some loss. 
+        This option is incompatible with nucleotide sequences.
+        See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
       * any instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`.
 """
 
@@ -59,7 +63,7 @@ cutoff
     All distances `> cutoff` will be replaced by `0` and eliminated from the sparse
     matrix. A sensible cutoff depends on the distance metric, you can find
     information in the corresponding docs. If set to `None`, the cutoff
-    will be `10` for the `alignment` metric, and `2` for `levenshtein` and `hamming`.
+    will be `10` for the `alignment` and `fastalignment` metric, and `2` for `levenshtein` and `hamming`.
     For the identity metric, the cutoff is ignored and always set to `0`.
 """
 
@@ -82,6 +86,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         dist_calc = metric
     elif metric == "alignment":
         dist_calc = metrics.AlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+    elif metric == "fastalignment":
+        dist_calc = metrics.FastAlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
     elif metric == "identity":
         dist_calc = metrics.IdentityDistanceCalculator(cutoff=cutoff, **kwargs)
     elif metric == "levenshtein":
