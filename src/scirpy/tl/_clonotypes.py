@@ -123,11 +123,11 @@ in the tutorial.
 
 
 def _validate_parameters(
-    adata,
+    params: DataHandler,
     reference,
     receptor_arms,
     dual_ir,
-    match_columns,
+    within_group,
     distance_key,
     sequence,
     metric,
@@ -153,22 +153,24 @@ def _validate_parameters(
     if dual_ir not in ["primary_only", "all", "any"]:
         raise ValueError("Invalid value for `dual_ir")
 
-    if match_columns is not None:
-        if isinstance(match_columns, str):
-            match_columns = [match_columns]
-        for group_col in match_columns:
-            if group_col not in adata.obs.columns:
-                msg = f"column `{match_columns}` not found in `adata.obs`. "
+    if within_group is not None:
+        if isinstance(within_group, str):
+            within_group = [within_group]
+        for group_col in within_group:
+            try:
+                params.get_obs(group_col)
+            except KeyError:
+                msg = f"column `{group_col}` not found in `obs`. "
                 if group_col in ("receptor_type", "receptor_subtype"):
                     msg += "Did you run `tl.chain_qc`? "
-                raise ValueError(msg)
+                raise ValueError(msg) from None
 
     if distance_key is None:
         if reference is not None:
             distance_key = f"ir_dist_{_get_db_name()}_{sequence}_{_get_metric_key(metric)}"
         else:
             distance_key = f"ir_dist_{sequence}_{_get_metric_key(metric)}"
-    if distance_key not in adata.uns:
+    if distance_key not in params.adata.uns:
         raise ValueError("Sequence distances were not found in `adata.uns`. Did you run `pp.ir_dist`?")
 
     if key_added is None:
@@ -177,7 +179,7 @@ def _validate_parameters(
         else:
             key_added = f"cc_{sequence}_{_get_metric_key(metric)}"
 
-    return match_columns, distance_key, key_added
+    return within_group, distance_key, key_added
 
 
 @DataHandler.inject_param_docs(
@@ -271,7 +273,7 @@ def define_clonotype_clusters(
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     within_group, distance_key, key_added = _validate_parameters(
-        params.adata,
+        params,
         None,
         receptor_arms,
         dual_ir,
