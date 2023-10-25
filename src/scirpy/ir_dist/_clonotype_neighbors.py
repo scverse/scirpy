@@ -77,7 +77,7 @@ class ClonotypeNeighbors:
         obs = obs.loc[_has_ir(params) & np.any(~pd.isnull(obs), axis=1), :]
         if self.match_columns is not None:
             obs = obs.join(
-                params.adata.obs.loc[:, self.match_columns],
+                params.get_obs(self.match_columns),
                 validate="one_to_one",
                 how="inner",
             )
