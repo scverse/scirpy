@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/scverse/cookiecutter-scverse",
-  "commit": "6a4338030e0c83a9034d607ed66abeff83e18840",
-  "checkout": null,
+  "commit": "605f95714130c960bce12eab98a4e023e8932249",
+  "checkout": "v0.2.22",
   "context": {
     "cookiecutter": {
       "project_name": "scirpy",
