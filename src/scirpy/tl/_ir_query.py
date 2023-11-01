@@ -178,8 +178,8 @@ def ir_query(
         DataHandler(reference, airr_mod_ref, airr_key_ref, chain_idx_key_ref) if reference is not None else None
     )
     match_columns, distance_key, key_added = _validate_parameters(
-        params.adata,
-        params_ref.adata if params_ref is not None else None,
+        params,
+        params_ref if params_ref is not None else None,
         receptor_arms,
         dual_ir,
         match_columns,

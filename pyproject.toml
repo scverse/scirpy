@@ -48,6 +48,7 @@ dev = [
     "pre-commit"
 ]
 doc = [
+    "docutils>=0.8,!=0.18.*,!=0.19.*",
     'sphinx>=4',
     "sphinx-book-theme>=1.0.0",
     "myst-nb",
@@ -57,6 +58,7 @@ doc = [
     'ipykernel',
     'ipython',
     "sphinx-copybutton",
+    "sphinxext-opengraph",
     'leidenalg',
     'myst_nb',
     'jupytext',
@@ -109,12 +111,10 @@ norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 
 [tool.black]
 line-length = 120
-target-version = ["py39"]
 
 [tool.ruff]
 src = ["src"]
 line-length = 120
-target-version = "py39"
 select = [
     "F",  # Errors detected by Pyflakes
     "E",  # Error detected by Pycodestyle
