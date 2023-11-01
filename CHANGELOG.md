@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning][].
     must now be vectorized over an awkward array, e.g. to check if a `junction_aa` field is present you could
     previously pass `lambda x: x['junction_aa'] is not None`, now an accepted version would be
     `lambda x: ~ak.is_none(x["junction_aa"], axis=-1)`. To learn more about native awkward array functions, please
-    refer to the [awkward array documentation](https://awkward-array.org/doc/main/reference/index.html).
+    refer to the [awkward array documentation](https://awkward-array.org/doc/main/reference/index.html). ([#444](https://github.com/scverse/scirpy/pull/444))
 
 ### Fixes
 
