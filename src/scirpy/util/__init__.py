@@ -463,8 +463,8 @@ def deprecated(message):
     def deprecated_decorator(func):
         def deprecated_func(*args, **kwargs):
             warnings.warn(
-                "{} is a deprecated function and will be removed in a "
-                "future version of scirpy. {}".format(func.__name__, message),
+                f"{func.__name__} is a deprecated function and will be removed in a "
+                f"future version of scirpy. {message}",
                 category=FutureWarning,
                 stacklevel=2,
             )

@@ -119,7 +119,7 @@ You can cite the scverse publication as follows:
 > Finotello, F. Alexander Wolf, Nir Yosef, Oliver Stegle & Fabian J.
 > Theis
 >
-> _Nat Biotechnol._ 2022 Apr 10. doi:
+> _Nat Biotechnol._ 2023 Apr 10. doi:
 > [10.1038/s41587-023-01733-8](https://doi.org/10.1038/s41587-023-01733-8).
 
 [scverse-discourse]: https://discourse.scverse.org/
