@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
--   Fix that `define_clonotype_clusters` could not retreive `within_group` columns from MuData ([#459](https://github.com/scverse/scirpy/pull/459))
+-   Fix that `define_clonotype_clusters` could not retrieve `within_group` columns from MuData ([#459](https://github.com/scverse/scirpy/pull/459))
 
 ## v0.13.1
 

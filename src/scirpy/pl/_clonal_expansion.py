@@ -1,4 +1,5 @@
-from typing import Literal, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 from scirpy import tl
 from scirpy.util import DataHandler
@@ -12,8 +13,9 @@ def clonal_expansion(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    clip_at: int = 3,
     expanded_in: Union[str, None] = None,
+    breakpoints: Sequence[int] = (1, 2),
+    clip_at: Optional[int] = None,
     summarize_by: Literal["cell", "clone_id"] = "cell",
     normalize: bool = True,
     show_nonexpanded: bool = True,
@@ -39,14 +41,22 @@ def clonal_expansion(
         Group by this categorical variable in `adata.obs`.
     target_col
         Column in `adata.obs` containing the clonotype information.
-    clip_at
-        All entries in `target_col` with more copies than `clip_at`
-        will be summarized into a single group.
     expanded_in
         Calculate clonal expansion within groups. To calculate expansion
         within patients, set this to the column containing patient annotation.
         If set to None, a clonotype counts as expanded if there's any cell of the
         same clonotype across the entire dataset. See also :term:`Public clonotype`.
+    breakpoints
+        summarize clonotypes with a size smaller or equal than the specified numbers
+        into groups. For instance, if this is (1, 2, 5), there will be four categories:
+         * all clonotypes with a size of 1 (singletons)
+         * all clonotypes with a size of 2
+         * all clonotypes with a size between 3 and 5 (inclusive)
+         * all clonotypes with a size > 5
+    clip_at
+        This argument is superseded by `breakpoints` and is only kept for backwards-compatibility.
+        Specifying a value of `clip_at = N` equals to specifying `breakpoints = (1, 2, 3, ..., N)`
+        Specifying both `clip_at` overrides `breakpoints`.
     summarize_by
         Can be either `cell` to count cells belonging to a clonotype (the default),
         or `clone_id` to count clonotypes. The former leads to a over-representation
@@ -70,6 +80,7 @@ def clonal_expansion(
         summarize_by=summarize_by,
         normalize=normalize,
         expanded_in=expanded_in,
+        breakpoints=breakpoints,
         clip_at=clip_at,
     )
     if not show_nonexpanded:
