@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+-   Reimplement `pp.index_chains` using numba and awkward array functions.
+
 ## v0.13.1
 
 ### Fixes
