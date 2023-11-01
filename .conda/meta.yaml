@@ -26,7 +26,7 @@ requirements:
     - awkward >=2.1.0
     - mudata >=0.2.3
     - scanpy >=1.9.3
-    - pandas >=1.5
+    - pandas >=1.5,!=2.1.2
     - numpy >=1.17.0
     - scipy
     - parasail-python
