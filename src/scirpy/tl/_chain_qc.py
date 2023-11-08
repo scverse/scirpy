@@ -3,6 +3,7 @@ from typing import Union, cast
 
 import awkward as ak
 import numpy as np
+import pandas as pd
 from scanpy import logging
 
 from scirpy import get
@@ -131,13 +132,26 @@ def chain_qc(
 
     res_chain_pairing = _chain_pairing(params, res_receptor_subtype == "ambiguous", mask_has_ir, mask_multichain)
 
+    # in mdata, cells that do not have a member in the AIRR modality should have the label "no IR"
+    # we achieve this by initalizing the full array with "no IR" and then overwriting all entries with
+    # the values calculated for the AIRR modality
+    res_receptor_subtype_mdata = pd.Series(
+        np.full(fill_value="no IR", shape=(params.data.shape[0],), dtype=f"<U{string_length}"),
+        index=params.data.obs_names,
+    )
+    res_receptor_type_mdata = res_receptor_subtype_mdata.copy()
+    res_chain_pairing_mdata = res_receptor_subtype_mdata.copy()
+    res_receptor_subtype_mdata[params.adata.obs_names] = res_receptor_subtype
+    res_receptor_type_mdata[params.adata.obs_names] = res_receptor_type
+    res_chain_pairing_mdata[params.adata.obs_names] = res_chain_pairing
+
     if inplace:
         col_receptor_type, col_receptor_subtype, col_chain_pairing = key_added
-        params.set_obs(col_receptor_type, res_receptor_type)
-        params.set_obs(col_receptor_subtype, res_receptor_subtype)
-        params.set_obs(col_chain_pairing, res_chain_pairing)
+        params.set_obs(col_receptor_type, res_receptor_type_mdata)
+        params.set_obs(col_receptor_subtype, res_receptor_subtype_mdata)
+        params.set_obs(col_chain_pairing, res_chain_pairing_mdata)
     else:
-        return (res_receptor_type, res_receptor_subtype, res_chain_pairing)
+        return (res_receptor_type_mdata, res_receptor_subtype_mdata, res_chain_pairing_mdata)
 
 
 def _chain_pairing(
