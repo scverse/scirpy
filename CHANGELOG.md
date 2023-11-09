@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 -   Fix that `define_clonotype_clusters` could not retreive `within_group` columns from MuData ([#459](https://github.com/scverse/scirpy/pull/459))
+-   Fix that AIRR Rearrangment fields of integer types could not be written when their value was None ([#465](https://github.com/scverse/scirpy/pull/465))
 
 ## v0.13.1
 
