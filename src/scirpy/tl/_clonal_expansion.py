@@ -88,10 +88,11 @@ def clonal_expansion(
     breakpoints
         summarize clonotypes with a size smaller or equal than the specified numbers
         into groups. For instance, if this is (1, 2, 5), there will be four categories:
-         * all clonotypes with a size of 1 (singletons)
-         * all clonotypes with a size of 2
-         * all clonotypes with a size between 3 and 5 (inclusive)
-         * all clonotypes with a size > 5
+
+        * all clonotypes with a size of 1 (singletons)
+        * all clonotypes with a size of 2
+        * all clonotypes with a size between 3 and 5 (inclusive)
+        * all clonotypes with a size > 5
     clip_at
         This argument is superseded by `breakpoints` and is only kept for backwards-compatibility.
         Specifying a value of `clip_at = N` equals to specifying `breakpoints = (1, 2, 3, ..., N)`
