@@ -16,6 +16,13 @@ def test_clonal_expansion(adata_clonotype):
     assert isinstance(p, plt.Axes)
 
 
+@pytest.mark.parametrize("adata_clonotype", [True], indirect=["adata_clonotype"], ids=["MuData"])
+def test_clonal_expansion_mudata_prefix(adata_clonotype):
+    """Regression test for #445"""
+    p = pl.clonal_expansion(adata_clonotype, groupby="group", target_col="airr:clone_id")
+    assert isinstance(p, plt.Axes)
+
+
 def test_alpha_diversity(adata_diversity):
     p = pl.alpha_diversity(adata_diversity, groupby="group", target_col="clonotype_")
     assert isinstance(p, plt.Axes)
