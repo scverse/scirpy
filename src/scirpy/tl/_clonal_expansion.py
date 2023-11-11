@@ -2,6 +2,7 @@ import warnings
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
+import numpy as np
 import pandas as pd
 
 from scirpy.util import DataHandler, _is_na, _normalize_counts
@@ -23,22 +24,32 @@ def _clip_and_count(
     `nan`s in the input remain `nan` in the output.
     """
     params = DataHandler(adata, airr_mod)
-    if target_col not in params.adata.obs.columns:
-        raise ValueError("`target_col` not found in obs.")
+    if not len(breakpoints):
+        raise ValueError("Need to specify at least one breakpoint.")
+
+    categories = [f"<= {b}" for b in breakpoints] + [f"> {breakpoints[-1]}", "nan"]
+
+    @np.vectorize
+    def _get_interval(value: int) -> str:
+        """Return the interval of `value`, given breakpoints."""
+        for b in breakpoints:
+            if value <= b:
+                return f"<= {b}"
+        return f"> {b}"
 
     groupby = [groupby] if isinstance(groupby, str) else groupby
     groupby_cols = [target_col] if groupby is None else groupby + [target_col]
+    obs = params.get_obs(groupby_cols)
+
     clonotype_counts = (
-        params.adata.obs.groupby(groupby_cols, observed=True)
+        obs.groupby(groupby_cols, observed=True)
         .size()
         .reset_index(name="tmp_count")
-        .assign(
-            tmp_count=lambda X: [f">= {min(n, clip_at)}" if n >= clip_at else str(n) for n in X["tmp_count"].values]
-        )
+        .assign(tmp_count=lambda X: pd.Categorical(_get_interval(X["tmp_count"].values), categories=categories))
     )
-    clipped_count = params.adata.obs.merge(clonotype_counts, how="left", on=groupby_cols)["tmp_count"]
-    clipped_count[_is_na(params.adata.obs[target_col])] = "nan"
-    clipped_count.index = params.adata.obs.index
+    clipped_count = obs.merge(clonotype_counts, how="left", on=groupby_cols)["tmp_count"]
+    clipped_count[_is_na(obs[target_col])] = "nan"
+    clipped_count.index = obs.index
 
     if inplace:
         key_added = f"{target_col}_clipped_count" if key_added is None else key_added
