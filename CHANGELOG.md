@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## v0.14.0
 
 ### Breaking changes
 
@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning][].
     previously pass `lambda x: x['junction_aa'] is not None`, now an accepted version would be
     `lambda x: ~ak.is_none(x["junction_aa"], axis=-1)`. To learn more about native awkward array functions, please
     refer to the [awkward array documentation](https://awkward-array.org/doc/main/reference/index.html). ([#444](https://github.com/scverse/scirpy/pull/444))
+
+### Additions
+
+-   The `clonal_expansion` function now supports a `breakpoints` argument for more flexible "expansion categories".
+    The `breakpoints` argument supersedes the `clip_at` parameter, which is now deprecated. ([#439](https://github.com/scverse/scirpy/pull/439))
 
 ### Fixes
 
