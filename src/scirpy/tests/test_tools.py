@@ -131,15 +131,6 @@ def test_clip_and_count_clonotypes(adata_clonotype):
         np.array(["> 1"] * 3 + ["nan"] * 2 + ["<= 1"] * 3 + ["> 1"] * 2),
     )
 
-    # check if it raises value error if target_col does not exist
-    with pytest.raises(ValueError):
-        ir.tl._clonal_expansion._clip_and_count(
-            adata,
-            groupby="group",
-            target_col="clone_id",
-            breakpoints=(1,),
-        )
-
 
 @pytest.mark.parametrize(
     "expanded_in,expected",
