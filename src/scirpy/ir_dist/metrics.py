@@ -519,7 +519,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         The choice of an expected penalty is likely influenced by similar considerations as the
         other parameters. Essentially, this can be thought of as a superficial (dis)similarity
         measure. A higher value more strongly penalizes mismatching characters and is more in line
-        with looking for closely related sequence paris, while a lower value is more forgiving
+        with looking for closely related sequence pairs, while a lower value is more forgiving
         and better suited when looking for more distantly related sequence pairs.
 
     Parameters
