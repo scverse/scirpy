@@ -236,6 +236,15 @@ def test_airr_roundtrip_conversion(anndata_from_10x_sample, tmp_path):
     pdt.assert_frame_equal(anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False)
 
 
+def test_write_airr_none_field_issue_454(tmp_path):
+    cell = AirrCell("cell1")
+    chain = cell.empty_chain_dict()
+    chain["d_sequence_end"] = None
+    cell.add_chain(chain)
+    adata = from_airr_cells([cell])
+    write_airr(adata, tmp_path / "test.airr.tsv")
+
+
 @pytest.mark.extra
 @pytest.mark.parametrize(
     "anndata_from_10x_sample",

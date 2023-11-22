@@ -8,7 +8,26 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## v0.14.0
+
+### Breaking changes
+
+-   Reimplement `pp.index_chains` using numba and awkward array functions, achieving a significant speedup. This function
+    behaves exactly like the previous version _except_ that callback functions passed to the `filter` arguments
+    must now be vectorized over an awkward array, e.g. to check if a `junction_aa` field is present you could
+    previously pass `lambda x: x['junction_aa'] is not None`, now an accepted version would be
+    `lambda x: ~ak.is_none(x["junction_aa"], axis=-1)`. To learn more about native awkward array functions, please
+    refer to the [awkward array documentation](https://awkward-array.org/doc/main/reference/index.html). ([#444](https://github.com/scverse/scirpy/pull/444))
+
+### Additions
+
+-   The `clonal_expansion` function now supports a `breakpoints` argument for more flexible "expansion categories".
+    The `breakpoints` argument supersedes the `clip_at` parameter, which is now deprecated. ([#439](https://github.com/scverse/scirpy/pull/439))
+
+### Fixes
+
+-   Fix that `define_clonotype_clusters` could not retreive `within_group` columns from MuData ([#459](https://github.com/scverse/scirpy/pull/459))
+-   Fix that AIRR Rearrangment fields of integer types could not be written when their value was None ([#465](https://github.com/scverse/scirpy/pull/465))
 
 ## v0.13.1
 

@@ -584,9 +584,9 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
     for tmp_cell in airr_cells:
         for chain in tmp_cell.to_airr_records():
             # workaround for AIRR library writing out int field as floats (if it happens to be a float)
-            for f in chain:
-                if RearrangementSchema.type(f) == "integer":
-                    chain[f] = int(chain[f])
+            for field, value in chain.items():
+                if RearrangementSchema.type(field) == "integer" and value is not None:
+                    chain[field] = int(value)
             writer.write(chain)
     writer.close()
 
