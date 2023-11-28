@@ -1,0 +1,9 @@
+diff a/docs/index.md b/docs/index.md	(rejected hunks)
+@@ -8,7 +8,6 @@
+ 
+ api.md
+ changelog.md
+-template_usage.md
+ contributing.md
+ references.md
+ 
