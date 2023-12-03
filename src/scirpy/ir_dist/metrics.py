@@ -485,13 +485,6 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
     Calculates distance between sequences based on pairwise sequence alignment.
 
-    This is a variation of the AlignmentDistanceCalculator which pre-filters sequence pairs based on
-        a) differences in sequence length
-        b) the number of different characters, based on estimate of the mismatch penalty
-
-    Depending on the setup, alignment may be performed significantly faster, but be advised that some sequence pairs may be filtered out incorrectly.
-    Default values for BLOSUM and PAM matrices are provided, but finding an adequate estimated_penalty for your given setup is encouraged.
-
     The distance between two sequences is defined as :math:`S_{{1,2}}^{{max}} - S_{{1,2}}`,
     where :math:`S_{{1,2}}` is the alignment score of sequences 1 and 2 and
     :math:`S_{{1,2}}^{{max}}` is the max. achievable alignment score of sequences 1 and 2.
@@ -501,6 +494,21 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     High-performance sequence alignments are calculated leveraging
     the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).
+
+    This is a variation of the AlignmentDistanceCalculator which pre-filters sequence pairs based on
+        a) differences in sequence length
+        b) the number of different characters, based on an estimate of the mismatch penalty
+
+    Depending on the setup, alignment may be performed significantly faster with an appropriate `estimated_penalty`, but be advised that some sequence pairs
+    may be filtered out incorrectly (referred to here as *loss*). Default values for BLOSUM and PAM matrices are provided, but finding an adequate `estimated_penalty`
+    for your given setup is encouraged. The provided default values were obtained by testing different values on the Wu dataset (:cite:`Wu2020`) and selecting
+    those that provided a reasonable balance between speedup and loss. Loss stayed well under 10% in all our test cases with the default values, and speedup
+    increases with the number of cells.
+
+    While the length-based filter is always active, the filter based on different characters can be disabled by setting the estimated penalty to zero.
+    Using length-based filtering only, loss is expected to be zero for most use cases, but achieves significantly less speedup than combining both filters.
+    The full filter can be called by specifying the 'fastalignment' metric, while the length-based-only version is now used as the 'alignment' metric, replacing
+    the AlignmentDistanceCalculator.
 
     Choosing a cutoff:
         Alignment distances need to be viewed in the light of the substitution matrix.
@@ -593,13 +601,14 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
             "pam200": 2.0,
         }
 
+
+        if subst_mat not in penalty_dict.keys():
+            raise Exception("Invalid substitution matrix.")
+        
         self.estimated_penalty = (
             estimated_penalty
             if estimated_penalty is not None
-            else penalty_dict[subst_mat]
-            if subst_mat in penalty_dict.keys()
-            else 0.0
-        )
+            else penalty_dict[subst_mat] )
 
     def _compute_block(self, seqs1, seqs2, origin):
         import parasail
