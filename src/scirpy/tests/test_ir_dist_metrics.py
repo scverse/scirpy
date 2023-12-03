@@ -266,7 +266,7 @@ def test_fast_alignment_compute_block():
     assert b1 == [(1, 0, 0), (9, 0, 1), (39, 0, 2), (1, 1, 1), (41, 1, 2), (1, 2, 2)]
     assert b2 == [(1, 10, 20), (9, 10, 21), (1, 11, 21), (1, 12, 22)]
     assert b3 == [(1, 10, 20), (9, 10, 21), (9, 11, 20), (1, 11, 21), (1, 12, 22)]
-    
+
 
 def test_fast_alignment_dist():
     with pytest.raises(ValueError):

@@ -601,14 +601,10 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
             "pam200": 2.0,
         }
 
-
         if subst_mat not in penalty_dict.keys():
             raise Exception("Invalid substitution matrix.")
-        
-        self.estimated_penalty = (
-            estimated_penalty
-            if estimated_penalty is not None
-            else penalty_dict[subst_mat] )
+
+        self.estimated_penalty = estimated_penalty if estimated_penalty is not None else penalty_dict[subst_mat]
 
     def _compute_block(self, seqs1, seqs2, origin):
         import parasail
