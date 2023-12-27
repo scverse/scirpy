@@ -1,8 +1,9 @@
+from functools import partial
+
 import numpy as np
 import numpy.testing as npt
 import pytest
 import scipy.sparse
-from functools import partial
 
 import scirpy as ir
 from scirpy.ir_dist.metrics import (
