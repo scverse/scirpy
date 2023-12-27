@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+## New features
+
+-   Speed up alignment distances by pre-filtering. There are two filtering strategies: A (lossless) length-based filter
+    and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
+    class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
+    in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
+    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
+
 ## v0.14.0
 
 ### Breaking changes
