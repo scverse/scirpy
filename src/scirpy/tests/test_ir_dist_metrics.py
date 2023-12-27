@@ -2,6 +2,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import scipy.sparse
+from functools import partial
 
 import scirpy as ir
 from scirpy.ir_dist.metrics import (
@@ -215,9 +216,12 @@ def test_hamming_dist():
     )
 
 
-def test_alignment_compute_block():
-    aligner = AlignmentDistanceCalculator(cutoff=255)
-    aligner10 = AlignmentDistanceCalculator(cutoff=10)
+@pytest.mark.parametrize(
+    "metric", [AlignmentDistanceCalculator, partial(FastAlignmentDistanceCalculator, estimated_penalty=0)]
+)
+def test_alignment_compute_block(metric):
+    aligner = metric(cutoff=255)
+    aligner10 = metric(cutoff=10)
     seqs = ["AWAW", "VWVW", "HHHH"]
 
     b1 = aligner._compute_block(seqs, None, (0, 0))
@@ -229,11 +233,14 @@ def test_alignment_compute_block():
     assert b3 == [(1, 10, 20), (9, 10, 21), (9, 11, 20), (1, 11, 21), (1, 12, 22)]
 
 
-def test_alignment_dist():
+@pytest.mark.parametrize(
+    "metric", [AlignmentDistanceCalculator, partial(FastAlignmentDistanceCalculator, estimated_penalty=0)]
+)
+def test_alignment_dist(metric):
     with pytest.raises(ValueError):
-        AlignmentDistanceCalculator(3000)
-    aligner = AlignmentDistanceCalculator(cutoff=255, n_jobs=1)
-    aligner10 = AlignmentDistanceCalculator(cutoff=10)
+        metric(3000)
+    aligner = metric(cutoff=255, n_jobs=1)
+    aligner10 = metric(cutoff=10)
     seqs = np.array(["AAAA", "AAHA", "HHHH"])
 
     res = aligner.calc_dist_mat(seqs)
@@ -245,8 +252,11 @@ def test_alignment_dist():
     npt.assert_almost_equal(res.toarray(), _squarify(np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]])))
 
 
-def test_alignment_dist_with_two_seq_arrays():
-    aligner = AlignmentDistanceCalculator(cutoff=10, n_jobs=1)
+@pytest.mark.parametrize(
+    "metric", [AlignmentDistanceCalculator, partial(FastAlignmentDistanceCalculator, estimated_penalty=0)]
+)
+def test_alignment_dist_with_two_seq_arrays(metric):
+    aligner = metric(cutoff=10, n_jobs=1)
     res = aligner.calc_dist_mat(["AAAA", "AATA", "HHHH", "WWWW"], ["WWWW", "AAAA", "ATAA"])
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (4, 3)
