@@ -12,7 +12,7 @@ from Levenshtein import hamming as hamming_dist
 from scipy.sparse import coo_matrix, csr_matrix
 from tqdm.contrib.concurrent import process_map
 
-from scirpy.util import _doc_params, tqdm, deprecated
+from scirpy.util import _doc_params, deprecated, tqdm
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs

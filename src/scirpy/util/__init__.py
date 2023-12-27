@@ -459,7 +459,6 @@ def _read_to_str(path):
 
 def deprecated(message):
     """Decorator to mark a function as deprecated"""
-
     message = dedent(message)
 
     def deprecated_decorator(func):
