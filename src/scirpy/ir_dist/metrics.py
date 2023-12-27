@@ -12,7 +12,7 @@ from Levenshtein import hamming as hamming_dist
 from scipy.sparse import coo_matrix, csr_matrix
 from tqdm.contrib.concurrent import process_map
 
-from scirpy.util import _doc_params, tqdm
+from scirpy.util import _doc_params, tqdm, deprecated
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -412,6 +412,12 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         Gap extend penatly
     """
 
+    @deprecated(
+        """\
+        FastAlignmentDistanceCalculator achieves (depending on the settings) identical results
+        at a higher speed.
+        """
+    )
     def __init__(
         self,
         cutoff: Union[None, int] = None,
@@ -495,20 +501,24 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
     High-performance sequence alignments are calculated leveraging
     the `parasail library <https://github.com/jeffdaily/parasail-python>`_ (:cite:`Daily2016`).
 
-    This is a variation of the AlignmentDistanceCalculator which pre-filters sequence pairs based on
+    To speed up the computation, we pre-filter sequence pairs based on
         a) differences in sequence length
-        b) the number of different characters, based on an estimate of the mismatch penalty
+        b) the number of different characters, based on an estimate of the mismatch penalty (`estimated_penalty`).
 
-    Depending on the setup, alignment may be performed significantly faster with an appropriate `estimated_penalty`, but be advised that some sequence pairs
-    may be filtered out incorrectly (referred to here as *loss*). Default values for BLOSUM and PAM matrices are provided, but finding an adequate `estimated_penalty`
-    for your given setup is encouraged. The provided default values were obtained by testing different values on the Wu dataset (:cite:`Wu2020`) and selecting
-    those that provided a reasonable balance between speedup and loss. Loss stayed well under 10% in all our test cases with the default values, and speedup
+    The filtering based on `estimated_penalty` is a *heuristic* and *may lead to false negatives*, i.e. sequence
+    pairs that are actually below the distance cutoff, but are removed during pre-filtering. Sensible values for
+    `estimated_penalty` are depending on the substitution matrix, but higher values lead to a higher false negative rate.
+
+    We provide default values for BLOSUM and PAM matrices. The provided default values were obtained by testing different
+    alues on the Wu dataset (:cite:`Wu2020`) and selecting those that provided a reasonable balance between
+    speedup and loss. Loss stayed well under 10% in all our test cases with the default values, and speedup
     increases with the number of cells.
 
-    While the length-based filter is always active, the filter based on different characters can be disabled by setting the estimated penalty to zero.
-    Using length-based filtering only, loss is expected to be zero for most use cases, but achieves significantly less speedup than combining both filters.
-    The full filter can be called by specifying the 'fastalignment' metric, while the length-based-only version is now used as the 'alignment' metric, replacing
-    the AlignmentDistanceCalculator.
+    While the length-based filter is always active, the filter based on different characters can be disabled by
+    setting the estimated penalty to zero. Using length-based filtering only, there won't be any false negatives
+    *unless with a substitution matrix in which a substitution results in a higher score than the corresponding match.*
+    Using the length-based filter only results in a substancially reduced speedup compared to combining it with
+    the `estimated_penalty` heuristic.
 
     Choosing a cutoff:
         Alignment distances need to be viewed in the light of the substitution matrix.
