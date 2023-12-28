@@ -19,8 +19,8 @@ pip install -e ".[dev,test,doc]"
 
 ## Code-style
 
-This template uses [pre-commit][] to enforce consistent code-styles. On every commit, pre-commit checks will either
-automatically fix issues with the code, or raise an error message.
+This package uses [pre-commit][] to enforce consistent code-styles.
+On every commit, pre-commit checks will either automatically fix issues with the code, or raise an error message.
 
 To enable pre-commit locally, simply run
 
@@ -82,66 +82,8 @@ out to the developers of the dependency before the package is released to a wide
 
 ### Updating the version number
 
-Before making a release, you need to update the version number. Please adhere to [Semantic Versioning][semver], in brief
-
-> Given a version number MAJOR.MINOR.PATCH, increment the:
->
-> 1.  MAJOR version when you make incompatible API changes,
-> 2.  MINOR version when you add functionality in a backwards compatible manner, and
-> 3.  PATCH version when you make backwards compatible bug fixes.
->
-> Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
-
-We use [bump2version][] to automatically update the version number in all places and automatically create a git tag.
-Run one of the following commands in the root of the repository
-
-```bash
-bump2version patch
-bump2version minor
-bump2version major
-```
-
-Once you are done, run
-
-```
-git push --tags
-```
-
-to publish the created tag on GitHub.
-
-[bump2version]: https://github.com/c4urself/bump2version
-
-### Building and publishing the package on PyPI
-
-Python packages are not distributed as source code, but as _distributions_. The most common distribution format is the so-called _wheel_. To build a _wheel_, run
-
-```bash
-python -m build
-```
-
-This command creates a _source archive_ and a _wheel_, which are required for publishing your package to [PyPI][]. These files are created directly in the root of the repository.
-
-Before uploading them to [PyPI][] you can check that your _distribution_ is valid by running:
-
-```bash
-twine check dist/*
-```
-
-and finally publishing it with:
-
-```bash
-twine upload dist/*
-```
-
-Provide your username and password when requested and then go check out your package on [PyPI][]!
-
-For more information, follow the [Python packaging tutorial][].
-
-It is possible to automate this with GitHub actions, see also [this feature request][pypi-feature-request]
-in the cookiecutter-scverse template.
-
-[python packaging tutorial]: https://packaging.python.org/en/latest/tutorials/packaging-projects/#generating-distribution-archives
-[pypi-feature-request]: https://github.com/scverse/cookiecutter-scverse/issues/88
+Scirpy uses [hatch-vcs](https://github.com/ofek/hatch-vcs) to automaticlly retrieve the version number
+from the git tag. To make a new release, navigate to the “Releases” page of this project on GitHub. Specify vX.X.X as a tag name and create a release. For more information, see [managing GitHub releases][]. This will automatically create a git tag and trigger a Github workflow that creates a release on PyPI.
 
 ## Writing documentation
 
@@ -205,3 +147,4 @@ open _build/html/index.html
 [numpydoc]: https://numpydoc.readthedocs.io/en/latest/format.html
 [sphinx autodoc typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
 [pypi]: https://pypi.org/
+[managing GitHub releases]: https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
