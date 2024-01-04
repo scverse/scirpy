@@ -74,7 +74,7 @@ doc = [
 ]
 test = [
     'pytest',
-    'pytest-cov',
+    'coverage',
     'black',
 ]
 dandelion = [

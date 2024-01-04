@@ -26,10 +26,13 @@ jobs:
           - os: ubuntu-latest
             python: "3.9"
           - os: ubuntu-latest
-            python: "3.10"
+            python: "3.11"
           - os: ubuntu-latest
-            python: "3.10"
+            python: "3.11"
             pip-flags: "--pre"
+            name: PRE-RELEASE DEPENDENCIES
+
+    name: ${{ matrix.name }} Python ${{ matrix.python }}
 
     env:
       OS: ${{ matrix.os }}
@@ -59,6 +62,9 @@ jobs:
           PLATFORM: ${{ matrix.os }}
           DISPLAY: :42
         run: |
-          pytest -v --cov --color=yes
+          coverage run -m pytest -v --color=yes
+      - name: Report coverage
+        run: |
+          coverage report
       - name: Upload coverage
         uses: codecov/codecov-action@v3

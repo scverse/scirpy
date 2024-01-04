@@ -132,6 +132,7 @@ html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
 html_title = project_name
 html_logo = "img/scirpy_logo.png"
+html_css_files = ["css/custom.css"]
 
 
 html_theme_options = {
@@ -177,18 +178,3 @@ nitpick_ignore = [
     ("py:meth", "mudata.MuData.update"),
     ("py:class", "awkward.highlevel.Array"),
 ]
-
-
-def setup(app):
-    """App setup hook."""
-    app.add_config_value(
-        "recommonmark_config",
-        {
-            "auto_toc_tree_section": "Contents",
-            "enable_auto_toc_tree": True,
-            "enable_math": True,
-            "enable_inline_math": False,
-            "enable_eval_rst": True,
-        },
-        True,
-    )
