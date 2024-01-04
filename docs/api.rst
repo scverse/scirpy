@@ -301,3 +301,4 @@ distance metrics
    ir_dist.metrics.LevenshteinDistanceCalculator
    ir_dist.metrics.HammingDistanceCalculator
    ir_dist.metrics.AlignmentDistanceCalculator
+   ir_dist.metrics.FastAlignmentDistanceCalculator
