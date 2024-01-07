@@ -237,19 +237,18 @@ class DoubleLookupNeighborFinder:
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
     ) -> Union[list[coo_matrix], list[np.ndarray]]:
-        
         distance_matrix_name, forward, _ = self.lookups[forward_lookup_table]
 
         if reverse_lookup_table is not None:
             distance_matrix_name_reverse, _, reverse = self.lookups[reverse_lookup_table]
             if distance_matrix_name != distance_matrix_name_reverse:
                 raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
-        
+
         distance_matrix = self.distance_matrices[distance_matrix_name]
         indices_in_dist_mat = forward[object_ids]
         indices_in_dist_mat = indices_in_dist_mat + 1
         empty_row = sp.csr_matrix((1, distance_matrix.shape[1]), dtype=distance_matrix.dtype)
-        distance_matrix_new = sp.vstack([empty_row, distance_matrix], format='csr')
+        distance_matrix_new = sp.vstack([empty_row, distance_matrix], format="csr")
         rows = distance_matrix_new[indices_in_dist_mat, :]
 
         reverse_empty_row_col = np.array([], dtype=np.int32)
@@ -262,7 +261,7 @@ class DoubleLookupNeighborFinder:
             reverse_table_data[key] = value.data
             reverse_table_col[key] = value.col
             nnz_array[key] = value.nnz
-        
+
         data = np.concatenate(reverse_table_data)
         col = np.concatenate(reverse_table_col)
         indptr = np.concatenate([np.array([0], dtype=np.int32), np.cumsum(nnz_array)])
