@@ -202,125 +202,154 @@ class ClonotypeNeighbors:
         return {step: np.sum(clonotype_table.loc[:, cols].values != "nan", axis=1) for step, cols in cols.items()}
 
     def compute_distances(self) -> sp.csr_matrix:
-        """Compute the distances between clonotypes.
-        Returns a clonotype x clonotype2 sparse distance matrix.
-        """
         start = logging.info("Computing clonotype x clonotype distances.")  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
-
-        # only use multiprocessing for sufficiently large datasets
-        # for small datasets the overhead is too large for a benefit
-        if self.n_jobs == 1 or n_clonotypes <= 2 * self.chunksize:
-            dist_rows = tqdm(
-                (self._dist_for_clonotype(i) for i in range(n_clonotypes)),
-                total=n_clonotypes,
-            )
-        else:
-            logging.info(
-                "NB: Computation happens in chunks. The progressbar only advances " "when a chunk has finished. "
-            )  # type: ignore
-
-            dist_rows = process_map(
-                self._dist_for_clonotype,
-                range(n_clonotypes),
-                max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-                chunksize=2000,
-                tqdm_class=tqdm,
-            )
-
-        dist = sp.vstack(dist_rows)
+        clonotype_ids = np.arange(n_clonotypes)
+        
+        dist = self._dist_for_clonotype(clonotype_ids)
+        
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
         return dist  # type: ignore
 
-    def _dist_for_clonotype(self, ct_id: int) -> sp.csr_matrix:
-        """Compute neighboring clonotypes for a given clonotype.
-
-        Or operations use the min dist of two matching entries.
-        And operations use the max dist of two matching entries.
-
-        The motivation for using the max instead of sum/average is
-        that our hypotheis is that a receptor recognizes the same antigen if it
-        has a sequence dist < threshold. If we require both receptors to
-        match ("and"), the higher one should count.
-        """
-        # Lookup distances for current row
-        tmp_clonotypes = self.clonotypes2 if self.clonotypes2 is not None else self.clonotypes
-        lookup = {}  # CDR3 distances
-        lookup_v = {}  # V-gene distances
+    def _dist_for_clonotype(self, ct_ids: np.ndarray[int]) -> sp.csr_matrix:
+        
+        lookup = {} 
+        chain_ids = [(1, 1)] if self.dual_ir == "primary_only" else [(1, 1), (2, 2), (1, 2), (2, 1)]
         for tmp_arm in self._receptor_arm_cols:
-            chain_ids = [(1, 1)] if self.dual_ir == "primary_only" else [(1, 1), (2, 2), (1, 2), (2, 1)]
             for c1, c2 in chain_ids:
                 lookup[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
-                    ct_id,
+                    ct_ids,
                     f"{tmp_arm}_{c1}",
                     f"{tmp_arm}_{c2}",
-                )
-                if self.same_v_gene:
-                    lookup_v[(tmp_arm, c1, c2)] = self.neighbor_finder.lookup(
-                        ct_id,
-                        f"{tmp_arm}_{c1}_v_call",
-                        f"{tmp_arm}_{c2}_v_call",
-                    )
+                )        
+        id_len = len(ct_ids)
 
-        # need to loop through all coordinates that have at least one distance.
-        has_distance = merge_coo_matrices(lookup.values()).tocsr()  # type: ignore
-        # convert to csr matrices to iterate over indices
-        lookup = {k: v.tocsr() for k, v in lookup.items()}
+        has_distance_table = sp.csr_matrix((id_len, id_len))
+        for value in lookup.values():
+            has_distance_table += value
+        
+        has_distance_mask = has_distance_table
+        has_distance_mask.data = np.ones_like(has_distance_mask.data)
 
-        def _lookup_dist_for_chains(tmp_arm: Literal["VJ", "VDJ"], c1: Literal[1, 2], c2: Literal[1, 2]):
-            """Lookup the distance between two chains of a given receptor
-            arm. Only considers those columns in the current row that
-            have an entry in `has_distance`. Returns a dense
-            array with dimensions (1, n) where n equals the number
-            of entries in `has_distance`.
-            """
-            ct_col2 = tmp_clonotypes[f"{tmp_arm}_{c2}_{self.sequence_key}"].values
-            tmp_array = lookup[(tmp_arm, c1, c2)][0, has_distance.indices].todense().A1.astype(np.float16)
-            tmp_array[ct_col2[has_distance.indices] == "nan"] = np.nan
-            if self.same_v_gene:
-                mask_v_gene = lookup_v[(tmp_arm, c1, c2)][0, has_distance.indices]
-                tmp_array = np.multiply(tmp_array, mask_v_gene)
-            return tmp_array
-
-        # Merge the distances of chains
-        res = []
-        for tmp_arm in self._receptor_arm_cols:
-            if self.dual_ir == "primary_only":
-                tmp_res = _lookup_dist_for_chains(tmp_arm, 1, 1)
-            elif self.dual_ir == "all":
-                tmp_res = reduce_or(
-                    reduce_and(
-                        _lookup_dist_for_chains(tmp_arm, 1, 1),
-                        _lookup_dist_for_chains(tmp_arm, 2, 2),
-                        chain_count=self._chain_count[tmp_arm][ct_id],
-                    ),
-                    reduce_and(
-                        _lookup_dist_for_chains(tmp_arm, 1, 2),
-                        _lookup_dist_for_chains(tmp_arm, 2, 1),
-                        chain_count=self._chain_count[tmp_arm][ct_id],
-                    ),
-                )
-            else:  # "any"
-                tmp_res = reduce_or(
-                    _lookup_dist_for_chains(tmp_arm, 1, 1),
-                    _lookup_dist_for_chains(tmp_arm, 1, 2),
-                    _lookup_dist_for_chains(tmp_arm, 2, 2),
-                    _lookup_dist_for_chains(tmp_arm, 2, 1),
-                )
-
-            res.append(tmp_res)
-
-        # Merge the distances of arms.
-        reduce_fun = reduce_and if self.receptor_arms == "all" else reduce_or
-        # checking only the chain=1 columns here is enough, as there must not
-        # be a secondary chain if there is no first one.
-        res = reduce_fun(np.vstack(res), chain_count=self._chain_count["arms"][ct_id])
-
+        def csr_min(a,b):
+            max_value_a = np.max(a.data, initial=0)
+            max_value_b = np.max(b.data, initial=0)
+            max_value = np.max([max_value_a,max_value_b]) + 1
+            min_mat_a = a.copy()
+            min_mat_a.data -= max_value
+            min_mat_b = b.copy()
+            min_mat_b.data -= max_value
+            a_smaller_b = min_mat_a < min_mat_b
+            return b + (a-b).multiply(a_smaller_b)
+        
+        def csr_max(a, b):
+            max_value_a = np.max(a.data)
+            max_value_b = np.max(b.data)
+            max_value = np.max([max_value_a,max_value_b]) + 1
+            max_mat_a = a.copy()
+            max_mat_a.data -= max_value
+            max_mat_b = b.copy()
+            max_mat_b.data -= max_value
+            a_greater_b = max_mat_a > max_mat_b
+            return b + (a-b).multiply(a_greater_b)
+        
         if self.match_columns is not None:
-            match_columns_mask = self.neighbor_finder.lookup(ct_id, "match_columns", "match_columns")
-            res = np.multiply(res, match_columns_mask[0, has_distance.indices])
+            distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
+            distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups["match_columns"]
+            if distance_matrix_name != distance_matrix_name_reverse:
+                    raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
+            reverse_lookup_values = np.vstack(list(reverse.lookup.values()))
+            reverse_lookup_keys = np.zeros(id_len, dtype=np.int32)
+            reverse_lookup_keys[list(reverse.lookup.keys())] = np.arange(len(list(reverse.lookup.keys())))
+            match_column_mask = sp.csr_matrix((np.empty(len(has_distance_mask.indices)), has_distance_mask.indices, has_distance_mask.indptr), shape = has_distance_mask.shape)
+            has_distance_mask_coo = match_column_mask.tocoo()
+            indices_in_dist_mat = forward[has_distance_mask_coo.row]
+            match_column_mask.data = reverse_lookup_values[reverse_lookup_keys[indices_in_dist_mat], has_distance_mask_coo.col]
+            
+        tmp_arm_res = {}
+        chain_res = {}
+        
+        def filter_chain_count_data(matrix_coo_data_chain_filtered, matrix_coo_data, matrix_coo_row, matrix_coo_col, chain_count_array):
+            data_indices = np.arange(len(matrix_coo_data))
+            chain_counts1 = chain_count_array[matrix_coo_row]
+            chain_counts2 = chain_count_array[matrix_coo_col]
+            chain_counts_equal = chain_counts1 == chain_counts2
+            matrix_coo_data_chain_filtered[chain_counts1[chain_counts_equal],data_indices[chain_counts_equal]] = matrix_coo_data[chain_counts_equal]
+            return matrix_coo_data_chain_filtered[0], matrix_coo_data_chain_filtered[1], matrix_coo_data_chain_filtered[2]
 
-        final_res = has_distance.copy()
-        final_res.data = res.astype(np.uint8)
+        def filter_chain_count(matrix: sp.csr_matrix, col: str) -> sp.csr_matrix:
+            chain_count = self._chain_count[col]
+            matrix_coo = matrix.tocoo()
+            matrix_coo_data_chain_filtered = np.array([np.zeros_like(matrix_coo.data),np.zeros_like(matrix_coo.data),np.zeros_like(matrix_coo.data)])
+            csr_filtered1, csr_filtered2, csr_filtered3 = matrix.copy(), matrix.copy(), matrix.copy()
+            csr_filtered1.data, csr_filtered2.data, csr_filtered3.data = filter_chain_count_data(matrix_coo_data_chain_filtered, matrix_coo.data, matrix_coo.row, matrix_coo.col, chain_count)
+            return csr_filtered1, csr_filtered2, csr_filtered3
+
+        for tmp_arm in self._receptor_arm_cols:
+            for c1, c2 in chain_ids:
+                tmp_arrays = lookup[(tmp_arm, c1, c2)][ct_ids]
+                
+                if(not (self.same_v_gene or self.match_columns)):
+                    tmp_arrays = tmp_arrays.multiply(has_distance_mask)
+
+                if self.same_v_gene:
+                    distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_v_call"]
+                    distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_v_call"]
+                    if distance_matrix_name != distance_matrix_name_reverse:
+                            raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
+                    empty_row = np.array([np.zeros(len(ct_ids), dtype=bool)])
+                    reverse_lookup_values = np.vstack((*reverse.lookup.values(), empty_row))
+                    reverse_lookup_keys = np.full(id_len, -1, dtype=np.int32)
+                    keys_array = np.fromiter(reverse.lookup.keys(), dtype=int, count=len(reverse.lookup))
+                    reverse_lookup_keys[keys_array] = np.arange(len(keys_array))
+                    v_gene_mask = sp.csr_matrix((np.empty(len(has_distance_mask.indices)), has_distance_mask.indices, has_distance_mask.indptr), shape = has_distance_mask.shape)
+                    has_distance_mask_coo = v_gene_mask.tocoo()
+                    indices_in_dist_mat = forward[has_distance_mask_coo.row]
+                    v_gene_mask.data = reverse_lookup_values[reverse_lookup_keys[indices_in_dist_mat], has_distance_mask_coo.col]
+                    tmp_arrays = tmp_arrays.multiply(v_gene_mask)
+                
+                if self.match_columns is not None:
+                    tmp_arrays = tmp_arrays.multiply(match_column_mask)
+
+                if(self.dual_ir == "all"):
+                    filtered1, filtered2, filtered3 = filter_chain_count(tmp_arrays,tmp_arm)
+                    chain_res[(tmp_arm, c1, c2, 0)] = filtered1
+                    chain_res[(tmp_arm, c1, c2, 1)] = filtered2
+                    chain_res[(tmp_arm, c1, c2, 2)] = filtered3
+                else:
+                    chain_res[(tmp_arm, c1, c2)] = tmp_arrays
+        
+            for c1, c2 in chain_ids:
+                if self.dual_ir == "primary_only":
+                    tmp_arm_res[tmp_arm] = chain_res[(tmp_arm, 1, 1)]
+                elif self.dual_ir == "any":
+                    tmp_arm_res[tmp_arm] = csr_min(csr_min(chain_res[(tmp_arm, 1, 1)],
+                                               chain_res[(tmp_arm, 1, 2)]),
+                                               csr_min(chain_res[(tmp_arm, 2, 1)],
+                                                       chain_res[(tmp_arm, 2, 2)]))
+                elif self.dual_ir == "all":
+                    tmp_arm_res[tmp_arm] = csr_min(csr_max(chain_res[(tmp_arm, 1, 1, 2)],
+                                               chain_res[(tmp_arm, 2, 2, 2)]),
+                                               csr_max(chain_res[(tmp_arm, 2, 1, 2)],
+                                                       chain_res[(tmp_arm, 1, 2, 2)]))
+                    
+                    tmp_arm_res[tmp_arm] += chain_res[(tmp_arm, 1, 1, 1)] + chain_res[(tmp_arm, 1, 1, 0)]
+
+                else:
+                    assert False, "self.dual_ir method " +  self.dual_ir + "not implemented" 
+
+        if(len(tmp_arm_res) == 1):
+            final_res = tmp_arm_res[self._receptor_arm_cols[0]]
+        else:
+
+            if(self.receptor_arms == "all"):
+                arm_res = {}
+                arm_res[("VJ", 0)], arm_res[("VJ", 1)], arm_res[("VJ", 2)]  = filter_chain_count(tmp_arm_res["VJ"], "arms")
+                arm_res[("VDJ", 0)], arm_res[("VDJ", 1)], arm_res[("VDJ", 2)]  = filter_chain_count(tmp_arm_res["VDJ"], "arms")
+                final_res = csr_max(arm_res[("VJ", 2)], arm_res[("VDJ", 2)])
+                final_res += arm_res[("VJ", 0)] + arm_res[("VJ", 1)] + arm_res[("VDJ", 0)] + arm_res[("VDJ", 1)]
+
+            else:
+                final_res = csr_min(tmp_arm_res["VJ"], tmp_arm_res["VDJ"])
         return final_res

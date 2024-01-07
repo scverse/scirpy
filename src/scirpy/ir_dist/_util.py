@@ -233,61 +233,42 @@ class DoubleLookupNeighborFinder:
 
     def lookup(
         self,
-        object_id: int,
+        object_ids: np.ndarray[int],
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
-    ) -> Union[coo_matrix, np.ndarray]:
-        """Get ids of neighboring objects from a lookup table.
-
-        Performs the following lookup:
-
-            object_id -> dist_mat -> neighboring features -> neighboring objects.
-
-        where an object is a clonotype in our case (but could be used for something else)
-
-        "nan"s are not looked up via the distance matrix, they return a row of zeros
-        instead.
-
-        Parameters
-        ----------
-        object_id
-            The row index of the feature_table.
-        forward_lookup_table
-            The unique identifier of a lookup table previously added via
-            `add_lookup_table`.
-        reverse_lookup_table
-            The unique identifier of the lookup table used for the reverse lookup.
-            If not provided will use the same lookup table for forward and reverse
-            lookup. This is useful to calculate distances across features from
-            different columns of the feature table (e.g. primary and secondary VJ chains).
-        """
-        distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
+    ) -> Union[list[coo_matrix], list[np.ndarray]]:
+        
+        distance_matrix_name, forward, _ = self.lookups[forward_lookup_table]
 
         if reverse_lookup_table is not None:
             distance_matrix_name_reverse, _, reverse = self.lookups[reverse_lookup_table]
             if distance_matrix_name != distance_matrix_name_reverse:
                 raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
-
+        
         distance_matrix = self.distance_matrices[distance_matrix_name]
-        idx_in_dist_mat = forward[object_id]
-        if idx_in_dist_mat == -1:  # nan
-            return reverse.empty()
-        else:
-            # get distances from the distance matrix...
-            row = distance_matrix[idx_in_dist_mat, :]
+        indices_in_dist_mat = forward[object_ids]
+        indices_in_dist_mat = indices_in_dist_mat + 1
+        empty_row = sp.csr_matrix((1, distance_matrix.shape[1]), dtype=distance_matrix.dtype)
+        distance_matrix_new = sp.vstack([empty_row, distance_matrix], format='csr')
+        rows = distance_matrix_new[indices_in_dist_mat, :]
 
-            if reverse.is_boolean:
-                assert (
-                    len(row.indices) == 1  # type: ignore
-                ), "Boolean reverse lookup only works for identity distance matrices."
-                return reverse[row.indices[0]]  # type: ignore
-            else:
-                # ... and get column indices directly from sparse row
-                # sum concatenates coo matrices
-                return merge_coo_matrices(
-                    (reverse[i] * multiplier for i, multiplier in zip(row.indices, row.data)),  # type: ignore
-                    shape=(1, reverse.size),
-                )
+        reverse_empty_row_col = np.array([], dtype=np.int32)
+        reverse_empty_row_data = np.array([], dtype=np.uint8)
+        reverse_table_data = [reverse_empty_row_data] * rows.shape[1]
+        reverse_table_col = [reverse_empty_row_col] * rows.shape[1]
+        nnz_array = np.zeros(rows.shape[1], dtype=int)
+
+        for key, value in reverse.lookup.items():
+            reverse_table_data[key] = value.data
+            reverse_table_col[key] = value.col
+            nnz_array[key] = value.nnz
+        
+        data = np.concatenate(reverse_table_data)
+        col = np.concatenate(reverse_table_col)
+        indptr = np.concatenate([np.array([0], dtype=np.int32), np.cumsum(nnz_array)])
+        reverse_matrix_csr = sp.csr_matrix((data, col, indptr), shape=(len(reverse_table_data), len(object_ids)))
+
+        return rows * reverse_matrix_csr
 
     def add_distance_matrix(
         self,
