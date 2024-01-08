@@ -9,6 +9,7 @@ import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from Levenshtein import hamming as hamming_dist
+from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 from tqdm.contrib.concurrent import process_map
 
@@ -114,7 +115,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         cutoff: int,
         *,
         n_jobs: Optional[int] = None,
-        block_size: Optional[int] = 50,
+        block_size: Optional[int] = 500,
     ):
         super().__init__(cutoff)
         self.n_jobs = n_jobs
@@ -194,6 +195,10 @@ class ParallelDistanceCalculator(DistanceCalculator):
 
         See :meth:`DistanceCalculator.calc_dist_mat`.
         """
+        if self.block_size < 1000 and len(seqs) * (len(seqs2) if seqs2 is not None else len(seqs)) > 300000**2:
+            logging.info("Large problem size. Adjusting block size to 5000 to avoid memory issues.")
+            self.block_size = 5000
+
         # precompute blocks as list to have total number of blocks for progressbar
         blocks = list(self._block_iter(seqs, seqs2, self.block_size))
 
