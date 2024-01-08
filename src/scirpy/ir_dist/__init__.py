@@ -82,18 +82,22 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         metric = "identity"
         cutoff = 0
 
+    # Let's rely on the default set by the class if cutoff is None
+    if cutoff is not None:
+        kwargs["cutoff"] = cutoff
+
     if isinstance(metric, metrics.DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
-        dist_calc = metrics.FastAlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, estimated_penalty=0, **kwargs)
+        dist_calc = metrics.FastAlignmentDistanceCalculator(n_jobs=n_jobs, estimated_penalty=0, **kwargs)
     elif metric == "fastalignment":
-        dist_calc = metrics.FastAlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.FastAlignmentDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "identity":
-        dist_calc = metrics.IdentityDistanceCalculator(cutoff=cutoff, **kwargs)
+        dist_calc = metrics.IdentityDistanceCalculator(**kwargs)
     elif metric == "levenshtein":
-        dist_calc = metrics.LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
-        dist_calc = metrics.HammingDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 
