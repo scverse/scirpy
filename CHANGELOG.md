@@ -10,13 +10,23 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
-## New features
+### Fixes
+
+-   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
+
+### New features
 
 -   Speed up alignment distances by pre-filtering. There are two filtering strategies: A (lossless) length-based filter
     and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
     class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
     in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
     Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
+
+### Documentation
+
+-   The default values of the distance calculator classes in `ir_dist.metrics` was unclear. The default value is now
+    set in the classes. In `pp.ir_dist` and `ir_dist.sequence_dist`, no cutoff argument is passed to the metrics
+    objects, unless one is explicitly specified (previously `None` was passed by default).
 
 ## v0.14.0
 
