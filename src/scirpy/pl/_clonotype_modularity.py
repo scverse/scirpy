@@ -192,7 +192,7 @@ def clonotype_modularity(
                 score_df["ys"].values,
                 arrowprops={"arrowstyle": "-", "color": "k", "lw": 0.5},
                 force_text=(0.3, 0.3),
-                force_points=(0.4, 0.4),
+                force_static=(0.4, 0.4),
             )
 
     return ax
