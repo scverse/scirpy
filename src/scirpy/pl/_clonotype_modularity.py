@@ -1,9 +1,11 @@
 from collections.abc import Sequence
 from typing import Optional, Union
 
+import adjustText
 import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
+from packaging.version import Version
 
 from scirpy.util import DataHandler
 
@@ -186,13 +188,21 @@ def clonotype_modularity(
             )
 
         if label_adjusttext:
+            kwargs = {}
+            # incompatible API between <1.0 and >=1.0. I'd like to pin 1.0, but it's not available from
+            # conda-forge and there are some issue (https://github.com/Phlya/adjustText/issues/166)
+            if Version(adjustText.__version__) >= Version("1.0"):
+                kwargs["force_static"] = (0.4, 0.4)
+            else:
+                kwargs["force_points"] = (0.4, 0.4)
+
             adjust_text(
                 label_objs,
                 score_df["xs"].values,
                 score_df["ys"].values,
                 arrowprops={"arrowstyle": "-", "color": "k", "lw": 0.5},
                 force_text=(0.3, 0.3),
-                force_static=(0.4, 0.4),
+                **kwargs,
             )
 
     return ax
