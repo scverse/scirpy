@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from importlib.metadata import version
 from typing import Optional, Union
 
-import adjustText
 import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
