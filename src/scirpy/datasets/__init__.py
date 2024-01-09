@@ -16,6 +16,7 @@ import pooch
 import scanpy as sc
 from anndata import AnnData
 from mudata import MuData
+from pandas.api.types import is_string_dtype
 from scanpy import logging
 
 from scirpy.io._convert_anndata import from_airr_cells
@@ -305,20 +306,49 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         ]
     )
 
-    # If no curated CDR3 sequence or V/D/J gene is available, the calculated one is used.
     def replace_curated(input_1, input_2):
-        calculated_1 = input_1.replace("Curated", "Calculated")
-        iedb_df.loc[iedb_df[input_1].isna(), input_1] = iedb_df[calculated_1]
-        iedb_df[input_1] = iedb_df[input_1].str.upper()
-        calculated_2 = input_2.replace("Curated", "Calculated")
-        iedb_df.loc[iedb_df[input_2].isna(), input_2] = iedb_df[calculated_2]
-        iedb_df[input_2] = iedb_df[input_2].str.upper()
+        """If no curated CDR3 sequence or V/D/J gene is available, use the calculated one"""
+        for input in [input_1, input_2]:
+            calculated = input.replace("Curated", "Calculated")
+            iedb_df.loc[iedb_df[input].isna(), input] = iedb_df[calculated]
+            if is_string_dtype(iedb_df[input]):
+                iedb_df[input] = iedb_df[input].str.upper()
+
+    def _get_junction_aa(row, chain="Chain 1"):
+        """Compute the "junction_aa" sequence from the protein sequence based on the Start/End indices.
+
+        In the database, only CDR3 (without initial C and terminal W/F) is available.
+        """
+        try:
+            # if the start end is missing (NaN)
+            start = int(row[f"{chain} CDR3 Start Curated"])
+            end = int(row[f"{chain} CDR3 End Curated"])
+        except ValueError:
+            return pd.NA
+        protein = row[f"{chain} Protein Sequence"]
+        if pd.isnull(protein):
+            # if a start/end is specified (possibly a "curated" CDR3 is available), but no reference protein sequence given
+            return pd.NA
+
+        # +1 at each end for "junction" vs. "cdr3", start one earlier because of different indexing
+        junction = protein[start - 2 : end + 1]
+
+        # It turns out that this does not always match - but in the inspected cases, the "curated" CDR3 was
+        # incorrectly including the C/F|W.
+        # cdr3 = junction[1:-1]
+        # print(junction, cdr3, row["Chain 1 CDR3 Curated"])
+
+        return junction
 
     replace_curated("Chain 1 CDR3 Curated", "Chain 2 CDR3 Curated")
+    replace_curated("Chain 1 CDR3 Start Curated", "Chain 2 CDR3 Start Curated")
+    replace_curated("Chain 1 CDR3 End Curated", "Chain 2 CDR3 End Curated")
     replace_curated("Chain 1 Curated V Gene", "Chain 2 Curated V Gene")
     replace_curated("Chain 1 Curated D Gene", "Chain 2 Curated D Gene")
     replace_curated("Chain 1 Curated J Gene", "Chain 2 Curated J Gene")
 
+    iedb_df["Chain 1 junction_aa"] = iedb_df.apply(_get_junction_aa, axis=1, chain="Chain 1")
+    iedb_df["Chain 2 junction_aa"] = iedb_df.apply(_get_junction_aa, axis=1, chain="Chain 2")
     iedb_df["cell_id"] = iedb_df.reset_index(drop=True).index
 
     accepted_chains = ["alpha", "beta", "heavy", "light", "gamma", "delta"]
@@ -348,7 +378,8 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         chain1.update(
             {
                 "locus": receptor_dict[row["Chain 1 Type"]],
-                "junction_aa": row["Chain 1 CDR3 Curated"],
+                "cdr3": row["Chain 1 CDR3 Curated"],
+                "junction_aa": row["Chain 1 junction_aa"],
                 "junction": None,
                 "consensus_count": None,
                 "v_call": row["Chain 1 Curated V Gene"],
@@ -360,7 +391,8 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         chain2.update(
             {
                 "locus": receptor_dict[row["Chain 2 Type"]],
-                "junction_aa": row["Chain 2 CDR3 Curated"],
+                "cdr3": row["Chain 2 CDR3 Curated"],
+                "junction_aa": row["Chain 2 junction_aa"],
                 "junction": None,
                 "consensus_count": None,
                 "v_call": row["Chain 2 Curated V Gene"],
