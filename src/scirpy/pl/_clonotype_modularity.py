@@ -1,7 +1,7 @@
 from collections.abc import Sequence
+from importlib.metadata import version
 from typing import Optional, Union
 
-import adjustText
 import numpy as np
 from adjustText import adjust_text
 from matplotlib import patheffects
@@ -191,7 +191,7 @@ def clonotype_modularity(
             kwargs = {}
             # incompatible API between <1.0 and >=1.0. I'd like to pin 1.0, but it's not available from
             # conda-forge and there are some issue (https://github.com/Phlya/adjustText/issues/166)
-            if Version(adjustText.__version__) >= Version("1.0"):
+            if Version(version("adjustText")) >= Version("1.0"):
                 kwargs["force_static"] = (0.4, 0.4)
             else:
                 kwargs["force_points"] = (0.4, 0.4)
