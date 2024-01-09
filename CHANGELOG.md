@@ -10,13 +10,19 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
-## New features
+### New features
 
 -   Speed up alignment distances by pre-filtering. There are two filtering strategies: A (lossless) length-based filter
     and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
     class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
     in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
-    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
+    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives. ([#456](https://github.com/scverse/scirpy/pull/456))
+
+### Fixes
+
+-   In `datasets.iedb`, the `junction_aa` field now correctly contains the initial `C` and the terminal `W/F`. Previously
+    it contained what should have been in the `cdr3_aa` field. The `junction_aa` is not contained in the IEDB dump directly.
+    Instead it is calculated from the protein sequence and the corresponding start/end coordinates. ([#476](https://github.com/scverse/scirpy/pull/476))
 
 ## v0.14.0
 
