@@ -378,7 +378,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         chain1.update(
             {
                 "locus": receptor_dict[row["Chain 1 Type"]],
-                "cdr3": row["Chain 1 CDR3 Curated"],
+                "cdr3_aa": row["Chain 1 CDR3 Curated"],
                 "junction_aa": row["Chain 1 junction_aa"],
                 "junction": None,
                 "consensus_count": None,
@@ -391,7 +391,7 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
         chain2.update(
             {
                 "locus": receptor_dict[row["Chain 2 Type"]],
-                "cdr3": row["Chain 2 CDR3 Curated"],
+                "cdr3_aa": row["Chain 2 CDR3 Curated"],
                 "junction_aa": row["Chain 2 junction_aa"],
                 "junction": None,
                 "consensus_count": None,
