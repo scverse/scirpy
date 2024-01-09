@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning][].
     Instead it is calculated from the protein sequence and the corresponding start/end coordinates. Note that if you have
     a cached `iedb.h5ad` in the `data` folder (relative to your work dir), you need to remove it to re-download the
     new version. ([#476](https://github.com/scverse/scirpy/pull/476))
+-   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
 
 ## v0.14.0
 
