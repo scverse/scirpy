@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
-## New features
+### Fixes
+
+-   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
+
+### New features
 
 -   Speed up alignment distances by pre-filtering. There are two filtering strategies: A (lossless) length-based filter
     and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
