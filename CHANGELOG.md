@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning][].
 
 -   In `datasets.iedb`, the `junction_aa` field now correctly contains the initial `C` and the terminal `W/F`. Previously
     it contained what should have been in the `cdr3_aa` field. The `junction_aa` is not contained in the IEDB dump directly.
-    Instead it is calculated from the protein sequence and the corresponding start/end coordinates. ([#476](https://github.com/scverse/scirpy/pull/476))
+    Instead it is calculated from the protein sequence and the corresponding start/end coordinates. Note that if you have
+    a cached `iedb.h5ad` in the `data` folder (relative to your work dir), you need to remove it to re-download the
+    new version. ([#476](https://github.com/scverse/scirpy/pull/476))
 
 ## v0.14.0
 

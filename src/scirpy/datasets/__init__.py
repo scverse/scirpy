@@ -248,6 +248,9 @@ def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
     :cite:`iedb` is a curated database of
     T-cell receptor (TCR) sequences with known antigen specificities.
 
+    The `junction_aa` is not contained in the IEDB dump directly.
+    Instead it is calculated from the protein sequence and the corresponding start/end coordinates.
+
     Parameters
     ----------
     cached
