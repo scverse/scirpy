@@ -51,7 +51,7 @@ metric
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
-        * `fastalignment` -- Distance based on pairwise sequence alignments using the
+      * `fastalignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. Faster implementation of `alignment` with some loss.
         This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
