@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 from anndata import AnnData
+from joblib import Parallel
 from mudata import MuData
 from scanpy import logging
 from scipy.sparse import issparse
@@ -561,3 +562,18 @@ def _translate_dna_to_protein(dna_seq: str):
         else:
             protein.append("N")
     return "".join(protein)
+
+
+def _parallelize_with_joblib(delayed_objects, *, total=None, **kwargs):
+    """Wrapper around joblib.Parallel that shows a progressbar if the backend supports it.
+
+    Progressbar solution from https://stackoverflow.com/a/76726101/2340703
+    """
+    try:
+        return tqdm(Parallel(return_as="generator", **kwargs)(delayed_objects), total=total)
+    except ValueError:
+        logging.info(
+            "Backend doesn't support return_as='generator'. No progress bar will be shown. "
+            "Consider setting verbosity in joblib.parallel_config"
+        )
+        return Parallel(return_as="list", **kwargs)(delayed_objects)

@@ -13,7 +13,7 @@ from Levenshtein import hamming as hamming_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
-from scirpy.util import _doc_params, deprecated, tqdm
+from scirpy.util import _doc_params, _parallelize_with_joblib, deprecated
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -228,12 +228,8 @@ class ParallelDistanceCalculator(DistanceCalculator):
         # precompute blocks as list to have total number of blocks for progressbar
         blocks = list(self._block_iter(seqs, seqs2, block_size=block_size))
 
-        # joblib + tqdm, see https://stackoverflow.com/a/76726101/2340703
-        block_results = tqdm(
-            joblib.Parallel(return_as="generator", n_jobs=self.n_jobs)(
-                joblib.delayed(self._compute_block)(*block) for block in blocks
-            ),
-            total=len(blocks),
+        block_results = _parallelize_with_joblib(
+            (joblib.delayed(self._compute_block)(*block) for block in blocks), total=len(blocks), n_jobs=self.n_jobs
         )
 
         try:
