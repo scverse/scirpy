@@ -158,7 +158,9 @@ def _ir_dist(
         with the results.
     n_jobs
         Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metrics.DistanceCalculator`.
+        :class:`scirpy.ir_dist.metrics.DistanceCalculator`. :class:`joblib.Parallel` is
+        used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
+        backend (e.g. `dask`) and adjust other configuration options.
     {airr_mod}
     {airr_key}
     {chain_idx_key}
