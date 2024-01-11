@@ -273,7 +273,7 @@ class IdentityDistanceCalculator(DistanceCalculator):
         will be ignored and is always 0.
     """
 
-    def __init__(self, cutoff: Union[int, None] = 0):
+    def __init__(self, cutoff: int = 0):
         cutoff = 0
         super().__init__(cutoff)
 
@@ -325,9 +325,7 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     {params}
     """
 
-    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
-        if cutoff is None:
-            cutoff = 2
+    def __init__(self, cutoff: int = 2, **kwargs):
         super().__init__(cutoff, **kwargs)
 
     def _compute_block(self, seqs1, seqs2, origin):
@@ -374,9 +372,7 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
     {params}
     """
 
-    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
-        if cutoff is None:
-            cutoff = 2
+    def __init__(self, cutoff: int = 2, **kwargs):
         super().__init__(cutoff, **kwargs)
 
     def _compute_block(self, seqs1, seqs2, origin):
@@ -450,7 +446,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     )
     def __init__(
         self,
-        cutoff: Union[None, int] = None,
+        cutoff: int = 10,
         *,
         n_jobs: Union[int, None] = -1,
         block_size: Optional[int] = None,
@@ -458,8 +454,6 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        if cutoff is None:
-            cutoff = 10
         super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
@@ -588,7 +582,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: Union[None, int] = None,
+        cutoff: int = 10,
         *,
         n_jobs: Union[int, None] = None,
         block_size: Optional[int] = None,
@@ -597,8 +591,6 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         gap_extend: int = 11,
         estimated_penalty: float = None,
     ):
-        if cutoff is None:
-            cutoff = 10
         super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
         self.subst_mat = subst_mat
         self.gap_open = gap_open

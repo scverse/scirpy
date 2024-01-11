@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning][].
     in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
     Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
 
+### Documentation
+
+-   The default values of the distance calculator classes in `ir_dist.metrics` was unclear. The default value is now
+    set in the classes. In `pp.ir_dist` and `ir_dist.sequence_dist`, no cutoff argument is passed to the metrics
+    objects, unless one is explicitly specified (previously `None` was passed by default).
+
 ## v0.14.0
 
 ### Breaking changes
