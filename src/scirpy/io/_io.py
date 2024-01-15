@@ -606,24 +606,11 @@ def to_dandelion(adata: DataHandler.TYPE, **kwargs):
     `Dandelion` object.
     """
     try:
-        import dandelion as ddl
+        from dandelion import from_scirpy
+
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
-    airr_cells = to_airr_cells(adata, **kwargs)
-
-    contig_dicts = {}
-    for tmp_cell in airr_cells:
-        for i, chain in enumerate(tmp_cell.to_airr_records(), start=1):
-            # dandelion-specific modifications
-            chain.update(
-                {
-                    "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
-                }
-            )
-            contig_dicts[chain["sequence_id"]] = chain
-
-    data = pd.DataFrame.from_dict(contig_dicts, orient="index")
-    return ddl.Dandelion(ddl.load_data(data))
+    return from_scirpy(adata)
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -651,20 +638,11 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     :ref:`data-structure`.
     """
     try:
-        import dandelion as ddl
+        from dandelion import to_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
-    dandelion_df = dandelion.data.copy()
-    # replace "unassigned" with None
-    for col in dandelion_df.columns:
-        dandelion_df.loc[dandelion_df[col] == "unassigned", col] = None
-
-    adata = read_airr(dandelion_df, **kwargs)
-
-    if transfer:
-        ddl.tl.transfer(adata, dandelion)  # need to make a version that is not so verbose?
-    return adata
+    return to_scirpy(dandelion, transfer=transfer, to_mudata=False, **kwargs)
 
 
 @_doc_params(doc_working_model=doc_working_model)
