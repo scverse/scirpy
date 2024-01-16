@@ -318,56 +318,52 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
         return result
 
 
-@_doc_params(params=_doc_params_parallel_distance_calculator)
-class HammingDistanceCalculator(ParallelDistanceCalculator):
-    """\
-    Calculates the Hamming distance between sequences of identical length.
-
-    The edit distance is the total number of substitution events. Sequences
-    with different lengths will be treated as though they exceeded the
-    distance-cutoff, i.e. they receive a distance of `0` in the sparse distance
-    matrix and will not be connected by an edge in the graph.
-
-    This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
-    to calculate the distances.
-
-    Choosing a cutoff:
-        Each modification stands for a substitution event.
-        While lacking empirical data, it seems unlikely that CDR3 sequences with more
-        than two modifications still recognize the same antigen.
-
-    Parameters
-    ----------
-    cutoff
-        Will eleminate distances > cutoff to make efficient
-        use of sparse matrices. The default cutoff is `2`.
-    {params}
-    """
-
-    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
+class HammingDistanceCalculator:
+    def __init__(self, normalize: bool, cutoff: Union[None, int] = None):
         if cutoff is None:
             cutoff = 2
-        super().__init__(cutoff, **kwargs)
+        self.cutoff = cutoff
+        self.normalize = normalize
 
-    def _compute_block(self, seqs1, seqs2, origin):
-        origin_row, origin_col = origin
-        if seqs2 is not None:
-            # compute the full matrix
-            coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
-        else:
-            # compute only upper triangle in this case
-            coord_iterator = itertools.combinations_with_replacement(enumerate(seqs1), r=2)
+    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
+        
+        def get_hamming_distances_row(seqs_a, seqs_b, seq_len):
+            ascii_seqs_a = np.frombuffer(seqs_a.encode('ascii'), dtype=np.uint8)
+            ascii_seqs_b = np.frombuffer(seqs_b.encode('ascii'), dtype=np.uint8)
+            return np.not_equal(ascii_seqs_a, ascii_seqs_b).reshape(-1, seq_len).sum(axis=1)+1
+            
+        data = []
+        col = []
+        indptr = [0]
+        if(seqs2 is None):
+            seqs2 = seqs
+        seqs2_lengths = np.vectorize(len)(seqs2)
 
-        result = []
-        for (row, s1), (col, s2) in coord_iterator:
-            # require identical length of sequences
-            if len(s1) != len(s2):
-                continue
-            d = hamming_dist(s1, s2)
-            if d <= self.cutoff:
-                result.append((d + 1, origin_row + row, origin_col + col))
+        for seq in tqdm(seqs, desc="Calculating Hamming Distances"):
+            seq_len = len(seq)
+            length_values_equal = seqs2_lengths == seq_len
+            same_length_positions = np.nonzero(length_values_equal)[0]
+            seqs2_same_length = seqs2[same_length_positions]
+            seqs2_row = ''.join(seqs2_same_length)
+            number_of_sequences = len(seqs2_row) // len(seq)
+            seq_repeated = seq*number_of_sequences
+            hamming_distances_row = get_hamming_distances_row(seq_repeated, seqs2_row, seq_len)
+            
+            cutoff_mask = hamming_distances_row <= self.cutoff + 1
+            hamming_distances_row = hamming_distances_row[cutoff_mask]
+            if(self.normalize):
+                hamming_distances_row = hamming_distances_row / seq_len
+            same_length_positions = same_length_positions[cutoff_mask]
 
-        return result
+            data.append(hamming_distances_row)
+            col.append(same_length_positions)
+            indptr.append(indptr[-1] + len(hamming_distances_row))
+
+        csr_data = np.concatenate(data)
+        csr_col= np.concatenate(col)
+        csr_indptr= np.array(indptr)
+        distance_matrix_csr = scipy.sparse.csr_matrix((csr_data, csr_col, csr_indptr))
+        return distance_matrix_csr
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)

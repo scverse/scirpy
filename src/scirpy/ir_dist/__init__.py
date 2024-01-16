@@ -93,7 +93,9 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
     elif metric == "levenshtein":
         dist_calc = metrics.LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
-        dist_calc = metrics.HammingDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.HammingDistanceCalculator(normalize=False, cutoff=cutoff)
+    elif metric == "normalized_hamming":
+        dist_calc = metrics.HammingDistanceCalculator(normalize=True, cutoff=cutoff)
     else:
         raise ValueError("Invalid distance metric.")
 
