@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 -   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
+-   Reduce overall importtime by deferring the import of the `airr` package until it is actually used. ([#473](https://github.com/scverse/scirpy/pull/473))
 
 ### New features
 
@@ -20,7 +21,10 @@ and this project adheres to [Semantic Versioning][].
     and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
     class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
     in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
-    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
+    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives. ([#456](https://github.com/scverse/scirpy/pull/456))
+-   Switch to [joblib/loky](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) as a backend for parallel
+    processing in `pp.ir_dist`. Joblib enables to switch to alternative backends that support out-of-machine computing
+    (e.g. `dask`, `ray`) via the `parallel_config` context manager. Additionally, chunk sizes are now adjusted dynamically based on the problem size. ([#473](https://github.com/scverse/scirpy/pull/473))
 
 ### Documentation
 

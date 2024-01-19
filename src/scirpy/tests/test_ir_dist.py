@@ -1,3 +1,4 @@
+import joblib
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -163,6 +164,7 @@ def test_ir_dist(
 
 
 @pytest.mark.parametrize("with_adata2", [False, True])
+@pytest.mark.parametrize("joblib_backend", ["loky", "multiprocessing", "threading"])
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize(
     "comment,metric,ctn_kwargs,expected_clonotype_df,expected_dist",
@@ -340,13 +342,15 @@ def test_compute_distances(
     expected_dist,
     n_jobs,
     with_adata2,
+    joblib_backend,
 ):
     """Test that distances are calculated correctly with different settings"""
     distance_key = f"ir_dist_aa_{metric}"
     metric = adata_cdr3_mock_distance_calculator if metric == "custom" else metric
     adata2 = adata_cdr3 if with_adata2 else None
     expected_dist = np.array(expected_dist)
-    ir.pp.ir_dist(adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key)
+    with joblib.parallel_config(backend=joblib_backend):
+        ir.pp.ir_dist(adata_cdr3, adata2, metric=metric, sequence="aa", key_added=distance_key)
     cn = ClonotypeNeighbors(
         DataHandler.default(adata_cdr3),
         DataHandler.default(adata2),
