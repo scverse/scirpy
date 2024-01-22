@@ -115,6 +115,7 @@ intersphinx_mapping = {
     "mudata": ("https://mudata.readthedocs.io/en/latest/", None),
     "awkward": ("https://awkward-array.org/doc/main/", None),
     "pooch": ("https://www.fatiando.org/pooch/latest/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/latest", None),
 }
 
 # List of patterns, relative to source directory, that match files and

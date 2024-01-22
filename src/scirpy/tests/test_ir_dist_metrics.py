@@ -158,13 +158,13 @@ def test_levenshtein_compute_block():
 
 
 def test_levensthein_dist():
-    levenshtein10 = LevenshteinDistanceCalculator(10, block_size=50)
-    levenshtein10_2 = LevenshteinDistanceCalculator(10, block_size=2)
-    levenshtein1 = LevenshteinDistanceCalculator(1, n_jobs=1, block_size=1)
+    levenshtein10 = LevenshteinDistanceCalculator(10)
+    levenshtein10_2 = LevenshteinDistanceCalculator(10)
+    levenshtein1 = LevenshteinDistanceCalculator(1, n_jobs=1)
 
-    res10 = levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
-    res10_2 = levenshtein10_2.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
-    res1 = levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]))
+    res10 = levenshtein10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]), block_size=50)
+    res10_2 = levenshtein10_2.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]), block_size=2)
+    res1 = levenshtein1.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR"]), block_size=1)
 
     assert isinstance(res10, scipy.sparse.csr_matrix)
     assert isinstance(res10_2, scipy.sparse.csr_matrix)
