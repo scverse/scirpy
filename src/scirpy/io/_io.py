@@ -595,15 +595,13 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
     writer.close()
 
 
-def to_dandelion(adata: DataHandler.TYPE, **kwargs):
+def to_dandelion(adata: DataHandler.TYPE):
     """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters
     ----------
     adata
         annotated data matrix with :term:`IR` annotations.
-    **kwargs
-        additional arguments passed to :func:`~scirpy.io.to_airr_cells`
 
     Returns
     -------
@@ -618,11 +616,11 @@ def to_dandelion(adata: DataHandler.TYPE, **kwargs):
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
+def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, **kwargs) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
-    Internally calls :func:`scirpy.io.read_airr`.
+    Internally calls :func:`dandelion.to_scirpy`.
 
     {doc_working_model}
 
@@ -633,8 +631,10 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     transfer
         Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
+    to_mudata
+        Return MuData object instead of AnnData object.
     **kwargs
-        Additional arguments passed to :func:`scirpy.io.read_airr`.
+        Additional arguments passed to :func:`dandelion.to_scirpy`.
 
     Returns
     -------
@@ -646,7 +646,7 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
-    return to_scirpy(dandelion, transfer=transfer, to_mudata=False, **kwargs)
+    return to_scirpy(dandelion, transfer=transfer, to_mudata=to_mudata, **kwargs)
 
 
 @_doc_params(doc_working_model=doc_working_model)
