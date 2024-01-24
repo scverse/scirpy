@@ -228,7 +228,7 @@ class ClonotypeNeighbors:
                 tqdm_class=tqdm,
             )
 
-        dist = sp.vstack(dist_rows)
+        dist = sp.vstack(list(dist_rows))
         dist.eliminate_zeros()
         logging.hint("Done computing clonotype x clonotype distances. ", time=start)
         return dist  # type: ignore
