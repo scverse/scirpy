@@ -123,6 +123,7 @@ def test_index_chains(airr_chains, expected_index):
         ),
     ],
     ids=[
+        "default parameters, old 'duplicate_count' field",
         "default parameters",
         "productive = False",
         "require_junction_aa = False",
