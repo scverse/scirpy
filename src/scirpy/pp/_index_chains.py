@@ -27,7 +27,9 @@ def index_chains(
         "require_junction_aa",
     ),
     sort_chains_by: Mapping[str, Any] = MappingProxyType(
-        {"duplicate_count": 0, "consensus_count": 0, "junction": "", "junction_aa": ""}
+        # Since AIRR version v1.4.1, `duplicate_count` is deprecated in favor of `umi_count`.
+        # We still keep it as sort key for backwards compatibility
+        {"umi_count": 0, "duplicate_count": 0, "consensus_count": 0, "junction": "", "junction_aa": ""}
     ),
     airr_mod: str = "airr",
     airr_key: str = "airr",
@@ -89,8 +91,12 @@ def index_chains(
 
     # only warn if those fields are in the key (i.e. this should give a warning if those are missing with
     # default settings. If the user specifies their own dictionary, they are on their own)
-    if "duplicate_count" in sort_chains_by and "consensus_count" in sort_chains_by:
-        if "duplicate_count" not in params.airr.fields and "consensus_count" not in params.airr.fields:
+    if "duplicate_count" in sort_chains_by and "consensus_count" in sort_chains_by and "umi_count" in sort_chains_by:
+        if (
+            "duplicate_count" not in params.airr.fields
+            and "consensus_count" not in params.airr.fields
+            and "umi_count" not in sort_chains_by
+        ):
             logging.warning("No expression information available. Cannot rank chains by expression. ")  # type: ignore
 
     if "locus" not in params.airr.fields:

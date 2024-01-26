@@ -35,9 +35,30 @@ from .util import _make_airr_chains_valid
                 {"VJ": [1, 0], "VDJ": [2, None], "multichain": False},
                 {"VJ": [1, None], "VDJ": [0, 2], "multichain": False},
             ],
-        )
+        ),
+        (
+            [
+                # fmt: off
+                [
+                    {"locus": "TRA", "junction_aa": "AAA", "umi_count": 3, "productive": True},
+                    {"locus": "TRA", "junction_aa": "KKK", "umi_count": 6, "productive": True},
+                    {"locus": "TRB", "junction_aa": "LLL", "umi_count": 3, "productive": True},
+                ],
+                [
+                    {"locus": "TRB", "junction_aa": "KKK", "umi_count": 6, "productive": True},
+                    {"locus": "TRA", "junction_aa": "AAA", "umi_count": 3, "productive": True},
+                    {"locus": "TRB", "junction_aa": "LLL", "umi_count": 3, "productive": True},
+                ],
+                # fmt: on
+            ],
+            [
+                # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+                {"VJ": [1, 0], "VDJ": [2, None], "multichain": False},
+                {"VJ": [1, None], "VDJ": [0, 2], "multichain": False},
+            ],
+        ),
     ],
-    ids=["standard case, multiple rows"],
+    ids=["using deprecated duplicate_count column", "standard case, multiple rows"],
 )
 def test_index_chains(airr_chains, expected_index):
     """Test that chain indexing works as expected (default parameters)"""
@@ -54,6 +75,16 @@ def test_index_chains(airr_chains, expected_index):
             ["productive", "require_junction_aa"],
             {
                 "duplicate_count": 0,
+                "consensus_count": 0,
+                "junction": "",
+                "junction_aa": "",
+            },
+            {"VJ": [3, 0], "VDJ": [None, None], "multichain": False},
+        ),
+        (
+            ["productive", "require_junction_aa"],
+            {
+                "umi_count": 0,
                 "consensus_count": 0,
                 "junction": "",
                 "junction_aa": "",
