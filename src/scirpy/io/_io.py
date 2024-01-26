@@ -8,10 +8,8 @@ from glob import iglob
 from pathlib import Path
 from typing import Any, Literal, Union
 
-import airr
 import numpy as np
 import pandas as pd
-from airr import RearrangementSchema
 from anndata import AnnData
 
 from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
@@ -19,7 +17,7 @@ from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, 
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
-from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
+from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model, get_rearrangement_schema
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -402,6 +400,9 @@ def read_airr(
     AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
     :ref:`data-structure`..
     """
+    # defer import, as this is very slow
+    import airr
+
     airr_cells = {}
     logger = _IOLogger()
 
@@ -426,7 +427,7 @@ def read_airr(
 
         for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
-            chain_dict.update({req: None for req in RearrangementSchema.required if req not in chain_dict})
+            chain_dict.update({req: None for req in get_rearrangement_schema().required if req not in chain_dict})
             try:
                 tmp_cell = airr_cells[cell_id]
             except KeyError:
@@ -438,7 +439,7 @@ def read_airr(
                 airr_cells[cell_id] = tmp_cell
 
             if _decide_use_umi_count_col(chain_dict):
-                chain_dict["duplicate_count"] = RearrangementSchema.to_int(chain_dict.pop("umi_count"))
+                chain_dict["duplicate_count"] = get_rearrangement_schema().to_int(chain_dict.pop("umi_count"))
 
             if infer_locus and "locus" not in chain_dict:
                 logger.warning(
@@ -571,6 +572,9 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
     **kwargs
         additional arguments passed to :func:`~scirpy.io.to_airr_cells`
     """
+    # defer import, as this is very slow
+    import airr
+
     airr_cells = to_airr_cells(adata, **kwargs)
     try:
         fields = airr_cells[0].fields
@@ -584,9 +588,9 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
     for tmp_cell in airr_cells:
         for chain in tmp_cell.to_airr_records():
             # workaround for AIRR library writing out int field as floats (if it happens to be a float)
-            for f in chain:
-                if RearrangementSchema.type(f) == "integer":
-                    chain[f] = int(chain[f])
+            for field, value in chain.items():
+                if airr.RearrangementSchema.type(field) == "integer" and value is not None:
+                    chain[field] = int(value)
             writer.write(chain)
     writer.close()
 

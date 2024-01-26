@@ -8,7 +8,32 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## v0.15.0
+
+### Fixes
+
+-   Fix incompatibility with `scipy` 1.12 ([#484](https://github.com/scverse/scirpy/pull/484))
+-   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
+-   Reduce overall importtime by deferring the import of the `airr` package until it is actually used. ([#473](https://github.com/scverse/scirpy/pull/473))
+
+### New features
+
+-   Speed up alignment distances by pre-filtering. There are two filtering strategies: A (lossless) length-based filter
+    and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
+    class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
+    in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
+    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives. ([#456](https://github.com/scverse/scirpy/pull/456))
+-   Switch to [joblib/loky](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) as a backend for parallel
+    processing in `pp.ir_dist`. Joblib enables to switch to alternative backends that support out-of-machine computing
+    (e.g. `dask`, `ray`) via the `parallel_config` context manager. Additionally, chunk sizes are now adjusted dynamically based on the problem size. ([#473](https://github.com/scverse/scirpy/pull/473))
+
+### Documentation
+
+-   The default values of the distance calculator classes in `ir_dist.metrics` was unclear. The default value is now
+    set in the classes. In `pp.ir_dist` and `ir_dist.sequence_dist`, no cutoff argument is passed to the metrics
+    objects, unless one is explicitly specified (previously `None` was passed by default).
+
+## v0.14.0
 
 ### Breaking changes
 
@@ -19,9 +44,15 @@ and this project adheres to [Semantic Versioning][].
     `lambda x: ~ak.is_none(x["junction_aa"], axis=-1)`. To learn more about native awkward array functions, please
     refer to the [awkward array documentation](https://awkward-array.org/doc/main/reference/index.html). ([#444](https://github.com/scverse/scirpy/pull/444))
 
+### Additions
+
+-   The `clonal_expansion` function now supports a `breakpoints` argument for more flexible "expansion categories".
+    The `breakpoints` argument supersedes the `clip_at` parameter, which is now deprecated. ([#439](https://github.com/scverse/scirpy/pull/439))
+
 ### Fixes
 
 -   Fix that `define_clonotype_clusters` could not retreive `within_group` columns from MuData ([#459](https://github.com/scverse/scirpy/pull/459))
+-   Fix that AIRR Rearrangment fields of integer types could not be written when their value was None ([#465](https://github.com/scverse/scirpy/pull/465))
 
 ## v0.13.1
 

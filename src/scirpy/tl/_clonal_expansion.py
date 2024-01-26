@@ -1,5 +1,8 @@
-from typing import Literal, Union
+import warnings
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
+import numpy as np
 import pandas as pd
 
 from scirpy.util import DataHandler, _is_na, _normalize_counts
@@ -10,10 +13,9 @@ def _clip_and_count(
     target_col: str,
     *,
     groupby: Union[str, None, list[str]] = None,
-    clip_at: int = 3,
+    breakpoints: Sequence[int] = (1, 2, 3),
     inplace: bool = True,
     key_added: Union[str, None] = None,
-    fraction: bool = True,
     airr_mod="airr",
 ) -> Union[None, pd.Series]:
     """Counts the number of identical entries in `target_col`
@@ -22,22 +24,32 @@ def _clip_and_count(
     `nan`s in the input remain `nan` in the output.
     """
     params = DataHandler(adata, airr_mod)
-    if target_col not in params.adata.obs.columns:
-        raise ValueError("`target_col` not found in obs.")
+    if not len(breakpoints):
+        raise ValueError("Need to specify at least one breakpoint.")
+
+    categories = [f"<= {b}" for b in breakpoints] + [f"> {breakpoints[-1]}", "nan"]
+
+    @np.vectorize
+    def _get_interval(value: int) -> str:
+        """Return the interval of `value`, given breakpoints."""
+        for b in breakpoints:
+            if value <= b:
+                return f"<= {b}"
+        return f"> {b}"
 
     groupby = [groupby] if isinstance(groupby, str) else groupby
     groupby_cols = [target_col] if groupby is None else groupby + [target_col]
+    obs = params.get_obs(groupby_cols)
+
     clonotype_counts = (
-        params.adata.obs.groupby(groupby_cols, observed=True)
+        obs.groupby(groupby_cols, observed=True)
         .size()
         .reset_index(name="tmp_count")
-        .assign(
-            tmp_count=lambda X: [f">= {min(n, clip_at)}" if n >= clip_at else str(n) for n in X["tmp_count"].values]
-        )
+        .assign(tmp_count=lambda X: pd.Categorical(_get_interval(X["tmp_count"].values), categories=categories))
     )
-    clipped_count = params.adata.obs.merge(clonotype_counts, how="left", on=groupby_cols)["tmp_count"]
-    clipped_count[_is_na(params.adata.obs[target_col])] = "nan"
-    clipped_count.index = params.adata.obs.index
+    clipped_count = obs.merge(clonotype_counts, how="left", on=groupby_cols)["tmp_count"]
+    clipped_count[_is_na(obs[target_col])] = "nan"
+    clipped_count.index = obs.index
 
     if inplace:
         key_added = f"{target_col}_clipped_count" if key_added is None else key_added
@@ -52,7 +64,8 @@ def clonal_expansion(
     *,
     target_col: str = "clone_id",
     expanded_in: Union[str, None] = None,
-    clip_at: int = 3,
+    breakpoints: Sequence[int] = (1, 2),
+    clip_at: Optional[int] = None,
     key_added: str = "clonal_expansion",
     inplace: bool = True,
     **kwargs,
@@ -72,9 +85,18 @@ def clonal_expansion(
         this to the column containing sample annotation. If set to None,
         a clonotype counts as expanded if there's any cell of the same clonotype
         across the entire dataset.
-    clip_at:
-        All clonotypes with more than `clip_at` clones will be summarized into
-        a single category
+    breakpoints
+        summarize clonotypes with a size smaller or equal than the specified numbers
+        into groups. For instance, if this is (1, 2, 5), there will be four categories:
+
+        * all clonotypes with a size of 1 (singletons)
+        * all clonotypes with a size of 2
+        * all clonotypes with a size between 3 and 5 (inclusive)
+        * all clonotypes with a size > 5
+    clip_at
+        This argument is superseded by `breakpoints` and is only kept for backwards-compatibility.
+        Specifying a value of `clip_at = N` equals to specifying `breakpoints = (1, 2, 3, ..., N)`
+        Specifying both `clip_at` overrides `breakpoints`.
     {key_added}
     {inplace}
     {airr_mod}
@@ -84,11 +106,14 @@ def clonal_expansion(
     Depending on the value of inplace, adds a column to adata or returns
     a Series with the clipped count per cell.
     """
+    if clip_at is not None:
+        breakpoints = list(range(1, clip_at))
+        warnings.warn("The argument `clip_at` is deprecated. Please use `brekpoints` instead.", category=FutureWarning)
     return _clip_and_count(
         adata,
         target_col,
         groupby=expanded_in,
-        clip_at=clip_at,
+        breakpoints=breakpoints,
         key_added=key_added,
         inplace=inplace,
         **kwargs,

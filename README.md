@@ -23,7 +23,7 @@ Please consider making a tax-deductible [donation](https://numfocus.org/donate-t
   >
 </a>
 
-[badge-tests]: https://img.shields.io/github/actions/workflow/status/grst/scirpy/test.yaml?branch=main
+[badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/scirpy/test.yaml?branch=main
 [link-tests]: https://github.com/scverse/scirpy/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/scirpy
 [badge-pypi]: https://img.shields.io/pypi/v/scirpy?logo=PyPI
@@ -69,7 +69,7 @@ There are several alternative options to install scirpy:
 3. Install the latest development version:
 
     ```bash
-    pip install git+https://github.com/grst/scirpy.git@main
+    pip install git+https://github.com/scverse/scirpy.git@main
     ```
 
 4. Run it in a container using [Docker][] or [Podman][]:
@@ -123,7 +123,7 @@ You can cite the scverse publication as follows:
 > [10.1038/s41587-023-01733-8](https://doi.org/10.1038/s41587-023-01733-8).
 
 [scverse-discourse]: https://discourse.scverse.org/
-[issue-tracker]: https://github.com/grst/scirpy/issues
+[issue-tracker]: https://github.com/scverse/scirpy/issues
 [changelog]: https://scirpy.readthedocs.io/latest/changelog.html
 [link-docs]: https://scirpy.readthedocs.io
 [link-api]: https://scirpy.readthedocs.io/latest/api.html
