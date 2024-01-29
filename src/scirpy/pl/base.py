@@ -1,4 +1,5 @@
 """Base plotting functions"""
+
 import itertools
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
