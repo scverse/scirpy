@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.16.0
 
 ### Backwards-incompatible changes
 
 -   Use the `umi_count` field instead of `duplicate_count` to store UMI counts. The field `umi_count` has been added to
-    the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022).
+    the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022) ([#487](https://github.com/scverse/scirpy/pull/487)).
     Use of `duplicate_count` for UMI counts is now discouraged. Scirpy will use `umi_count` in all `scirpy.io` functions.
     It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
     Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning][].
     ```python
     adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
     ```
+
+### Other
+
+-   the `io.to_dandelion` and `io.from_dandelion` interoperability functions now rely on the implementation provided by Dandelion itself ([#483](https://github.com/scverse/scirpy/pull/483)).
 
 ## v0.15.0
 
