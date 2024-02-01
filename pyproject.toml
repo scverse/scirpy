@@ -65,7 +65,7 @@ doc = [
     'jupytext',
     'pycairo',
     'jupyter_client',
-    'sc-dandelion',
+    'sc-dandelion>=0.3.5',
     'muon>=0.1.5',
     # for executing notebooks on CI
     'nbconvert',
