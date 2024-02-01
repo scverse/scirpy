@@ -10,8 +10,23 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Backwards-incompatible changes
+
+-   Use the `umi_count` field instead of `duplicate_count` to store UMI counts. The field `umi_count` has been added to
+    the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022).
+    Use of `duplicate_count` for UMI counts is now discouraged. Scirpy will use `umi_count` in all `scirpy.io` functions.
+    It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
+    Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
+
+    ```python
+    adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
+    ```
+
+## v0.15.0
+
 ### Fixes
 
+-   Fix incompatibility with `scipy` 1.12 ([#484](https://github.com/scverse/scirpy/pull/484))
 -   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
 -   Reduce overall importtime by deferring the import of the `airr` package until it is actually used. ([#473](https://github.com/scverse/scirpy/pull/473))
 

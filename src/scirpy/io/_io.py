@@ -6,7 +6,7 @@ import sys
 from collections.abc import Collection, Iterable, Sequence
 from glob import iglob
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -125,7 +125,7 @@ def _read_10x_vdj_json(
         chain["locus"] = chain_type
         chain["junction"] = contig["cdr3_seq"]
         chain["junction_aa"] = contig["cdr3"]
-        chain["duplicate_count"] = contig["umi_count"]
+        chain["umi_count"] = contig["umi_count"]
         chain["consensus_count"] = contig["read_count"]
         chain["productive"] = contig["productive"]
         chain["is_cell"] = contig["is_cell"]
@@ -166,7 +166,7 @@ def _read_10x_vdj_csv(
                 locus=chain_series["chain"],
                 junction_aa=chain_series["cdr3"],
                 junction=chain_series["cdr3_nt"],
-                duplicate_count=chain_series["umis"],
+                umi_count=chain_series["umis"],
                 consensus_count=chain_series["reads"],
                 productive=_is_true2(chain_series["productive"]),
                 v_call=chain_series["v_gene"],
@@ -352,7 +352,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
 )
 def read_airr(
     path: Union[str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]],
-    use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
+    use_umi_count_col: None = None,  # deprecated, kept for backwards-compatibility
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
     include_fields: Any = None,
@@ -380,10 +380,9 @@ def read_airr(
         as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
         Alternatively, this can be a pandas data frame.
     use_umi_count_col
-        Whether to add UMI counts from the non-strandard (but common) `umi_count`
-        column. When this column is used, the UMI counts are moved over to the
-        standard `duplicate_count` column. Default: Use `umi_count` if there is
-        no `duplicate_count` column present.
+        Deprecated, has no effect as of v0.16. Since v1.4 of the AIRR standard, `umi_count`
+        is an official field in the Rearrangement schema and preferred over `duplicate_count`.
+        `umi_count` now always takes precedence over `duplicate_count`.
     infer_locus
         Try to infer the `locus` column from gene names, in case it is not specified.
     cell_attributes
@@ -409,16 +408,6 @@ def read_airr(
     if isinstance(path, (str, Path, pd.DataFrame)):
         path: list[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
 
-    def _decide_use_umi_count_col(chain_dict):
-        """Logic to decide whether or not to use counts form the `umi_counts` column."""
-        if "umi_count" in chain_dict and use_umi_count_col == "auto" and "duplicate_count" not in chain_dict:
-            logger.warning("Renaming the non-standard `umi_count` column to `duplicate_count`. ")  # type: ignore
-            return True
-        elif use_umi_count_col is True:
-            return True
-        else:
-            return False
-
     for tmp_path_or_df in path:
         if isinstance(tmp_path_or_df, pd.DataFrame):
             iterator = _read_airr_rearrangement_df(tmp_path_or_df)
@@ -437,9 +426,6 @@ def read_airr(
                     cell_attribute_fields=cell_attributes,
                 )
                 airr_cells[cell_id] = tmp_cell
-
-            if _decide_use_umi_count_col(chain_dict):
-                chain_dict["duplicate_count"] = get_rearrangement_schema().to_int(chain_dict.pop("umi_count"))
 
             if infer_locus and "locus" not in chain_dict:
                 logger.warning(
@@ -720,7 +706,7 @@ def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
                 "junction_aa": _get(row, "CDR3_Translation"),
                 "productive": row["Productive"],
                 "consensus_count": row["Read_Count"],
-                "duplicate_count": row["Molecule_Count"],
+                "umi_count": row["Molecule_Count"],
             }
         )
         tmp_cell.add_chain(tmp_chain)
