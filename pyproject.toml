@@ -79,7 +79,7 @@ test = [
     'black',
 ]
 dandelion = [
-    'sc-dandelion>=0.2.3',
+    'sc-dandelion>=0.3.5',
 ]
 diversity = [
     'scikit-bio>=0.5.7'
