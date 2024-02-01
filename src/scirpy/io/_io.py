@@ -595,9 +595,9 @@ def to_dandelion(adata: DataHandler.TYPE):
     """
     try:
         from dandelion import from_scirpy
-
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
+
     return from_scirpy(adata)
 
 
