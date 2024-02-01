@@ -606,7 +606,7 @@ def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, *
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
-    Internally calls :func:`dandelion.to_scirpy`.
+    Internally calls `dandelion.to_scirpy`.
 
     {doc_working_model}
 
@@ -620,7 +620,7 @@ def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, *
     to_mudata
         Return MuData object instead of AnnData object.
     **kwargs
-        Additional arguments passed to :func:`dandelion.to_scirpy`.
+        Additional arguments passed to `dandelion.to_scirpy`.
 
     Returns
     -------
