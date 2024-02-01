@@ -245,7 +245,7 @@ def test_write_airr_none_field_issue_454(tmp_path):
     write_airr(adata, tmp_path / "test.airr.tsv")
 
 
-@pytest.mark.xfail(reason="Dandelion still uses `duplicate_count` instead of `umi_count`", raises=AssertionError)
+# @pytest.mark.xfail(reason="Dandelion still uses `duplicate_count` instead of `umi_count`", raises=AssertionError)
 @pytest.mark.extra
 @pytest.mark.parametrize(
     "anndata_from_10x_sample",
