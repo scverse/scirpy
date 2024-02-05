@@ -59,13 +59,11 @@ class DataHandler:
 
     @overload
     @staticmethod
-    def default(data: None) -> None:
-        ...
+    def default(data: None) -> None: ...
 
     @overload
     @staticmethod
-    def default(data: "DataHandler.TYPE") -> "DataHandler":
-        ...
+    def default(data: "DataHandler.TYPE") -> "DataHandler": ...
 
     @staticmethod
     def default(data):
@@ -119,12 +117,10 @@ class DataHandler:
             index_chains(self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key)
 
     @overload
-    def get_obs(self, columns: str) -> pd.Series:
-        ...
+    def get_obs(self, columns: str) -> pd.Series: ...
 
     @overload
-    def get_obs(self, columns: Sequence[str]) -> pd.DataFrame:
-        ...
+    def get_obs(self, columns: Sequence[str]) -> pd.DataFrame: ...
 
     def get_obs(self, columns):
         """\

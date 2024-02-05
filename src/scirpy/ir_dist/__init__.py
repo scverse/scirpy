@@ -1,4 +1,5 @@
 """Compute distances between immune receptor sequences"""
+
 import itertools
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
