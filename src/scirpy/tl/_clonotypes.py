@@ -390,9 +390,7 @@ def define_clonotypes(
         # For the case of "clonotypes" we want to compute the distance automatically
         # if it doesn't exist yet. Since it's just a sparse ID matrix, this
         # should be instant.
-        logging.info(
-            "ir_dist for sequence='nt' and metric='identity' not found. " "Computing with default parameters."
-        )  # type: ignore
+        logging.info("ir_dist for sequence='nt' and metric='identity' not found. " "Computing with default parameters.")  # type: ignore
         ir_dist(params, metric="identity", sequence="nt", key_added=distance_key)
 
     return define_clonotype_clusters(
