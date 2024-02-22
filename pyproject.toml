@@ -110,12 +110,16 @@ markers = [
 minversion = 6.0
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
 
-[tool.black]
-line-length = 120
 
 [tool.ruff]
-src = ["src"]
 line-length = 120
+src = ["src"]
+extend-include = ["*.ipynb"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
 select = [
     "F",  # Errors detected by Pyflakes
     "E",  # Error detected by Pycodestyle
@@ -165,10 +169,10 @@ ignore = [
     "D301"
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
