@@ -321,7 +321,8 @@ class _ClonotypeModularity:
                 nb_dist = distributions_per_size[subgraph.vcount()]
                 # restrict pvalues to float precision
                 pvalue_dict[clonotype] = max(
-                    1 - nb_dist.cdf(subgraph.ecount() - 1), np.finfo(np.float32).tiny  # type: ignore
+                    1 - nb_dist.cdf(subgraph.ecount() - 1),
+                    np.finfo(np.float32).tiny,  # type: ignore
                 )
 
         return pvalue_dict

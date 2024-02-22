@@ -394,9 +394,7 @@ def ir_query_annotate(
                     "unique-only": _reduce_unique_only,
                     "most-frequent": _reduce_most_frequent,
                     "json": _reduce_json,
-                }[
-                    strategy
-                ](  # type: ignore
+                }[strategy](  # type: ignore
                     x
                 )
 

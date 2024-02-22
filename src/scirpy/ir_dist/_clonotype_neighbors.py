@@ -160,7 +160,9 @@ class ClonotypeNeighbors:
                 )
 
             self.neighbor_finder.add_distance_matrix(
-                "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
+                "v_gene",
+                sp.identity(len(v_genes), dtype=bool, format="csr"),
+                v_genes,  # type: ignore
             )
 
         if self.match_columns is not None:

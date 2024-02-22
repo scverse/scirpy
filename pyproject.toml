@@ -177,6 +177,7 @@ convention = "numpy"
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
 "src/scirpy/datasets/_processing_scripts/*" = ["B018", "E402"]
+"*.ipynb" = ["E402"] # Module level import not at top of cell
 
 [tool.cruft]
 skip = [

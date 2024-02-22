@@ -14,11 +14,11 @@ def adata_cdr3(request):
     obs = pd.DataFrame(
         # fmt: off
         [
-            [ "cell1", "AAA", "AHA", "KKY", "KKK", "GCGGCGGCG", "TRA", "TRB", "TRA", "TRB"],
-            [ "cell2", "AHA", "nan", "KK", "KKK", "GCGAUGGCG", "TRA", "TRB", "TRA", "TRB"],
-            [ "cell3", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
-            [ "cell4", "AAA", "AAA", "LLL", "AAA", "GCUGCUGCU", "TRA", "TRB", "TRA", "TRB"],
-            [ "cell5", "AAA", "nan", "LLL", "nan", "nan", "nan", "TRB", "TRA", "nan"],
+            ["cell1", "AAA", "AHA", "KKY", "KKK", "GCGGCGGCG", "TRA", "TRB", "TRA", "TRB"],
+            ["cell2", "AHA", "nan", "KK", "KKK", "GCGAUGGCG", "TRA", "TRB", "TRA", "TRB"],
+            ["cell3", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan", "nan"],
+            ["cell4", "AAA", "AAA", "LLL", "AAA", "GCUGCUGCU", "TRA", "TRB", "TRA", "TRB"],
+            ["cell5", "AAA", "nan", "LLL", "nan", "nan", "nan", "TRB", "TRA", "nan"],
         ],
         # fmt: on
         columns=[
