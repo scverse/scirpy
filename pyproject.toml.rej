@@ -1,0 +1,50 @@
+diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
+@@ -21,13 +21,13 @@ urls.Home-page = "https://github.com/scverse/scirpy"
+ dependencies = [
+     "anndata",
+     # for debug logging (referenced from the issue template)
+-    "session-info"
++    "session-info",
+ ]
+ 
+ [project.optional-dependencies]
+ dev = [
+     "pre-commit",
+-    "twine>=4.0.2"
++    "twine>=4.0.2",
+ ]
+ doc = [
+     "docutils>=0.8,!=0.18.*,!=0.19.*",
+@@ -61,12 +61,15 @@ addopts = [
+     "--import-mode=importlib",  # allow using test files with same name
+ ]
+ 
+-[tool.black]
+-line-length = 120
+-
+ [tool.ruff]
+-src = ["src"]
+ line-length = 120
++src = ["src"]
++extend-include = ["*.ipynb"]
++
++[tool.ruff.format]
++docstring-code-format = true
++
++[tool.ruff.lint]
+ select = [
+     "F",  # Errors detected by Pyflakes
+     "E",  # Error detected by Pycodestyle
+@@ -108,10 +111,10 @@ ignore = [
+     "D213",
+ ]
+ 
+-[tool.ruff.pydocstyle]
++[tool.ruff.lint.pydocstyle]
+ convention = "numpy"
+ 
+-[tool.ruff.per-file-ignores]
++[tool.ruff.lint.per-file-ignores]
+ "docs/*" = ["I"]
+ "tests/*" = ["D"]
+ "*/__init__.py" = ["F401"]

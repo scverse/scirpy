@@ -130,7 +130,7 @@ select = [
     "RUF100",  # Report unused noqa directives
 ]
 ignore = [
-    # line too long -> we accept long comment lines; black gets rid of long code lines
+    # line too long -> we accept long comment lines; formatter gets rid of long code lines
     "E501",
     # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
     "E731",
@@ -183,5 +183,5 @@ skip = [
     "docs/changelog.md",
     "docs/references.bib",
     "docs/references.md",
-    "docs/notebooks/example.ipynb"
+    "docs/notebooks/example.ipynb",
 ]

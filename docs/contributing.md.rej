@@ -1,0 +1,15 @@
+diff a/docs/contributing.md b/docs/contributing.md	(rejected hunks)
+@@ -93,7 +93,7 @@ Before making a release, you need to update the version number in the `pyproject
+ > Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
+ 
+ Once you are done, commit and push your changes and navigate to the "Releases" page of this project on GitHub.
+-Specify `vX.X.X` as a tag name and create a release. For more information, see [managing Github releases][]. This will automatically create a git tag and trigger a Github workflow that creates a release on PyPI.
++Specify `vX.X.X` as a tag name and create a release. For more information, see [managing GitHub releases][]. This will automatically create a git tag and trigger a Github workflow that creates a release on PyPI.
+ 
+ ## Writing documentation
+ 
+@@ -157,3 +157,4 @@ open _build/html/index.html
+ [numpydoc]: https://numpydoc.readthedocs.io/en/latest/format.html
+ [sphinx autodoc typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
+ [pypi]: https://pypi.org/
++[managing GitHub releases]: https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
