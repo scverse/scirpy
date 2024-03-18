@@ -1,4 +1,5 @@
 """Compute distances between immune receptor sequences"""
+
 import itertools
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
@@ -114,7 +115,7 @@ def _ir_dist(
     sequence: Literal["aa", "nt"] = "nt",
     key_added: Union[str, None] = None,
     inplace: bool = True,
-    n_jobs: Union[int, None] = -1,
+    n_jobs: int = -1,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
@@ -247,7 +248,7 @@ def sequence_dist(
     *,
     metric: MetricType = "identity",
     cutoff: Union[None, int] = None,
-    n_jobs: Union[None, int] = -1,
+    n_jobs: int = -1,
     **kwargs,
 ) -> csr_matrix:
     """
