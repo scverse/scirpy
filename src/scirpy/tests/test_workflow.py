@@ -8,6 +8,7 @@ Bioconda-CI when building the container as a quick consistency check.
 The tests need to be quick in order not to overload the bioconda CI,
 but AIRR-compliance mandates to have these tests.
 """
+
 import pandas as pd
 import pandas.testing as pdt
 import pytest
