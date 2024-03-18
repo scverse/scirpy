@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning][].
 ## Unreleased
 
 -   Fix default value for `n_jobs` in `ir.tl.ir_query` that could lead to an error ([#498](https://github.com/scverse/scirpy/pull/498)).
+-   Update description of D50 diversity metric in documentation ([#499](https://github.com/scverse/scirpy/pull/498)).
 
 ## v0.16.0
 

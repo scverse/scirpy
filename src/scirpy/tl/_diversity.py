@@ -68,15 +68,12 @@ def alpha_diversity(
         `normalized to group size <https://math.stackexchange.com/a/945172>`__.
 
     D50:
-        The diversity index (D50) is a measure of the diversity of an immune repertoire of J individual cells
-        (the total number of CDR3s) composed of S distinct CDR3s in a ranked dominance configuration where ri
-        is the abundance of the ith most abundant CDR3, r1 is the abundance of the most abundant CDR3, r2 is the
-        abundance of the second most abundant CDR3, and so on. C is the minimum number of distinct CDR3s,
-        amounting to >50% of the total sequencing reads. D50 therefore is given by C/S x 100.
-        `<https://patents.google.com/patent/WO2012097374A1/en>`__.
+        D50 is a measure of the minimum number of distinct clonotypes totalling greater than 50% of total clonotype
+        counts in a given group, as a percentage out of the total number of clonotypes.
+        Adapted from `<https://patents.google.com/patent/WO2012097374A1/en>`__.
 
     DXX:
-        Similar to D50 where XX indicates the percent of J (the total number of CDR3s).
+        Similar to D50 where XX indicates the percentage of total clonotype counts threshold.
         Requires to pass the `percentage` keyword argument which can be within 0 and
         100.
 
