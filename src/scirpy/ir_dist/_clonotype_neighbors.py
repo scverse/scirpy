@@ -28,7 +28,7 @@ class ClonotypeNeighbors:
         match_columns: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
-        n_jobs: int,
+        n_jobs: int = -1,
         chunksize: int = 2000,
     ):
         """Computes pairwise distances between cells with identical
