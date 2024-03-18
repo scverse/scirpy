@@ -25,7 +25,7 @@ def adata_cdr3_mock_distance_calculator():
     """Mock distances for the adata_cdr3 fixture"""
 
     class MockDistanceCalculator(DistanceCalculator):
-        def __init__(self, n_jobs=None):
+        def __init__(self, n_jobs=-1):
             pass
 
         def calc_dist_mat(self, seqs, seqs2=None):

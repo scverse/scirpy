@@ -1,6 +1,6 @@
 import itertools
+import os
 from collections.abc import Mapping, Sequence
-from multiprocessing import cpu_count
 from typing import Literal, Optional, Union
 
 import numpy as np
@@ -28,7 +28,7 @@ class ClonotypeNeighbors:
         match_columns: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
-        n_jobs: Union[int, None] = None,
+        n_jobs: int = -1,
         chunksize: int = 2000,
     ):
         """Computes pairwise distances between cells with identical
@@ -225,7 +225,7 @@ class ClonotypeNeighbors:
             dist_rows = process_map(
                 self._dist_for_clonotype,
                 range(n_clonotypes),
-                max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
+                max_workers=self.n_jobs if self.n_jobs > 0 else len(os.sched_getaffinity(0)),
                 chunksize=2000,
                 tqdm_class=tqdm,
             )

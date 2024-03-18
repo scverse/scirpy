@@ -90,7 +90,7 @@ def ir_query(
     key_added: Optional[str] = None,
     distance_key: Optional[str] = None,
     inplace: bool = True,
-    n_jobs: Optional[int] = -1,
+    n_jobs: int = -1,
     chunksize: int = 2000,
     airr_mod: str = "airr",
     airr_key: str = "airr",

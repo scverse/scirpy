@@ -204,7 +204,7 @@ def define_clonotype_clusters(
     n_iterations: int = 5,
     distance_key: Union[str, None] = None,
     inplace: bool = True,
-    n_jobs: Union[int, None] = None,
+    n_jobs: int = -1,
     chunksize: int = 2000,
     airr_mod="airr",
     airr_key="airr",

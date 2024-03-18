@@ -115,7 +115,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         self,
         cutoff: int,
         *,
-        n_jobs: Optional[int] = -1,
+        n_jobs: int = -1,
         block_size: Optional[int] = None,
     ):
         super().__init__(cutoff)
@@ -444,7 +444,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         self,
         cutoff: int = 10,
         *,
-        n_jobs: Union[int, None] = -1,
+        n_jobs: int = -1,
         block_size: Optional[int] = None,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
@@ -580,7 +580,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         self,
         cutoff: int = 10,
         *,
-        n_jobs: Union[int, None] = None,
+        n_jobs: int = -1,
         block_size: Optional[int] = None,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
