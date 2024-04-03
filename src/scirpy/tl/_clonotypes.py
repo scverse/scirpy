@@ -204,7 +204,7 @@ def define_clonotype_clusters(
     n_iterations: int = 5,
     distance_key: Union[str, None] = None,
     inplace: bool = True,
-    n_jobs: Union[int, None] = None,
+    n_jobs: int = -1,
     chunksize: int = 2000,
     airr_mod="airr",
     airr_key="airr",
@@ -390,9 +390,7 @@ def define_clonotypes(
         # For the case of "clonotypes" we want to compute the distance automatically
         # if it doesn't exist yet. Since it's just a sparse ID matrix, this
         # should be instant.
-        logging.info(
-            "ir_dist for sequence='nt' and metric='identity' not found. " "Computing with default parameters."
-        )  # type: ignore
+        logging.info("ir_dist for sequence='nt' and metric='identity' not found. " "Computing with default parameters.")  # type: ignore
         ir_dist(params, metric="identity", sequence="nt", key_added=distance_key)
 
     return define_clonotype_clusters(

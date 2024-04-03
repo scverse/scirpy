@@ -238,18 +238,11 @@ class _ClonotypeModularity:
         # This is also the bottleneck of the process, s.t. naively parallelizing
         # does not lead to a speed gain.
 
-        # logging.info(
-        #     "NB: Computation happens in chunks. The progressbar only advances "
-        #     "when a chunk has finished. "
-        # )  # type: ignore
         background_distribution = np.vstack(
             list(
                 map(
                     self._get_background_distribution,
                     tqdm(range(n_permutations)),
-                    # chunksize=chunksize,
-                    # max_workers=n_jobs if n_jobs is not None else cpu_count(),
-                    # tqdm_class=tqdm,
                 )
             )
         )
@@ -321,7 +314,8 @@ class _ClonotypeModularity:
                 nb_dist = distributions_per_size[subgraph.vcount()]
                 # restrict pvalues to float precision
                 pvalue_dict[clonotype] = max(
-                    1 - nb_dist.cdf(subgraph.ecount() - 1), np.finfo(np.float32).tiny  # type: ignore
+                    1 - nb_dist.cdf(subgraph.ecount() - 1),
+                    np.finfo(np.float32).tiny,  # type: ignore
                 )
 
         return pvalue_dict

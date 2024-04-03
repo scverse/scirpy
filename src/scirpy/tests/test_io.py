@@ -245,6 +245,7 @@ def test_write_airr_none_field_issue_454(tmp_path):
     write_airr(adata, tmp_path / "test.airr.tsv")
 
 
+# @pytest.mark.xfail(reason="Dandelion still uses `duplicate_count` instead of `umi_count`", raises=AssertionError)
 @pytest.mark.extra
 @pytest.mark.parametrize(
     "anndata_from_10x_sample",
@@ -269,7 +270,7 @@ def test_convert_dandelion(anndata_from_10x_sample):
         assert len(ir_obj1.chains) == len(ir_obj2.chains)
 
         def _key(chain):
-            v1, v2 = chain.get("duplicate_count", -1), chain.get("junction", "")
+            v1, v2 = chain.get("umi_count", -1), chain.get("junction", "")
             v1 = -1 if v1 is None else v1
             v2 = "" if v2 is None else v2
             return (v1, v2)
@@ -295,7 +296,7 @@ def test_read_10x_csv():
             [
                 "junction_aa",
                 "junction",
-                "duplicate_count",
+                "umi_count",
                 "consensus_count",
                 "v_call",
                 "d_call",
@@ -314,7 +315,7 @@ def test_read_10x_csv():
     assert cell1.name == "AAACCTGAGTACGCCC-1"
     assert cell1["VDJ_1_junction_aa"] == "CASSLGPSTDTQYF"
     assert cell1["VDJ_1_junction"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
-    assert cell1["VDJ_1_duplicate_count"] == 55
+    assert cell1["VDJ_1_umi_count"] == 55
     assert cell1["VDJ_1_consensus_count"] == 18021
     assert cell1["VDJ_1_v_call"] == "TRBV7-2"
     assert cell1["VDJ_1_d_call"] == "TRBD2"
@@ -327,8 +328,8 @@ def test_read_10x_csv():
     assert cell2.name == "AAACCTGGTCCGTTAA-1"
     assert cell2["VJ_1_junction_aa"] == "CALNTGGFKTIF"
     assert cell2["VJ_2_junction_aa"] == "CAVILDARLMF"
-    assert cell2["VJ_1_duplicate_count"] == 5
-    assert cell2["VJ_2_duplicate_count"] == 5
+    assert cell2["VJ_1_umi_count"] == 5
+    assert cell2["VJ_2_umi_count"] == 5
     assert cell2["VJ_1_locus"] == "TRA"
     assert cell2["VDJ_1_locus"] == "TRB"
     assert cell2["VJ_2_locus"] == "TRA"
@@ -427,7 +428,7 @@ def test_read_10x():
                 "junction",
                 "np1_length",
                 "np2_length",
-                "duplicate_count",
+                "umi_count",
                 "consensus_count",
                 "v_call",
                 "d_call",
@@ -450,7 +451,7 @@ def test_read_10x():
     assert cell1["VDJ_1_junction"] == "TGTGCCAGCTCACCACCGAGCCAGGGCCTTTCTACCGGGGAGCTGTTTTTT"
     assert cell1["VDJ_1_np1_length"] == 4
     assert cell1["VDJ_1_np2_length"] == 7
-    assert cell1["VDJ_1_duplicate_count"] == 1
+    assert cell1["VDJ_1_umi_count"] == 1
     assert cell1["VDJ_1_consensus_count"] == 494
     assert cell1["VDJ_1_v_call"] == "TRBV18"
     assert cell1["VDJ_1_d_call"] == "TRBD1"
@@ -462,8 +463,8 @@ def test_read_10x():
     assert cell2.name == "AAACCTGAGTACGCCC-1"
     assert cell2["VJ_1_junction_aa"] == "CAMRVGGSQGNLIF"
     assert cell2["VJ_2_junction_aa"] == "CATDAKDSNYQLIW"
-    assert cell2["VJ_1_duplicate_count"] == 9
-    assert cell2["VJ_2_duplicate_count"] == 4
+    assert cell2["VJ_1_umi_count"] == 9
+    assert cell2["VJ_2_umi_count"] == 4
     assert np.all(_is_na(cell2[["VDJ_1_junction_aa", "VDJ_2_junction_aa"]]))
     assert cell2["VJ_1_np1_length"] == 4
     assert _is_na(cell2["VJ_1_np2_length"])
@@ -816,7 +817,7 @@ def test_airr_df():
             "cell_id",
             "c_call",
             "consensus_count",
-            "duplicate_count",
+            "umi_count",
         ],
     )
 
@@ -874,7 +875,7 @@ def test_read_bd_per_cell_chain():
         adata,
         [
             "locus",
-            "duplicate_count",
+            "umi_count",
             "consensus_count",
             "junction",
             "junction_aa",
@@ -892,7 +893,7 @@ def test_read_bd_per_cell_chain():
     cell85 = obs.loc["85", :]
 
     assert cell1["VJ_1_locus"] == "TRA"
-    assert cell1["VJ_1_duplicate_count"] == 1
+    assert cell1["VJ_1_umi_count"] == 1
     assert cell1["VJ_1_consensus_count"] == 72
     assert cell1["VJ_1_junction"] == "GCTGCCCCAGAATTTTGTC"
     assert cell1["VJ_1_junction_aa"] == "AAGQNFV"
@@ -918,11 +919,11 @@ def test_read_bd_per_cell_chain():
 def test_read_bd_contigs():
     adata = read_bd_rhapsody(TESTDATA / "bd/test_unfiltered_contigs.csv")
 
-    obs = ir.get.airr(adata, ["locus", "duplicate_count"], "VJ_1")
+    obs = ir.get.airr(adata, ["locus", "umi_count"], "VJ_1")
 
     assert obs.shape[0] == 5
 
     cell10681 = obs.loc["10681"]
 
     assert cell10681["VJ_1_locus"] == "IGK"
-    assert cell10681["VJ_1_duplicate_count"] == 2
+    assert cell10681["VJ_1_umi_count"] == 2

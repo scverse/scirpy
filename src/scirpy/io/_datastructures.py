@@ -9,9 +9,10 @@ from collections.abc import Collection, Iterable, Iterator, Mapping, MutableMapp
 from typing import Any
 
 import scanpy
-from airr import RearrangementSchema
 
 from scirpy.util import _is_na2
+
+from ._util import get_rearrangement_schema
 
 
 class AirrCell(MutableMapping):
@@ -126,8 +127,8 @@ class AirrCell(MutableMapping):
         # sanitize NA values
         chain = {k: None if _is_na2(v) else v for k, v in chain.items()}
 
-        RearrangementSchema.validate_header(chain.keys())
-        RearrangementSchema.validate_row(chain)
+        get_rearrangement_schema().validate_header(chain.keys())
+        get_rearrangement_schema().validate_row(chain)
 
         for tmp_field in self._cell_attribute_fields:
             # It is ok if a field specified as cell attribute is not present in the chain
@@ -140,9 +141,7 @@ class AirrCell(MutableMapping):
             self._chain_fields = list(chain.keys())
 
         if "locus" not in chain:
-            self._logger.warning(
-                "`locus` field not specified, but required for most scirpy functionality. "
-            )  # type: ignore
+            self._logger.warning("`locus` field not specified, but required for most scirpy functionality. ")  # type: ignore
         elif chain["locus"] not in self.VALID_LOCI:
             self._logger.warning(f"Non-standard locus name: {chain['locus']} ")  # type: ignore
 
@@ -182,4 +181,4 @@ class AirrCell(MutableMapping):
         """Generate an empty chain dictionary, containing all required AIRR
         columns, but set to `None`
         """
-        return {field: None for field in RearrangementSchema.required}
+        return {field: None for field in get_rearrangement_schema().required}

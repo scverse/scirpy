@@ -1,4 +1,5 @@
 """Compute distances between immune receptor sequences"""
+
 import itertools
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
@@ -51,7 +52,7 @@ metric
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
-        * `fastalignment` -- Distance based on pairwise sequence alignments using the
+      * `fastalignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. Faster implementation of `alignment` with some loss.
         This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
@@ -72,7 +73,7 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs):
+def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=-1, **kwargs):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
@@ -82,16 +83,20 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         metric = "identity"
         cutoff = 0
 
+    # Let's rely on the default set by the class if cutoff is None
+    if cutoff is not None:
+        kwargs["cutoff"] = cutoff
+
     if isinstance(metric, metrics.DistanceCalculator):
         dist_calc = metric
     elif metric == "alignment":
-        dist_calc = metrics.FastAlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, estimated_penalty=0, **kwargs)
+        dist_calc = metrics.FastAlignmentDistanceCalculator(n_jobs=n_jobs, estimated_penalty=0, **kwargs)
     elif metric == "fastalignment":
-        dist_calc = metrics.FastAlignmentDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.FastAlignmentDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "identity":
-        dist_calc = metrics.IdentityDistanceCalculator(cutoff=cutoff, **kwargs)
+        dist_calc = metrics.IdentityDistanceCalculator(**kwargs)
     elif metric == "levenshtein":
-        dist_calc = metrics.LevenshteinDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
         dist_calc = metrics.HammingDistanceCalculator(cutoff=cutoff, n_jobs=n_jobs, **kwargs)
     elif metric == "tcrdist":
@@ -112,7 +117,7 @@ def _ir_dist(
     sequence: Literal["aa", "nt"] = "nt",
     key_added: Union[str, None] = None,
     inplace: bool = True,
-    n_jobs: Union[int, None] = None,
+    n_jobs: int = -1,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
@@ -157,7 +162,9 @@ def _ir_dist(
         with the results.
     n_jobs
         Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metrics.DistanceCalculator`.
+        :class:`scirpy.ir_dist.metrics.DistanceCalculator`. :class:`joblib.Parallel` is
+        used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
+        backend (e.g. `dask`) and adjust other configuration options.
     {airr_mod}
     {airr_key}
     {chain_idx_key}
@@ -244,7 +251,7 @@ def sequence_dist(
     *,
     metric: MetricType = "identity",
     cutoff: Union[None, int] = None,
-    n_jobs: Union[None, int] = None,
+    n_jobs: int = -1,
     **kwargs,
 ) -> csr_matrix:
     """

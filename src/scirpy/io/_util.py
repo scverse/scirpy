@@ -3,7 +3,6 @@ import os
 from collections import Counter
 
 import pandas as pd
-from airr import RearrangementReader
 from scanpy import logging
 
 doc_working_model = """\
@@ -16,6 +15,20 @@ doc_working_model = """\
 
     For more information, see :ref:`data-structure`.
 """
+
+
+def get_rearrangement_reader():
+    """Defer importing from airr package until it is used, since this is very slow"""
+    from airr import RearrangementReader
+
+    return RearrangementReader
+
+
+def get_rearrangement_schema():
+    """Defer importing from airr package until it is used, since this is very slow"""
+    from airr import RearrangementSchema
+
+    return RearrangementSchema
 
 
 class _IOLogger:
@@ -50,7 +63,7 @@ def _read_airr_rearrangement_df(df: pd.DataFrame, validate=False, debug=False):
         def __next__(self):
             return next(self.reader)
 
-    class PdRearrangementReader(RearrangementReader):
+    class PdRearrangementReader(get_rearrangement_reader()):
         def __init__(self, df, *args, **kwargs):
             super().__init__(os.devnull, *args, **kwargs)
             self.dict_reader = PdDictReader(df)

@@ -1,29 +1,31 @@
 import abc
 import itertools
+import warnings
 from collections.abc import Sequence
-from multiprocessing import cpu_count
 from typing import Optional, Union
 
+import joblib
 import numpy as np
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from Levenshtein import hamming as hamming_dist
+from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
-from tqdm.contrib.concurrent import process_map
 
-from scirpy.util import _doc_params, deprecated, tqdm
+from scirpy.util import _doc_params, _parallelize_with_joblib, deprecated
 
 import numba as nb
 import multiprocessing
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
-    Number of jobs to use for the pairwise distance calculation.
-    If None, use all jobs (only for ParallelDistanceCalculators).
+    Number of jobs to use for the pairwise distance calculation, passed to
+    :class:`joblib.Parallel`. If -1, use all CPUs (only for ParallelDistanceCalculators).
+    Via the :class:`joblib.parallel_config` context manager, another backend (e.g. `dask`)
+    can be selected.
 block_size
-    The width of a block of the matrix that will be delegated to a worker
-    process. The block contains `block_size ** 2` elements.
+    Deprecated. This is now set in `calc_dist_mat`.
 """
 
 
@@ -116,12 +118,16 @@ class ParallelDistanceCalculator(DistanceCalculator):
         self,
         cutoff: int,
         *,
-        n_jobs: Optional[int] = None,
-        block_size: Optional[int] = 50,
+        n_jobs: int = -1,
+        block_size: Optional[int] = None,
     ):
         super().__init__(cutoff)
         self.n_jobs = n_jobs
-        self.block_size = block_size
+        if block_size is not None:
+            warnings.warn(
+                "The `block_size` parameter is now set in the `calc_dist_mat` function instead of the object level. It is ignored here.",
+                category=FutureWarning,
+            )
 
     @abc.abstractmethod
     def _compute_block(
@@ -192,21 +198,41 @@ class ParallelDistanceCalculator(DistanceCalculator):
                 else:
                     yield seqs1[row : row + block_size], seqs2[col : col + block_size], (row, col)
 
-    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
+    def calc_dist_mat(
+        self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None, *, block_size: Optional[int] = None
+    ) -> csr_matrix:
         """Calculate the distance matrix.
 
         See :meth:`DistanceCalculator.calc_dist_mat`.
-        """
-        # precompute blocks as list to have total number of blocks for progressbar
-        blocks = list(self._block_iter(seqs, seqs2, self.block_size))
 
-        block_results = process_map(
-            self._compute_block,
-            *zip(*blocks),
-            max_workers=self.n_jobs if self.n_jobs is not None else cpu_count(),
-            chunksize=50,
-            tqdm_class=tqdm,
-            total=len(blocks),
+        Parameters
+        ----------
+        seqs
+            array containing CDR3 sequences. Must not contain duplicates.
+        seqs2
+            second array containing CDR3 sequences. Must not contain
+            duplicates either.
+        block_size
+            The width of a block that's sent to a worker. A block contains
+            `block_size ** 2` elements. If `None` the block
+            size is determined automatically based on the problem size.
+
+
+
+        Returns
+        -------
+        Sparse pairwise distance matrix.
+        """
+        problem_size = len(seqs) * len(seqs2) if seqs2 is not None else len(seqs) ** 2
+        # dynamicall adjust the block size such that there are ~1000 blocks within a range of 50 and 5000
+        block_size = int(np.ceil(min(max(np.sqrt(problem_size / 1000), 50), 5000)))
+        logging.info(f"block size set to {block_size}")
+
+        # precompute blocks as list to have total number of blocks for progressbar
+        blocks = list(self._block_iter(seqs, seqs2, block_size=block_size))
+
+        block_results = _parallelize_with_joblib(
+            (joblib.delayed(self._compute_block)(*block) for block in blocks), total=len(blocks), n_jobs=self.n_jobs
         )
 
         try:
@@ -246,7 +272,7 @@ class IdentityDistanceCalculator(DistanceCalculator):
         will be ignored and is always 0.
     """
 
-    def __init__(self, cutoff: Union[int, None] = 0):
+    def __init__(self, cutoff: int = 0):
         cutoff = 0
         super().__init__(cutoff)
 
@@ -298,9 +324,7 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     {params}
     """
 
-    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
-        if cutoff is None:
-            cutoff = 2
+    def __init__(self, cutoff: int = 2, **kwargs):
         super().__init__(cutoff, **kwargs)
 
     def _compute_block(self, seqs1, seqs2, origin):
@@ -347,9 +371,7 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
     {params}
     """
 
-    def __init__(self, cutoff: Union[None, int] = None, **kwargs):
-        if cutoff is None:
-            cutoff = 2
+    def __init__(self, cutoff: int = 2, **kwargs):
         super().__init__(cutoff, **kwargs)
 
     def _compute_block(self, seqs1, seqs2, origin):
@@ -584,16 +606,14 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     )
     def __init__(
         self,
-        cutoff: Union[None, int] = None,
+        cutoff: int = 10,
         *,
-        n_jobs: Union[int, None] = None,
-        block_size: int = 50,
+        n_jobs: int = -1,
+        block_size: Optional[int] = None,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        if cutoff is None:
-            cutoff = 10
         super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
@@ -722,17 +742,15 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: Union[None, int] = None,
+        cutoff: int = 10,
         *,
-        n_jobs: Union[int, None] = None,
-        block_size: int = 50,
+        n_jobs: int = -1,
+        block_size: Optional[int] = None,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 11,
         estimated_penalty: float = None,
     ):
-        if cutoff is None:
-            cutoff = 10
         super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
         self.subst_mat = subst_mat
         self.gap_open = gap_open

@@ -10,13 +10,51 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
-## New features
+-   Fix default value for `n_jobs` in `ir.tl.ir_query` that could lead to an error ([#498](https://github.com/scverse/scirpy/pull/498)).
+-   Update description of D50 diversity metric in documentation ([#499](https://github.com/scverse/scirpy/pull/498)).
+
+## v0.16.0
+
+### Backwards-incompatible changes
+
+-   Use the `umi_count` field instead of `duplicate_count` to store UMI counts. The field `umi_count` has been added to
+    the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022) ([#487](https://github.com/scverse/scirpy/pull/487)).
+    Use of `duplicate_count` for UMI counts is now discouraged. Scirpy will use `umi_count` in all `scirpy.io` functions.
+    It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
+    Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
+
+    ```python
+    adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
+    ```
+
+### Other
+
+-   the `io.to_dandelion` and `io.from_dandelion` interoperability functions now rely on the implementation provided by Dandelion itself ([#483](https://github.com/scverse/scirpy/pull/483)).
+
+## v0.15.0
+
+### Fixes
+
+-   Fix incompatibility with `scipy` 1.12 ([#484](https://github.com/scverse/scirpy/pull/484))
+-   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
+-   Reduce overall importtime by deferring the import of the `airr` package until it is actually used. ([#473](https://github.com/scverse/scirpy/pull/473))
+
+### New features
 
 -   Speed up alignment distances by pre-filtering. There are two filtering strategies: A (lossless) length-based filter
     and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
     class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
     in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
-    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
+    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives. ([#456](https://github.com/scverse/scirpy/pull/456))
+-   Switch to [joblib/loky](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) as a backend for parallel
+    processing in `pp.ir_dist`. Joblib enables to switch to alternative backends that support out-of-machine computing
+    (e.g. `dask`, `ray`) via the `parallel_config` context manager. Additionally, chunk sizes are now adjusted dynamically based on the problem size. ([#473](https://github.com/scverse/scirpy/pull/473))
+
+### Documentation
+
+-   The default values of the distance calculator classes in `ir_dist.metrics` was unclear. The default value is now
+    set in the classes. In `pp.ir_dist` and `ir_dist.sequence_dist`, no cutoff argument is passed to the metrics
+    objects, unless one is explicitly specified (previously `None` was passed by default).
 
 ## v0.14.0
 
