@@ -304,7 +304,7 @@ def test_fast_alignment_dist_with_two_seq_arrays():
 
     npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
-"""
+
 @pytest.mark.parametrize("metric", ["alignment", "fastalignment", "identity", "hamming", "levenshtein"])
 def test_sequence_dist_all_metrics(metric):
     #Smoke test, no assertions!
@@ -315,7 +315,7 @@ def test_sequence_dist_all_metrics(metric):
 
     dist_mat = ir.ir_dist.sequence_dist(unique_seqs, seqs2, metric=metric, cutoff=8, n_jobs=2)
     assert dist_mat.shape == (5, 3)
-"""
+    
 
 @pytest.mark.parametrize("test_parameters,test_input,expected_result", [
     
