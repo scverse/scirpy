@@ -307,7 +307,7 @@ def test_fast_alignment_dist_with_two_seq_arrays():
 
 @pytest.mark.parametrize("metric", ["alignment", "fastalignment", "identity", "hamming", "levenshtein"])
 def test_sequence_dist_all_metrics(metric):
-    #Smoke test, no assertions!
+    # Smoke test, no assertions!
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
     dist_mat = ir.ir_dist.sequence_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
@@ -315,105 +315,188 @@ def test_sequence_dist_all_metrics(metric):
 
     dist_mat = ir.ir_dist.sequence_dist(unique_seqs, seqs2, metric=metric, cutoff=8, n_jobs=2)
     assert dist_mat.shape == (5, 3)
-    
 
-@pytest.mark.parametrize("test_parameters,test_input,expected_result", [
-    
-    #test more complex strings with unequal length and set high cutoff such that cutoff is neglected
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 1000, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["WEKFAPIQCMNR", "RDAIYTCCNKSWEQ", "CWWMFGHTVRI", "GWSZNNHI"])),
-      np.array([[57, 74, 65, 33],
-                [66, 68, 65, 33],
-                [53, 58, 49, 25]])),
-    
-    #test very small input sequences
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 0, "ctrim": 0, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
-     (np.array(["A"]),
-      np.array(["C"])),
-      np.array([[13]])),
-    
-    #test standard parameters with simple input sequences
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 0, 21],
-                [0, 1, 21],
-                [21, 21, 1]])),
-    
-    #test standard parameters with simple input sequences with second sequences array set to None
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      None),
-      np.array([[1, 0, 21],
-                [0, 1, 21],
-                [21, 21, 1]])),
-    
-    #test with dist_weight set to 0
-    ({"dist_weight": 0, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 1, 9],
-                [1, 1, 9],
-                [9, 9, 1]])),
 
-    #test with dist_weight set high and cutoff set high to neglect it
-    ({"dist_weight": 30, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 1000, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 241, 129],
-                [241, 1, 129],
-                [129, 129, 1]])),
-    
-    #test with gap_penalty set to 0
-    ({"dist_weight": 3, "gap_penalty": 0, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 0, 13],
-                [0, 1, 13],
-                [13, 13, 1]])),
-    
-    #test with gap_penalty set high and cutoff set high to neglect it
-    ({"dist_weight": 3, "gap_penalty": 40, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 1000, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 25, 93],
-                [25, 1, 93],
-                [93, 93, 1]])),
-    
-    #test with fixed_gappos = False and a high cutoff to neglect it
-    #AAAAA added at the beginning of the usual sequences to make to difference of min_gappos and max_gappos more significant
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": False, "cutoff": 1000, "n_jobs": 1},
-     (np.array(["AAAAAAAAAAAAAAA", "AAAAAAAAARRAAAA", "AAAAAAANDAAAA"]),
-      np.array(["AAAAAAAAAAAAAAA", "AAAAAAAAARRAAAA", "AAAAAAANDAAAA"])),
-      np.array([[1, 25, 33],
-                [25, 1, 33],
-                [33, 33, 1]])),
-
-    #test with cutoff set to 0
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 0, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 0, 0],
-                [0, 1, 0],
-                [0, 0, 1]])),
-    
-    #test with cutoff set high to neglect it
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 1000, "n_jobs": 1},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 25, 21],
-                [25, 1, 21],
-                [21, 21, 1]])),
-
-    #test with multiple cores by setting n_jobs = 3
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 3},
-     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
-      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
-      np.array([[1, 0, 21],
-                [0, 1, 21],
-                [21, 21, 1]])),
-])
+@pytest.mark.parametrize(
+    "test_parameters,test_input,expected_result",
+    [
+        # test more complex strings with unequal length and set high cutoff such that cutoff is neglected
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 1000,
+                "n_jobs": 1,
+            },
+            (
+                np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
+                np.array(["WEKFAPIQCMNR", "RDAIYTCCNKSWEQ", "CWWMFGHTVRI", "GWSZNNHI"]),
+            ),
+            np.array([[57, 74, 65, 33], [66, 68, 65, 33], [53, 58, 49, 25]]),
+        ),
+        # test very small input sequences
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 0,
+                "ctrim": 0,
+                "fixed_gappos": True,
+                "cutoff": None,
+                "n_jobs": 1,
+            },
+            (np.array(["A"]), np.array(["C"])),
+            np.array([[13]]),
+        ),
+        # test standard parameters with simple input sequences
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": None,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 0, 21], [0, 1, 21], [21, 21, 1]]),
+        ),
+        # test standard parameters with simple input sequences with second sequences array set to None
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": None,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), None),
+            np.array([[1, 0, 21], [0, 1, 21], [21, 21, 1]]),
+        ),
+        # test with dist_weight set to 0
+        (
+            {
+                "dist_weight": 0,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": None,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 1, 9], [1, 1, 9], [9, 9, 1]]),
+        ),
+        # test with dist_weight set high and cutoff set high to neglect it
+        (
+            {
+                "dist_weight": 30,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 1000,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 241, 129], [241, 1, 129], [129, 129, 1]]),
+        ),
+        # test with gap_penalty set to 0
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 0,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": None,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 0, 13], [0, 1, 13], [13, 13, 1]]),
+        ),
+        # test with gap_penalty set high and cutoff set high to neglect it
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 40,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 1000,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 25, 93], [25, 1, 93], [93, 93, 1]]),
+        ),
+        # test with fixed_gappos = False and a high cutoff to neglect it
+        # AAAAA added at the beginning of the usual sequences to make to difference of min_gappos and max_gappos more significant
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": False,
+                "cutoff": 1000,
+                "n_jobs": 1,
+            },
+            (
+                np.array(["AAAAAAAAAAAAAAA", "AAAAAAAAARRAAAA", "AAAAAAANDAAAA"]),
+                np.array(["AAAAAAAAAAAAAAA", "AAAAAAAAARRAAAA", "AAAAAAANDAAAA"]),
+            ),
+            np.array([[1, 25, 33], [25, 1, 33], [33, 33, 1]]),
+        ),
+        # test with cutoff set to 0
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 0,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        ),
+        # test with cutoff set high to neglect it
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 1000,
+                "n_jobs": 1,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 25, 21], [25, 1, 21], [21, 21, 1]]),
+        ),
+        # test with multiple cores by setting n_jobs = 3
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": None,
+                "n_jobs": 3,
+            },
+            (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+            np.array([[1, 0, 21], [0, 1, 21], [21, 21, 1]]),
+        ),
+    ],
+)
 def test_tcrdist(test_parameters, test_input, expected_result):
     tcrdist_calculator = TCRdistDistanceCalculator(**test_parameters)
     seq1, seq2 = test_input
