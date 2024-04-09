@@ -166,11 +166,20 @@ class DataHandler:
     def set_obs(self, key: str, value: Union[pd.Series, Sequence[Any], np.ndarray]) -> None:
         """Store results in .obs of AnnData and MuData.
 
+        If `value` is not a Series, if the length is equal to the params.mdata, we assume it aligns to the
+        MuData object. Otherwise, if the length is equal to the params.adata, we assume it aligns to the
+        AnnData object. Otherwise, a ValueError is thrown.
+
         The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key]`.
         """
         # index series with AnnData (in case MuData has different dimensions)
         if not isinstance(value, pd.Series):
-            value = pd.Series(value, index=self.adata.obs_names)
+            if len(value) == self.data.shape[0]:
+                value = pd.Series(value, index=self.data.obs_names)
+            elif len(value) == self.adata.shape[0]:
+                value = pd.Series(value, index=self.adata.obs_names)
+            else:
+                raise ValueError("Provided values without index and can't align with either MuData or AnnData.")
         if isinstance(self.data, MuData):
             # write to both AnnData and MuData
             if self._airr_mod is None:

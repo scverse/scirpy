@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning][].
 
 -   Fix default value for `n_jobs` in `ir.tl.ir_query` that could lead to an error ([#498](https://github.com/scverse/scirpy/pull/498)).
 -   Update description of D50 diversity metric in documentation ([#499](https://github.com/scverse/scirpy/pull/498)).
+-   Fix `clonotype_modularity` not being able to store result in MuData in some cases ([#504](https://github.com/scverse/scirpy/pull/504)).
+-   Fix issue with creating sparse matrices from generators with the latest scipy version ([#504](https://github.com/scverse/scirpy/pull/504))
 
 ## v0.16.0
 
