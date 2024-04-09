@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.16.1
+
+### Fixes
 
 -   Fix default value for `n_jobs` in `ir.tl.ir_query` that could lead to an error ([#498](https://github.com/scverse/scirpy/pull/498)).
 -   Update description of D50 diversity metric in documentation ([#499](https://github.com/scverse/scirpy/pull/498)).
