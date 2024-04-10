@@ -459,3 +459,16 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
+
+def test_tcrdist_reference():
+    #test tcrdist against reference implementation
+    seqs = np.load('data/tcrdist_test_data/tcrdist_WU3k_seqs.npy')
+    reference_result = scipy.sparse.load_npz('data/tcrdist_test_data/tcrdist_WU3k_csr_result.npz')
+    
+    tcrdist_calculator = TCRdistDistanceCalculator(dist_weight=3, gap_penalty=4, ntrim=3, ctrim=2, fixed_gappos=True, cutoff=15, n_jobs= 1)
+    res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
+
+    assert np.array_equal(res.data, reference_result.data)
+    assert np.array_equal(res.indices, reference_result.indices)
+    assert np.array_equal(res.indptr, reference_result.indptr)
