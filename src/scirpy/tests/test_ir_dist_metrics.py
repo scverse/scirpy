@@ -326,15 +326,21 @@ def test_sequence_dist_all_metrics(metric):
       np.array([[57, 74, 65, 33],
                 [66, 68, 65, 33],
                 [53, 58, 49, 25]])),
+
+    #test empty input arrays
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
+     (np.array([]),
+      np.array([])),
+      np.empty((0,0))),
     
     #test very small input sequences
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 0, "ctrim": 0, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 0, "ctrim": 0, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
      (np.array(["A"]),
       np.array(["C"])),
       np.array([[13]])),
     
     #test standard parameters with simple input sequences
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
      (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
       np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
       np.array([[1, 0, 21],
@@ -342,7 +348,7 @@ def test_sequence_dist_all_metrics(metric):
                 [21, 21, 1]])),
     
     #test standard parameters with simple input sequences with second sequences array set to None
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
      (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
       None),
       np.array([[1, 0, 21],
@@ -350,7 +356,7 @@ def test_sequence_dist_all_metrics(metric):
                 [21, 21, 1]])),
     
     #test with dist_weight set to 0
-    ({"dist_weight": 0, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
+    ({"dist_weight": 0, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
      (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
       np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
       np.array([[1, 1, 9],
@@ -366,7 +372,7 @@ def test_sequence_dist_all_metrics(metric):
                 [129, 129, 1]])),
     
     #test with gap_penalty set to 0
-    ({"dist_weight": 3, "gap_penalty": 0, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 1},
+    ({"dist_weight": 3, "gap_penalty": 0, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
      (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
       np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
       np.array([[1, 0, 13],
@@ -380,7 +386,39 @@ def test_sequence_dist_all_metrics(metric):
       np.array([[1, 25, 93],
                 [25, 1, 93],
                 [93, 93, 1]])),
-    
+
+    #test with ntrim = 0 and cutoff set high to neglect it
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 0, "ctrim": 2, "fixed_gappos": True, "cutoff": 1000, "n_jobs": 1},
+     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
+      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+      np.array([[1, 25, 33],
+                [25, 1, 33],
+                [33, 33, 1]])),
+
+    #test with high ntrim - trimmimg with ntrim is only possible until the beginning of the gap for sequences of unequal length
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 10, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
+     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
+      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+      np.array([[1, 1, 9],
+                [1, 1, 9],
+                [9, 9, 1]])),
+
+    #test with ctrim = 0 and cutoff set high to neglect it
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 0, "fixed_gappos": True, "cutoff": 1000, "n_jobs": 1},
+     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
+      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+      np.array([[1, 25, 21],
+                [25, 1, 21],
+                [21, 21, 1]])),
+
+    #test with high ctrim - trimmimg with ctrim is only possible until the end of the gap for sequences of unequal length
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 10, "fixed_gappos": True, "cutoff": 20, "n_jobs": 1},
+     (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
+      np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
+      np.array([[1, 1, 21],
+                [1, 1, 21],
+                [21, 21, 1]])),
+
     #test with fixed_gappos = False and a high cutoff to neglect it
     #AAAAA added at the beginning of the usual sequences to make to difference of min_gappos and max_gappos more significant
     ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": False, "cutoff": 1000, "n_jobs": 1},
@@ -406,8 +444,8 @@ def test_sequence_dist_all_metrics(metric):
                 [25, 1, 21],
                 [21, 21, 1]])),
 
-    #test with multiple cores by setting n_jobs = 3
-    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": None, "n_jobs": 3},
+    #test with multiple cores by setting n_jobs = 4
+    ({"dist_weight": 3, "gap_penalty": 4, "ntrim": 3, "ctrim": 2, "fixed_gappos": True, "cutoff": 20, "n_jobs": 4},
      (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
       np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"])),
       np.array([[1, 0, 21],
