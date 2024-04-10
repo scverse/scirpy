@@ -307,7 +307,7 @@ def test_fast_alignment_dist_with_two_seq_arrays():
 
 @pytest.mark.parametrize("metric", ["alignment", "fastalignment", "identity", "hamming", "levenshtein"])
 def test_sequence_dist_all_metrics(metric):
-    #Smoke test, no assertions!
+    # Smoke test, no assertions!
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
     dist_mat = ir.ir_dist.sequence_dist(unique_seqs, metric=metric, cutoff=8, n_jobs=2)
@@ -315,7 +315,7 @@ def test_sequence_dist_all_metrics(metric):
 
     dist_mat = ir.ir_dist.sequence_dist(unique_seqs, seqs2, metric=metric, cutoff=8, n_jobs=2)
     assert dist_mat.shape == (5, 3)
-    
+
 
 @pytest.mark.parametrize("test_parameters,test_input,expected_result", [
     
