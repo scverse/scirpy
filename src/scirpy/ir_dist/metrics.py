@@ -395,7 +395,6 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
 
 
 class TCRdistDistanceCalculator:
-
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
     The code of this class is heavily based on: https://github.com/agartland/pwseqdist/blob/master/pwseqdist
