@@ -1049,7 +1049,7 @@ class TCRdistDistanceCalculator:
 
         if(len(seqs) == 0 or len(seqs2) == 0):
             return csr_matrix((len(seqs), len(seqs2)))
-        
+
         seqs_mat1, seqs_L1 = self._seqs2mat(seqs)
         seqs_mat2, seqs_L2 = self._seqs2mat(seqs2)
 
