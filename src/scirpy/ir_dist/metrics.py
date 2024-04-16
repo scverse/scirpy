@@ -444,7 +444,6 @@ class TCRdistDistanceCalculator:
         self.cutoff = cutoff
         self.n_jobs = n_jobs
 
-
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
     parasail_aa_alphabet_with_unknown = "ARNDCQEGHILKMFPSTWYVBZX*"
     tcr_dict_distance_matrix = {
@@ -862,8 +861,8 @@ class TCRdistDistanceCalculator:
 
         Returns
         -------
-        distance_matrix : np.ndarray, dtype=np.int32"""
-
+        distance_matrix : np.ndarray, dtype=np.int32
+        """
         dm = np.zeros((len(alphabet), len(alphabet)), dtype=np.int32)
         for (aa1, aa2), d in distance_matrix.items():
             dm[alphabet.index(aa1), alphabet.index(aa2)] = d
@@ -879,16 +878,16 @@ class TCRdistDistanceCalculator:
 
         Parameters
         ----------
-        seqs : list 
+        seqs : list
             List of strings
 
         Returns
         -------
-        mat : np.array  
+        mat : np.array
 
         Examples
         --------
-        >>> seqs2mat(["CAT","HAT"])
+        >>> seqs2mat(["CAT", "HAT"])
         array([[ 4,  0, 16],
             [ 8,  0, 16]], dtype=int8)
 
@@ -897,7 +896,6 @@ class TCRdistDistanceCalculator:
         Requires all seqs to have the same length, therefore shorter sequences
         are filled up with -1 entries at the end.
         """
-
         if max_len is None:
             max_len = np.max([len(s) for s in seqs])
         mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
@@ -958,7 +956,7 @@ class TCRdistDistanceCalculator:
 
         Returns
         -------
-        data_rows : 
+        data_rows :
             List with arrays containing the non-zero data values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         indices_rows :
@@ -968,7 +966,6 @@ class TCRdistDistanceCalculator:
             Arraay with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
-
         assert seqs_mat1.shape[0] == seqs_L1.shape[0]
         assert seqs_mat2.shape[0] == seqs_L2.shape[0]
 
@@ -1044,9 +1041,8 @@ class TCRdistDistanceCalculator:
         return data_rows, indices_rows, row_element_counts
 
     def _calc_dist_mat_block(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
-        "Computes a block of the final TCRdist distance matrix and returns it as CSR matrix"
-
-        if(len(seqs) == 0 or len(seqs2) == 0):
+        """Computes a block of the final TCRdist distance matrix and returns it as CSR matrix"""
+        if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
 
         seqs_mat1, seqs_L1 = self._seqs2mat(seqs)
@@ -1073,8 +1069,8 @@ class TCRdistDistanceCalculator:
 
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
         """Calculates the pairwise distances between two vectors of gene sequences based on the TCRdist distance metric
-        and returns a CSR distance matrix"""
-        
+        and returns a CSR distance matrix
+        """
         if seqs2 is None:
             seqs2 = seqs
 
