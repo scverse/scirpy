@@ -395,6 +395,57 @@ class HammingDistanceCalculator(ParallelDistanceCalculator):
 
 
 class TCRdistDistanceCalculator:
+
+    """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
+
+    The code of this class is heavily based on: https://github.com/agartland/pwseqdist/blob/master/pwseqdist
+
+    Using default weight, gap penalty, ntrim and ctrim is equivalent to the
+    original distance published in Dash et al, (2017).
+
+    Parameters
+    ----------
+    dist_weight : int
+        Weight applied to the mismatch distances before summing with the gap penalties
+    gap_penalty : int
+        Distance penalty for the difference in the length of the two sequences
+    ntrim/ctrim : int
+        Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
+        in the distance calculation.
+    fixed_gappos : bool
+        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
+        If False, find the "optimal" position for inserting the gaps to make up the difference in length
+    cutoff:
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices.
+    n_jobs:
+        Number of jobs (processes) to use for the pairwise distance calculation
+    """
+
+    def __init__(
+        self,
+        dist_weight=3,
+        gap_penalty=4,
+        ntrim=3,
+        ctrim=2,
+        fixed_gappos=True,
+        cutoff: Union[None, int] = None,
+        n_jobs: Union[None, int] = None,
+    ):
+        if cutoff is None:
+            cutoff = 20
+        if n_jobs is None:
+            n_jobs = 1
+
+        self.dist_weight = dist_weight
+        self.gap_penalty = gap_penalty
+        self.ntrim = ntrim
+        self.ctrim = ctrim
+        self.fixed_gappos = fixed_gappos
+        self.cutoff = cutoff
+        self.n_jobs = n_jobs
+
+
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
     parasail_aa_alphabet_with_unknown = "ARNDCQEGHILKMFPSTWYVBZX*"
     tcr_dict_distance_matrix = {
@@ -800,31 +851,20 @@ class TCRdistDistanceCalculator:
         ("Y", "Y"): 0,
     }
 
-    def __init__(
-        self,
-        dist_weight=3,
-        gap_penalty=4,
-        ntrim=3,
-        ctrim=2,
-        fixed_gappos=True,
-        cutoff: Union[None, int] = None,
-        n_jobs: Union[None, int] = None,
-    ):
-        if cutoff is None:
-            cutoff = 20
-        if n_jobs is None:
-            n_jobs = 1
-
-        self.dist_weight = dist_weight
-        self.gap_penalty = gap_penalty
-        self.ntrim = ntrim
-        self.ctrim = ctrim
-        self.fixed_gappos = fixed_gappos
-        self.cutoff = cutoff
-        self.n_jobs = n_jobs
-
     @staticmethod
     def _make_numba_matrix(distance_matrix, alphabet=parasail_aa_alphabet_with_unknown):
+        """Creates a numba compatible distance matrix from a dict of tuples.
+
+        Parameters
+        ----------
+        distance_matrix : dict
+            Keys are tuples like ('A', 'C') with values containing an integer.
+        alphabet : str
+
+        Returns
+        -------
+        distance_matrix : np.ndarray, dtype=np.int32"""
+
         dm = np.zeros((len(alphabet), len(alphabet)), dtype=np.int32)
         for (aa1, aa2), d in distance_matrix.items():
             dm[alphabet.index(aa1), alphabet.index(aa2)] = d
@@ -835,6 +875,30 @@ class TCRdistDistanceCalculator:
 
     @staticmethod
     def _seqs2mat(seqs, alphabet=parasail_aa_alphabet, max_len=None):
+        """Convert a collection of gene sequences into a
+        numpy matrix of integers for fast comparison.
+
+        Parameters
+        ----------
+        seqs : list 
+            List of strings
+
+        Returns
+        -------
+        mat : np.array  
+
+        Examples
+        --------
+        >>> seqs2mat(["CAT","HAT"])
+        array([[ 4,  0, 16],
+            [ 8,  0, 16]], dtype=int8)
+
+        Notes
+        -----
+        Requires all seqs to have the same length, therefore shorter sequences
+        are filled up with -1 entries at the end.
+        """
+
         if max_len is None:
             max_len = np.max([len(s) for s in seqs])
         mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
@@ -866,6 +930,46 @@ class TCRdistDistanceCalculator:
         fixed_gappos=True,
         cutoff=20,
     ):
+        """Computes the pairwise TCRdist distances for sequences in seqs_mat1 and seqs_mat2.
+
+        Note: to use with non-CDR3 sequences set ntrim and ctrim to 0.
+
+        Parameters
+        ----------
+        seqs_mat1/2 : np.ndarray
+            Matrix containing sequences created by seqs2mat with padding to accomodate
+            sequences of different lengths (-1 padding)
+        seqs_L1/2 : np.ndarray
+            A vector containing the length of each sequence in the respective seqs_mat matrix,
+            without the padding in seqs_mat
+        distance_matrix : np.ndarray [alphabet, alphabet] dtype=int32
+            A square distance matrix (NOT a similarity matrix).
+            Matrix must match the alphabet that was used to create
+            seqs_mat, where each AA is represented by an index into the alphabet.
+        dist_weight : int
+            Weight applied to the mismatch distances before summing with the gap penalties
+        gap_penalty : int
+            Distance penalty for the difference in the length of the two sequences
+        ntrim/ctrim : int
+            Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
+            in the distance calculation.
+        fixed_gappos : bool
+            If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
+            If False, find the "optimal" position for inserting the gaps to make up the difference in length
+
+        Returns
+        -------
+        data_rows : 
+            List with arrays containing the non-zero data values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        indices_rows :
+            List with arrays containing the non-zero entry column indeces of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts :
+            Arraay with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        """
+
         assert seqs_mat1.shape[0] == seqs_L1.shape[0]
         assert seqs_mat2.shape[0] == seqs_L2.shape[0]
 
@@ -941,7 +1045,8 @@ class TCRdistDistanceCalculator:
         return data_rows, indices_rows, row_element_counts
 
     def _calc_dist_mat_block(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
-        
+        "Computes a block of the final TCRdist distance matrix and returns it as CSR matrix"
+
         if(len(seqs) == 0 or len(seqs2) == 0):
             return csr_matrix((len(seqs), len(seqs2)))
         
@@ -968,6 +1073,9 @@ class TCRdistDistanceCalculator:
         return sparse_distance_matrix
 
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
+        """Calculates the pairwise distances between two vectors of gene sequences based on the TCRdist distance metric
+        and returns a CSR distance matrix"""
+        
         if seqs2 is None:
             seqs2 = seqs
 
