@@ -69,7 +69,8 @@ def test_data_handler_no_airr():
         DataHandler(adata, "airr", "airr")
 
 
-def test_data_handler_get_obs():
+@pytest.fixture
+def mdata_with_smaller_adata():
     adata_gex = AnnData(obs=pd.DataFrame(index=["c1", "c2", "c3"]).assign(both=[11, 12, 13]))
     adata_airr = AnnData(obs=pd.DataFrame(index=["c3", "c4", "c5"]).assign(both=[14, 15, 16]))
     mdata = MuData({"gex": adata_gex, "airr": adata_airr})
@@ -77,8 +78,11 @@ def test_data_handler_get_obs():
 
     mdata.obs["mudata_only"] = [1, 2, 3, 4, 5]
     mdata.obs["both"] = [np.nan, np.nan, 114, 115, 116]
+    return mdata
 
-    params = DataHandler(mdata, "airr")
+
+def test_data_handler_get_obs(mdata_with_smaller_adata):
+    params = DataHandler(mdata_with_smaller_adata, "airr")
     # can retrieve value from mudata
     npt.assert_equal(params.get_obs("mudata_only").values, np.array([1, 2, 3, 4, 5]))
     # Mudata takes precedence
@@ -107,6 +111,27 @@ def test_data_handler_get_obs():
         params.get_obs(["airr_only"]),
         pd.DataFrame(index=["c1", "c2", "c3", "c4", "c5"]).assign(airr_only=[np.nan, np.nan, 3, 4, 5]),
     )
+
+
+@pytest.mark.parametrize(
+    "value,exception",
+    [
+        [pd.Series([1, 2, 3], index=["c1", "c3", "c4"]), None],
+        [pd.Series([1, 2, 3], index=["c1", "c3", "c8"]), None],
+        [pd.Series([1, 2, 3, 4, 5], index=["c1", "c2", "c3", "c4", "c5"]), None],
+        [[1, 2, 3], None],
+        [[1, 2, 3, 4], ValueError],
+        [[1, 2, 3, 4, 5], None],
+        [[1, 2, 3, 4, 5, 6], ValueError],
+    ],
+)
+def test_data_handler_set_obs(mdata_with_smaller_adata, value, exception):
+    params = DataHandler(mdata_with_smaller_adata, "airr")
+    if exception is not None:
+        with pytest.raises(exception):
+            params.set_obs("test", value)
+    else:
+        params.set_obs("test", value)
 
 
 def test_data_handler_initalize_from_object(adata_tra):

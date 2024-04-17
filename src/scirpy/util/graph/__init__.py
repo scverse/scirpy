@@ -144,7 +144,7 @@ def _get_sparse_from_igraph(graph, *, simplified, weight_attr=None):
     shape = graph.vcount()
     shape = (shape, shape)
     if len(edges) > 0:
-        adj_mat = csr_matrix((weights, zip(*edges)), shape=shape)
+        adj_mat = csr_matrix((weights, list(zip(*edges))), shape=shape)
         if simplified:
             # make symmetrical and add diagonal
             adj_mat = adj_mat + adj_mat.T - sparse.diags(adj_mat.diagonal()) + sparse.diags(np.ones(adj_mat.shape[0]))
