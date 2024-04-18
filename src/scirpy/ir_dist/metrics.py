@@ -423,6 +423,7 @@ class TCRdistDistanceCalculator:
 
     def __init__(
         self,
+        *,
         dist_weight: int = 3,
         gap_penalty: int = 4,
         ntrim: int = 3,
@@ -519,6 +520,7 @@ class TCRdistDistanceCalculator:
     @staticmethod
     @nb.jit(nopython=True, parallel=False, nogil=True)
     def _nb_tcrdist_mat(
+        *,
         seqs_mat1: np.ndarray,
         seqs_mat2: np.ndarray,
         seqs_L1: np.ndarray,
