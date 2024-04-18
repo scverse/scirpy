@@ -577,7 +577,7 @@ class TCRdistDistanceCalculator:
         row_element_counts = np.zeros(seqs_mat1.shape[0])
 
         empty_row = np.zeros(0)
-        for i in range(0, seqs_mat1.shape[0]):
+        for _ in range(0, seqs_mat1.shape[0]):
             data_rows.append(empty_row)
             indices_rows.append(empty_row)
 
