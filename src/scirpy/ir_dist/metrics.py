@@ -428,14 +428,9 @@ class TCRdistDistanceCalculator:
         ntrim=3,
         ctrim=2,
         fixed_gappos=True,
-        cutoff: Union[None, int] = None,
-        n_jobs: Union[None, int] = None,
+        cutoff: int = 20,
+        n_jobs: int = 1,
     ):
-        if cutoff is None:
-            cutoff = 20
-        if n_jobs is None:
-            n_jobs = 1
-
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
         self.ntrim = ntrim
