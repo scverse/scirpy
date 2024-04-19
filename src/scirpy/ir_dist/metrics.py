@@ -408,12 +408,12 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
     distance_matrix:
         distance lookup matrix
     """
-
     dm = np.zeros((len(alphabet), len(alphabet)), dtype=np.int32)
     for (aa1, aa2), d in distance_matrix.items():
         dm[alphabet.index(aa1), alphabet.index(aa2)] = d
         dm[alphabet.index(aa2), alphabet.index(aa1)] = d
     return dm
+
 
 class TCRdistDistanceCalculator:
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
@@ -441,6 +441,7 @@ class TCRdistDistanceCalculator:
     n_jobs:
         Number of jobs (processes) to use for the pairwise distance calculation
     """
+
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
     parasail_aa_alphabet_with_unknown = "ARNDCQEGHILKMFPSTWYVBZX*"
     # fmt: off
