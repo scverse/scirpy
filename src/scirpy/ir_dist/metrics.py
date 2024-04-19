@@ -468,13 +468,15 @@ class TCRdistDistanceCalculator:
         self.n_jobs = n_jobs
 
     @staticmethod
-    def _seqs2mat(seqs: Sequence[str], alphabet: str = parasail_aa_alphabet, max_len: Union[None, int] = None) -> tuple[np.ndarray, np.ndarray]:
+    def _seqs2mat(
+        seqs: Sequence[str], alphabet: str = parasail_aa_alphabet, max_len: Union[None, int] = None
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Convert a collection of gene sequences into a
         numpy matrix of integers for fast comparison.
 
         Parameters
         ----------
-        seqs: 
+        seqs:
             Sequence of strings
 
         Returns
@@ -518,7 +520,7 @@ class TCRdistDistanceCalculator:
         seqs_mat2: np.ndarray,
         seqs_L1: np.ndarray,
         seqs_L2: np.ndarray,
-        distance_matrix: np.ndarray  = tcr_nb_distance_matrix,
+        distance_matrix: np.ndarray = tcr_nb_distance_matrix,
         dist_weight: int = 3,
         gap_penalty: int = 4,
         ntrim: int = 3,
@@ -555,7 +557,7 @@ class TCRdistDistanceCalculator:
 
         Returns
         -------
-        data_rows: 
+        data_rows:
             List with arrays containing the non-zero data values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         indices_rows:
@@ -648,16 +650,16 @@ class TCRdistDistanceCalculator:
         seqs_mat2, seqs_L2 = self._seqs2mat(seqs2)
 
         data_rows, indices_rows, row_element_counts = self._nb_tcrdist_mat(
-            seqs_mat1 = seqs_mat1,
-            seqs_mat2 = seqs_mat2,
-            seqs_L1 = seqs_L1,
-            seqs_L2 = seqs_L2,
-            dist_weight = self.dist_weight,
-            gap_penalty = self.gap_penalty,
-            ntrim = self.ntrim,
-            ctrim = self.ctrim,
-            fixed_gappos = self.fixed_gappos,
-            cutoff = self.cutoff,
+            seqs_mat1=seqs_mat1,
+            seqs_mat2=seqs_mat2,
+            seqs_L1=seqs_L1,
+            seqs_L2=seqs_L2,
+            dist_weight=self.dist_weight,
+            gap_penalty=self.gap_penalty,
+            ntrim=self.ntrim,
+            ctrim=self.ctrim,
+            fixed_gappos=self.fixed_gappos,
+            cutoff=self.cutoff,
         )
 
         indptr = np.zeros(row_element_counts.shape[0] + 1)

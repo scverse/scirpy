@@ -615,6 +615,7 @@ def test_tcrdist(test_parameters, test_input, expected_result):
 def test_tcrdist_reference():
     # test tcrdist against reference implementation
     from . import TESTDATA
+
     seqs = np.load(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_csr_result.npz")
 
