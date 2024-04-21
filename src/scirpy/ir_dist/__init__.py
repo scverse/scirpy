@@ -174,6 +174,8 @@ def _ir_dist(
         Like `airr_key`, but for `reference`.
     chain_idx_key_ref
         Like `chain_idx_key`, but for `reference`.
+    **kwargs
+        Arguments are passed to the respective :class:`~scirpy.ir_dist.metrics.DistanceCalculator` class.
 
     Returns
     -------
