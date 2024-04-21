@@ -99,6 +99,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
+    elif metric == "tcrdist":
+        dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 
@@ -122,6 +124,7 @@ def _ir_dist(
     airr_mod_ref: str = "airr",
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
+    **kwargs,
 ) -> Union[dict, None]:
     """\
     Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
@@ -171,6 +174,8 @@ def _ir_dist(
         Like `airr_key`, but for `reference`.
     chain_idx_key_ref
         Like `chain_idx_key`, but for `reference`.
+    **kwargs
+        Arguments are passed to the respective :class:`~scirpy.ir_dist.metrics.DistanceCalculator` class.
 
     Returns
     -------
@@ -227,7 +232,7 @@ def _ir_dist(
                 result[chain_type][tmp_key] = unique_seqs
 
     # compute distance matrices
-    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs)
+    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs, **kwargs)
     for chain_type in ["VJ", "VDJ"]:
         logging.info(f"Computing sequence x sequence distance matrix for {chain_type} sequences.")  # type: ignore
         result[chain_type]["distances"] = dist_calc.calc_dist_mat(
