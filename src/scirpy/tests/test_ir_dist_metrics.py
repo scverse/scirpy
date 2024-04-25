@@ -584,6 +584,23 @@ def test_sequence_dist_all_metrics(metric):
             ),
             np.array([[1, 25, 21], [25, 1, 21], [21, 21, 1]]),
         ),
+        #test more complex strings with multiple cores by setting n_jobs = 2
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 1000,
+                "n_jobs": 1,
+            },
+            (
+                np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
+                np.array(["WEKFAPIQCMNR", "RDAIYTCCNKSWEQ", "CWWMFGHTVRI", "GWSZNNHI"]),
+            ),
+            np.array([[57, 74, 65, 33], [66, 68, 65, 33], [53, 58, 49, 25]]),
+        ),
         # test with multiple cores by setting n_jobs = 4
         (
             {
@@ -626,7 +643,7 @@ def test_tcrdist_reference():
         ctrim=2,
         fixed_gappos=True,
         cutoff=15,
-        n_jobs=1,
+        n_jobs=2,
     )
     res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
 
