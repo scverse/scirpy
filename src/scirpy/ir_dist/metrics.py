@@ -408,17 +408,18 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
     distance_matrix:
         distance lookup matrix
     """
-
     dm = np.zeros((len(alphabet), len(alphabet)), dtype=np.int32)
     for (aa1, aa2), d in distance_matrix.items():
         dm[alphabet.index(aa1), alphabet.index(aa2)] = d
         dm[alphabet.index(aa2), alphabet.index(aa1)] = d
     return dm
 
+
 class TCRdistDistanceCalculator:
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
-    The code of this class is heavily based on: https://github.com/agartland/pwseqdist/blob/master/pwseqdist
+    The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
     Using default weight, gap penalty, ntrim and ctrim is equivalent to the
     original distance published in :cite:`TCRdist`.
@@ -441,6 +442,7 @@ class TCRdistDistanceCalculator:
     n_jobs:
         Number of jobs (processes) to use for the pairwise distance calculation
     """
+
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
     parasail_aa_alphabet_with_unknown = "ARNDCQEGHILKMFPSTWYVBZX*"
     # fmt: off
@@ -450,13 +452,13 @@ class TCRdistDistanceCalculator:
 
     def __init__(
         self,
+        cutoff: int = 20,
         *,
         dist_weight: int = 3,
         gap_penalty: int = 4,
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
-        cutoff: int = 20,
         n_jobs: int = 1,
     ):
         self.dist_weight = dist_weight

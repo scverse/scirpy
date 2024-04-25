@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+-   Add "TCRdist" as new metric ([#502](https://github.com/scverse/scirpy/pull/502))
+
 ## v0.16.1
 
 ### Fixes

@@ -302,3 +302,4 @@ distance metrics
    ir_dist.metrics.HammingDistanceCalculator
    ir_dist.metrics.AlignmentDistanceCalculator
    ir_dist.metrics.FastAlignmentDistanceCalculator
+   ir_dist.metrics.TCRdistDistanceCalculator
