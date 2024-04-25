@@ -704,17 +704,18 @@ class TCRdistDistanceCalculator:
         seqs2 = np.array(seqs2)
         is_symmetric = np.array_equal(seqs, seqs2)
         n_blocks = self.n_jobs*2
-        
-        if(self.n_jobs>1):
+
+        if self.n_jobs > 1:
             split_seqs = np.array_split(seqs, n_blocks)
-            start_columns = np.cumsum(np.array([0] + [len(seq) for seq in split_seqs[:-1]]))
-            arguments = [(split_seqs[x],seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
-            with multiprocessing.Pool(self.n_jobs) as p:
-                results = p.starmap(self._calc_dist_mat_block, arguments)
+            start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
+            arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
+            
+            delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
+            results = _parallelize_with_joblib(delayed_jobs, total=len(arguments), n_jobs=self.n_jobs)
             distance_matrix_csr = scipy.sparse.vstack(results)
         else:
             distance_matrix_csr = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
-
+        
         if(is_symmetric):
             upper_triangular_distance_matrix = distance_matrix_csr
             full_distance_matrix = upper_triangular_distance_matrix.maximum(upper_triangular_distance_matrix.T)
