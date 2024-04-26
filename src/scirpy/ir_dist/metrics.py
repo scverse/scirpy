@@ -715,7 +715,7 @@ class TCRdistDistanceCalculator:
             arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
             
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
-            results = _parallelize_with_joblib(delayed_jobs, total=len(arguments), n_jobs=self.n_jobs)
+            results = list(_parallelize_with_joblib(delayed_jobs, total=len(arguments), n_jobs=self.n_jobs))
             distance_matrix_csr = scipy.sparse.vstack(results)
         else:
             distance_matrix_csr = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
