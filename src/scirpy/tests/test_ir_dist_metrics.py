@@ -15,6 +15,7 @@ from scirpy.ir_dist.metrics import (
     LevenshteinDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
+    TCRdistDistanceCalculator,
 )
 
 from .util import _squarify
@@ -307,6 +308,7 @@ def test_fast_alignment_dist_with_two_seq_arrays():
 
 @pytest.mark.parametrize("metric", ["alignment", "fastalignment", "identity", "hamming", "levenshtein"])
 def test_sequence_dist_all_metrics(metric):
+    # Smoke test, no assertions!
     # Smoke test, no assertions!
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
