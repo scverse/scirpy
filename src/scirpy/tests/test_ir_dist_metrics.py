@@ -15,7 +15,6 @@ from scirpy.ir_dist.metrics import (
     LevenshteinDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
-    TCRdistDistanceCalculator,
 )
 
 from .util import _squarify
@@ -586,7 +585,7 @@ def test_sequence_dist_all_metrics(metric):
             ),
             np.array([[1, 25, 21], [25, 1, 21], [21, 21, 1]]),
         ),
-        #test more complex strings with multiple cores by setting n_jobs = 2
+        # test more complex strings with multiple cores by setting n_jobs = 2
         (
             {
                 "dist_weight": 3,
