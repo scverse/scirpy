@@ -1,13 +1,10 @@
 import abc
 import itertools
-import multiprocessing
-import multiprocessing
 import warnings
 from collections.abc import Sequence
 from typing import Optional, Union
 
 import joblib
-import numba as nb
 import numba as nb
 import numpy as np
 import scipy.sparse
@@ -533,13 +530,13 @@ class TCRdistDistanceCalculator:
         ctrim: int = 2,
         fixed_gappos: bool = True,
         cutoff: int = 20,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]: 
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         """Computes the pairwise TCRdist distances for sequences in seqs_mat1 and seqs_mat2.
-        
+
         This function is a wrapper and contains an inner JIT compiled numba function without parameters. The reason for this is
         that this way some of the parameters can be treated as constant by numba and this allows for a better optimization
         of the numba compiler in this specific case.
-        
+
         If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
         can be used to only compute the part of the block that would be part of the upper triangular matrix of the
         result matrix.
@@ -587,22 +584,20 @@ class TCRdistDistanceCalculator:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
-        
         dist_mat_weighted = distance_matrix * dist_weight
         start_column *= is_symmetric
 
         @nb.jit(nopython=True, parallel=False, nogil=True)
         def _nb_tcrdist_mat():
-            
             assert seqs_mat1.shape[0] == seqs_L1.shape[0]
             assert seqs_mat2.shape[0] == seqs_L2.shape[0]
 
             data_rows = nb.typed.List()
             indices_rows = nb.typed.List()
             row_element_counts = np.zeros(seqs_mat1.shape[0])
-            
+
             empty_row = np.zeros(0)
-            for i in range(0,seqs_mat1.shape[0]):
+            for i in range(0, seqs_mat1.shape[0]):
                 data_rows.append(empty_row)
                 indices_rows.append(empty_row)
 
@@ -610,12 +605,12 @@ class TCRdistDistanceCalculator:
             indices_row = np.zeros(seqs_mat2.shape[0])
             for row_index in range(seqs_mat1.shape[0]):
                 row_end_index = 0
-                for col_index in range(start_column + row_index*is_symmetric, seqs_mat2.shape[0]):
+                for col_index in range(start_column + row_index * is_symmetric, seqs_mat2.shape[0]):
                     q_L = seqs_L1[row_index]
                     s_L = seqs_L2[col_index]
                     distance = 1
-                    
-                    if(q_L==s_L):
+
+                    if q_L == s_L:
                         for i in range(ntrim, q_L - ctrim):
                             distance += dist_mat_weighted[seqs_mat1[row_index, i], seqs_mat2[col_index, i]]
 
@@ -641,7 +636,9 @@ class TCRdistDistanceCalculator:
                                 tmp_dist += dist_mat_weighted[seqs_mat1[row_index, n_i], seqs_mat2[col_index, n_i]]
 
                             for c_i in range(ctrim, remainder):
-                                tmp_dist += dist_mat_weighted[seqs_mat1[row_index, q_L - 1 - c_i], seqs_mat2[col_index, s_L - 1 - c_i]]
+                                tmp_dist += dist_mat_weighted[
+                                    seqs_mat1[row_index, q_L - 1 - c_i], seqs_mat2[col_index, s_L - 1 - c_i]
+                                ]
 
                             if tmp_dist < min_dist or min_dist == -1:
                                 min_dist = tmp_dist
@@ -650,8 +647,8 @@ class TCRdistDistanceCalculator:
                                 break
 
                         distance = min_dist + len_diff * gap_penalty + 1
-                    
-                    if(distance <= cutoff + 1):
+
+                    if distance <= cutoff + 1:
                         data_row[row_end_index] = distance
                         indices_row[row_end_index] = col_index
                         row_end_index += 1
@@ -660,12 +657,18 @@ class TCRdistDistanceCalculator:
                 indices_rows[row_index] = indices_row[0:row_end_index].copy()
                 row_element_counts[row_index] = row_end_index
             return data_rows, indices_rows, row_element_counts
-        
+
         data_rows, indices_rows, row_element_counts = _nb_tcrdist_mat()
 
         return data_rows, indices_rows, row_element_counts
 
-    def _calc_dist_mat_block(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None, is_symmetric: bool = False, start_column: int = 0) -> csr_matrix:
+    def _calc_dist_mat_block(
+        self,
+        seqs: Sequence[str],
+        seqs2: Optional[Sequence[str]] = None,
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> csr_matrix:
         """Computes a block of the final TCRdist distance matrix and returns it as CSR matrix.
         If the final result matrix that consists of all blocks together is symmetric, only the part of the block that would
         contribute to the upper triangular matrix of the final result will be computed.
@@ -681,8 +684,8 @@ class TCRdistDistanceCalculator:
             seqs_mat2=seqs_mat2,
             seqs_L1=seqs_L1,
             seqs_L2=seqs_L2,
-            is_symmetric = is_symmetric,
-            start_column = start_column,
+            is_symmetric=is_symmetric,
+            start_column=start_column,
             dist_weight=self.dist_weight,
             gap_penalty=self.gap_penalty,
             ntrim=self.ntrim,
@@ -701,31 +704,31 @@ class TCRdistDistanceCalculator:
         """Calculates the pairwise distances between two vectors of gene sequences based on the TCRdist distance metric
         and returns a CSR distance matrix
         """
-        if(seqs2 is None):
+        if seqs2 is None:
             seqs2 = seqs
 
         seqs = np.array(seqs)
         seqs2 = np.array(seqs2)
         is_symmetric = np.array_equal(seqs, seqs2)
-        n_blocks = self.n_jobs*2
+        n_blocks = self.n_jobs * 2
 
         if self.n_jobs > 1:
             split_seqs = np.array_split(seqs, n_blocks)
             start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
             arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
-            
+
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
             results = _parallelize_with_joblib(delayed_jobs, total=len(arguments), n_jobs=self.n_jobs)
             distance_matrix_csr = scipy.sparse.vstack(results)
         else:
             distance_matrix_csr = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
-        
-        if(is_symmetric):
+
+        if is_symmetric:
             upper_triangular_distance_matrix = distance_matrix_csr
             full_distance_matrix = upper_triangular_distance_matrix.maximum(upper_triangular_distance_matrix.T)
         else:
             full_distance_matrix = distance_matrix_csr
-        
+
         return full_distance_matrix
 
 
