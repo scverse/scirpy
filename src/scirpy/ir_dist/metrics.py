@@ -2,7 +2,7 @@ import abc
 import itertools
 import warnings
 from collections.abc import Sequence
-from typing import Optional, Union, Callable
+from typing import Optional, Union
 
 import joblib
 import numba as nb
