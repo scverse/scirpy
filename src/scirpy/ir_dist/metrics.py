@@ -350,7 +350,6 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
     ----------
     distance_matrix:
         Keys are tuples like ('A', 'C') with values containing an integer.
-    alphabet:
 
     Returns
     -------
@@ -434,9 +433,9 @@ class NumbaDistanceCalculator(abc.ABC):
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> csr_matrix:
-        """Computes a block of the final TCRdist distance matrix and returns it as CSR matrix.
-        If the final result matrix that consists of all blocks together is symmetric, only the part of the block that would
-        contribute to the upper triangular matrix of the final result will be computed.
+        """Computes a block of the final distance matrix and returns it as CSR matrix.
+        If the final result matrix that consists of all blocks together is symmetric, only the part 
+        of the block that would contribute to the upper triangular matrix of the final result will be computed.
         """
         if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
@@ -461,8 +460,8 @@ class NumbaDistanceCalculator(abc.ABC):
         return sparse_distance_matrix
 
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
-        """Calculates the pairwise distances between two vectors of gene sequences based on the TCRdist distance metric
-        and returns a CSR distance matrix
+        """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
+        of the derived class and returns a CSR distance matrix
         """
         if seqs2 is None:
             seqs2 = seqs
@@ -491,6 +490,7 @@ class NumbaDistanceCalculator(abc.ABC):
 
         return full_distance_matrix
 
+
 class HammingDistanceCalculator(NumbaDistanceCalculator):
     def __init__(
         self,
@@ -510,8 +510,6 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
-        
-        print("mat equal: ", np.array_equal(seqs_mat1, seqs_mat2))
         
         cutoff=self.cutoff
         start_column *= is_symmetric
@@ -648,20 +646,6 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
         start_column:
             Determines at which column the calculation should be started. This is only used if this function is
             used to compute a block of a bigger result matrix that is symmetric
-        distance_matrix:
-            A square distance matrix (NOT a similarity matrix).
-            Matrix must match the alphabet that was used to create
-            seqs_mat, where each AA is represented by an index into the alphabet.
-        dist_weight:
-            Weight applied to the mismatch distances before summing with the gap penalties
-        gap_penalty:
-            Distance penalty for the difference in the length of the two sequences
-        ntrim/ctrim:
-            Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
-            in the distance calculation.
-        fixed_gappos:
-            If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
-            If False, find the "optimal" position for inserting the gaps to make up the difference in length
 
         Returns
         -------
@@ -675,7 +659,6 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
-        distance_matrix=self.tcr_nb_distance_matrix
         cutoff=self.cutoff
         dist_weight=self.dist_weight
         gap_penalty=self.gap_penalty
@@ -683,7 +666,7 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
         ctrim=self.ctrim
         fixed_gappos=self.fixed_gappos
 
-        dist_mat_weighted = distance_matrix * dist_weight
+        dist_mat_weighted = self.tcr_nb_distance_matrix * dist_weight
         start_column *= is_symmetric
 
         @nb.jit(nopython=True, parallel=False, nogil=True)
@@ -762,6 +745,7 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
         return data_rows, indices_rows, row_element_counts
     
     _metric_mat = _tcrdist_mat
+
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
