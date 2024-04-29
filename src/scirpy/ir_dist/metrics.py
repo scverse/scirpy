@@ -440,8 +440,9 @@ class NumbaDistanceCalculator(abc.ABC):
         if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
 
-        seqs_mat1, seqs_L1 = _seqs2mat(seqs)
-        seqs_mat2, seqs_L2 = _seqs2mat(seqs2)
+        max_seq_len = max(np.max([len(s) for s in seqs]), np.max([len(s) for s in seqs2]))
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len = max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len = max_seq_len)
 
         data_rows, indices_rows, row_element_counts = self._metric_mat(
             seqs_mat1=seqs_mat1,
@@ -509,6 +510,8 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         
+        print("mat equal: ", np.array_equal(seqs_mat1, seqs_mat2))
+        
         cutoff=self.cutoff
         start_column *= is_symmetric
 
@@ -529,6 +532,25 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
             data_row = np.zeros(seqs_mat2.shape[0])
             indices_row = np.zeros(seqs_mat2.shape[0])
             for row_index in range(seqs_mat1.shape[0]):
+                start_col_index = start_column + row_index * is_symmetric
+                row_end_index = 0
+                seq = seqs_mat1[row_index]
+                comparison = seqs_mat2[start_col_index:] != seq
+                unequal_length = np.where(seqs_L1[row_index] != seqs_L2[start_col_index:])[0]
+                sum_of_rows = np.sum(comparison, axis=1)+1
+                sum_of_rows[unequal_length] = cutoff + 2
+                indices = np.where(sum_of_rows <= cutoff + 1)[0]
+                row_end_index = len(indices)
+                indices_row[0:row_end_index] = indices + start_col_index
+                values = sum_of_rows[indices]
+                data_row[0:row_end_index] = values
+                data_rows[row_index] = data_row[0:row_end_index].copy()
+                indices_rows[row_index] = indices_row[0:row_end_index].copy()
+                row_element_counts[row_index] = row_end_index
+            return data_rows, indices_rows, row_element_counts
+            
+            """
+            for row_index in range(seqs_mat1.shape[0]):
                 row_end_index = 0
                 for col_index in range(start_column + row_index * is_symmetric, seqs_mat2.shape[0]):
                     q_L = seqs_L1[row_index]
@@ -548,6 +570,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
                 indices_rows[row_index] = indices_row[0:row_end_index].copy()
                 row_element_counts[row_index] = row_end_index
             return data_rows, indices_rows, row_element_counts
+            """
 
         data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
 
