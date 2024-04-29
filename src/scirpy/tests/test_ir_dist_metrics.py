@@ -652,6 +652,7 @@ def test_tcrdist_reference():
     assert np.array_equal(res.indices, reference_result.indices)
     assert np.array_equal(res.indptr, reference_result.indptr)
 
+
 def test_hamming_reference():
     # test hamming distance against reference implementation
     from . import TESTDATA
@@ -659,7 +660,7 @@ def test_hamming_reference():
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
 
-    hamming_calculator = HammingDistanceCalculator(2,2)
+    hamming_calculator = HammingDistanceCalculator(2, 2)
     res = hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)

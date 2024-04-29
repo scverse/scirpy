@@ -10,7 +10,6 @@ import numpy as np
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
-from Levenshtein import hamming as hamming_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
@@ -362,50 +361,51 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
         dm[alphabet.index(aa2), alphabet.index(aa1)] = d
     return dm
 
+
 def _seqs2mat(
-        seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: Union[None, int] = None
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Convert a collection of gene sequences into a
-        numpy matrix of integers for fast comparison.
+    seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: Union[None, int] = None
+) -> tuple[np.ndarray, np.ndarray]:
+    """Convert a collection of gene sequences into a
+    numpy matrix of integers for fast comparison.
 
-        Parameters
-        ----------
-        seqs:
-            Sequence of strings
+    Parameters
+    ----------
+    seqs:
+        Sequence of strings
 
-        Returns
-        -------
-        mat:
-            matrix with gene sequences encoded as integers
-        L:
-            vector with length values of the gene sequences in the matrix
+    Returns
+    -------
+    mat:
+        matrix with gene sequences encoded as integers
+    L:
+        vector with length values of the gene sequences in the matrix
 
-        Examples
-        --------
-        >>> seqs2mat(["CAT", "HAT"])
-        array([[ 4,  0, 16],
-            [ 8,  0, 16]], dtype=int8)
+    Examples
+    --------
+    >>> seqs2mat(["CAT", "HAT"])
+    array([[ 4,  0, 16],
+        [ 8,  0, 16]], dtype=int8)
 
-        Notes
-        -----
-        Requires all seqs to have the same length, therefore shorter sequences
-        are filled up with -1 entries at the end.
-        """
-        if max_len is None:
-            max_len = np.max([len(s) for s in seqs])
-        mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
-        L = np.zeros(len(seqs), dtype=np.int8)
-        for si, s in enumerate(seqs):
-            L[si] = len(s)
-            for aai in range(max_len):
-                if aai >= len(s):
-                    break
-                try:
-                    mat[si, aai] = alphabet.index(s[aai])
-                except ValueError:
-                    # Unknown symbols given value for last column/row of matrix
-                    mat[si, aai] = len(alphabet)
-        return mat, L
+    Notes
+    -----
+    Requires all seqs to have the same length, therefore shorter sequences
+    are filled up with -1 entries at the end.
+    """
+    if max_len is None:
+        max_len = np.max([len(s) for s in seqs])
+    mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
+    L = np.zeros(len(seqs), dtype=np.int8)
+    for si, s in enumerate(seqs):
+        L[si] = len(s)
+        for aai in range(max_len):
+            if aai >= len(s):
+                break
+            try:
+                mat[si, aai] = alphabet.index(s[aai])
+            except ValueError:
+                # Unknown symbols given value for last column/row of matrix
+                mat[si, aai] = len(alphabet)
+    return mat, L
 
 
 class NumbaDistanceCalculator(abc.ABC):
@@ -425,7 +425,7 @@ class NumbaDistanceCalculator(abc.ABC):
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         pass
-    
+
     def _calc_dist_mat_block(
         self,
         seqs: Sequence[str],
@@ -434,15 +434,15 @@ class NumbaDistanceCalculator(abc.ABC):
         start_column: int = 0,
     ) -> csr_matrix:
         """Computes a block of the final distance matrix and returns it as CSR matrix.
-        If the final result matrix that consists of all blocks together is symmetric, only the part 
+        If the final result matrix that consists of all blocks together is symmetric, only the part
         of the block that would contribute to the upper triangular matrix of the final result will be computed.
         """
         if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
 
         max_seq_len = max(np.max([len(s) for s in seqs]), np.max([len(s) for s in seqs2]))
-        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len = max_seq_len)
-        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len = max_seq_len)
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
 
         data_rows, indices_rows, row_element_counts = self._metric_mat(
             seqs_mat1=seqs_mat1,
@@ -510,8 +510,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
-        
-        cutoff=self.cutoff
+        cutoff = self.cutoff
         start_column *= is_symmetric
 
         @nb.jit(nopython=True, parallel=False, nogil=True)
@@ -536,7 +535,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
                 seq = seqs_mat1[row_index]
                 comparison = seqs_mat2[start_col_index:] != seq
                 unequal_length = np.where(seqs_L1[row_index] != seqs_L2[start_col_index:])[0]
-                sum_of_rows = np.sum(comparison, axis=1)+1
+                sum_of_rows = np.sum(comparison, axis=1) + 1
                 sum_of_rows[unequal_length] = cutoff + 2
                 indices = np.where(sum_of_rows <= cutoff + 1)[0]
                 row_end_index = len(indices)
@@ -551,9 +550,8 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
 
         return data_rows, indices_rows, row_element_counts
-    
-    _metric_mat = _hamming_mat
 
+    _metric_mat = _hamming_mat
 
 
 class TCRdistDistanceCalculator(NumbaDistanceCalculator):
@@ -659,12 +657,12 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
-        cutoff=self.cutoff
-        dist_weight=self.dist_weight
-        gap_penalty=self.gap_penalty
-        ntrim=self.ntrim
-        ctrim=self.ctrim
-        fixed_gappos=self.fixed_gappos
+        cutoff = self.cutoff
+        dist_weight = self.dist_weight
+        gap_penalty = self.gap_penalty
+        ntrim = self.ntrim
+        ctrim = self.ctrim
+        fixed_gappos = self.fixed_gappos
 
         dist_mat_weighted = self.tcr_nb_distance_matrix * dist_weight
         start_column *= is_symmetric
@@ -743,7 +741,7 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
         data_rows, indices_rows, row_element_counts = _nb_tcrdist_mat()
 
         return data_rows, indices_rows, row_element_counts
-    
+
     _metric_mat = _tcrdist_mat
 
 
