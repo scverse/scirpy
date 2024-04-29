@@ -513,8 +513,8 @@ class TCRdistDistanceCalculator:
         self.cutoff = cutoff
         self.n_jobs = n_jobs
 
-    @staticmethod
     def _tcrdist_mat(
+        self,
         *,
         seqs_mat1: np.ndarray,
         seqs_mat2: np.ndarray,
@@ -523,12 +523,6 @@ class TCRdistDistanceCalculator:
         is_symmetric: bool = False,
         start_column: int = 0,
         distance_matrix: np.ndarray = tcr_nb_distance_matrix,
-        dist_weight: int = 3,
-        gap_penalty: int = 4,
-        ntrim: int = 3,
-        ctrim: int = 2,
-        fixed_gappos: bool = True,
-        cutoff: int = 20,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         """Computes the pairwise TCRdist distances for sequences in seqs_mat1 and seqs_mat2.
 
@@ -583,6 +577,13 @@ class TCRdistDistanceCalculator:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
+        cutoff=self.cutoff
+        dist_weight=self.dist_weight
+        gap_penalty=self.gap_penalty
+        ntrim=self.ntrim
+        ctrim=self.ctrim
+        fixed_gappos=self.fixed_gappos
+
         dist_mat_weighted = distance_matrix * dist_weight
         start_column *= is_symmetric
 
@@ -685,12 +686,6 @@ class TCRdistDistanceCalculator:
             seqs_L2=seqs_L2,
             is_symmetric=is_symmetric,
             start_column=start_column,
-            dist_weight=self.dist_weight,
-            gap_penalty=self.gap_penalty,
-            ntrim=self.ntrim,
-            ctrim=self.ctrim,
-            fixed_gappos=self.fixed_gappos,
-            cutoff=self.cutoff,
         )
 
         indptr = np.zeros(row_element_counts.shape[0] + 1)
