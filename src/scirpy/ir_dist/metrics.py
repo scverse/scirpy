@@ -343,56 +343,6 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
         return result
 
 
-@_doc_params(params=_doc_params_parallel_distance_calculator)
-class HammingDistanceCalculator(ParallelDistanceCalculator):
-    """\
-    Calculates the Hamming distance between sequences of identical length.
-
-    The edit distance is the total number of substitution events. Sequences
-    with different lengths will be treated as though they exceeded the
-    distance-cutoff, i.e. they receive a distance of `0` in the sparse distance
-    matrix and will not be connected by an edge in the graph.
-
-    This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
-    to calculate the distances.
-
-    Choosing a cutoff:
-        Each modification stands for a substitution event.
-        While lacking empirical data, it seems unlikely that CDR3 sequences with more
-        than two modifications still recognize the same antigen.
-
-    Parameters
-    ----------
-    cutoff
-        Will eleminate distances > cutoff to make efficient
-        use of sparse matrices. The default cutoff is `2`.
-    {params}
-    """
-
-    def __init__(self, cutoff: int = 2, **kwargs):
-        super().__init__(cutoff, **kwargs)
-
-    def _compute_block(self, seqs1, seqs2, origin):
-        origin_row, origin_col = origin
-        if seqs2 is not None:
-            # compute the full matrix
-            coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
-        else:
-            # compute only upper triangle in this case
-            coord_iterator = itertools.combinations_with_replacement(enumerate(seqs1), r=2)
-
-        result = []
-        for (row, s1), (col, s2) in coord_iterator:
-            # require identical length of sequences
-            if len(s1) != len(s2):
-                continue
-            d = hamming_dist(s1, s2)
-            if d <= self.cutoff:
-                result.append((d + 1, origin_row + row, origin_col + col))
-
-        return result
-
-
 def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX*") -> np.ndarray:
     """Creates a numba compatible distance matrix from a dict of tuples.
 
@@ -538,7 +488,75 @@ class NumbaDistanceCalculator(abc.ABC):
             full_distance_matrix = distance_matrix_csr
 
         return full_distance_matrix
+
+class HammingDistanceCalculator(NumbaDistanceCalculator):
+    def __init__(
+        self,
+        n_jobs: int = 1,
+        cutoff: int = 2,
+    ):
+        self.n_jobs = n_jobs
+        self.cutoff = cutoff
+
+    def _hamming_mat(
+        self,
+        *,
+        seqs_mat1: np.ndarray,
+        seqs_mat2: np.ndarray,
+        seqs_L1: np.ndarray,
+        seqs_L2: np.ndarray,
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+        
+        cutoff=self.cutoff
+        start_column *= is_symmetric
+
+        @nb.jit(nopython=True, parallel=False, nogil=True)
+        def _nb_hamming_mat():
+            assert seqs_mat1.shape[0] == seqs_L1.shape[0]
+            assert seqs_mat2.shape[0] == seqs_L2.shape[0]
+
+            data_rows = nb.typed.List()
+            indices_rows = nb.typed.List()
+            row_element_counts = np.zeros(seqs_mat1.shape[0])
+
+            empty_row = np.zeros(0)
+            for _ in range(0, seqs_mat1.shape[0]):
+                data_rows.append(empty_row)
+                indices_rows.append(empty_row)
+
+            data_row = np.zeros(seqs_mat2.shape[0])
+            indices_row = np.zeros(seqs_mat2.shape[0])
+            for row_index in range(seqs_mat1.shape[0]):
+                row_end_index = 0
+                for col_index in range(start_column + row_index * is_symmetric, seqs_mat2.shape[0]):
+                    q_L = seqs_L1[row_index]
+                    s_L = seqs_L2[col_index]
+                    distance = 1
+
+                    if q_L == s_L:
+                        for i in range(0, q_L):
+                            distance += seqs_mat1[row_index, i] != seqs_mat2[col_index, i]
+
+                        if distance <= cutoff + 1:
+                            data_row[row_end_index] = distance
+                            indices_row[row_end_index] = col_index
+                            row_end_index += 1
+
+                data_rows[row_index] = data_row[0:row_end_index].copy()
+                indices_rows[row_index] = indices_row[0:row_end_index].copy()
+                row_element_counts[row_index] = row_end_index
+            return data_rows, indices_rows, row_element_counts
+
+        data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
+
+        return data_rows, indices_rows, row_element_counts
     
+    _metric_mat = _hamming_mat
+
+
+
 class TCRdistDistanceCalculator(NumbaDistanceCalculator):
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
