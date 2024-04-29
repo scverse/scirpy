@@ -410,8 +410,9 @@ def _seqs2mat(
 
 
 class NumbaDistanceCalculator(abc.ABC):
-    def __init__(self):
+    def __init__(self, n_jobs: int = 1):
         super().__init__()
+        self.n_jobs = n_jobs
 
     @abc.abstractmethod
     def _metric_mat(
@@ -496,7 +497,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         n_jobs: int = 1,
         cutoff: int = 2,
     ):
-        self.n_jobs = n_jobs
+        super().__init__(n_jobs=n_jobs)
         self.cutoff = cutoff
 
     def _hamming_mat(
@@ -548,29 +549,6 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
                 indices_rows[row_index] = indices_row[0:row_end_index].copy()
                 row_element_counts[row_index] = row_end_index
             return data_rows, indices_rows, row_element_counts
-            
-            """
-            for row_index in range(seqs_mat1.shape[0]):
-                row_end_index = 0
-                for col_index in range(start_column + row_index * is_symmetric, seqs_mat2.shape[0]):
-                    q_L = seqs_L1[row_index]
-                    s_L = seqs_L2[col_index]
-                    distance = 1
-
-                    if q_L == s_L:
-                        for i in range(0, q_L):
-                            distance += seqs_mat1[row_index, i] != seqs_mat2[col_index, i]
-
-                        if distance <= cutoff + 1:
-                            data_row[row_end_index] = distance
-                            indices_row[row_end_index] = col_index
-                            row_end_index += 1
-
-                data_rows[row_index] = data_row[0:row_end_index].copy()
-                indices_rows[row_index] = indices_row[0:row_end_index].copy()
-                row_element_counts[row_index] = row_end_index
-            return data_rows, indices_rows, row_element_counts
-            """
 
         data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
 
@@ -632,7 +610,7 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
         self.ctrim = ctrim
         self.fixed_gappos = fixed_gappos
         self.cutoff = cutoff
-        self.n_jobs = n_jobs
+        super().__init__(n_jobs=n_jobs)
 
     def _tcrdist_mat(
         self,
