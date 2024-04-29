@@ -413,6 +413,51 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
         dm[alphabet.index(aa2), alphabet.index(aa1)] = d
     return dm
 
+def _seqs2mat(
+        seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: Union[None, int] = None
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Convert a collection of gene sequences into a
+        numpy matrix of integers for fast comparison.
+
+        Parameters
+        ----------
+        seqs:
+            Sequence of strings
+
+        Returns
+        -------
+        mat:
+            matrix with gene sequences encoded as integers
+        L:
+            vector with length values of the gene sequences in the matrix
+
+        Examples
+        --------
+        >>> seqs2mat(["CAT", "HAT"])
+        array([[ 4,  0, 16],
+            [ 8,  0, 16]], dtype=int8)
+
+        Notes
+        -----
+        Requires all seqs to have the same length, therefore shorter sequences
+        are filled up with -1 entries at the end.
+        """
+        if max_len is None:
+            max_len = np.max([len(s) for s in seqs])
+        mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
+        L = np.zeros(len(seqs), dtype=np.int8)
+        for si, s in enumerate(seqs):
+            L[si] = len(s)
+            for aai in range(max_len):
+                if aai >= len(s):
+                    break
+                try:
+                    mat[si, aai] = alphabet.index(s[aai])
+                except ValueError:
+                    # Unknown symbols given value for last column/row of matrix
+                    mat[si, aai] = len(alphabet)
+        return mat, L
+
 
 class TCRdistDistanceCalculator:
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
@@ -467,52 +512,6 @@ class TCRdistDistanceCalculator:
         self.fixed_gappos = fixed_gappos
         self.cutoff = cutoff
         self.n_jobs = n_jobs
-
-    @staticmethod
-    def _seqs2mat(
-        seqs: Sequence[str], alphabet: str = parasail_aa_alphabet, max_len: Union[None, int] = None
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Convert a collection of gene sequences into a
-        numpy matrix of integers for fast comparison.
-
-        Parameters
-        ----------
-        seqs:
-            Sequence of strings
-
-        Returns
-        -------
-        mat:
-            matrix with gene sequences encoded as integers
-        L:
-            vector with length values of the gene sequences in the matrix
-
-        Examples
-        --------
-        >>> seqs2mat(["CAT", "HAT"])
-        array([[ 4,  0, 16],
-            [ 8,  0, 16]], dtype=int8)
-
-        Notes
-        -----
-        Requires all seqs to have the same length, therefore shorter sequences
-        are filled up with -1 entries at the end.
-        """
-        if max_len is None:
-            max_len = np.max([len(s) for s in seqs])
-        mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
-        L = np.zeros(len(seqs), dtype=np.int8)
-        for si, s in enumerate(seqs):
-            L[si] = len(s)
-            for aai in range(max_len):
-                if aai >= len(s):
-                    break
-                try:
-                    mat[si, aai] = alphabet.index(s[aai])
-                except ValueError:
-                    # Unknown symbols given value for last column/row of matrix
-                    mat[si, aai] = len(alphabet)
-        return mat, L
 
     @staticmethod
     def _tcrdist_mat(
@@ -676,8 +675,8 @@ class TCRdistDistanceCalculator:
         if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
 
-        seqs_mat1, seqs_L1 = self._seqs2mat(seqs)
-        seqs_mat2, seqs_L2 = self._seqs2mat(seqs2)
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2)
 
         data_rows, indices_rows, row_element_counts = self._tcrdist_mat(
             seqs_mat1=seqs_mat1,
