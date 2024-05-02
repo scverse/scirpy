@@ -471,7 +471,7 @@ class NumbaDistanceCalculator(abc.ABC):
         is_symmetric = np.array_equal(seqs, seqs2)
         n_blocks = self.n_jobs * 2
 
-        if self.n_jobs > 1:
+        if False:#self.n_jobs > 1: --- only for intermediate version set to False
             split_seqs = np.array_split(seqs, n_blocks)
             start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
             arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
@@ -514,43 +514,61 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         cutoff=self.cutoff
         start_column *= is_symmetric
 
-        @nb.jit(nopython=True, parallel=False, nogil=True)
+        nb.set_num_threads(self.n_jobs)
+        num_threads = nb.get_num_threads()
+        print("numba threads: ", num_threads)
+
+        @nb.jit(nopython=True, parallel=True, nogil=True)
         def _nb_hamming_mat():
             assert seqs_mat1.shape[0] == seqs_L1.shape[0]
             assert seqs_mat2.shape[0] == seqs_L2.shape[0]
 
+            num_rows = seqs_mat1.shape[0]
+            num_cols = seqs_mat2.shape[0]
+            
             data_rows = nb.typed.List()
             indices_rows = nb.typed.List()
-            row_element_counts = np.zeros(seqs_mat1.shape[0])
+            row_element_counts = np.zeros(num_rows)
 
             empty_row = np.zeros(0)
-            for _ in range(0, seqs_mat1.shape[0]):
-                data_rows.append(empty_row)
-                indices_rows.append(empty_row)
+            for _ in range(0, num_rows):
+                data_rows.append([empty_row])
+                indices_rows.append([empty_row])
+            
+            for row_index in nb.prange(num_rows):
+                data_row = np.empty(num_cols)
+                indices_row = np.empty(num_cols)
 
-            data_row = np.zeros(seqs_mat2.shape[0])
-            indices_row = np.zeros(seqs_mat2.shape[0])
-            for row_index in range(seqs_mat1.shape[0]):
-                start_col_index = start_column + row_index * is_symmetric
                 row_end_index = 0
-                seq = seqs_mat1[row_index]
-                comparison = seqs_mat2[start_col_index:] != seq
-                unequal_length = np.where(seqs_L1[row_index] != seqs_L2[start_col_index:])[0]
-                sum_of_rows = np.sum(comparison, axis=1)+1
-                sum_of_rows[unequal_length] = cutoff + 2
-                indices = np.where(sum_of_rows <= cutoff + 1)[0]
-                row_end_index = len(indices)
-                indices_row[0:row_end_index] = indices + start_col_index
-                values = sum_of_rows[indices]
-                data_row[0:row_end_index] = values
-                data_rows[row_index] = data_row[0:row_end_index].copy()
-                indices_rows[row_index] = indices_row[0:row_end_index].copy()
+                seq1_len = seqs_L1[row_index]
+
+                for col_index in range(start_column + row_index * is_symmetric, num_cols):
+                    distance = 1
+                    seq2_len = seqs_L2[col_index]
+                    if seq1_len == seq2_len:
+                        for i in range(0, seq1_len):
+                            distance += seqs_mat1[row_index, i] != seqs_mat2[col_index, i]
+
+                        if distance <= cutoff + 1:
+                            data_row[row_end_index] = distance
+                            indices_row[row_end_index] = col_index
+                            row_end_index += 1
+
+                data_rows[row_index][0] = data_row[0:row_end_index].copy()
+                indices_rows[row_index][0] = indices_row[0:row_end_index].copy()
                 row_element_counts[row_index] = row_end_index
+
             return data_rows, indices_rows, row_element_counts
 
         data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
+        data_rows_flat = []
+        indices_rows_flat = []
+        
+        for i in range(len(data_rows)):
+            data_rows_flat.append(data_rows[i][0])
+            indices_rows_flat.append(indices_rows[i][0])
 
-        return data_rows, indices_rows, row_element_counts
+        return data_rows_flat, indices_rows_flat, row_element_counts
     
     _metric_mat = _hamming_mat
 
