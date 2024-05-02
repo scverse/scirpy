@@ -471,7 +471,7 @@ class NumbaDistanceCalculator(abc.ABC):
         is_symmetric = np.array_equal(seqs, seqs2)
         n_blocks = self.n_jobs * 2
 
-        if False:#self.n_jobs > 1: --- only for intermediate version set to False
+        if False:  # self.n_jobs > 1: --- only for intermediate version set to False
             split_seqs = np.array_split(seqs, n_blocks)
             start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
             arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
@@ -524,7 +524,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
 
             num_rows = seqs_mat1.shape[0]
             num_cols = seqs_mat2.shape[0]
-            
+
             data_rows = nb.typed.List()
             indices_rows = nb.typed.List()
             row_element_counts = np.zeros(num_rows)
@@ -533,7 +533,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
             for _ in range(0, num_rows):
                 data_rows.append([empty_row])
                 indices_rows.append([empty_row])
-            
+
             for row_index in nb.prange(num_rows):
                 data_row = np.empty(num_cols)
                 indices_row = np.empty(num_cols)
@@ -562,13 +562,13 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
         data_rows_flat = []
         indices_rows_flat = []
-        
+
         for i in range(len(data_rows)):
             data_rows_flat.append(data_rows[i][0])
             indices_rows_flat.append(indices_rows[i][0])
 
         return data_rows_flat, indices_rows_flat, row_element_counts
-    
+
     _metric_mat = _hamming_mat
 
 
