@@ -10,7 +10,6 @@ import numpy as np
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
-from Levenshtein import hamming as hamming_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
