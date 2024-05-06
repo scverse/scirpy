@@ -645,6 +645,7 @@ def test_tcrdist_reference():
         fixed_gappos=True,
         cutoff=15,
         n_jobs=2,
+        n_blocks=2,
     )
     res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
 
@@ -660,7 +661,7 @@ def test_hamming_reference():
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
 
-    hamming_calculator = HammingDistanceCalculator(2, 2)
+    hamming_calculator = HammingDistanceCalculator(2, 2, 2)
     res = hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
