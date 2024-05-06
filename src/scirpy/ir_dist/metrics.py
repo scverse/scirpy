@@ -422,7 +422,6 @@ class NumbaDistanceCalculator(abc.ABC):
         Overall number of blocks given to the workers (processes)
     """
 
-
     def __init__(self, n_jobs: int = 1, n_blocks: int = 1):
         super().__init__()
         self.n_jobs = n_jobs
@@ -441,13 +440,13 @@ class NumbaDistanceCalculator(abc.ABC):
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         """
         This function should be implemented by the derived class in a way sucht that it computes the pairwise distances
-        for sequences in seqs_mat1 and seqs_mat2 based on a certain distance metric. The result should be a distance matrix 
+        for sequences in seqs_mat1 and seqs_mat2 based on a certain distance metric. The result should be a distance matrix
         that is returned in the form of the data, indices and intptr arrays of a (scipy) compressed sparse row matrix.
 
         If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
         can be used to only compute the part of the block that would be part of the upper triangular matrix of the
         result matrix.
-        
+
         Parameters
         ----------
         seqs_mat1/2:
@@ -520,7 +519,7 @@ class NumbaDistanceCalculator(abc.ABC):
         seqs = np.array(seqs)
         seqs2 = np.array(seqs2)
         is_symmetric = np.array_equal(seqs, seqs2)
-        
+
         if self.n_blocks > 1:
             split_seqs = np.array_split(seqs, self.n_blocks)
             start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
@@ -543,7 +542,7 @@ class NumbaDistanceCalculator(abc.ABC):
 
 class HammingDistanceCalculator(NumbaDistanceCalculator):
     """Computes pairwise distances between gene sequences based on the "hamming" distance metric.
-    
+
     Parameters
     ----------
     cutoff:
@@ -617,7 +616,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         nb.set_num_threads(self.n_jobs)
         num_threads = nb.get_num_threads()
 
-        if(num_threads>1):
+        if num_threads > 1:
             jit_parallel = True
         else:
             jit_parallel = False
@@ -796,8 +795,8 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
 
         nb.set_num_threads(self.n_jobs)
         num_threads = nb.get_num_threads()
-        
-        if(num_threads>1):
+
+        if num_threads > 1:
             jit_parallel = True
         else:
             jit_parallel = False
@@ -821,7 +820,7 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
 
             data_row_matrix = np.empty((num_threads, num_cols))
             indices_row_matrix = np.empty((num_threads, num_cols))
-            
+
             for row_index in nb.prange(num_rows):
                 thread_id = nb.get_thread_id()
                 row_end_index = 0
@@ -886,7 +885,7 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
                 indices_rows_flat.append(indices_rows[i][0])
 
             return data_rows_flat, indices_rows_flat, row_element_counts
-        
+
         data_rows, indices_rows, row_element_counts = _nb_tcrdist_mat()
         return data_rows, indices_rows, row_element_counts
 
