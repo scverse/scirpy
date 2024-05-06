@@ -410,6 +410,20 @@ def _seqs2mat(
 
 
 class NumbaDistanceCalculator(abc.ABC):
+    """
+    This is an abstract base class for distance calculator classes that compute parwise distances between
+    gene sequences in parallel based on a certain distance metric. The result is a (scipy) compressed sparse row distance matrix.
+    Derived classes just need to implement the method _metric_mat (see method comments for more details).
+
+    Parameters
+    ----------
+    n_jobs:
+        Number of threads per process to use for the pairwise distance calculation
+    n_blocks:
+        Overall number of blocks given to the workers (processes)
+    """
+
+
     def __init__(self, n_jobs: int = 1, n_blocks: int = 1):
         super().__init__()
         self.n_jobs = n_jobs
@@ -529,6 +543,19 @@ class NumbaDistanceCalculator(abc.ABC):
 
 
 class HammingDistanceCalculator(NumbaDistanceCalculator):
+    """Computes pairwise distances between gene sequences based on the "hamming" distance metric.
+    
+    Parameters
+    ----------
+    cutoff:
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices.
+    n_jobs:
+        Number of numba parallel threads to use for the pairwise distance calculation
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    """
+
     def __init__(
         self,
         n_jobs: int = 1,
@@ -548,6 +575,43 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+        """Computes the pairwise hamming distances for sequences in seqs_mat1 and seqs_mat2.
+
+        This function is a wrapper and contains an inner JIT compiled numba function without parameters. The reason for this is
+        that this way some of the parameters can be treated as constant by numba and this allows for a better optimization
+        of the numba compiler in this specific case.
+
+        If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
+        can be used to only compute the part of the block that would be part of the upper triangular matrix of the
+        result matrix.
+
+        Parameters
+        ----------
+        seqs_mat1/2:
+            Matrix containing sequences created by seqs2mat with padding to accomodate
+            sequences of different lengths (-1 padding)
+        seqs_L1/2:
+            A vector containing the length of each sequence in the respective seqs_mat matrix,
+            without the padding in seqs_mat
+        is_symmetric:
+            Determines whether the final result matrix is symmetric, assuming that this function is
+            only used to compute a block of a bigger result matrix
+        start_column:
+            Determines at which column the calculation should be started. This is only used if this function is
+            used to compute a block of a bigger result matrix that is symmetric
+
+        Returns
+        -------
+        data_rows:
+            List with arrays containing the non-zero data values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        indices_rows:
+            List with arrays containing the non-zero entry column indeces of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts:
+            Array with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        """
         cutoff = self.cutoff
         start_column *= is_symmetric
 
@@ -640,7 +704,9 @@ class TCRdistDistanceCalculator(NumbaDistanceCalculator):
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
     n_jobs:
-        Number of jobs (processes) to use for the pairwise distance calculation
+        Number of numba parallel threads to use for the pairwise distance calculation
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
