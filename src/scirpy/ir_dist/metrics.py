@@ -548,7 +548,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
 
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
-    
+
     Parameters
     ----------
     cutoff:
