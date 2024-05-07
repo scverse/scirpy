@@ -408,11 +408,14 @@ def _seqs2mat(
     return mat, L
 
 
-class NumbaDistanceCalculator(abc.ABC):
+class MetricDistanceCalculator(abc.ABC):
     """
-    This is an abstract base class for distance calculator classes that compute parwise distances between
+    Abstract base class for distance calculator classes that compute parwise distances between
     gene sequences in parallel based on a certain distance metric. The result is a (scipy) compressed sparse row distance matrix.
     Derived classes just need to implement the method _metric_mat (see method comments for more details).
+
+    The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
     Parameters
     ----------
@@ -541,8 +544,11 @@ class NumbaDistanceCalculator(abc.ABC):
         return full_distance_matrix
 
 
-class HammingDistanceCalculator(NumbaDistanceCalculator):
+class HammingDistanceCalculator(MetricDistanceCalculator):
     """Computes pairwise distances between gene sequences based on the "hamming" distance metric.
+
+    The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
     
     Parameters
     ----------
@@ -678,7 +684,7 @@ class HammingDistanceCalculator(NumbaDistanceCalculator):
     _metric_mat = _hamming_mat
 
 
-class TCRdistDistanceCalculator(NumbaDistanceCalculator):
+class TCRdistDistanceCalculator(MetricDistanceCalculator):
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
