@@ -208,7 +208,7 @@ def test_levensthein_dist_with_two_seq_arrays():
 
 
 def test_hamming_dist():
-    hamming10 = HammingDistanceCalculator(cutoff = 2)
+    hamming10 = HammingDistanceCalculator(cutoff=2)
     res = hamming10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"]))
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
