@@ -442,7 +442,7 @@ class MetricDistanceCalculator(abc.ABC):
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         """
-        This function should be implemented by the derived class in a way sucht that it computes the pairwise distances
+        Abstract method that should be implemented by the derived class in a way sucht that it computes the pairwise distances
         for sequences in seqs_mat1 and seqs_mat2 based on a certain distance metric. The result should be a distance matrix
         that is returned in the form of the data, indices and intptr arrays of a (scipy) compressed sparse row matrix.
 
