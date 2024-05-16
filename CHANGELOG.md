@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning][].
 ## Unreleased
 
 -   Add "TCRdist" as new metric ([#502](https://github.com/scverse/scirpy/pull/502))
+-   Fix issue with detecting the number of available CPUs on MacOD ([#518](https://github.com/scverse/scirpy/pull/502))
 
 ## v0.16.1
 
