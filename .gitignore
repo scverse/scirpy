@@ -4,6 +4,7 @@ sinfo-requirements.txt
 !.vscode/settings.json.default
 notebooks
 tutorial
+/data
 .idea
 # Byte-compiled / optimized / DLL files
 __pycache__/
