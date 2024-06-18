@@ -10,7 +10,6 @@ import numpy as np
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
-from Levenshtein import hamming as hamming_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
@@ -343,56 +342,6 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
         return result
 
 
-@_doc_params(params=_doc_params_parallel_distance_calculator)
-class HammingDistanceCalculator(ParallelDistanceCalculator):
-    """\
-    Calculates the Hamming distance between sequences of identical length.
-
-    The edit distance is the total number of substitution events. Sequences
-    with different lengths will be treated as though they exceeded the
-    distance-cutoff, i.e. they receive a distance of `0` in the sparse distance
-    matrix and will not be connected by an edge in the graph.
-
-    This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
-    to calculate the distances.
-
-    Choosing a cutoff:
-        Each modification stands for a substitution event.
-        While lacking empirical data, it seems unlikely that CDR3 sequences with more
-        than two modifications still recognize the same antigen.
-
-    Parameters
-    ----------
-    cutoff
-        Will eleminate distances > cutoff to make efficient
-        use of sparse matrices. The default cutoff is `2`.
-    {params}
-    """
-
-    def __init__(self, cutoff: int = 2, **kwargs):
-        super().__init__(cutoff, **kwargs)
-
-    def _compute_block(self, seqs1, seqs2, origin):
-        origin_row, origin_col = origin
-        if seqs2 is not None:
-            # compute the full matrix
-            coord_iterator = itertools.product(enumerate(seqs1), enumerate(seqs2))
-        else:
-            # compute only upper triangle in this case
-            coord_iterator = itertools.combinations_with_replacement(enumerate(seqs1), r=2)
-
-        result = []
-        for (row, s1), (col, s2) in coord_iterator:
-            # require identical length of sequences
-            if len(s1) != len(s2):
-                continue
-            d = hamming_dist(s1, s2)
-            if d <= self.cutoff:
-                result.append((d + 1, origin_row + row, origin_col + col))
-
-        return result
-
-
 def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX*") -> np.ndarray:
     """Creates a numba compatible distance matrix from a dict of tuples.
 
@@ -400,7 +349,6 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
     ----------
     distance_matrix:
         Keys are tuples like ('A', 'C') with values containing an integer.
-    alphabet:
 
     Returns
     -------
@@ -414,7 +362,328 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
     return dm
 
 
-class TCRdistDistanceCalculator:
+def _seqs2mat(
+    seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: Union[None, int] = None
+) -> tuple[np.ndarray, np.ndarray]:
+    """Convert a collection of gene sequences into a
+    numpy matrix of integers for fast comparison.
+
+    Parameters
+    ----------
+    seqs:
+        Sequence of strings
+
+    Returns
+    -------
+    mat:
+        matrix with gene sequences encoded as integers
+    L:
+        vector with length values of the gene sequences in the matrix
+
+    Examples
+    --------
+    >>> seqs2mat(["CAT", "HAT"])
+    array([[ 4,  0, 16],
+        [ 8,  0, 16]], dtype=int8)
+
+    Notes
+    -----
+    Requires all seqs to have the same length, therefore shorter sequences
+    are filled up with -1 entries at the end.
+    """
+    if max_len is None:
+        max_len = np.max([len(s) for s in seqs])
+    mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
+    L = np.zeros(len(seqs), dtype=np.int8)
+    for si, s in enumerate(seqs):
+        L[si] = len(s)
+        for aai in range(max_len):
+            if aai >= len(s):
+                break
+            try:
+                mat[si, aai] = alphabet.index(s[aai])
+            except ValueError:
+                # Unknown symbols given value for last column/row of matrix
+                mat[si, aai] = len(alphabet)
+    return mat, L
+
+
+class MetricDistanceCalculator(abc.ABC):
+    """
+    Abstract base class for distance calculator classes that compute parwise distances between
+    gene sequences in parallel based on a certain distance metric. The result is a (scipy) compressed sparse row distance matrix.
+    Derived classes just need to implement the method _metric_mat (see method comments for more details).
+
+    The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
+
+    Parameters
+    ----------
+    n_jobs:
+        Number of threads per process to use for the pairwise distance calculation
+    n_blocks:
+        Overall number of blocks given to the workers (processes)
+    """
+
+    def __init__(self, n_jobs: int = 1, n_blocks: int = 1):
+        super().__init__()
+        self.n_jobs = n_jobs
+        self.n_blocks = n_blocks
+
+    @abc.abstractmethod
+    def _metric_mat(
+        self,
+        *,
+        seqs_mat1: np.ndarray,
+        seqs_mat2: np.ndarray,
+        seqs_L1: np.ndarray,
+        seqs_L2: np.ndarray,
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+        """
+        Abstract method that should be implemented by the derived class in a way sucht that it computes the pairwise distances
+        for sequences in seqs_mat1 and seqs_mat2 based on a certain distance metric. The result should be a distance matrix
+        that is returned in the form of the data, indices and intptr arrays of a (scipy) compressed sparse row matrix.
+
+        If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
+        can be used to only compute the part of the block that would be part of the upper triangular matrix of the
+        result matrix.
+
+        Parameters
+        ----------
+        seqs_mat1/2:
+            Matrix containing sequences created by seqs2mat with padding to accomodate
+            sequences of different lengths (-1 padding)
+        seqs_L1/2:
+            A vector containing the length of each sequence in the respective seqs_mat matrix,
+            without the padding in seqs_mat
+        is_symmetric:
+            Determines whether the final result matrix is symmetric, assuming that this function is
+            only used to compute a block of a bigger result matrix
+        start_column:
+            Determines at which column the calculation should be started. This is only used if this function is
+            used to compute a block of a bigger result matrix that is symmetric
+
+        Returns
+        -------
+        data_rows:
+            List with arrays containing the non-zero data values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        indices_rows:
+            List with arrays containing the non-zero entry column indeces of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts:
+            Array with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        """
+        pass
+
+    def _calc_dist_mat_block(
+        self,
+        seqs: Sequence[str],
+        seqs2: Optional[Sequence[str]] = None,
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> csr_matrix:
+        """Computes a block of the final distance matrix and returns it as CSR matrix.
+        If the final result matrix that consists of all blocks together is symmetric, only the part
+        of the block that would contribute to the upper triangular matrix of the final result will be computed.
+        """
+        if len(seqs) == 0 or len(seqs2) == 0:
+            return csr_matrix((len(seqs), len(seqs2)))
+
+        max_seq_len = max(np.max([len(s) for s in seqs]), np.max([len(s) for s in seqs2]))
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
+
+        data_rows, indices_rows, row_element_counts = self._metric_mat(
+            seqs_mat1=seqs_mat1,
+            seqs_mat2=seqs_mat2,
+            seqs_L1=seqs_L1,
+            seqs_L2=seqs_L2,
+            is_symmetric=is_symmetric,
+            start_column=start_column,
+        )
+
+        indptr = np.zeros(row_element_counts.shape[0] + 1)
+        indptr[1:] = np.cumsum(row_element_counts)
+        data, indices = np.concatenate(data_rows), np.concatenate(indices_rows)
+        sparse_distance_matrix = csr_matrix((data, indices, indptr), shape=(len(seqs), len(seqs2)))
+        return sparse_distance_matrix
+
+    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
+        """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
+        of the derived class and returns a CSR distance matrix
+        """
+        if seqs2 is None:
+            seqs2 = seqs
+
+        seqs = np.array(seqs)
+        seqs2 = np.array(seqs2)
+        is_symmetric = np.array_equal(seqs, seqs2)
+
+        if self.n_blocks > 1:
+            split_seqs = np.array_split(seqs, self.n_blocks)
+            start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
+            arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(self.n_blocks)]
+
+            delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
+            results = joblib.Parallel(return_as="list")(delayed_jobs)
+            distance_matrix_csr = scipy.sparse.vstack(results)
+        else:
+            distance_matrix_csr = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
+
+        if is_symmetric:
+            upper_triangular_distance_matrix = distance_matrix_csr
+            full_distance_matrix = upper_triangular_distance_matrix.maximum(upper_triangular_distance_matrix.T)
+        else:
+            full_distance_matrix = distance_matrix_csr
+
+        return full_distance_matrix
+
+
+class HammingDistanceCalculator(MetricDistanceCalculator):
+    """Computes pairwise distances between gene sequences based on the "hamming" distance metric.
+
+    The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
+
+    Parameters
+    ----------
+    cutoff:
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices.
+    n_jobs:
+        Number of numba parallel threads to use for the pairwise distance calculation
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    """
+
+    def __init__(
+        self,
+        n_jobs: int = 1,
+        n_blocks: int = 1,
+        cutoff: int = 2,
+    ):
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks)
+        self.cutoff = cutoff
+
+    def _hamming_mat(
+        self,
+        *,
+        seqs_mat1: np.ndarray,
+        seqs_mat2: np.ndarray,
+        seqs_L1: np.ndarray,
+        seqs_L2: np.ndarray,
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+        """Computes the pairwise hamming distances for sequences in seqs_mat1 and seqs_mat2.
+
+        This function is a wrapper and contains an inner JIT compiled numba function without parameters. The reason for this is
+        that this way some of the parameters can be treated as constant by numba and this allows for a better optimization
+        of the numba compiler in this specific case.
+
+        If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
+        can be used to only compute the part of the block that would be part of the upper triangular matrix of the
+        result matrix.
+
+        Parameters
+        ----------
+        seqs_mat1/2:
+            Matrix containing sequences created by seqs2mat with padding to accomodate
+            sequences of different lengths (-1 padding)
+        seqs_L1/2:
+            A vector containing the length of each sequence in the respective seqs_mat matrix,
+            without the padding in seqs_mat
+        is_symmetric:
+            Determines whether the final result matrix is symmetric, assuming that this function is
+            only used to compute a block of a bigger result matrix
+        start_column:
+            Determines at which column the calculation should be started. This is only used if this function is
+            used to compute a block of a bigger result matrix that is symmetric
+
+        Returns
+        -------
+        data_rows:
+            List with arrays containing the non-zero data values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        indices_rows:
+            List with arrays containing the non-zero entry column indeces of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts:
+            Array with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        """
+        cutoff = self.cutoff
+        start_column *= is_symmetric
+
+        nb.set_num_threads(self.n_jobs)
+        num_threads = nb.get_num_threads()
+
+        if num_threads > 1:
+            jit_parallel = True
+        else:
+            jit_parallel = False
+
+        @nb.jit(nopython=True, parallel=jit_parallel, nogil=True)
+        def _nb_hamming_mat():
+            assert seqs_mat1.shape[0] == seqs_L1.shape[0]
+            assert seqs_mat2.shape[0] == seqs_L2.shape[0]
+
+            num_rows = seqs_mat1.shape[0]
+            num_cols = seqs_mat2.shape[0]
+
+            data_rows = nb.typed.List()
+            indices_rows = nb.typed.List()
+            row_element_counts = np.zeros(num_rows)
+
+            empty_row = np.zeros(0)
+            for _ in range(0, num_rows):
+                data_rows.append([empty_row])
+                indices_rows.append([empty_row])
+
+            data_row_matrix = np.empty((num_threads, num_cols))
+            indices_row_matrix = np.empty((num_threads, num_cols))
+
+            for row_index in nb.prange(num_rows):
+                thread_id = nb.get_thread_id()
+                row_end_index = 0
+                seq1_len = seqs_L1[row_index]
+
+                for col_index in range(start_column + row_index * is_symmetric, num_cols):
+                    distance = 1
+                    seq2_len = seqs_L2[col_index]
+                    if seq1_len == seq2_len:
+                        for i in range(0, seq1_len):
+                            distance += seqs_mat1[row_index, i] != seqs_mat2[col_index, i]
+
+                        if distance <= cutoff + 1:
+                            data_row_matrix[thread_id, row_end_index] = distance
+                            indices_row_matrix[thread_id, row_end_index] = col_index
+                            row_end_index += 1
+
+                data_rows[row_index][0] = data_row_matrix[thread_id, 0:row_end_index].copy()
+                indices_rows[row_index][0] = indices_row_matrix[thread_id, 0:row_end_index].copy()
+                row_element_counts[row_index] = row_end_index
+
+            data_rows_flat = []
+            indices_rows_flat = []
+
+            for i in range(len(data_rows)):
+                data_rows_flat.append(data_rows[i][0])
+                indices_rows_flat.append(indices_rows[i][0])
+
+            return data_rows_flat, indices_rows_flat, row_element_counts
+
+        data_rows, indices_rows, row_element_counts = _nb_hamming_mat()
+        return data_rows, indices_rows, row_element_counts
+
+    _metric_mat = _hamming_mat
+
+
+class TCRdistDistanceCalculator(MetricDistanceCalculator):
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
@@ -439,7 +708,9 @@ class TCRdistDistanceCalculator:
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
     n_jobs:
-        Number of jobs (processes) to use for the pairwise distance calculation
+        Number of numba parallel threads to use for the pairwise distance calculation
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
@@ -459,6 +730,7 @@ class TCRdistDistanceCalculator:
         ctrim: int = 2,
         fixed_gappos: bool = True,
         n_jobs: int = 1,
+        n_blocks: int = 1,
     ):
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
@@ -466,56 +738,10 @@ class TCRdistDistanceCalculator:
         self.ctrim = ctrim
         self.fixed_gappos = fixed_gappos
         self.cutoff = cutoff
-        self.n_jobs = n_jobs
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks)
 
-    @staticmethod
-    def _seqs2mat(
-        seqs: Sequence[str], alphabet: str = parasail_aa_alphabet, max_len: Union[None, int] = None
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Convert a collection of gene sequences into a
-        numpy matrix of integers for fast comparison.
-
-        Parameters
-        ----------
-        seqs:
-            Sequence of strings
-
-        Returns
-        -------
-        mat:
-            matrix with gene sequences encoded as integers
-        L:
-            vector with length values of the gene sequences in the matrix
-
-        Examples
-        --------
-        >>> seqs2mat(["CAT", "HAT"])
-        array([[ 4,  0, 16],
-            [ 8,  0, 16]], dtype=int8)
-
-        Notes
-        -----
-        Requires all seqs to have the same length, therefore shorter sequences
-        are filled up with -1 entries at the end.
-        """
-        if max_len is None:
-            max_len = np.max([len(s) for s in seqs])
-        mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
-        L = np.zeros(len(seqs), dtype=np.int8)
-        for si, s in enumerate(seqs):
-            L[si] = len(s)
-            for aai in range(max_len):
-                if aai >= len(s):
-                    break
-                try:
-                    mat[si, aai] = alphabet.index(s[aai])
-                except ValueError:
-                    # Unknown symbols given value for last column/row of matrix
-                    mat[si, aai] = len(alphabet)
-        return mat, L
-
-    @staticmethod
     def _tcrdist_mat(
+        self,
         *,
         seqs_mat1: np.ndarray,
         seqs_mat2: np.ndarray,
@@ -523,13 +749,6 @@ class TCRdistDistanceCalculator:
         seqs_L2: np.ndarray,
         is_symmetric: bool = False,
         start_column: int = 0,
-        distance_matrix: np.ndarray = tcr_nb_distance_matrix,
-        dist_weight: int = 3,
-        gap_penalty: int = 4,
-        ntrim: int = 3,
-        ctrim: int = 2,
-        fixed_gappos: bool = True,
-        cutoff: int = 20,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         """Computes the pairwise TCRdist distances for sequences in seqs_mat1 and seqs_mat2.
 
@@ -557,20 +776,6 @@ class TCRdistDistanceCalculator:
         start_column:
             Determines at which column the calculation should be started. This is only used if this function is
             used to compute a block of a bigger result matrix that is symmetric
-        distance_matrix:
-            A square distance matrix (NOT a similarity matrix).
-            Matrix must match the alphabet that was used to create
-            seqs_mat, where each AA is represented by an index into the alphabet.
-        dist_weight:
-            Weight applied to the mismatch distances before summing with the gap penalties
-        gap_penalty:
-            Distance penalty for the difference in the length of the two sequences
-        ntrim/ctrim:
-            Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
-            in the distance calculation.
-        fixed_gappos:
-            If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
-            If False, find the "optimal" position for inserting the gaps to make up the difference in length
 
         Returns
         -------
@@ -584,39 +789,60 @@ class TCRdistDistanceCalculator:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
-        dist_mat_weighted = distance_matrix * dist_weight
+        cutoff = self.cutoff
+        dist_weight = self.dist_weight
+        gap_penalty = self.gap_penalty
+        ntrim = self.ntrim
+        ctrim = self.ctrim
+        fixed_gappos = self.fixed_gappos
+
+        dist_mat_weighted = self.tcr_nb_distance_matrix * dist_weight
         start_column *= is_symmetric
 
-        @nb.jit(nopython=True, parallel=False, nogil=True)
+        nb.set_num_threads(self.n_jobs)
+        num_threads = nb.get_num_threads()
+
+        if num_threads > 1:
+            jit_parallel = True
+        else:
+            jit_parallel = False
+
+        @nb.jit(nopython=True, parallel=jit_parallel, nogil=True)
         def _nb_tcrdist_mat():
             assert seqs_mat1.shape[0] == seqs_L1.shape[0]
             assert seqs_mat2.shape[0] == seqs_L2.shape[0]
 
+            num_rows = seqs_mat1.shape[0]
+            num_cols = seqs_mat2.shape[0]
+
             data_rows = nb.typed.List()
             indices_rows = nb.typed.List()
-            row_element_counts = np.zeros(seqs_mat1.shape[0])
+            row_element_counts = np.zeros(num_rows)
 
             empty_row = np.zeros(0)
-            for _ in range(0, seqs_mat1.shape[0]):
-                data_rows.append(empty_row)
-                indices_rows.append(empty_row)
+            for _ in range(0, num_rows):
+                data_rows.append([empty_row])
+                indices_rows.append([empty_row])
 
-            data_row = np.zeros(seqs_mat2.shape[0])
-            indices_row = np.zeros(seqs_mat2.shape[0])
-            for row_index in range(seqs_mat1.shape[0]):
+            data_row_matrix = np.empty((num_threads, num_cols))
+            indices_row_matrix = np.empty((num_threads, num_cols))
+
+            for row_index in nb.prange(num_rows):
+                thread_id = nb.get_thread_id()
                 row_end_index = 0
-                for col_index in range(start_column + row_index * is_symmetric, seqs_mat2.shape[0]):
-                    q_L = seqs_L1[row_index]
-                    s_L = seqs_L2[col_index]
-                    distance = 1
+                seq1_len = seqs_L1[row_index]
 
-                    if q_L == s_L:
-                        for i in range(ntrim, q_L - ctrim):
+                for col_index in range(start_column + row_index * is_symmetric, num_cols):
+                    distance = 1
+                    seq2_len = seqs_L2[col_index]
+
+                    if seq1_len == seq2_len:
+                        for i in range(ntrim, seq1_len - ctrim):
                             distance += dist_mat_weighted[seqs_mat1[row_index, i], seqs_mat2[col_index, i]]
 
                     else:
-                        short_len = min(q_L, s_L)
-                        len_diff = abs(q_L - s_L)
+                        short_len = min(seq1_len, seq2_len)
+                        len_diff = abs(seq1_len - seq2_len)
                         if fixed_gappos:
                             min_gappos = min(6, 3 + (short_len - 5) // 2)
                             max_gappos = min_gappos
@@ -637,7 +863,7 @@ class TCRdistDistanceCalculator:
 
                             for c_i in range(ctrim, remainder):
                                 tmp_dist += dist_mat_weighted[
-                                    seqs_mat1[row_index, q_L - 1 - c_i], seqs_mat2[col_index, s_L - 1 - c_i]
+                                    seqs_mat1[row_index, seq1_len - 1 - c_i], seqs_mat2[col_index, seq2_len - 1 - c_i]
                                 ]
 
                             if tmp_dist < min_dist or min_dist == -1:
@@ -649,87 +875,27 @@ class TCRdistDistanceCalculator:
                         distance = min_dist + len_diff * gap_penalty + 1
 
                     if distance <= cutoff + 1:
-                        data_row[row_end_index] = distance
-                        indices_row[row_end_index] = col_index
+                        data_row_matrix[thread_id, row_end_index] = distance
+                        indices_row_matrix[thread_id, row_end_index] = col_index
                         row_end_index += 1
 
-                data_rows[row_index] = data_row[0:row_end_index].copy()
-                indices_rows[row_index] = indices_row[0:row_end_index].copy()
+                data_rows[row_index][0] = data_row_matrix[thread_id, 0:row_end_index].copy()
+                indices_rows[row_index][0] = indices_row_matrix[thread_id, 0:row_end_index].copy()
                 row_element_counts[row_index] = row_end_index
-            return data_rows, indices_rows, row_element_counts
+
+            data_rows_flat = []
+            indices_rows_flat = []
+
+            for i in range(len(data_rows)):
+                data_rows_flat.append(data_rows[i][0])
+                indices_rows_flat.append(indices_rows[i][0])
+
+            return data_rows_flat, indices_rows_flat, row_element_counts
 
         data_rows, indices_rows, row_element_counts = _nb_tcrdist_mat()
-
         return data_rows, indices_rows, row_element_counts
 
-    def _calc_dist_mat_block(
-        self,
-        seqs: Sequence[str],
-        seqs2: Optional[Sequence[str]] = None,
-        is_symmetric: bool = False,
-        start_column: int = 0,
-    ) -> csr_matrix:
-        """Computes a block of the final TCRdist distance matrix and returns it as CSR matrix.
-        If the final result matrix that consists of all blocks together is symmetric, only the part of the block that would
-        contribute to the upper triangular matrix of the final result will be computed.
-        """
-        if len(seqs) == 0 or len(seqs2) == 0:
-            return csr_matrix((len(seqs), len(seqs2)))
-
-        seqs_mat1, seqs_L1 = self._seqs2mat(seqs)
-        seqs_mat2, seqs_L2 = self._seqs2mat(seqs2)
-
-        data_rows, indices_rows, row_element_counts = self._tcrdist_mat(
-            seqs_mat1=seqs_mat1,
-            seqs_mat2=seqs_mat2,
-            seqs_L1=seqs_L1,
-            seqs_L2=seqs_L2,
-            is_symmetric=is_symmetric,
-            start_column=start_column,
-            dist_weight=self.dist_weight,
-            gap_penalty=self.gap_penalty,
-            ntrim=self.ntrim,
-            ctrim=self.ctrim,
-            fixed_gappos=self.fixed_gappos,
-            cutoff=self.cutoff,
-        )
-
-        indptr = np.zeros(row_element_counts.shape[0] + 1)
-        indptr[1:] = np.cumsum(row_element_counts)
-        data, indices = np.concatenate(data_rows), np.concatenate(indices_rows)
-        sparse_distance_matrix = csr_matrix((data, indices, indptr), shape=(len(seqs), len(seqs2)))
-        return sparse_distance_matrix
-
-    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
-        """Calculates the pairwise distances between two vectors of gene sequences based on the TCRdist distance metric
-        and returns a CSR distance matrix
-        """
-        if seqs2 is None:
-            seqs2 = seqs
-
-        seqs = np.array(seqs)
-        seqs2 = np.array(seqs2)
-        is_symmetric = np.array_equal(seqs, seqs2)
-        n_blocks = self.n_jobs * 2
-
-        if self.n_jobs > 1:
-            split_seqs = np.array_split(seqs, n_blocks)
-            start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
-            arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(n_blocks)]
-
-            delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
-            results = list(_parallelize_with_joblib(delayed_jobs, total=len(arguments), n_jobs=self.n_jobs))
-            distance_matrix_csr = scipy.sparse.vstack(results)
-        else:
-            distance_matrix_csr = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
-
-        if is_symmetric:
-            upper_triangular_distance_matrix = distance_matrix_csr
-            full_distance_matrix = upper_triangular_distance_matrix.maximum(upper_triangular_distance_matrix.T)
-        else:
-            full_distance_matrix = distance_matrix_csr
-
-        return full_distance_matrix
+    _metric_mat = _tcrdist_mat
 
 
 @_doc_params(params=_doc_params_parallel_distance_calculator)

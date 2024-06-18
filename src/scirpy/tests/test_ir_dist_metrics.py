@@ -208,7 +208,7 @@ def test_levensthein_dist_with_two_seq_arrays():
 
 
 def test_hamming_dist():
-    hamming10 = HammingDistanceCalculator(2)
+    hamming10 = HammingDistanceCalculator(cutoff=2)
     res = hamming10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"]))
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
@@ -645,8 +645,24 @@ def test_tcrdist_reference():
         fixed_gappos=True,
         cutoff=15,
         n_jobs=2,
+        n_blocks=2,
     )
     res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
+
+    assert np.array_equal(res.data, reference_result.data)
+    assert np.array_equal(res.indices, reference_result.indices)
+    assert np.array_equal(res.indptr, reference_result.indptr)
+
+
+def test_hamming_reference():
+    # test hamming distance against reference implementation
+    from . import TESTDATA
+
+    seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
+    reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
+
+    hamming_calculator = HammingDistanceCalculator(2, 2, 2)
+    res = hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
     assert np.array_equal(res.indices, reference_result.indices)
