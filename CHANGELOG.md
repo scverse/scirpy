@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
- -  Compatibility with numpy 2.0 ([#525](https://github.com/scverse/scirpy/pull/525))
+-   Compatibility with numpy 2.0 ([#525](https://github.com/scverse/scirpy/pull/525))
 
 ## v0.17.0
 
