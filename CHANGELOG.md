@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning][].
 -   Compatibility with numpy 2.0 ([#525](https://github.com/scverse/scirpy/pull/525))
 
 ### Chore
+
 -   scverse template update to v0.4 ([#519](https://github.com/scverse/scirpy/pull/519))
 
 ## v0.17.0
