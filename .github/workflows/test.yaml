@@ -52,7 +52,7 @@ jobs:
           python -m pip install --upgrade pip wheel
       - name: Install dependencies
         run: |
-          pip install ${{ matrix.pip-flags }} ".[dev,test,rpack,dandelion]"
+          pip install ${{ matrix.pip-flags }} ".[dev,test,rpack,dandelion,diversity]"
       - name: Test
         env:
           MPLBACKEND: agg
