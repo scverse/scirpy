@@ -8,11 +8,15 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [unreleased]
+## v0.17.1
 
 ### Fixes
 
 -   Compatibility with numpy 2.0 ([#525](https://github.com/scverse/scirpy/pull/525))
+
+### Chore
+
+-   scverse template update to v0.4 ([#519](https://github.com/scverse/scirpy/pull/519))
 
 ## v0.17.0
 
