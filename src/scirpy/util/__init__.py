@@ -598,6 +598,6 @@ def _get_usable_cpus(n_jobs: int = 0):
         return n_jobs
 
     try:
-        return os.sched_getaffinity(0)
+        return len(os.sched_getaffinity(0))
     except AttributeError:
         return os.cpu_count()
