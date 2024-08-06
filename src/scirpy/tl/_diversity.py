@@ -103,7 +103,7 @@ def hill_diversity_profile(
             else:
                 diversity[k] = [Hill_diversity(tmp_counts, q)]
     df = pd.DataFrame.from_dict(
-        diversity, orient="index", columns=[a for a in np.arange(q_min, q_max + q_step, q_step)]
+        diversity, orient="index", columns=list(np.arange(q_min, q_max + q_step, q_step))
     )
     df.index.name = groupby
     return df.T
@@ -147,7 +147,7 @@ def convert_hill_table(
     elif convert_to == "evenness_factor":
         df = diversity_profile.copy()
         observed_richeness = diversity_profile.loc[0]
-        for index, row in df.iterrows():
+        for _index, row in df.iterrows():
             for i in range(len(row)):
                 row.iloc[i] = row.iloc[i] / observed_richeness.iloc[i]
         return df
@@ -155,7 +155,7 @@ def convert_hill_table(
     elif convert_to == "relative_evenness":
         df = diversity_profile.copy()
         observed_richeness = diversity_profile.loc[0]
-        for index, row in df.iterrows():
+        for _index, row in df.iterrows():
             for i in range(len(row)):
                 row.iloc[i] = np.log(row.iloc[i]) / np.log(observed_richeness.iloc[i])
         return df

@@ -8,7 +8,7 @@ from scirpy.util import DataHandler
 
 
 def simple_hamming_distance(sequence: str, germline: str, frequency=False):
-    if (sequence == None) or (germline == None):
+    if (sequence is None) or (germline is None):
         return None
     if len(sequence) != len(germline):
         raise Exception("Sequences might not be IMGT aligned")

@@ -77,7 +77,7 @@ def logoplot_cdr3_motif(
 
     if by == "length":
         airr_df = get_airr(params, [cdr3_col], chains)
-        if type(chains) == list:
+        if isinstance(chains, list):
             if len(chains) > 2:
                 raise Exception("Only two different chains are allowed e.g. VDJ_1 and VDJ_2")
 
@@ -94,7 +94,7 @@ def logoplot_cdr3_motif(
                 airr_df[airr_df[chains + "_" + cdr3_col].str.len() == cdr_len][chains + "_" + cdr3_col].to_list()
             )
 
-        if plot == True:
+        if plot:
             return SVG(palm.svg_logo(motif, return_str=False, color_scheme=color_scheme))
         else:
             return motif
@@ -108,7 +108,7 @@ def logoplot_cdr3_motif(
             gene_annotation = list(gene_annotation.split(" "))
 
         airr_df = get_airr(params, [cdr3_col, target_col], chains)
-        if type(chains) == list:
+        if isinstance(chains, list):
             if len(chains) > 2:
                 raise Exception("Only two different chains are allowed e.g. VDJ_1 and VDJ_2")
 
@@ -130,7 +130,7 @@ def logoplot_cdr3_motif(
                 ][chains + "_" + cdr3_col].to_list()
             )
 
-        if plot == True:
+        if plot:
             return SVG(palm.svg_logo(motif, return_str=False, color_scheme=color_scheme))
         else:
             return motif
@@ -168,7 +168,7 @@ def logoplot_cdr3_motif(
                 airr_df[airr_df[chains + "_" + cdr3_col].str.len() == cdr_len][chains + "_" + cdr3_col].to_list()
             )
 
-        if plot == True:
+        if plot:
             return SVG(palm.svg_logo(motif, return_str=False, color_scheme=color_scheme))
         else:
             return motif
