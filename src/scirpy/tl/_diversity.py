@@ -102,9 +102,7 @@ def hill_diversity_profile(
                 diversity[k].append(Hill_diversity(tmp_counts, q))
             else:
                 diversity[k] = [Hill_diversity(tmp_counts, q)]
-    df = pd.DataFrame.from_dict(
-        diversity, orient="index", columns=list(np.arange(q_min, q_max + q_step, q_step))
-    )
+    df = pd.DataFrame.from_dict(diversity, orient="index", columns=list(np.arange(q_min, q_max + q_step, q_step)))
     df.index.name = groupby
     return df.T
 
