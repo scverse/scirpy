@@ -52,7 +52,7 @@ doc = [
     "docutils>=0.8,!=0.18.*,!=0.19.*",
     'sphinx>=4',
     "sphinx-book-theme>=1.0.0",
-    "myst-nb",
+    "myst-nb>=1.1.0",
     'sphinxcontrib-bibtex>=1.0.0',
     "sphinx-autodoc-typehints",
     # for tutorial
@@ -148,7 +148,7 @@ ignore = [
     "D107",
     # Errors from function calls in argument defaults. These are fine when the result is immutable.
     "B008",
-    # __magic__ methods are are often self-explanatory, allow missing docstrings
+    # __magic__ methods are often self-explanatory, allow missing docstrings
     "D105",
     # first line should end with a period [Bug: doesn't work with single-line docstrings]
     "D400",

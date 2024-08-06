@@ -8,9 +8,31 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.17.2
+
+### Fixes
+
+-   Detection of CPU count in `define_clonotype_clusters` was broken ([#527](https://github.com/scverse/scirpy/pull/527))
+
+## v0.17.1
+
+### Fixes
+
+-   Compatibility with numpy 2.0 ([#525](https://github.com/scverse/scirpy/pull/525))
+
+### Chore
+
+-   scverse template update to v0.4 ([#519](https://github.com/scverse/scirpy/pull/519))
+
+## v0.17.0
+
+### Additions
 
 -   Add "TCRdist" as new metric ([#502](https://github.com/scverse/scirpy/pull/502))
+
+### Fixes
+
+-   Fix issue with detecting the number of available CPUs on MacOD ([#518](https://github.com/scverse/scirpy/pull/502))
 
 ## v0.16.1
 

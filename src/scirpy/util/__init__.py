@@ -1,4 +1,5 @@
 import contextlib
+import os
 import warnings
 from collections.abc import Mapping, Sequence
 from textwrap import dedent
@@ -582,3 +583,21 @@ def _parallelize_with_joblib(delayed_objects, *, total=None, **kwargs):
             "Consider setting verbosity in joblib.parallel_config"
         )
         return Parallel(return_as="list", **kwargs)(delayed_objects)
+
+
+def _get_usable_cpus(n_jobs: int = 0):
+    """Get the number of CPUs available to the process
+
+    If `n_jobs` is specified and > 0 that value will be returned unaltered.
+    Otherwise will try to determine the number of CPUs available to the process which
+    is not necessarily the number of CPUs available on the system.
+
+    On MacOS, `os.sched_getaffinity` is not implemented, therefore we just return the cpu count there.
+    """
+    if n_jobs > 0:
+        return n_jobs
+
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return os.cpu_count()
