@@ -8,4 +8,5 @@ from ._group_abundance import group_abundance
 from ._repertoire_overlap import repertoire_overlap
 from ._spectratype import spectratype
 from ._vdj_usage import vdj_usage
+from ._logoplots import logoplot_cdr3_motif
 from .base import embedding
