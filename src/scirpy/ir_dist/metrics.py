@@ -599,8 +599,8 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
             needed to create the final scipy CSR result matrix later
         """
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
-        max_seq_len = max((len(s) for s in (*seqs, *seqs2)))
-        
+        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
         seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
 
@@ -774,11 +774,11 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
-        max_seq_len = max((len(s) for s in (*seqs, *seqs2)))
-        
+        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
         seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
-        
+
         cutoff = self.cutoff
         dist_weight = self.dist_weight
         gap_penalty = self.gap_penalty
