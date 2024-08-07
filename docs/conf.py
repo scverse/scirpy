@@ -10,6 +10,8 @@ from datetime import datetime
 from importlib.metadata import metadata
 from pathlib import Path
 
+import os
+
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE / "extensions"))
@@ -44,6 +46,12 @@ html_context = {
     "github_version": "main",  # Version
     "conf_py_path": "/docs/",  # Path in the checkout to the docs root
 }
+
+# Set canonical URL from the Read the Docs Domain
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    html_context["READTHEDOCS"] = True
 
 # -- General configuration ---------------------------------------------------
 
@@ -96,25 +104,25 @@ source_suffix = {
 }
 
 intersphinx_mapping = {
-    "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
-    "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
-    "h5py": ("https://docs.h5py.org/en/stable/", None),
-    "cycler": ("https://matplotlib.org/cycler/", None),
-    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
-    "leidenalg": ("https://leidenalg.readthedocs.io/en/latest/", None),
+    "scanpy": ("https://scanpy.readthedocs.io/en/stable", None),
+    "anndata": ("https://anndata.readthedocs.io/en/stable", None),
+    "h5py": ("https://docs.h5py.org/en/stable", None),
+    "cycler": ("https://matplotlib.org/cycler", None),
+    "ipython": ("https://ipython.readthedocs.io/en/stable", None),
+    "leidenalg": ("https://leidenalg.readthedocs.io/en/latest", None),
     "matplotlib": ("https://matplotlib.org/stable", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
     "python": ("https://docs.python.org/3", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "seaborn": ("https://seaborn.pydata.org/", None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
-    "networkx": ("https://networkx.org/documentation/networkx-1.10/", None),
-    "dandelion": ("https://sc-dandelion.readthedocs.io/en/latest/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "seaborn": ("https://seaborn.pydata.org", None),
+    "sklearn": ("https://scikit-learn.org/stable", None),
+    "networkx": ("https://networkx.org/documentation/networkx-1.10", None),
+    "dandelion": ("https://sc-dandelion.readthedocs.io/en/latest", None),
     "muon": ("https://muon.readthedocs.io/en/latest", None),
-    "mudata": ("https://mudata.readthedocs.io/en/latest/", None),
-    "awkward": ("https://awkward-array.org/doc/main/", None),
-    "pooch": ("https://www.fatiando.org/pooch/latest/", None),
+    "mudata": ("https://mudata.readthedocs.io/en/latest", None),
+    "awkward": ("https://awkward-array.org/doc/main", None),
+    "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest", None),
 }
 
