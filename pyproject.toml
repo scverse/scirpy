@@ -50,7 +50,7 @@ dev = [
 ]
 doc = [
     "docutils>=0.8,!=0.18.*,!=0.19.*",
-    'sphinx>=4',
+    'sphinx>=7,!=7.4.*', # https://github.com/sphinx-doc/sphinx/issues/12589
     "sphinx-book-theme>=1.0.0",
     "myst-nb>=1.1.0",
     'sphinxcontrib-bibtex>=1.0.0',
