@@ -482,7 +482,7 @@ class MetricDistanceCalculator(abc.ABC):
     def _calc_dist_mat_block(
         self,
         seqs: Sequence[str],
-        seqs2: Optional[Sequence[str]] = None,
+        seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> csr_matrix:
