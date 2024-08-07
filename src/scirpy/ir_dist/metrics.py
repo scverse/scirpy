@@ -434,16 +434,14 @@ class MetricDistanceCalculator(abc.ABC):
     def _metric_mat(
         self,
         *,
-        seqs_mat1: np.ndarray,
-        seqs_mat2: np.ndarray,
-        seqs_L1: np.ndarray,
-        seqs_L2: np.ndarray,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
         """
-        Abstract method that should be implemented by the derived class in a way sucht that it computes the pairwise distances
-        for sequences in seqs_mat1 and seqs_mat2 based on a certain distance metric. The result should be a distance matrix
+        Abstract method that should be implemented by the derived class in a way such that it computes the pairwise distances
+        for gene sequences in seqs and seqs2 based on a certain distance metric. The result should be a distance matrix
         that is returned in the form of the data, indices and intptr arrays of a (scipy) compressed sparse row matrix.
 
         If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
@@ -452,12 +450,8 @@ class MetricDistanceCalculator(abc.ABC):
 
         Parameters
         ----------
-        seqs_mat1/2:
-            Matrix containing sequences created by seqs2mat with padding to accomodate
-            sequences of different lengths (-1 padding)
-        seqs_L1/2:
-            A vector containing the length of each sequence in the respective seqs_mat matrix,
-            without the padding in seqs_mat
+        seqs/2:
+            A python sequence of strings representing gene sequences
         is_symmetric:
             Determines whether the final result matrix is symmetric, assuming that this function is
             only used to compute a block of a bigger result matrix
@@ -493,15 +487,9 @@ class MetricDistanceCalculator(abc.ABC):
         if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
 
-        max_seq_len = max(np.max([len(s) for s in seqs]), np.max([len(s) for s in seqs2]))
-        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
-        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
-
         data_rows, indices_rows, row_element_counts = self._metric_mat(
-            seqs_mat1=seqs_mat1,
-            seqs_mat2=seqs_mat2,
-            seqs_L1=seqs_L1,
-            seqs_L2=seqs_L2,
+            seqs=seqs,
+            seqs2=seqs2,
             is_symmetric=is_symmetric,
             start_column=start_column,
         )
@@ -572,14 +560,12 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
     def _hamming_mat(
         self,
         *,
-        seqs_mat1: np.ndarray,
-        seqs_mat2: np.ndarray,
-        seqs_L1: np.ndarray,
-        seqs_L2: np.ndarray,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
-        """Computes the pairwise hamming distances for sequences in seqs_mat1 and seqs_mat2.
+        """Computes the pairwise hamming distances for sequences in seqs and seqs2.
 
         This function is a wrapper and contains an inner JIT compiled numba function without parameters. The reason for this is
         that this way some of the parameters can be treated as constant by numba and this allows for a better optimization
@@ -591,12 +577,8 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
 
         Parameters
         ----------
-        seqs_mat1/2:
-            Matrix containing sequences created by seqs2mat with padding to accomodate
-            sequences of different lengths (-1 padding)
-        seqs_L1/2:
-            A vector containing the length of each sequence in the respective seqs_mat matrix,
-            without the padding in seqs_mat
+        seqs/2:
+            A python sequence of strings representing gene sequences
         is_symmetric:
             Determines whether the final result matrix is symmetric, assuming that this function is
             only used to compute a block of a bigger result matrix
@@ -616,6 +598,12 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
+        unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
+        max_seq_len = max((len(s) for s in (*seqs, *seqs2)))
+        
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+
         cutoff = self.cutoff
         start_column *= is_symmetric
 
@@ -743,14 +731,12 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
     def _tcrdist_mat(
         self,
         *,
-        seqs_mat1: np.ndarray,
-        seqs_mat2: np.ndarray,
-        seqs_L1: np.ndarray,
-        seqs_L2: np.ndarray,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
-        """Computes the pairwise TCRdist distances for sequences in seqs_mat1 and seqs_mat2.
+        """Computes the pairwise TCRdist distances for sequences in seqs and seqs2.
 
         This function is a wrapper and contains an inner JIT compiled numba function without parameters. The reason for this is
         that this way some of the parameters can be treated as constant by numba and this allows for a better optimization
@@ -764,9 +750,8 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
 
         Parameters
         ----------
-        seqs_mat1/2:
-            Matrix containing sequences created by seqs2mat with padding to accomodate
-            sequences of different lengths (-1 padding)
+        seqs/2:
+            A python sequence of strings representing gene sequences
         seqs_L1/2:
             A vector containing the length of each sequence in the respective seqs_mat matrix,
             without the padding in seqs_mat
@@ -789,6 +774,11 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         """
+        max_seq_len = max((len(s) for s in (*seqs, *seqs2)))
+        
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
+        
         cutoff = self.cutoff
         dist_weight = self.dist_weight
         gap_penalty = self.gap_penalty
