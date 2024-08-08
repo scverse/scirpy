@@ -1,5 +1,4 @@
 import itertools
-import os
 from collections.abc import Mapping, Sequence
 from typing import Literal, Optional, Union
 
@@ -11,7 +10,7 @@ from tqdm.contrib.concurrent import process_map
 
 from scirpy.get import _has_ir
 from scirpy.get import airr as get_airr
-from scirpy.util import DataHandler, tqdm
+from scirpy.util import DataHandler, _get_usable_cpus, tqdm
 
 from ._util import DoubleLookupNeighborFinder, merge_coo_matrices, reduce_and, reduce_or
 
@@ -225,7 +224,7 @@ class ClonotypeNeighbors:
             dist_rows = process_map(
                 self._dist_for_clonotype,
                 range(n_clonotypes),
-                max_workers=self.n_jobs if self.n_jobs > 0 else len(os.sched_getaffinity(0)),
+                max_workers=_get_usable_cpus(self.n_jobs),
                 chunksize=2000,
                 tqdm_class=tqdm,
             )

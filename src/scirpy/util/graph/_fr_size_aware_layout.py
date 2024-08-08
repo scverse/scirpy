@@ -173,7 +173,7 @@ def layout_fr_size_aware(
     adjacency = adjacency + adjacency.transpose()
 
     if k is None:
-        area = np.product(scale)
+        area = np.prod(scale)
         k = np.sqrt(area / float(total_nodes))
 
     temperatures = _get_temperature_decay(initial_temperature, total_iterations)
