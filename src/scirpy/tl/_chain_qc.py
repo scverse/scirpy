@@ -42,9 +42,10 @@ def chain_qc(
         * `IGH` (all cells that have only IGH chains, but no IGL or IGK)
         * `IGH+IGL` (all cells that have only IGH and IGL chains)
         * `IGH+IGK` (all cells that have only IGH and IGK chains)
+        * `IGH+IGK/L` (isotypically included B cell i.e. IGH+IGK as the primary and
+          IGH+IGL as the secondary receptor or vice versa)
         * `multichain` (all cells with more than two VJ or more than two VDJ chains)
-        * `ambiguous` (all cells that are none of the above, e.g. TRA+TRD, TRA+IGH or,
-          IGH+IGK as the primary and IGH+IGL as the secondary receptor)
+        * `ambiguous` (all cells that are none of the above, e.g. TRA+TRD, TRA+IGH)
         * `no IR` (all cells without any detected immune receptor)
 
     `chain_pairing` can be one of the following
@@ -109,6 +110,8 @@ def chain_qc(
     subtype_is_tgd = (has_trg | has_trd) & ~(has_tra | has_trb | has_ig)
     subtype_is_ighk = (has_igk) & ~(has_tr | has_igl)
     subtype_is_ighl = (has_igl) & ~(has_tr | has_igk)
+    # isotypically included B cells
+    subtype_is_ighkl = (has_igl) & (has_igk) & ~(has_tr) & (has_igh)
     # orphan IGH
     subtype_is_igh = (has_igh) & ~(has_igk | has_igl | has_tr)
 
@@ -127,6 +130,7 @@ def chain_qc(
     res_receptor_subtype[subtype_is_igh] = "IGH"
     res_receptor_subtype[subtype_is_ighl] = "IGH+IGL"
     res_receptor_subtype[subtype_is_ighk] = "IGH+IGK"
+    res_receptor_subtype[subtype_is_ighkl] = "IGH+IGK/L"
     res_receptor_subtype[mask_multichain] = "multichain"
 
     res_chain_pairing = _chain_pairing(params, res_receptor_subtype == "ambiguous", mask_has_ir, mask_multichain)
