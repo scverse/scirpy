@@ -684,8 +684,7 @@ def test_normalized_hamming():
 
 def test_hamming_histogram():
     hamming_calculator = HammingDistanceCalculator(1, 1, 100, True, True)
-    seq1 = np.array(["AAAA", "AA", "AABB", "ABA"])
-    seq2 = np.array(["ABB", "ABBB", "ABBB"])
-    expected_result = np.array([75, 100, 25, 33])
-    _, _, _, res = hamming_calculator._hamming_mat(seqs=seq1, seqs2=seq2)
+    seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
+    expected_result = np.array([50, 100, 50, 100])
+    _, _, _, res = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
     assert np.array_equal(res, expected_result)
