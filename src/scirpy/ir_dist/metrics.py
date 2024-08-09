@@ -563,8 +563,8 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         self.histogram = histogram
 
     def _make_histogram(self, row_mins):
-        if(self.normalize):
-            bins = np.arange(0,101,2)
+        if self.normalize:
+            bins = np.arange(0, 101, 2)
         else:
             max_value = np.max(row_mins)
             bin_step = np.ceil(max_value / 100)
