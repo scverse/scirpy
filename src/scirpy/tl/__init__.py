@@ -4,7 +4,7 @@ from ._clonotype_imbalance import clonotype_imbalance
 from ._clonotype_modularity import clonotype_modularity
 from ._clonotypes import clonotype_network, clonotype_network_igraph, define_clonotype_clusters, define_clonotypes
 from ._convergence import clonotype_convergence
-from ._diversity import alpha_diversity
+from ._diversity import alpha_diversity, hill_diversity_profile, convert_hill_table
 from ._group_abundance import group_abundance
 from ._ir_query import ir_query, ir_query_annotate, ir_query_annotate_df
 from ._repertoire_overlap import repertoire_overlap
