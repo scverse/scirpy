@@ -553,9 +553,11 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         n_jobs: int = 1,
         n_blocks: int = 1,
         cutoff: int = 2,
+        normalize: bool = False,
     ):
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks)
         self.cutoff = cutoff
+        self.normalize = normalize
 
     def _hamming_mat(
         self,
@@ -605,6 +607,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
 
         cutoff = self.cutoff
+        normalize = self.normalize
         start_column *= is_symmetric
 
         nb.set_num_threads(self.n_jobs)
@@ -646,6 +649,9 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
                     if seq1_len == seq2_len:
                         for i in range(0, seq1_len):
                             distance += seqs_mat1[row_index, i] != seqs_mat2[col_index, i]
+                        
+                        if(normalize):
+                            distance = int((distance-1) * 100 / seq1_len + 0.5) + 1
 
                         if distance <= cutoff + 1:
                             data_row_matrix[thread_id, row_end_index] = distance

@@ -99,6 +99,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
+    elif metric == "normalized_hamming":
+        dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, normalize= True, **kwargs)
     elif metric == "tcrdist":
         dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
