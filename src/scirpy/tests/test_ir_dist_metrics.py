@@ -208,7 +208,7 @@ def test_levensthein_dist_with_two_seq_arrays():
 
 
 def test_hamming_dist():
-    hamming10 = HammingDistanceCalculator(2)
+    hamming10 = HammingDistanceCalculator(cutoff=2)
     res = hamming10.calc_dist_mat(np.array(["A", "AA", "AAA", "AAR", "ZZZZZZ"]), np.array(["RRR", "AR"]))
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == (5, 2)
@@ -305,7 +305,9 @@ def test_fast_alignment_dist_with_two_seq_arrays():
     npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
 
-@pytest.mark.parametrize("metric", ["alignment", "fastalignment", "identity", "hamming", "levenshtein"])
+@pytest.mark.parametrize(
+    "metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"]
+)
 def test_sequence_dist_all_metrics(metric):
     # Smoke test, no assertions!
     # Smoke test, no assertions!
@@ -645,9 +647,45 @@ def test_tcrdist_reference():
         fixed_gappos=True,
         cutoff=15,
         n_jobs=2,
+        n_blocks=2,
     )
     res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
     assert np.array_equal(res.indices, reference_result.indices)
     assert np.array_equal(res.indptr, reference_result.indptr)
+
+
+def test_hamming_reference():
+    # test hamming distance against reference implementation
+    from . import TESTDATA
+
+    seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
+    reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
+
+    hamming_calculator = HammingDistanceCalculator(2, 2, 2)
+    res = hamming_calculator.calc_dist_mat(seqs, seqs)
+
+    assert np.array_equal(res.data, reference_result.data)
+    assert np.array_equal(res.indices, reference_result.indices)
+    assert np.array_equal(res.indptr, reference_result.indptr)
+
+
+def test_normalized_hamming():
+    hamming_calculator = HammingDistanceCalculator(1, 1, 50, True)
+    seq1 = np.array(["AAAA", "AAB", "AABB", "ABA"])
+    seq2 = np.array(["ABB", "ABBB", "ABBB"])
+    expected_result = np.array([[0, 0, 0], [34, 0, 0], [0, 26, 26], [34, 0, 0]])
+    res = hamming_calculator.calc_dist_mat(seq1, seq2)
+    assert isinstance(res, scipy.sparse.csr_matrix)
+    assert res.shape == expected_result.shape
+    assert np.array_equal(res.todense(), expected_result)
+
+
+def test_hamming_histogram():
+    hamming_calculator = HammingDistanceCalculator(1, 1, 100, True, True)
+    seq1 = np.array(["AAAA", "AA", "AABB", "ABA"])
+    seq2 = np.array(["ABB", "ABBB", "ABBB"])
+    expected_result = np.array([75, 100, 25, 33])
+    _, _, _, res = hamming_calculator._hamming_mat(seqs=seq1, seqs2=seq2)
+    assert np.array_equal(res, expected_result)
