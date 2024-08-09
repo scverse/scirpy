@@ -668,7 +668,7 @@ def test_hamming_reference():
     assert np.array_equal(res.indices, reference_result.indices)
     assert np.array_equal(res.indptr, reference_result.indptr)
 
-def test_normalized_hamming_reference():
+def test_normalized_hamming():
     hamming_calculator = HammingDistanceCalculator(1, 1, 50, True)
     seq1 = np.array(["AAAA", "AAB", "AABB", "ABA"])
     seq2 = np.array(["ABB", "ABBB", "ABBB"])
