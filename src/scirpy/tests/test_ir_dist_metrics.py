@@ -305,7 +305,9 @@ def test_fast_alignment_dist_with_two_seq_arrays():
     npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
 
-@pytest.mark.parametrize("metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"])
+@pytest.mark.parametrize(
+    "metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"]
+)
 def test_sequence_dist_all_metrics(metric):
     # Smoke test, no assertions!
     # Smoke test, no assertions!
@@ -668,11 +670,12 @@ def test_hamming_reference():
     assert np.array_equal(res.indices, reference_result.indices)
     assert np.array_equal(res.indptr, reference_result.indptr)
 
+
 def test_normalized_hamming_reference():
     hamming_calculator = HammingDistanceCalculator(1, 1, 50, True)
     seq1 = np.array(["AAAA", "AAB", "AABB", "ABA"])
     seq2 = np.array(["ABB", "ABBB", "ABBB"])
-    expected_result = np.array([[0, 0, 0], [34, 0, 0], [0, 26, 26],[34, 0, 0]])
+    expected_result = np.array([[0, 0, 0], [34, 0, 0], [0, 26, 26], [34, 0, 0]])
     res = hamming_calculator.calc_dist_mat(seq1, seq2)
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape

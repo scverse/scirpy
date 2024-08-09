@@ -649,9 +649,9 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
                     if seq1_len == seq2_len:
                         for i in range(0, seq1_len):
                             distance += seqs_mat1[row_index, i] != seqs_mat2[col_index, i]
-                        
-                        if(normalize):
-                            distance = int((distance-1) * 100 / seq1_len + 0.5) + 1
+
+                        if normalize:
+                            distance = int((distance - 1) * 100 / seq1_len + 0.5) + 1
 
                         if distance <= cutoff + 1:
                             data_row_matrix[thread_id, row_end_index] = distance
