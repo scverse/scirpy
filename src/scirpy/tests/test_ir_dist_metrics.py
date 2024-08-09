@@ -670,6 +670,7 @@ def test_hamming_reference():
     assert np.array_equal(res.indices, reference_result.indices)
     assert np.array_equal(res.indptr, reference_result.indptr)
 
+
 def test_normalized_hamming():
     hamming_calculator = HammingDistanceCalculator(1, 1, 50, True)
     seq1 = np.array(["AAAA", "AAB", "AABB", "ABA"])
@@ -679,6 +680,7 @@ def test_normalized_hamming():
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
 
 def test_hamming_histogram():
     hamming_calculator = HammingDistanceCalculator(1, 1, 100, True, True)

@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from typing import Optional, Union
 
 import joblib
+import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import scipy.sparse
@@ -12,8 +13,6 @@ import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
-import matplotlib.pyplot as plt
-
 
 from scirpy.util import _doc_params, _parallelize_with_joblib, deprecated
 
@@ -564,18 +563,18 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         self.histogram = histogram
 
     def _make_histogram(self, row_mins):
-        if(self.normalize==True):
-            bins = np.arange(0,101,2)
+        if self.normalize == True:
+            bins = np.arange(0, 101, 2)
         else:
             max_value = np.max(row_mins)
-            bin_step = np.ceil(max_value/100)
-            bins = np.arange(0,max_value+1,bin_step)
-        plt.hist(row_mins, bins = bins, histtype = "bar", edgecolor ="black")
-        plt.axvline(x=self.cutoff, color='r', linestyle='-', label="cutoff")
+            bin_step = np.ceil(max_value / 100)
+            bins = np.arange(0, max_value + 1, bin_step)
+        plt.hist(row_mins, bins=bins, histtype="bar", edgecolor="black")
+        plt.axvline(x=self.cutoff, color="r", linestyle="-", label="cutoff")
         plt.legend()
-        plt.xlabel('Distance to nearest neighbor')
-        plt.ylabel('Count')
-        plt.title('Histogram of \"distance-to-nearest\"-distribution')
+        plt.xlabel("Distance to nearest neighbor")
+        plt.ylabel("Count")
+        plt.title('Histogram of "distance-to-nearest"-distribution')
         plt.show()
 
     def _hamming_mat(
@@ -650,7 +649,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
             indices_rows = nb.typed.List()
             row_element_counts = np.zeros(num_rows)
 
-            if(histogram):
+            if histogram:
                 row_mins = np.zeros(num_rows)
             else:
                 row_mins = np.zeros(0)
@@ -668,12 +667,12 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
                 row_end_index = 0
                 seq1_len = seqs_L1[row_index]
 
-                if(histogram):
-                    if(normalize):
+                if histogram:
+                    if normalize:
                         row_min = 100
                     else:
                         row_min = seq1_len
-                
+
                 for col_index in range(start_column + row_index * is_symmetric, num_cols):
                     distance = 1
                     seq2_len = seqs_L2[col_index]
@@ -689,14 +688,14 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
                             indices_row_matrix[thread_id, row_end_index] = col_index
                             row_end_index += 1
 
-                        if(histogram):
-                            if(distance>1):
-                                row_min = min(row_min, distance-1)
+                        if histogram:
+                            if distance > 1:
+                                row_min = min(row_min, distance - 1)
 
                 data_rows[row_index][0] = data_row_matrix[thread_id, 0:row_end_index].copy()
                 indices_rows[row_index][0] = indices_row_matrix[thread_id, 0:row_end_index].copy()
                 row_element_counts[row_index] = row_end_index
-                if(histogram):
+                if histogram:
                     row_mins[row_index] = row_min
 
             data_rows_flat = []
@@ -710,11 +709,11 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
 
         data_rows, indices_rows, row_element_counts, row_mins = _nb_hamming_mat()
 
-        if(histogram):
+        if histogram:
             self._make_histogram(row_mins)
 
         return data_rows, indices_rows, row_element_counts, row_mins
-    
+
     _metric_mat = lambda self, *args, **kwargs: self._hamming_mat(*args, **kwargs)[:3]
 
 
