@@ -117,9 +117,7 @@ def layout_fr_size_aware(
         dimensionality_node_positions = np.array(list(node_positions.values())).shape[1]
         assert (
             dimensionality_node_positions == dimensionality
-        ), "The dimensionality of values of `node_positions` (d={}) must match the dimensionality of `origin`/ `scale` (d={})!".format(
-            dimensionality_node_positions, dimensionality
-        )
+        ), f"The dimensionality of values of `node_positions` (d={dimensionality_node_positions}) must match the dimensionality of `origin`/ `scale` (d={dimensionality})!"
 
         is_valid = _is_within_bbox(list(node_positions.values()), origin=origin, scale=scale)
         if not np.all(is_valid):
@@ -175,7 +173,7 @@ def layout_fr_size_aware(
     adjacency = adjacency + adjacency.transpose()
 
     if k is None:
-        area = np.product(scale)
+        area = np.prod(scale)
         k = np.sqrt(area / float(total_nodes))
 
     temperatures = _get_temperature_decay(initial_temperature, total_iterations)

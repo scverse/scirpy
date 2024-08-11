@@ -6,12 +6,10 @@ import sys
 from collections.abc import Collection, Iterable, Sequence
 from glob import iglob
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Union
 
-import airr
 import numpy as np
 import pandas as pd
-from airr import RearrangementSchema
 from anndata import AnnData
 
 from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
@@ -19,7 +17,7 @@ from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, 
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
-from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model
+from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model, get_rearrangement_schema
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -127,7 +125,7 @@ def _read_10x_vdj_json(
         chain["locus"] = chain_type
         chain["junction"] = contig["cdr3_seq"]
         chain["junction_aa"] = contig["cdr3"]
-        chain["duplicate_count"] = contig["umi_count"]
+        chain["umi_count"] = contig["umi_count"]
         chain["consensus_count"] = contig["read_count"]
         chain["productive"] = contig["productive"]
         chain["is_cell"] = contig["is_cell"]
@@ -168,7 +166,7 @@ def _read_10x_vdj_csv(
                 locus=chain_series["chain"],
                 junction_aa=chain_series["cdr3"],
                 junction=chain_series["cdr3_nt"],
-                duplicate_count=chain_series["umis"],
+                umi_count=chain_series["umis"],
                 consensus_count=chain_series["reads"],
                 productive=_is_true2(chain_series["productive"]),
                 v_call=chain_series["v_gene"],
@@ -354,7 +352,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
 )
 def read_airr(
     path: Union[str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]],
-    use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
+    use_umi_count_col: None = None,  # deprecated, kept for backwards-compatibility
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
     include_fields: Any = None,
@@ -382,10 +380,9 @@ def read_airr(
         as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
         Alternatively, this can be a pandas data frame.
     use_umi_count_col
-        Whether to add UMI counts from the non-strandard (but common) `umi_count`
-        column. When this column is used, the UMI counts are moved over to the
-        standard `duplicate_count` column. Default: Use `umi_count` if there is
-        no `duplicate_count` column present.
+        Deprecated, has no effect as of v0.16. Since v1.4 of the AIRR standard, `umi_count`
+        is an official field in the Rearrangement schema and preferred over `duplicate_count`.
+        `umi_count` now always takes precedence over `duplicate_count`.
     infer_locus
         Try to infer the `locus` column from gene names, in case it is not specified.
     cell_attributes
@@ -402,21 +399,14 @@ def read_airr(
     AnnData object with :term:`AIRR` data in `obsm["airr"]` for each cell. For more details see
     :ref:`data-structure`..
     """
+    # defer import, as this is very slow
+    import airr
+
     airr_cells = {}
     logger = _IOLogger()
 
     if isinstance(path, (str, Path, pd.DataFrame)):
         path: list[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
-
-    def _decide_use_umi_count_col(chain_dict):
-        """Logic to decide whether or not to use counts form the `umi_counts` column."""
-        if "umi_count" in chain_dict and use_umi_count_col == "auto" and "duplicate_count" not in chain_dict:
-            logger.warning("Renaming the non-standard `umi_count` column to `duplicate_count`. ")  # type: ignore
-            return True
-        elif use_umi_count_col is True:
-            return True
-        else:
-            return False
 
     for tmp_path_or_df in path:
         if isinstance(tmp_path_or_df, pd.DataFrame):
@@ -426,7 +416,7 @@ def read_airr(
 
         for chain_dict in iterator:
             cell_id = chain_dict.pop("cell_id")
-            chain_dict.update({req: None for req in RearrangementSchema.required if req not in chain_dict})
+            chain_dict.update({req: None for req in get_rearrangement_schema().required if req not in chain_dict})
             try:
                 tmp_cell = airr_cells[cell_id]
             except KeyError:
@@ -436,9 +426,6 @@ def read_airr(
                     cell_attribute_fields=cell_attributes,
                 )
                 airr_cells[cell_id] = tmp_cell
-
-            if _decide_use_umi_count_col(chain_dict):
-                chain_dict["duplicate_count"] = RearrangementSchema.to_int(chain_dict.pop("umi_count"))
 
             if infer_locus and "locus" not in chain_dict:
                 logger.warning(
@@ -571,6 +558,9 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
     **kwargs
         additional arguments passed to :func:`~scirpy.io.to_airr_cells`
     """
+    # defer import, as this is very slow
+    import airr
+
     airr_cells = to_airr_cells(adata, **kwargs)
     try:
         fields = airr_cells[0].fields
@@ -585,53 +575,38 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
         for chain in tmp_cell.to_airr_records():
             # workaround for AIRR library writing out int field as floats (if it happens to be a float)
             for field, value in chain.items():
-                if RearrangementSchema.type(field) == "integer" and value is not None:
+                if airr.RearrangementSchema.type(field) == "integer" and value is not None:
                     chain[field] = int(value)
             writer.write(chain)
     writer.close()
 
 
-def to_dandelion(adata: DataHandler.TYPE, **kwargs):
+def to_dandelion(adata: DataHandler.TYPE):
     """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters
     ----------
     adata
         annotated data matrix with :term:`IR` annotations.
-    **kwargs
-        additional arguments passed to :func:`~scirpy.io.to_airr_cells`
 
     Returns
     -------
     `Dandelion` object.
     """
     try:
-        import dandelion as ddl
+        from dandelion import from_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
-    airr_cells = to_airr_cells(adata, **kwargs)
 
-    contig_dicts = {}
-    for tmp_cell in airr_cells:
-        for i, chain in enumerate(tmp_cell.to_airr_records(), start=1):
-            # dandelion-specific modifications
-            chain.update(
-                {
-                    "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
-                }
-            )
-            contig_dicts[chain["sequence_id"]] = chain
-
-    data = pd.DataFrame.from_dict(contig_dicts, orient="index")
-    return ddl.Dandelion(ddl.load_data(data))
+    return from_scirpy(adata)
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
+def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, **kwargs) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
-    Internally calls :func:`scirpy.io.read_airr`.
+    Internally calls `dandelion.to_scirpy`.
 
     {doc_working_model}
 
@@ -642,8 +617,10 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     transfer
         Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
+    to_mudata
+        Return MuData object instead of AnnData object.
     **kwargs
-        Additional arguments passed to :func:`scirpy.io.read_airr`.
+        Additional arguments passed to `dandelion.to_scirpy`.
 
     Returns
     -------
@@ -651,20 +628,11 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     :ref:`data-structure`.
     """
     try:
-        import dandelion as ddl
+        from dandelion import to_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
-    dandelion_df = dandelion.data.copy()
-    # replace "unassigned" with None
-    for col in dandelion_df.columns:
-        dandelion_df.loc[dandelion_df[col] == "unassigned", col] = None
-
-    adata = read_airr(dandelion_df, **kwargs)
-
-    if transfer:
-        ddl.tl.transfer(adata, dandelion)  # need to make a version that is not so verbose?
-    return adata
+    return to_scirpy(dandelion, transfer=transfer, to_mudata=to_mudata, **kwargs)
 
 
 @_doc_params(doc_working_model=doc_working_model)
@@ -738,7 +706,7 @@ def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
                 "junction_aa": _get(row, "CDR3_Translation"),
                 "productive": row["Productive"],
                 "consensus_count": row["Read_Count"],
-                "duplicate_count": row["Molecule_Count"],
+                "umi_count": row["Molecule_Count"],
             }
         )
         tmp_cell.add_chain(tmp_chain)

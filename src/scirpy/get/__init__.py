@@ -127,9 +127,7 @@ def obs_context(data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Map
                 "v_gene_primary_vj_chain": ir.get.airr(mdata, "v_call", "VJ_1"),
             },
         ) as m:
-            ir.pl.group_abundance(
-                m, groupby="v_gene_primary_vj_chain", target_col="new_col_with_constant_value"
-            )
+            ir.pl.group_abundance(m, groupby="v_gene_primary_vj_chain", target_col="new_col_with_constant_value")
 
 
     Parameters

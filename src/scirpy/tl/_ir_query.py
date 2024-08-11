@@ -90,7 +90,7 @@ def ir_query(
     key_added: Optional[str] = None,
     distance_key: Optional[str] = None,
     inplace: bool = True,
-    n_jobs: Optional[int] = None,
+    n_jobs: int = -1,
     chunksize: int = 2000,
     airr_mod: str = "airr",
     airr_key: str = "airr",
@@ -394,9 +394,7 @@ def ir_query_annotate(
                     "unique-only": _reduce_unique_only,
                     "most-frequent": _reduce_most_frequent,
                     "json": _reduce_json,
-                }[
-                    strategy
-                ](  # type: ignore
+                }[strategy](  # type: ignore
                     x
                 )
 

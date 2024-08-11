@@ -1,4 +1,5 @@
 """Compute distances between immune receptor sequences"""
+
 import itertools
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
@@ -72,7 +73,7 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=None, **kwargs):
+def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=-1, **kwargs):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
@@ -98,6 +99,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
+    elif metric == "tcrdist":
+        dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 
@@ -114,13 +117,14 @@ def _ir_dist(
     sequence: Literal["aa", "nt"] = "nt",
     key_added: Union[str, None] = None,
     inplace: bool = True,
-    n_jobs: Union[int, None] = None,
+    n_jobs: int = -1,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
     airr_mod_ref: str = "airr",
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
+    **kwargs,
 ) -> Union[dict, None]:
     """\
     Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
@@ -158,7 +162,9 @@ def _ir_dist(
         with the results.
     n_jobs
         Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metrics.DistanceCalculator`.
+        :class:`scirpy.ir_dist.metrics.DistanceCalculator`. :class:`joblib.Parallel` is
+        used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
+        backend (e.g. `dask`) and adjust other configuration options.
     {airr_mod}
     {airr_key}
     {chain_idx_key}
@@ -168,6 +174,8 @@ def _ir_dist(
         Like `airr_key`, but for `reference`.
     chain_idx_key_ref
         Like `chain_idx_key`, but for `reference`.
+    **kwargs
+        Arguments are passed to the respective :class:`~scirpy.ir_dist.metrics.DistanceCalculator` class.
 
     Returns
     -------
@@ -224,7 +232,7 @@ def _ir_dist(
                 result[chain_type][tmp_key] = unique_seqs
 
     # compute distance matrices
-    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs)
+    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs, **kwargs)
     for chain_type in ["VJ", "VDJ"]:
         logging.info(f"Computing sequence x sequence distance matrix for {chain_type} sequences.")  # type: ignore
         result[chain_type]["distances"] = dist_calc.calc_dist_mat(
@@ -245,7 +253,7 @@ def sequence_dist(
     *,
     metric: MetricType = "identity",
     cutoff: Union[None, int] = None,
-    n_jobs: Union[None, int] = None,
+    n_jobs: int = -1,
     **kwargs,
 ) -> csr_matrix:
     """

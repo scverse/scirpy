@@ -8,11 +8,66 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.17.2
 
 ### Fixes
 
+-   Detection of CPU count in `define_clonotype_clusters` was broken ([#527](https://github.com/scverse/scirpy/pull/527))
+
+## v0.17.1
+
+### Fixes
+
+-   Compatibility with numpy 2.0 ([#525](https://github.com/scverse/scirpy/pull/525))
+
+### Chore
+
+-   scverse template update to v0.4 ([#519](https://github.com/scverse/scirpy/pull/519))
+
+## v0.17.0
+
+### Additions
+
+-   Add "TCRdist" as new metric ([#502](https://github.com/scverse/scirpy/pull/502))
+
+### Fixes
+
+-   Fix issue with detecting the number of available CPUs on MacOD ([#518](https://github.com/scverse/scirpy/pull/502))
+
+## v0.16.1
+
+### Fixes
+
+-   Fix default value for `n_jobs` in `ir.tl.ir_query` that could lead to an error ([#498](https://github.com/scverse/scirpy/pull/498)).
+-   Update description of D50 diversity metric in documentation ([#499](https://github.com/scverse/scirpy/pull/498)).
+-   Fix `clonotype_modularity` not being able to store result in MuData in some cases ([#504](https://github.com/scverse/scirpy/pull/504)).
+-   Fix issue with creating sparse matrices from generators with the latest scipy version ([#504](https://github.com/scverse/scirpy/pull/504))
+
+## v0.16.0
+
+### Backwards-incompatible changes
+
+-   Use the `umi_count` field instead of `duplicate_count` to store UMI counts. The field `umi_count` has been added to
+    the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022) ([#487](https://github.com/scverse/scirpy/pull/487)).
+    Use of `duplicate_count` for UMI counts is now discouraged. Scirpy will use `umi_count` in all `scirpy.io` functions.
+    It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
+    Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
+
+    ```python
+    adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
+    ```
+
+### Other
+
+-   the `io.to_dandelion` and `io.from_dandelion` interoperability functions now rely on the implementation provided by Dandelion itself ([#483](https://github.com/scverse/scirpy/pull/483)).
+
+## v0.15.0
+
+### Fixes
+
+-   Fix incompatibility with `scipy` 1.12 ([#484](https://github.com/scverse/scirpy/pull/484))
 -   Fix incompatibility with `adjustText` 1.0 ([#477](https://github.com/scverse/scirpy/pull/477))
+-   Reduce overall importtime by deferring the import of the `airr` package until it is actually used. ([#473](https://github.com/scverse/scirpy/pull/473))
 
 ### New features
 
@@ -20,7 +75,10 @@ and this project adheres to [Semantic Versioning][].
     and a heuristic based on the expected penalty per mismatch. This is implemented in the `FastAlignmentDistanceCalculator`
     class which supersedes the `AlignmentDistanceCalculator` class, which is now deprecated. Using the `"alignment"` metric
     in `pp.ir_dist` now uses the `FastAlignmentDistanceCalculator` with only the lenght-based filter activated.
-    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives.
+    Using the `"fastalignment"` activates the heuristic, which is significantly faster, but results in some false-negatives. ([#456](https://github.com/scverse/scirpy/pull/456))
+-   Switch to [joblib/loky](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html) as a backend for parallel
+    processing in `pp.ir_dist`. Joblib enables to switch to alternative backends that support out-of-machine computing
+    (e.g. `dask`, `ray`) via the `parallel_config` context manager. Additionally, chunk sizes are now adjusted dynamically based on the problem size. ([#473](https://github.com/scverse/scirpy/pull/473))
 
 ### Documentation
 

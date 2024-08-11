@@ -1,3 +1,5 @@
+import contextlib
+import os
 import warnings
 from collections.abc import Mapping, Sequence
 from textwrap import dedent
@@ -8,6 +10,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 from anndata import AnnData
+from joblib import Parallel
 from mudata import MuData
 from scanpy import logging
 from scipy.sparse import issparse
@@ -57,13 +60,11 @@ class DataHandler:
 
     @overload
     @staticmethod
-    def default(data: None) -> None:
-        ...
+    def default(data: None) -> None: ...
 
     @overload
     @staticmethod
-    def default(data: "DataHandler.TYPE") -> "DataHandler":
-        ...
+    def default(data: "DataHandler.TYPE") -> "DataHandler": ...
 
     @staticmethod
     def default(data):
@@ -117,12 +118,10 @@ class DataHandler:
             index_chains(self.adata, airr_key=self._airr_key, key_added=self._chain_idx_key)
 
     @overload
-    def get_obs(self, columns: str) -> pd.Series:
-        ...
+    def get_obs(self, columns: str) -> pd.Series: ...
 
     @overload
-    def get_obs(self, columns: Sequence[str]) -> pd.DataFrame:
-        ...
+    def get_obs(self, columns: Sequence[str]) -> pd.DataFrame: ...
 
     def get_obs(self, columns):
         """\
@@ -168,11 +167,20 @@ class DataHandler:
     def set_obs(self, key: str, value: Union[pd.Series, Sequence[Any], np.ndarray]) -> None:
         """Store results in .obs of AnnData and MuData.
 
+        If `value` is not a Series, if the length is equal to the params.mdata, we assume it aligns to the
+        MuData object. Otherwise, if the length is equal to the params.adata, we assume it aligns to the
+        AnnData object. Otherwise, a ValueError is thrown.
+
         The result will be written to `mdata.obs["{airr_mod}:{key}"]` and to `adata.obs[key]`.
         """
         # index series with AnnData (in case MuData has different dimensions)
         if not isinstance(value, pd.Series):
-            value = pd.Series(value, index=self.adata.obs_names)
+            if len(value) == self.data.shape[0]:
+                value = pd.Series(value, index=self.data.obs_names)
+            elif len(value) == self.adata.shape[0]:
+                value = pd.Series(value, index=self.adata.obs_names)
+            else:
+                raise ValueError("Provided values without index and can't align with either MuData or AnnData.")
         if isinstance(self.data, MuData):
             # write to both AnnData and MuData
             if self._airr_mod is None:
@@ -560,3 +568,36 @@ def _translate_dna_to_protein(dna_seq: str):
         else:
             protein.append("N")
     return "".join(protein)
+
+
+def _parallelize_with_joblib(delayed_objects, *, total=None, **kwargs):
+    """Wrapper around joblib.Parallel that shows a progressbar if the backend supports it.
+
+    Progressbar solution from https://stackoverflow.com/a/76726101/2340703
+    """
+    try:
+        return tqdm(Parallel(return_as="generator", **kwargs)(delayed_objects), total=total)
+    except ValueError:
+        logging.info(
+            "Backend doesn't support return_as='generator'. No progress bar will be shown. "
+            "Consider setting verbosity in joblib.parallel_config"
+        )
+        return Parallel(return_as="list", **kwargs)(delayed_objects)
+
+
+def _get_usable_cpus(n_jobs: int = 0):
+    """Get the number of CPUs available to the process
+
+    If `n_jobs` is specified and > 0 that value will be returned unaltered.
+    Otherwise will try to determine the number of CPUs available to the process which
+    is not necessarily the number of CPUs available on the system.
+
+    On MacOS, `os.sched_getaffinity` is not implemented, therefore we just return the cpu count there.
+    """
+    if n_jobs > 0:
+        return n_jobs
+
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return os.cpu_count()

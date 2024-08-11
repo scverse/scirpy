@@ -26,7 +26,7 @@ class ClonotypeNeighbors:
         match_columns: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
-        n_jobs: Union[int, None] = None,
+        n_jobs: int = -1,
         chunksize: int = 2000,
     ):
         """Computes pairwise distances between cells with identical
@@ -158,7 +158,9 @@ class ClonotypeNeighbors:
                 )
 
             self.neighbor_finder.add_distance_matrix(
-                "v_gene", sp.identity(len(v_genes), dtype=bool, format="csr"), v_genes  # type: ignore
+                "v_gene",
+                sp.identity(len(v_genes), dtype=bool, format="csr"),
+                v_genes,  # type: ignore
             )
 
         if self.match_columns is not None:
