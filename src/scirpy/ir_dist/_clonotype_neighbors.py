@@ -281,9 +281,9 @@ class ClonotypeNeighbors:
             chain_counts1 = chain_count_array[matrix_coo_row]
             chain_counts2 = chain_count_array[matrix_coo_col]
             chain_counts_equal = chain_counts1 == chain_counts2
-            matrix_coo_data_chain_filtered[
-                chain_counts1[chain_counts_equal], data_indices[chain_counts_equal]
-            ] = matrix_coo_data[chain_counts_equal]
+            matrix_coo_data_chain_filtered[chain_counts1[chain_counts_equal], data_indices[chain_counts_equal]] = (
+                matrix_coo_data[chain_counts_equal]
+            )
             return (
                 matrix_coo_data_chain_filtered[0],
                 matrix_coo_data_chain_filtered[1],
