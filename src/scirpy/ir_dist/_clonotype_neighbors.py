@@ -234,10 +234,10 @@ class ClonotypeNeighbors:
         def csr_min(a, b):
             max_value_a = np.max(a.data, initial=0)
             max_value_b = np.max(b.data, initial=0)
-            max_value = np.max([max_value_a, max_value_b]) + 1
-            min_mat_a = a.copy()
+            max_value = np.int16(np.max([max_value_a, max_value_b]) + 1)
+            min_mat_a = sp.csr_matrix((a.data.astype(np.int16), a.indices, a.indptr), shape=a.shape)
             min_mat_a.data -= max_value
-            min_mat_b = b.copy()
+            min_mat_b = sp.csr_matrix((b.data.astype(np.int16), b.indices, b.indptr), shape=b.shape)
             min_mat_b.data -= max_value
             a_smaller_b = min_mat_a < min_mat_b
             return b + (a - b).multiply(a_smaller_b)
