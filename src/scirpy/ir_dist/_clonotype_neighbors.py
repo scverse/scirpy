@@ -362,7 +362,6 @@ class ClonotypeNeighbors:
                 else:
                     raise AssertionError(f"self.dual_ir method {self.dual_ir} not implemented")
 
-
         if len(tmp_arm_res) == 1:
             final_res = tmp_arm_res[self._receptor_arm_cols[0]]
         else:
