@@ -265,8 +265,7 @@ class DoubleLookupNeighborFinder:
         data = np.concatenate(reverse_table_data)
         col = np.concatenate(reverse_table_col)
         indptr = np.concatenate([np.array([0], dtype=np.int32), np.cumsum(nnz_array)])
-        reverse_matrix_csr = sp.csr_matrix((data, col, indptr), shape=(len(reverse_table_data), len(object_ids)))
-
+        reverse_matrix_csr = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse.size))
         return rows * reverse_matrix_csr
 
     def add_distance_matrix(

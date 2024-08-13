@@ -224,7 +224,8 @@ class ClonotypeNeighbors:
                 )
         id_len = len(ct_ids)
 
-        has_distance_table = sp.csr_matrix((id_len, id_len))
+        first_value = next(iter(lookup.values()))
+        has_distance_table = sp.csr_matrix((id_len, first_value.shape[1]))
         for value in lookup.values():
             has_distance_table += value
 
