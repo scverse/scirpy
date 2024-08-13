@@ -360,7 +360,8 @@ class ClonotypeNeighbors:
                     tmp_arm_res[tmp_arm] += chain_res[(tmp_arm, 1, 1, 1)] + chain_res[(tmp_arm, 1, 1, 0)]
 
                 else:
-                    assert False, "self.dual_ir method " + self.dual_ir + "not implemented"
+                    raise AssertionError(f"self.dual_ir method {self.dual_ir} not implemented")
+
 
         if len(tmp_arm_res) == 1:
             final_res = tmp_arm_res[self._receptor_arm_cols[0]]
