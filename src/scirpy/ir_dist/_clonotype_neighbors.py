@@ -276,11 +276,11 @@ class ClonotypeNeighbors:
         chain_res = {}
 
         def filter_chain_count_data(
-            matrix_coo_data_chain_filtered, matrix_coo_data, matrix_coo_row, matrix_coo_col, chain_count_array
+            matrix_coo_data_chain_filtered, matrix_coo_data, matrix_coo_row, matrix_coo_col, chain_count_array1, chain_count_array2
         ):
             data_indices = np.arange(len(matrix_coo_data))
-            chain_counts1 = chain_count_array[matrix_coo_row]
-            chain_counts2 = chain_count_array[matrix_coo_col]
+            chain_counts1 = chain_count_array1[matrix_coo_row]
+            chain_counts2 = chain_count_array2[matrix_coo_col]
             chain_counts_equal = chain_counts1 == chain_counts2
             matrix_coo_data_chain_filtered[chain_counts1[chain_counts_equal], data_indices[chain_counts_equal]] = (
                 matrix_coo_data[chain_counts_equal]
@@ -292,14 +292,20 @@ class ClonotypeNeighbors:
             )
 
         def filter_chain_count(matrix: sp.csr_matrix, col: str) -> sp.csr_matrix:
-            chain_count = self._chain_count[col]
+            chain_count_array1 = self._chain_count[col]
+            
+            if self._chain_count2 is None:
+                chaint_count_array2 = chain_count_array1
+            else:
+                chaint_count_array2 = self._chain_count2[col]
+                
             matrix_coo = matrix.tocoo()
             matrix_coo_data_chain_filtered = np.array(
                 [np.zeros_like(matrix_coo.data), np.zeros_like(matrix_coo.data), np.zeros_like(matrix_coo.data)]
             )
             csr_filtered1, csr_filtered2, csr_filtered3 = matrix.copy(), matrix.copy(), matrix.copy()
             csr_filtered1.data, csr_filtered2.data, csr_filtered3.data = filter_chain_count_data(
-                matrix_coo_data_chain_filtered, matrix_coo.data, matrix_coo.row, matrix_coo.col, chain_count
+                matrix_coo_data_chain_filtered, matrix_coo.data, matrix_coo.row, matrix_coo.col, chain_count_array1, chaint_count_array2
             )
             return csr_filtered1, csr_filtered2, csr_filtered3
 
