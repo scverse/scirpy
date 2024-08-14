@@ -237,7 +237,7 @@ class DoubleLookupNeighborFinder:
         forward_lookup_table: str,
         reverse_lookup_table: Union[str, None] = None,
     ) -> Union[list[coo_matrix], list[np.ndarray]]:
-        distance_matrix_name, forward, _ = self.lookups[forward_lookup_table]
+        distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
 
         if reverse_lookup_table is not None:
             distance_matrix_name_reverse, _, reverse = self.lookups[reverse_lookup_table]
