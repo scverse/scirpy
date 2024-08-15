@@ -2,44 +2,37 @@ from collections.abc import Sequence
 from typing import Literal, Union
 
 import pandas as pd
+import numpy as np
 
 from scirpy.get import airr as get_airr
 from scirpy.util import DataHandler
 
+def simple_hamming_distance(sequence: str,
+                             germline: str, 
+                             frequency: bool,
+                             ignore_chars: list[str]):
 
-def simple_hamming_distance(sequence: str, germline: str, frequency=False):
-    if (sequence is None) or (germline is None):
-        return None
-    if len(sequence) != len(germline):
-        raise Exception("Sequences might not be IMGT aligned")
-
+    if not sequence or not germline or len(sequence) != len(germline):
+        raise ValueError("Sequences might not be IMGT aligned")
+    
     distance = 0
-    if frequency:
-        frac_counter = len(germline)
-        for i, c in enumerate(germline):
-            if (c == ".") or (c == "N"):
-                frac_counter -= 1
-                continue
-            elif (sequence[i] == ".") or (sequence[i] == "N"):
-                frac_counter -= 1
-                continue
-            elif c != sequence[i]:
-                distance += 1
-        if frac_counter == 0:
-            return frac_counter
-        else:
-            return distance / frac_counter
+    num_chars = len(sequence)
+    
+    for l1, l2 in zip(sequence, germline):
+        if l1 in ignore_chars or l2 in ignore_chars:
+          num_chars -= 1
 
+        elif l1 != l2:
+          distance += 1
+
+    if num_chars == 0:
+      return np.nan #can be used as a flag for filtering
+    
+    elif(frequency):
+      return distance / num_chars
+    
     else:
-        for i, c in enumerate(germline):
-            if (c == ".") or (c == "N"):
-                continue
-            if (sequence[i] == ".") or (sequence[i] == "N"):
-                continue
-            elif c != sequence[i]:
-                distance += 1
-
-        return distance
+      return distance
 
 
 @DataHandler.inject_param_docs()
@@ -58,10 +51,12 @@ def mutational_load(
     region: Literal["IMGT_V(D)J", "IMGT_V_segment", "subregion"] = "IMGT_VDJ",
     junction_col: str = "junction",
     frequency: bool = True,
+    ignore_chars: list[str] = [".", "N"],
     inplace: bool = True,
 ) -> Union[None, pd.DataFrame]:
     """\
     Calculates observable mutation by comparing sequence with germline alignment and counting differences
+    Needs germline alignment information, which can be obtained by using the interoperability to Dandelion (https://sc-dandelion.readthedocs.io/en/latest/notebooks/5_dandelion_diversity_and_mutation-10x_data.html)
     Behaviour: N- (masked/decayed base calls) and .-(gaps) characters are ignored
 
     Parameters
@@ -78,14 +73,18 @@ def mutational_load(
     chains
         One or multiple chains from which to use CDR3 sequences
     region
-        Specify the way mutations are calculated according to IMGT unique numbering scheme (https://doi.org/10.1016/S0145-305X(02)00039-3)
-        IMGT_V(D)J ->
-        IMGT_V_segment ->
-        subregion ->
+        Specify the way mutations of the V segment are calculated according to IMGT unique numbering scheme (https://doi.org/10.1016/S0145-305X(02)00039-3)
+        IMGT_V(D)J -> Includes the entire available sequence and germline alignment without any sub-regions/divisions
+        IMGT_V_segment -> Only V_segment as defined by the IMGT unique numbering scheme is included => Nucleotide 1 to 312
+        subregion -> same as IMGT_V(D)J, but distinguish subregions into CDR1-3 and FWR1-4
     junction_col
         Awkward array key to access junction region information
     frequency
         Specify to obtain either total or relative counts
+    ignore_chars
+        A list of characters to ignore while calculating differences:
+        N are masked or degraded nucleotide
+        . are gaps => beneficial to ignore as sometimes more gaps appear in sequence in respect to germline
     {inplace}
 
     Returns
@@ -97,41 +96,30 @@ def mutational_load(
     if not inplace:
         mutation_df = pd.DataFrame(index=airr_df.index)
 
+    if frequency:
+        frequency_string = "mu_freq"
+    else:
+        frequency_string = "mu_count"
+
     if region == "IMGT_V(D)J":
         for chain in chains:
             mutations = []
             for row in range(len(airr_df)):
-                #
-                if frequency:
-                    rel_mutation = simple_hamming_distance(
+                    
+                    mutation = simple_hamming_distance(
                         airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"],
                         airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"],
-                        frequency=True,
+                        frequency=frequency,
+                        ignore_chars = ignore_chars,
                     )
-                    mutations.append(rel_mutation)
+                    mutations.append(mutation)
 
-                else:
-                    count_mutation = simple_hamming_distance(
-                        airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"],
-                        airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"],
-                    )
+            if inplace:
+                params.set_obs(f"{chain}_IMGT_V(D)J_{frequency_string}", mutations)
 
-                    mutations.append(count_mutation)
-
-            if inplace and frequency:
-                params.set_obs(f"{chain}_V(D)J_mu_freq", mutations)
-
-            if not inplace and frequency:
-                mutation_df[f"{chain}_V(D)J_mu_freq"] = mutations
-
-            if inplace and not frequency:
-                params.set_obs(f"{chain}_V(D)J_mu_count", mutations)
-
-            if not inplace and not frequency:
-                mutation_df[f"{chain}_V(D)J_mu_count"] = mutations
-
-        if not inplace:
-            return mutation_df
+            else:
+                mutation_df[f"{chain}_IMGT_V(D)J_{frequency_string}"] = mutations
+                return mutation_df
 
     # calculate SHM up to nucleotide 312. Referring to the IMGT unique numbering scheme this includes:
     # fwr1, cdr1, fwr2, cdr2, fwr3, but not cdr3 and fwr4
@@ -142,40 +130,25 @@ def mutational_load(
                 v_region_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:312]
                 v_region_sequence = airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"][:312]
 
-                if frequency:
-                    rel_mutation = simple_hamming_distance(v_region_sequence, v_region_germline, frequency=True)
-                    mutations.append(rel_mutation)
-                else:
-                    count_mutation = simple_hamming_distance(v_region_sequence, v_region_germline)
-                    mutations.append(count_mutation)
+                mutation = simple_hamming_distance(v_region_sequence,
+                                                   v_region_germline,
+                                                   frequency=frequency,
+                                                   ignore_chars=ignore_chars)
+                mutations.append(mutation)
 
-            if inplace and frequency:
-                params.set_obs(f"{chain}_v_segment_mu_freq", mutations)
+            if inplace:
+                params.set_obs(f"{chain}_v_segment_{frequency_string}", mutations)
 
-            if not inplace and frequency:
-                mutation_df[f"{chain}_v_segment_mu_freq"] = mutations
-
-            if inplace and not frequency:
-                params.set_obs(f"{chain}_v_segment_mu_count", mutations)
-
-            if not inplace and not frequency:
-                mutation_df[f"{chain}_v_segment_mu_count"] = mutations
-
-        if not inplace:
-            return mutation_df
+            else:
+                mutation_df[f"{chain}_v_segment_{frequency_string}"] = mutations
+                return mutation_df
 
     if region == "subregion":
         subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
 
-            mutation_fwr1 = []
-            mutation_fwr2 = []
-            mutation_fwr3 = []
-            mutation_fwr4 = []
-            mutation_cdr1 = []
-            mutation_cdr2 = []
-            mutation_cdr3 = []
+            mutation_dict = {"fwr1":[], "fwr2": [], "fwr3": [], "fwr4": [], "cdr1": [], "cdr2":[], "cdr3":[]}
 
             for row in range(len(airr_df)):
                 fwr1_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:78]
@@ -189,90 +162,55 @@ def mutational_load(
                 fwr4_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][
                     (312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6) :
                 ]
+                    
+                mutation_dict["fwr1"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_fwr1"],
+                    fwr1_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
+                mutation_dict["cdr1"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_cdr1"],
+                    cdr1_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
+                mutation_dict["fwr2"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_fwr2"],
+                    fwr2_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
+                mutation_dict["cdr2"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_cdr2"],
+                    cdr2_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
+                mutation_dict["fwr3"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_fwr3"],
+                    fwr3_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
+                mutation_dict["cdr3"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_cdr3"],
+                    cdr3_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
+                mutation_dict["fwr4"].append(simple_hamming_distance(
+                    subregion_df.iloc[row].loc[f"{chain}_fwr4"],
+                    fwr4_germline,
+                    frequency=frequency,
+                    ignore_chars=ignore_chars
+                ))
 
-                if frequency:
-                    fwr1_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr1"], fwr1_germline, frequency=True
-                    )
-                    cdr1_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_cdr1"], cdr1_germline, frequency=True
-                    )
-                    fwr2_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr2"], fwr2_germline, frequency=True
-                    )
-                    cdr2_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_cdr2"], cdr2_germline, frequency=True
-                    )
-                    fwr3_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr3"], fwr3_germline, frequency=True
-                    )
-                    cdr3_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_cdr3"], cdr3_germline, frequency=True
-                    )
-                    fwr4_mu_rel = simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr4"], fwr4_germline, frequency=True
-                    )
+            for key in mutation_dict:
+                if inplace:
+                    params.set_obs(f"{chain}_{key}_{frequency_string}", mutation_dict[key])
+                if not inplace:
+                    mutation_df[f"{chain}_{key}_{frequency_string}"] = mutation_dict[key]
 
-                    mutation_fwr1.append(fwr1_mu_rel)
-                    mutation_fwr2.append(fwr2_mu_rel)
-                    mutation_fwr3.append(fwr3_mu_rel)
-                    mutation_fwr4.append(fwr4_mu_rel)
-                    mutation_cdr1.append(cdr1_mu_rel)
-                    mutation_cdr2.append(cdr2_mu_rel)
-                    mutation_cdr3.append(cdr3_mu_rel)
-
-                else:
-                    fwr1_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_fwr1"], fwr1_germline)
-                    cdr1_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_cdr1"], cdr1_germline)
-                    fwr2_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_fwr2"], fwr2_germline)
-                    cdr2_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_cdr2"], cdr2_germline)
-                    fwr3_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_fwr3"], fwr3_germline)
-                    cdr3_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_cdr3"], cdr3_germline)
-                    fwr4_mu_count = simple_hamming_distance(subregion_df.iloc[row].loc[f"{chain}_fwr4"], fwr4_germline)
-
-                    mutation_fwr1.append(fwr1_mu_count)
-                    mutation_fwr2.append(fwr2_mu_count)
-                    mutation_fwr3.append(fwr3_mu_count)
-                    mutation_fwr4.append(fwr4_mu_count)
-                    mutation_cdr1.append(cdr1_mu_count)
-                    mutation_cdr2.append(cdr2_mu_count)
-                    mutation_cdr3.append(cdr3_mu_count)
-
-            if not inplace and frequency:
-                mutation_df[f"{chain}_fwr1_mu_freq"] = mutation_fwr1
-                mutation_df[f"{chain}_cdr1_mu_freq"] = mutation_cdr1
-                mutation_df[f"{chain}_fwr2_mu_freq"] = mutation_fwr2
-                mutation_df[f"{chain}_cdr2_mu_freq"] = mutation_cdr2
-                mutation_df[f"{chain}_fwr3_mu_freq"] = mutation_fwr3
-                mutation_df[f"{chain}_cdr3_mu_freq"] = mutation_cdr3
-                mutation_df[f"{chain}_fwr4_mu_freq"] = mutation_fwr4
-
-            if inplace and frequency:
-                params.set_obs(f"{chain}_fwr1_mu_freq", mutation_fwr1)
-                params.set_obs(f"{chain}_cdr1_mu_freq", mutation_cdr1)
-                params.set_obs(f"{chain}_fwr2_mu_freq", mutation_fwr2)
-                params.set_obs(f"{chain}_cdr2_mu_freq", mutation_cdr2)
-                params.set_obs(f"{chain}_fwr3_mu_freq", mutation_fwr3)
-                params.set_obs(f"{chain}_cdr3_mu_freq", mutation_cdr3)
-                params.set_obs(f"{chain}_fwr4_mu_freq", mutation_fwr4)
-
-            if inplace and not frequency:
-                params.set_obs(f"{chain}_fwr1_mu_count", mutation_fwr1)
-                params.set_obs(f"{chain}_cdr1_mu_count", mutation_cdr1)
-                params.set_obs(f"{chain}_fwr2_mu_count", mutation_fwr2)
-                params.set_obs(f"{chain}_cdr2_mu_count", mutation_cdr2)
-                params.set_obs(f"{chain}_fwr3_mu_count", mutation_fwr3)
-                params.set_obs(f"{chain}_cdr3_mu_count", mutation_cdr3)
-                params.set_obs(f"{chain}_fwr4_mu_count", mutation_fwr4)
-
-            if not inplace and not frequency:
-                mutation_df[f"{chain}_fwr1_mu_count"] = mutation_fwr1
-                mutation_df[f"{chain}_cdr1_mu_count"] = mutation_cdr1
-                mutation_df[f"{chain}_fwr2_mu_count"] = mutation_fwr2
-                mutation_df[f"{chain}_cdr2_mu_count"] = mutation_cdr2
-                mutation_df[f"{chain}_fwr3_mu_count"] = mutation_fwr3
-                mutation_df[f"{chain}_cdr3_mu_count"] = mutation_cdr3
-                mutation_df[f"{chain}_fwr4_mu_count"] = mutation_fwr4
-
-        if not inplace:
-            return mutation_df
+            if not inplace:
+                return mutation_df

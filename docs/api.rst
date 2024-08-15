@@ -168,7 +168,12 @@ V(D)J gene usage
 
    tl.spectratype
 
+Calculating mutations
+^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+   :toctree: ./generated
 
+   tl.mutational_load
 
 Plotting: `pl`
 --------------
