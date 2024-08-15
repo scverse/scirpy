@@ -313,8 +313,8 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
     # Smoke test, no assertions!
     # Smoke test, no assertions!
     metrics_with_n_blocks = ["hamming", "normalized_hamming", "tcrdist"]
-    n_blocks_params = [1,2]
-    
+    n_blocks_params = [1, 2]
+
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
     cutoff = 8
