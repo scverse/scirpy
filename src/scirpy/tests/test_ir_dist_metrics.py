@@ -308,9 +308,7 @@ def test_fast_alignment_dist_with_two_seq_arrays():
 @pytest.mark.parametrize(
     "metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"]
 )
-@pytest.mark.parametrize(
-    "n_jobs", [-1, 1, 2]
-)
+@pytest.mark.parametrize("n_jobs", [-1, 1, 2])
 def test_sequence_dist_all_metrics(metric, n_jobs):
     # Smoke test, no assertions!
     # Smoke test, no assertions!
@@ -320,12 +318,16 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
     cutoff = 8
-    
+
     if metric in metrics_with_n_blocks:
         for n_blocks in n_blocks_params:
-            dist_mat = ir.ir_dist.sequence_dist(unique_seqs, metric=metric, cutoff=cutoff, n_jobs=n_jobs, n_blocks=n_blocks)
+            dist_mat = ir.ir_dist.sequence_dist(
+                unique_seqs, metric=metric, cutoff=cutoff, n_jobs=n_jobs, n_blocks=n_blocks
+            )
             assert dist_mat.shape == (5, 5)
-            dist_mat = ir.ir_dist.sequence_dist(unique_seqs, seqs2, metric=metric, cutoff=cutoff, n_jobs=n_jobs, n_blocks=n_blocks)
+            dist_mat = ir.ir_dist.sequence_dist(
+                unique_seqs, seqs2, metric=metric, cutoff=cutoff, n_jobs=n_jobs, n_blocks=n_blocks
+            )
             assert dist_mat.shape == (5, 3)
     else:
         dist_mat = ir.ir_dist.sequence_dist(unique_seqs, metric=metric, cutoff=cutoff, n_jobs=n_jobs)
