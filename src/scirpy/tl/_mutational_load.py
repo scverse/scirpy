@@ -51,7 +51,7 @@ def mutational_load(
     region: Literal["IMGT_V(D)J", "IMGT_V_segment", "subregion"] = "IMGT_VDJ",
     junction_col: str = "junction",
     frequency: bool = True,
-    ignore_chars: list[str] = [".", "N"],
+    ignore_chars: list[str] = "None",
     inplace: bool = True,
 ) -> Union[None, pd.DataFrame]:
     """\
@@ -100,6 +100,8 @@ def mutational_load(
         frequency_string = "mu_freq"
     else:
         frequency_string = "mu_count"
+    if ignore_chars is "None":
+        ignore_chars = [".","N"]
 
     if region == "IMGT_V(D)J":
         for chain in chains:
