@@ -426,7 +426,7 @@ class MetricDistanceCalculator(abc.ABC):
         Overall number of blocks given to the workers (processes)
     """
 
-    def __init__(self, n_jobs: int = 1, n_blocks: int = 1):
+    def __init__(self, n_jobs: int = -1, n_blocks: int = 1):
         super().__init__()
         self.n_jobs = n_jobs
         self.n_blocks = n_blocks
@@ -631,13 +631,12 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         is_symmetric *= histogram
         start_column *= is_symmetric
 
-        nb.set_num_threads(self.n_jobs)
+        if(self.n_jobs > -1):
+            nb.set_num_threads(self.n_jobs)
+        
         num_threads = nb.get_num_threads()
 
-        if num_threads > 1:
-            jit_parallel = True
-        else:
-            jit_parallel = False
+        jit_parallel = num_threads > 1
 
         @nb.jit(nopython=True, parallel=jit_parallel, nogil=True)
         def _nb_hamming_mat():
@@ -837,13 +836,12 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         dist_mat_weighted = self.tcr_nb_distance_matrix * dist_weight
         start_column *= is_symmetric
 
-        nb.set_num_threads(self.n_jobs)
+        if(self.n_jobs > -1):
+            nb.set_num_threads(self.n_jobs)
+
         num_threads = nb.get_num_threads()
 
-        if num_threads > 1:
-            jit_parallel = True
-        else:
-            jit_parallel = False
+        jit_parallel = num_threads > 1
 
         @nb.jit(nopython=True, parallel=jit_parallel, nogil=True)
         def _nb_tcrdist_mat():
