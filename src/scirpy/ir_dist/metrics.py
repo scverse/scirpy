@@ -551,7 +551,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
 
     def __init__(
         self,
-        n_jobs: int = 1,
+        n_jobs: int = -1,
         n_blocks: int = 1,
         cutoff: int = 2,
         *,
@@ -764,7 +764,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
-        n_jobs: int = 1,
+        n_jobs: int = -1,
         n_blocks: int = 1,
     ):
         self.dist_weight = dist_weight
