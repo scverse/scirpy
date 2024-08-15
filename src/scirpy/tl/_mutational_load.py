@@ -1,38 +1,35 @@
 from collections.abc import Sequence
 from typing import Literal, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from scirpy.get import airr as get_airr
 from scirpy.util import DataHandler
 
-def simple_hamming_distance(sequence: str,
-                             germline: str, 
-                             frequency: bool,
-                             ignore_chars: list[str]):
 
+def simple_hamming_distance(sequence: str, germline: str, frequency: bool, ignore_chars: list[str]):
     if not sequence or not germline or len(sequence) != len(germline):
         raise ValueError("Sequences might not be IMGT aligned")
-    
+
     distance = 0
     num_chars = len(sequence)
-    
+
     for l1, l2 in zip(sequence, germline):
         if l1 in ignore_chars or l2 in ignore_chars:
-          num_chars -= 1
+            num_chars -= 1
 
         elif l1 != l2:
-          distance += 1
+            distance += 1
 
     if num_chars == 0:
-      return np.nan #can be used as a flag for filtering
-    
-    elif(frequency):
-      return distance / num_chars
-    
+        return np.nan  # can be used as a flag for filtering
+
+    elif frequency:
+        return distance / num_chars
+
     else:
-      return distance
+        return distance
 
 
 @DataHandler.inject_param_docs()
@@ -107,14 +104,13 @@ def mutational_load(
         for chain in chains:
             mutations = []
             for row in range(len(airr_df)):
-                    
-                    mutation = simple_hamming_distance(
-                        airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"],
-                        airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"],
-                        frequency=frequency,
-                        ignore_chars = ignore_chars,
-                    )
-                    mutations.append(mutation)
+                mutation = simple_hamming_distance(
+                    airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"],
+                    airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"],
+                    frequency=frequency,
+                    ignore_chars=ignore_chars,
+                )
+                mutations.append(mutation)
 
             if inplace:
                 params.set_obs(f"{chain}_IMGT_V(D)J_{frequency_string}", mutations)
@@ -132,10 +128,9 @@ def mutational_load(
                 v_region_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:312]
                 v_region_sequence = airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"][:312]
 
-                mutation = simple_hamming_distance(v_region_sequence,
-                                                   v_region_germline,
-                                                   frequency=frequency,
-                                                   ignore_chars=ignore_chars)
+                mutation = simple_hamming_distance(
+                    v_region_sequence, v_region_germline, frequency=frequency, ignore_chars=ignore_chars
+                )
                 mutations.append(mutation)
 
             if inplace:
@@ -150,7 +145,7 @@ def mutational_load(
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
 
-            mutation_dict = {"fwr1":[], "fwr2": [], "fwr3": [], "fwr4": [], "cdr1": [], "cdr2":[], "cdr3":[]}
+            mutation_dict = {"fwr1": [], "fwr2": [], "fwr3": [], "fwr4": [], "cdr1": [], "cdr2": [], "cdr3": []}
 
             for row in range(len(airr_df)):
                 fwr1_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:78]
@@ -164,49 +159,63 @@ def mutational_load(
                 fwr4_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][
                     (312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6) :
                 ]
-                    
-                mutation_dict["fwr1"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_fwr1"],
-                    fwr1_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
-                mutation_dict["cdr1"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_cdr1"],
-                    cdr1_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
-                mutation_dict["fwr2"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_fwr2"],
-                    fwr2_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
-                mutation_dict["cdr2"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_cdr2"],
-                    cdr2_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
-                mutation_dict["fwr3"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_fwr3"],
-                    fwr3_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
-                mutation_dict["cdr3"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_cdr3"],
-                    cdr3_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
-                mutation_dict["fwr4"].append(simple_hamming_distance(
-                    subregion_df.iloc[row].loc[f"{chain}_fwr4"],
-                    fwr4_germline,
-                    frequency=frequency,
-                    ignore_chars=ignore_chars
-                ))
+
+                mutation_dict["fwr1"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_fwr1"],
+                        fwr1_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
+                mutation_dict["cdr1"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_cdr1"],
+                        cdr1_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
+                mutation_dict["fwr2"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_fwr2"],
+                        fwr2_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
+                mutation_dict["cdr2"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_cdr2"],
+                        cdr2_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
+                mutation_dict["fwr3"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_fwr3"],
+                        fwr3_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
+                mutation_dict["cdr3"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_cdr3"],
+                        cdr3_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
+                mutation_dict["fwr4"].append(
+                    simple_hamming_distance(
+                        subregion_df.iloc[row].loc[f"{chain}_fwr4"],
+                        fwr4_germline,
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                )
 
             for key in mutation_dict:
                 if inplace:
