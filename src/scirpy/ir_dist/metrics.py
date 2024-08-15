@@ -554,6 +554,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         n_jobs: int = 1,
         n_blocks: int = 1,
         cutoff: int = 2,
+        *,
         normalize: bool = False,
         histogram: bool = False,
     ):
