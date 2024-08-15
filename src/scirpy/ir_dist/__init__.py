@@ -172,7 +172,7 @@ def _ir_dist(
         backend (e.g. `dask`) and adjust other configuration options.
         The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba` 
         for parallelization with multithreading instead.
-        
+
     {airr_mod}
     {airr_key}
     {chain_idx_key}
