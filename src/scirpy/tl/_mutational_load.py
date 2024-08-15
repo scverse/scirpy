@@ -97,8 +97,8 @@ def mutational_load(
         frequency_string = "mu_freq"
     else:
         frequency_string = "mu_count"
-    if ignore_chars is "None":
-        ignore_chars = [".","N"]
+    if ignore_chars == "None":
+        ignore_chars = [".", "N"]
 
     if region == "IMGT_V(D)J":
         for chain in chains:
