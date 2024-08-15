@@ -305,9 +305,6 @@ def test_fast_alignment_dist_with_two_seq_arrays():
     npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
 
-metrics_with_n_blocks = ["hamming", "normalized_hamming", "tcrdist"]
-n_blocks_params = [1,2]
-
 @pytest.mark.parametrize(
     "metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"]
 )
@@ -317,6 +314,9 @@ n_blocks_params = [1,2]
 def test_sequence_dist_all_metrics(metric, n_jobs):
     # Smoke test, no assertions!
     # Smoke test, no assertions!
+    metrics_with_n_blocks = ["hamming", "normalized_hamming", "tcrdist"]
+    n_blocks_params = [1,2]
+    
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
     seqs2 = np.array(["RRR", "FAFA", "WWWWWWW"])
     cutoff = 8
