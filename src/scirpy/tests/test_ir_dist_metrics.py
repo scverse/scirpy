@@ -672,7 +672,7 @@ def test_hamming_reference():
 
 
 def test_normalized_hamming():
-    hamming_calculator = HammingDistanceCalculator(1, 1, 50, True)
+    hamming_calculator = HammingDistanceCalculator(1, 1, 50, normalize = True)
     seq1 = np.array(["AAAA", "AAB", "AABB", "ABA"])
     seq2 = np.array(["ABB", "ABBB", "ABBB"])
     expected_result = np.array([[0, 0, 0], [34, 0, 0], [0, 26, 26], [34, 0, 0]])
@@ -681,53 +681,34 @@ def test_normalized_hamming():
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
 
+
 def test_normalized_hamming_reference():
     from . import TESTDATA
-    from decimal import Decimal, ROUND_HALF_UP
     
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
-    hamming_calculator = HammingDistanceCalculator(1, 1, 1000, False)
-    res = hamming_calculator.calc_dist_mat(seqs, seqs)
+    reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_normalized_csr_result.npz")
 
-    cutoff = 50
+    normalized_hamming_calculator = HammingDistanceCalculator(2, 2, 50, normalize = True)
+    res = normalized_hamming_calculator.calc_dist_mat(seqs, seqs)
 
-    normalized_hamming_calculator = HammingDistanceCalculator(2, 2, cutoff, True)
-    res_norm = normalized_hamming_calculator.calc_dist_mat(seqs, seqs)
-
-    lengths = np.array([len(s) for s in seqs])
-
-    for i in range(len(res.data)):
-        if res.data[i] > 0:
-            distance = (res.data[i]-1) / lengths[res.indices[i]] * 100 + 1
-            distance = Decimal(distance).quantize(0, ROUND_HALF_UP)
-            if(distance <= cutoff + 1):
-                res.data[i] = distance
-            else:
-                res.data[i] = 0
-
-    nz = np.nonzero(res.data)
-    res.data = res.data[nz]
-
-    assert np.array_equal(res.data, res_norm.data)
+    assert np.array_equal(res.data, reference_result.data)
+    assert np.array_equal(res.indices, reference_result.indices)
+    assert np.array_equal(res.indptr, reference_result.indptr)
 
 
 def test_hamming_histogram():
-    hamming_calculator = HammingDistanceCalculator(1, 1, 100, True, True)
+    hamming_calculator = HammingDistanceCalculator(1, 1, 100, normalize=True, histogram=True)
     seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
-    expected_result = np.array([50, 100, 50, 100])
-    _, _, _, res = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
-    assert np.array_equal(res, expected_result)
+    row_mins_expected = np.array([50, 100, 50, 100])
+    _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
+    assert np.array_equal(row_mins_expected, row_mins)
+
 
 def test_hamming_histogram_reference():
     from . import TESTDATA
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
-    hamming_calculator = HammingDistanceCalculator(2, 2, 100, True, True)
-    res = hamming_calculator.calc_dist_mat(seqs, seqs)
-    res_dense = res.todense()
-    res_dense = np.where(res_dense == 0, 101, res_dense)
-    res_dense = np.where(res_dense == 1, 101, res_dense)
-    row_mins_ref = np.min(res_dense, axis=1) - 1 
+    hamming_calculator = HammingDistanceCalculator(2, 2, 100, normalize=True, histogram=True)
+    row_mins_ref = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_histogram_result.npy")
     _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
-
     assert np.array_equal(row_mins_ref, row_mins)
 
