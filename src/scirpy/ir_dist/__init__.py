@@ -35,7 +35,7 @@ def IrNeighbors(*args, **kwargs):
 
 
 MetricType = Union[
-    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming"],
+    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming", "normalized_hamming", "tcrdist"],
     metrics.DistanceCalculator,
 ]
 
@@ -167,10 +167,12 @@ def _ir_dist(
         If true, store the result in `adata.uns`. Otherwise return a dictionary
         with the results.
     n_jobs
-        Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metrics.DistanceCalculator`. :class:`joblib.Parallel` is
+        Number of cores to use for distance calculation. :class:`joblib.Parallel` is
         used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
         backend (e.g. `dask`) and adjust other configuration options.
+        The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba.jit(parallel=True)` 
+        for parallelization with multithreading instead.
+
     {airr_mod}
     {airr_key}
     {chain_idx_key}
