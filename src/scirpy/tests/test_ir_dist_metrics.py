@@ -672,7 +672,7 @@ def test_hamming_reference():
 
 
 def test_normalized_hamming():
-    hamming_calculator = HammingDistanceCalculator(1, 1, 50, normalize = True)
+    hamming_calculator = HammingDistanceCalculator(1, 1, 50, normalize=True)
     seq1 = np.array(["AAAA", "AAB", "AABB", "ABA"])
     seq2 = np.array(["ABB", "ABBB", "ABBB"])
     expected_result = np.array([[0, 0, 0], [34, 0, 0], [0, 26, 26], [34, 0, 0]])
@@ -684,11 +684,11 @@ def test_normalized_hamming():
 
 def test_normalized_hamming_reference():
     from . import TESTDATA
-    
+
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_normalized_csr_result.npz")
 
-    normalized_hamming_calculator = HammingDistanceCalculator(2, 2, 50, normalize = True)
+    normalized_hamming_calculator = HammingDistanceCalculator(2, 2, 50, normalize=True)
     res = normalized_hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
@@ -706,9 +706,9 @@ def test_hamming_histogram():
 
 def test_hamming_histogram_reference():
     from . import TESTDATA
+
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     hamming_calculator = HammingDistanceCalculator(2, 2, 100, normalize=True, histogram=True)
     row_mins_ref = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_histogram_result.npy")
     _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
     assert np.array_equal(row_mins_ref, row_mins)
-
