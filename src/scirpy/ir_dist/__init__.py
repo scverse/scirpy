@@ -170,7 +170,7 @@ def _ir_dist(
         Number of cores to use for distance calculation. :class:`joblib.Parallel` is
         used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
         backend (e.g. `dask`) and adjust other configuration options.
-        The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba.jit(parallel=True)` 
+        The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba` 
         for parallelization with multithreading instead.
         
     {airr_mod}
