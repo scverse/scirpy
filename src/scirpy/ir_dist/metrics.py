@@ -631,9 +631,9 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         is_symmetric *= histogram
         start_column *= is_symmetric
 
-        if(self.n_jobs > -1):
+        if self.n_jobs > -1:
             nb.set_num_threads(self.n_jobs)
-        
+
         num_threads = nb.get_num_threads()
 
         jit_parallel = num_threads > 1
@@ -836,7 +836,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         dist_mat_weighted = self.tcr_nb_distance_matrix * dist_weight
         start_column *= is_symmetric
 
-        if(self.n_jobs > -1):
+        if self.n_jobs > -1:
             nb.set_num_threads(self.n_jobs)
 
         num_threads = nb.get_num_threads()
