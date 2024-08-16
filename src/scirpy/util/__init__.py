@@ -603,6 +603,7 @@ def _get_usable_cpus(n_jobs: int = 0, use_numba: bool = False):
     if use_numba:
         # When using numba, the `NUMBA_NUM_THREADS` variable should additionally be respected as upper limit
         from numba import config
+
         usable_cpus = min(usable_cpus, config.NUMBA_NUM_THREADS)
 
     return usable_cpus
