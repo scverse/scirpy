@@ -411,7 +411,7 @@ def _seqs2mat(
 
 class MetricDistanceCalculator(abc.ABC):
     """
-    Abstract base class for distance calculator classes that compute parwise distances between
+    Abstract base class for distance calculator classes that computes parwise distances between
     gene sequences in parallel based on a certain distance metric. The result is a (scipy) compressed sparse row distance matrix.
     Derived classes just need to implement the method _metric_mat (see method comments for more details).
 
@@ -446,6 +446,8 @@ class MetricDistanceCalculator(abc.ABC):
         for gene sequences in seqs and seqs2 based on a certain distance metric. The result should be a distance matrix
         that is returned in the form of the data, indices and intptr arrays of a (scipy) compressed sparse row matrix.
 
+        In case that a nearest neighbour histogram should be created later, the minimum value per row is returned.
+
         If this function is used to compute a block of a bigger result matrix, is_symmetric and start_column
         can be used to only compute the part of the block that would be part of the upper triangular matrix of the
         result matrix.
@@ -474,8 +476,8 @@ class MetricDistanceCalculator(abc.ABC):
             needed to create the final scipy CSR result matrix later
         row_mins:
             Array containing the minimum distance per row, ignoring equal sequences and ignoring the cutoff.
-            Should contain None if the computation of row_mins is not implemented. Used to create a nearest neighbor
-            histogram later.
+            Contains None if the computation of row_mins is not implemented. Used to create a nearest neighbor
+            histogram later. Is empty if the histogram should not be created.
         """
         pass
 
@@ -640,8 +642,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
             needed to create the final scipy CSR result matrix later
         row_mins:
             Array containing the minimum distance per row, ignoring equal sequences and ignoring the cutoff.
-            Should contain None if the computation of row_mins is not implemented. Used to create a nearest neighbor
-            histogram later.
+            Used to create a nearest neighbor histogram later. Is empty if the histogram should not be created.
         """
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
@@ -844,8 +845,8 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         row_mins:
-            Always returns numpy array containing None because the computation of the minimum distance per row is not implemented for
-            the tcrdist calculator yet.
+            Always returns a numpy array containing None because the computation of the minimum distance per row is
+            not implemented for the tcrdist calculator yet.
         """
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
 
