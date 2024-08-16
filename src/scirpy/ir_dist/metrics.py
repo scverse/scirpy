@@ -649,7 +649,10 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         cutoff = self.cutoff
         normalize = self.normalize
         histogram = self.histogram
-        is_symmetric *= histogram
+        
+        if(histogram):
+            is_symmetric = False
+        
         start_column *= is_symmetric
 
         if self.n_jobs > -1:
