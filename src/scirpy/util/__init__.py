@@ -585,7 +585,7 @@ def _parallelize_with_joblib(delayed_objects, *, total=None, **kwargs):
         return Parallel(return_as="list", **kwargs)(delayed_objects)
 
 
-def _get_usable_cpus(n_jobs: int = 0):
+def _get_usable_cpus(n_jobs: int = 0, use_numba: bool = False):
     """Get the number of CPUs available to the process
 
     If `n_jobs` is specified and > 0 that value will be returned unaltered.
@@ -598,6 +598,14 @@ def _get_usable_cpus(n_jobs: int = 0):
         return n_jobs
 
     try:
-        return os.sched_getaffinity(0)
+        usable_cpus = os.sched_getaffinity(0)
     except AttributeError:
-        return os.cpu_count()
+        usable_cpus = os.cpu_count()
+
+    if use_numba:
+        # When using numba, we should additionally repsect the `NUMBA_NUM_THREADS` variable as upper limit
+        import numba.config
+
+        usable_cpus = min(usable_cpus, numba.config.NUMBA_NUM_THREADS)
+
+    return usable_cpus
