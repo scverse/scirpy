@@ -483,9 +483,7 @@ class MetricDistanceCalculator(abc.ABC):
 
 
     def _make_histogram(self, row_mins: np.ndarray):
-        """
-        Subclass should override this method if the computation of a nearest neighbor histogram is implemented.
-        """
+        """Subclass should override this method if the computation of a nearest neighbor histogram is implemented."""
         raise NotImplementedError("Creating a histogram is not implemented for this metric")
 
 
