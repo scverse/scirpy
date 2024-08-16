@@ -481,13 +481,11 @@ class MetricDistanceCalculator(abc.ABC):
         """
         pass
 
-
     def _make_histogram(self, row_mins: np.ndarray):
         """
         Subclass should override this method if the computation of a nearest neighbor histogram is implemented.
         """
         raise NotImplementedError("Creating a histogram is not implemented for this metric")
-
 
     def _calc_dist_mat_block(
         self,
@@ -535,7 +533,7 @@ class MetricDistanceCalculator(abc.ABC):
 
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
             results = joblib.Parallel(return_as="list")(delayed_jobs)
-            
+
             block_matrices_csr, block_row_mins = zip(*results)
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
             row_mins = np.concatenate(block_row_mins)
@@ -548,7 +546,7 @@ class MetricDistanceCalculator(abc.ABC):
         else:
             full_distance_matrix = distance_matrix_csr
 
-        if self.histogram :
+        if self.histogram:
             self._make_histogram(row_mins)
 
         return full_distance_matrix
