@@ -787,6 +787,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         fixed_gappos: bool = True,
         n_jobs: int = -1,
         n_blocks: int = 1,
+        histogram: bool = False,
     ):
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
@@ -794,7 +795,8 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         self.ctrim = ctrim
         self.fixed_gappos = fixed_gappos
         self.cutoff = cutoff
-        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=False)
+        self.histogram = histogram
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
 
     def _tcrdist_mat(
         self,
