@@ -440,7 +440,7 @@ class MetricDistanceCalculator(abc.ABC):
         seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, Union[np.ndarray, None]]:
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, np.ndarray]:
         """
         Abstract method that should be implemented by the derived class in a way such that it computes the pairwise distances
         for gene sequences in seqs and seqs2 based on a certain distance metric. The result should be a distance matrix
@@ -473,27 +473,19 @@ class MetricDistanceCalculator(abc.ABC):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         row_mins:
-            Minimum distance per row, ignoring equal sequences and ignoring the cutoff.
-            Should be None if the computation of row_mins is not implemented. Used to create a nearest neighbor
+            Array containing the minimum distance per row, ignoring equal sequences and ignoring the cutoff.
+            Should contain None if the computation of row_mins is not implemented. Used to create a nearest neighbor
             histogram later.
         """
         pass
 
-    def _make_histogram(self, row_mins: np.ndarray):
-        if self.normalize:
-            bins = np.arange(0, 101, 2)
-        else:
-            max_value = np.max(row_mins)
-            bin_step = np.ceil(max_value / 100)
-            bins = np.arange(0, max_value + 1, bin_step)
 
-        plt.hist(row_mins, bins=bins, histtype="bar", edgecolor="black")
-        plt.axvline(x=self.cutoff, color="r", linestyle="-", label="cutoff")
-        plt.legend()
-        plt.xlabel("Distance to nearest neighbor")
-        plt.ylabel("Count")
-        plt.title('Histogram of "distance-to-nearest"-distribution')
-        plt.show()
+    def _make_histogram(self, row_mins: np.ndarray):
+        """
+        Subclass should override this method if the computation of a nearest neighbor histogram is implemented.
+        """
+        raise NotImplementedError("Creating a histogram is not implemented for this metric")
+
 
     def _calc_dist_mat_block(
         self,
@@ -508,7 +500,7 @@ class MetricDistanceCalculator(abc.ABC):
         of the block that would contribute to the upper triangular matrix of the final result will be computed.
         """
         if len(seqs) == 0 or len(seqs2) == 0:
-            return csr_matrix((len(seqs), len(seqs2)))
+            return csr_matrix((len(seqs), len(seqs2))), np.array([None])
 
         data_rows, indices_rows, row_element_counts, row_mins = self._metric_mat(
             seqs=seqs,
@@ -546,8 +538,7 @@ class MetricDistanceCalculator(abc.ABC):
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
             row_mins = np.concatenate(block_row_mins)
         else:
-            distance_matrix_csr, block_row_mins = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
-            row_mins = np.array(block_row_mins)
+            distance_matrix_csr, row_mins = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
 
         if is_symmetric:
             upper_triangular_distance_matrix = distance_matrix_csr
@@ -556,10 +547,7 @@ class MetricDistanceCalculator(abc.ABC):
             full_distance_matrix = distance_matrix_csr
 
         if self.histogram :
-            if None in row_mins:
-                raise NotImplementedError("Creating a histogram is not implemented for this metric")
-            else:
-                self._make_histogram(row_mins)
+            self._make_histogram(row_mins)
 
         return full_distance_matrix
 
@@ -588,10 +576,27 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         cutoff: int = 2,
         *,
         normalize: bool = False,
+        histogram: bool = False,
     ):
-        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=False)
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
         self.cutoff = cutoff
         self.normalize = normalize
+
+    def _make_histogram(self, row_mins: np.ndarray):
+        if self.normalize:
+            bins = np.arange(0, 101, 2)
+        else:
+            max_value = np.max(row_mins)
+            bin_step = np.ceil(max_value / 100)
+            bins = np.arange(0, max_value + 1, bin_step)
+
+        plt.hist(row_mins, bins=bins, histtype="bar", edgecolor="black")
+        plt.axvline(x=self.cutoff, color="r", linestyle="-", label="cutoff")
+        plt.legend()
+        plt.xlabel("Distance to nearest neighbor")
+        plt.ylabel("Count")
+        plt.title('Histogram of "distance-to-nearest"-distribution')
+        plt.show()
 
     def _hamming_mat(
         self,
@@ -634,8 +639,8 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         row_mins:
-            Minimum distance per row, ignoring equal sequences and ignoring the cutoff.
-            Should be None if the computation of row_mins is not implemented. Used to create a nearest neighbor
+            Array containing the minimum distance per row, ignoring equal sequences and ignoring the cutoff.
+            Should contain None if the computation of row_mins is not implemented. Used to create a nearest neighbor
             histogram later.
         """
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
@@ -789,7 +794,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         self.ctrim = ctrim
         self.fixed_gappos = fixed_gappos
         self.cutoff = cutoff
-        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks)
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=False)
 
     def _tcrdist_mat(
         self,
@@ -837,7 +842,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
         row_mins:
-            Returns always None because the computation of the minimum distance per row is not implemented for
+            Always returns numpy array containing None because the computation of the minimum distance per row is not implemented for
             the tcrdist calculator yet.
         """
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
@@ -948,7 +953,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
             return data_rows_flat, indices_rows_flat, row_element_counts
 
         data_rows, indices_rows, row_element_counts = _nb_tcrdist_mat()
-        return data_rows, indices_rows, row_element_counts, None
+        return data_rows, indices_rows, row_element_counts, np.array([None])
 
     _metric_mat = _tcrdist_mat
 
