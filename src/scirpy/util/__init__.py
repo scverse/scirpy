@@ -598,7 +598,7 @@ def _get_usable_cpus(n_jobs: int = 0, use_numba: bool = False):
         return n_jobs
 
     try:
-        usable_cpus = os.sched_getaffinity(0)
+        usable_cpus = len(os.sched_getaffinity(0))
     except AttributeError:
         usable_cpus = os.cpu_count()
 
