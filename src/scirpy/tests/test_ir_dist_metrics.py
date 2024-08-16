@@ -729,8 +729,9 @@ def test_hamming_histogram_reference():
     _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
     assert np.array_equal(row_mins_ref, row_mins)
 
+
 def test_tcrdist_histogram_not_implemented():
-    #Change once histogram is implemented for tcrdist
+    # Change once histogram is implemented for tcrdist
     with pytest.raises(NotImplementedError, match=None):
         tcrdist_calculator = TCRdistDistanceCalculator(histogram=True)
         seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
