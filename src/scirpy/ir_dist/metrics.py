@@ -426,10 +426,11 @@ class MetricDistanceCalculator(abc.ABC):
         Overall number of blocks given to the workers (processes)
     """
 
-    def __init__(self, n_jobs: int = -1, n_blocks: int = 1):
+    def __init__(self, n_jobs: int = -1, n_blocks: int = 1, histogram: bool = False):
         super().__init__()
         self.n_jobs = n_jobs
         self.n_blocks = n_blocks
+        self.histogram = histogram
 
     @abc.abstractmethod
     def _metric_mat(
@@ -439,7 +440,7 @@ class MetricDistanceCalculator(abc.ABC):
         seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, Union[np.ndarray, None]]:
         """
         Abstract method that should be implemented by the derived class in a way such that it computes the pairwise distances
         for gene sequences in seqs and seqs2 based on a certain distance metric. The result should be a distance matrix
@@ -471,8 +472,28 @@ class MetricDistanceCalculator(abc.ABC):
         row_element_counts:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
+        row_mins:
+            Minimum distance per row, ignoring equal sequences and ignoring the cutoff.
+            Should be None if the computation of row_mins is not implemented. Used to create a nearest neighbor
+            histogram later.
         """
         pass
+
+    def _make_histogram(self, row_mins: np.ndarray):
+        if self.normalize:
+            bins = np.arange(0, 101, 2)
+        else:
+            max_value = np.max(row_mins)
+            bin_step = np.ceil(max_value / 100)
+            bins = np.arange(0, max_value + 1, bin_step)
+
+        plt.hist(row_mins, bins=bins, histtype="bar", edgecolor="black")
+        plt.axvline(x=self.cutoff, color="r", linestyle="-", label="cutoff")
+        plt.legend()
+        plt.xlabel("Distance to nearest neighbor")
+        plt.ylabel("Count")
+        plt.title('Histogram of "distance-to-nearest"-distribution')
+        plt.show()
 
     def _calc_dist_mat_block(
         self,
@@ -480,15 +501,16 @@ class MetricDistanceCalculator(abc.ABC):
         seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
-    ) -> csr_matrix:
-        """Computes a block of the final distance matrix and returns it as CSR matrix.
+    ) -> tuple[csr_matrix, np.ndarray]:
+        """Computes a block of the final distance matrix and returns it as CSR matrix. Also computes
+        the minimum distance per row, for which equal sequences and the cutoff are ignored.
         If the final result matrix that consists of all blocks together is symmetric, only the part
         of the block that would contribute to the upper triangular matrix of the final result will be computed.
         """
         if len(seqs) == 0 or len(seqs2) == 0:
             return csr_matrix((len(seqs), len(seqs2)))
 
-        data_rows, indices_rows, row_element_counts = self._metric_mat(
+        data_rows, indices_rows, row_element_counts, row_mins = self._metric_mat(
             seqs=seqs,
             seqs2=seqs2,
             is_symmetric=is_symmetric,
@@ -499,7 +521,7 @@ class MetricDistanceCalculator(abc.ABC):
         indptr[1:] = np.cumsum(row_element_counts)
         data, indices = np.concatenate(data_rows), np.concatenate(indices_rows)
         sparse_distance_matrix = csr_matrix((data, indices, indptr), shape=(len(seqs), len(seqs2)))
-        return sparse_distance_matrix
+        return sparse_distance_matrix, row_mins
 
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
         """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
@@ -519,15 +541,25 @@ class MetricDistanceCalculator(abc.ABC):
 
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
             results = joblib.Parallel(return_as="list")(delayed_jobs)
-            distance_matrix_csr = scipy.sparse.vstack(results)
+            
+            block_matrices_csr, block_row_mins = zip(*results)
+            distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
+            row_mins = np.concatenate(block_row_mins)
         else:
-            distance_matrix_csr = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
+            distance_matrix_csr, block_row_mins = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
+            row_mins = np.array(block_row_mins)
 
         if is_symmetric:
             upper_triangular_distance_matrix = distance_matrix_csr
             full_distance_matrix = upper_triangular_distance_matrix.maximum(upper_triangular_distance_matrix.T)
         else:
             full_distance_matrix = distance_matrix_csr
+
+        if self.histogram :
+            if None in row_mins:
+                raise NotImplementedError("Creating a histogram is not implemented for this metric")
+            else:
+                self._make_histogram(row_mins)
 
         return full_distance_matrix
 
@@ -556,27 +588,10 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         cutoff: int = 2,
         *,
         normalize: bool = False,
-        histogram: bool = False,
     ):
-        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks)
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=False)
         self.cutoff = cutoff
         self.normalize = normalize
-        self.histogram = histogram
-
-    def _make_histogram(self, row_mins):
-        if self.normalize:
-            bins = np.arange(0, 101, 2)
-        else:
-            max_value = np.max(row_mins)
-            bin_step = np.ceil(max_value / 100)
-            bins = np.arange(0, max_value + 1, bin_step)
-        plt.hist(row_mins, bins=bins, histtype="bar", edgecolor="black")
-        plt.axvline(x=self.cutoff, color="r", linestyle="-", label="cutoff")
-        plt.legend()
-        plt.xlabel("Distance to nearest neighbor")
-        plt.ylabel("Count")
-        plt.title('Histogram of "distance-to-nearest"-distribution')
-        plt.show()
 
     def _hamming_mat(
         self,
@@ -618,6 +633,10 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         row_element_counts:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
+        row_mins:
+            Minimum distance per row, ignoring equal sequences and ignoring the cutoff.
+            Should be None if the computation of row_mins is not implemented. Used to create a nearest neighbor
+            histogram later.
         """
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
@@ -710,12 +729,9 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
 
         data_rows, indices_rows, row_element_counts, row_mins = _nb_hamming_mat()
 
-        if histogram:
-            self._make_histogram(row_mins)
-
         return data_rows, indices_rows, row_element_counts, row_mins
 
-    _metric_mat = lambda self, *args, **kwargs: self._hamming_mat(*args, **kwargs)[:3]
+    _metric_mat = _hamming_mat
 
 
 class TCRdistDistanceCalculator(MetricDistanceCalculator):
@@ -820,6 +836,9 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         row_element_counts:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
+        row_mins:
+            Returns always None because the computation of the minimum distance per row is not implemented for
+            the tcrdist calculator yet.
         """
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
 
@@ -929,7 +948,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
             return data_rows_flat, indices_rows_flat, row_element_counts
 
         data_rows, indices_rows, row_element_counts = _nb_tcrdist_mat()
-        return data_rows, indices_rows, row_element_counts
+        return data_rows, indices_rows, row_element_counts, None
 
     _metric_mat = _tcrdist_mat
 
