@@ -649,10 +649,10 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         cutoff = self.cutoff
         normalize = self.normalize
         histogram = self.histogram
-        
-        if(histogram):
+
+        if histogram:
             is_symmetric = False
-        
+
         start_column *= is_symmetric
 
         nb.set_num_threads(_get_usable_cpus(n_jobs=self.n_jobs, use_numba=True))
