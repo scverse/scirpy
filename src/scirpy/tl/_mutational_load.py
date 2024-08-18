@@ -141,31 +141,35 @@ def mutational_load(
 
     if region == "subregion":
         subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
-        
+
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
 
             mutation_dict = {"fwr1": [], "fwr2": [], "fwr3": [], "fwr4": [], "cdr1": [], "cdr2": [], "cdr3": []}
 
             for row in range(len(airr_df)):
-                regions = {"fwr1": (0, 78),
-                   "cdr1": (78, 114),
-                   "fwr2": (114, 165),
-                   "cdr2": (165, 195),
-                   "fwr3": (195,312),
-                   "cdr3": (312, 312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6),
-                   "fwr4": (312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6, len(airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"]))}
+                regions = {
+                    "fwr1": (0, 78),
+                    "cdr1": (78, 114),
+                    "fwr2": (114, 165),
+                    "cdr2": (165, 195),
+                    "fwr3": (195, 312),
+                    "cdr3": (312, 312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6),
+                    "fwr4": (
+                        312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6,
+                        len(airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"]),
+                    ),
+                }
 
                 for v, coordinates in regions.items():
-
                     mutation_dict[v].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_{v}"],
-                        airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][slice(*coordinates)],
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
+                        simple_hamming_distance(
+                            subregion_df.iloc[row].loc[f"{chain}_{v}"],
+                            airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][slice(*coordinates)],
+                            frequency=frequency,
+                            ignore_chars=ignore_chars,
+                        )
                     )
-                )
 
             for key in mutation_dict:
                 if inplace:
