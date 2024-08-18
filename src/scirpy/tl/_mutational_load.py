@@ -52,9 +52,8 @@ def mutational_load(
     inplace: bool = True,
 ) -> Union[None, pd.DataFrame]:
     """\
-    Calculates observable mutation by comparing sequence with germline alignment and counting differences
+    Calculates observable mutation by comparing sequences with corresponding germline alignments and counting differences.
     Needs germline alignment information, which can be obtained by using the interoperability to Dandelion (https://sc-dandelion.readthedocs.io/en/latest/notebooks/5_dandelion_diversity_and_mutation-10x_data.html)
-    Behaviour: N- (masked/decayed base calls) and .-(gaps) characters are ignored
 
     Parameters
     ----------
@@ -62,31 +61,31 @@ def mutational_load(
     {airr_mod}
     {airr_key}
     chain_idx_key
-        key to select chain indices
+        Key to select chain indices
     sequence_alignment
         Awkward array key to access sequence alignment information
     germline_alignment
-        Awkward array key to access sequence alignment information -> best practice to select D gene-masked alignment
+        Awkward array key to access germline alignment information -> best practice mask D-gene segment (https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-015-0243-2)
     chains
         One or multiple chains from which to use CDR3 sequences
     region
         Specify the way mutations of the V segment are calculated according to IMGT unique numbering scheme (https://doi.org/10.1016/S0145-305X(02)00039-3)
-        IMGT_V(D)J -> Includes the entire available sequence and germline alignment without any sub-regions/divisions
-        IMGT_V_segment -> Only V_segment as defined by the IMGT unique numbering scheme is included => Nucleotide 1 to 312
-        subregion -> same as IMGT_V(D)J, but distinguish subregions into CDR1-3 and FWR1-4
+        * `"IMGT_V(D)J"` - Includes the entire available sequence and germline alignment without any sub-regions/divisions
+        * `"IMGT_V_segment"` - Only V_segment as defined by the IMGT unique numbering scheme is included => Nucleotide 1 to 312
+        * `"subregion"` - Similar to IMGT_V(D)J, but independent calculation of each subregion (CDR1-3 and FWR1-4, respectively)
     junction_col
         Awkward array key to access junction region information
     frequency
         Specify to obtain either total or relative counts
     ignore_chars
-        A list of characters to ignore while calculating differences:
-        N are masked or degraded nucleotide
-        . are gaps => beneficial to ignore as sometimes more gaps appear in sequence in respect to germline
+        A list of characters to ignore while calculating differences. The default "None" ignors the following:
+        * `"N"` - masked or degraded nucleotide, i.e. D-segment is recommended to mask
+        * `"."` - "gaps" => beneficial to ignore; because sometimes there seem to be more gaps in the sequence alignment compared to germline alignment
     {inplace}
 
     Returns
     -------
-    Depending on the value of inplace adds a column to adata or returns a pd.DataFrame
+    Depending on the value of inplace adds a column to adata `.obs` or returns a pd.DataFrame
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     airr_df = get_airr(params, [sequence_alignment, germline_alignment, junction_col], chains)
@@ -142,76 +141,27 @@ def mutational_load(
 
     if region == "subregion":
         subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
+        
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
 
             mutation_dict = {"fwr1": [], "fwr2": [], "fwr3": [], "fwr4": [], "cdr1": [], "cdr2": [], "cdr3": []}
 
             for row in range(len(airr_df)):
-                fwr1_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:78]
-                cdr1_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][78:114]
-                fwr2_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][114:165]
-                cdr2_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][165:195]
-                fwr3_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][195:312]
-                cdr3_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][
-                    312 : (312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6)
-                ]
-                fwr4_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][
-                    (312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6) :
-                ]
+                regions = {"fwr1": (0, 78),
+                   "cdr1": (78, 114),
+                   "fwr2": (114, 165),
+                   "cdr2": (165, 195),
+                   "fwr3": (195,312),
+                   "cdr3": (312, 312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6),
+                   "fwr4": (312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6, len(airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"]))}
 
-                mutation_dict["fwr1"].append(
+                for v, coordinates in regions.items():
+
+                    mutation_dict[v].append(
                     simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr1"],
-                        fwr1_germline,
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
-                    )
-                )
-                mutation_dict["cdr1"].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_cdr1"],
-                        cdr1_germline,
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
-                    )
-                )
-                mutation_dict["fwr2"].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr2"],
-                        fwr2_germline,
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
-                    )
-                )
-                mutation_dict["cdr2"].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_cdr2"],
-                        cdr2_germline,
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
-                    )
-                )
-                mutation_dict["fwr3"].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr3"],
-                        fwr3_germline,
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
-                    )
-                )
-                mutation_dict["cdr3"].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_cdr3"],
-                        cdr3_germline,
-                        frequency=frequency,
-                        ignore_chars=ignore_chars,
-                    )
-                )
-                mutation_dict["fwr4"].append(
-                    simple_hamming_distance(
-                        subregion_df.iloc[row].loc[f"{chain}_fwr4"],
-                        fwr4_germline,
+                        subregion_df.iloc[row].loc[f"{chain}_{v}"],
+                        airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][slice(*coordinates)],
                         frequency=frequency,
                         ignore_chars=ignore_chars,
                     )
