@@ -290,7 +290,7 @@ def define_clonotype_clusters(
         receptor_arms=receptor_arms,  # type: ignore
         dual_ir=dual_ir,  # type: ignore
         same_v_gene=same_v_gene,
-        same_J_gene=same_j_gene,
+        same_j_gene=same_j_gene,
         match_columns=within_group,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",
