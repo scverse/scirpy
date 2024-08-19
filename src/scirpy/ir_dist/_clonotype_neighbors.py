@@ -394,7 +394,6 @@ class ClonotypeNeighbors:
                     chain_res[(tmp_arm, c1, c2, 2)] = filtered3
                 else:
                     chain_res[(tmp_arm, c1, c2)] = tmp_arrays
-                    
 
             if self.dual_ir == "primary_only":
                 tmp_arm_res[tmp_arm] = chain_res[(tmp_arm, 1, 1)]
@@ -412,7 +411,6 @@ class ClonotypeNeighbors:
                 tmp_arm_res[tmp_arm] += chain_res[(tmp_arm, 1, 1, 1)] + chain_res[(tmp_arm, 1, 1, 0)]
             else:
                 raise NotImplementedError(f"self.dual_ir method {self.dual_ir} is not implemented")
-
 
         if len(tmp_arm_res) == 1:
             final_res = tmp_arm_res[self._receptor_arm_cols[0]]
