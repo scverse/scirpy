@@ -14,7 +14,7 @@ from Levenshtein import distance as levenshtein_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
-from scirpy.util import _doc_params, _parallelize_with_joblib, deprecated, _get_usable_cpus
+from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -669,7 +669,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         start_column *= is_symmetric
 
         nb.set_num_threads(_get_usable_cpus(n_jobs=self.n_jobs, use_numba=True))
-        
+
         num_threads = nb.get_num_threads()
 
         jit_parallel = num_threads > 1
