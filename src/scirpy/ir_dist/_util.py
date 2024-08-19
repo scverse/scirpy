@@ -246,15 +246,14 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
         indices_in_dist_mat = forward[object_ids]
-        indices_in_dist_mat = indices_in_dist_mat + 1
         empty_row = sp.csr_matrix((1, distance_matrix.shape[1]), dtype=distance_matrix.dtype)
-        distance_matrix_new = sp.vstack([empty_row, distance_matrix], format="csr")
+        distance_matrix_new = sp.vstack([distance_matrix, empty_row], format="csr")
         rows = distance_matrix_new[indices_in_dist_mat, :]
 
-        reverse_empty_row_col = np.array([], dtype=np.int32)
-        reverse_empty_row_data = np.array([], dtype=np.uint8)
-        reverse_table_data = [reverse_empty_row_data] * rows.shape[1]
-        reverse_table_col = [reverse_empty_row_col] * rows.shape[1]
+        empty_row_col = np.array([], dtype=np.int32)
+        empty_row_data = np.array([], dtype=np.uint8)
+        reverse_table_data = [empty_row_data] * rows.shape[1]
+        reverse_table_col = [empty_row_col] * rows.shape[1]
         nnz_array = np.zeros(rows.shape[1], dtype=int)
 
         for key, value in reverse.lookup.items():
@@ -267,6 +266,7 @@ class DoubleLookupNeighborFinder:
         indptr = np.concatenate([np.array([0], dtype=np.int32), np.cumsum(nnz_array)])
         reverse_matrix_csr = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse.size))
         return rows * reverse_matrix_csr
+
 
     def add_distance_matrix(
         self,
