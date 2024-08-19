@@ -234,38 +234,79 @@ class DoubleLookupNeighborFinder:
     def lookup(
         self,
         object_ids: np.ndarray[int],
-        forward_lookup_table: str,
-        reverse_lookup_table: Union[str, None] = None,
-    ) -> Union[list[coo_matrix], list[np.ndarray]]:
-        distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
+        forward_lookup_table_name: str,
+        reverse_lookup_table_name: Union[str, None] = None,
+    ) -> sp.csr_matrix:
+        """
+        Creates a distance matrix between objects with the given ids based on a feature distance matrix.
 
-        if reverse_lookup_table is not None:
-            distance_matrix_name_reverse, _, reverse = self.lookups[reverse_lookup_table]
+        To get distance between two objects we need to look up the features of the two objects.
+        The distance between those two features is then the distance between the two objects.
+
+        To do so, we first use the `object_ids` together with the forward lookup table to look up 
+        the indices of the objects in the distance matrix. Afterwards we pick the according row for each object
+        out of the distance matrix and construct a `rows` matrix (n_object_ids x n_features).
+        
+        "nan"s (index = -1) are not looked up in the feature distance matrix, they return a row of zeros
+        instead.
+
+        Then we use the entries of the reverse lookup table to construct a reverse_lookup_matrix (n_features x n_object_ids).
+        By multiplying the rows matrix with the reverse_lookup_matrix we get the final object distance matrix that shows
+        the distances between the objects with the given `object_ids` regarding a certain feature column.
+
+        It might not be obvious at first sight that the matrix multiplication between `rows` and `reverse_lookup_matrix` gives
+        us the desired result. But this trick allows us to use the built-in sparse matrix multiplication of the `scipy.sparse`
+        for enhanced performance.
+        
+        Parameters
+        ----------
+        object_ids
+            The row indices of the feature_table.
+        forward_lookup_table_name
+            The unique identifier of a lookup table previously added via
+            `add_lookup_table`.
+        reverse_lookup_table_name
+            The unique identifier of the lookup table used for the reverse lookup.
+            If not provided will use the same lookup table for forward and reverse
+            lookup. This is useful to calculate distances across features from
+            different columns of the feature table (e.g. primary and secondary VJ chains).
+        
+        Returns
+        -------
+        object_distance_matrix
+            A CSR matrix containing the pairwise distances between objects with the
+            given `object_ids` regarding a certain feature column.
+        """
+        distance_matrix_name, forward_lookup_table, reverse_lookup_table = self.lookups[forward_lookup_table_name]
+
+        if reverse_lookup_table_name is not None:
+            distance_matrix_name_reverse, _, reverse_lookup_table = self.lookups[reverse_lookup_table_name]
             if distance_matrix_name != distance_matrix_name_reverse:
                 raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
-        indices_in_dist_mat = forward[object_ids]
-        empty_row = sp.csr_matrix((1, distance_matrix.shape[1]), dtype=distance_matrix.dtype)
-        distance_matrix_new = sp.vstack([distance_matrix, empty_row], format="csr")
-        rows = distance_matrix_new[indices_in_dist_mat, :]
 
-        empty_row_col = np.array([], dtype=np.int32)
-        empty_row_data = np.array([], dtype=np.uint8)
-        reverse_table_data = [empty_row_data] * rows.shape[1]
-        reverse_table_col = [empty_row_col] * rows.shape[1]
+        indices_in_dist_mat = forward_lookup_table[object_ids]
+        empty_row = sp.csr_matrix((1, distance_matrix.shape[1]), dtype=distance_matrix.dtype)
+        distance_matrix_extended = sp.vstack([distance_matrix, empty_row], format="csr")
+        rows = distance_matrix_extended[indices_in_dist_mat, :]
+
+        reverse_matrix_data = [np.array([], dtype=np.uint8)] * rows.shape[1]
+        reverse_matrix_col = [np.array([], dtype=np.int32)] * rows.shape[1]
         nnz_array = np.zeros(rows.shape[1], dtype=int)
 
-        for key, value in reverse.lookup.items():
-            reverse_table_data[key] = value.data
-            reverse_table_col[key] = value.col
+        for key, value in reverse_lookup_table.lookup.items():
+            reverse_matrix_data[key] = value.data
+            reverse_matrix_col[key] = value.col
             nnz_array[key] = value.nnz
 
-        data = np.concatenate(reverse_table_data)
-        col = np.concatenate(reverse_table_col)
+        data = np.concatenate(reverse_matrix_data)
+        col = np.concatenate(reverse_matrix_col)
         indptr = np.concatenate([np.array([0], dtype=np.int32), np.cumsum(nnz_array)])
-        reverse_matrix_csr = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse.size))
-        return rows * reverse_matrix_csr
+
+        reverse_matrix = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse_lookup_table.size))
+        object_distance_matrix = rows * reverse_matrix
+        return object_distance_matrix
 
 
     def add_distance_matrix(
