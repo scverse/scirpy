@@ -359,24 +359,24 @@ class ClonotypeNeighbors:
                     chain_res[(tmp_arm, c1, c2, 2)] = filtered3
                 else:
                     chain_res[(tmp_arm, c1, c2)] = tmp_arrays
+                    
 
-            for _c1, _c2 in chain_ids:
-                if self.dual_ir == "primary_only":
-                    tmp_arm_res[tmp_arm] = chain_res[(tmp_arm, 1, 1)]
-                elif self.dual_ir == "any":
-                    tmp_arm_res[tmp_arm] = csr_min(
-                        csr_min(chain_res[(tmp_arm, 1, 1)], chain_res[(tmp_arm, 1, 2)]),
-                        csr_min(chain_res[(tmp_arm, 2, 1)], chain_res[(tmp_arm, 2, 2)]),
-                    )
-                elif self.dual_ir == "all":
-                    tmp_arm_res[tmp_arm] = csr_min(
-                        csr_max(chain_res[(tmp_arm, 1, 1, 2)], chain_res[(tmp_arm, 2, 2, 2)]),
-                        csr_max(chain_res[(tmp_arm, 2, 1, 2)], chain_res[(tmp_arm, 1, 2, 2)]),
-                    )
+            if self.dual_ir == "primary_only":
+                tmp_arm_res[tmp_arm] = chain_res[(tmp_arm, 1, 1)]
+            elif self.dual_ir == "any":
+                tmp_arm_res[tmp_arm] = csr_min(
+                    csr_min(chain_res[(tmp_arm, 1, 1)], chain_res[(tmp_arm, 1, 2)]),
+                    csr_min(chain_res[(tmp_arm, 2, 1)], chain_res[(tmp_arm, 2, 2)]),
+                )
+            elif self.dual_ir == "all":
+                tmp_arm_res[tmp_arm] = csr_min(
+                    csr_max(chain_res[(tmp_arm, 1, 1, 2)], chain_res[(tmp_arm, 2, 2, 2)]),
+                    csr_max(chain_res[(tmp_arm, 2, 1, 2)], chain_res[(tmp_arm, 1, 2, 2)]),
+                )
 
-                    tmp_arm_res[tmp_arm] += chain_res[(tmp_arm, 1, 1, 1)] + chain_res[(tmp_arm, 1, 1, 0)]
-                else:
-                    raise NotImplementedError(f"self.dual_ir method {self.dual_ir} is not implemented")
+                tmp_arm_res[tmp_arm] += chain_res[(tmp_arm, 1, 1, 1)] + chain_res[(tmp_arm, 1, 1, 0)]
+            else:
+                raise NotImplementedError(f"self.dual_ir method {self.dual_ir} is not implemented")
 
 
         if len(tmp_arm_res) == 1:
