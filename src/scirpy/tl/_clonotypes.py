@@ -197,6 +197,7 @@ def define_clonotype_clusters(
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_ir: Literal["primary_only", "all", "any"] = "any",
     same_v_gene: bool = False,
+    same_j_gene: bool = False,
     within_group: Union[Sequence[str], str, None] = "receptor_type",
     key_added: Optional[str] = None,
     partitions: Literal["connected", "leiden"] = "connected",
@@ -289,6 +290,7 @@ def define_clonotype_clusters(
         receptor_arms=receptor_arms,  # type: ignore
         dual_ir=dual_ir,  # type: ignore
         same_v_gene=same_v_gene,
+        same_J_gene=same_j_gene,
         match_columns=within_group,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",

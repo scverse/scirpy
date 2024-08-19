@@ -23,6 +23,7 @@ class ClonotypeNeighbors:
         receptor_arms: Literal["VJ", "VDJ", "all", "any"],
         dual_ir: Literal["primary_only", "all", "any"],
         same_v_gene: bool = False,
+        same_j_gene: bool = False,
         match_columns: Union[None, Sequence[str]] = None,
         distance_key: str,
         sequence_key: str,
@@ -33,6 +34,7 @@ class ClonotypeNeighbors:
         receptor configuration and calls clonotypes from this distance matrix
         """
         self.same_v_gene = same_v_gene
+        self.same_j_gene = same_j_gene
         self.match_columns = match_columns
         self.receptor_arms = receptor_arms
         self.dual_ir = dual_ir
@@ -66,8 +68,13 @@ class ClonotypeNeighbors:
             raise ValueError("Obs names need to be unique!")
 
         airr_variables = [self.sequence_key]
+        
         if self.same_v_gene:
             airr_variables.append("v_call")
+
+        if self.same_j_gene:
+            airr_variables.append("j_call")
+
         chains = [f"{arm}_{chain}" for arm, chain in itertools.product(self._receptor_arm_cols, self._dual_ir_cols)]
 
         obs = get_airr(params, airr_variables, chains)
@@ -156,11 +163,26 @@ class ClonotypeNeighbors:
                     self.clonotypes2,
                     [x for x in self.clonotypes.columns if "v_call" in x],
                 )
-
             self.neighbor_finder.add_distance_matrix(
                 "v_gene",
                 sp.identity(len(v_genes), dtype=bool, format="csr"),
                 v_genes,  # type: ignore
+            )
+
+        if self.same_j_gene:
+            # J gene distance matrix (identity mat)
+            j_genes = self._unique_values_in_multiple_columns(
+                self.clonotypes, [x for x in self.clonotypes.columns if "j_call" in x]
+            )
+            if self.clonotypes2 is not None:
+                j_genes |= self._unique_values_in_multiple_columns(
+                    self.clonotypes2,
+                    [x for x in self.clonotypes.columns if "j_call" in x],
+                )
+            self.neighbor_finder.add_distance_matrix(
+                "j_gene",
+                sp.identity(len(j_genes), dtype=bool, format="csr"),
+                j_genes,  # type: ignore
             )
 
         if self.match_columns is not None:
@@ -187,6 +209,13 @@ class ClonotypeNeighbors:
                     f"{arm}_{i}_v_call",
                     f"{arm}_{i}_v_call",
                     "v_gene",
+                    dist_type="boolean",
+                )
+            if self.same_j_gene:
+                self.neighbor_finder.add_lookup_table(
+                    f"{arm}_{i}_j_call",
+                    f"{arm}_{i}_j_call",
+                    "j_gene",
                     dist_type="boolean",
                 )
 
@@ -323,12 +352,12 @@ class ClonotypeNeighbors:
             for c1, c2 in chain_ids:
                 tmp_arrays = lookup[(tmp_arm, c1, c2)][ct_ids]
 
-                if not (self.same_v_gene or self.match_columns):
+                if not (self.same_v_gene or self.same_j_gene or self.match_columns):
                     tmp_arrays = tmp_arrays.multiply(has_distance_mask)
 
-                if self.same_v_gene:
-                    distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_v_call"]
-                    distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_v_call"]
+                def match_gene_segment(tmp_arrays: sp.csr_matrix, segment_suffix: str = "v_call") -> sp.csr_matrix:
+                    distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_{segment_suffix}"]
+                    distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_{segment_suffix}"]
                     if distance_matrix_name != distance_matrix_name_reverse:
                         raise ValueError(
                             "Forward and reverse lookup tablese must be defined " "on the same distance matrices."
@@ -338,16 +367,22 @@ class ClonotypeNeighbors:
                     reverse_lookup_keys = np.full(id_len, -1, dtype=np.int32)
                     keys_array = np.fromiter(reverse.lookup.keys(), dtype=int, count=len(reverse.lookup))
                     reverse_lookup_keys[keys_array] = np.arange(len(keys_array))
-                    v_gene_mask = sp.csr_matrix(
+                    gene_segment_mask = sp.csr_matrix(
                         (np.empty(len(has_distance_mask.indices)), has_distance_mask.indices, has_distance_mask.indptr),
                         shape=has_distance_mask.shape,
                     )
-                    has_distance_mask_coo = v_gene_mask.tocoo()
+                    has_distance_mask_coo = gene_segment_mask.tocoo()
                     indices_in_dist_mat = forward[has_distance_mask_coo.row]
-                    v_gene_mask.data = reverse_lookup_values[
+                    gene_segment_mask.data = reverse_lookup_values[
                         reverse_lookup_keys[indices_in_dist_mat], has_distance_mask_coo.col
                     ]
-                    tmp_arrays = tmp_arrays.multiply(v_gene_mask)
+                    return tmp_arrays.multiply(gene_segment_mask)
+
+                if self.same_v_gene:
+                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix = "v_call")
+
+                if self.same_j_gene:
+                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix = "j_call")
 
                 if self.match_columns is not None:
                     tmp_arrays = tmp_arrays.multiply(match_column_mask)
