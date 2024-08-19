@@ -424,6 +424,8 @@ class MetricDistanceCalculator(abc.ABC):
         Number of threads per process to use for the pairwise distance calculation
     n_blocks:
         Overall number of blocks given to the workers (processes)
+    histogram:
+        Determines whether a nearest neighbor histogram should be created 
     """
 
     def __init__(self, n_jobs: int = -1, n_blocks: int = 1, histogram: bool = False):
@@ -482,7 +484,7 @@ class MetricDistanceCalculator(abc.ABC):
         pass
 
     def _make_histogram(self, row_mins: np.ndarray):
-        """Subclass should override this method if the computation of a nearest neighbor histogram is implemented."""
+        """Subclass should override this method if the creation of a nearest neighbor histogram is implemented."""
         raise NotImplementedError("Creating a histogram is not implemented for this metric")
 
     def _calc_dist_mat_block(
@@ -515,7 +517,8 @@ class MetricDistanceCalculator(abc.ABC):
 
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
         """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
-        of the derived class and returns a CSR distance matrix
+        of the derived class and returns a CSR distance matrix. Also creates a histogram based on the minimum value
+        per row of the distance matrix if histogram is set to True.
         """
         if seqs2 is None:
             seqs2 = seqs
@@ -553,6 +556,11 @@ class MetricDistanceCalculator(abc.ABC):
 class HammingDistanceCalculator(MetricDistanceCalculator):
     """Computes pairwise distances between gene sequences based on the "hamming" distance metric.
 
+    Set `normalize` to True to use the normalized hamming distance metric instead of the standard hamming distance
+    metric. Then the distance will be calculated as percentage of different positions relative to the sequence length
+    (e.g. AAGG and AAAA -> 50 (%) normalized hamming distance). The cutoff is then also given as normalized hamming
+    distance in percent.
+
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
@@ -565,6 +573,11 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    normalize:
+        Determines whether the normalized hamming distance metric should be used instead of the standard
+        hamming distance
+    histogram:
+        Determines whether a nearest neighbor histogram should be created 
     """
 
     def __init__(
@@ -766,6 +779,8 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    histogram:
+        Determines whether a nearest neighbor histogram should be created 
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
