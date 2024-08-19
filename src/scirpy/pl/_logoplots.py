@@ -1,30 +1,30 @@
 from collections.abc import Sequence
 from typing import Literal, Union
 
-import palmotif as palm
-from logomaker import alignment_to_matrix, Logo
-import pandas as pd
-from IPython.display import SVG
+from logomaker import Logo, alignment_to_matrix
 
 from scirpy.get import airr as get_airr
 from scirpy.util import DataHandler
 
+
 @DataHandler.inject_param_docs()
-def logoplot_cdr3_motif(adata: DataHandler.TYPE,
-                     chains: Union[
-                            Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
-                            Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
-                            ] = "VDJ_1",
-                    airr_mod="airr",
-                    airr_key="airr",
-                    chain_idx_key="chain_indices",
-                    cdr3_col: str = "junction_aa",
-                    to_type: Sequence[Literal["information", "counts", "probability", "weight"]] = "information",
-                    pseudocount: float = 0,
-                    background = None,
-                    center_weights: bool = False,
-                    plot_default = True,
-                    **kwargs):
+def logoplot_cdr3_motif(
+    adata: DataHandler.TYPE,
+    chains: Union[
+        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
+        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
+    ] = "VDJ_1",
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
+    cdr3_col: str = "junction_aa",
+    to_type: Sequence[Literal["information", "counts", "probability", "weight"]] = "information",
+    pseudocount: float = 0,
+    background=None,
+    center_weights: bool = False,
+    plot_default=True,
+    **kwargs,
+):
     """
     A user friendly wrapper function for the logomaker python package.
     Enables the analysis of potential amino acid motifs by displaying logo plots.
@@ -45,7 +45,7 @@ def logoplot_cdr3_motif(adata: DataHandler.TYPE,
         * `"information"`
         * `"counts"`
         * `"probability"`
-        * `"weight"` 
+        * `"weight"`
     pseudocount
         Pseudocount to use when converting from counts to probabilities
     background
@@ -66,9 +66,8 @@ def logoplot_cdr3_motif(adata: DataHandler.TYPE,
     -------
     Returns a object of class logomaker.Logo (see here for more information https://logomaker.readthedocs.io/en/latest/implementation.html#matrix-functions)
     """
-    
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
-    #make sure that sequences are prealigned i.e. they need to have the the same length
+    # make sure that sequences are prealigned i.e. they need to have the the same length
     airr_df = get_airr(params, [cdr3_col], chains)
     sequence_list = []
     for chain in chains:
@@ -76,19 +75,14 @@ def logoplot_cdr3_motif(adata: DataHandler.TYPE,
             if sequence is not None:
                 sequence_list.append(sequence)
 
-    motif = alignment_to_matrix(sequence_list,
-                                to_type = to_type, 
-                                pseudocount = pseudocount,
-                                background=background,
-                                center_weights=center_weights)
+    motif = alignment_to_matrix(
+        sequence_list, to_type=to_type, pseudocount=pseudocount, background=background, center_weights=center_weights
+    )
     if plot_default:
-        cdr3_logo = Logo(motif,
-        font_name='Arial Rounded MT Bold',
-        color_scheme='chemistry',
-        vpad=.05,
-        width=.9,
-        **kwargs)
-    
+        cdr3_logo = Logo(
+            motif, font_name="Arial Rounded MT Bold", color_scheme="chemistry", vpad=0.05, width=0.9, **kwargs
+        )
+
         cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
         cdr3_logo.ax.set_ylabel(f"{to_type}")
         cdr3_logo.ax.set_xlim([-1, len(motif)])
