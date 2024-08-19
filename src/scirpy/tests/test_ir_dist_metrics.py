@@ -10,8 +10,8 @@ from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     DistanceCalculator,
     FastAlignmentDistanceCalculator,
-    HammingDistanceCalculator,
     GPUHammingDistanceCalculator,
+    HammingDistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
     ParallelDistanceCalculator,
@@ -742,7 +742,7 @@ def test_tcrdist_histogram_not_implemented():
 def test_gpu_hamming_reference():
     # test hamming distance against reference implementation
     from . import TESTDATA
-    
+
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
 
