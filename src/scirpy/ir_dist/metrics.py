@@ -7,6 +7,7 @@ from typing import Optional, Union
 import joblib
 import matplotlib.pyplot as plt
 import numba as nb
+from numba import cuda
 import numpy as np
 import scipy.sparse
 import scipy.spatial
@@ -749,6 +750,172 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         return data_rows, indices_rows, row_element_counts, row_mins
 
     _metric_mat = _hamming_mat
+
+
+class GPUHammingDistanceCalculator(MetricDistanceCalculator):
+    """Computes pairwise distances between gene sequences based on the "hamming" distance metric with GPU support.
+
+    The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
+
+    Parameters
+    ----------
+    cutoff:
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices.
+    n_jobs:
+        Number of numba parallel threads to use for the pairwise distance calculation
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    """
+
+    def __init__(
+        self,
+        *,
+        cutoff: int = 2,
+    ):
+        super().__init__(n_jobs=1, n_blocks=1)
+        self.cutoff = cutoff
+
+    def _gpu_hamming_mat(
+        self,
+        *,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+        """Computes the pairwise hamming distances for sequences in seqs_mat1 and seqs_mat2 with GPU support.
+
+        Parameters
+        ----------
+        seqs_mat1/2:
+            Matrix containing sequences created by seqs2mat with padding to accomodate
+            sequences of different lengths (-1 padding)
+        seqs_L1/2:
+            A vector containing the length of each sequence in the respective seqs_mat matrix,
+            without the padding in seqs_mat
+        is_symmetric:
+            Determines whether the final result matrix is symmetric, assuming that this function is
+            only used to compute a block of a bigger result matrix
+        start_column:
+            Determines at which column the calculation should be started. This is only used if this function is
+            used to compute a block of a bigger result matrix that is symmetric
+
+        Returns
+        -------
+        data_rows:
+            List with arrays containing the non-zero data values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        indices_rows:
+            List with arrays containing the non-zero entry column indeces of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts:
+            Array with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        """
+
+        unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
+        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+
+        @cuda.jit
+        def hamming_kernel(seqs_mat1, seqs_mat2, seqs_L1, seqs_L2, cutoff, data, indices, row_element_counts, block_offset):
+            row = cuda.grid(1)
+            if row < seqs_mat1.shape[0]:
+                row_end_index = 0
+                seq1_len = seqs_L1[row]
+                for col in range(seqs_mat2.shape[0]):
+                    if (not is_symmetric) or ((col + block_offset) >= row):
+                        seq2_len = seqs_L2[col]
+                        distance = 1
+                        if(seq1_len == seq2_len):
+                            for i in range(0, seq1_len):
+                                distance += seqs_mat1[row, i] != seqs_mat2[col, i]
+                            if(distance <= cutoff + 1):
+                                data[row, row_end_index] = distance
+                                indices[row, row_end_index] = col
+                                row_end_index += 1
+                    row_element_counts[row] = row_end_index
+
+        @cuda.jit
+        def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
+            row, col = cuda.grid(2)
+            if row < data_matrix.shape[0] and col < data_matrix.shape[1]:
+                row_start = indptr[row]
+                row_end = indptr[row + 1]
+                row_end_index = row_end - row_start
+                data_index = row_start + col
+                if (data_index < data.shape[0]) and (col < row_end_index):
+                    data[data_index] = data_matrix[row, col]
+                    indices[data_index] = indices_matrix[row, col] 
+
+        def calc_block_gpu(seqs_mat1_block, seqs_mat2, seqs_L1_block, seqs_L2, block_offset):
+            
+            d_seqs_mat1 = cuda.to_device(seqs_mat1_block)
+            d_seqs_mat2 = cuda.to_device(seqs_mat2)
+            d_seqs_L1 = cuda.to_device(seqs_L1_block)
+            d_seqs_L2 = cuda.to_device(seqs_L2)
+
+            data_matrix = np.zeros((seqs_mat1_block.shape[0],seqs_mat2.shape[0]), dtype=np.uint8)
+            d_data_matrix = cuda.device_array_like(data_matrix)
+
+            indices_matrix = np.zeros((seqs_mat1_block.shape[0],seqs_mat2.shape[0]), dtype=np.uint32)
+            d_indices_matrix = cuda.device_array_like(indices_matrix)
+
+            row_element_counts = np.zeros(seqs_mat1_block.shape[0], dtype=np.uint32)
+            d_row_element_counts = cuda.device_array_like(row_element_counts)
+            
+            threads_per_block = 256
+            blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
+            hamming_kernel[blocks_per_grid, threads_per_block](d_seqs_mat1, d_seqs_mat2, d_seqs_L1, d_seqs_L2, self.cutoff, d_data_matrix, d_indices_matrix, d_row_element_counts, block_offset)
+
+            row_element_counts = d_row_element_counts.copy_to_host()
+
+            indptr = np.zeros(seqs_mat1_block.shape[0]+1, dtype=np.uint32)
+            indptr[1:] = np.cumsum(row_element_counts)
+            d_indptr = cuda.to_device(indptr)
+
+            n_elements = indptr[-1]
+            
+            data = np.zeros(n_elements, dtype=np.uint8)
+            d_data = cuda.device_array_like(data)
+
+            indices = np.zeros(n_elements, dtype=np.uint32)
+            d_indices = cuda.device_array_like(indices)
+
+            threads_per_block = (1, 256)
+            blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
+            blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
+            blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
+            create_csr_kernel[blocks_per_grid, threads_per_block](d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr)
+
+            data = d_data.copy_to_host()
+            indices = d_indices.copy_to_host()
+
+            return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0],seqs_mat2.shape[0]))
+        
+        block_width = 4096
+        n_blocks = seqs_mat2.shape[0] // block_width + 1
+
+        seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
+        seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
+        result_blocks = [None] * n_blocks
+
+        block_offset = start_column
+        for i in range(0, n_blocks):
+            result_blocks[i] = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], block_offset)
+            block_offset += seqs_mat2_blocks[i].shape[0]
+        
+        result_sparse = scipy.sparse.hstack(result_blocks)
+
+        row_element_counts_gpu = np.diff(result_sparse.indptr)
+
+        return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
+ 
+    _metric_mat = _gpu_hamming_mat
 
 
 class TCRdistDistanceCalculator(MetricDistanceCalculator):
