@@ -142,7 +142,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
             array containing sequences
         seqs2
             other array containing sequences. If `None` compute the square matrix
-            of `seqs1` and iteratoe over the upper triangle including the diagonal only.
+            of `seqs1` and iterator over the upper triangle including the diagonal only.
         origin
             row, col coordinates of the origin of the block.
 
@@ -409,10 +409,12 @@ def _seqs2mat(
     return mat, L
 
 
-class MetricDistanceCalculator(abc.ABC):
+class _MetricDistanceCalculator(abc.ABC):
     """
     Abstract base class for distance calculator classes that computes parwise distances between
-    gene sequences in parallel based on a certain distance metric. The result is a (scipy) compressed sparse row distance matrix.
+    gene sequences in parallel based on a certain distance metric.
+
+    The result is a (scipy) compressed sparse row distance matrix.
     Derived classes just need to implement the method _metric_mat (see method comments for more details).
 
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
@@ -553,7 +555,7 @@ class MetricDistanceCalculator(abc.ABC):
         return full_distance_matrix
 
 
-class HammingDistanceCalculator(MetricDistanceCalculator):
+class HammingDistanceCalculator(_MetricDistanceCalculator):
     """Computes pairwise distances between gene sequences based on the "hamming" distance metric.
 
     Set `normalize` to True to use the normalized hamming distance metric instead of the standard hamming distance
@@ -751,7 +753,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
     _metric_mat = _hamming_mat
 
 
-class TCRdistDistanceCalculator(MetricDistanceCalculator):
+class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
