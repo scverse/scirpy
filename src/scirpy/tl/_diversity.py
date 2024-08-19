@@ -124,7 +124,7 @@ def convert_hill_table(
            * `"diversity"` - infer respective indices from Hill numbers
            * `"evenness_factor"` - calculates EF for each diversity order as specified previously
            * `"relative_evenness"` - calculates RLE for each diversity order as specified previously
-    
+
     Returns
     -------
     pd.DataFrame, where rows are indices/diversity orders and columns are groups (i.e. severity)
