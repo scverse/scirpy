@@ -355,7 +355,7 @@ class ClonotypeNeighbors:
                 if not (self.same_v_gene or self.same_j_gene or self.match_columns):
                     tmp_arrays = tmp_arrays.multiply(has_distance_mask)
 
-                def match_gene_segment(tmp_arrays: sp.csr_matrix, segment_suffix: str = "v_call") -> sp.csr_matrix:
+                def match_gene_segment(tmp_arrays: sp.csr_matrix, tmp_arm: str, c1: int, c2: int, segment_suffix: str = "v_call") -> sp.csr_matrix:
                     distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_{segment_suffix}"]
                     distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_{segment_suffix}"]
                     if distance_matrix_name != distance_matrix_name_reverse:
@@ -379,10 +379,10 @@ class ClonotypeNeighbors:
                     return tmp_arrays.multiply(gene_segment_mask)
 
                 if self.same_v_gene:
-                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix = "v_call")
+                    tmp_arrays = match_gene_segment(tmp_arrays, tmp_arm, c1, c2, segment_suffix = "v_call")
 
                 if self.same_j_gene:
-                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix = "j_call")
+                    tmp_arrays = match_gene_segment(tmp_arrays, tmp_arm, c1, c2, segment_suffix = "j_call")
 
                 if self.match_columns is not None:
                     tmp_arrays = tmp_arrays.multiply(match_column_mask)
