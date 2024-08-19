@@ -425,7 +425,7 @@ class MetricDistanceCalculator(abc.ABC):
     n_blocks:
         Overall number of blocks given to the workers (processes)
     histogram:
-        Determines whether a nearest neighbor histogram should be created 
+        Determines whether a nearest neighbor histogram should be created
     """
 
     def __init__(self, n_jobs: int = -1, n_blocks: int = 1, histogram: bool = False):
@@ -577,7 +577,7 @@ class HammingDistanceCalculator(MetricDistanceCalculator):
         Determines whether the normalized hamming distance metric should be used instead of the standard
         hamming distance
     histogram:
-        Determines whether a nearest neighbor histogram should be created 
+        Determines whether a nearest neighbor histogram should be created
     """
 
     def __init__(
@@ -780,7 +780,7 @@ class TCRdistDistanceCalculator(MetricDistanceCalculator):
     n_blocks:
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     histogram:
-        Determines whether a nearest neighbor histogram should be created 
+        Determines whether a nearest neighbor histogram should be created
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
