@@ -148,6 +148,8 @@ Analyse clonal diversity
    tl.clonal_expansion
    tl.summarize_clonal_expansion
    tl.alpha_diversity
+   tl.hill_diversity_profile
+   tl.convert_hill_table
    tl.repertoire_overlap
    tl.clonotype_modularity
    tl.clonotype_imbalance

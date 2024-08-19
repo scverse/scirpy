@@ -63,7 +63,7 @@ def hill_diversity_profile(
     q_step=1,
 ) -> pd.DataFrame:
     """\
-    Calculates a Hill based diversity profile for a given diversity order (`q`) range
+    Calculates a Hill based diversity profile for a given range of diversity order (`q`)
 
     Parameters
     ----------
@@ -74,16 +74,16 @@ def hill_diversity_profile(
         Column containing the clonotype annoatation
     {airr_mod}
     q_min
-        Specify lowest diversity order
+        Specify lowest (start) diversity order
     q_max
-        Specify highest diversity order
+        Specify highest (end) diversity order
     q_step
-        Specify the fineness of diversity order calculation
+        Specify the fineness (steps) of diversity order calculation
 
     Returns
     -------
-    Returns a pd.DataFrame where columns are groups specified by groupby and rows represent
-    all calculated diversity orders -> allows seamlessly potting with seaborn
+    Returns a pd.DataFrame where columns are groups (specified by groupby) and row indices indicate each
+    all calculated diversity order => allows seamless plotting with e.g. seaborn
     """
     params = DataHandler(adata, airr_mod)
     ir_obs = params.get_obs([target_col, groupby])
