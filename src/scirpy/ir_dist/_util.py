@@ -243,19 +243,19 @@ class DoubleLookupNeighborFinder:
         To get distance between two objects we need to look up the features of the two objects.
         The distance between those two features is then the distance between the two objects.
 
-        To do so, we first use the `object_ids` together with the forward lookup table to look up 
-        the indices of the objects in the distance matrix. Afterwards we pick the according row for each object
-        out of the distance matrix and construct a `rows` matrix (n_object_ids x n_features).
+        To do so, we first use the `object_ids` together with the `forward_lookup_table` to look up 
+        the indices of the objects in the feature `distance_matrix`. Afterwards we pick the according row for each object
+        out of the `distance_matrix` and construct a `rows` matrix (n_object_ids x n_features).
         
-        "nan"s (index = -1) are not looked up in the feature distance matrix, they return a row of zeros
+        "nan"s (index = -1) are not looked up in the feature `distance_matrix`, they return a row of zeros
         instead.
 
-        Then we use the entries of the reverse lookup table to construct a reverse_lookup_matrix (n_features x n_object_ids).
-        By multiplying the rows matrix with the reverse_lookup_matrix we get the final object distance matrix that shows
+        Then we use the entries of the `reverse_lookup_table` to construct a `reverse_lookup_matrix` (n_features x n_object_ids).
+        By multiplying the `rows` matrix with the `reverse_lookup_matrix` we get the final `object_distance_matrix` that shows
         the distances between the objects with the given `object_ids` regarding a certain feature column.
 
         It might not be obvious at first sight that the matrix multiplication between `rows` and `reverse_lookup_matrix` gives
-        us the desired result. But this trick allows us to use the built-in sparse matrix multiplication of the `scipy.sparse`
+        us the desired result. But this trick allows us to use the built-in sparse matrix multiplication of `scipy.sparse`
         for enhanced performance.
         
         Parameters
