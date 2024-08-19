@@ -68,7 +68,7 @@ class ClonotypeNeighbors:
             raise ValueError("Obs names need to be unique!")
 
         airr_variables = [self.sequence_key]
-        
+
         if self.same_v_gene:
             airr_variables.append("v_call")
 
@@ -357,7 +357,9 @@ class ClonotypeNeighbors:
 
                 def match_gene_segment(tmp_arrays: sp.csr_matrix, segment_suffix: str = "v_call") -> sp.csr_matrix:
                     distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_{segment_suffix}"]
-                    distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_{segment_suffix}"]
+                    distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[
+                        f"{tmp_arm}_{c2}_{segment_suffix}"
+                    ]
                     if distance_matrix_name != distance_matrix_name_reverse:
                         raise ValueError(
                             "Forward and reverse lookup tablese must be defined " "on the same distance matrices."
@@ -379,10 +381,10 @@ class ClonotypeNeighbors:
                     return tmp_arrays.multiply(gene_segment_mask)
 
                 if self.same_v_gene:
-                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix = "v_call")
+                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix="v_call")
 
                 if self.same_j_gene:
-                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix = "j_call")
+                    tmp_arrays = match_gene_segment(tmp_arrays, segment_suffix="j_call")
 
                 if self.match_columns is not None:
                     tmp_arrays = tmp_arrays.multiply(match_column_mask)
