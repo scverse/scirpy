@@ -286,17 +286,24 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
 
-        if(distance_matrix.indptr[-1] > np.iinfo(np.int32).max):
-            raise OverflowError("The number of values in the csr matrix exceeds the maximum limit for int32 as datatype for the indptr array.")
+        if distance_matrix.indptr[-1] > np.iinfo(np.int32).max:
+            raise OverflowError(
+                "The number of values in the csr matrix exceeds the maximum limit for int32 as datatype for the indptr array."
+            )
 
-        if(distance_matrix.shape[1] > np.iinfo(np.int32).max):
-            raise OverflowError("The number of columns in the csr matrix exceeds the maximum limit for int32 as datatype for the indices array.")
-        
+        if distance_matrix.shape[1] > np.iinfo(np.int32).max:
+            raise OverflowError(
+                "The number of columns in the csr matrix exceeds the maximum limit for int32 as datatype for the indices array."
+            )
+
         indices_in_dist_mat = forward_lookup_table[object_ids]
         indptr = np.empty(distance_matrix.indptr.shape[0] + 1, dtype=np.int32)
         indptr[:-1] = distance_matrix.indptr
         indptr[-1] = indptr[-2]
-        distance_matrix_extended = sp.csr_matrix((distance_matrix.data.astype(np.uint8), distance_matrix.indices.astype(np.int32), indptr), shape=(distance_matrix.shape[0]+1, distance_matrix.shape[1]))
+        distance_matrix_extended = sp.csr_matrix(
+            (distance_matrix.data.astype(np.uint8), distance_matrix.indices.astype(np.int32), indptr),
+            shape=(distance_matrix.shape[0] + 1, distance_matrix.shape[1]),
+        )
         rows = distance_matrix_extended[indices_in_dist_mat, :]
 
         reverse_matrix_data = [np.array([], dtype=np.uint8)] * rows.shape[1]
