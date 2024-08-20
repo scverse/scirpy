@@ -261,7 +261,17 @@ class ClonotypeNeighbors:
         has_distance_mask = has_distance_table
         has_distance_mask.data = np.ones_like(has_distance_mask.data)
 
-        def csr_min(a, b):
+        def csr_min(a: sp.csr_matrix, b: sp.csr_matrix) -> sp.csr_matrix:
+            """
+            Computes the element-wise minimum between 2 CSR matrices while ignoring 0 values. If 2 values 
+            are compared and at least one of them is a 0, the maximum of the 2 values is taken instead of the minimum.
+
+            To be able to use built-in functions, we shift the data arrays by the overall maximum value such that we get negative values.
+            Then we can use the built-in "<" function to compare the CSR matrices while ignoring 0 values.
+            """
+            if a.dtype != np.uint8 or b.dtype != np.uint8:
+                raise ValueError("Both CSR matrices must be of type uint8.")
+            
             max_value_a = np.max(a.data, initial=0)
             max_value_b = np.max(b.data, initial=0)
             max_value = np.int16(np.max([max_value_a, max_value_b]) + 1)
@@ -273,6 +283,17 @@ class ClonotypeNeighbors:
             return b + (a - b).multiply(a_smaller_b)
 
         def csr_max(a, b):
+            """
+            Computes the element-wise maximum between 2 CSR matrices while handling 0 values differently. If 2 values 
+            are compared and at least one of them is a 0, the minimum (=0) of the 2 values is taken instead of the maximum.
+
+            To be able to use built-in functions, we shift the data arrays by the overall maximum value such that we get negative values.
+            Then we can use the built-in ">" function to compare the CSR matrices while handling the special case for 0 values at
+            the same time.
+            """
+            if a.dtype != np.uint8 or b.dtype != np.uint8:
+                raise ValueError("Both CSR matrices must be of type uint8.")
+            
             max_value_a = np.max(a.data, initial=0)
             max_value_b = np.max(b.data, initial=0)
             max_value = np.int16(np.max([max_value_a, max_value_b]) + 1)
