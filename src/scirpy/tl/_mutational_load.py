@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from collections import defaultdict
 from typing import Literal, Union
 
 import numpy as np
@@ -145,7 +146,7 @@ def mutational_load(
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
 
-            mutation_dict = {"fwr1": [], "fwr2": [], "fwr3": [], "fwr4": [], "cdr1": [], "cdr2": [], "cdr3": []}
+            mutation_dict = defaultdict(list)
 
             for row in range(len(airr_df)):
                 regions = {
@@ -161,10 +162,10 @@ def mutational_load(
                     ),
                 }
 
-                for v, coordinates in regions.items():
-                    mutation_dict[v].append(
+                for v_region, coordinates in regions.items():
+                    mutation_dict[v_region].append(
                         simple_hamming_distance(
-                            subregion_df.iloc[row].loc[f"{chain}_{v}"],
+                            subregion_df.iloc[row].loc[f"{chain}_{v_region}"],
                             airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][slice(*coordinates)],
                             frequency=frequency,
                             ignore_chars=ignore_chars,
