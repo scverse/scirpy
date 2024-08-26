@@ -35,7 +35,7 @@ def IrNeighbors(*args, **kwargs):
 
 
 MetricType = Union[
-    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming"],
+    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming", "normalized_hamming", "tcrdist"],
     metrics.DistanceCalculator,
 ]
 
@@ -47,7 +47,11 @@ metric
         This metric implies a cutoff of 0.
       * `levenshtein` -- Levenshtein edit distance.
         See :class:`~scirpy.ir_dist.metrics.LevenshteinDistanceCalculator`.
+      * `tcrdist` -- Distance based on pairwise sequence alignments between TCR CDR3 sequences based on the tcrdist metric.
+        See :class:`~scirpy.ir_dist.metrics.TCRdistDistanceCalculator`.
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
+        See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
+      * `normalized_hamming` -- Normalized Hamming distance (in percent) for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
@@ -99,6 +103,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
+    elif metric == "normalized_hamming":
+        dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, normalize=True, **kwargs)
     elif metric == "tcrdist":
         dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
@@ -161,10 +167,12 @@ def _ir_dist(
         If true, store the result in `adata.uns`. Otherwise return a dictionary
         with the results.
     n_jobs
-        Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metrics.DistanceCalculator`. :class:`joblib.Parallel` is
+        Number of cores to use for distance calculation. :class:`joblib.Parallel` is
         used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
         backend (e.g. `dask`) and adjust other configuration options.
+        The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba`
+        for parallelization with multithreading instead.
+
     {airr_mod}
     {airr_key}
     {chain_idx_key}

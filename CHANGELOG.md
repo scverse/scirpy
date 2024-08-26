@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning][].
 ### Addition
 
 -   Isotypically included B cells are now labelled as `receptor_subtype="IGH+IGK/L"` instead of `ambiguous` in `tl.chain_qc`. ([#537](https://github.com/scverse/scirpy/pull/537))
+-   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length. Additionally,
+    the hamming distance was reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
 
 ## v0.17.2
 
