@@ -577,7 +577,7 @@ def clonotype_network(
         return coord_df
 
 
-def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
+def _graph_from_coordinates(adata: AnnData, clonotype_key: str, basis: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
     """
     Given an AnnData object on which `tl.clonotype_network` was ran, and
     the corresponding `clonotype_key`, extract a data-frame
@@ -597,7 +597,7 @@ def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.Data
 
     # Retrieve coordinates and reduce them to one coordinate per node
     coords = (
-        cast(pd.DataFrame, adata.obsm["X_clonotype_network"])
+        cast(pd.DataFrame, adata.obsm[f"X_{basis}"])
         .dropna(axis=0, how="any")
         .join(dist_idx_lookup)
         .join(clonotype_label_lookup)

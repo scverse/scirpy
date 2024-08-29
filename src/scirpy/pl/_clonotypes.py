@@ -197,7 +197,7 @@ def clonotype_network(
                 pass
 
     clonotype_res = params.adata.uns[clonotype_key]
-    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
+    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key, basis)
     nx_graph = nx.Graph(_distance_to_connectivity(adj_mat))
     # in 2.6 networkx added functionality to draw self-loops. We don't want
     # them plotted, so we remove them here
