@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -12,12 +12,12 @@ def _clip_and_count(
     adata: DataHandler.TYPE,
     target_col: str,
     *,
-    groupby: Union[str, None, list[str]] = None,
+    groupby: str | None | list[str] = None,
     breakpoints: Sequence[int] = (1, 2, 3),
     inplace: bool = True,
-    key_added: Union[str, None] = None,
+    key_added: str | None = None,
     airr_mod="airr",
-) -> Union[None, pd.Series]:
+) -> None | pd.Series:
     """Counts the number of identical entries in `target_col`
     for each group in `group_by`.
 
@@ -63,13 +63,13 @@ def clonal_expansion(
     adata: DataHandler.TYPE,
     *,
     target_col: str = "clone_id",
-    expanded_in: Union[str, None] = None,
+    expanded_in: str | None = None,
     breakpoints: Sequence[int] = (1, 2),
-    clip_at: Optional[int] = None,
+    clip_at: int | None = None,
     key_added: str = "clonal_expansion",
     inplace: bool = True,
     **kwargs,
-) -> Union[None, pd.Series]:
+) -> None | pd.Series:
     """\
     Adds a column to `obs` recording which clonotypes are expanded.
 

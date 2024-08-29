@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,8 @@ def _group_abundance(
     groupby: str,
     target_col: str,
     *,
-    fraction: Union[None, str, bool] = None,
-    sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
+    fraction: None | str | bool = None,
+    sort: Literal["count", "alphabetical"] | Sequence[str] = "count",
 ) -> pd.DataFrame:
     # remove NA rows
     na_mask = _is_na(ir_obs[groupby]) | _is_na(ir_obs[target_col])
@@ -57,12 +57,12 @@ def _group_abundance(
 
 
 def group_abundance(
-    adata: Union[AnnData, MuData],
+    adata: AnnData | MuData,
     groupby: str,
     target_col: str = "has_ir",
     *,
-    fraction: Union[None, str, bool] = None,
-    sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
+    fraction: None | str | bool = None,
+    sort: Literal["count", "alphabetical"] | Sequence[str] = "count",
 ) -> pd.DataFrame:
     """\
     Summarizes the number/fraction of cells of a certain category by a certain group.

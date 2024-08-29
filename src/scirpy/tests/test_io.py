@@ -266,7 +266,7 @@ def test_convert_dandelion(anndata_from_10x_sample):
 
     assert len(ir_objs1) == len(ir_objs2) == anndata.shape[0]
 
-    for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2):
+    for ir_obj1, ir_obj2 in zip(ir_objs1, ir_objs2, strict=False):
         assert len(ir_obj1.chains) == len(ir_obj2.chains)
 
         def _key(chain):
@@ -278,7 +278,7 @@ def test_convert_dandelion(anndata_from_10x_sample):
         chains1 = sorted(ir_obj1.chains, key=_key)
         chains2 = sorted(ir_obj2.chains, key=_key)
 
-        for tmp_chain1, tmp_chain2 in zip(chains1, chains2):
+        for tmp_chain1, tmp_chain2 in zip(chains1, chains2, strict=False):
             # this field is expected to be different
             del tmp_chain1["sequence_id"]
             del tmp_chain2["sequence_id"]

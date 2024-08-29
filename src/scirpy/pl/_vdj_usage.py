@@ -1,6 +1,6 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from copy import deepcopy
-from typing import Callable, Union, cast
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,15 +30,15 @@ def vdj_usage(
         "VDJ_1_d_call",
         "VDJ_1_j_call",
     ),
-    normalize_to: Union[bool, str, Sequence[float]] = False,
-    ax: Union[plt.Axes, None] = None,
-    max_segments: Union[int, None] = None,
-    max_labelled_segments: Union[int, None] = 5,
-    max_ribbons: Union[None, int] = 10,
+    normalize_to: bool | str | Sequence[float] = False,
+    ax: plt.Axes | None = None,
+    max_segments: int | None = None,
+    max_labelled_segments: int | None = 5,
+    max_ribbons: None | int = 10,
     barwidth: float = 0.4,
     draw_bars: bool = True,
     full_combination: bool = True,
-    fig_kws: Union[dict, None] = None,
+    fig_kws: dict | None = None,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
@@ -96,7 +96,8 @@ def vdj_usage(
         *[
             (f"{arm}_{chain}", airr_variable)
             for arm, chain, airr_variable in (x.split("_", maxsplit=2) for x in vdj_cols)
-        ]
+        ],
+        strict=False,
     )
 
     tmp_obs = (
@@ -161,7 +162,7 @@ def vdj_usage(
             bottom = 0
 
         # Draw gene segments
-        for i, (segment_size, gene) in list(enumerate(zip(segment_sizes, genes)))[:max_segments][::-1]:
+        for i, (segment_size, gene) in list(enumerate(zip(segment_sizes, genes, strict=False)))[:max_segments][::-1]:
             if _is_na(gene):
                 gene = "none"
             gene_tops[col_name][gene] = bottom + segment_size
@@ -271,11 +272,11 @@ def vdj_usage(
 def _gapped_ribbons(
     data: list,
     *,
-    ax: Union[plt.Axes, list, None] = None,
+    ax: plt.Axes | list | None = None,
     xstart: float = 1.2,
     gapfreq: float = 1.0,
     gapwidth: float = 0.4,
-    ribcol: Union[str, tuple, None] = None,
+    ribcol: str | tuple | None = None,
     fun: Callable = lambda x: x[3] + (x[4] / (1 + np.exp(-((x[5] / x[2]) * (x[0] - x[1]))))),
     figsize: tuple[float, float] = (3.44, 2.58),
     dpi: int = 300,
