@@ -1012,9 +1012,6 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         ----------
         seqs/2:
             A python sequence of strings representing gene sequences
-        seqs_L1/2:
-            A vector containing the length of each sequence in the respective seqs_mat matrix,
-            without the padding in seqs_mat
         is_symmetric:
             Determines whether the final result matrix is symmetric, assuming that this function is
             only used to compute a block of a bigger result matrix
