@@ -122,7 +122,7 @@ def mutational_load(
                 mutation_df[f"{chain}_IMGT_V(D)J_{frequency_string}"] = mutations
         try:
             return mutation_df
-        except:
+        except NameError:
             return None
 
     # calculate SHM up to nucleotide 312. Referring to the IMGT unique numbering scheme this includes:
@@ -149,7 +149,7 @@ def mutational_load(
                 mutation_df[f"{chain}_v_segment_{frequency_string}"] = mutations
         try:
             return mutation_df
-        except:
+        except NameError:
             return None
 
     if region == "subregion":
@@ -196,5 +196,5 @@ def mutational_load(
 
         try:
             return mutation_df
-        except:
+        except NameError:
             return None
