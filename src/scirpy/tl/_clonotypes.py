@@ -408,7 +408,7 @@ def clonotype_network(
     adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "nt",
-    metric: Literal["identity", "alignment", "levenshtein", "hamming", "custom"] = "identity",
+    metric: MetricType = "identity",
     min_cells: int = 1,
     min_nodes: int = 1,
     layout: str = "components",
