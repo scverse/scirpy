@@ -765,10 +765,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     cutoff:
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
-    n_jobs:
-        Number of numba parallel threads to use for the pairwise distance calculation
-    n_blocks:
-        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     """
 
     def __init__(
@@ -787,16 +783,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         is_symmetric: bool = False,
         start_column: int = 0,
     ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
-        """Computes the pairwise hamming distances for sequences in seqs_mat1 and seqs_mat2 with GPU support.
+        """Computes the pairwise hamming distances for sequences in seqs and seqs2 with GPU support.
 
         Parameters
         ----------
-        seqs_mat1/2:
-            Matrix containing sequences created by seqs2mat with padding to accomodate
-            sequences of different lengths (-1 padding)
-        seqs_L1/2:
-            A vector containing the length of each sequence in the respective seqs_mat matrix,
-            without the padding in seqs_mat
+        seqs/2:
+            A python sequence of strings representing gene sequences
         is_symmetric:
             Determines whether the final result matrix is symmetric, assuming that this function is
             only used to compute a block of a bigger result matrix
@@ -807,14 +799,17 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         Returns
         -------
         data_rows:
-            List with arrays containing the non-zero data values of the result matrix per row,
+            List with array containing the non-zero data values of the result matrix,
             needed to create the final scipy CSR result matrix later
         indices_rows:
-            List with arrays containing the non-zero entry column indeces of the result matrix per row,
+            List with array containing the non-zero entry column indeces of the result matrix,
             needed to create the final scipy CSR result matrix later
         row_element_counts:
             Array with integers that indicate the amount of non-zero values of the result matrix per row,
             needed to create the final scipy CSR result matrix later
+        row_mins:
+            Always returns a numpy array containing None because the computation of the minimum distance per row is
+            not implemented for the GPU hamming calculator yet.
         """
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
