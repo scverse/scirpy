@@ -27,8 +27,6 @@ dependencies = [
     'pandas>=1.5,!=2.1.2',
     'numpy>=1.17.0',
     'scipy',
-    # parasail 1.2.1 fails to be installd on MacOS
-    'parasail != 1.2.1',
     'scikit-learn',
     'python-levenshtein',
     # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
@@ -86,6 +84,10 @@ diversity = [
 ]
 rpack = [
     'rectangle-packer',
+]
+parasail = [
+    # parasail 1.2.1 fails to be installd on MacOS
+    'parasail != 1.2.1',
 ]
 
 [tool.hatch.version]

@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning][].
 -   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length. Additionally,
     the hamming distance was reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
 
+### Other changes
+
+-   Make `parasail` an optional dependency since it is hard to install it on ARM CPUs. `TCRdist` is now the
+    recommended default distance metric which is much faster than parasail-based pairwise sequence alignments.
+
 ## v0.17.2
 
 ### Fixes
