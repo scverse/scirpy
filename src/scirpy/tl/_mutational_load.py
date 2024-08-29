@@ -80,8 +80,8 @@ def mutational_load(
         Specify to obtain either total or relative counts
     ignore_chars
         A list of characters to ignore while calculating differences. The default "None" ignors the following:
-        * `"N"` - masked or degraded nucleotide, i.e. D-segment is recommended to mask
-        * `"."` - "gaps" => beneficial to ignore; because sometimes there seem to be more gaps in the sequence alignment compared to germline alignment
+        * `"N"` - masked or degraded nucleotide, i.e. D-segment is recommended to mask, because of lower sequence quality
+        * `"."` - "IMGT-gaps", distinct from "normal gaps ('-')" => beneficial to ignore, because sometimes sequence alignments are "clipped" at the beginning, which would cause artificial mutations
     {inplace}
 
     Returns
@@ -104,20 +104,26 @@ def mutational_load(
         for chain in chains:
             mutations = []
             for row in range(len(airr_df)):
-                mutation = simple_hamming_distance(
-                    airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"],
-                    airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"],
-                    frequency=frequency,
-                    ignore_chars=ignore_chars,
-                )
-                mutations.append(mutation)
+                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None):
+                    mutations.append(np.nan)
+                else:
+                    mutation = simple_hamming_distance(
+                        airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"],
+                        airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"],
+                        frequency=frequency,
+                        ignore_chars=ignore_chars,
+                    )
+                    mutations.append(mutation)
 
             if inplace:
                 params.set_obs(f"{chain}_IMGT_V(D)J_{frequency_string}", mutations)
 
             else:
                 mutation_df[f"{chain}_IMGT_V(D)J_{frequency_string}"] = mutations
-                return mutation_df
+        try:
+            return mutation_df
+        except:
+            return None
 
     # calculate SHM up to nucleotide 312. Referring to the IMGT unique numbering scheme this includes:
     # fwr1, cdr1, fwr2, cdr2, fwr3, but not cdr3 and fwr4
@@ -125,23 +131,29 @@ def mutational_load(
         for chain in chains:
             mutations = []
             for row in range(len(airr_df)):
-                v_region_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:312]
-                v_region_sequence = airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"][:312]
+                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None):
+                    mutations.append(np.nan)
+                else:
+                    v_region_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:312]
+                    v_region_sequence = airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"][:312]
 
-                mutation = simple_hamming_distance(
-                    v_region_sequence, v_region_germline, frequency=frequency, ignore_chars=ignore_chars
-                )
-                mutations.append(mutation)
+                    mutation = simple_hamming_distance(
+                        v_region_sequence, v_region_germline, frequency=frequency, ignore_chars=ignore_chars
+                    )
+                    mutations.append(mutation)
 
             if inplace:
                 params.set_obs(f"{chain}_v_segment_{frequency_string}", mutations)
 
             else:
                 mutation_df[f"{chain}_v_segment_{frequency_string}"] = mutations
-                return mutation_df
+        try:
+            return mutation_df
+        except:
+            return None
 
     if region == "subregion":
-        subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
+        #subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
 
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
@@ -149,28 +161,32 @@ def mutational_load(
             mutation_dict = defaultdict(list)
 
             for row in range(len(airr_df)):
-                regions = {
-                    "fwr1": (0, 78),
-                    "cdr1": (78, 114),
-                    "fwr2": (114, 165),
-                    "cdr2": (165, 195),
-                    "fwr3": (195, 312),
-                    "cdr3": (312, 312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6),
-                    "fwr4": (
-                        312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6,
-                        len(airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"]),
-                    ),
-                }
+                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None):
+                    for k in list(mutation_dict.keys()):
+                        mutation_dict[k].append(np.nan)
+                else:
+                    regions = {
+                        "fwr1": (0, 78),
+                        "cdr1": (78, 114),
+                        "fwr2": (114, 165),
+                        "cdr2": (165, 195),
+                        "fwr3": (195, 312),
+                        "cdr3": (312, 312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6),
+                        "fwr4": (
+                            312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6,
+                            len(airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"]),
+                            ),
+                        }
 
-                for v_region, coordinates in regions.items():
-                    mutation_dict[v_region].append(
-                        simple_hamming_distance(
-                            subregion_df.iloc[row].loc[f"{chain}_{v_region}"],
-                            airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][slice(*coordinates)],
-                            frequency=frequency,
-                            ignore_chars=ignore_chars,
+                    for v_region, coordinates in regions.items():
+                        mutation_dict[v_region].append(
+                            simple_hamming_distance(
+                                airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"][slice(*coordinates)],
+                                airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][slice(*coordinates)],
+                                frequency=frequency,
+                                ignore_chars=ignore_chars,
+                            )
                         )
-                    )
 
             for key in mutation_dict:
                 if inplace:
@@ -178,5 +194,7 @@ def mutational_load(
                 if not inplace:
                     mutation_df[f"{chain}_{key}_{frequency_string}"] = mutation_dict[key]
 
-            if not inplace:
-                return mutation_df
+        try:
+            return mutation_df
+        except:
+            return None
