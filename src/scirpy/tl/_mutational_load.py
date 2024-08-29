@@ -1,5 +1,5 @@
-from collections.abc import Sequence
 from collections import defaultdict
+from collections.abc import Sequence
 from typing import Literal, Union
 
 import numpy as np
@@ -104,7 +104,9 @@ def mutational_load(
         for chain in chains:
             mutations = []
             for row in range(len(airr_df)):
-                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None):
+                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (
+                    airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None
+                ):
                     mutations.append(np.nan)
                 else:
                     mutation = simple_hamming_distance(
@@ -131,7 +133,9 @@ def mutational_load(
         for chain in chains:
             mutations = []
             for row in range(len(airr_df)):
-                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None):
+                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (
+                    airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None
+                ):
                     mutations.append(np.nan)
                 else:
                     v_region_germline = airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"][:312]
@@ -153,7 +157,7 @@ def mutational_load(
             return None
 
     if region == "subregion":
-        #subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
+        # subregion_df = get_airr(params, ["fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"], chains)
 
         for chain in chains:
             airr_df[f"{chain}_junction_len"] = [len(a) for a in airr_df[f"{chain}_junction"]]
@@ -161,7 +165,9 @@ def mutational_load(
             mutation_dict = defaultdict(list)
 
             for row in range(len(airr_df)):
-                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None):
+                if (airr_df.iloc[row].loc[f"{chain}_{sequence_alignment}"] is None) or (
+                    airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"] is None
+                ):
                     for k in list(mutation_dict.keys()):
                         mutation_dict[k].append(np.nan)
                 else:
@@ -175,8 +181,8 @@ def mutational_load(
                         "fwr4": (
                             312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6,
                             len(airr_df.iloc[row].loc[f"{chain}_{germline_alignment}"]),
-                            ),
-                        }
+                        ),
+                    }
 
                     for v_region, coordinates in regions.items():
                         mutation_dict[v_region].append(
