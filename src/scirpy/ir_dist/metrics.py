@@ -1039,7 +1039,13 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         self.gap_extend = gap_extend
 
     def _compute_block(self, seqs1, seqs2, origin):
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         subst_mat = parasail.Matrix(self.subst_mat)
         origin_row, origin_col = origin
@@ -1071,7 +1077,13 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists
         """
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         return np.fromiter(
             (
@@ -1218,7 +1230,13 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         self.estimated_penalty = estimated_penalty if estimated_penalty is not None else penalty_dict[subst_mat]
 
     def _compute_block(self, seqs1, seqs2, origin):
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         subst_mat = parasail.Matrix(self.subst_mat)
         origin_row, origin_col = origin
@@ -1267,7 +1285,13 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists
         """
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         return np.fromiter(
             (

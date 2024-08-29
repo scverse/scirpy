@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning][].
 ### Other changes
 
 -   Make `parasail` an optional dependency since it is hard to install it on ARM CPUs. `TCRdist` is now the
-    recommended default distance metric which is much faster than parasail-based pairwise sequence alignments.
+    recommended default distance metric which is much faster than parasail-based pairwise sequence alignments while
+    providing very similar results ([#547](https://github.com/scverse/scirpy/pull/547)).
 
 ## v0.17.2
 
