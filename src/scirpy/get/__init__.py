@@ -19,13 +19,13 @@ ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 @DataHandler.inject_param_docs()
 def airr(
     adata: DataHandler.TYPE,
-    airr_variable: Union[str, Sequence[str]],
-    chain: Union[ChainType, Sequence[ChainType]] = ("VJ_1", "VDJ_1", "VJ_2", "VDJ_2"),
+    airr_variable: str | Sequence[str],
+    chain: ChainType | Sequence[ChainType] = ("VJ_1", "VDJ_1", "VJ_2", "VDJ_2"),
     *,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
-) -> Union[pd.DataFrame, pd.Series]:
+) -> pd.DataFrame | pd.Series:
     """\
     Retrieve AIRR variables for each cell, given a specific chain.
 
@@ -110,7 +110,7 @@ def _airr_col(
 
 
 @contextmanager
-def obs_context(data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Mapping[str, Any]]):
+def obs_context(data: AnnData | MuData, temp_cols: pd.DataFrame | Mapping[str, Any]):
     """
     Contextmanager that temporarily adds columns to obs.
 
@@ -151,8 +151,8 @@ def obs_context(data: Union[AnnData, MuData], temp_cols: Union[pd.DataFrame, Map
 @DataHandler.inject_param_docs()
 def airr_context(
     data: DataHandler.TYPE,
-    airr_variable: Union[str, Sequence[str]],
-    chain: Union[ChainType, Sequence[ChainType]] = ("VJ_1", "VDJ_1", "VJ_2", "VDJ_2"),
+    airr_variable: str | Sequence[str],
+    chain: ChainType | Sequence[ChainType] = ("VJ_1", "VDJ_1", "VJ_2", "VDJ_2"),
     *,
     airr_mod: str = "airr",
     airr_key: str = "airr",

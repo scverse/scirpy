@@ -87,7 +87,7 @@ def to_airr_cells(adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: 
         tmp_airr = ak.to_list(params.airr[i : i + CHUNKSIZE])
         tmp_obs = params.adata.obs.iloc[i : i + CHUNKSIZE].to_dict(orient="index")
 
-        for (cell_id, row), chains in zip(tmp_obs.items(), tmp_airr):
+        for (cell_id, row), chains in zip(tmp_obs.items(), tmp_airr, strict=False):
             tmp_cell = AirrCell(cast(str, cell_id), logger=logger)
             # add cell-level metadata
             tmp_cell.update(row)

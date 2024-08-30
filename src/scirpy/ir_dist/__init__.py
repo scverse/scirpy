@@ -77,7 +77,7 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=-1, **kwargs):
+def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-1, **kwargs):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
@@ -116,12 +116,12 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
 @DataHandler.inject_param_docs(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: DataHandler.TYPE,
-    reference: Optional[DataHandler.TYPE] = None,
+    reference: DataHandler.TYPE | None = None,
     *,
     metric: MetricType = "identity",
-    cutoff: Union[int, None] = None,
+    cutoff: int | None = None,
     sequence: Literal["aa", "nt"] = "nt",
-    key_added: Union[str, None] = None,
+    key_added: str | None = None,
     inplace: bool = True,
     n_jobs: int = -1,
     airr_mod: str = "airr",
@@ -131,7 +131,7 @@ def _ir_dist(
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
     **kwargs,
-) -> Union[dict, None]:
+) -> dict | None:
     """\
     Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
     :term:`CDR3` sequences and between all unique :term:`VDJ <Chain locus>`
@@ -257,10 +257,10 @@ def _ir_dist(
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def sequence_dist(
     seqs: Sequence[str],
-    seqs2: Optional[Sequence[str]] = None,
+    seqs2: Sequence[str] | None = None,
     *,
     metric: MetricType = "identity",
-    cutoff: Union[None, int] = None,
+    cutoff: None | int = None,
     n_jobs: int = -1,
     **kwargs,
 ) -> csr_matrix:
