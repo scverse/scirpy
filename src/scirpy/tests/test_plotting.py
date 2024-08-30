@@ -143,6 +143,7 @@ def test_clonotype_network(
     assert isinstance(p, plt.Axes)
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize("show_size_legend", [True, False])
 @pytest.mark.parametrize("show_legend", [True, False])
 def test_clonotype_network_pie(
