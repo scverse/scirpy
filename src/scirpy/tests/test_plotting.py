@@ -115,18 +115,18 @@ def test_clonotype_modularity(adata_clonotype_modularity, jitter, show_size_lege
     )
 
 
+@pytest.mark.parametrize(
+    "adata_clonotype_network,kwargs",
+    [[{}, {}], [{"key_added": "foo"}, {"basis": "foo"}]],
+    indirect=["adata_clonotype_network"],
+)
 @pytest.mark.parametrize("color_by_n_cells", [True, False])
 @pytest.mark.parametrize("scale_by_n_cells", [True, False])
 @pytest.mark.parametrize("show_size_legend", [True, False])
 @pytest.mark.parametrize("show_legend", [True, False])
 @pytest.mark.parametrize("show_labels", [True, False])
 def test_clonotype_network(
-    adata_clonotype_network,
-    color_by_n_cells,
-    scale_by_n_cells,
-    show_size_legend,
-    show_legend,
-    show_labels,
+    adata_clonotype_network, color_by_n_cells, scale_by_n_cells, show_size_legend, show_legend, show_labels, kwargs
 ):
     adata = adata_clonotype_network
     p = pl.clonotype_network(
@@ -136,6 +136,7 @@ def test_clonotype_network(
         show_size_legend=show_size_legend,
         show_legend=show_legend,
         show_labels=show_labels,
+        **kwargs,
     )
     assert isinstance(p, plt.Axes)
 

@@ -196,12 +196,16 @@ def adata_define_clonotype_clusters_singletons():
 
 
 @pytest.fixture
-def adata_clonotype_network(adata_conn):
+def adata_clonotype_network(adata_conn, request):
     """Adata with clonotype network computed.
 
     adata derived from adata_conn that also contains some gene expression data
     for plotting.
     """
+    try:
+        kwargs = request.param
+    except AttributeError:
+        kwargs = {}
     if isinstance(adata_conn, AnnData):
         adata = AnnData(
             var=pd.DataFrame().assign(gene_symbol=["CD8A", "CD4"]).set_index("gene_symbol"),
@@ -216,7 +220,7 @@ def adata_clonotype_network(adata_conn):
             obsm=adata_conn.obsm,
         )
         adata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
-        ir.tl.clonotype_network(adata, sequence="aa", metric="alignment")
+        ir.tl.clonotype_network(adata, sequence="aa", metric="alignment", **kwargs)
         return adata
     else:
         adata_gex = AnnData(
@@ -231,7 +235,7 @@ def adata_clonotype_network(adata_conn):
         )
         mdata = MuData({"gex": adata_gex, "airr": adata_conn.mod["airr"]})
         mdata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
-        ir.tl.clonotype_network(mdata, sequence="aa", metric="alignment")
+        ir.tl.clonotype_network(mdata, sequence="aa", metric="alignment", **kwargs)
         return mdata
 
 
