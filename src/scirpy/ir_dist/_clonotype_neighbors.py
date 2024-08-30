@@ -310,7 +310,7 @@ class ClonotypeNeighbors:
             if distance_matrix_name != distance_matrix_name_reverse:
                 raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
             reverse_lookup_values = np.vstack(list(reverse.lookup.values()))
-            reverse_lookup_keys = np.zeros(reverse.size, dtype=np.int32)
+            reverse_lookup_keys = np.zeros(reverse.size, dtype=np.int64)
             reverse_lookup_keys[list(reverse.lookup.keys())] = np.arange(len(list(reverse.lookup.keys())))
             match_column_mask = sp.csr_matrix(
                 (np.empty(len(has_distance_mask.indices)), has_distance_mask.indices, has_distance_mask.indptr),

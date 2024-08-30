@@ -286,22 +286,19 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
 
-        if(distance_matrix.indptr[-1] > np.iinfo(np.int32).max):
-            raise OverflowError("The number of values in the csr matrix exceeds the maximum limit for int32 as datatype for the indptr array.")
-
-        if(distance_matrix.shape[1] > np.iinfo(np.int32).max):
-            raise OverflowError("The number of columns in the csr matrix exceeds the maximum limit for int32 as datatype for the indices array.")
+        if(np.max(distance_matrix.data) > np.iinfo(np.uint8).max):
+            raise OverflowError("The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)")
         
         indices_in_dist_mat = forward_lookup_table[object_ids]
-        indptr = np.empty(distance_matrix.indptr.shape[0] + 1, dtype=np.int32)
+        indptr = np.empty(distance_matrix.indptr.shape[0] + 1, dtype=np.int64)
         indptr[:-1] = distance_matrix.indptr
         indptr[-1] = indptr[-2]
-        distance_matrix_extended = sp.csr_matrix((distance_matrix.data.astype(np.uint8), distance_matrix.indices.astype(np.int32), indptr), shape=(distance_matrix.shape[0]+1, distance_matrix.shape[1]))
+        distance_matrix_extended = sp.csr_matrix((distance_matrix.data.astype(np.uint8), distance_matrix.indices, indptr), shape=(distance_matrix.shape[0]+1, distance_matrix.shape[1]))
         rows = distance_matrix_extended[indices_in_dist_mat, :]
 
         reverse_matrix_data = [np.array([], dtype=np.uint8)] * rows.shape[1]
-        reverse_matrix_col = [np.array([], dtype=np.int32)] * rows.shape[1]
-        nnz_array = np.zeros(rows.shape[1], dtype=np.int32)
+        reverse_matrix_col = [np.array([], dtype=np.int64)] * rows.shape[1]
+        nnz_array = np.zeros(rows.shape[1], dtype=np.int64)
 
         for key, value in reverse_lookup_table.lookup.items():
             reverse_matrix_data[key] = value.data
@@ -310,7 +307,7 @@ class DoubleLookupNeighborFinder:
 
         data = np.concatenate(reverse_matrix_data)
         col = np.concatenate(reverse_matrix_col)
-        indptr = np.concatenate([np.array([0], dtype=np.int32), np.cumsum(nnz_array)])
+        indptr = np.concatenate([np.array([0], dtype=np.int64), np.cumsum(nnz_array)])
 
         reverse_matrix = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse_lookup_table.size))
         object_distance_matrix = rows * reverse_matrix
