@@ -269,18 +269,21 @@ class ClonotypeNeighbors:
             To be able to use built-in functions, we shift the data arrays by the overall maximum value such that we get negative values.
             Then we can use the built-in "<" function to compare the CSR matrices while ignoring 0 values.
             """
-            if a.dtype != np.uint8 or b.dtype != np.uint8:
-                raise ValueError("Both CSR matrices must be of type uint8.")
-            
             max_value_a = np.max(a.data, initial=0)
             max_value_b = np.max(b.data, initial=0)
+
+            if max_value_a > np.iinfo(np.uint8).max or max_value_b > np.iinfo(np.uint8).max:
+                raise ValueError("CSR matrix data values exceed maximum value for datatype uint8 (255).")
+
             max_value = np.int16(np.max([max_value_a, max_value_b]) + 1)
             min_mat_a = sp.csr_matrix((a.data.astype(np.int16), a.indices, a.indptr), shape=a.shape)
             min_mat_a.data -= max_value
             min_mat_b = sp.csr_matrix((b.data.astype(np.int16), b.indices, b.indptr), shape=b.shape)
             min_mat_b.data -= max_value
             a_smaller_b = min_mat_a < min_mat_b
-            return b + (a - b).multiply(a_smaller_b)
+            min_result = b + (a - b).multiply(a_smaller_b)
+            print("min_result dtype: ", min_result.dtype)
+            return min_result
 
         def csr_max(a, b):
             """
@@ -291,18 +294,21 @@ class ClonotypeNeighbors:
             Then we can use the built-in ">" function to compare the CSR matrices while handling the special case for 0 values at
             the same time.
             """
-            if a.dtype != np.uint8 or b.dtype != np.uint8:
-                raise ValueError("Both CSR matrices must be of type uint8.")
-            
             max_value_a = np.max(a.data, initial=0)
             max_value_b = np.max(b.data, initial=0)
+
+            if max_value_a > np.iinfo(np.uint8).max or max_value_b > np.iinfo(np.uint8).max:
+                raise ValueError("CSR matrix data values exceed maximum value for datatype uint8 (255).")
+            
             max_value = np.int16(np.max([max_value_a, max_value_b]) + 1)
             max_mat_a = sp.csr_matrix((a.data.astype(np.int16), a.indices, a.indptr), shape=a.shape)
             max_mat_a.data -= max_value
             max_mat_b = sp.csr_matrix((b.data.astype(np.int16), b.indices, b.indptr), shape=b.shape)
             max_mat_b.data -= max_value
             a_greater_b = max_mat_a > max_mat_b
-            return b + (a - b).multiply(a_greater_b)
+            max_result = b + (a - b).multiply(a_greater_b)
+            print("max_result dtype: ", max_result.dtype)
+            return max_result
 
         if self.match_columns is not None:
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
