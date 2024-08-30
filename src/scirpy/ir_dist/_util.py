@@ -231,6 +231,7 @@ class DoubleLookupNeighborFinder:
     def n_cols(self):
         return self.feature_table2.shape[0]
 
+
     def lookup(
         self,
         object_ids: np.ndarray[int],
@@ -240,7 +241,7 @@ class DoubleLookupNeighborFinder:
         """
         Creates a distance matrix between objects with the given ids based on a feature distance matrix.
 
-        To get distance between two objects we need to look up the features of the two objects.
+        To get the distance between two objects we need to look up the features of the two objects.
         The distance between those two features is then the distance between the two objects.
 
         To do so, we first use the `object_ids` together with the `forward_lookup_table` to look up
@@ -254,7 +255,7 @@ class DoubleLookupNeighborFinder:
         By multiplying the `rows` matrix with the `reverse_lookup_matrix` we get the final `object_distance_matrix` that shows
         the distances between the objects with the given `object_ids` regarding a certain feature column.
 
-        It might not be obvious at first sight that the matrix multiplication between `rows` and `reverse_lookup_matrix` gives
+        It might not be obvious at the first sight that the matrix multiplication between `rows` and `reverse_lookup_matrix` gives
         us the desired result. But this trick allows us to use the built-in sparse matrix multiplication of `scipy.sparse`
         for enhanced performance.
 
@@ -312,6 +313,7 @@ class DoubleLookupNeighborFinder:
         reverse_matrix = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse_lookup_table.size))
         object_distance_matrix = rows * reverse_matrix
         return object_distance_matrix
+    
 
     def add_distance_matrix(
         self,
