@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import scipy.sparse
@@ -19,13 +19,13 @@ def clonotype_modularity(
     target_col="clone_id",
     connectivity_key="gex:connectivities",
     permutation_test: Literal["approx", "exact"] = "approx",
-    n_permutations: Optional[int] = None,
+    n_permutations: int | None = None,
     key_added: str = "clonotype_modularity",
     inplace: bool = True,
     fdr_correction: bool = True,
     random_state: int = 0,
     airr_mod: str = "airr",
-) -> Optional[tuple[dict[str, float], dict[str, float]]]:
+) -> tuple[dict[str, float], dict[str, float]] | None:
     """\
     Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance by computing the
@@ -147,6 +147,7 @@ def clonotype_modularity(
             zip(
                 modularity_pvalues.keys(),
                 fdrcorrection(list(modularity_pvalues.values()))[1],
+                strict=False,
             )
         )
 

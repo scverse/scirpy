@@ -1,6 +1,6 @@
 import itertools
 from collections.abc import Mapping, Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -19,12 +19,12 @@ class ClonotypeNeighbors:
     def __init__(
         self,
         params: DataHandler,
-        params2: Optional[DataHandler] = None,
+        params2: DataHandler | None = None,
         *,
         receptor_arms: Literal["VJ", "VDJ", "all", "any"],
         dual_ir: Literal["primary_only", "all", "any"],
         same_v_gene: bool = False,
-        match_columns: Union[None, Sequence[str]] = None,
+        match_columns: None | Sequence[str] = None,
         distance_key: str,
         sequence_key: str,
         n_jobs: int = -1,

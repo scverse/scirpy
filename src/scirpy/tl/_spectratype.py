@@ -1,5 +1,5 @@
-from collections.abc import Sequence
-from typing import Callable, Literal, Union
+from collections.abc import Callable, Sequence
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -13,15 +13,12 @@ from ._group_abundance import _group_abundance
 @DataHandler.inject_param_docs()
 def spectratype(
     adata: DataHandler.TYPE,
-    chain: Union[
-        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
-        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
-    ] = "VJ_1",
+    chain: Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"] | Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]] = "VJ_1",
     *,
     target_col: str,
     cdr3_col: str = "junction_aa",
     combine_fun: Callable = np.sum,
-    fraction: Union[None, str, bool] = None,
+    fraction: None | str | bool = None,
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
