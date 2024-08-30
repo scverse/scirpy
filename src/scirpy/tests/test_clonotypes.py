@@ -207,6 +207,7 @@ def test_clonotype_clusters_end_to_end(
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
+@pytest.mark.extra
 @pytest.mark.xfail(
     sys.platform == "win32",
     reason="Inconsistent coordinates with igraph on windows (got introduced only after release of python-igraph 0.9.11)",

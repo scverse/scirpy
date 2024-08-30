@@ -86,6 +86,7 @@ def test_vdj_usage(adata_vdj, full_combination):
     assert isinstance(p, plt.Axes)
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize("matrix_type", ["array", "csr", "csc"])
 @pytest.mark.parametrize("use_raw", [False, None])
 @pytest.mark.parametrize("cmap", [None, "cividis"])
@@ -115,6 +116,7 @@ def test_clonotype_modularity(adata_clonotype_modularity, jitter, show_size_lege
     )
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "adata_clonotype_network,kwargs",
     [[{}, {}], [{"key_added": "foo"}, {"basis": "foo"}]],
