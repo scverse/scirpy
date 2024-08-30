@@ -270,6 +270,7 @@ def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware,
     npt.assert_almost_equal(coords.values, np.array(expected), decimal=1)
 
 
+@pytest.mark.extra
 def test_clonotype_network_igraph(adata_clonotype_network):
     g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
     print(lo.coords)
