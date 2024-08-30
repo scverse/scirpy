@@ -10,11 +10,25 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
-### Addition
+### Additions
 
--   Isotypically included B cells are now labelled as `receptor_subtype="IGH+IGK/L"` instead of `ambiguous` in `tl.chain_qc`. ([#537](https://github.com/scverse/scirpy/pull/537))
--   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length. Additionally,
-    the hamming distance was reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
+-   Isotypically included B cells are now labelled as `receptor_subtype="IGH+IGK/L"` instead of `ambiguous` in `tl.chain_qc` ([#537](https://github.com/scverse/scirpy/pull/537)).
+-   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length ([#512](https://github.com/scverse/scirpy/pull/512)).
+
+### Performance improvements
+
+-   The hamming distance was reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
+
+### Fixes
+
+-   Fix that pl.clonotype_network couldn't use non-standard obsm key ([#545](https://github.com/scverse/scirpy/pull/545)).
+
+### Other changes
+
+-   Make `parasail` an optional dependency since it is hard to install it on ARM CPUs. `TCRdist` is now the
+    recommended default distance metric which is much faster than parasail-based pairwise sequence alignments while
+    providing very similar results ([#547](https://github.com/scverse/scirpy/pull/547)).
+-   Drop support for Python 3.9 in accordance with [SPEC0](https://scientific-python.org/specs/spec-0000/) ([#546](https://github.com/scverse/scirpy/pull/546))
 
 ## v0.17.2
 

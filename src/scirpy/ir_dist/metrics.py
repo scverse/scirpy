@@ -2,7 +2,6 @@ import abc
 import itertools
 import warnings
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import joblib
 import matplotlib.pyplot as plt
@@ -58,14 +57,14 @@ class DistanceCalculator(abc.ABC):
     #: The sparse matrix dtype. Defaults to uint8, constraining the max distance to 255.
     DTYPE = "uint8"
 
-    def __init__(self, cutoff: Union[int, None]):
+    def __init__(self, cutoff: int | None):
         if cutoff > 255:
             raise ValueError("Using a cutoff > 255 is not possible due to the `uint8` dtype used")
         self.cutoff = cutoff
 
     @_doc_params(dist_mat=_doc_dist_mat)
     @abc.abstractmethod
-    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
+    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Sequence[str] | None = None) -> csr_matrix:
         """\
         Calculate pairwise distance matrix of all sequences in `seqs` and `seqs2`.
 
@@ -118,7 +117,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         cutoff: int,
         *,
         n_jobs: int = -1,
-        block_size: Optional[int] = None,
+        block_size: int | None = None,
     ):
         super().__init__(cutoff)
         self.n_jobs = n_jobs
@@ -132,7 +131,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
     def _compute_block(
         self,
         seqs1: Sequence[str],
-        seqs2: Union[Sequence[str], None],
+        seqs2: Sequence[str] | None,
         origin: tuple[int, int],
     ) -> tuple[int, int, int]:
         """Compute the distances for a block of the matrix
@@ -157,9 +156,9 @@ class ParallelDistanceCalculator(DistanceCalculator):
     @staticmethod
     def _block_iter(
         seqs1: Sequence[str],
-        seqs2: Optional[Sequence[str]] = None,
-        block_size: Optional[int] = 50,
-    ) -> tuple[Sequence[str], Union[Sequence[str], None], tuple[int, int]]:
+        seqs2: Sequence[str] | None = None,
+        block_size: int | None = 50,
+    ) -> tuple[Sequence[str], Sequence[str] | None, tuple[int, int]]:
         """Iterate over sequences in blocks.
 
         Parameters
@@ -198,7 +197,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
                     yield seqs1[row : row + block_size], seqs2[col : col + block_size], (row, col)
 
     def calc_dist_mat(
-        self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None, *, block_size: Optional[int] = None
+        self, seqs: Sequence[str], seqs2: Sequence[str] | None = None, *, block_size: int | None = None
     ) -> csr_matrix:
         """Calculate the distance matrix.
 
@@ -235,7 +234,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
         )
 
         try:
-            dists, rows, cols = zip(*itertools.chain(*block_results))
+            dists, rows, cols = zip(*itertools.chain(*block_results), strict=False)
         except ValueError:
             # happens when there is no match at all
             dists, rows, cols = (), (), ()
@@ -291,7 +290,7 @@ class IdentityDistanceCalculator(DistanceCalculator):
                         yield 1, i1, i2
 
             try:
-                d, row, col = zip(*coord_generator())
+                d, row, col = zip(*coord_generator(), strict=False)
             except ValueError:
                 # happens when there is no match at all
                 d, row, col = (), (), ()
@@ -365,7 +364,7 @@ def _make_numba_matrix(distance_matrix: dict, alphabet: str = "ARNDCQEGHILKMFPST
 
 
 def _seqs2mat(
-    seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: Union[None, int] = None
+    seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: None | int = None
 ) -> tuple[np.ndarray, np.ndarray]:
     """Convert a collection of gene sequences into a
     numpy matrix of integers for fast comparison.
@@ -518,7 +517,7 @@ class _MetricDistanceCalculator(abc.ABC):
         sparse_distance_matrix = csr_matrix((data, indices, indptr), shape=(len(seqs), len(seqs2)))
         return sparse_distance_matrix, row_mins
 
-    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Optional[Sequence[str]] = None) -> csr_matrix:
+    def calc_dist_mat(self, seqs: Sequence[str], seqs2: Sequence[str] | None = None) -> csr_matrix:
         """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
         of the derived class and returns a CSR distance matrix. Also creates a histogram based on the minimum value
         per row of the distance matrix if histogram is set to True.
@@ -538,7 +537,7 @@ class _MetricDistanceCalculator(abc.ABC):
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
             results = joblib.Parallel(return_as="list")(delayed_jobs)
 
-            block_matrices_csr, block_row_mins = zip(*results)
+            block_matrices_csr, block_row_mins = zip(*results, strict=False)
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
             row_mins = np.concatenate(block_row_mins)
         else:
@@ -1202,7 +1201,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         cutoff: int = 10,
         *,
         n_jobs: int = -1,
-        block_size: Optional[int] = None,
+        block_size: int | None = None,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 11,
@@ -1213,7 +1212,13 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         self.gap_extend = gap_extend
 
     def _compute_block(self, seqs1, seqs2, origin):
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         subst_mat = parasail.Matrix(self.subst_mat)
         origin_row, origin_col = origin
@@ -1245,7 +1250,13 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists
         """
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         return np.fromiter(
             (
@@ -1338,7 +1349,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         cutoff: int = 10,
         *,
         n_jobs: int = -1,
-        block_size: Optional[int] = None,
+        block_size: int | None = None,
         subst_mat: str = "blosum62",
         gap_open: int = 11,
         gap_extend: int = 11,
@@ -1392,7 +1403,13 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         self.estimated_penalty = estimated_penalty if estimated_penalty is not None else penalty_dict[subst_mat]
 
     def _compute_block(self, seqs1, seqs2, origin):
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         subst_mat = parasail.Matrix(self.subst_mat)
         origin_row, origin_col = origin
@@ -1441,7 +1458,13 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         """Calculate self-alignments. We need them as reference values
         to turn scores into dists
         """
-        import parasail
+        try:
+            import parasail
+        except ImportError:
+            raise ImportError(
+                "Using the alignment distance requires the installation of `parasail`. "
+                "You can install it with `pip install parasail`."
+            ) from None
 
         return np.fromiter(
             (

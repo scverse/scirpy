@@ -311,6 +311,7 @@ def test_translate_dna_to_protein(adata_tra):
     for nt, aa in zip(
         ir.get.airr(adata_tra, "junction", "VJ_1"),
         ir.get.airr(adata_tra, "junction_aa", "VJ_1"),
+        strict=False,
     ):
         assert _translate_dna_to_protein(cast(str, nt)) == aa
 
