@@ -2,7 +2,7 @@ import itertools
 import json
 from collections import Counter
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -86,9 +86,9 @@ def ir_query(
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_ir: Literal["any", "primary_only", "all"] = "any",
     same_v_gene: bool = False,
-    match_columns: Union[Sequence[str], str, None] = None,
-    key_added: Optional[str] = None,
-    distance_key: Optional[str] = None,
+    match_columns: Sequence[str] | str | None = None,
+    key_added: str | None = None,
+    distance_key: str | None = None,
     inplace: bool = True,
     n_jobs: int = -1,
     chunksize: int = 2000,
@@ -98,7 +98,7 @@ def ir_query(
     airr_mod_ref: str = "airr",
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
-) -> Optional[dict]:
+) -> dict | None:
     """\
     Query a referece database for matching immune cell receptors.
 
@@ -223,9 +223,9 @@ def ir_query_annotate_df(
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
-    include_ref_cols: Optional[Sequence[str]] = None,
+    include_ref_cols: Sequence[str] | None = None,
     include_query_cols: Sequence[str] = (),
-    query_key: Optional[str] = None,
+    query_key: str | None = None,
     suffix: str = "",
     airr_mod: str = "airr",
     airr_mod_ref: str = "airr",
@@ -311,13 +311,13 @@ def ir_query_annotate(
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
     strategy: Literal["json", "unique-only", "most-frequent"] = "unique-only",
-    include_ref_cols: Optional[Sequence[str]] = None,
-    query_key: Optional[str] = None,
+    include_ref_cols: Sequence[str] | None = None,
+    query_key: str | None = None,
     suffix: str = "",
     inplace=True,
     airr_mod: str = "airr",
     airr_mod_ref: str = "airr",
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """
     Annotate cells based on the result of :func:`~scirpy.tl.ir_query`.
 

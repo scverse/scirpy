@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import igraph as ig
 import numpy as np
@@ -12,7 +12,7 @@ def layout_components(
     arrange_boxes: Literal["size", "rpack", "squarify"] = "squarify",
     pad_x: float = 1.0,
     pad_y: float = 1.0,
-    layout_kwargs: Optional[dict] = None,
+    layout_kwargs: dict | None = None,
 ) -> np.ndarray:
     """
     Compute a graph layout by layouting all connected components individually.
@@ -68,7 +68,7 @@ def layout_components(
 
     component_layouts = [
         _layout_component(component, bbox, component_layout, layout_kwargs)
-        for component, bbox in zip(components, bboxes)
+        for component, bbox in zip(components, bboxes, strict=False)
     ]
     # get vertexes back into their original order
     coords = np.vstack(component_layouts)[vertex_sorter, :]
@@ -107,7 +107,7 @@ def _bbox_rpack(component_sizes, pad_x=1.0, pad_y=1.0):
             width * scale_width - pad_x,
             height * scale_height - pad_y,
         )
-        for (x, y), (width, height) in zip(origins, dimensions)
+        for (x, y), (width, height) in zip(origins, dimensions, strict=False)
     ]
     return bboxes[::-1]
 

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from scirpy import tl
 from scirpy.util import DataHandler
@@ -13,9 +13,9 @@ def clonal_expansion(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    expanded_in: Union[str, None] = None,
+    expanded_in: str | None = None,
     breakpoints: Sequence[int] = (1, 2),
-    clip_at: Optional[int] = None,
+    clip_at: int | None = None,
     summarize_by: Literal["cell", "clone_id"] = "cell",
     normalize: bool = True,
     show_nonexpanded: bool = True,

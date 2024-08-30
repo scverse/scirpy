@@ -1,9 +1,9 @@
 import contextlib
 import os
 import warnings
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from textwrap import dedent
-from typing import Any, Callable, Optional, Union, cast, overload
+from typing import Any, Optional, Union, cast, overload
 
 import awkward as ak
 import numpy as np
@@ -77,9 +77,9 @@ class DataHandler:
     def __init__(
         self,
         data: "DataHandler.TYPE",
-        airr_mod: Optional[str] = None,
-        airr_key: Optional[str] = None,
-        chain_idx_key: Optional[str] = None,
+        airr_mod: str | None = None,
+        airr_key: str | None = None,
+        chain_idx_key: str | None = None,
     ):
         if isinstance(data, DataHandler):
             self._data = data._data
@@ -164,7 +164,7 @@ class DataHandler:
         except (KeyError, AttributeError):
             return self.adata.obs[column]
 
-    def set_obs(self, key: str, value: Union[pd.Series, Sequence[Any], np.ndarray]) -> None:
+    def set_obs(self, key: str, value: pd.Series | Sequence[Any] | np.ndarray) -> None:
         """Store results in .obs of AnnData and MuData.
 
         If `value` is not a Series, if the length is equal to the params.mdata, we assume it aligns to the
@@ -229,7 +229,7 @@ class DataHandler:
                 raise AttributeError("DataHandler was initalized with MuData, but without specifying a modality")
 
     @property
-    def data(self) -> Union[MuData, AnnData]:
+    def data(self) -> MuData | AnnData:
         """Get the outermost container. If MuData is defined, return the MuData object.
         Otherwise the AnnData object.
         """
@@ -432,9 +432,7 @@ def _is_false2(x):
 _is_false = np.vectorize(lambda x: _is_false2(np.array(x).astype(object)), otypes=[bool])
 
 
-def _normalize_counts(
-    obs: pd.DataFrame, normalize: Union[bool, str], default_col: Union[None, str] = None
-) -> np.ndarray:
+def _normalize_counts(obs: pd.DataFrame, normalize: bool | str, default_col: None | str = None) -> np.ndarray:
     """
     Produces an array with group sizes that can be used to normalize
     counts in a DataFrame.
