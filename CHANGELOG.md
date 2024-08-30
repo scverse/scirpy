@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning][].
 
 -   Fix that pl.clonotype_network couldn't use non-standard obsm key ([#545](https://github.com/scverse/scirpy/pull/545)).
 
+### Other changes
+
+-   Drop support for Python 3.9 (in accordance with [SPEC0](https://scientific-python.org/specs/spec-0000/))
+
 ## v0.17.2
 
 ### Fixes

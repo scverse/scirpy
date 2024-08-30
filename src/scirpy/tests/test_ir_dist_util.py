@@ -203,7 +203,7 @@ def test_dlnf_lookup_table(dlnf, feature_col, name, forward_expected, reverse_ex
     assert dist_mat == "test"
     npt.assert_array_equal(forward, forward_expected)
     assert len(reverse.lookup) == len(reverse_expected)
-    for (k, v), (k_expected, v_expected) in zip(reverse.lookup.items(), reverse_expected.items()):
+    for (k, v), (k_expected, v_expected) in zip(reverse.lookup.items(), reverse_expected.items(), strict=False):
         assert k == k_expected
         assert list(v.todense().A1) == v_expected
 

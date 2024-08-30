@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -19,15 +18,15 @@ def clonotype_imbalance(
     groupby: str,
     case_label: str,
     *,
-    control_label: Union[None, str] = None,
+    control_label: None | str = None,
     target_col: str = "clone_id",
-    additional_hue: Union[None, str, bool] = None,
-    fraction: Union[None, str, bool] = None,
+    additional_hue: None | str | bool = None,
+    fraction: None | str | bool = None,
     inplace: bool = True,
-    overlap_key: Union[None, str] = None,
+    overlap_key: None | str = None,
     key_added: str = "clonotype_imbalance",
     airr_mod: str = "airr",
-) -> Union[None, tuple[pd.DataFrame, pd.DataFrame]]:
+) -> None | tuple[pd.DataFrame, pd.DataFrame]:
     """\
     Aims to find clonotypes that are the most enriched or depleted in a category.
 
@@ -165,9 +164,9 @@ def _create_case_control_groups(
     params: DataHandler,
     replicate_col: str,
     groupby: str,
-    additional_hue: Union[None, str, bool],
+    additional_hue: None | str | bool,
     case_label: str,
-    control_label: Union[None, str],
+    control_label: None | str,
 ) -> list:
     """Creates groups for comparison.
 
@@ -225,8 +224,8 @@ def _create_case_control_groups(
 
 
 def _calculate_imbalance(
-    case_sizes: Union[np.ndarray, pd.Series],
-    control_sizes: Union[np.ndarray, pd.Series],
+    case_sizes: np.ndarray | pd.Series,
+    control_sizes: np.ndarray | pd.Series,
     ncase: Sequence,
     ncontrol: Sequence,
     global_minimum: float,
