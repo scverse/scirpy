@@ -70,7 +70,7 @@ def repertoire_overlap(
 
     # Normalize to fractions
     df["cell_weights"] = (
-        _normalize_counts(df, fraction) if isinstance(fraction, (bool, str)) or fraction is None else fraction
+        _normalize_counts(df, fraction) if isinstance(fraction, bool | str) or fraction is None else fraction
     )
 
     # Create a weighted matrix of clonotypes

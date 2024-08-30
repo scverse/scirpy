@@ -107,7 +107,7 @@ def vdj_usage(
     )
     df = get_airr(params, airr_variables, chains).assign(
         # make sure this also works with mudata columns:
-        cell_weights=_normalize_counts(tmp_obs, normalize_to) if isinstance(normalize_to, (bool, str)) else normalize_to
+        cell_weights=_normalize_counts(tmp_obs, normalize_to) if isinstance(normalize_to, bool | str) else normalize_to
     )
     for col in df.columns:
         if col.startswith("VJ") or col.startswith("VDJ"):

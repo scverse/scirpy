@@ -405,7 +405,7 @@ def read_airr(
     airr_cells = {}
     logger = _IOLogger()
 
-    if isinstance(path, (str, Path, pd.DataFrame)):
+    if isinstance(path, str | Path | pd.DataFrame):
         path: list[str | Path | pd.DataFrame] = [path]  # type: ignore
 
     for tmp_path_or_df in path:

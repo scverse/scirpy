@@ -34,10 +34,10 @@ def IrNeighbors(*args, **kwargs):
     )
 
 
-MetricType = Union[
-    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming", "normalized_hamming", "tcrdist"],
-    metrics.DistanceCalculator,
-]
+MetricType = (
+    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming", "normalized_hamming", "tcrdist"]
+    | metrics.DistanceCalculator
+)
 
 _doc_metrics = """\
 metric
