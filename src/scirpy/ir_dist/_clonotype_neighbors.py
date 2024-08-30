@@ -263,7 +263,7 @@ class ClonotypeNeighbors:
 
         def csr_min(a: sp.csr_matrix, b: sp.csr_matrix) -> sp.csr_matrix:
             """
-            Computes the element-wise minimum between 2 CSR matrices while ignoring 0 values. If 2 values 
+            Computes the element-wise minimum between 2 CSR matrices while ignoring 0 values. If 2 values
             are compared and at least one of them is a 0, the maximum of the 2 values is taken instead of the minimum.
 
             To be able to use built-in functions, we shift the data arrays by the overall maximum value such that we get negative values.
@@ -287,7 +287,7 @@ class ClonotypeNeighbors:
 
         def csr_max(a, b):
             """
-            Computes the element-wise maximum between 2 CSR matrices while handling 0 values differently. If 2 values 
+            Computes the element-wise maximum between 2 CSR matrices while handling 0 values differently. If 2 values
             are compared and at least one of them is a 0, the minimum (=0) of the 2 values is taken instead of the maximum.
 
             To be able to use built-in functions, we shift the data arrays by the overall maximum value such that we get negative values.
@@ -299,7 +299,7 @@ class ClonotypeNeighbors:
 
             if max_value_a > np.iinfo(np.uint8).max or max_value_b > np.iinfo(np.uint8).max:
                 raise ValueError("CSR matrix data values exceed maximum value for datatype uint8 (255).")
-            
+
             max_value = np.int16(np.max([max_value_a, max_value_b]) + 1)
             max_mat_a = sp.csr_matrix((a.data.astype(np.int16), a.indices, a.indptr), shape=a.shape)
             max_mat_a.data -= max_value

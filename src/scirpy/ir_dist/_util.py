@@ -286,14 +286,19 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
 
-        if(np.max(distance_matrix.data) > np.iinfo(np.uint8).max):
-            raise OverflowError("The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)")
-        
+        if np.max(distance_matrix.data) > np.iinfo(np.uint8).max:
+            raise OverflowError(
+                "The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)"
+            )
+
         indices_in_dist_mat = forward_lookup_table[object_ids]
         indptr = np.empty(distance_matrix.indptr.shape[0] + 1, dtype=np.int64)
         indptr[:-1] = distance_matrix.indptr
         indptr[-1] = indptr[-2]
-        distance_matrix_extended = sp.csr_matrix((distance_matrix.data.astype(np.uint8), distance_matrix.indices, indptr), shape=(distance_matrix.shape[0]+1, distance_matrix.shape[1]))
+        distance_matrix_extended = sp.csr_matrix(
+            (distance_matrix.data.astype(np.uint8), distance_matrix.indices, indptr),
+            shape=(distance_matrix.shape[0] + 1, distance_matrix.shape[1]),
+        )
         rows = distance_matrix_extended[indices_in_dist_mat, :]
 
         reverse_matrix_data = [np.array([], dtype=np.uint8)] * rows.shape[1]
