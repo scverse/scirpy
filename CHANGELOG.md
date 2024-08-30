@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning][].
 -   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length. Additionally,
     the hamming distance was reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
 
+### Other changes
+
+-   Drop support for Python 3.9 (in accordance with [SPEC0](https://scientific-python.org/specs/spec-0000/))
+
 ## v0.17.2
 
 ### Fixes
