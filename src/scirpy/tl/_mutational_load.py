@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import Literal, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ def simple_hamming_distance(sequence: str, germline: str, frequency: bool, ignor
     distance = 0
     num_chars = len(sequence)
 
-    for l1, l2 in zip(sequence, germline):
+    for l1, l2 in zip(sequence, germline, strict=False):
         if l1 in ignore_chars or l2 in ignore_chars:
             num_chars -= 1
 
@@ -42,16 +42,13 @@ def mutational_load(
     chain_idx_key="chain_indices",
     sequence_alignment: str = "sequence_alignment",
     germline_alignment: str = "germline_alignment_d_mask",
-    chains: Union[
-        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
-        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
-    ] = "VDJ_1",
+    chains: Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"] | Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]] = "VDJ_1",
     region: Literal["IMGT_V(D)J", "IMGT_V_segment", "subregion"] = "IMGT_VDJ",
     junction_col: str = "junction",
     frequency: bool = True,
     ignore_chars: list[str] = "None",
     inplace: bool = True,
-) -> Union[None, pd.DataFrame]:
+) -> None | pd.DataFrame:
     """\
     Calculates observable mutation by comparing sequences with corresponding germline alignments and counting differences.
     Needs germline alignment information, which can be obtained by using the interoperability to Dandelion (https://sc-dandelion.readthedocs.io/en/latest/notebooks/5_dandelion_diversity_and_mutation-10x_data.html)
