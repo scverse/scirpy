@@ -200,7 +200,7 @@ def define_clonotype_clusters(
     same_j_gene: bool = False,
     within_group: Union[Sequence[str], str, None] = "receptor_type",
     key_added: Optional[str] = None,
-    partitions: Literal["connected", "leiden"] = "connected",
+    partitions: Literal["connected", "leiden", "fastgreedy"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
     distance_key: Union[str, None] = None,
@@ -250,11 +250,18 @@ def define_clonotype_clusters(
 
     partitions
         How to find graph partitions that define a clonotype.
-        Possible values are `leiden`, for using the "Leiden" algorithm and
+        Possible values are `leiden`, for using the "Leiden" algorithm,
+        `fastgreedy` for using the "Fastgreedy" algorithm and
         `connected` to find fully connected sub-graphs.
 
-        The difference is that the Leiden algorithm further divides
+        The difference is that the Leiden and Fastgreedy algorithms further divide
         fully connected subgraphs into highly-connected modules.
+
+        "Leiden" finds the community structure of the graph using the 
+        Leiden algorithm of Traag, van Eck & Waltman.
+
+        "Fastgreedy" finds the community structure of the graph according to the 
+        algorithm of Clauset et al based on the greedy optimization of modularity.
 
     resolution
         `resolution` parameter for the leiden algorithm.
@@ -306,6 +313,8 @@ def define_clonotype_clusters(
             resolution_parameter=resolution,
             n_iterations=n_iterations,
         )
+    elif partitions == "fastgreedy":
+        part = g.community_fastgreedy().as_clustering()
     else:
         part = g.clusters(mode="weak")
 
