@@ -282,7 +282,6 @@ class ClonotypeNeighbors:
             min_mat_b.data -= max_value
             a_smaller_b = min_mat_a < min_mat_b
             min_result = b + (a - b).multiply(a_smaller_b)
-            print("min_result dtype: ", min_result.dtype)
             return min_result
 
         def csr_max(a, b):
