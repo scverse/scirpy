@@ -231,6 +231,9 @@ class ClonotypeNeighbors:
         return {step: np.sum(clonotype_table.loc[:, cols].values != "nan", axis=1) for step, cols in cols.items()}
 
     def compute_distances(self) -> sp.csr_matrix:
+        """Compute the distances between clonotypes.
+        Returns a clonotype x clonotype2 sparse distance matrix.
+        """
         start = logging.info("Computing clonotype x clonotype distances.")  # type: ignore
         n_clonotypes = self.clonotypes.shape[0]
         clonotype_ids = np.arange(n_clonotypes)
@@ -242,6 +245,17 @@ class ClonotypeNeighbors:
         return dist  # type: ignore
 
     def _dist_for_clonotype(self, ct_ids: np.ndarray[int]) -> sp.csr_matrix:
+        """Compute neighboring clonotypes for the given clonotypes.
+        Returns a clonotype x clonotype2 sparse distance matrix.
+
+        Or operations use the min dist of two matching entries.
+        And operations use the max dist of two matching entries.
+
+        The motivation for using the max instead of sum/average is
+        that our hypotheis is that a receptor recognizes the same antigen if it
+        has a sequence dist < threshold. If we require both receptors to
+        match ("and"), the higher one should count.
+        """
         lookup = {}
         chain_ids = [(1, 1)] if self.dual_ir == "primary_only" else [(1, 1), (2, 2), (1, 2), (2, 1)]
         for tmp_arm in self._receptor_arm_cols:
@@ -306,10 +320,10 @@ class ClonotypeNeighbors:
             max_mat_b.data -= max_value
             a_greater_b = max_mat_a > max_mat_b
             max_result = b + (a - b).multiply(a_greater_b)
-            print("max_result dtype: ", max_result.dtype)
             return max_result
 
         if self.match_columns is not None:
+            #Create a mask fo filter clonotype pairs based on having similar entries in given columns
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
             distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups["match_columns"]
             if distance_matrix_name != distance_matrix_name_reverse:
@@ -331,48 +345,56 @@ class ClonotypeNeighbors:
         chain_res = {}
 
         def filter_chain_count_data(
-            matrix_coo_data_chain_filtered,
-            matrix_coo_data,
-            matrix_coo_row,
-            matrix_coo_col,
-            chain_count_array1,
-            chain_count_array2,
-        ):
-            data_indices = np.arange(len(matrix_coo_data))
-            chain_counts1 = chain_count_array1[matrix_coo_row]
-            chain_counts2 = chain_count_array2[matrix_coo_col]
-            chain_counts_equal = chain_counts1 == chain_counts2
-            matrix_coo_data_chain_filtered[chain_counts1[chain_counts_equal], data_indices[chain_counts_equal]] = (
-                matrix_coo_data[chain_counts_equal]
+            dist_mat_coo,
+            chain_counts_a,
+            chain_counts_b,
+        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+            """
+            Helper function for filter_chain_count. Computes the data
+            arrays for the csr matrices that are filtered by chain count.
+            """
+            filtered_data_stacked = np.array(
+                [np.zeros_like(dist_mat_coo.data), np.zeros_like(dist_mat_coo.data), np.zeros_like(dist_mat_coo.data)]
+            )
+
+            ct_pair_ids_a = dist_mat_coo.row
+            ct_pair_ids_b = dist_mat_coo.col
+            
+            data_array_indices = np.arange(len(dist_mat_coo.data))
+            chain_counts_pair_a = chain_counts_a[ct_pair_ids_a]
+            chain_counts_pair_b = chain_counts_b[ct_pair_ids_b]
+            chain_counts_equal = chain_counts_pair_a == chain_counts_pair_b
+            filtered_data_stacked[chain_counts_pair_a[chain_counts_equal], data_array_indices[chain_counts_equal]] = (
+                dist_mat_coo.data[chain_counts_equal]
             )
             return (
-                matrix_coo_data_chain_filtered[0],
-                matrix_coo_data_chain_filtered[1],
-                matrix_coo_data_chain_filtered[2],
+                filtered_data_stacked[0],
+                filtered_data_stacked[1],
+                filtered_data_stacked[2],
             )
 
-        def filter_chain_count(matrix: sp.csr_matrix, col: str) -> sp.csr_matrix:
-            chain_count_array1 = self._chain_count[col]
+        def filter_chain_count(dist_mat: sp.csr_matrix, col: str) -> tuple[sp.csr_matrix, sp.csr_matrix, sp.csr_matrix]:
+            """
+            Gets a clonotype distance matrix as input. Filters based on the count of receptor chains.
+            We want to keep clonotype pairs that both have the same number of chains which can be either 0, 1, or 2 chains.
+            Return 3 matrices: pairs with both 0 chains, pairs with both 1 chain, pairs with both 2 chains;
+            """
+            chain_counts_a = self._chain_count[col]
 
             if self._chain_count2 is None:
-                chaint_count_array2 = chain_count_array1
+                chain_counts_b = chain_counts_a
             else:
-                chaint_count_array2 = self._chain_count2[col]
+                chain_counts_b = self._chain_count2[col]
 
-            matrix_coo = matrix.tocoo()
-            matrix_coo_data_chain_filtered = np.array(
-                [np.zeros_like(matrix_coo.data), np.zeros_like(matrix_coo.data), np.zeros_like(matrix_coo.data)]
+            dist_mat_coo = dist_mat.tocoo()
+
+            filtered_chain_count0, filtered_chain_count1, filtered_chain_count2 = dist_mat.copy(), dist_mat.copy(), dist_mat.copy()
+            filtered_chain_count0.data, filtered_chain_count1.data, filtered_chain_count2.data = filter_chain_count_data(
+                dist_mat_coo,
+                chain_counts_a,
+                chain_counts_b,
             )
-            csr_filtered1, csr_filtered2, csr_filtered3 = matrix.copy(), matrix.copy(), matrix.copy()
-            csr_filtered1.data, csr_filtered2.data, csr_filtered3.data = filter_chain_count_data(
-                matrix_coo_data_chain_filtered,
-                matrix_coo.data,
-                matrix_coo.row,
-                matrix_coo.col,
-                chain_count_array1,
-                chaint_count_array2,
-            )
-            return csr_filtered1, csr_filtered2, csr_filtered3
+            return filtered_chain_count0, filtered_chain_count1, filtered_chain_count2
 
         for tmp_arm in self._receptor_arm_cols:
             for c1, c2 in chain_ids:
