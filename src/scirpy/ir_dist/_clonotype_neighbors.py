@@ -323,7 +323,7 @@ class ClonotypeNeighbors:
             return max_result
 
         if self.match_columns is not None:
-            #Create a mask to filter clonotype pairs based on having similar entries in given columns
+            # Create a mask to filter clonotype pairs based on having similar entries in given columns
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
             distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups["match_columns"]
             if distance_matrix_name != distance_matrix_name_reverse:
