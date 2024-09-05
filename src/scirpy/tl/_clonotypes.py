@@ -257,10 +257,10 @@ def define_clonotype_clusters(
         The difference is that the Leiden and Fastgreedy algorithms further divide
         fully connected subgraphs into highly-connected modules.
 
-        "Leiden" finds the community structure of the graph using the 
+        "Leiden" finds the community structure of the graph using the
         Leiden algorithm of Traag, van Eck & Waltman.
 
-        "Fastgreedy" finds the community structure of the graph according to the 
+        "Fastgreedy" finds the community structure of the graph according to the
         algorithm of Clauset et al based on the greedy optimization of modularity.
 
     resolution

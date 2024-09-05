@@ -231,7 +231,6 @@ class DoubleLookupNeighborFinder:
     def n_cols(self):
         return self.feature_table2.shape[0]
 
-
     def lookup(
         self,
         object_ids: np.ndarray[int],
@@ -318,7 +317,6 @@ class DoubleLookupNeighborFinder:
         reverse_matrix = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse_lookup_table.size))
         object_distance_matrix = rows * reverse_matrix
         return object_distance_matrix
-    
 
     def add_distance_matrix(
         self,
