@@ -8,6 +8,7 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from mudata import MuData
+import anndata as ad
 
 import scirpy as ir
 
@@ -337,3 +338,22 @@ def test_clonotype_convergence(adata_clonotype):
             categories=["convergent", "not convergent"],
         ),
     )
+
+def test_j_gene_matching():
+    from . import TESTDATA
+
+    data = ad.read_h5ad(TESTDATA / "clonotypes_test_data/j_gene_test_data.h5ad")
+
+    ir.tl.define_clonotype_clusters(
+        data,
+        sequence="nt",
+        metric="normalized_hamming",
+        receptor_arms="all",
+        dual_ir="any",
+        same_j_gene=True,
+        key_added="test_j_gene"
+    )
+    
+    clustering = data.obs["test_j_gene"].tolist()
+    expected = ['0', '0', '0', '0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '2', '2', '2', '2', '2']
+    assert np.array_equal(clustering, expected)
