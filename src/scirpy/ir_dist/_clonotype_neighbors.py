@@ -323,7 +323,7 @@ class ClonotypeNeighbors:
             return max_result
 
         if self.match_columns is not None:
-            #Create a mask fo filter clonotype pairs based on having similar entries in given columns
+            #Create a mask to filter clonotype pairs based on having similar entries in given columns
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
             distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups["match_columns"]
             if distance_matrix_name != distance_matrix_name_reverse:
@@ -351,7 +351,7 @@ class ClonotypeNeighbors:
         ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
             """
             Helper function for filter_chain_count. Computes the data
-            arrays for the csr matrices that are filtered by chain count.
+            arrays for the csr matrices that we want to filter by chain count.
             """
             filtered_data_stacked = np.array(
                 [np.zeros_like(dist_mat_coo.data), np.zeros_like(dist_mat_coo.data), np.zeros_like(dist_mat_coo.data)]
