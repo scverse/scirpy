@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Sequence
-from typing import Optional, Union, cast
+from typing import cast
 
 import matplotlib
 import matplotlib.colors
@@ -34,34 +34,34 @@ COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list("grey2", ["
 def clonotype_network(
     adata: DataHandler.TYPE,
     *,
-    color: Union[str, Sequence[str], None] = None,
+    color: str | Sequence[str] | None = None,
     basis: str = "clonotype_network",
     panel_size: tuple[float, float] = (10, 10),
     color_by_n_cells: bool = False,
     scale_by_n_cells: bool = True,
-    base_size: Optional[float] = None,
-    size_power: Optional[float] = None,
-    use_raw: Optional[bool] = None,
+    base_size: float | None = None,
+    size_power: float | None = None,
+    use_raw: bool | None = None,
     show_labels: bool = True,
-    label_fontsize: Optional[int] = None,
+    label_fontsize: int | None = None,
     label_fontweight: str = "bold",
     label_fontoutline: int = 3,
     label_alpha: float = 0.6,
     label_y_offset: float = 2,
     legend_fontsize=None,
     legend_width: float = 2,
-    show_legend: Optional[bool] = None,
+    show_legend: bool | None = None,
     show_size_legend: bool = True,
-    palette: Union[str, Sequence[str], Cycler, None] = None,
-    cmap: Union[str, Colormap, None] = None,
-    edges_color: Union[str, None] = None,
-    edges_cmap: Union[Colormap, str] = COLORMAP_EDGES,
+    palette: str | Sequence[str] | Cycler | None = None,
+    cmap: str | Colormap | None = None,
+    edges_color: str | None = None,
+    edges_cmap: Colormap | str = COLORMAP_EDGES,
     edges: bool = True,
     edges_width: float = 0.4,
-    frameon: Optional[bool] = None,
-    title: Optional[Union[str, Sequence[str]]] = None,
-    ax: Optional[Axes] = None,
-    fig_kws: Optional[dict] = None,
+    frameon: bool | None = None,
+    title: str | Sequence[str] | None = None,
+    ax: Axes | None = None,
+    fig_kws: dict | None = None,
     airr_mod: str = "airr",
 ) -> plt.Axes:
     """\
@@ -300,8 +300,8 @@ def _plot_size_legend(size_legend_ax: Axes, *, sizes, size_power, base_size, n_d
 def _fetch_features_mudata(
     params: DataHandler,
     keys: Sequence[str],
-    use_raw: Optional[bool] = None,
-    layer: Optional[str] = None,
+    use_raw: bool | None = None,
+    layer: str | None = None,
 ) -> pd.DataFrame:
     """Fetch a feature from the corresponding modality.
 
@@ -491,7 +491,7 @@ def _plot_clonotype_network_panel(
             unique, counts = np.unique(values[obs.index.isin(cell_ids)], return_counts=True)
             fracs = counts / np.sum(counts)
             if cat_colors is not None:
-                pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs)})
+                pie_colors.append({cat_colors[c]: f for c, f in zip(unique, fracs, strict=False)})
 
     # create panel for legend(s)
     legend_ax = None
@@ -556,13 +556,13 @@ def _plot_clonotype_network_panel(
             legend_ax.xaxis.set_tick_params(labelsize="small")
 
     else:
-        for xx, yy, tmp_size, tmp_color in zip(coords["x"], coords["y"], sizes, pie_colors):
+        for xx, yy, tmp_size, tmp_color in zip(coords["x"], coords["y"], sizes, pie_colors, strict=False):
             # tmp_color is a mapping (color) -> (fraction)
             cumsum = np.cumsum(list(tmp_color.values()))
             cumsum = cumsum / cumsum[-1]
             cumsum = [0] + cumsum.tolist()
 
-            for r1, r2, color in zip(cumsum[:-1], cumsum[1:], tmp_color.keys()):
+            for r1, r2, color in zip(cumsum[:-1], cumsum[1:], tmp_color.keys(), strict=False):
                 angles = np.linspace(2 * np.pi * r1, 2 * np.pi * r2, 20)
                 x = [0] + np.cos(angles).tolist()
                 y = [0] + np.sin(angles).tolist()

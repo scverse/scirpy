@@ -2,7 +2,7 @@ import warnings
 from collections.abc import Hashable, Mapping, Sequence
 from functools import reduce
 from operator import mul
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
     if not len(mats) or shape is None or reduce(mul, shape) == 0:
         return coo_matrix((0, 0) if shape is None else shape)
 
-    data, row, col = zip(*((x.data, x.row, x.col) for x in mats))
+    data, row, col = zip(*((x.data, x.row, x.col) for x in mats), strict=False)
 
     return sp.coo_matrix((np.hstack(data), (np.hstack(row), np.hstack(col))), shape=shape)
 
@@ -174,7 +174,7 @@ class ReverseLookupTable:
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(self, feature_table: pd.DataFrame, feature_table2: Optional[pd.DataFrame] = None):
+    def __init__(self, feature_table: pd.DataFrame, feature_table2: pd.DataFrame | None = None):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -236,7 +236,7 @@ class DoubleLookupNeighborFinder:
         self,
         object_ids: np.ndarray[int],
         forward_lookup_table_name: str,
-        reverse_lookup_table_name: Union[str, None] = None,
+        reverse_lookup_table_name: str | None = None,
     ) -> sp.csr_matrix:
         """
         Creates a distance matrix between objects with the given ids based on a feature distance matrix.
@@ -287,14 +287,19 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
 
-        if(np.max(distance_matrix.data) > np.iinfo(np.uint8).max):
-            raise OverflowError("The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)")
-        
+        if np.max(distance_matrix.data) > np.iinfo(np.uint8).max:
+            raise OverflowError(
+                "The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)"
+            )
+
         indices_in_dist_mat = forward_lookup_table[object_ids]
         indptr = np.empty(distance_matrix.indptr.shape[0] + 1, dtype=np.int64)
         indptr[:-1] = distance_matrix.indptr
         indptr[-1] = indptr[-2]
-        distance_matrix_extended = sp.csr_matrix((distance_matrix.data.astype(np.uint8), distance_matrix.indices, indptr), shape=(distance_matrix.shape[0]+1, distance_matrix.shape[1]))
+        distance_matrix_extended = sp.csr_matrix(
+            (distance_matrix.data.astype(np.uint8), distance_matrix.indices, indptr),
+            shape=(distance_matrix.shape[0] + 1, distance_matrix.shape[1]),
+        )
         rows = distance_matrix_extended[indices_in_dist_mat, :]
 
         reverse_matrix_data = [np.array([], dtype=np.uint8)] * rows.shape[1]
@@ -320,7 +325,7 @@ class DoubleLookupNeighborFinder:
         name: str,
         distance_matrix: sp.csr_matrix,
         labels: Sequence,
-        labels2: Optional[Sequence] = None,
+        labels2: Sequence | None = None,
     ):
         """Add a distance matrix.
 

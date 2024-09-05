@@ -2,7 +2,7 @@
 
 import itertools
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,11 +33,11 @@ fig_kws
 def bar(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.Axes, None] = None,
+    ax: plt.Axes | None = None,
     stacked: bool = True,
-    style: Union[Literal["default"], None] = "default",
-    style_kws: Union[dict, None] = None,
-    fig_kws: Union[dict, None] = None,
+    style: Literal["default"] | None = "default",
+    style_kws: dict | None = None,
+    fig_kws: dict | None = None,
     **kwargs,
 ) -> plt.Axes:
     """\
@@ -80,10 +80,10 @@ def bar(
 def line(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.Axes, None] = None,
-    style: Union[Literal["default"], None] = "default",
-    style_kws: Union[dict, None] = None,
-    fig_kws: Union[dict, None] = None,
+    ax: plt.Axes | None = None,
+    style: Literal["default"] | None = "default",
+    style_kws: dict | None = None,
+    fig_kws: dict | None = None,
     **kwargs,
 ) -> plt.Axes:
     """\
@@ -117,10 +117,10 @@ def line(
 def barh(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.Axes, None] = None,
-    style: Union[Literal["default"], None] = "default",
-    style_kws: Union[dict, None] = None,
-    fig_kws: Union[dict, None] = None,
+    ax: plt.Axes | None = None,
+    style: Literal["default"] | None = "default",
+    style_kws: dict | None = None,
+    fig_kws: dict | None = None,
     **kwargs,
 ) -> plt.Axes:
     """\
@@ -153,16 +153,16 @@ def barh(
 def curve(
     data: dict,
     *,
-    ax: Union[plt.Axes, None] = None,
+    ax: plt.Axes | None = None,
     curve_layout: Literal["overlay", "stacked", "shifetd"] = "overlay",
     shade: bool = True,
     kde_norm: bool = True,
-    order: Union[list, None] = None,
-    kernel_kws: Union[dict, None] = None,
-    color: Union[Sequence[str], None] = None,
-    style: Union[Literal["default"], None] = "default",
-    style_kws: Union[dict, None] = None,
-    fig_kws: Union[dict, None] = None,
+    order: list | None = None,
+    kernel_kws: dict | None = None,
+    color: Sequence[str] | None = None,
+    style: Literal["default"] | None = "default",
+    style_kws: dict | None = None,
+    fig_kws: dict | None = None,
     **kwargs,
 ) -> plt.Axes:
     """\
@@ -273,10 +273,10 @@ def curve(
 def ol_scatter(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.Axes, None] = None,
-    style_kws: Union[dict, None] = None,
-    style: Union[Literal["default"], None] = "default",
-    fig_kws: Union[dict, None] = None,
+    ax: plt.Axes | None = None,
+    style_kws: dict | None = None,
+    style: Literal["default"] | None = "default",
+    fig_kws: dict | None = None,
 ) -> plt.Axes:
     """\
     Scatterplot where dot size is proportional to group size.
@@ -314,10 +314,10 @@ def ol_scatter(
 def volcano(
     data: pd.DataFrame,
     *,
-    ax: Union[plt.Axes, None] = None,
-    style_kws: Union[dict, None] = None,
-    style: Union[Literal["default"], None] = "default",
-    fig_kws: Union[dict, None] = None,
+    ax: plt.Axes | None = None,
+    style_kws: dict | None = None,
+    style: Literal["default"] | None = "default",
+    fig_kws: dict | None = None,
 ) -> plt.Axes:
     """\
     Volcano plot (special case of scatter plot)
@@ -363,17 +363,17 @@ def embedding(
     adata: AnnData,
     basis: str,
     *,
-    color: Union[str, Sequence[str], None] = None,
+    color: str | Sequence[str] | None = None,
     panel_size: tuple[float, float] = (4, 4),
-    palette: Union[str, Cycler, Sequence[str], Sequence[Cycler], None] = None,
+    palette: str | Cycler | Sequence[str] | Sequence[Cycler] | None = None,
     legend_loc: str = "right margin",
-    ax: Optional[Union[plt.Axes, Sequence[plt.Axes]]] = None,
+    ax: plt.Axes | Sequence[plt.Axes] | None = None,
     ncols: int = 3,
-    show: Optional[bool] = False,
+    show: bool | None = False,
     hspace: float = 0.25,
     wspace: float = None,
     **kwargs,
-) -> Union[None, Sequence[plt.Axes]]:
+) -> None | Sequence[plt.Axes]:
     """A customized wrapper to the :func:`scanpy.pl.embedding` function.
 
     The differences to the scanpy embedding function are:
@@ -465,7 +465,9 @@ def embedding(
         fig = axs[0].get_figure()
 
     # use the scanpy plotting api to fill individual components
-    for ax, tmp_color, tmp_basis, tmp_legend_loc, tmp_palette in zip(axs, color, basis, legend_loc, palette):
+    for ax, tmp_color, tmp_basis, tmp_legend_loc, tmp_palette in zip(
+        axs, color, basis, legend_loc, palette, strict=False
+    ):
         # cycle colors for categories with many values instead of
         # coloring them in grey
         if tmp_palette is None and tmp_color is not None:
