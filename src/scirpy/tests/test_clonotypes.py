@@ -208,6 +208,7 @@ def test_clonotype_clusters_end_to_end(
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
+@pytest.mark.extra
 @pytest.mark.xfail(
     sys.platform == "win32",
     reason="Inconsistent coordinates with igraph on windows (got introduced only after release of python-igraph 0.9.11)",
@@ -270,6 +271,7 @@ def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware,
     npt.assert_almost_equal(coords.values, np.array(expected), decimal=1)
 
 
+@pytest.mark.extra
 def test_clonotype_network_igraph(adata_clonotype_network):
     g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
     print(lo.coords)

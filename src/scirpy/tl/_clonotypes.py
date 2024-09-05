@@ -420,7 +420,7 @@ def clonotype_network(
     adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "nt",
-    metric: Literal["identity", "alignment", "levenshtein", "hamming", "custom"] = "identity",
+    metric: MetricType = "identity",
     min_cells: int = 1,
     min_nodes: int = 1,
     layout: str = "components",
@@ -590,7 +590,7 @@ def clonotype_network(
         return coord_df
 
 
-def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
+def _graph_from_coordinates(adata: AnnData, clonotype_key: str, basis: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
     """
     Given an AnnData object on which `tl.clonotype_network` was ran, and
     the corresponding `clonotype_key`, extract a data-frame
@@ -611,7 +611,7 @@ def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.Data
 
     # Retrieve coordinates and reduce them to one coordinate per node
     coords = (
-        cast(pd.DataFrame, adata.obsm["X_clonotype_network"])
+        cast(pd.DataFrame, adata.obsm[f"X_{basis}"])
         .dropna(axis=0, how="any")
         .join(dist_idx_lookup)
         .join(clonotype_label_lookup)
@@ -664,7 +664,7 @@ def clonotype_network_igraph(
         raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?") from None
     if f"X_{basis}" not in params.adata.obsm_keys():
         raise KeyError(f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?")
-    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
+    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key, basis)
 
     graph = igraph_from_sparse_matrix(adj_mat, matrix_type="distance")
     # flip y axis to be consistent with networkx
