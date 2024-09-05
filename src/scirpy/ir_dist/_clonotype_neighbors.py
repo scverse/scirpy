@@ -323,7 +323,7 @@ class ClonotypeNeighbors:
             return max_result
 
         if self.match_columns is not None:
-            #Create a mask fo filter clonotype pairs based on having similar entries in given columns
+            # Create a mask fo filter clonotype pairs based on having similar entries in given columns
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
             distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups["match_columns"]
             if distance_matrix_name != distance_matrix_name_reverse:
@@ -359,7 +359,7 @@ class ClonotypeNeighbors:
 
             ct_pair_ids_a = dist_mat_coo.row
             ct_pair_ids_b = dist_mat_coo.col
-            
+
             data_array_indices = np.arange(len(dist_mat_coo.data))
             chain_counts_pair_a = chain_counts_a[ct_pair_ids_a]
             chain_counts_pair_b = chain_counts_b[ct_pair_ids_b]
@@ -375,7 +375,9 @@ class ClonotypeNeighbors:
                 filtered_data_stacked[2],
             )
 
-        def filter_chain_count(tmp_dist_mat: sp.csr_matrix, col: str) -> tuple[sp.csr_matrix, sp.csr_matrix, sp.csr_matrix]:
+        def filter_chain_count(
+            tmp_dist_mat: sp.csr_matrix, col: str
+        ) -> tuple[sp.csr_matrix, sp.csr_matrix, sp.csr_matrix]:
             """
             Filters a temporary clonotype distance matrix based on the count of receptor chains.
             We want to keep clonotype pairs that both have the same number of chains which can be either 0, 1, or 2 chains.
@@ -390,29 +392,31 @@ class ClonotypeNeighbors:
 
             dist_mat_coo = tmp_dist_mat.tocoo()
 
-            filtered_chain_count0, filtered_chain_count1, filtered_chain_count2 = tmp_dist_mat.copy(), tmp_dist_mat.copy(), tmp_dist_mat.copy()
-            filtered_chain_count0.data, filtered_chain_count1.data, filtered_chain_count2.data = filter_chain_count_data(
-                dist_mat_coo,
-                chain_counts_a,
-                chain_counts_b,
+            filtered_chain_count0, filtered_chain_count1, filtered_chain_count2 = (
+                tmp_dist_mat.copy(),
+                tmp_dist_mat.copy(),
+                tmp_dist_mat.copy(),
+            )
+            filtered_chain_count0.data, filtered_chain_count1.data, filtered_chain_count2.data = (
+                filter_chain_count_data(
+                    dist_mat_coo,
+                    chain_counts_a,
+                    chain_counts_b,
+                )
             )
             return filtered_chain_count0, filtered_chain_count1, filtered_chain_count2
 
         def match_gene_segment(
-                tmp_dist_mat: sp.csr_matrix, tmp_arm: str, c1: int, c2: int, segment_suffix: Literal["v_call", "j_call"]
-            ) -> sp.csr_matrix:
+            tmp_dist_mat: sp.csr_matrix, tmp_arm: str, c1: int, c2: int, segment_suffix: Literal["v_call", "j_call"]
+        ) -> sp.csr_matrix:
             """
             Filters a temporary clonotype distance matrix based on gene segement similarity (e.g. v_gene or j_gene).
             We want to keep clonotype pairs with the same gene segment.
             """
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_{segment_suffix}"]
-            distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[
-                f"{tmp_arm}_{c2}_{segment_suffix}"
-            ]
+            distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_{segment_suffix}"]
             if distance_matrix_name != distance_matrix_name_reverse:
-                raise ValueError(
-                    "Forward and reverse lookup tablese must be defined " "on the same distance matrices."
-                )
+                raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
             empty_row = np.array([np.zeros(reverse.size, dtype=bool)])
             reverse_lookup_values = np.vstack((*reverse.lookup.values(), empty_row))
             reverse_lookup_keys = np.full(id_len, -1, dtype=np.int32)
@@ -429,7 +433,6 @@ class ClonotypeNeighbors:
             ]
             return tmp_dist_mat.multiply(gene_segment_mask)
 
-        
         # Now we merge the distances of chains.
         # Can first be filtered based on v_gene and j_gene similarity and other column similarity.
         # We also need to filter based on chain count similarity.
@@ -471,7 +474,9 @@ class ClonotypeNeighbors:
                     AND_max(dist_mats_chains[(receptor_arm, 2, 1, 2)], dist_mats_chains[(receptor_arm, 1, 2, 2)]),
                 )
 
-                receptor_arm_res[receptor_arm] += dist_mats_chains[(receptor_arm, 1, 1, 1)] + dist_mats_chains[(receptor_arm, 1, 1, 0)]
+                receptor_arm_res[receptor_arm] += (
+                    dist_mats_chains[(receptor_arm, 1, 1, 1)] + dist_mats_chains[(receptor_arm, 1, 1, 0)]
+                )
             else:
                 raise NotImplementedError(f"self.dual_ir method {self.dual_ir} is not implemented")
 
@@ -480,14 +485,19 @@ class ClonotypeNeighbors:
         else:
             if self.receptor_arms == "all":
                 arm_res_filtered = {}
-                arm_res_filtered[("VJ", 0)], arm_res_filtered[("VJ", 1)], arm_res_filtered[("VJ", 2)] = filter_chain_count(
-                    receptor_arm_res["VJ"], "arms"
+                arm_res_filtered[("VJ", 0)], arm_res_filtered[("VJ", 1)], arm_res_filtered[("VJ", 2)] = (
+                    filter_chain_count(receptor_arm_res["VJ"], "arms")
                 )
-                arm_res_filtered[("VDJ", 0)], arm_res_filtered[("VDJ", 1)], arm_res_filtered[("VDJ", 2)] = filter_chain_count(
-                    receptor_arm_res["VDJ"], "arms"
+                arm_res_filtered[("VDJ", 0)], arm_res_filtered[("VDJ", 1)], arm_res_filtered[("VDJ", 2)] = (
+                    filter_chain_count(receptor_arm_res["VDJ"], "arms")
                 )
                 ct_dist_mat = AND_max(arm_res_filtered[("VJ", 2)], arm_res_filtered[("VDJ", 2)])
-                ct_dist_mat += arm_res_filtered[("VJ", 0)] + arm_res_filtered[("VJ", 1)] + arm_res_filtered[("VDJ", 0)] + arm_res_filtered[("VDJ", 1)]
+                ct_dist_mat += (
+                    arm_res_filtered[("VJ", 0)]
+                    + arm_res_filtered[("VJ", 1)]
+                    + arm_res_filtered[("VDJ", 0)]
+                    + arm_res_filtered[("VDJ", 1)]
+                )
 
             else:
                 ct_dist_mat = OR_min(receptor_arm_res["VJ"], receptor_arm_res["VDJ"])
