@@ -2,13 +2,13 @@
 import sys
 from typing import cast
 
+import anndata as ad
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
 from mudata import MuData
-import anndata as ad
 
 import scirpy as ir
 
@@ -341,6 +341,7 @@ def test_clonotype_convergence(adata_clonotype):
         ),
     )
 
+
 def test_j_gene_matching():
     from . import TESTDATA
 
@@ -353,9 +354,9 @@ def test_j_gene_matching():
         receptor_arms="all",
         dual_ir="any",
         same_j_gene=True,
-        key_added="test_j_gene"
+        key_added="test_j_gene",
     )
-    
+
     clustering = data.obs["test_j_gene"].tolist()
-    expected = ['0', '0', '0', '0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '2', '2', '2', '2', '2']
+    expected = ["0", "0", "0", "0", "0", "1", "1", "1", "1", "1", "1", "1", "1", "2", "2", "2", "2", "2"]
     assert np.array_equal(clustering, expected)
