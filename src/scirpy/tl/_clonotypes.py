@@ -197,9 +197,10 @@ def define_clonotype_clusters(
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_ir: Literal["primary_only", "all", "any"] = "any",
     same_v_gene: bool = False,
+    same_j_gene: bool = False,
     within_group: Sequence[str] | str | None = "receptor_type",
     key_added: str | None = None,
-    partitions: Literal["connected", "leiden"] = "connected",
+    partitions: Literal["connected", "leiden", "fastgreedy"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
     distance_key: str | None = None,
@@ -249,11 +250,18 @@ def define_clonotype_clusters(
 
     partitions
         How to find graph partitions that define a clonotype.
-        Possible values are `leiden`, for using the "Leiden" algorithm and
+        Possible values are `leiden`, for using the "Leiden" algorithm,
+        `fastgreedy` for using the "Fastgreedy" algorithm and
         `connected` to find fully connected sub-graphs.
 
-        The difference is that the Leiden algorithm further divides
+        The difference is that the Leiden and Fastgreedy algorithms further divide
         fully connected subgraphs into highly-connected modules.
+
+        "Leiden" finds the community structure of the graph using the
+        Leiden algorithm of Traag, van Eck & Waltman.
+
+        "Fastgreedy" finds the community structure of the graph according to the
+        algorithm of Clauset et al based on the greedy optimization of modularity.
 
     resolution
         `resolution` parameter for the leiden algorithm.
@@ -289,6 +297,7 @@ def define_clonotype_clusters(
         receptor_arms=receptor_arms,  # type: ignore
         dual_ir=dual_ir,  # type: ignore
         same_v_gene=same_v_gene,
+        same_j_gene=same_j_gene,
         match_columns=within_group,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",
@@ -304,6 +313,8 @@ def define_clonotype_clusters(
             resolution_parameter=resolution,
             n_iterations=n_iterations,
         )
+    elif partitions == "fastgreedy":
+        part = g.community_fastgreedy().as_clustering()
     else:
         part = g.clusters(mode="weak")
 
