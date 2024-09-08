@@ -41,7 +41,7 @@ jobs:
 
       - name: install conda build
         run: |
-          mamba install -y boa conda-verify
+          mamba install -y boa conda-verify python=${{ matrix.python }}
         shell: bash
 
       - name: build and test package
