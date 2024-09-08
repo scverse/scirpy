@@ -34,11 +34,10 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
+          mamba-version: "*"
           channels: conda-forge,bioconda
           channel-priority: strict
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
 
       - name: install conda build
         run: |
