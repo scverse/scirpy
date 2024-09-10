@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Union
+from typing import Literal
 
 from logomaker import Logo, alignment_to_matrix
 
@@ -10,10 +10,7 @@ from scirpy.util import DataHandler
 @DataHandler.inject_param_docs()
 def logoplot_cdr3_motif(
     adata: DataHandler.TYPE,
-    chains: Union[
-        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
-        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
-    ] = "VDJ_1",
+    chains: Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"] | Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]] = "VDJ_1",
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
