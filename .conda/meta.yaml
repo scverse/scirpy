@@ -16,12 +16,12 @@ build:
 
 requirements:
   host:
-    - python >=3.9
+    - python >=3.10
     - hatchling
     - hatch-vcs
 
   run:
-    - python >=3.9
+    - python >=3.10
     - anndata >=0.9
     - awkward >=2.1.0
     - mudata >=0.2.3
@@ -29,7 +29,6 @@ requirements:
     - pandas >=1.5,!=2.1.2
     - numpy >=1.17.0
     - scipy
-    - parasail-python
     - scikit-learn
     - python-levenshtein
     - python-igraph !=0.10.0,!=0.10.1

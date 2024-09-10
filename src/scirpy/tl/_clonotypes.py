@@ -1,7 +1,7 @@
 import itertools
 import random
 from collections.abc import Sequence
-from typing import Literal, Optional, Union, cast
+from typing import Literal, cast
 
 import igraph as ig
 import numpy as np
@@ -132,7 +132,7 @@ def _validate_parameters(
     sequence,
     metric,
     key_added,
-) -> tuple[Optional[list[str]], str, str]:
+) -> tuple[list[str] | None, str, str]:
     """Validate and sanitze parameters for `define_clonotypes`"""
 
     def _get_db_name():
@@ -197,19 +197,20 @@ def define_clonotype_clusters(
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_ir: Literal["primary_only", "all", "any"] = "any",
     same_v_gene: bool = False,
-    within_group: Union[Sequence[str], str, None] = "receptor_type",
-    key_added: Optional[str] = None,
-    partitions: Literal["connected", "leiden"] = "connected",
+    same_j_gene: bool = False,
+    within_group: Sequence[str] | str | None = "receptor_type",
+    key_added: str | None = None,
+    partitions: Literal["connected", "leiden", "fastgreedy"] = "connected",
     resolution: float = 1,
     n_iterations: int = 5,
-    distance_key: Union[str, None] = None,
+    distance_key: str | None = None,
     inplace: bool = True,
     n_jobs: int = -1,
     chunksize: int = 2000,
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
-) -> Optional[tuple[pd.Series, pd.Series, dict]]:
+) -> tuple[pd.Series, pd.Series, dict] | None:
     """
     Define :term:`clonotype clusters<Clonotype cluster>`.
 
@@ -249,11 +250,18 @@ def define_clonotype_clusters(
 
     partitions
         How to find graph partitions that define a clonotype.
-        Possible values are `leiden`, for using the "Leiden" algorithm and
+        Possible values are `leiden`, for using the "Leiden" algorithm,
+        `fastgreedy` for using the "Fastgreedy" algorithm and
         `connected` to find fully connected sub-graphs.
 
-        The difference is that the Leiden algorithm further divides
+        The difference is that the Leiden and Fastgreedy algorithms further divide
         fully connected subgraphs into highly-connected modules.
+
+        "Leiden" finds the community structure of the graph using the
+        Leiden algorithm of Traag, van Eck & Waltman.
+
+        "Fastgreedy" finds the community structure of the graph according to the
+        algorithm of Clauset et al based on the greedy optimization of modularity.
 
     resolution
         `resolution` parameter for the leiden algorithm.
@@ -289,6 +297,7 @@ def define_clonotype_clusters(
         receptor_arms=receptor_arms,  # type: ignore
         dual_ir=dual_ir,  # type: ignore
         same_v_gene=same_v_gene,
+        same_j_gene=same_j_gene,
         match_columns=within_group,
         distance_key=distance_key,
         sequence_key="junction_aa" if sequence == "aa" else "junction",
@@ -304,6 +313,8 @@ def define_clonotype_clusters(
             resolution_parameter=resolution,
             n_iterations=n_iterations,
         )
+    elif partitions == "fastgreedy":
+        part = g.community_fastgreedy().as_clustering()
     else:
         part = g.clusters(mode="weak")
 
@@ -315,7 +326,8 @@ def define_clonotype_clusters(
         *itertools.chain.from_iterable(
             zip(ctn.cell_indices[str(ct_id)], itertools.repeat(str(clonotype_cluster)))
             for ct_id, clonotype_cluster in enumerate(part.membership)
-        )
+        ),
+        strict=False,
     )
     clonotype_cluster_series = pd.Series(values, index=idx).reindex(params.adata.obs_names)
     clonotype_cluster_size_series = clonotype_cluster_series.groupby(clonotype_cluster_series).transform("count")
@@ -348,12 +360,12 @@ def define_clonotypes(
     adata: DataHandler.TYPE,
     *,
     key_added: str = "clone_id",
-    distance_key: Union[str, None] = None,
+    distance_key: str | None = None,
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
     **kwargs,
-) -> Optional[tuple[pd.Series, pd.Series, dict]]:
+) -> tuple[pd.Series, pd.Series, dict] | None:
     """
     Define :term:`clonotypes <Clonotype>` based on :term:`CDR3` nucleic acid
     sequence identity.
@@ -408,20 +420,20 @@ def clonotype_network(
     adata: DataHandler.TYPE,
     *,
     sequence: Literal["aa", "nt"] = "nt",
-    metric: Literal["identity", "alignment", "levenshtein", "hamming", "custom"] = "identity",
+    metric: MetricType = "identity",
     min_cells: int = 1,
     min_nodes: int = 1,
     layout: str = "components",
     size_aware: bool = True,
-    base_size: Optional[float] = None,
+    base_size: float | None = None,
     size_power: float = 1,
-    layout_kwargs: Union[dict, None] = None,
-    clonotype_key: Union[str, None] = None,
+    layout_kwargs: dict | None = None,
+    clonotype_key: str | None = None,
     key_added: str = "clonotype_network",
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-) -> Union[None, pd.DataFrame]:
+) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
 
@@ -561,8 +573,9 @@ def clonotype_network(
     idx, coords = zip(
         *itertools.chain.from_iterable(
             zip(clonotype_res["cell_indices"][str(node_id)], itertools.repeat(coord))
-            for node_id, coord in zip(graph.vs["node_id"], coords)  # type: ignore
-        )
+            for node_id, coord in zip(graph.vs["node_id"], coords, strict=False)  # type: ignore
+        ),
+        strict=False,
     )
     coord_df = pd.DataFrame(data=coords, index=idx, columns=["x", "y"]).reindex(params.adata.obs_names)
 
@@ -577,7 +590,7 @@ def clonotype_network(
         return coord_df
 
 
-def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
+def _graph_from_coordinates(adata: AnnData, clonotype_key: str, basis: str) -> tuple[pd.DataFrame, sp.csr_matrix]:
     """
     Given an AnnData object on which `tl.clonotype_network` was ran, and
     the corresponding `clonotype_key`, extract a data-frame
@@ -590,14 +603,15 @@ def _graph_from_coordinates(adata: AnnData, clonotype_key: str) -> tuple[pd.Data
     dist_idx, obs_names = zip(
         *itertools.chain.from_iterable(
             zip(itertools.repeat(i), obs_names) for i, obs_names in clonotype_res["cell_indices"].items()
-        )
+        ),
+        strict=False,
     )
     dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
     clonotype_label_lookup = adata.obs.loc[:, [clonotype_key]].rename(columns={clonotype_key: "label"})
 
     # Retrieve coordinates and reduce them to one coordinate per node
     coords = (
-        cast(pd.DataFrame, adata.obsm["X_clonotype_network"])
+        cast(pd.DataFrame, adata.obsm[f"X_{basis}"])
         .dropna(axis=0, how="any")
         .join(dist_idx_lookup)
         .join(clonotype_label_lookup)
@@ -650,7 +664,7 @@ def clonotype_network_igraph(
         raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?") from None
     if f"X_{basis}" not in params.adata.obsm_keys():
         raise KeyError(f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?")
-    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key)
+    coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key, basis)
 
     graph = igraph_from_sparse_matrix(adj_mat, matrix_type="distance")
     # flip y axis to be consistent with networkx

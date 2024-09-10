@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Union
+from typing import Literal
 
 import matplotlib.pyplot as plt
 from anndata import AnnData
@@ -13,13 +13,13 @@ from .styling import _get_colors
 
 
 def group_abundance(
-    adata: Union[AnnData, MuData],
+    adata: AnnData | MuData,
     groupby: str,
     target_col: str = "has_ir",
     *,
-    normalize: Union[None, str, bool] = None,
-    max_cols: Union[None, int] = None,
-    sort: Union[Literal["count", "alphabetical"], Sequence[str]] = "count",
+    normalize: None | str | bool = None,
+    max_cols: None | int = None,
+    sort: Literal["count", "alphabetical"] | Sequence[str] = "count",
     **kwargs,
 ) -> plt.Axes:
     """Plots the number of cells per group, split up by a categorical variable.
