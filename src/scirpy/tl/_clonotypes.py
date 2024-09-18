@@ -333,24 +333,6 @@ def define_clonotype_clusters(
     clonotype_cluster_series = pd.Series(values, index=idx).reindex(params.adata.obs_names)
     clonotype_cluster_size_series = clonotype_cluster_series.groupby(clonotype_cluster_series).transform("count")
 
-    def convert_str_array_dict_to_csr(str_array_dict: dict[str, np.ndarray[str]]) -> sp.csr_matrix:
-        num_rows = len(str_array_dict)
-
-        data_arrays = [np.array([])] * num_rows
-        indices_arrays = [np.array([])] * num_rows
-        nnz_array = np.zeros(num_rows)
-
-        for key_str, value in str_array_dict.items():
-            key = int(key_str)
-            data_arrays[key] = value.astype(int)
-            indices_arrays[key] = np.array(range(0,len(value)))
-            nnz_array[key] = len(value)
-
-        data = np.concatenate(data_arrays)
-        indices = np.concatenate(indices_arrays)
-        indptr = np.concatenate([np.array([0]), np.cumsum(nnz_array)])
-        return sp.csr_matrix((data, indices, indptr))
-
     # Return or store results
     clonotype_distance_res = {
         "distances": clonotype_dist,
