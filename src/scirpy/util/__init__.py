@@ -16,6 +16,9 @@ from scanpy import logging
 from scipy.sparse import issparse
 from tqdm.auto import tqdm
 
+from typing import Literal
+import json
+
 # reexport tqdm (here was previously a workaround for https://github.com/tqdm/tqdm/issues/1082)
 __all__ = ["tqdm"]
 
@@ -605,3 +608,18 @@ def _get_usable_cpus(n_jobs: int = 0, use_numba: bool = False):
         usable_cpus = min(usable_cpus, config.NUMBA_NUM_THREADS)
 
     return usable_cpus
+
+def read_cell_indices(cell_indices: Union[dict[str, np.ndarray[str]], str]) -> dict[str,list[str]]:
+    """
+    The datatype of the cell_indices Mapping (clonotype_id -> cell_ids) that is stored to the anndata.uns
+    attribute after the ´define_clonotype_clusters´ function has changed from dict[str, np.ndarray[str] to
+    str (json) due to performance considerations regarding the writing speed of the anndata object. But we still
+    want that older anndata objects with the dict[str, np.ndarray[str] datatype can be used. So we use this function
+    to read the cell_indices from the anndata object to support both formats.
+    """
+    if(isinstance(cell_indices, str)): # new format
+        return json.loads(cell_indices)
+    elif(isinstance(cell_indices, dict)): # old format
+        return {k: v.tolist() for k, v in cell_indices.items()}
+    else: # unsupported format
+        raise TypeError(f"Unsupported type for cell_indices: {type(cell_indices)}. Expected str (json) or dict[str, np.ndarray[str]].")

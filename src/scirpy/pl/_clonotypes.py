@@ -22,7 +22,7 @@ from scanpy.plotting._utils import ticks_formatter
 from scipy.sparse import issparse
 
 from scirpy.tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
-from scirpy.util import DataHandler
+from scirpy.util import DataHandler, read_cell_indices
 from scirpy.util.graph import _distance_to_connectivity
 
 from .styling import _get_colors, _init_ax
@@ -413,6 +413,8 @@ def _plot_clonotype_network_panel(
     scale_by_n_cells,
     color_by_n_cells,
 ):
+    cell_indices = read_cell_indices(cell_indices)
+    
     colorbar_title = "mean per dot"
     pie_colors = None
     cat_colors = None
