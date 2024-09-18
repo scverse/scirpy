@@ -7,11 +7,10 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 from scanpy import logging
-import json
 
 from scirpy.ir_dist import MetricType, _get_metric_key
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from scirpy.util import DataHandler, _is_na, tqdm, read_cell_indices
+from scirpy.util import DataHandler, _is_na, read_cell_indices, tqdm
 
 from ._clonotypes import _common_doc, _common_doc_parallelism, _doc_clonotype_definition, _validate_parameters
 
