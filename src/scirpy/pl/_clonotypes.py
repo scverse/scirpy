@@ -414,7 +414,7 @@ def _plot_clonotype_network_panel(
     color_by_n_cells,
 ):
     cell_indices = read_cell_indices(cell_indices)
-    
+
     colorbar_title = "mean per dot"
     pie_colors = None
     cat_colors = None

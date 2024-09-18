@@ -1,4 +1,5 @@
 import itertools
+import json
 import random
 from collections.abc import Sequence
 from typing import Literal, cast
@@ -9,7 +10,6 @@ import pandas as pd
 import scipy.sparse as sp
 from anndata import AnnData
 from scanpy import logging
-import json
 
 from scirpy.ir_dist import MetricType, _get_metric_key
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
@@ -343,7 +343,7 @@ def define_clonotype_clusters(
         for key_str, value in str_array_dict.items():
             key = int(key_str)
             data_arrays[key] = value.astype(int)
-            indices_arrays[key] = np.array(range(0,len(value)))
+            indices_arrays[key] = np.array(range(0, len(value)))
             nnz_array[key] = len(value)
 
         data = np.concatenate(data_arrays)
@@ -622,9 +622,7 @@ def _graph_from_coordinates(adata: AnnData, clonotype_key: str, basis: str) -> t
     # map the cell-id to the corresponding row/col in the clonotype distance matrix
     cell_indices = read_cell_indices(clonotype_res["cell_indices"])
     dist_idx, obs_names = zip(
-        *itertools.chain.from_iterable(
-            zip(itertools.repeat(i), obs_names) for i, obs_names in cell_indices.items()
-        ),
+        *itertools.chain.from_iterable(zip(itertools.repeat(i), obs_names) for i, obs_names in cell_indices.items()),
         strict=False,
     )
     dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
