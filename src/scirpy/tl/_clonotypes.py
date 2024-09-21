@@ -1,7 +1,7 @@
 import itertools
 import random
 from collections.abc import Sequence
-from typing import Literal, Union, cast
+from typing import Literal, cast
 
 import igraph as ig
 import numpy as np
@@ -433,7 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    cell_index_filter: Union[None, list['str']] = None
+    cell_index_filter: None | list["str"] = None,
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
@@ -535,31 +535,26 @@ def clonotype_network(
 
     cell_indices = clonotype_res["cell_indices"]
 
-     # store size in graph to be accessed by layout algorithms
+    # store size in graph to be accessed by layout algorithms
     clonotype_size = np.array([len(idx) for idx in cell_indices.values()])
     graph.vs["size"] = clonotype_size
-    
+
     components = np.array(graph.decompose("weak"))
 
     component_node_count = np.array([len(component.vs) for component in components])
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
     component_mask = (component_node_count >= min_nodes) & (component_sizes >= min_cells)
 
-    if(cell_index_filter is not None):
+    if cell_index_filter is not None:
         cluster_mask = np.array([False] * len(components))
         for cell_index in cell_index_filter:
             cluster_index = adata.obs.loc[cell_index][f"{airr_mod}:{clonotype_key}"]
-            if(not pd.isna(cluster_index)):   
+            if not pd.isna(cluster_index):
                 cluster_mask[int(cluster_index)] = True
         component_mask = component_mask & cluster_mask
-    
+
     # Filter subgraph by `min_cells` and `min_nodes`
-    subgraph_idx = list(
-        itertools.chain.from_iterable(
-            comp.vs["node_id"]
-            for comp in components[component_mask]
-        )
-    )
+    subgraph_idx = list(itertools.chain.from_iterable(comp.vs["node_id"] for comp in components[component_mask]))
 
     if len(subgraph_idx) == 0:
         raise ValueError(f"No subgraphs with size >= {min_cells} found.")
