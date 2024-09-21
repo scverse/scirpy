@@ -118,7 +118,7 @@ class ClonotypeNeighbors:
                     ct_tuple[0] if len(ct_tuple) == 1 else ct_tuple,
                     [],
                 )
-            ].values
+            ].values.tolist()
             for i, ct_tuple in enumerate(clonotypes.itertuples(index=False, name=None))
         }
 

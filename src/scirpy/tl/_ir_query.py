@@ -10,7 +10,7 @@ from scanpy import logging
 
 from scirpy.ir_dist import MetricType, _get_metric_key
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from scirpy.util import DataHandler, _is_na, tqdm
+from scirpy.util import DataHandler, _is_na, read_cell_indices, tqdm
 
 from ._clonotypes import _common_doc, _common_doc_parallelism, _doc_clonotype_definition, _validate_parameters
 
@@ -166,9 +166,9 @@ def ir_query(
     A dictionary containing
      * `distances`: A sparse distance matrix between unique receptor configurations
        in `adata` aund unique receptor configurations in `reference`.
-     * `cell_indices`: A dict of arrays, containing the the `adata.obs_names`
+     * `cell_indices`: A dict of lists, containing the the `adata.obs_names`
        (cell indices) for each row in the distance matrix.
-     * `cell_indices_reference`: A dict of arrays, containing the `reference.obs_names`
+     * `cell_indices_reference`: A dict of lists, containing the `reference.obs_names`
        for each column in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
@@ -206,8 +206,8 @@ def ir_query(
     # Return or store results
     clonotype_distance_res = {
         "distances": clonotype_dist,
-        "cell_indices": ctn.cell_indices,
-        "cell_indices_reference": ctn.cell_indices2,
+        "cell_indices": json.dumps(ctn.cell_indices),
+        "cell_indices_reference": json.dumps(ctn.cell_indices2),
     }
     if inplace:
         params.adata.uns[key_added] = clonotype_distance_res
@@ -284,10 +284,13 @@ def ir_query_annotate_df(
     res = params.adata.uns[query_key]
     dist = res["distances"]
 
+    cell_indices = read_cell_indices(res["cell_indices"])
+    cell_indices_reference = read_cell_indices(res["cell_indices_reference"])
+
     def get_pairs():
-        for i, query_cells in res["cell_indices"].items():
+        for i, query_cells in cell_indices.items():
             reference_cells = itertools.chain.from_iterable(
-                res["cell_indices_reference"][str(k)] for k in dist[int(i), :].indices
+                cell_indices_reference[str(k)] for k in dist[int(i), :].indices
             )
             yield from itertools.product(query_cells, reference_cells)
 
