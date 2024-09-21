@@ -433,7 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    cell_indices_filter: Union[None, list['str']]
+    cell_index_filter: Union[None, list['str']] = None
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
@@ -531,44 +531,35 @@ def clonotype_network(
 
     cell_indices = clonotype_res["cell_indices"]
 
-    for i in range(0,10):
-        if str(i) in cell_indices:
-            print(cell_indices[str(i)])
-        else:
-            print("index not found")
-
      # store size in graph to be accessed by layout algorithms
     clonotype_size = np.array([len(idx) for idx in cell_indices.values()])
-    
-    # n = 100
-    # node_has_attribute = np.array([True]*n + ([False]*(len(cell_indices.values())-n)))
-
-    num_clonotypes = len(cell_indices.values())
-    node_has_attribute = np.array([False]*num_clonotypes)
-
-    for i in range(0,num_clonotypes):
-        indices = cell_indices[str(i)]
-        cell_has_attribute = [False]*len(indices)
-        for j, idx in enumerate(indices):
-            if(adata.obs.loc[idx]['gex:patient'] == 'Lung1'):
-                cell_has_attribute[j] = True
-        node_has_attribute[i] = any(cell_has_attribute)
-            
     graph.vs["size"] = clonotype_size
-    graph.vs["has_attribute"] = node_has_attribute
+
+    cluster_column_key = f"{airr_mod}:{clonotype_key}"
+    
+    num_clusters = int(max(adata.obs['airr:cc_aa_hamming'].astype(float)) + 1) 
+
+    if(cell_index_filter is not None):
+        cluster_mask = np.array([False] * num_clusters)
+        for cell_index in cell_index_filter:
+            cluster_index = adata.obs.loc[cell_index][cluster_column_key]
+            if(not pd.isna(cluster_index)):   
+                cluster_mask[int(cluster_index)] = True
 
     components = np.array(graph.decompose("weak"))
+
     component_node_count = np.array([len(component.vs) for component in components])
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
-    component_has_attribute = np.array([any(component.vs["has_attribute"]) for component in components])
-
-    print("component_has_attribute: ", component_has_attribute)
-
+    component_mask = (component_node_count >= min_nodes) & (component_sizes >= min_cells)
+    
+    if(cell_index_filter is not None):
+        component_mask = component_mask & cluster_mask
+    
     # Filter subgraph by `min_cells` and `min_nodes`
     subgraph_idx = list(
         itertools.chain.from_iterable(
             comp.vs["node_id"]
-            for comp in components[(component_node_count >= min_nodes) & (component_sizes >= min_cells) & component_has_attribute]
+            for comp in components[component_mask]
         )
     )
 
