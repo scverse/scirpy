@@ -494,6 +494,10 @@ def clonotype_network(
     random_state
         Random seed set before computing the layout.
     {airr_mod}
+    cell_index_filter
+        List of cell indices in anndata obs to filter the clonotype clusters that should be displayed
+        in the graph. Only clusters that contain at least one cell of the cell_index_filter list will be shown.
+        Can be set to None to avoid filtering.
 
     Returns
     -------
@@ -534,25 +538,19 @@ def clonotype_network(
      # store size in graph to be accessed by layout algorithms
     clonotype_size = np.array([len(idx) for idx in cell_indices.values()])
     graph.vs["size"] = clonotype_size
-
-    cluster_column_key = f"{airr_mod}:{clonotype_key}"
     
-    num_clusters = int(max(adata.obs['airr:cc_aa_hamming'].astype(float)) + 1) 
-
-    if(cell_index_filter is not None):
-        cluster_mask = np.array([False] * num_clusters)
-        for cell_index in cell_index_filter:
-            cluster_index = adata.obs.loc[cell_index][cluster_column_key]
-            if(not pd.isna(cluster_index)):   
-                cluster_mask[int(cluster_index)] = True
-
     components = np.array(graph.decompose("weak"))
 
     component_node_count = np.array([len(component.vs) for component in components])
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
     component_mask = (component_node_count >= min_nodes) & (component_sizes >= min_cells)
-    
+
     if(cell_index_filter is not None):
+        cluster_mask = np.array([False] * len(components))
+        for cell_index in cell_index_filter:
+            cluster_index = adata.obs.loc[cell_index][f"{airr_mod}:{clonotype_key}"]
+            if(not pd.isna(cluster_index)):   
+                cluster_mask[int(cluster_index)] = True
         component_mask = component_mask & cluster_mask
     
     # Filter subgraph by `min_cells` and `min_nodes`
