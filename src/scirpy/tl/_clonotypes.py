@@ -1,7 +1,7 @@
 import itertools
 import random
 from collections.abc import Sequence
-from typing import Literal, cast
+from typing import Literal, Union, cast
 
 import igraph as ig
 import numpy as np
@@ -433,6 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
+    cell_indices_filter: Union[None, list['str']]
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
@@ -528,20 +529,49 @@ def clonotype_network(
     # explicitly annotate node ids to keep them after subsetting
     graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
-    # store size in graph to be accessed by layout algorithms
-    clonotype_size = np.array([idx.size for idx in clonotype_res["cell_indices"].values()])
+    cell_indices = clonotype_res["cell_indices"]
+
+    for i in range(0,10):
+        if str(i) in cell_indices:
+            print(cell_indices[str(i)])
+        else:
+            print("index not found")
+
+     # store size in graph to be accessed by layout algorithms
+    clonotype_size = np.array([len(idx) for idx in cell_indices.values()])
+    
+    # n = 100
+    # node_has_attribute = np.array([True]*n + ([False]*(len(cell_indices.values())-n)))
+
+    num_clonotypes = len(cell_indices.values())
+    node_has_attribute = np.array([False]*num_clonotypes)
+
+    for i in range(0,num_clonotypes):
+        indices = cell_indices[str(i)]
+        cell_has_attribute = [False]*len(indices)
+        for j, idx in enumerate(indices):
+            if(adata.obs.loc[idx]['gex:patient'] == 'Lung1'):
+                cell_has_attribute[j] = True
+        node_has_attribute[i] = any(cell_has_attribute)
+            
     graph.vs["size"] = clonotype_size
+    graph.vs["has_attribute"] = node_has_attribute
+
     components = np.array(graph.decompose("weak"))
     component_node_count = np.array([len(component.vs) for component in components])
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
+    component_has_attribute = np.array([any(component.vs["has_attribute"]) for component in components])
+
+    print("component_has_attribute: ", component_has_attribute)
 
     # Filter subgraph by `min_cells` and `min_nodes`
     subgraph_idx = list(
         itertools.chain.from_iterable(
             comp.vs["node_id"]
-            for comp in components[(component_node_count >= min_nodes) & (component_sizes >= min_cells)]
+            for comp in components[(component_node_count >= min_nodes) & (component_sizes >= min_cells) & component_has_attribute]
         )
     )
+
     if len(subgraph_idx) == 0:
         raise ValueError(f"No subgraphs with size >= {min_cells} found.")
     graph = graph.subgraph(subgraph_idx)
