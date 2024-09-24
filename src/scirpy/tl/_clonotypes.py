@@ -1,7 +1,7 @@
 import itertools
 import random
 from collections.abc import Sequence
-from typing import Literal, Union, cast
+from typing import Literal, cast
 
 import igraph as ig
 import numpy as np
@@ -433,7 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    mask_obs: Union[None, str] = None
+    cell_index_filter: None | list["str"] = None,
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
@@ -565,12 +565,7 @@ def clonotype_network(
         component_mask = component_mask & component_filter
     
     # Filter subgraph by `min_cells` and `min_nodes`
-    subgraph_idx = list(
-        itertools.chain.from_iterable(
-            comp.vs["node_id"]
-            for comp in components[component_mask]
-        )
-    )
+    subgraph_idx = list(itertools.chain.from_iterable(comp.vs["node_id"] for comp in components[component_mask]))
 
     if len(subgraph_idx) == 0:
         raise ValueError(f"No subgraphs with size >= {min_cells} found.")
