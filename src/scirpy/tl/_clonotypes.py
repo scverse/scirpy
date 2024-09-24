@@ -433,7 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    cell_index_filter: None | list["str"] = None,
+    mask_obs: None | str = None,
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
