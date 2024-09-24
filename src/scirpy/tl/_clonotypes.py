@@ -494,9 +494,9 @@ def clonotype_network(
     random_state
         Random seed set before computing the layout.
     {airr_mod}
-    cell_index_filter
-        List of cell indices in anndata obs to filter the clonotype clusters that should be displayed
-        in the graph. Only clusters that contain at least one cell of the cell_index_filter list will be shown.
+    mask_obs
+        Name of the column in anndata.obs that contains the boolean mask to select cells to filter the clonotype clusters that should be displayed
+        in the graph. Only connected modules in the clonotype distance graph that contain at least one of these cells will be shown.
         Can be set to None to avoid filtering.
 
     Returns
@@ -535,25 +535,34 @@ def clonotype_network(
 
     cell_indices = clonotype_res["cell_indices"]
 
-     # store size in graph to be accessed by layout algorithms
+    # store size in graph to be accessed by layout algorithms
     clonotype_size = np.array([len(idx) for idx in cell_indices.values()])
     graph.vs["size"] = clonotype_size
+
+    # create clonotype_mask for filtering according to mask_obs
+    if(mask_obs is not None):
+        cell_mask = adata.obs[mask_obs]
+        cell_indices_reversed = {v: k for k, values in cell_indices.items() for v in values}
+        clonotype_mask = np.array([False] * len(cell_indices.items()))
+        cell_index_filter = adata.obs.loc[cell_mask].index
+        for cell_index in cell_index_filter:
+            if(cell_index in cell_indices_reversed):
+                clonotype_mask_index = int(cell_indices_reversed[cell_index])
+                clonotype_mask[clonotype_mask_index] = True
+        graph.vs["clonotype_mask"] = clonotype_mask
     
+    # decompose graph
     components = np.array(graph.decompose("weak"))
 
+    # create component_mask
     component_node_count = np.array([len(component.vs) for component in components])
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
     component_mask = (component_node_count >= min_nodes) & (component_sizes >= min_cells)
 
+    # adapt component_mask according to clonotype_mask
     if(mask_obs is not None):
-        cluster_mask = np.array([False] * len(components))
-        cell_mask = adata.obs[mask_obs]
-        cell_index_filter = adata.obs.loc[cell_mask].index
-        for cell_index in cell_index_filter:
-            cluster_index = adata.obs.loc[cell_index][f"{airr_mod}:{clonotype_key}"]
-            if(not pd.isna(cluster_index)):   
-                cluster_mask[int(cluster_index)] = True
-        component_mask = component_mask & cluster_mask
+        component_filter = np.array([any(component.vs["clonotype_mask"]) for component in components])
+        component_mask = component_mask & component_filter
     
     # Filter subgraph by `min_cells` and `min_nodes`
     subgraph_idx = list(
