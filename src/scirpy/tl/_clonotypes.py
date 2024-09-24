@@ -433,7 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    cell_index_filter: Union[None, list['str']] = None
+    mask_obs: Union[None, str] = None
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
@@ -545,8 +545,10 @@ def clonotype_network(
     component_sizes = np.array([sum(component.vs["size"]) for component in components])
     component_mask = (component_node_count >= min_nodes) & (component_sizes >= min_cells)
 
-    if(cell_index_filter is not None):
+    if(mask_obs is not None):
         cluster_mask = np.array([False] * len(components))
+        cell_mask = adata.obs[mask_obs]
+        cell_index_filter = adata.obs.loc[cell_mask].index
         for cell_index in cell_index_filter:
             cluster_index = adata.obs.loc[cell_index][f"{airr_mod}:{clonotype_key}"]
             if(not pd.isna(cluster_index)):   
