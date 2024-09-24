@@ -540,17 +540,17 @@ def clonotype_network(
     graph.vs["size"] = clonotype_size
 
     # create clonotype_mask for filtering according to mask_obs
-    if(mask_obs is not None):
+    if mask_obs is not None:
         cell_mask = adata.obs[mask_obs]
         cell_indices_reversed = {v: k for k, values in cell_indices.items() for v in values}
         clonotype_mask = np.array([False] * len(cell_indices.items()))
         cell_index_filter = adata.obs.loc[cell_mask].index
         for cell_index in cell_index_filter:
-            if(cell_index in cell_indices_reversed):
+            if cell_index in cell_indices_reversed:
                 clonotype_mask_index = int(cell_indices_reversed[cell_index])
                 clonotype_mask[clonotype_mask_index] = True
         graph.vs["clonotype_mask"] = clonotype_mask
-    
+
     # decompose graph
     components = np.array(graph.decompose("weak"))
 
@@ -560,10 +560,10 @@ def clonotype_network(
     component_mask = (component_node_count >= min_nodes) & (component_sizes >= min_cells)
 
     # adapt component_mask according to clonotype_mask
-    if(mask_obs is not None):
+    if mask_obs is not None:
         component_filter = np.array([any(component.vs["clonotype_mask"]) for component in components])
         component_mask = component_mask & component_filter
-    
+
     # Filter subgraph by `min_cells` and `min_nodes`
     subgraph_idx = list(itertools.chain.from_iterable(comp.vs["node_id"] for comp in components[component_mask]))
 
