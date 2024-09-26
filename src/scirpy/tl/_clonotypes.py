@@ -541,7 +541,7 @@ def clonotype_network(
 
     # create clonotype_mask for filtering according to mask_obs
     if mask_obs is not None:
-        if(isinstance(mask_obs, str)):
+        if isinstance(mask_obs, str):
             cell_mask = adata.obs[mask_obs]
         elif isinstance(mask_obs, np.ndarray) and mask_obs.dtype == np.bool_:
             cell_mask = mask_obs
