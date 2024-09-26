@@ -433,7 +433,7 @@ def clonotype_network(
     inplace: bool = True,
     random_state=42,
     airr_mod="airr",
-    mask_obs: None | str = None,
+    mask_obs: np.ndarray[np.bool_] | str | None = None,
 ) -> None | pd.DataFrame:
     """
     Computes the layout of the clonotype network.
@@ -495,7 +495,7 @@ def clonotype_network(
         Random seed set before computing the layout.
     {airr_mod}
     mask_obs
-        Name of the column in anndata.obs that contains the boolean mask to select cells to filter the clonotype clusters that should be displayed
+        Boolean mask or the name of the column in anndata.obs that contains the boolean mask to select cells to filter the clonotype clusters that should be displayed
         in the graph. Only connected modules in the clonotype distance graph that contain at least one of these cells will be shown.
         Can be set to None to avoid filtering.
 
@@ -541,7 +541,13 @@ def clonotype_network(
 
     # create clonotype_mask for filtering according to mask_obs
     if mask_obs is not None:
-        cell_mask = adata.obs[mask_obs]
+        if(isinstance(mask_obs, str)):
+            cell_mask = adata.obs[mask_obs]
+        elif isinstance(mask_obs, np.ndarray) and mask_obs.dtype == np.bool_:
+            cell_mask = mask_obs
+        else:
+            raise TypeError(f"mask_obs should be either a string or a boolean NumPy array, but got {type(mask_obs)}")
+
         cell_indices_reversed = {v: k for k, values in cell_indices.items() for v in values}
         clonotype_mask = np.zeros((len(cell_indices),), dtype=bool)
         cell_index_filter = adata.obs.loc[cell_mask].index
