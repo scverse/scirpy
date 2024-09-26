@@ -543,7 +543,7 @@ def clonotype_network(
     if mask_obs is not None:
         cell_mask = adata.obs[mask_obs]
         cell_indices_reversed = {v: k for k, values in cell_indices.items() for v in values}
-        clonotype_mask = np.array([False] * len(cell_indices.items()))
+        clonotype_mask = np.zeros((len(cell_indices), ), dtype=bool)
         cell_index_filter = adata.obs.loc[cell_mask].index
         for cell_index in cell_index_filter:
             if cell_index in cell_indices_reversed:
