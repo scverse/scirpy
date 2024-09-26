@@ -272,7 +272,6 @@ def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware,
 
 
 def test_clonotype_network_mask_obs(adata_conn):
-    
     expected = [
         [34.854376, 96.0],
         [34.854376, 96.0],
@@ -284,10 +283,10 @@ def test_clonotype_network_mask_obs(adata_conn):
         [1.0, 65.74282],
         [96.0, 51.195539],
         [np.nan, np.nan],
-        [np.nan, np.nan]
+        [np.nan, np.nan],
     ]
-    
-    boolean_mask = np.array([1,1,1,0,0,0,1,1,1,0,0], dtype=bool)
+
+    boolean_mask = np.array([1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0], dtype=bool)
     adata_conn.obs["boolean_mask"] = boolean_mask
 
     coords1 = ir.tl.clonotype_network(
