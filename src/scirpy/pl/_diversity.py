@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Callable, Literal, Optional, Union
+from collections.abc import Callable, Mapping
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,8 +16,8 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: Union[str, Callable[[np.ndarray], Union[int, float]]] = "normalized_shannon_entropy",
-    metric_kwargs: Optional[Mapping] = None,
+    metric: str | Callable[[np.ndarray], int | float] = "normalized_shannon_entropy",
+    metric_kwargs: Mapping | None = None,
     vistype: Literal["bar"] = "bar",
     airr_mod: str = "airr",
     **kwargs,

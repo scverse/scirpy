@@ -1,5 +1,5 @@
-from collections.abc import Sequence
-from typing import Callable, Literal, Union
+from collections.abc import Callable, Sequence
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,21 +15,18 @@ from .styling import _get_colors
 @DataHandler.inject_param_docs()
 def spectratype(
     adata: DataHandler.TYPE,
-    chain: Union[
-        Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"],
-        Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]],
-    ] = "VJ_1",
+    chain: Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"] | Sequence[Literal["VJ_1", "VDJ_1", "VJ_2", "VDJ_2"]] = "VJ_1",
     *,
     color: str,
     cdr3_col: str = "junction_aa",
     combine_fun: Callable = np.sum,
-    normalize: Union[None, str, bool] = None,
+    normalize: None | str | bool = None,
     viztype: Literal["bar", "line", "curve"] = "bar",
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
     **kwargs,
-) -> Union[list[plt.Axes], AnnData]:
+) -> list[plt.Axes] | AnnData:
     """\
     Show the distribution of CDR3 region lengths.
 

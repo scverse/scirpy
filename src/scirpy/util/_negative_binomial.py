@@ -7,14 +7,13 @@ https://github.com/gokceneraslan/fit_nbinom/issues/5
 """
 
 from numbers import Number
-from typing import Optional
 
 import numpy as np
 from scipy.optimize import fmin_l_bfgs_b as optim
 from scipy.special import factorial, gammaln, psi
 
 
-def fit_nbinom(X: np.ndarray, initial_params: Optional[tuple[Number, Number]] = None) -> tuple[float, float]:
+def fit_nbinom(X: np.ndarray, initial_params: tuple[Number, Number] | None = None) -> tuple[float, float]:
     """Fit a negative binomial distribution.
 
     Parameters

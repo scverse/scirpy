@@ -8,13 +8,29 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## v0.18.0
 
-### Addition
+### Additions
 
--   Isotypically included B cells are now labelled as `receptor_subtype="IGH+IGK/L"` instead of `ambiguous` in `tl.chain_qc`. ([#537](https://github.com/scverse/scirpy/pull/537))
--   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length. Additionally,
-    the hamming distance was reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
+-   Isotypically included B cells are now labelled as `receptor_subtype="IGH+IGK/L"` instead of `ambiguous` in `tl.chain_qc` ([#537](https://github.com/scverse/scirpy/pull/537)).
+-   Added the `normalized_hamming` metric to `pp.ir_dist` that accounts for differences in CDR3 sequence length ([#512](https://github.com/scverse/scirpy/pull/512)).
+-   `tl.define_clonotype_clusters` now has an option to require J genes to match (`same_j_gene=True`) in addition to `same_v_gene`. ([#470](https://github.com/scverse/scirpy/pull/470)).
+
+### Performance improvements
+
+-   The hamming distance has been reimplemented with numba, achieving a significant speedup ([#512](https://github.com/scverse/scirpy/pull/512)).
+-   Clonotype clustering has been accelerated leveraging sparse matrix operations ([#470](https://github.com/scverse/scirpy/pull/470)).
+
+### Fixes
+
+-   Fix that `pl.clonotype_network` couldn't use non-standard obsm key ([#545](https://github.com/scverse/scirpy/pull/545)).
+
+### Other changes
+
+-   Make `parasail` an optional dependency since it is hard to install it on ARM CPUs. `TCRdist` is now the
+    recommended default distance metric which is much faster than parasail-based pairwise sequence alignments while
+    providing very similar results ([#547](https://github.com/scverse/scirpy/pull/547)).
+-   Drop support for Python 3.9 in accordance with [SPEC0](https://scientific-python.org/specs/spec-0000/) ([#546](https://github.com/scverse/scirpy/pull/546))
 
 ## v0.17.2
 
@@ -40,7 +56,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
--   Fix issue with detecting the number of available CPUs on MacOD ([#518](https://github.com/scverse/scirpy/pull/502))
+-   Fix issue with detecting the number of available CPUs on MacOS ([#518](https://github.com/scverse/scirpy/pull/502))
 
 ## v0.16.1
 

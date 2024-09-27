@@ -219,6 +219,7 @@ def test_hamming_dist():
     )
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "metric", [AlignmentDistanceCalculator, partial(FastAlignmentDistanceCalculator, estimated_penalty=0)]
 )
@@ -236,6 +237,7 @@ def test_alignment_compute_block(metric):
     assert b3 == [(1, 10, 20), (9, 10, 21), (9, 11, 20), (1, 11, 21), (1, 12, 22)]
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "metric", [AlignmentDistanceCalculator, partial(FastAlignmentDistanceCalculator, estimated_penalty=0)]
 )
@@ -255,6 +257,7 @@ def test_alignment_dist(metric):
     npt.assert_almost_equal(res.toarray(), _squarify(np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]])))
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "metric", [AlignmentDistanceCalculator, partial(FastAlignmentDistanceCalculator, estimated_penalty=0)]
 )
@@ -267,6 +270,7 @@ def test_alignment_dist_with_two_seq_arrays(metric):
     npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
 
+@pytest.mark.extra
 def test_fast_alignment_compute_block():
     aligner = FastAlignmentDistanceCalculator(cutoff=255)
     aligner10 = FastAlignmentDistanceCalculator(cutoff=10)
@@ -281,6 +285,7 @@ def test_fast_alignment_compute_block():
     assert b3 == [(1, 10, 20), (9, 10, 21), (9, 11, 20), (1, 11, 21), (1, 12, 22)]
 
 
+@pytest.mark.extra
 def test_fast_alignment_dist():
     with pytest.raises(ValueError):
         FastAlignmentDistanceCalculator(3000)
@@ -297,6 +302,7 @@ def test_fast_alignment_dist():
     npt.assert_almost_equal(res.toarray(), _squarify(np.array([[1, 7, 0], [0, 1, 0], [0, 0, 1]])))
 
 
+@pytest.mark.extra
 def test_fast_alignment_dist_with_two_seq_arrays():
     aligner = FastAlignmentDistanceCalculator(cutoff=10, n_jobs=1)
     res = aligner.calc_dist_mat(["AAAA", "AATA", "HHHH", "WWWW"], ["WWWW", "AAAA", "ATAA"])
@@ -306,6 +312,7 @@ def test_fast_alignment_dist_with_two_seq_arrays():
     npt.assert_almost_equal(res.toarray(), np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]))
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"]
 )

@@ -1,8 +1,8 @@
 import operator
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from functools import reduce
 from types import MappingProxyType
-from typing import Any, Callable, Union
+from typing import Any
 
 import awkward as ak
 import numba as nb
@@ -22,7 +22,7 @@ _VDJ_LOCI = tuple(AirrCell.VDJ_LOCI)
 def index_chains(
     adata: DataHandler.TYPE,
     *,
-    filter: Union[Callable[[ak.Array], bool], Sequence[Union[str, Callable[[ak.Array], bool]]]] = (
+    filter: Callable[[ak.Array], bool] | Sequence[str | Callable[[ak.Array], bool]] = (
         "productive",
         "require_junction_aa",
     ),

@@ -2,6 +2,7 @@
 import sys
 from typing import cast
 
+import anndata as ad
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -207,6 +208,7 @@ def test_clonotype_clusters_end_to_end(
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
+@pytest.mark.extra
 @pytest.mark.xfail(
     sys.platform == "win32",
     reason="Inconsistent coordinates with igraph on windows (got introduced only after release of python-igraph 0.9.11)",
@@ -269,6 +271,7 @@ def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware,
     npt.assert_almost_equal(coords.values, np.array(expected), decimal=1)
 
 
+@pytest.mark.extra
 def test_clonotype_network_igraph(adata_clonotype_network):
     g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
     print(lo.coords)
@@ -337,3 +340,23 @@ def test_clonotype_convergence(adata_clonotype):
             categories=["convergent", "not convergent"],
         ),
     )
+
+
+def test_j_gene_matching():
+    from . import TESTDATA
+
+    data = ad.read_h5ad(TESTDATA / "clonotypes_test_data/j_gene_test_data.h5ad")
+
+    ir.tl.define_clonotype_clusters(
+        data,
+        sequence="nt",
+        metric="normalized_hamming",
+        receptor_arms="all",
+        dual_ir="any",
+        same_j_gene=True,
+        key_added="test_j_gene",
+    )
+
+    clustering = data.obs["test_j_gene"].tolist()
+    expected = ["0", "0", "0", "0", "0", "1", "1", "1", "1", "1", "1", "1", "1", "2", "2", "2", "2", "2"]
+    assert np.array_equal(clustering, expected)
