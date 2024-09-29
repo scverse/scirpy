@@ -10,7 +10,8 @@ import numpy as np
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
-from numba import cuda
+# from numba import cuda
+import cupy as cp
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
@@ -819,107 +820,130 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
 
-        # import matplotlib.pyplot as plt
-        # plt.hist(seqs_L1, bins=np.max(seqs_L1), edgecolor='black')
-        # plt.show()
-
-        @cuda.jit
-        def hamming_kernel(
-            seqs_mat1, seqs_mat2, seqs_L1, seqs_L2, cutoff, data, indices, row_element_counts, block_offset
-        ):
-            row = cuda.grid(1)
-            if row < seqs_mat1.shape[0]:
-                row_end_index = 0
-                seq1_len = seqs_L1[row]
-                for col in range(seqs_mat2.shape[0]):
-                    if (not is_symmetric) or ((col + block_offset) >= row):
-                        seq2_len = seqs_L2[col]
-                        distance = 1
-                        if seq1_len == seq2_len:
-                            for i in range(0, seq1_len):
-                                distance += seqs_mat1[row, i] != seqs_mat2[col, i]
-                            if distance <= cutoff + 1:
-                                data[row, row_end_index] = distance
-                                indices[row, row_end_index] = col
-                                row_end_index += 1
-                    row_element_counts[row] = row_end_index
-
         # @cuda.jit
         # def hamming_kernel(
         #     seqs_mat1, seqs_mat2, seqs_L1, seqs_L2, cutoff, data, indices, row_element_counts, block_offset
         # ):
         #     row = cuda.grid(1)
         #     if row < seqs_mat1.shape[0]:
-        #     # row_end_index = 0
+        #         row_end_index = 0
         #         seq1_len = seqs_L1[row]
         #         for col in range(seqs_mat2.shape[0]):
-        #             seq2_len = seqs_L2[col]
-        #             if seq1_len == seq2_len: # (col%1000 == 0):
-        #                 # data[row, col] = 1
-        #                 # indices[row, col] = col
-        #                 data[row, col] = 1
-        #                 data[row, col] = 0
+        #             if (not is_symmetric) or ((col + block_offset) >= row):
+        #                 seq2_len = seqs_L2[col]
+        #                 distance = 1
+        #                 if seq1_len == seq2_len:
+        #                     for i in range(0, seq1_len):
+        #                         distance += seqs_mat1[row, i] != seqs_mat2[col, i]
+        #                     if distance <= cutoff + 1:
+        #                         data[row, row_end_index] = distance
+        #                         indices[row, row_end_index] = col
+        #                         row_end_index += 1
+        #             row_element_counts[row] = row_end_index
 
+        hamming_kernel = cp.RawKernel(r'''
+        extern "C" __global__
+        void hamming_kernel(
+            const int* seqs_mat1, const int* seqs_mat2,
+            const int* seqs_L1, const int* seqs_L2, const int cutoff,
+            int* data, int* indices, int* row_element_counts, const int block_offset,
+            const int seqs_mat1_rows, const int seqs_mat2_rows, const int seqs_mat1_cols, const int seqs_mat2_cols, const bool is_symmetric
+        ) {
+            int row = blockDim.x * blockIdx.x + threadIdx.x;  // Get thread index
+            if (row < seqs_mat1_rows) {
+                if(row == 0){
+                printf("*********%d********", cutoff);
+                                      }
+                int seq1_len = seqs_L1[row];
+                int row_end_index = 0;
+                for (int col = 0; col < seqs_mat2_rows; col++) {
+                    if ((! is_symmetric ) || (col + block_offset) >= row) {
+                        int seq2_len = seqs_L2[col];
+                        int distance = 1;          
+                        if (seq1_len == seq2_len) {
+                            for (int i = 0; i < seq1_len; i++) {
+                                if(seqs_mat1[row * seqs_mat1_cols + i] != seqs_mat2[col * seqs_mat2_cols + i]) {
+                                    distance++;
+                                }
+                            }
+                            if (distance <= cutoff + 1) {
+                                data[row * seqs_mat2_cols + row_end_index] = distance;
+                                indices[row * seqs_mat2_cols + row_end_index] = col;
+                                row_end_index++;
+                            }
+                        }
+                    }
+                }
+                row_element_counts[row] = row_end_index;               
+            }
+        }
+        ''', 'hamming_kernel')
 
-        #                 # row_end_index += 1
-        #                 # row_element_counts[row] = row_end_index
+        # @cuda.jit
+        # def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
+        #     row, col = cuda.grid(2)
+        #     if row < data_matrix.shape[0] and col < data_matrix.shape[1]:
+        #         row_start = indptr[row]
+        #         row_end = indptr[row + 1]
+        #         row_end_index = row_end - row_start
+        #         data_index = row_start + col
+        #         if (data_index < data.shape[0]) and (col < row_end_index):
+        #             data[data_index] = data_matrix[row, col]
+        #             indices[data_index] = indices_matrix[row, col]
 
-        @cuda.jit
-        def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
-            row, col = cuda.grid(2)
-            if row < data_matrix.shape[0] and col < data_matrix.shape[1]:
-                row_start = indptr[row]
-                row_end = indptr[row + 1]
-                row_end_index = row_end - row_start
-                data_index = row_start + col
-                if (data_index < data.shape[0]) and (col < row_end_index):
-                    data[data_index] = data_matrix[row, col]
-                    indices[data_index] = indices_matrix[row, col]
+        create_csr_kernel = cp.RawKernel(r'''
+        extern "C" __global__
+        void create_csr_kernel(
+            int* data, int* indices,
+            int* data_matrix, int* indices_matrix,
+            int* indptr, int data_matrix_rows, int data_matrix_cols, int data_rows, int indices_matrix_cols
+        ) {
+            int row = blockDim.x * blockIdx.x + threadIdx.x;
+            int col = blockDim.y * blockIdx.y + threadIdx.y;
+
+            if (row < data_matrix_rows && col < data_matrix_cols) {
+                unsigned int row_start = indptr[row];
+                unsigned int row_end = indptr[row + 1];
+                unsigned int row_end_index = row_end - row_start;
+                unsigned int data_index = row_start + col;
+
+                if (data_index < data_rows && col < row_end_index) {
+                    data[data_index] = data_matrix[row * data_matrix_cols + col];
+                    indices[data_index] = indices_matrix[row * indices_matrix_cols + col];
+                }
+            }
+        }
+        ''', 'create_csr_kernel')
 
         def calc_block_gpu(seqs_mat1_block, seqs_mat2, seqs_L1_block, seqs_L2, block_offset):
-            d_seqs_mat1 = cuda.to_device(seqs_mat1_block)
-            d_seqs_mat2 = cuda.to_device(seqs_mat2)
-            d_seqs_L1 = cuda.to_device(seqs_L1_block)
-            d_seqs_L2 = cuda.to_device(seqs_L2)
-
-            result_len = 50
-
-            data_matrix =  np.zeros((seqs_mat1_block.shape[0], result_len), dtype=np.uint8) # np.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.uint8)
-            d_data_matrix = cuda.device_array_like(data_matrix)
-
-            indices_matrix = np.zeros((seqs_mat1_block.shape[0], result_len), dtype=np.uint32) # np.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.uint32)
-            d_indices_matrix = cuda.device_array_like(indices_matrix)
-
-            row_element_counts = np.zeros(seqs_mat1_block.shape[0], dtype=np.uint32)
-            d_row_element_counts = cuda.device_array_like(row_element_counts)
-
-            threads_per_block = 256
-            blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
-
-            # threads_per_block = (1, 256)
-            # blocks_per_grid_x = math.ceil(data_matrix.shape[0] / threads_per_block[0])
-            # blocks_per_grid_y = math.ceil(data_matrix.shape[1] / threads_per_block[1])
-            # blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
             
-            cuda.synchronize()
-            start_kernel = time.time()
-            hamming_kernel[blocks_per_grid, threads_per_block](
-                d_seqs_mat1,
-                d_seqs_mat2,
-                d_seqs_L1,
-                d_seqs_L2,
-                self.cutoff,
-                d_data_matrix,
-                d_indices_matrix,
-                d_row_element_counts,
-                block_offset,
-            )
-            cuda.synchronize()
-            end_kernel = time.time()
-            time_taken = (end_kernel-start_kernel)
-            print("first time hamming kernel time taken: ", time_taken)
+            # Transfer data to GPU (CuPy automatically places arrays on GPU)
+            d_seqs_mat1 = cp.asarray(seqs_mat1_block.astype(int))
+            d_seqs_mat2 = cp.asarray(seqs_mat2.astype(int))
+            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(int))
+            d_seqs_L2 = cp.asarray(seqs_L2.astype(int))
+            
+            result_len = 100
 
-            # start_kernel = time.time()
+            # Create output arrays (on GPU) using CuPy
+            d_data_matrix = cp.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=cp.int_)
+            d_indices_matrix = cp.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=cp.int_)
+            d_row_element_counts = cp.zeros(seqs_mat1_block.shape[0], dtype=cp.int_)
+
+            # Configure the grid and block sizes
+            threads_per_block = 256
+            blocks_per_grid = (seqs_mat1_block.shape[0] + (threads_per_block - 1)) // threads_per_block
+            
+            print('seqs_mat1_block shape:', seqs_mat1_block.shape)
+            print('seqs_mat2 shape:', seqs_mat2.shape)
+            print("d_seqs_L1:", np.min(d_seqs_L1))
+
+            seqs_mat1_rows, seqs_mat1_cols = seqs_mat1_block.shape
+            seqs_mat2_rows, seqs_mat2_cols = seqs_mat2.shape
+
+            cp.cuda.Device().synchronize()
+
+            start_kernel = time.time()
             # hamming_kernel[blocks_per_grid, threads_per_block](
             #     d_seqs_mat1,
             #     d_seqs_mat2,
@@ -931,39 +955,70 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             #     d_row_element_counts,
             #     block_offset,
             # )
-            # cuda.synchronize()
-            # end_kernel = time.time()
-            # print("second time hamming kernel time taken: ", end_kernel-start_kernel)
 
-            row_element_counts = d_row_element_counts.copy_to_host()
+            hamming_kernel(
+                (blocks_per_grid,), (threads_per_block,),
+                (
+                    d_seqs_mat1,
+                    d_seqs_mat2,
+                    d_seqs_L1,
+                    d_seqs_L2,
+                    self.cutoff,
+                    d_data_matrix,
+                    d_indices_matrix,
+                    d_row_element_counts,
+                    block_offset,
+                    seqs_mat1_rows,
+                    seqs_mat2_rows,
+                    seqs_mat1_cols,
+                    seqs_mat2_cols,
+                    is_symmetric,
+                )
+            )
+            
+            cp.cuda.Device().synchronize()
+
+            exit()
+
+            end_kernel = time.time()
+            time_taken = (end_kernel-start_kernel)
+            print("first time hamming kernel time taken: ", time_taken)
+
+            row_element_counts = d_row_element_counts.get()
 
             indptr = np.zeros(seqs_mat1_block.shape[0] + 1, dtype=np.uint32)
             indptr[1:] = np.cumsum(row_element_counts)
-            d_indptr = cuda.to_device(indptr)
+            d_indptr = cp.asarray(indptr)
 
             n_elements = indptr[-1]
 
             data = np.zeros(n_elements, dtype=np.uint8)
-            d_data = cuda.device_array_like(data)
+            d_data = cp.zeros_like(data)
 
             indices = np.zeros(n_elements, dtype=np.uint32)
-            d_indices = cuda.device_array_like(indices)
+            d_indices = cp.zeros_like(indices)
 
             threads_per_block = (1, 256)
             blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
             blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
             blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
-            create_csr_kernel[blocks_per_grid, threads_per_block](
-                d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr
+            
+            # create_csr_kernel[blocks_per_grid, threads_per_block](
+            #     d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr
+            # )
+
+            create_csr_kernel(
+                (blocks_per_grid_x, blocks_per_grid_y), threads_per_block,
+                (d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr, d_data_matrix.shape[0], d_data_matrix.shape[1],d_data.shape[0], d_indices_matrix.shape[1])
             )
 
-            data = d_data.copy_to_host()
-            indices = d_indices.copy_to_host()
+            data = d_data.get()
+            indices = d_indices.get()
 
             return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0], seqs_mat2.shape[0])), time_taken
 
-        block_width = 512
-        n_blocks = 50 # seqs_mat2.shape[0] // block_width + 1
+        block_width = 4096
+        n_blocks = 1 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
