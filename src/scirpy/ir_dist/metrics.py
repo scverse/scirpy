@@ -16,6 +16,9 @@ from scipy.sparse import coo_matrix, csr_matrix
 
 from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated
 
+import time
+import math
+
 _doc_params_parallel_distance_calculator = """\
 n_jobs
     Number of jobs to use for the pairwise distance calculation, passed to
@@ -816,6 +819,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
 
+        # import matplotlib.pyplot as plt
+        # plt.hist(seqs_L1, bins=np.max(seqs_L1), edgecolor='black')
+        # plt.show()
+
         @cuda.jit
         def hamming_kernel(
             seqs_mat1, seqs_mat2, seqs_L1, seqs_L2, cutoff, data, indices, row_element_counts, block_offset
@@ -837,6 +844,26 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                 row_end_index += 1
                     row_element_counts[row] = row_end_index
 
+        # @cuda.jit
+        # def hamming_kernel(
+        #     seqs_mat1, seqs_mat2, seqs_L1, seqs_L2, cutoff, data, indices, row_element_counts, block_offset
+        # ):
+        #     row = cuda.grid(1)
+        #     if row < seqs_mat1.shape[0]:
+        #     # row_end_index = 0
+        #         seq1_len = seqs_L1[row]
+        #         for col in range(seqs_mat2.shape[0]):
+        #             seq2_len = seqs_L2[col]
+        #             if seq1_len == seq2_len: # (col%1000 == 0):
+        #                 # data[row, col] = 1
+        #                 # indices[row, col] = col
+        #                 data[row, col] = 1
+        #                 data[row, col] = 0
+
+
+        #                 # row_end_index += 1
+        #                 # row_element_counts[row] = row_end_index
+
         @cuda.jit
         def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
             row, col = cuda.grid(2)
@@ -855,10 +882,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_seqs_L1 = cuda.to_device(seqs_L1_block)
             d_seqs_L2 = cuda.to_device(seqs_L2)
 
-            data_matrix = np.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.uint8)
+            result_len = 50
+
+            data_matrix =  np.zeros((seqs_mat1_block.shape[0], result_len), dtype=np.uint8) # np.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.uint8)
             d_data_matrix = cuda.device_array_like(data_matrix)
 
-            indices_matrix = np.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.uint32)
+            indices_matrix = np.zeros((seqs_mat1_block.shape[0], result_len), dtype=np.uint32) # np.zeros((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.uint32)
             d_indices_matrix = cuda.device_array_like(indices_matrix)
 
             row_element_counts = np.zeros(seqs_mat1_block.shape[0], dtype=np.uint32)
@@ -866,6 +895,14 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             threads_per_block = 256
             blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
+
+            # threads_per_block = (1, 256)
+            # blocks_per_grid_x = math.ceil(data_matrix.shape[0] / threads_per_block[0])
+            # blocks_per_grid_y = math.ceil(data_matrix.shape[1] / threads_per_block[1])
+            # blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
+            
+            cuda.synchronize()
+            start_kernel = time.time()
             hamming_kernel[blocks_per_grid, threads_per_block](
                 d_seqs_mat1,
                 d_seqs_mat2,
@@ -877,6 +914,26 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 d_row_element_counts,
                 block_offset,
             )
+            cuda.synchronize()
+            end_kernel = time.time()
+            time_taken = (end_kernel-start_kernel)
+            print("first time hamming kernel time taken: ", time_taken)
+
+            # start_kernel = time.time()
+            # hamming_kernel[blocks_per_grid, threads_per_block](
+            #     d_seqs_mat1,
+            #     d_seqs_mat2,
+            #     d_seqs_L1,
+            #     d_seqs_L2,
+            #     self.cutoff,
+            #     d_data_matrix,
+            #     d_indices_matrix,
+            #     d_row_element_counts,
+            #     block_offset,
+            # )
+            # cuda.synchronize()
+            # end_kernel = time.time()
+            # print("second time hamming kernel time taken: ", end_kernel-start_kernel)
 
             row_element_counts = d_row_element_counts.copy_to_host()
 
@@ -903,23 +960,32 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             data = d_data.copy_to_host()
             indices = d_indices.copy_to_host()
 
-            return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0], seqs_mat2.shape[0]))
+            return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0], seqs_mat2.shape[0])), time_taken
 
-        block_width = 4096
-        n_blocks = seqs_mat2.shape[0] // block_width + 1
+        block_width = 512
+        n_blocks = 50 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
         result_blocks = [None] * n_blocks
 
         block_offset = start_column
+        time_sum = 0
         for i in range(0, n_blocks):
-            result_blocks[i] = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], block_offset)
+            result_blocks[i], time_taken = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], block_offset)
+            time_sum += time_taken
             block_offset += seqs_mat2_blocks[i].shape[0]
+        print("time_sum: ", time_sum)
 
         result_sparse = scipy.sparse.hstack(result_blocks)
 
+        size_in_bytes = result_sparse.data.nbytes + result_sparse.indices.nbytes + result_sparse.indptr.nbytes
+        size_in_gb = size_in_bytes / (1024 ** 3)
+        print(f"Size of the CSR matrix: {size_in_gb:.6f} GB")
+
         row_element_counts_gpu = np.diff(result_sparse.indptr)
+
+        print("max row element count: ", np.max(row_element_counts_gpu))
 
         return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
 
