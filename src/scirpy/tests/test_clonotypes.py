@@ -266,9 +266,56 @@ def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware,
         size_aware=size_aware,
         layout=layout,
         inplace=False,
+        mask_obs=None,
     )
-    # print(coords)
     npt.assert_almost_equal(coords.values, np.array(expected), decimal=1)
+
+
+@pytest.mark.extra
+def test_clonotype_network_mask_obs(adata_conn):
+    expected = [
+        [34.854376, 96.0],
+        [34.854376, 96.0],
+        [93.076805, 27.643534],
+        [np.nan, np.nan],
+        [np.nan, np.nan],
+        [np.nan, np.nan],
+        [22.889353, 1.0],
+        [1.0, 65.74282],
+        [96.0, 51.195539],
+        [np.nan, np.nan],
+        [np.nan, np.nan],
+    ]
+
+    boolean_mask = np.array([1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0], dtype=bool)
+    adata_conn.obs["boolean_mask"] = boolean_mask
+
+    coords1 = ir.tl.clonotype_network(
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        min_cells=1,
+        min_nodes=1,
+        size_aware=True,
+        layout="components",
+        inplace=False,
+        mask_obs=boolean_mask,
+    )
+
+    coords2 = ir.tl.clonotype_network(
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        min_cells=1,
+        min_nodes=1,
+        size_aware=True,
+        layout="components",
+        inplace=False,
+        mask_obs="boolean_mask",
+    )
+
+    npt.assert_almost_equal(coords1.values, np.array(expected), decimal=1)
+    npt.assert_almost_equal(coords2.values, np.array(expected), decimal=1)
 
 
 @pytest.mark.extra
