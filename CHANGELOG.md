@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Additions
 
--   Add a `mask_obs` argument to `tl.clonotype_network` that allows to compute the clonotype networks on a subset of the cells ([#557](https://github.com/scverse/scirpy/pull/557)). 
+-   Add a `mask_obs` argument to `tl.clonotype_network` that allows to compute the clonotype networks on a subset of the cells ([#557](https://github.com/scverse/scirpy/pull/557)).
 
 ## v0.18.0
 
