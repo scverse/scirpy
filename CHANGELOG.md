@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [Unreleased]
+
+### Additions
+
+-   Add a `mask_obs` argument to `tl.clonotype_network` that allows to compute the clonotype networks on a subset of the cells ([#557](https://github.com/scverse/scirpy/pull/557)). 
+
 ## v0.18.0
 
 ### Additions
