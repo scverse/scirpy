@@ -851,13 +851,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         ) {
             int row = blockDim.x * blockIdx.x + threadIdx.x;  // Get thread index
             if (row < seqs_mat1_rows) {
-                if(row == 0){
-                printf("*********%d********", cutoff);
-                                      }
                 int seq1_len = seqs_L1[row];
                 int row_end_index = 0;
                 for (int col = 0; col < seqs_mat2_rows; col++) {
-                    if ((! is_symmetric ) || (col + block_offset) >= row) {
+                    //if ((! is_symmetric ) || (col + block_offset) >= row) {
                         int seq2_len = seqs_L2[col];
                         int distance = 1;          
                         if (seq1_len == seq2_len) {
@@ -867,12 +864,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                 }
                             }
                             if (distance <= cutoff + 1) {
-                                data[row * seqs_mat2_cols + row_end_index] = distance;
-                                indices[row * seqs_mat2_cols + row_end_index] = col;
+                                data[row * seqs_mat2_rows + row_end_index] = distance;
+                                indices[row * seqs_mat2_rows + row_end_index] = col;
                                 row_end_index++;
                             }
                         }
-                    }
+                    //}
                 }
                 row_element_counts[row] = row_end_index;               
             }
@@ -902,12 +899,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             int col = blockDim.y * blockIdx.y + threadIdx.y;
 
             if (row < data_matrix_rows && col < data_matrix_cols) {
-                unsigned int row_start = indptr[row];
-                unsigned int row_end = indptr[row + 1];
-                unsigned int row_end_index = row_end - row_start;
-                unsigned int data_index = row_start + col;
+                int row_start = indptr[row];
+                int row_end = indptr[row + 1];
+                int row_end_index = row_end - row_start;
+                int data_index = row_start + col;
 
-                if (data_index < data_rows && col < row_end_index) {
+                if ((data_index < data_rows) && (col < row_end_index)) {
                     data[data_index] = data_matrix[row * data_matrix_cols + col];
                     indices[data_index] = indices_matrix[row * indices_matrix_cols + col];
                 }
@@ -978,24 +975,39 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             
             cp.cuda.Device().synchronize()
 
-            exit()
-
             end_kernel = time.time()
             time_taken = (end_kernel-start_kernel)
             print("first time hamming kernel time taken: ", time_taken)
 
+            data_matrix = d_data_matrix.get()
+            indices_matrix = d_indices_matrix.get()
+
+            print('*****data_matrix shape: ', data_matrix.shape)
+            print('*****indices_matrix shape: ', indices_matrix.shape)
+            print('*****data_matrix nonzero: ', np.count_nonzero(data_matrix))
+            print('*****d_indices_matrix nonzero: ', np.count_nonzero(indices_matrix))
+            np.savetxt('data_matrix.csv', data_matrix, delimiter=',', fmt='%d')
+            np.savetxt('indices_matrix.csv', indices_matrix, delimiter=',', fmt='%d')
+
             row_element_counts = d_row_element_counts.get()
 
-            indptr = np.zeros(seqs_mat1_block.shape[0] + 1, dtype=np.uint32)
+            indptr = np.zeros(seqs_mat1_block.shape[0] + 1, dtype=np.int_)
             indptr[1:] = np.cumsum(row_element_counts)
             d_indptr = cp.asarray(indptr)
 
+
+
+            # np.savetxt('data_matrix.csv', data_matrix, delimiter=',', fmt='%d')
+
+            # print('*****indptr: ', indptr[-10:-1])
+            # exit()
+
             n_elements = indptr[-1]
 
-            data = np.zeros(n_elements, dtype=np.uint8)
+            data = np.zeros(n_elements, dtype=np.int_)
             d_data = cp.zeros_like(data)
 
-            indices = np.zeros(n_elements, dtype=np.uint32)
+            indices = np.zeros(n_elements, dtype=np.int_)
             d_indices = cp.zeros_like(indices)
 
             threads_per_block = (1, 256)
@@ -1007,12 +1019,26 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             #     d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr
             # )
 
+            # void create_csr_kernel(
+            # int* data, int* indices,
+            # int* data_matrix, int* indices_matrix,
+            # int* indptr, int data_matrix_rows, int data_matrix_cols, int data_rows, int indices_matrix_cols
+            # ) 
+
             create_csr_kernel(
                 (blocks_per_grid_x, blocks_per_grid_y), threads_per_block,
                 (d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr, d_data_matrix.shape[0], d_data_matrix.shape[1],d_data.shape[0], d_indices_matrix.shape[1])
             )
 
             data = d_data.get()
+            indptr = d_indptr.get()
+            print('*****data nonzero: ', np.count_nonzero(data))
+            print('*****data shape: ',data.shape)
+            np.savetxt('data.csv', data, delimiter=',', fmt='%d')
+            np.savetxt('indptr.csv', indptr, delimiter=',', fmt='%d')
+
+            
+
             indices = d_indices.get()
 
             return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0], seqs_mat2.shape[0])), time_taken
