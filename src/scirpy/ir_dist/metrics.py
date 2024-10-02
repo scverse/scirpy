@@ -814,6 +814,30 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             Always returns a numpy array containing None because the computation of the minimum distance per row is
             not implemented for the GPU hamming calculator yet.
         """
+
+        print("seqs unsorted: ", seqs[0:20])
+        start_sorting = time.time()
+        # seqs = np.array(sorted(seqs, key=len))
+        # seqs2 = np.array(sorted(seqs2, key=len))
+
+        seqs_lengths = np.vectorize(len)(seqs)
+        seqs_original_indices = np.argsort(seqs_lengths)
+        seqs = seqs[seqs_original_indices]
+
+        seqs2_lengths = np.vectorize(len)(seqs2)
+        seqs2_original_indices = np.argsort(seqs2_lengths)
+        seqs2 = seqs2[seqs2_original_indices]
+
+        end_sorting = time.time()
+        print("sorting time taken: ", end_sorting-start_sorting)
+        print("seqs sorted: ", seqs[0:20])
+
+        # seqs_original_indices = np.arange(0, len(seqs))
+        # seqs2_original_indices = np.arange(0, len(seqs2))
+
+        is_symmetric = False
+        print("is_symmetric: ", is_symmetric)
+        
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
 
@@ -848,6 +872,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const int* seqs_mat2,
             const int* seqs_L1,
             const int* seqs_L2,
+            const int* seqs_original_indices,
+            const int* seqs2_original_indices,
             const int cutoff,
             int* data,
             int* indices,
@@ -861,8 +887,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const int indices_cols,                  
             const bool is_symmetric
         ) {
-            int row = blockDim.x * blockIdx.x + threadIdx.x;  // Get thread index
+            int row = blockDim.x * blockIdx.x + threadIdx.x;
             if (row < seqs_mat1_rows) {
+                int seqs_original_index = seqs_original_indices[row];     
                 int seq1_len = seqs_L1[row];
                 int row_end_index = 0;
                 for (int col = 0; col < seqs_mat2_rows; col++) {
@@ -876,14 +903,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                 }
                             }
                             if (distance <= cutoff + 1) {
-                                data[row * data_cols + row_end_index] = distance;
-                                indices[row * indices_cols + row_end_index] = col;
+                                int seqs2_original_index = seqs2_original_indices[col];
+                                data[seqs_original_index * data_cols + row_end_index] = distance;
+                                indices[seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
                                 row_end_index++;
                             }
                         }
                     }
                 }
-                row_element_counts[row] = row_end_index;               
+                row_element_counts[seqs_original_index] = row_end_index;               
             }
         }
         ''', 'hamming_kernel')
@@ -959,6 +987,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_seqs_mat2,
                     d_seqs_L1,
                     d_seqs_L2,
+                    cp.asarray(seqs_original_indices.astype(int), dtype=cp.int_),
+                    cp.asarray(seqs2_original_indices.astype(int), dtype=cp.int_),
                     self.cutoff,
                     d_data_matrix,
                     d_indices_matrix,
@@ -982,11 +1012,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             row_element_counts = d_row_element_counts.get()
 
+            # np.savetxt('d_data_matrix_ref.csv', d_data_matrix.get(), delimiter=',', fmt='%d')
+            # np.savetxt('d_indices_matrix_ref.csv', d_data_matrix.get(), delimiter=',', fmt='%d')
+
             indptr = np.zeros(seqs_mat1_block.shape[0] + 1, dtype=np.int_)
             indptr[1:] = np.cumsum(row_element_counts)
             d_indptr = cp.asarray(indptr)
 
             n_elements = indptr[-1]
+
+            print("***n_elements: ", n_elements)
 
             data = np.zeros(n_elements, dtype=np.int_)
             d_data = cp.zeros_like(data)
@@ -1008,10 +1043,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             indptr = d_indptr.get()
             indices = d_indices.get()
 
+            # np.savetxt('data.csv', data, delimiter=',', fmt='%d')
+            # print("np.count_nonzero(data):", np.count_nonzero(data))
+            # print("np.count_nonzero(indices):", np.count_nonzero(indices))
+            # print("indptr[-1]: ", indptr[-1])
+
             return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0], seqs_mat2.shape[0])), time_taken
 
         block_width = 4096
-        n_blocks = 10 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 1 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
