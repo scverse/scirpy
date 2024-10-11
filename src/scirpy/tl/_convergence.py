@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 
 from scirpy.util import DataHandler
@@ -14,7 +12,7 @@ def clonotype_convergence(
     key_added: str = "is_convergent",
     inplace=True,
     airr_mod: str = "airr",
-) -> Optional[pd.Series]:
+) -> pd.Series | None:
     """
     Finds evidence for :term:`Convergent evolution of clonotypes`.
 

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import matplotlib.pyplot as plt
 from cycler import Cycler
@@ -15,7 +15,7 @@ from scirpy.util import DataHandler
 DEFAULT_FIG_KWS = {"figsize": (3.44, 2.58), "dpi": 120}
 
 
-def apply_style_to_axes(ax: plt.Axes, style: Union[Literal["default"], None], style_kws: Union[dict, None]) -> None:
+def apply_style_to_axes(ax: plt.Axes, style: Literal["default"] | None, style_kws: dict | None) -> None:
     """Apply a predefined style to an axis object.
 
     Parameters
@@ -37,7 +37,7 @@ def apply_style_to_axes(ax: plt.Axes, style: Union[Literal["default"], None], st
             raise ValueError(f"Unknown style: {style}")
 
 
-def _init_ax(fig_kws: Union[dict, None] = None) -> plt.Axes:
+def _init_ax(fig_kws: dict | None = None) -> plt.Axes:
     fig_kws = DEFAULT_FIG_KWS if fig_kws is None else fig_kws
     _, ax = plt.subplots(**fig_kws)
     return ax
@@ -116,8 +116,8 @@ def style_axes(
 def _get_colors(
     params: DataHandler,
     obs_key: str,
-    palette: Union[str, Sequence[str], Cycler, None] = None,
-) -> Optional[dict[str, str]]:
+    palette: str | Sequence[str] | Cycler | None = None,
+) -> dict[str, str] | None:
     """Return colors for a category stored in AnnData.
 
     If colors are not stored, new ones are assigned.
@@ -152,4 +152,4 @@ def _get_colors(
         else:
             _validate_palette(uns_lookup, obs_key)
 
-        return dict(zip(categories, uns_lookup.uns[color_key]))
+        return dict(zip(categories, uns_lookup.uns[color_key], strict=False))

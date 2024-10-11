@@ -92,7 +92,7 @@ p = Pool()
 adatas = p.map(_load_adata, mtx_paths)
 p.close()
 
-adatas, adatas_airr = zip(*adatas)
+adatas, adatas_airr = zip(*adatas, strict=False)
 
 adata = anndata.concat(adatas)
 
