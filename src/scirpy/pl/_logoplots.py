@@ -23,7 +23,9 @@ def logoplot_cdr3_motif(
     **kwargs,
 ):
     """
-    A user friendly wrapper function for the logomaker python package.
+    Generates logoplots of CDR3 sequences
+
+    This is a user friendly wrapper function around the logomaker python package.
     Enables the analysis of potential amino acid motifs by displaying logo plots.
     Subsetting of AnnData/MuData has to be performed manually beforehand (or while calling) and only cells with equal cdr3 sequence lengths are permitted.
 
@@ -31,7 +33,7 @@ def logoplot_cdr3_motif(
     ----------
     {adata}
     chains
-        One or multiple chains from which to use CDR3 sequences
+        One or up to two chains from which to use CDR3 sequences i.e. primary and/or secondary VJ/VDJ chains. Mixing VJ and VDJ chains will likely not lead to a meaningful result.
     {airr_mod}
     {airr_key}
     {chain_idx_key}
