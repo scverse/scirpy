@@ -76,6 +76,10 @@ test = [
     'pytest',
     'coverage',
     'black',
+    'sc-dandelion>=0.3.5',
+    'scikit-bio>=0.5.7',
+    'rectangle-packer',
+    'parasail != 1.2.1',
 ]
 dandelion = [
     'sc-dandelion>=0.3.5',
