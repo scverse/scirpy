@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
--   Add all optional dependencies required for testing to the `[test]` dependency group ([#562](https://github.com/scverse/scirpy/pull/562)). 
+-   Add all optional dependencies required for testing to the `[test]` dependency group ([#562](https://github.com/scverse/scirpy/pull/562)).
 
 ## v0.18.0
 
