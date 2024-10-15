@@ -466,6 +466,7 @@ def test_repertoire_overlap(adata_tra):
     npt.assert_equal(res.values, expected_cnt.values)
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "permutation_test,fdr_correction,expected_scores,expected_pvalues",
     [
