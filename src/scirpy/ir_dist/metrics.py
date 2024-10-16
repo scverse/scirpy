@@ -870,13 +870,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         hamming_kernel = cp.RawKernel(r'''
         extern "C" __global__
         void hamming_kernel(
-            const int* __restrict__ seqs_mat1, //cudaTextureObject_t seqs_mat1,
-            const int* __restrict__ seqs_mat2, //cudaTextureObject_t seqs_mat2,
-            cudaTextureObject_t tex_mat1,
+            const int* seqs_mat1, //cudaTextureObject_t seqs_mat1,
+            const int* seqs_mat2, //cudaTextureObject_t seqs_mat2,
+            //cudaTextureObject_t tex_mat1,
             cudaTextureObject_t tex_mat2,
-            cudaTextureObject_t tex_L1, //const int* seqs_L1,
+            const int* seqs_L1, //cudaTextureObject_t tex_L1, //
             cudaTextureObject_t tex_L2, //const int* seqs_L2,
-            cudaTextureObject_t seqs_original_indices, //const int* seqs_original_indices,
+            const int* seqs_original_indices, //cudaTextureObject_t seqs_original_indices, 
             cudaTextureObject_t seqs2_original_indices, //const int* seqs2_original_indices,
             const int cutoff,
             int* data,
@@ -893,9 +893,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         ) {
             int row = blockDim.x * blockIdx.x + threadIdx.x;
             if (row < seqs_mat1_rows) {
-                int seqs_original_index = tex1D<int>(seqs_original_indices, row); //seqs_original_indices[row];     
-                int seq1_len = tex1D<int>(tex_L1, row);//seqs_L1[row];
+                int seqs_original_index = seqs_original_indices[row]; //tex1D<int>(seqs_original_indices, row);    
+                int seq1_len = seqs_L1[row]; // tex1D<int>(tex_L1, row);
                 int row_end_index = 0;
+                
+                int seq1[80];
+                for(int i = 0; i<80; i++){
+                    seq1[i] = seqs_mat1[row * seqs_mat1_cols + i];//tex2D<int>(tex_mat1, row, i);                 
+                }
+                                      
                 for (int col = 0; col < seqs_mat2_rows; col++) {
                     if ((! is_symmetric ) || (col + block_offset) >= row) {
                         int seq2_len = tex1D<int>(tex_L2, col); // seqs_L2[col];
@@ -917,7 +923,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                 }
                                 */
                                 
-                                int tex_val1 = tex2D<int>(tex_mat1, row, i);
+                                int tex_val1 = seq1[i];//tex2D<int>(tex_mat1, row, i);
                                 int tex_val2 = tex2D<int>(tex_mat2, col, i);
                                 if( tex_val1 != tex_val2) {
                                     distance++;
@@ -1046,11 +1052,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                         cp.cuda.runtime.cudaReadModeElementType)
                 return texture.TextureObject(res, tex)
 
-            tex_seqs_mat1 = create_texture2D(d_seqs_mat1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
+            #tex_seqs_mat1 = create_texture2D(d_seqs_mat1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
             tex_seqs_mat2 = create_texture2D(d_seqs_mat2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
-            tex_seqs_L1 = create_texture1D(d_seqs_L1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
+            #tex_seqs_L1 = create_texture1D(d_seqs_L1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
             tex_seqs_L2 = create_texture1D(d_seqs_L2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
-            tex_seqs_original_indices = create_texture1D(seqs_original_indices) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
+            #tex_seqs_original_indices = create_texture1D(seqs_original_indices) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
             tex_seqs2_original_indices = create_texture1D(seqs2_original_indices_blocks) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
 
             start_compile = time.time()
@@ -1068,11 +1074,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 (
                     d_seqs_mat1, # tex_seqs_mat1,
                     d_seqs_mat2, #tex_seqs_mat2,
-                    tex_seqs_mat1,
+                    #tex_seqs_mat1,
                     tex_seqs_mat2,
-                    tex_seqs_L1, # d_seqs_L1,
+                    d_seqs_L1, #tex_seqs_L1, 
                     tex_seqs_L2, # d_seqs_L2,
-                    tex_seqs_original_indices, #seqs_original_indices,
+                    seqs_original_indices, # tex_seqs_original_indices,
                     tex_seqs2_original_indices, #seqs2_original_indices,
                     self.cutoff,
                     d_data_matrix,
@@ -1136,7 +1142,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             return res, time_taken
 
         block_width = 4096
-        n_blocks = 2 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 10 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
