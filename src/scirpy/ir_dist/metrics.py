@@ -832,14 +832,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         print("sorting time taken: ", end_sorting-start_sorting)
         print("seqs sorted: ", seqs[0:20])
 
-        # seqs_original_indices = np.arange(0, len(seqs))
-        # seqs2_original_indices = np.arange(0, len(seqs2))
+        seqs_original_indices = cp.asarray(seqs_original_indices.astype(int), dtype=cp.int_)
+        seqs2_original_indices = cp.asarray(seqs2_original_indices.astype(int), dtype=cp.int_)
 
         is_symmetric = False
         print("is_symmetric: ", is_symmetric)
         
         unique_characters = "".join({char for string in (*seqs, *seqs2) for char in string})
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
+        print(f"***max_seq_len: {max_seq_len}")
 
         seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
@@ -868,8 +870,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         hamming_kernel = cp.RawKernel(r'''
         extern "C" __global__
         void hamming_kernel(
-            const int* seqs_mat1,
-            const int* seqs_mat2,
+            const int* seqs_mat1, //cudaTextureObject_t seqs_mat1,
+            const int* seqs_mat2, //cudaTextureObject_t seqs_mat2,
+            cudaTextureObject_t tex_mat1,
+            cudaTextureObject_t tex_mat2,
             const int* seqs_L1,
             const int* seqs_L2,
             const int* seqs_original_indices,
@@ -898,9 +902,27 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         int distance = 1;          
                         if (seq1_len == seq2_len) {
                             for (int i = 0; i < seq1_len; i++) {
-                                if(seqs_mat1[row * seqs_mat1_cols + i] != seqs_mat2[col * seqs_mat2_cols + i]) {
+                                /*
+                                int val1 = seqs_mat1[row, i];//tex2D<int>(seqs_mat1, row, i);
+                                int val2 = seqs_mat2[col, i];//tex2D<int>(seqs_mat2, col, i);
+                                if(val1 != val2) {
                                     distance++;
                                 }
+                                */
+                                /*
+                                int val1 = seqs_mat1[row * seqs_mat1_cols + i];
+                                int val2 = seqs_mat2[col * seqs_mat2_cols + i];
+                                if( val1 != val2) {
+                                    distance++;
+                                }
+                                */
+                                
+                                int tex_val1 = tex2D<int>(tex_mat1, i, row);
+                                int tex_val2 = tex2D<int>(tex_mat2, i, col);
+                                if( tex_val1 != tex_val2) {
+                                    distance++;
+                                }
+                                
                             }
                             if (distance <= cutoff + 1) {
                                 int seqs2_original_index = seqs2_original_indices[col];
@@ -976,6 +998,42 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_data_matrix_cols = result_len
             d_indices_matrix_cols = result_len
 
+            from cupy.cuda import texture
+
+            def create_texture(cupy_array) -> texture.TextureObject:
+                width, height, depth = (cupy_array.shape[1], cupy_array.shape[0], 0)
+                dim = 3 if depth != 0 else 2 if height != 0 else 1
+
+                # generate input data and allocate output buffer
+                shape = (depth, height, width) if dim == 3 else \
+                        (height, width) if dim == 2 else \
+                        (width,)
+
+                # prepare input, output, and texture memory
+                # self.data holds the data stored in the texture memory
+                tex_data = cupy_array #cupy_array
+                ch = texture.ChannelFormatDescriptor(32, 0, 0, 0,
+                                            cp.cuda.runtime.cudaChannelFormatKindSigned)
+                
+                print(f"{tex_data.shape}, {width}, {height}")
+                arr = texture.CUDAarray(ch, width, height)
+                
+                arr.copy_from(tex_data)
+                # create resource and texture descriptors
+                res = texture.ResourceDescriptor(cp.cuda.runtime.cudaResourceTypeArray, cuArr=arr)
+                address_mode = (cp.cuda.runtime.cudaAddressModeClamp,
+                                )
+                tex = texture.TextureDescriptor(address_mode, cp.cuda.runtime.cudaFilterModePoint,
+                                        cp.cuda.runtime.cudaReadModeElementType)
+
+                # create a texture object
+                return texture.TextureObject(res, tex)
+
+            tex_mat1 = create_texture(d_seqs_mat1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
+            tex_mat2 = create_texture(d_seqs_mat2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
+            #tex_mat3 = create_texture(d_seqs_mat1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
+            #tex_mat4 = create_texture(d_seqs_mat2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
+
             cp.cuda.Device().synchronize()
 
             start_kernel = time.time()
@@ -983,12 +1041,14 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             hamming_kernel(
                 (blocks_per_grid,), (threads_per_block,),
                 (
-                    d_seqs_mat1,
-                    d_seqs_mat2,
+                    d_seqs_mat1, # tex_seqs_mat1,
+                    d_seqs_mat2, #tex_seqs_mat2,
+                    tex_mat1,
+                    tex_mat2,
                     d_seqs_L1,
                     d_seqs_L2,
-                    cp.asarray(seqs_original_indices.astype(int), dtype=cp.int_),
-                    cp.asarray(seqs2_original_indices.astype(int), dtype=cp.int_),
+                    seqs_original_indices,
+                    seqs2_original_indices,
                     self.cutoff,
                     d_data_matrix,
                     d_indices_matrix,
