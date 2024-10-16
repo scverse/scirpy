@@ -974,27 +974,27 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         }
         ''', 'create_csr_kernel')
 
-        def calc_block_gpu(seqs_mat1_block, seqs_mat2, seqs_L1_block, seqs_L2, block_offset):
+        def calc_block_gpu(seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset):
             
             # Transfer data to GPU (CuPy automatically places arrays on GPU)
-            d_seqs_mat1 = cp.asarray(seqs_mat1_block.astype(int))
-            d_seqs_mat2 = cp.asarray(seqs_mat2.astype(int))
+            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(int))
+            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(int))
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(int))
             d_seqs_L2 = cp.asarray(seqs_L2.astype(int))
             
             result_len = 200
 
             # Create output arrays (on GPU) using CuPy
-            d_data_matrix = cp.zeros((seqs_mat1_block.shape[0], result_len), dtype=cp.int_)
-            d_indices_matrix = cp.zeros((seqs_mat1_block.shape[0], result_len), dtype=cp.int_)
-            d_row_element_counts = cp.zeros(seqs_mat1_block.shape[0], dtype=cp.int_)
+            d_data_matrix = cp.zeros((seqs_mat1.shape[0], result_len), dtype=cp.int_)
+            d_indices_matrix = cp.zeros((seqs_mat1.shape[0], result_len), dtype=cp.int_)
+            d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=cp.int_)
 
             # Configure the grid and block sizes
             threads_per_block = 256
-            blocks_per_grid = (seqs_mat1_block.shape[0] + (threads_per_block - 1)) // threads_per_block
+            blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
 
-            seqs_mat1_rows, seqs_mat1_cols = seqs_mat1_block.shape
-            seqs_mat2_rows, seqs_mat2_cols = seqs_mat2.shape
+            seqs_mat1_rows, seqs_mat1_cols = seqs_mat1.shape
+            seqs_mat2_rows, seqs_mat2_cols = seqs_mat2_block.shape
             d_data_matrix_cols = result_len
             d_indices_matrix_cols = result_len
 
@@ -1051,7 +1051,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             tex_seqs_L1 = create_texture1D(d_seqs_L1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
             tex_seqs_L2 = create_texture1D(d_seqs_L2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
             tex_seqs_original_indices = create_texture1D(seqs_original_indices) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
-            tex_seqs2_original_indices = create_texture1D(seqs2_original_indices) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
+            tex_seqs2_original_indices = create_texture1D(seqs2_original_indices_blocks) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
 
             start_compile = time.time()
             hamming_kernel.compile()
@@ -1100,7 +1100,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             # np.savetxt('d_data_matrix_ref.csv', d_data_matrix.get(), delimiter=',', fmt='%d')
             # np.savetxt('d_indices_matrix_ref.csv', d_data_matrix.get(), delimiter=',', fmt='%d')
 
-            indptr = np.zeros(seqs_mat1_block.shape[0] + 1, dtype=np.int_)
+            indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int_)
             indptr[1:] = np.cumsum(row_element_counts)
             d_indptr = cp.asarray(indptr)
 
@@ -1132,25 +1132,49 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             # print("np.count_nonzero(data):", np.count_nonzero(data))
             # print("np.count_nonzero(indices):", np.count_nonzero(indices))
             # print("indptr[-1]: ", indptr[-1])
-
-            return csr_matrix((data, indices, indptr), shape=(seqs_mat1_block.shape[0], seqs_mat2.shape[0])), time_taken
+            res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2_block.shape[0]))
+            return res, time_taken
 
         block_width = 4096
-        n_blocks = 1 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 2 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
+        seqs2_original_indices_blocks = np.array_split(seqs2_original_indices, n_blocks)
         result_blocks = [None] * n_blocks
 
         block_offset = start_column
         time_sum = 0
         for i in range(0, n_blocks):
-            result_blocks[i], time_taken = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], block_offset)
+            result_blocks[i], time_taken = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], seqs2_original_indices_blocks[i], block_offset)
             time_sum += time_taken
             block_offset += seqs_mat2_blocks[i].shape[0]
         print("time_sum: ", time_sum)
 
-        result_sparse = scipy.sparse.hstack(result_blocks)
+        # result_sparse = scipy.sparse.hstack(result_blocks)
+        # print("block indptr shape: ", [block.indptr.shape for block in result_blocks])
+        # print(result_blocks[0].shape[0])
+
+        data_blocks = []
+        indices_blocks = []
+        indptr = np.zeros(result_blocks[0].shape[0] + 1)
+        for result in result_blocks:
+            indptr+=result.indptr
+        size_counter = 0
+        for row in range(result_blocks[0].shape[0]):
+            for result in result_blocks:
+                start = result.indptr[row]
+                end = result.indptr[row+1]
+                data = result.data[start:end]
+                indices = result.indices[start:end]
+                data_blocks.append(data)
+                indices_blocks.append(indices)
+                size_counter += len(data)
+
+        data = np.concatenate(data_blocks)
+        indices = np.concatenate(indices_blocks)
+
+        result_sparse = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
 
         size_in_bytes = result_sparse.data.nbytes + result_sparse.indices.nbytes + result_sparse.indptr.nbytes
         size_in_gb = size_in_bytes / (1024 ** 3)
