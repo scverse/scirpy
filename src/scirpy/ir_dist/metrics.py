@@ -843,8 +843,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         print(f"***max_seq_len: {max_seq_len}")
 
-        seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
-        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=32)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=32)
 
         # @cuda.jit
         # def hamming_kernel(
@@ -870,18 +870,18 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         hamming_kernel = cp.RawKernel(r'''
         extern "C" __global__
         void hamming_kernel(
-            const int* seqs_mat1, //cudaTextureObject_t seqs_mat1,
-            const int* seqs_mat2, //cudaTextureObject_t seqs_mat2,
+            const char* __restrict__ seqs_mat1, //cudaTextureObject_t seqs_mat1,
+            const int* __restrict__ seqs_mat2, //cudaTextureObject_t seqs_mat2,
             //cudaTextureObject_t tex_mat1,
             cudaTextureObject_t tex_mat2,
-            const int* seqs_L1, //cudaTextureObject_t tex_L1, //
+            const int* __restrict__ seqs_L1, //cudaTextureObject_t tex_L1, //
             cudaTextureObject_t tex_L2, //const int* seqs_L2,
-            const int* seqs_original_indices, //cudaTextureObject_t seqs_original_indices, 
+            const int* __restrict__ seqs_original_indices, //cudaTextureObject_t seqs_original_indices, 
             cudaTextureObject_t seqs2_original_indices, //const int* seqs2_original_indices,
             const int cutoff,
-            int* data,
-            int* indices,
-            int* row_element_counts,
+            int* __restrict__ data,
+            int* __restrict__ indices,
+            int* __restrict__ row_element_counts,
             const int block_offset,
             const int seqs_mat1_rows,
             const int seqs_mat2_rows,
@@ -897,8 +897,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 int seq1_len = seqs_L1[row]; // tex1D<int>(tex_L1, row);
                 int row_end_index = 0;
                 
-                int seq1[80];
-                for(int i = 0; i<80; i++){
+                char seq1[32];
+                #pragma unroll
+                for(int i = 0; i<32; i++){
                     seq1[i] = seqs_mat1[row * seqs_mat1_cols + i];//tex2D<int>(tex_mat1, row, i);                 
                 }
                                       
@@ -923,8 +924,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                 }
                                 */
                                 
-                                int tex_val1 = seq1[i];//tex2D<int>(tex_mat1, row, i);
-                                int tex_val2 = tex2D<int>(tex_mat2, col, i);
+                                char tex_val1 = seq1[i];//tex2D<int>(tex_mat1, row, i);
+                                char tex_val2 = tex2D<char>(tex_mat2, col, i);
                                 if( tex_val1 != tex_val2) {
                                     distance++;
                                 }
@@ -942,7 +943,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 row_element_counts[seqs_original_index] = row_end_index;               
             }
         }
-        ''', 'hamming_kernel')
+        ''', 'hamming_kernel') #, options=('--maxrregcount=256', '--ptxas-options=-v'))
 
         # @cuda.jit
         # def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
@@ -983,8 +984,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         def calc_block_gpu(seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset):
             
             # Transfer data to GPU (CuPy automatically places arrays on GPU)
-            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(int))
-            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(int))
+            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
+            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8))
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(int))
             d_seqs_L2 = cp.asarray(seqs_L2.astype(int))
             
@@ -1038,7 +1039,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         (width,)
 
                 tex_data = cp.transpose(cupy_array)
-                ch = texture.ChannelFormatDescriptor(32, 0, 0, 0,
+                ch = texture.ChannelFormatDescriptor(8, 0, 0, 0,
                                             cp.cuda.runtime.cudaChannelFormatKindSigned)
                 
                 print(f"{tex_data.shape}, {width}, {height}")
@@ -1103,9 +1104,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             row_element_counts = d_row_element_counts.get()
 
-            # np.savetxt('d_data_matrix_ref.csv', d_data_matrix.get(), delimiter=',', fmt='%d')
-            # np.savetxt('d_indices_matrix_ref.csv', d_data_matrix.get(), delimiter=',', fmt='%d')
-
             indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int_)
             indptr[1:] = np.cumsum(row_element_counts)
             d_indptr = cp.asarray(indptr)
@@ -1134,10 +1132,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             indptr = d_indptr.get()
             indices = d_indices.get()
 
-            # np.savetxt('data.csv', data, delimiter=',', fmt='%d')
-            # print("np.count_nonzero(data):", np.count_nonzero(data))
-            # print("np.count_nonzero(indices):", np.count_nonzero(indices))
-            # print("indptr[-1]: ", indptr[-1])
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2_block.shape[0]))
             return res, time_taken
 
@@ -1156,10 +1150,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             time_sum += time_taken
             block_offset += seqs_mat2_blocks[i].shape[0]
         print("time_sum: ", time_sum)
-
-        # result_sparse = scipy.sparse.hstack(result_blocks)
-        # print("block indptr shape: ", [block.indptr.shape for block in result_blocks])
-        # print(result_blocks[0].shape[0])
 
         data_blocks = []
         indices_blocks = []
