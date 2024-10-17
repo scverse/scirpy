@@ -401,7 +401,7 @@ def _seqs2mat(
     mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
     L = np.zeros(len(seqs), dtype=np.int8)
     for si, s in enumerate(seqs):
-        L[si] = len(s)
+        L[si] = min(len(s), max_len)
         for aai in range(max_len):
             if aai >= len(s):
                 break
@@ -868,7 +868,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         #             row_element_counts[row] = row_end_index
 
         hamming_kernel = cp.RawKernel(r'''
-        extern "C" __global__
+        extern "C" __global__ __launch_bounds__(256)
         void hamming_kernel(
             const char* __restrict__ seqs_mat1, //cudaTextureObject_t seqs_mat1,
             const int* __restrict__ seqs_mat2, //cudaTextureObject_t seqs_mat2,
@@ -897,16 +897,23 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 int seq1_len = seqs_L1[row]; // tex1D<int>(tex_L1, row);
                 int row_end_index = 0;
                 
+                /*
                 char seq1[32];
                 #pragma unroll
                 for(int i = 0; i<32; i++){
                     seq1[i] = seqs_mat1[row * seqs_mat1_cols + i];//tex2D<int>(tex_mat1, row, i);                 
+                }
+                */
+                __shared__ char seq1[32*256];
+                for(int i = 0; i<32; i++){
+                    seq1[i * 256 + threadIdx.x] = seqs_mat1[row * seqs_mat1_cols + i];//tex2D<int>(tex_mat1, row, i);                 
                 }
                                       
                 for (int col = 0; col < seqs_mat2_rows; col++) {
                     if ((! is_symmetric ) || (col + block_offset) >= row) {
                         int seq2_len = tex1D<int>(tex_L2, col); // seqs_L2[col];
                         int distance = 1;          
+                        
                         if (seq1_len == seq2_len) {
                             for (int i = 0; i < seq1_len; i++) {
                                 /*
@@ -923,8 +930,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                                     distance++;
                                 }
                                 */
-                                
-                                char tex_val1 = seq1[i];//tex2D<int>(tex_mat1, row, i);
+                                char tex_val1 = seq1[i * 256 + threadIdx.x];//seq1[i];//tex2D<int>(tex_mat1, row, i);
                                 char tex_val2 = tex2D<char>(tex_mat2, col, i);
                                 if( tex_val1 != tex_val2) {
                                     distance++;
@@ -943,7 +949,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 row_element_counts[seqs_original_index] = row_end_index;               
             }
         }
-        ''', 'hamming_kernel') #, options=('--maxrregcount=256', '--ptxas-options=-v'))
+        ''', 'hamming_kernel', options=('--maxrregcount=256', '--ptxas-options=-v', '-lineinfo'))
 
         # @cuda.jit
         # def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
@@ -1136,7 +1142,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             return res, time_taken
 
         block_width = 4096
-        n_blocks = 10 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 2 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
