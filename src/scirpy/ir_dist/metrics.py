@@ -878,11 +878,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const char* __restrict__ seqs_mat1, //cudaTextureObject_t seqs_mat1,
             const char* __restrict__ seqs_mat2, //cudaTextureObject_t seqs_mat2,
             //cudaTextureObject_t tex_mat1,
-            cudaTextureObject_t tex_mat2,
+            //cudaTextureObject_t tex_mat2,
             const int* __restrict__ seqs_L1, //cudaTextureObject_t tex_L1, //
-            cudaTextureObject_t tex_L2, //const int* seqs_L2,
+            const int* seqs_L2,//cudaTextureObject_t tex_L2, //const int* seqs_L2,
             const int* __restrict__ seqs_original_indices, //cudaTextureObject_t seqs_original_indices, 
-            cudaTextureObject_t seqs2_original_indices, //const int* seqs2_original_indices,
+            const int* seqs2_original_indices, //cudaTextureObject_t seqs2_original_indices, //const int* seqs2_original_indices,
             const int cutoff,
             int* __restrict__ data,
             int* __restrict__ indices,
@@ -898,106 +898,27 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         ) {
             int row = blockDim.x * blockIdx.x + threadIdx.x;
             if (row < seqs_mat1_rows) {
-                int seqs_original_index = seqs_original_indices[row]; //tex1D<int>(seqs_original_indices, row);    
-                int seq1_len = seqs_L1[row]; // tex1D<int>(tex_L1, row);
+                int seqs_original_index = seqs_original_indices[row];   
+                int seq1_len = seqs_L1[row];
                 int row_end_index = 0;
-                /*     
-                int num_threads_per_block = 256;
-                __shared__ char seq1[32*256];
-                __shared__ char seq1_2[32*256];
-                const char4* seqs_mat1_pointer = reinterpret_cast<const char4*>(seqs_mat1);
-                char4* seq1_2_pointer = reinterpret_cast<char4*>(seq1_2);
-                */
-                /*            
-                for(int i = 0; i<32/4; i++){
-                    seq1[(i*4+0) * 256 + threadIdx.x] = seqs_mat1[(i*4+0)  * seqs_mat1_cols + row];//seqs_mat1[row * seqs_mat1_cols + i];//tex2D<int>(tex_mat1, row, i);                 
-                    seq1[(i*4+1) * 256 + threadIdx.x] = seqs_mat1[(i*4+1)  * seqs_mat1_cols + row];
-                    seq1[(i*4+2) * 256 + threadIdx.x] = seqs_mat1[(i*4+2)  * seqs_mat1_cols + row];
-                    seq1[(i*4+3) * 256 + threadIdx.x] = seqs_mat1[(i*4+3)  * seqs_mat1_cols + row];
-                    
-                }*/
-                
-                /*
-                for(int i = 0; i<32/4; i++){
-                    seq1[(i*4+0)* num_threads_per_block + threadIdx.x] = seqs_mat1[(i*4+0) * seqs_mat1_rows + row];
-                    seq1[(i*4+1)* num_threads_per_block + threadIdx.x] = seqs_mat1[(i*4+1) * seqs_mat1_rows + row];
-                    seq1[(i*4+2)* num_threads_per_block + threadIdx.x] = seqs_mat1[(i*4+2) * seqs_mat1_rows + row];
-                    seq1[(i*4+3)* num_threads_per_block + threadIdx.x] = seqs_mat1[(i*4+3) * seqs_mat1_rows + row];
-
-                    
-                    seq1[i * 4 * num_threads_per_block + threadIdx.x*4 + 0] = seqs_mat1[i * 4 * seqs_mat1_rows + row*4 + 0];
-                    seq1[i * 4 * num_threads_per_block + threadIdx.x*4 + 1] = seqs_mat1[i * 4 * seqs_mat1_rows + row*4 + 1];
-                    seq1[i * 4 * num_threads_per_block + threadIdx.x*4 + 2] = seqs_mat1[i * 4 * seqs_mat1_rows + row*4 + 2];
-                    seq1[i * 4 *num_threads_per_block + threadIdx.x*4 + 3] = seqs_mat1[i * 4 * seqs_mat1_rows + row*4 + 3];
-                    
-                    if(threadIdx.x == 255 && row == 255 && i<8){
-                        printf("***index1 mat: %d\n***", i * 4 * seqs_mat1_rows + row*4 + 0);
-                        printf("***index1: %d\n***", i * 4 * num_threads_per_block + threadIdx.x*4 + 0);
-                        printf("***index2: %d\n***", i * 4 * num_threads_per_block + threadIdx.x*4 + 1);
-                        printf("***index3: %d\n***", i * 4 * num_threads_per_block + threadIdx.x*4 + 2);
-                        printf("***index4: %d\n***", i * 4 * num_threads_per_block + threadIdx.x*4 + 3);
-
-                    }
-                    
-                    seq1_2_pointer[i * num_threads_per_block + threadIdx.x] = seqs_mat1_pointer[i * seqs_mat1_rows + row];
-                    __syncthreads();
-                    if(threadIdx.x == 1 && row == 1 && i<8){
-                        printf("***value1: %d\n***", seqs_mat1[(i*4+0) * seqs_mat1_rows + row]);
-                        printf("***value2: %d\n***", seqs_mat1[(i*4+1) * seqs_mat1_rows + row]);
-                        printf("***value3: %d\n***", seqs_mat1[(i*4+2) * seqs_mat1_rows + row]);
-                        printf("***value4: %d\n***", seqs_mat1[(i*4+3) * seqs_mat1_rows + row]);
-                        printf("..\n");     
-                        char4 input = seqs_mat1_pointer[i * 388 + row];
-                        printf("***values pointer: (%d, %d, %d, %d)***\n", input.x, input.y, input.z, input.w);
-                        printf("-----\n");
-                        //printf("***index: %d***", i * num_threads_per_block + threadIdx.x);
-                        //printf("***value: (%d, %d, %d, %d)***", input.x, input.y, input.z, input.w);
-                        //printf("***row: %d, i: %d, value: %d\n***",row, i ,  seqs_mat1[i * seqs_mat1_rows + row]);
-                    }
-                }*/
                                                       
                 for (int col = 0; col < seqs_mat2_rows; col++) {
                     if ((! is_symmetric ) || (col + block_offset) >= row) {
-                        int seq2_len = tex1Dfetch<int>(tex_L2, col); // seqs_L2[col];
+                        int seq2_len = seqs_L2[col];//tex1Dfetch<int>(tex_L2, col); // seqs_L2[col];
                         int distance = 1;          
                         
                         if (seq1_len == seq2_len) {
-                            for (int i = 0; i < seq1_len; i++) {
-                                /*
-                                int val1 = seqs_mat1[row, i];//tex2D<int>(seqs_mat1, row, i);
-                                int val2 = seqs_mat2[col, i];//tex2D<int>(seqs_mat2, col, i);
-                                if(val1 != val2) {
-                                    distance++;
-                                }
-                                */
-                                /*
-                                int val1 = __ldg(&seqs_mat1[row * seqs_mat1_cols + i]);
-                                int val2 = __ldg(&seqs_mat2[col * seqs_mat2_cols + i]);
-                                if( val1 != val2) {
-                                    distance++;
-                                }
-                                */
-                                      
-                                /*
-                                char tex_val1 = /seq1[i * 256 + threadIdx.x];//seq1[i];//tex2D<int>(tex_mat1, row, i);
-                                char tex_val2 = tex2D<char>(tex_mat2, col, i);
-                                if( tex_val1 != tex_val2) {
-                                    distance++;
-                                }
-                                */
-                                char tex_val1 = seqs_mat1[i*seqs_mat1_rows+row];//tex2D<char>(tex_mat1,row,i);//tex1Dfetch<char>(tex_mat1, i * seqs_mat1_rows + row);;//seqs_mat1[i * seqs_mat1_rows + row]; //tex2D<char>(tex_mat1, row, i);//seq1[i * num_threads_per_block + threadIdx.x];//seq1[i];//tex2D<int>(tex_mat1, row, i);
-                                char tex_val2 = seqs_mat2[i*seqs_mat2_rows+col];//tex2D<char>(tex_mat2,col,i);//tex1Dfetch<char>(tex_mat2, col * seqs_mat1_cols + i);
-                                /*char4 tex_val3 = seq1_2[i * num_threads_per_block + threadIdx.x];
-                                if(tex_val1 != tex_val3.x && tex_val1 != tex_val3.y && tex_val1 != tex_val3.z && tex_val1 != tex_val3.w){
-                                    printf("***unequal!!**");
-                                }*/
+                            for (int i = 0; i < seq1_len; i++) {                                      
+                                char tex_val1 = seqs_mat1[i*seqs_mat1_rows+row];
+                                char tex_val2 = seqs_mat2[i*seqs_mat2_rows+col];
+
                                 if( tex_val1 != tex_val2) {
                                     distance++;
                                 }
                                 
                             }
                             if (distance <= cutoff + 1) {
-                                int seqs2_original_index = tex1Dfetch<int>(seqs2_original_indices, col);//seqs2_original_indices[col];
+                                int seqs2_original_index = seqs2_original_indices[col];//tex1Dfetch<int>(seqs2_original_indices, col);
                                 data[seqs_original_index * data_cols + row_end_index] = distance;
                                 indices[seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
                                 row_end_index++;
@@ -1008,7 +929,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 row_element_counts[seqs_original_index] = row_end_index;               
             }
         }
-        ''', 'hamming_kernel', options=('--maxrregcount=256', '--ptxas-options=-v', '-lineinfo'))
+        ''', 'hamming_kernel', options=('--maxrregcount=256',))#, '--ptxas-options=-v', '-lineinfo'))
 
         # @cuda.jit
         # def create_csr_kernel(data, indices, data_matrix, indices_matrix, indptr):
@@ -1141,11 +1062,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 return texture.TextureObject(res, tex)
 
             #tex_seqs_mat1 = create_texture2D(d_seqs_mat1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
-            tex_seqs_mat2 = create_texture2D(d_seqs_mat2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
+            #tex_seqs_mat2 = create_texture2D(d_seqs_mat2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
             #tex_seqs_L1 = create_texture1D(d_seqs_L1) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
-            tex_seqs_L2 = create_texture1D(d_seqs_L2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
+            #tex_seqs_L2 = create_texture1D(d_seqs_L2) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
             #tex_seqs_original_indices = create_texture1D(seqs_original_indices) #cp.cuda.texture.TextureObject(d_seqs_mat1, channel_desc, tex_desc)
-            tex_seqs2_original_indices = create_texture1D(cp.asarray(seqs2_original_indices_blocks.astype(int))) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
+            #tex_seqs2_original_indices = create_texture1D(cp.asarray(seqs2_original_indices_blocks.astype(int))) #cp.cuda.texture.TextureObject(d_seqs_mat2, channel_desc, tex_desc)
 
             d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
             d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
@@ -1166,11 +1087,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_seqs_mat1_transposed, # , #d_seqs_mat1, # tex_seqs_mat1,
                     d_seqs_mat2_transposed, #tex_seqs_mat2,
                     #tex_seqs_mat1,
-                    tex_seqs_mat2,
+                    #tex_seqs_mat2,
                     d_seqs_L1, #tex_seqs_L1, 
-                    tex_seqs_L2, # d_seqs_L2,
+                    d_seqs_L2, #tex_seqs_L2, # d_seqs_L2,
                     seqs_original_indices, # tex_seqs_original_indices,
-                    tex_seqs2_original_indices, #seqs2_original_indices,
+                    seqs2_original_indices_blocks, #tex_seqs2_original_indices, #seqs2_original_indices,
                     self.cutoff,
                     d_data_matrix,
                     d_indices_matrix,
