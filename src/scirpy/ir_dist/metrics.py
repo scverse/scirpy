@@ -815,6 +815,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             not implemented for the GPU hamming calculator yet.
         """
 
+        start_gpu_hamming_mat = time.time()
+        
         start_sorting = time.time()
 
         seqs_lengths = np.vectorize(len)(seqs)
@@ -829,17 +831,33 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         print("sorting time taken: ", end_sorting-start_sorting)
 
         start_preparation = time.time()
-        seqs_original_indices = cp.asarray(seqs_original_indices.astype(int), dtype=cp.int_)
-        seqs2_original_indices = cp.asarray(seqs2_original_indices.astype(int), dtype=cp.int_)
+
+        seqs_original_indices = cp.asarray(seqs_original_indices, dtype=cp.int_)
+        seqs2_original_indices = cp.asarray(seqs2_original_indices, dtype=cp.int_)
 
         is_symmetric = False
         
-        unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
+        #unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
         print(f"max_seq_len: {max_seq_len}")
 
-        seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
-        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+        def _seqs2mat_fast(seqs: Sequence[str], max_len: None | int = None
+            ) -> tuple[np.ndarray, np.ndarray]:
+            if max_len is None:
+                max_len = np.max([len(s) for s in seqs])
+            mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
+            L = np.zeros(len(seqs), dtype=np.int8)
+            for i, seq in enumerate(seqs):
+                mat[i][0:len(seq)] =  np.frombuffer(seq.encode('ascii'), dtype=np.uint8)
+                L[i] = len(seq)
+            return mat, L
+                
+        # seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
+        # seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+
+        seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
+
         end_preparation = time.time()
         print("preparation time taken: ", end_preparation-start_preparation)
 
@@ -953,7 +971,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             
             cp.cuda.Device().synchronize()
             create_input_matrices_end = time.time()
-            print("sorting time taken: ", create_input_matrices_end-create_input_matrices_start)
+            print("create_input_matrices time taken: ", create_input_matrices_end-create_input_matrices_start)
 
 
             start_compile = time.time()
@@ -1036,6 +1054,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             return res, time_taken
 
+        start_split_blocks = time.time()
+
         block_width = 4096
         n_blocks = 10 # seqs_mat2.shape[0] // block_width + 1
 
@@ -1046,12 +1066,18 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         block_offset = start_column
         time_sum = 0
+
+        end_split_blocks = time.time()
+        print("split_blocks time taken: ", end_split_blocks-start_split_blocks)
+
         for i in range(0, n_blocks):
             result_blocks[i], time_taken = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], seqs2_original_indices_blocks[i], block_offset)
             time_sum += time_taken
             block_offset += seqs_mat2_blocks[i].shape[0]
         print("time_sum: ", time_sum)
 
+        start_stack_matrix = time.time()
+        
         data_blocks = []
         indices_blocks = []
         indptr = np.zeros(result_blocks[0].shape[0] + 1)
@@ -1080,6 +1106,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         row_element_counts_gpu = np.diff(result_sparse.indptr)
 
         print("max row element count: ", np.max(row_element_counts_gpu))
+
+        end_stack_matrix = time.time()
+        print("stack matrix time taken: ", end_stack_matrix-start_stack_matrix)
+
+        end_gpu_hamming_mat = time.time()
+        print("gpu_hamming_mat time taken: ", end_gpu_hamming_mat-start_gpu_hamming_mat)
 
         return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
 
