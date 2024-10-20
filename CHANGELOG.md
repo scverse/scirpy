@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Additions
 
 -   Add a `mask_obs` argument to `tl.clonotype_network` that allows to compute the clonotype networks on a subset of the cells ([#557](https://github.com/scverse/scirpy/pull/557)).
+-   Add `datasets.stephenson2021_5k`, an example dataset for the upcoming BCR tutorial ([#565](https://github.com/scverse/scirpy/pull/565))
 
 ### Fixes
 
