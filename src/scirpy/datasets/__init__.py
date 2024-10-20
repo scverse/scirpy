@@ -28,7 +28,7 @@ HERE = Path(__file__).parent
 
 _FIGSHARE = pooch.create(
     path=pooch.os_cache("scirpy"),
-    base_url="doi:10.6084/m9.figshare.22249894.v1",
+    base_url="doi:10.6084/m9.figshare.22249894.v2",
     version=version("scirpy"),
     version_dev="main",
     env="SCIRPY_DATA_DIR",
@@ -36,6 +36,7 @@ _FIGSHARE = pooch.create(
         "wu2020.h5mu": "md5:ed30d9c1c44cae544f4c080a2451118b",
         "wu2020_3k.h5mu": "md5:12c57c790f8a403751304c9de5a18cbf",
         "maynard2020.h5mu": "md5:da64ac62e3e92c80eaf0e8eef6537ac7",
+        "stephenson2021_5k.h5mu": "md5:6ea26f9d95525371ff9028f8e99ed474",
     },
 )
 _POOCH_INFO = dedent(
@@ -121,6 +122,34 @@ def maynard2020() -> MuData:
         {processing_code}
     """
     fname = cast(PathLike, _FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
+    return mudata.read_h5mu(fname)
+
+
+@_doc_params(
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/maynard2020.py"), " " * 8),
+    pooch_info=_POOCH_INFO,
+)
+def stephenson2021_5k() -> MuData:
+    """\
+    Return the dataset from :cite:`Maynard2020` as AnnData object.
+
+    21k cells from NSCLC profiled with Smart-seq2, of which 3,500 have :term:`TCRs<TCR>`
+    and 1,500 have :term:`BCRs<BCR>`.
+
+    {pooch_info}
+
+    The raw FASTQ files have been obtained from `PRJNA591860 <https://www.ebi.ac.uk/ena/browser/view/PRJNA591860>`__
+    and processed using the nf-core `RNA-seq pipeline <https://github.com/nf-core/rnaseq>`_ to obtain
+    gene expression and TraCeR/BraCeR to reconstruct receptors.
+
+    The processed files have been imported and transformed into an :class:`anndata.AnnData`
+    object using the following script:
+
+    .. code-block:: python
+
+        {processing_code}
+    """
+    fname = cast(PathLike, _FIGSHARE.fetch("stephenson2021_5k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
