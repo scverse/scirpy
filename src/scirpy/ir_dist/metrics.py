@@ -871,7 +871,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const int* __restrict__ seqs_original_indices,
             const int* seqs2_original_indices,
             const int cutoff,
-            int* __restrict__ data,
+            char* __restrict__ data,
             int* __restrict__ indices,
             int* __restrict__ row_element_counts,
             const int block_offset,
@@ -892,7 +892,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 for (int col = 0; col < seqs_mat2_rows; col++) {
                     if ((! is_symmetric ) || (col + block_offset) >= row) {
                         int seq2_len = seqs_L2[col];//tex1Dfetch<int>(tex_L2, col); // seqs_L2[col];
-                        int distance = 1;          
+                        char distance = 1;          
                         
                         if (seq1_len == seq2_len) {
                             for (int i = 0; i < seq1_len; i++) {                                      
@@ -921,7 +921,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         extern "C" __global__
         void create_csr_kernel(
             int* data, int* indices,
-            int* data_matrix, int* indices_matrix,
+            char* data_matrix, int* indices_matrix,
             int* indptr, int data_matrix_rows, int data_matrix_cols, int data_rows, int indices_matrix_cols
         ) {
             int row = blockDim.x * blockIdx.x + threadIdx.x;
@@ -953,8 +953,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             result_len = 1100
 
             # Create output arrays (on GPU) using CuPy
-            d_data_matrix = cp.zeros((seqs_mat1.shape[0], result_len), dtype=cp.int_)
-            d_indices_matrix = cp.zeros((seqs_mat1.shape[0], result_len), dtype=cp.int_)
+            d_data_matrix = cp.empty((seqs_mat1.shape[0], result_len), dtype=cp.int8)
+            d_indices_matrix = cp.empty((seqs_mat1.shape[0], result_len), dtype=cp.int_)
             d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=cp.int_)
 
             # Configure the grid and block sizes
@@ -1061,7 +1061,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         start_split_blocks = time.time()
 
         block_width = 4096
-        n_blocks = 16 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 20 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
