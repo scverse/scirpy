@@ -950,7 +950,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(int))
             d_seqs_L2 = cp.asarray(seqs_L2.astype(int))
             
-            result_len = 200
+            result_len = 1100
 
             # Create output arrays (on GPU) using CuPy
             d_data_matrix = cp.zeros((seqs_mat1.shape[0], result_len), dtype=cp.int_)
@@ -1025,6 +1025,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             n_elements = indptr[-1]
 
             print("***n_elements: ", n_elements)
+            row_max_len = np.max(row_element_counts)
+            print("***row max len of block: ", row_max_len)
+            assert row_max_len<=result_len, f""""ERROR: The chosen result block width is too small to hold all result values of the current block. 
+            Chosen width: {result_len}, Necessary width: {row_max_len}"""
 
             data = np.zeros(n_elements, dtype=np.int_)
             d_data = cp.zeros_like(data)
@@ -1046,7 +1050,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             indptr = d_indptr.get()
             indices = d_indices.get()
 
-            res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2_block.shape[0]))
+            res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))#, seqs_mat2_block.shape[0])) #, seqs_mat2.shape[0])) #
             cp.cuda.Device().synchronize()
             
             end_create_csr = time.time()
@@ -1057,7 +1061,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         start_split_blocks = time.time()
 
         block_width = 4096
-        n_blocks = 10 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 16 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
@@ -1078,26 +1082,38 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         start_stack_matrix = time.time()
         
-        data_blocks = []
-        indices_blocks = []
-        indptr = np.zeros(result_blocks[0].shape[0] + 1)
-        for result in result_blocks:
-            indptr+=result.indptr
-        size_counter = 0
-        for row in range(result_blocks[0].shape[0]):
-            for result in result_blocks:
-                start = result.indptr[row]
-                end = result.indptr[row+1]
-                data = result.data[start:end]
-                indices = result.indices[start:end]
-                data_blocks.append(data)
-                indices_blocks.append(indices)
-                size_counter += len(data)
+        # data_blocks = []
+        # indices_blocks = []
 
-        data = np.concatenate(data_blocks)
-        indices = np.concatenate(indices_blocks)
+        # start_indptr = time.time()
+        # indptr = sum(result.indptr for result in result_blocks)
+        # end_indptr = time.time()
+        # print("create indptr time: ", end_indptr-start_indptr)
 
-        result_sparse = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
+        # num_rows = result_blocks[0].shape[0]
+
+        # size_counter = 0
+        # for row_id in range(num_rows):
+        #     for i, result in enumerate(result_blocks):
+        #         start = result.indptr[row_id]
+        #         end = result.indptr[row_id+1]
+        #         data = result.data[start:end]
+        #         indices = result.indices[start:end]
+        #         data_blocks.append(data)
+        #         indices_blocks.append(indices)
+        #         size_counter += len(data)
+
+        # start_concat= time.time()
+        # data = np.concatenate(data_blocks)
+        # indices = np.concatenate(indices_blocks)
+        # end_concat = time.time()
+        # print("concatination time: ", end_concat-start_concat)
+
+        # result_sparse = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
+
+        result_sparse = result_blocks[0]
+        for i in range(1,len(result_blocks)):
+            result_sparse += result_blocks[i]
 
         size_in_bytes = result_sparse.data.nbytes + result_sparse.indices.nbytes + result_sparse.indptr.nbytes
         size_in_gb = size_in_bytes / (1024 ** 3)
