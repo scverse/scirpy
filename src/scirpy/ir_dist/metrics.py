@@ -957,6 +957,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_indices_matrix = cp.empty((seqs_mat1.shape[0], result_len), dtype=cp.int_)
             d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=cp.int_)
 
+            print("d_indices_matrix.dtype: ", d_indices_matrix.dtype)
+
             # Configure the grid and block sizes
             threads_per_block = 256
             blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
@@ -1061,7 +1063,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         start_split_blocks = time.time()
 
         block_width = 4096
-        n_blocks = 20 # seqs_mat2.shape[0] // block_width + 1
+        n_blocks = 10 # seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
