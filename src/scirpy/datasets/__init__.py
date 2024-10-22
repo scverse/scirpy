@@ -131,23 +131,18 @@ def maynard2020() -> MuData:
 )
 def stephenson2021_5k() -> MuData:
     """\
-    Return the dataset from :cite:`Maynard2020` as AnnData object.
+    Return the dataset from :cite:`Stephenson2021` as MuData object, downsampled
+    to 5000 BCR-containing cells.
 
-    21k cells from NSCLC profiled with Smart-seq2, of which 3,500 have :term:`TCRs<TCR>`
-    and 1,500 have :term:`BCRs<BCR>`.
+    The original study sequenced 1,141,860 cells from 143 PBMC samples collected from patients with different severity of COVID-19 and control groups.
+    Gene expression, TCR-enriched and BCR-enriched libraries were prepared for each sample according to 10x Genomics protocol and NovaSeq 6000 was used for sequencing.
 
-    {pooch_info}
+    A preprocessed dataset for the transciptome library was obtained from `Array Express <https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-10026>`__
+    A preprocessed dataset for the BCR-enriched library was obtained from `clatworthylab's GitHub <https://github.com/clatworthylab/COVID_analysis>`__
+    Both dataset have already passed quality control and all cells that didn't express BCR were discarded.
 
-    The raw FASTQ files have been obtained from `PRJNA591860 <https://www.ebi.ac.uk/ena/browser/view/PRJNA591860>`__
-    and processed using the nf-core `RNA-seq pipeline <https://github.com/nf-core/rnaseq>`_ to obtain
-    gene expression and TraCeR/BraCeR to reconstruct receptors.
-
-    The processed files have been imported and transformed into an :class:`anndata.AnnData`
-    object using the following script:
-
-    .. code-block:: python
-
-        {processing_code}
+    To  speed up computation time, we solely included 5 samples from each of the COVID-19-positive groups and randomly subsampled down to a total of 5k cells.
+    
     """
     fname = cast(PathLike, _FIGSHARE.fetch("stephenson2021_5k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
