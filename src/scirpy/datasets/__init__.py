@@ -142,7 +142,7 @@ def stephenson2021_5k() -> MuData:
     Both dataset have already passed quality control and all cells that didn't express BCR were discarded.
 
     To  speed up computation time, we solely included 5 samples from each of the COVID-19-positive groups and randomly subsampled down to a total of 5k cells.
-    
+
     """
     fname = cast(PathLike, _FIGSHARE.fetch("stephenson2021_5k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
