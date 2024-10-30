@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## v0.19.0
 
 ### Additions
 
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 -   Add all optional dependencies required for testing to the `[test]` dependency group ([#562](https://github.com/scverse/scirpy/pull/562)).
+-   Unpin AnnData version ([#551](https://github.com/scverse/scirpy/pull/551))
 
 ## v0.18.0
 
