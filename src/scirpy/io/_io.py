@@ -6,7 +6,7 @@ import sys
 from collections.abc import Collection, Iterable, Sequence
 from glob import iglob
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ def _cdr3_from_junction(junction_aa, junction_nt):
 
 
 def _read_10x_vdj_json(
-    path: Union[str, Path],
+    path: str | Path,
     filtered: bool = True,
 ) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
@@ -148,7 +148,7 @@ def _read_10x_vdj_json(
 
 
 def _read_10x_vdj_csv(
-    path: Union[str, Path],
+    path: str | Path,
     filtered: bool = True,
 ) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `_contig_annotations.csv` file"""
@@ -199,7 +199,7 @@ def _read_10x_vdj_csv(
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj(path: Union[str, Path], filtered: bool = True, include_fields: Any = None, **kwargs) -> AnnData:
+def read_10x_vdj(path: str | Path, filtered: bool = True, include_fields: Any = None, **kwargs) -> AnnData:
     """\
     Read :term:`AIRR` data from 10x Genomics cell-ranger output.
 
@@ -241,7 +241,7 @@ def read_10x_vdj(path: Union[str, Path], filtered: bool = True, include_fields: 
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
+def read_tracer(path: str | Path, **kwargs) -> AnnData:
     """\
     Read data from `TraCeR <https://github.com/Teichlab/tracer>`_ (:cite:`Stubbington2016-kh`).
 
@@ -351,7 +351,7 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
     cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
 )
 def read_airr(
-    path: Union[str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]],
+    path: str | Sequence[str] | Path | Sequence[Path] | pd.DataFrame | Sequence[pd.DataFrame],
     use_umi_count_col: None = None,  # deprecated, kept for backwards-compatibility
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
@@ -405,8 +405,8 @@ def read_airr(
     airr_cells = {}
     logger = _IOLogger()
 
-    if isinstance(path, (str, Path, pd.DataFrame)):
-        path: list[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
+    if isinstance(path, str | Path | pd.DataFrame):
+        path: list[str | Path | pd.DataFrame] = [path]  # type: ignore
 
     for tmp_path_or_df in path:
         if isinstance(tmp_path_or_df, pd.DataFrame):
@@ -475,7 +475,7 @@ def _infer_locus_from_gene_names(chain_dict, *, keys=("v_call", "d_call", "j_cal
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
+def read_bracer(path: str | Path, **kwargs) -> AnnData:
     """\
     Read data from `BraCeR <https://github.com/Teichlab/bracer>`_ (:cite:`Lindeman2018`).
 
@@ -546,7 +546,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     return from_airr_cells(bcr_cells.values(), **kwargs)
 
 
-def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) -> None:
+def write_airr(adata: DataHandler.TYPE, filename: str | Path, **kwargs) -> None:
     """Export :term:`IR` data to :term:`AIRR` Rearrangement `tsv` format.
 
     Parameters
@@ -636,7 +636,7 @@ def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, *
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
+def read_bd_rhapsody(path: str | Path, **kwargs) -> AnnData:
     """\
     Read :term:`IR` data from the BD Rhapsody Analysis Pipeline.
 

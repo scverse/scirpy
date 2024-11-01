@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Union, cast
+from typing import cast
 
 import awkward as ak
 import numpy as np
@@ -18,7 +18,7 @@ def chain_qc(
     chain_idx_key="chain_indices",
     inplace: bool = True,
     key_added: Sequence[str] = ("receptor_type", "receptor_subtype", "chain_pairing"),
-) -> Union[None, tuple[np.ndarray, np.ndarray, np.ndarray]]:
+) -> None | tuple[np.ndarray, np.ndarray, np.ndarray]:
     """\
     Perform quality control based on the receptor-chain pairing configuration.
 

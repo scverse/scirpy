@@ -7,7 +7,7 @@ name = 'scirpy'
 dynamic = ["version"]
 description = "Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"
 readme = "README.md"
-requires-python = '>= 3.9'
+requires-python = '>= 3.10'
 license = {file = "LICENSE"}
 authors = [
     {name = "Gregor Sturm"},
@@ -27,8 +27,6 @@ dependencies = [
     'pandas>=1.5,!=2.1.2',
     'numpy>=1.17.0',
     'scipy',
-    # parasail 1.2.1 fails to be installd on MacOS
-    'parasail != 1.2.1',
     'scikit-learn',
     'python-levenshtein',
     # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
@@ -66,7 +64,7 @@ doc = [
     'pycairo',
     'jupyter_client',
     'sc-dandelion',
-    'muon>=0.1.5',
+    'muon>0.1.6',
     # for executing notebooks on CI
     'nbconvert',
     # I don't know why this would be needed, but it complains about zarr missing when building
@@ -77,6 +75,10 @@ test = [
     'pytest',
     'coverage',
     'black',
+    'sc-dandelion>=0.3.5',
+    'scikit-bio>=0.5.7',
+    'rectangle-packer',
+    'parasail != 1.2.1',
 ]
 dandelion = [
     'sc-dandelion>=0.3.5',
@@ -86,6 +88,10 @@ diversity = [
 ]
 rpack = [
     'rectangle-packer',
+]
+parasail = [
+    # parasail 1.2.1 fails to be installd on MacOS
+    'parasail != 1.2.1',
 ]
 
 [tool.hatch.version]

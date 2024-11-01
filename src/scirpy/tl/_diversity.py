@@ -1,4 +1,5 @@
-from typing import Callable, Literal, Optional, Union, cast
+from collections.abc import Callable
+from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -167,12 +168,12 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: Union[str, Callable[[np.ndarray], Union[int, float]]] = "normalized_shannon_entropy",
+    metric: str | Callable[[np.ndarray], int | float] = "normalized_shannon_entropy",
     inplace: bool = True,
-    key_added: Union[None, str] = None,
+    key_added: None | str = None,
     airr_mod: str = "airr",
     **kwargs,
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """\
     Computes the alpha diversity of clonotypes within a group.
 

@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python: "3.9"
+            python: "3.10"
           - os: ubuntu-latest
             python: "3.12"
           - os: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
           python -m pip install --upgrade pip wheel
       - name: Install dependencies
         run: |
-          pip install ${{ matrix.pip-flags }} ".[dev,test,rpack,dandelion,diversity]"
+          pip install ${{ matrix.pip-flags }} ".[dev,test]"
       - name: Test
         env:
           MPLBACKEND: agg
