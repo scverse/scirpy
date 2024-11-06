@@ -10,9 +10,17 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+### Backwards-incompatible changes
+
+-   The format of storing the results of `tl.define_clonotypes`/`tl.define_clonotype_clusters` in `adata.uns` has changed.
+    Older versions of Scirpy won't be able to run downstream functions (e.g. `tl.clonotype_network`) on AnnData objects
+    created with Scirpy v0.20 or later. This change was necessary to speed up writing results to `h5ad` when working
+    with large datasets ([#556](https://github.com/scverse/scirpy/pull/556)).
+
 ### Documentation
 
 -   Add a tutorial for BCR analysis with Scirpy ([#542](https://github.com/scverse/scirpy/pull/542)).
+-   Fix typo in `pp.index_chains` methods description ([#570](https://github.com/scverse/scirpy/pull/570))
 
 ## v0.19.0
 
