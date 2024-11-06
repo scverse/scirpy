@@ -20,7 +20,7 @@ urls.Documentation = "https://scirpy.readthedocs.io/"
 urls.Source = "https://github.com/scverse/scirpy"
 urls.Home-page = "https://github.com/scverse/scirpy"
 dependencies = [
-    'anndata>=0.9,<0.10.9', # TODO remove constraint
+    'anndata>=0.9',
     'awkward>=2.1.0',
     'mudata>=0.2.3',
     'scanpy>=1.9.3',
@@ -64,7 +64,7 @@ doc = [
     'pycairo',
     'jupyter_client',
     'sc-dandelion',
-    'muon>=0.1.5',
+    'muon>0.1.6',
     # for executing notebooks on CI
     'nbconvert',
     # I don't know why this would be needed, but it complains about zarr missing when building
@@ -75,6 +75,10 @@ test = [
     'pytest',
     'coverage',
     'black',
+    'sc-dandelion>=0.3.5',
+    'scikit-bio>=0.5.7',
+    'rectangle-packer',
+    'parasail != 1.2.1',
 ]
 dandelion = [
     'sc-dandelion>=0.3.5',

@@ -49,6 +49,16 @@ Glossary
         :term:`CDR3<CDR>` nucleotide sequences, but might recognize the same antigen
         because they have the same or similar CDR3 amino acid sequence.
 
+        This is especially relevant for BCR, because clonally related cell are likely to differ due to
+        :term:`somatic hypermutation <SHM>`. It is important to understand that there is currently no best practice or
+        go-to approach on how to define clonotype cluster for BCR, as it remains an active research
+        field (:cite:`Yaari.2015`). There exist many different approaches such as maximum-likelihood (:cite:`Ralph.2016`),
+        hierarchical clustering (:cite:`Gupta.2017`), spectral clustering (:cite:`Nouri.2018`), natural language
+        processing (:cite:`Lindenbaum.2021`) and network based approaches (:cite:`BashfordRogers.2013`). A recent
+        comparison study indicates that computationally more sophisticated clonal inference approaches do not
+        outperform simplistic, computational cheaper ones (:cite:`Balashova.2024`). That said, there is still a
+        need for more in-depth comparison studies to confirm these results.
+
         See also: :func:`scirpy.tl.define_clonotype_clusters`.
 
     Private clonotype
@@ -190,7 +200,7 @@ Glossary
         Immune receptor.
 
     BCR
-        B-cell receptor. A BCR consiste of two Immunoglobulin (IG) heavy chains and
+        B-cell receptor. A BCR consists of two Immunoglobulin (IG) heavy chains and
         two IG light chains. The two light chains contain a variable region, which is
         responsible for antigen recognition.
 
@@ -201,12 +211,24 @@ Glossary
            under the `CC BY-4.0 <https://creativecommons.org/licenses/by/4.0/deed.en>`__ license,
            obtained from `wikimedia commons <https://commons.wikimedia.org/w/index.php?curid=49935883>`__
 
+    SHM
+        Common abbreviation for "Somatic hypermutation". This process is unique to BCR and occurs as part
+        of affinity maturation upon antigen encounter. This process further increases the diversity of the
+        variable domain of the BCR and selects for cells with higher affinity. SHM introduces around one point mutation per 1000
+        base pairs (:cite:`Kleinstein.2003`) and is able to introduce (although rare) deletions and/or insertions (:cite:`Wilson.1998`).
+        Furthermore, SHM is not a stochastic process, but biased in multiple ways (e.g. intrinsic hot-spot motifs (reviewed in :cite:`Schramm.2018`))
+
     Dual IR
         :term:`IRs<IR>` with more than one pair of :term:`VJ<V(D)J>` and
         :term:`VDJ<V(D)J>` sequences. While this was
         previously thought to be impossible due to the mechanism of allelic exclusion
-        (:cite:`Brady2010-gh`), there is an increasing amound of evidence for a *bona fide*
-        dual-IR population (:cite:`Schuldt2019`, :cite:`Ji2010-bn`, :cite:`Vettermann2010`).
+        (:cite:`Brady2010-gh`), there is an increasing amount of evidence for a *bona fide*
+        dual-IR population (:cite:`Schuldt2019`, :cite:`Shi.2019`, :cite:`RobertaPelanda.2014`,
+        :cite:`Ji2010-bn`, :cite:`Vettermann2010`).
+
+        Recent evidence suggest that also B cells with three or more productively rearranged
+        H and/or L chains exist (:cite:`Zhu.2023`), which indicates how much of B cell development
+        is still unclear.
 
         For more information on how *Scirpy* handles dual IRs, see the
         page about our :ref:`IR model<receptor-model>`.
@@ -239,8 +261,12 @@ Glossary
     Alellically included B-cells
         A B cell with two pairs of :term:`IG` chains. See :term:`Dual IR`.
 
+    Isotypically included B-cells
+        Similar to :term:`Alellically included B-cells`, but expresses both IGL and
+        IGK and thus rearrangements are not on alleles of the same gene (= isotypic inclusion).
+
     Clonotype modularity
-        The clonotype modularity measures how densly connected the transcriptomics
+        The clonotype modularity measures how densely connected the transcriptomics
         neighborhood graph underlying the cells in a clonotype is. Clonotypes with
         a high modularity consist of cells that are transcriptionally more similar
         than that of a clonotype with a low modularity.
