@@ -1,8 +1,11 @@
 import abc
 import itertools
+import time
 import warnings
 from collections.abc import Sequence
 
+# from numba import cuda
+import cupy as cp
 import joblib
 import matplotlib.pyplot as plt
 import numba as nb
@@ -10,15 +13,10 @@ import numpy as np
 import scipy.sparse
 import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
-# from numba import cuda
-import cupy as cp
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
 from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated
-
-import time
-import math
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -814,9 +812,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             Always returns a numpy array containing None because the computation of the minimum distance per row is
             not implemented for the GPU hamming calculator yet.
         """
-
         start_gpu_hamming_mat = time.time()
-        
+
         start_sorting = time.time()
 
         seqs_lengths = np.vectorize(len)(seqs)
@@ -840,14 +837,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
         print(f"max_seq_len: {max_seq_len}")
 
-        def _seqs2mat_fast(seqs: Sequence[str], max_len: None | int = None
-            ) -> tuple[np.ndarray, np.ndarray]:
+        def _seqs2mat_fast(seqs: Sequence[str], max_len: None | int = None) -> tuple[np.ndarray, np.ndarray]:
             if max_len is None:
                 max_len = np.max([len(s) for s in seqs])
             mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
             L = np.zeros(len(seqs), dtype=np.int8)
             for i, seq in enumerate(seqs):
-                mat[i][0:len(seq)] =  np.frombuffer(seq.encode('ascii'), dtype=np.uint8)
+                mat[i][0 : len(seq)] = np.frombuffer(seq.encode("ascii"), dtype=np.uint8)
                 L[i] = len(seq)
             return mat, L
                 
@@ -860,9 +856,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
 
         end_preparation = time.time()
-        print("preparation time taken: ", end_preparation-start_preparation)
+        print("preparation time taken: ", end_preparation - start_preparation)
 
-        hamming_kernel = cp.RawKernel(r'''                           
+        hamming_kernel = cp.RawKernel(
+            r"""
         extern "C" __global__ __launch_bounds__(256)
         void hamming_kernel(
             const char* __restrict__ seqs_mat1,
@@ -881,28 +878,28 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const int seqs_mat1_cols,
             const int seqs_mat2_cols,
             const int data_cols,
-            const int indices_cols,                  
+            const int indices_cols,
             const bool is_symmetric
         ) {
             int row = blockDim.x * blockIdx.x + threadIdx.x;
             if (row < seqs_mat1_rows) {
-                int seqs_original_index = seqs_original_indices[row];   
+                int seqs_original_index = seqs_original_indices[row];
                 int seq1_len = seqs_L1[row];
                 int row_end_index = 0;
-                                                      
+
                 for (int col = 0; col < seqs_mat2_rows; col++) {
                     if ((! is_symmetric ) || (col + block_offset) >= row) {
                         int seq2_len = seqs_L2[col];//tex1Dfetch<int>(tex_L2, col); // seqs_L2[col];
-                        char distance = 1;          
-                        
+                        char distance = 1;
+
                         if (seq1_len == seq2_len) {
-                            for (int i = 0; i < seq1_len; i++) {                                      
+                            for (int i = 0; i < seq1_len; i++) {
                                 char tex_val1 = seqs_mat1[i*seqs_mat1_rows+row];
                                 char tex_val2 = seqs_mat2[i*seqs_mat2_rows+col];
 
                                 if( tex_val1 != tex_val2) {
                                     distance++;
-                                } 
+                                }
                             }
                             if (distance <= cutoff + 1) {
                                 int seqs2_original_index = seqs2_original_indices[col];//tex1Dfetch<int>(seqs2_original_indices, col);
@@ -913,12 +910,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         }
                     }
                 }
-                row_element_counts[seqs_original_index] = row_end_index;               
+                row_element_counts[seqs_original_index] = row_end_index;
             }
         }
-        ''', 'hamming_kernel', options=('--maxrregcount=256',))#, '--ptxas-options=-v', '-lineinfo'))
+        """,
+            "hamming_kernel",
+            options=("--maxrregcount=256",),
+        )  # , '--ptxas-options=-v', '-lineinfo'))
 
-        create_csr_kernel = cp.RawKernel(r'''
+        create_csr_kernel = cp.RawKernel(
+            r"""
         extern "C" __global__
         void create_csr_kernel(
             int* data, int* indices,
@@ -940,10 +941,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 }
             }
         }
-        ''', 'create_csr_kernel')
+        """,
+            "create_csr_kernel",
+        )
 
-        def calc_block_gpu(seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset):
-            
+        def calc_block_gpu(
+            seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset
+        ):
             create_input_matrices_start = time.time()
 
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
@@ -969,7 +973,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
             d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
-            
+
             cp.cuda.Device().synchronize()
             create_input_matrices_end = time.time()
             print("create_input_matrices time taken: ", create_input_matrices_end-create_input_matrices_start)
@@ -977,7 +981,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             start_compile = time.time()
             hamming_kernel.compile()
             end_compile = time.time()
-            print("compile time taken: ", end_compile-start_compile)
+            print("compile time taken: ", end_compile - start_compile)
 
             #For performance testing, we free all memory blocks and synchronize with the device
             cp.get_default_memory_pool().free_all_blocks()
@@ -986,11 +990,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             start_kernel = time.time()
 
             hamming_kernel(
-                (blocks_per_grid,), (threads_per_block,),
+                (blocks_per_grid,),
+                (threads_per_block,),
                 (
                     d_seqs_mat1_transposed,
                     d_seqs_mat2_transposed,
-                    d_seqs_L1, 
+                    d_seqs_L1,
                     d_seqs_L2,
                     seqs_original_indices,
                     seqs2_original_indices_blocks,
@@ -1006,13 +1011,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_data_matrix_cols,
                     d_indices_matrix_cols,
                     is_symmetric,
-                )
+                ),
             )
-            
+
             cp.cuda.Device().synchronize()
 
             end_kernel = time.time()
-            time_taken = (end_kernel-start_kernel)
+            time_taken = end_kernel - start_kernel
             print("hamming kernel time taken: ", time_taken)
 
             start_create_csr = time.time()
@@ -1042,10 +1047,21 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
             blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
             blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
-        
+
             create_csr_kernel(
-                (blocks_per_grid_x, blocks_per_grid_y), threads_per_block,
-                (d_data, d_indices, d_data_matrix, d_indices_matrix, d_indptr, d_data_matrix.shape[0], d_data_matrix.shape[1],d_data.shape[0], d_indices_matrix.shape[1])
+                (blocks_per_grid_x, blocks_per_grid_y),
+                threads_per_block,
+                (
+                    d_data,
+                    d_indices,
+                    d_data_matrix,
+                    d_indices_matrix,
+                    d_indptr,
+                    d_data_matrix.shape[0],
+                    d_data_matrix.shape[1],
+                    d_data.shape[0],
+                    d_indices_matrix.shape[1],
+                ),
             )
 
             data = d_data.get()
@@ -1054,9 +1070,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
             cp.cuda.Device().synchronize()
-            
+
             end_create_csr = time.time()
-            print("end_create_csr time taken: ", end_create_csr-start_create_csr)
+            print("end_create_csr time taken: ", end_create_csr - start_create_csr)
 
             return res, time_taken
 
@@ -1076,7 +1092,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         time_sum_blocks = 0
 
         end_split_blocks = time.time()
-        print("split_blocks time taken: ", end_split_blocks-start_split_blocks)
+        print("split_blocks time taken: ", end_split_blocks - start_split_blocks)
 
         for i in range(0, n_blocks):
             result_blocks[i], time_taken = calc_block_gpu(seqs_mat1, seqs_mat2_blocks[i], seqs_L1, seqs_L2_blocks[i], seqs2_original_indices_blocks[i], block_offset)
@@ -1087,11 +1103,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         start_stack_matrix = time.time()
 
         result_sparse = result_blocks[0]
-        for i in range(1,len(result_blocks)):
+        for i in range(1, len(result_blocks)):
             result_sparse += result_blocks[i]
 
         size_in_bytes = result_sparse.data.nbytes + result_sparse.indices.nbytes + result_sparse.indptr.nbytes
-        size_in_gb = size_in_bytes / (1024 ** 3)
+        size_in_gb = size_in_bytes / (1024**3)
         print(f"Size of the CSR matrix: {size_in_gb:.6f} GB")
 
         row_element_counts_gpu = np.diff(result_sparse.indptr)
@@ -1104,10 +1120,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         print("final result max row element count: ", np.max(row_element_counts_gpu))
 
         end_stack_matrix = time.time()
-        print("stack matrix time taken: ", end_stack_matrix-start_stack_matrix)
+        print("stack matrix time taken: ", end_stack_matrix - start_stack_matrix)
 
         end_gpu_hamming_mat = time.time()
-        print("gpu_hamming_mat time taken: ", end_gpu_hamming_mat-start_gpu_hamming_mat)
+        print("gpu_hamming_mat time taken: ", end_gpu_hamming_mat - start_gpu_hamming_mat)
 
         #Returns the results in a way that fits the current interface, could be improved later
         return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
