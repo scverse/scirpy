@@ -1123,6 +1123,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         row_element_counts_gpu = np.diff(result_sparse.indptr)
 
+        start_sort_indices = time.time()
+        result_sparse.sort_indices()
+        end_sort_indices = time.time()
+        print("sorting indices of csr matrix time taken: ", end_sort_indices-start_sort_indices)
+
         print("max row element count: ", np.max(row_element_counts_gpu))
 
         end_stack_matrix = time.time()
