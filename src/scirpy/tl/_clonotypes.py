@@ -1,4 +1,5 @@
 import itertools
+import json
 import random
 from collections.abc import Sequence
 from typing import Literal, cast
@@ -13,7 +14,7 @@ from scanpy import logging
 from scirpy.ir_dist import MetricType, _get_metric_key
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
 from scirpy.pp import ir_dist
-from scirpy.util import DataHandler
+from scirpy.util import DataHandler, read_cell_indices
 from scirpy.util.graph import igraph_from_sparse_matrix, layout_components
 
 _common_doc = """\
@@ -89,7 +90,7 @@ distance_result
     A dictionary containing
      * `distances`: A sparse, pairwise distance matrix between unique
        receptor configurations
-     * `cell_indices`: A dict of arrays, containing the `adata.obs_names`
+     * `cell_indices`: A dict of lists, containing the `adata.obs_names`
        (cell indices) for each row in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
@@ -335,7 +336,7 @@ def define_clonotype_clusters(
     # Return or store results
     clonotype_distance_res = {
         "distances": clonotype_dist,
-        "cell_indices": ctn.cell_indices,
+        "cell_indices": json.dumps(ctn.cell_indices),
     }
     if inplace:
         params.set_obs(key_added, clonotype_cluster_series)
@@ -533,7 +534,7 @@ def clonotype_network(
     # explicitly annotate node ids to keep them after subsetting
     graph.vs["node_id"] = np.arange(0, len(graph.vs))
 
-    cell_indices = clonotype_res["cell_indices"]
+    cell_indices = read_cell_indices(clonotype_res["cell_indices"])
 
     # store size in graph to be accessed by layout algorithms
     clonotype_size = np.array([len(idx) for idx in cell_indices.values()])
@@ -603,7 +604,7 @@ def clonotype_network(
     # Expand to cell coordinates to store in adata.obsm
     idx, coords = zip(
         *itertools.chain.from_iterable(
-            zip(clonotype_res["cell_indices"][str(node_id)], itertools.repeat(coord))
+            zip(cell_indices[str(node_id)], itertools.repeat(coord))
             for node_id, coord in zip(graph.vs["node_id"], coords, strict=False)  # type: ignore
         ),
         strict=False,
@@ -631,10 +632,9 @@ def _graph_from_coordinates(adata: AnnData, clonotype_key: str, basis: str) -> t
     """
     clonotype_res = adata.uns[clonotype_key]
     # map the cell-id to the corresponding row/col in the clonotype distance matrix
+    cell_indices = read_cell_indices(clonotype_res["cell_indices"])
     dist_idx, obs_names = zip(
-        *itertools.chain.from_iterable(
-            zip(itertools.repeat(i), obs_names) for i, obs_names in clonotype_res["cell_indices"].items()
-        ),
+        *itertools.chain.from_iterable(zip(itertools.repeat(i), obs_names) for i, obs_names in cell_indices.items()),
         strict=False,
     )
     dist_idx_lookup = pd.DataFrame(index=obs_names, data=dist_idx, columns=["dist_idx"])
