@@ -1,10 +1,13 @@
 from collections.abc import Sequence
 from typing import Literal
 
+import matplotlib.pyplot as plt
 from logomaker import Logo, alignment_to_matrix
 
 from scirpy.get import airr as get_airr
 from scirpy.util import DataHandler
+
+from .styling import _init_ax
 
 
 @DataHandler.inject_param_docs()
@@ -20,6 +23,8 @@ def logoplot_cdr3_motif(
     background=None,
     center_weights: bool = False,
     plot_default=True,
+    ax: plt.Axes | None = None,
+    fig_kws: dict | None = None,
     **kwargs,
 ):
     """
@@ -58,6 +63,11 @@ def logoplot_cdr3_motif(
         * `"vpad"`= .05
         * `"width"` = .9
         And some additional styling. If false, the user needs to adapt`**kwargs` accordingly.
+    ax
+        Add the plot to a predefined Axes object.
+    fig_kws
+        Parameters passed to the :func:`matplotlib.pyplot.figure` call
+        if no `ax` is specified.
     **kwargs
         Additional arguments passed to logomaker.Logo() for comprehensive customization. For a full list of parameters please refer to logomaker documentation (https://logomaker.readthedocs.io/en/latest/implementation.html#logo-class)
 
@@ -66,6 +76,16 @@ def logoplot_cdr3_motif(
     Returns a object of class logomaker.Logo (see here for more information https://logomaker.readthedocs.io/en/latest/implementation.html#matrix-functions)
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
+
+    if isinstance(chains, str):
+        chains = [chains]
+
+    if ax is None:
+        fig_kws = {} if fig_kws is None else fig_kws
+        if "figsize" not in fig_kws:
+            fig_kws["figsize"] = (6, 2)
+        ax = _init_ax(fig_kws)
+
     # make sure that sequences are prealigned i.e. they need to have the the same length
     airr_df = get_airr(params, [cdr3_col], chains)
     sequence_list = []
@@ -79,7 +99,7 @@ def logoplot_cdr3_motif(
     )
     if plot_default:
         cdr3_logo = Logo(
-            motif, font_name="Arial Rounded MT Bold", color_scheme="chemistry", vpad=0.05, width=0.9, **kwargs
+            motif, font_name="Arial Rounded MT Bold", color_scheme="chemistry", vpad=0.05, width=0.9, ax=ax, **kwargs
         )
 
         cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
