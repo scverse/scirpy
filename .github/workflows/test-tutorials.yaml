@@ -23,6 +23,7 @@ jobs:
         tutorial:
           - tutorial_3k_tcr.ipynb
           - tutorial_io.ipynb
+          - tutorial_5k_bcr.ipynb
         os:
           - ubuntu-latest
         python:

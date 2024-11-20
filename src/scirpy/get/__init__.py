@@ -203,6 +203,7 @@ def airr_context(
 
 def _has_ir(params: DataHandler):
     """Return a mask of all cells that have a valid IR configuration"""
-    return ak.to_numpy(
-        (ak.count(params.chain_indices["VJ"], axis=1) + ak.count(params.chain_indices["VDJ"], axis=1)) > 0
-    )
+    return (
+        ak.to_numpy(ak.count(params.chain_indices["VJ"], axis=1))
+        + ak.to_numpy(ak.count(params.chain_indices["VDJ"], axis=1))
+    ) > 0
