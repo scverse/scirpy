@@ -99,9 +99,7 @@ def logoplot_cdr3_motif(
         sequence_list, to_type=to_type, pseudocount=pseudocount, background=background, center_weights=center_weights
     )
     if plot_default:
-        cdr3_logo = Logo(
-            motif, color_scheme="chemistry", vpad=0.05, width=0.9, ax=ax, **kwargs
-        )
+        cdr3_logo = Logo(motif, color_scheme="chemistry", vpad=0.05, width=0.9, ax=ax, **kwargs)
 
         cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
         cdr3_logo.ax.set_ylabel(f"{to_type}")
