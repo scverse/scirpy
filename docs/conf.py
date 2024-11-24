@@ -124,6 +124,7 @@ intersphinx_mapping = {
     "awkward": ("https://awkward-array.org/doc/main", None),
     "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest", None),
+    "logomaker": ("https://logomaker.readthedocs.io/en/latest/", None),
 }
 
 # List of patterns, relative to source directory, that match files and
@@ -186,4 +187,5 @@ nitpick_ignore = [
     ("py:class", "seaborn.matrix.ClusterGrid"),
     ("py:meth", "mudata.MuData.update"),
     ("py:class", "awkward.highlevel.Array"),
+    ("py:class", "logomaker.src.Logo.Logo"),
 ]

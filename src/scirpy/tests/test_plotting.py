@@ -1,4 +1,5 @@
 # pylama:ignore=W0611,W0404
+import logomaker
 import matplotlib.pyplot as plt
 import pytest
 import seaborn as sns
@@ -159,3 +160,9 @@ def test_clonotype_network_pie(
         show_legend=show_legend,
     )
     assert isinstance(p, plt.Axes)
+
+
+@pytest.mark.extra
+def test_logoplot(adata_cdr3):
+    p = pl.logoplot_cdr3_motif(adata_cdr3, chains="VJ_1")
+    assert isinstance(p, logomaker.Logo)
