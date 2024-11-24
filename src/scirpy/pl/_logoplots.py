@@ -2,6 +2,8 @@ from collections.abc import Sequence
 from typing import Literal
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from logomaker import Logo, alignment_to_matrix
 
 from scirpy.get import airr as get_airr
@@ -19,15 +21,18 @@ def logoplot_cdr3_motif(
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
     cdr3_col: str = "junction_aa",
-    to_type: Sequence[Literal["information", "counts", "probability", "weight"]] = "information",
+    to_type: Literal["information", "counts", "probability", "weight"] = "information",
     pseudocount: float = 0,
-    background=None,
+    background: np.ndarray | pd.DataFrame = None,
     center_weights: bool = False,
-    plot_default=True,
+    font_name: str = "sans",
+    color_scheme: str = "chemistry",
+    vpad: float = 0.05,
+    width: float = 0.9,
     ax: plt.Axes | None = None,
     fig_kws: dict | None = None,
     **kwargs,
-):
+) -> Logo:
     """
     Generates logoplots of CDR3 sequences
 
@@ -57,20 +62,22 @@ def logoplot_cdr3_motif(
         Background probabilities. Both arrays with the same length as ouput or df with same shape as ouput are permitted.
     center_weights
         Whether to subtract the mean of each row, but only if to_type == `weight`
-    plot_default
-        If true does some basic formatting for the user i.e:
-        * `"font_name"` = 'Arial Rounded MT Bold'
-        * `"color_scheme"` = 'chemistry'
-        * `"vpad"`= .05
-        * `"width"` = .9
-        And some additional styling. If false, the user needs to adapt`**kwargs` accordingly.
+    font_name
+        customize the font face. You can list all available fonts with `logomaker.list_font_names()`.
+    color_scheme
+        customize the color scheme. You can list all available color schemes with `logomaker.list_color_schemes()`.
+    vpad
+        The whitespace to leave above and below each character within that character's bounding box.
+    width
+        x coordinate span of each character
     ax
         Add the plot to a predefined Axes object.
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call
         if no `ax` is specified.
     **kwargs
-        Additional arguments passed to logomaker.Logo() for comprehensive customization. For a full list of parameters please refer to logomaker documentation (https://logomaker.readthedocs.io/en/latest/implementation.html#logo-class)
+        Additional arguments passed to `logomaker.Logo()` for comprehensive customization.
+        For a full list of parameters please refer to `logomaker documentation <https://logomaker.readthedocs.io/en/latest/implementation.html#logo-class>`_
 
     Returns
     -------
@@ -98,13 +105,11 @@ def logoplot_cdr3_motif(
     motif = alignment_to_matrix(
         sequence_list, to_type=to_type, pseudocount=pseudocount, background=background, center_weights=center_weights
     )
-    if plot_default:
-        cdr3_logo = Logo(motif, color_scheme="chemistry", vpad=0.05, width=0.9, ax=ax, **kwargs)
+    cdr3_logo = Logo(motif, color_scheme=color_scheme, vpad=vpad, width=width, font_name=font_name, ax=ax, **kwargs)
 
-        cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
-        cdr3_logo.ax.set_ylabel(f"{to_type}")
-        cdr3_logo.ax.set_xlim([-1, len(motif)])
-        return cdr3_logo
-    else:
-        cdr3_logo = Logo(motif, **kwargs)
-        return cdr3_logo
+    cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
+    cdr3_logo.ax.set_ylabel(f"{to_type}")
+    cdr3_logo.ax.grid(False)
+    cdr3_logo.ax.set_xlim([-1, len(motif)])
+    cdr3_logo.ax.set_title("/".join(chains))
+    return cdr3_logo
