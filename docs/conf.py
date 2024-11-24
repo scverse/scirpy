@@ -187,4 +187,5 @@ nitpick_ignore = [
     ("py:class", "seaborn.matrix.ClusterGrid"),
     ("py:meth", "mudata.MuData.update"),
     ("py:class", "awkward.highlevel.Array"),
+    ("py:class", "logomaker.src.Logo.Logo"),
 ]
