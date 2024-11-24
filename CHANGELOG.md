@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning][].
     created with Scirpy v0.20 or later. This change was necessary to speed up writing results to `h5ad` when working
     with large datasets ([#556](https://github.com/scverse/scirpy/pull/556)).
 
+### Additions
+
+-   The function `pl.logoplot_cdr3_motif` has been added that allows to plot sequence logos of
+    CDR3 sequences using [logomaker](https://logomaker.readthedocs.io/en/latest/) ([#534](https://github.com/scverse/scirpy/pull/534))
+
 ### Documentation
 
 -   Add a tutorial for BCR analysis with Scirpy ([#542](https://github.com/scverse/scirpy/pull/542)).
