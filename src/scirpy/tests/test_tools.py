@@ -760,7 +760,7 @@ def test_clonotype_imbalance(adata_tra):
 def test_mutational_load(adata_mutation, adata_not_aligned):
     mutation_VDJ = ir.tl.mutational_load(
         adata_mutation,
-        germline_alignment="germline_alignment",
+        germline_key="germline_alignment",
         chains=["VDJ_1", "VJ_1"],
         frequency=False,
         inplace=False,
@@ -768,7 +768,7 @@ def test_mutational_load(adata_mutation, adata_not_aligned):
     )
     mutation_V_segment = ir.tl.mutational_load(
         adata_mutation,
-        germline_alignment="germline_alignment",
+        germline_key="germline_alignment",
         chains=["VDJ_1", "VJ_1"],
         frequency=False,
         inplace=False,
@@ -776,7 +776,7 @@ def test_mutational_load(adata_mutation, adata_not_aligned):
     )
     mutation_subregion = ir.tl.mutational_load(
         adata_mutation,
-        germline_alignment="germline_alignment",
+        germline_key="germline_alignment",
         chains=["VDJ_1", "VJ_1"],
         frequency=False,
         inplace=False,
@@ -1075,7 +1075,7 @@ def test_mutational_load(adata_mutation, adata_not_aligned):
     with npt.assert_raises(ValueError):
         ir.tl.mutational_load(
             adata_not_aligned,
-            germline_alignment="germline_alignment",
+            germline_key="germline_alignment",
             chains=["VDJ_1", "VJ_1"],
             frequency=False,
             inplace=False,
