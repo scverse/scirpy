@@ -107,7 +107,8 @@ xfail_strict = true
 # ]
 markers = [
     "conda: marks a subset of tests to be ran on the Bioconda CI.",
-    "extra: marks tests that require extra dependencies."
+    "extra: marks tests that require extra dependencies.",
+    "gpu: mark test to run on GPU",
 ]
 minversion = 6.0
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']

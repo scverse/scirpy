@@ -745,7 +745,7 @@ def test_tcrdist_histogram_not_implemented():
         seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
         _ = tcrdist_calculator.calc_dist_mat(seqs, seqs)
 
-
+@pytest.mark.gpu
 def test_gpu_hamming_reference():
     # test hamming distance against reference implementation
     from . import TESTDATA
