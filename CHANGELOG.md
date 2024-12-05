@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## v0.20.0
 
 ### Backwards-incompatible changes
 
@@ -19,8 +19,12 @@ and this project adheres to [Semantic Versioning][].
 
 ### Additions
 
--   The function `pl.logoplot_cdr3_motif` has been added that allows to plot sequence logos of
-    CDR3 sequences using [logomaker](https://logomaker.readthedocs.io/en/latest/) ([#534](https://github.com/scverse/scirpy/pull/534))
+-   Add `pl.logoplot_cdr3_motif` that allows to plot sequence logos of
+    CDR3 sequences using [logomaker](https://logomaker.readthedocs.io/en/latest/) ([#534](https://github.com/scverse/scirpy/pull/534)).
+
+### Fixes
+
+-   Make `datasets.vdjdb` compatible with the latest release of VDJDB ([#578](https://github.com/scverse/scirpy/pull/578)).
 
 ### Documentation
 
