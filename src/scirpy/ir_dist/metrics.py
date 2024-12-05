@@ -5,7 +5,6 @@ import warnings
 from collections.abc import Sequence
 
 # from numba import cuda
-import cupy as cp
 import joblib
 import matplotlib.pyplot as plt
 import numba as nb
@@ -812,6 +811,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             Always returns a numpy array containing None because the computation of the minimum distance per row is
             not implemented for the GPU hamming calculator yet.
         """
+        import cupy as cp
         start_gpu_hamming_mat = time.time()
 
         start_sorting = time.time()
@@ -948,6 +948,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         def calc_block_gpu(
             seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset
         ):
+            import cupy as cp
             create_input_matrices_start = time.time()
 
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
