@@ -76,6 +76,9 @@ test = [
     'coverage',
     'black',
 ]
+cupy = [
+    'cupy-cuda12x',
+]
 dandelion = [
     'sc-dandelion>=0.3.5',
 ]
