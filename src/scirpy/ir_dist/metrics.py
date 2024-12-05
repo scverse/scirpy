@@ -812,6 +812,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             not implemented for the GPU hamming calculator yet.
         """
         import cupy as cp
+
         start_gpu_hamming_mat = time.time()
 
         start_sorting = time.time()
@@ -949,6 +950,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset
         ):
             import cupy as cp
+
             create_input_matrices_start = time.time()
 
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
