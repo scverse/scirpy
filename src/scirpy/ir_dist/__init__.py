@@ -60,6 +60,10 @@ metric
         BLOSUM62 matrix. Faster implementation of `alignment` with some loss.
         This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
+      * `normalized_hamming` -- Normalized Hamming distance (in percent) for CDR3 sequences of equal length.
+        See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
+      * `tcrdist` -- Distance based on pairwise sequence alignments between TCR CDR3 sequences based on the tcrdist metric.
+        See :class:`~scirpy.ir_dist.metrics.TCRdistDistanceCalculator`.
       * any instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`.
 """
 
@@ -105,6 +109,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "normalized_hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, normalize=True, **kwargs)
+    elif metric == "gpu_hamming":
+        dist_calc = metrics.GPUHammingDistanceCalculator(**kwargs)
     elif metric == "tcrdist":
         dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
