@@ -81,10 +81,10 @@ out to the developers of the dependency before the package is released to a wide
 ## Making a release
 
 1. **Review and update the changelog.** Make sure the changelog is up-to-date and change the top line from `[Unreleased]` to the version number you intend to publish.
-2. **Create a release on GitHub.**  Navigate to the "Releases" page of this project on GitHub. Specify vX.X.X as a tag name and create a release. For more information, see [managing GitHub releases][].
+2. **Create a release on GitHub.** Navigate to the "Releases" page of this project on GitHub. Specify vX.X.X as a tag name and create a release. For more information, see [managing GitHub releases][].
 
-**That's it!** The release will be built automatically and published on PyPI using GitHub actions using the [trusted publishing workflow](https://docs.pypi.org/trusted-publishers/). 
-Scirpy uses [hatch-vcs](https://github.com/ofek/hatch-vcs) to automaticlly retrieve the version number from the git tag. Therefore, it is not necessary to bump versions in the code. 
+**That's it!** The release will be built automatically and published on PyPI using GitHub actions using the [trusted publishing workflow](https://docs.pypi.org/trusted-publishers/).
+Scirpy uses [hatch-vcs](https://github.com/ofek/hatch-vcs) to automaticlly retrieve the version number from the git tag. Therefore, it is not necessary to bump versions in the code.
 
 ## Writing documentation
 
