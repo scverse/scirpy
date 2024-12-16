@@ -42,8 +42,8 @@ Please consider making a tax-deductible [donation](https://numfocus.org/donate-t
 
 Please refer to the [documentation][link-docs]. In particular, the
 
--   [Tutorial][link-tutorial], and the
--   [API documentation][link-api].
+- [Tutorial][link-tutorial], and the
+- [API documentation][link-api].
 
 ## Installation
 
@@ -88,8 +88,8 @@ See the [changelog][changelog].
 
 We are happy to assist with problems when using scirpy.
 
--   If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the [scverse discourse][scverse-discourse].
--   For bug report or feature requests, please use the [issue tracker][issue-tracker].
+- If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the [scverse discourse][scverse-discourse].
+- For bug report or feature requests, please use the [issue tracker][issue-tracker].
 
 We try to respond within two working days, however fixing bugs or implementing new features
 can take substantially longer, depending on the availability of our developers.
