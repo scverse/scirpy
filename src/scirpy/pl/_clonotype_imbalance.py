@@ -84,7 +84,7 @@ def clonotype_imbalance(
     params = DataHandler(adata, airr_mod)
     if key_added not in params.adata.uns:
         sc.logging.warning(
-            "Clonotype imbalance not found." " Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
+            "Clonotype imbalance not found. Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
         )
 
         tl.clonotype_imbalance(

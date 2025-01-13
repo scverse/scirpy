@@ -282,7 +282,7 @@ class DoubleLookupNeighborFinder:
         if reverse_lookup_table_name is not None:
             distance_matrix_name_reverse, _, reverse_lookup_table = self.lookups[reverse_lookup_table_name]
             if distance_matrix_name != distance_matrix_name_reverse:
-                raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
+                raise ValueError("Forward and reverse lookup tablese must be defined on the same distance matrices.")
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
 

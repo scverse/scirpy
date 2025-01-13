@@ -368,12 +368,12 @@ class Recombinant:
         if not self.has_D_segment:
             V_segment = self.summary[0]
             J_segment = self.summary[1]
-            segments_string = f"V segment:\t{V_segment}\n" f"J segment:\t{J_segment}\n"
+            segments_string = f"V segment:\t{V_segment}\nJ segment:\t{J_segment}\n"
         else:
             V_segment = self.summary[0]
             D_segment = self.summary[1]
             J_segment = self.summary[2]
-            segments_string = f"V segment:\t{V_segment}\nD segment:\t{D_segment}\n" f"J segment:\t{J_segment}\n"
+            segments_string = f"V segment:\t{V_segment}\nD segment:\t{D_segment}\nJ segment:\t{J_segment}\n"
         summary_string += segments_string
         summary_string += f"ID:\t{self.identifier}\n"
         summary_string += (
