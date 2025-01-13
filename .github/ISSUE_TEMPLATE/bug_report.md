@@ -20,9 +20,9 @@ A clear and concise description of what you expected to happen.
 
 **System**
 
--   OS: [e.g. Windows 10]
--   Python version [e.g. 3.9]
--   Versions of libraries involved [e.g. AnnData 0.8.0, Scirpy 0.12.0]
+- OS: [e.g. Windows 10]
+- Python version [e.g. 3.9]
+- Versions of libraries involved [e.g. AnnData 0.8.0, Scirpy 0.12.0]
 
 **Additional context**
 Add any other context about the problem here.
