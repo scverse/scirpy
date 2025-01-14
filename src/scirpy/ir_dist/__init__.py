@@ -30,7 +30,7 @@ def TcrNeighbors(*args, **kwargs):
 
 def IrNeighbors(*args, **kwargs):
     raise RuntimeError(
-        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` " "or `sequence_dist` for that functionality. "
+        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` or `sequence_dist` for that functionality. "
     )
 
 

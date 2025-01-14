@@ -36,7 +36,7 @@ def index_chains(
     key_added: str = "chain_indices",
 ) -> None:
     """\
-    Selects primary/secondary VJ/VDJ cells per chain according to the :ref:`receptor-model`.
+    Selects primary/secondary VJ/VDJ chains per cell according to the :ref:`receptor-model`.
 
     This function iterates through all chains stored in the :term:`awkward array` in
     `adata.obsm[airr_key]` and
