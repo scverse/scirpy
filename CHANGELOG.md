@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## v0.20.1
+
+### Fixes
+
+- Exclude `logomaker` v0.8.5 ([#589](https://github.com/scverse/scirpy/pull/589))
+
 ## v0.20.0
 
 ### Backwards-incompatible changes
