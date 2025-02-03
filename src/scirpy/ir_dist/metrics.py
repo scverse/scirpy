@@ -812,6 +812,22 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             not implemented for the GPU hamming calculator yet.
         """
         import cupy as cp
+        import sys
+        import subprocess
+
+        print("python version: ", sys.version)
+        print("cupy version: ", cp.__version__)
+        print("cupy runtime version: ", cp.cuda.runtime.runtimeGetVersion())
+
+        def get_nvcc_version():
+            try:
+                # Run the nvcc --version command
+                result = subprocess.run(['nvcc', '--version'], capture_output=True, text=True)
+                return result.stdout
+            except FileNotFoundError:
+                return "nvcc is not installed or not found in the system PATH"
+
+        print(get_nvcc_version())
 
         start_gpu_hamming_mat = time.time()
 
