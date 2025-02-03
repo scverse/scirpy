@@ -811,9 +811,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             Always returns a numpy array containing None because the computation of the minimum distance per row is
             not implemented for the GPU hamming calculator yet.
         """
-        import cupy as cp
-        import sys
         import subprocess
+        import sys
+
+        import cupy as cp
 
         print("python version: ", sys.version)
         print("cupy version: ", cp.__version__)
@@ -822,7 +823,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         def get_nvcc_version():
             try:
                 # Run the nvcc --version command
-                result = subprocess.run(['nvcc', '--version'], capture_output=True, text=True)
+                result = subprocess.run(["nvcc", "--version"], capture_output=True, text=True)
                 return result.stdout
             except FileNotFoundError:
                 return "nvcc is not installed or not found in the system PATH"
