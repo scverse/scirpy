@@ -846,8 +846,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         start_preparation = time.time()
 
-        seqs_original_indices = cp.asarray(seqs_original_indices, dtype=cp.int_)
-        seqs2_original_indices = cp.asarray(seqs2_original_indices, dtype=cp.int_)
+        seqs_original_indices = cp.asarray(seqs_original_indices, dtype=np.int32)
+        seqs2_original_indices = cp.asarray(seqs2_original_indices, dtype=np.int32)
 
         is_symmetric = False
 
@@ -971,16 +971,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
             d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8))
-            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(int))
-            d_seqs_L2 = cp.asarray(seqs_L2.astype(int))
+            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32))
+            d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32))
 
             # Due to performance reasons and since we expect the result matrix to be very sparse, we
             # set a maximum result width for the current block
             max_block_width = 1100
 
             d_data_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=cp.int8)
-            d_indices_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=cp.int_)
-            d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=cp.int_)
+            d_indices_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=np.int32)
+            d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=np.int32)
 
             threads_per_block = 256
             blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
@@ -1005,6 +1005,32 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             # For performance testing, we free all memory blocks and synchronize with the device
             cp.get_default_memory_pool().free_all_blocks()
             cp.cuda.Device().synchronize()
+
+            print("---")
+            print("blocks_per_grid: ", blocks_per_grid, " ", type(blocks_per_grid))
+            print("threads_per_block: ", threads_per_block, " ", type(threads_per_block))
+            print("d_seqs_mat1_transposed: ", d_seqs_mat1_transposed.shape, " ", d_seqs_mat1_transposed.dtype)
+            print("d_seqs_mat2_transposed: ", d_seqs_mat2_transposed.shape, " ", d_seqs_mat2_transposed.dtype)
+            print("d_seqs_L1: ", d_seqs_L1.shape, " ", d_seqs_L1.dtype)
+            print("d_seqs_L2: ", d_seqs_L2.shape, " ", d_seqs_L2.dtype)
+            print("seqs_original_indices: ", seqs_original_indices.shape, " ", seqs_original_indices.dtype)
+            print("seqs2_original_indices_blocks: ", seqs2_original_indices_blocks.shape, " ", seqs2_original_indices_blocks.dtype)
+            print("self.cutoff: ", self.cutoff, " ", type(self.cutoff))
+            print("d_data_matrix: ", d_data_matrix.shape, " ", d_data_matrix.dtype)
+            print("d_indices_matrix: ", d_indices_matrix.shape, " ", d_indices_matrix.dtype)
+            print("d_row_element_counts: ", d_row_element_counts.shape, " ", d_row_element_counts.dtype)
+            print("block_offset: ", block_offset, " ", type(block_offset))
+            
+            print("seqs_mat1_rows: ", seqs_mat1_rows, " ", type(seqs_mat1_rows))
+            print("seqs_mat2_rows: ", seqs_mat2_rows, " ", type(seqs_mat2_rows))
+            print("seqs_mat1_cols: ", seqs_mat1_cols, " ", type(seqs_mat1_cols))
+            print("seqs_mat2_cols: ", seqs_mat2_cols, " ", type(seqs_mat2_cols))
+            print("d_data_matrix_cols: ", d_data_matrix_cols, " ", type(d_data_matrix_cols))
+            print("d_indices_matrix_cols: ", d_indices_matrix_cols, " ", type(d_indices_matrix_cols))
+
+            print("is_symmetric: ", is_symmetric, " ", type(is_symmetric))
+
+            print("---")
 
             start_kernel = time.time()
 
@@ -1043,7 +1069,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             row_element_counts = d_row_element_counts.get()
 
-            indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int_)
+            indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
             indptr[1:] = np.cumsum(row_element_counts)
             d_indptr = cp.asarray(indptr)
 
@@ -1058,10 +1084,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             ), f""""ERROR: The chosen result block width is too small to hold all result values of the current block.
             Chosen width: {max_block_width}, Necessary width: {row_max_len}"""
 
-            data = np.zeros(n_elements, dtype=np.int_)
+            data = np.zeros(n_elements, dtype=np.int32)
             d_data = cp.zeros_like(data)
 
-            indices = np.zeros(n_elements, dtype=np.int_)
+            indices = np.zeros(n_elements, dtype=np.int32)
             d_indices = cp.zeros_like(indices)
 
             threads_per_block = (1, 256)
@@ -1069,6 +1095,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
             blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
 
+            print("d_data: ", d_data.shape, " ", d_data.dtype)
+            print("d_indices: ", d_indices.shape, " ", d_indices.dtype)
+            print("d_data_matrix: ", d_data_matrix.shape, " ", d_data_matrix.dtype)
+            print("d_indices_matrix: ", d_indices_matrix.shape, " ", d_indices_matrix.dtype)
+            print("d_indptr: ", d_indptr.shape, " ", d_indptr.dtype)
+            
             create_csr_kernel(
                 (blocks_per_grid_x, blocks_per_grid_y),
                 threads_per_block,
