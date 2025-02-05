@@ -57,7 +57,7 @@ test:
   imports:
     - scirpy
   commands:
-    - pytest --pyargs scirpy -m "not extra" -m "not gpu"
+    - pytest --pyargs scirpy -m "not extra and not gpu"
 
 about:
   home: https://scirpy.scverse.org
