@@ -812,22 +812,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             not implemented for the GPU hamming calculator yet.
         """
         import cupy as cp
-        import sys
-        import subprocess
-
-        print("python version: ", sys.version)
-        print("cupy version: ", cp.__version__)
-        print("cupy runtime version: ", cp.cuda.runtime.runtimeGetVersion())
-
-        def get_nvcc_version():
-            try:
-                # Run the nvcc --version command
-                result = subprocess.run(['nvcc', '--version'], capture_output=True, text=True)
-                return result.stdout
-            except FileNotFoundError:
-                return "nvcc is not installed or not found in the system PATH"
-
-        print(get_nvcc_version())
 
         start_gpu_hamming_mat = time.time()
 
@@ -1006,32 +990,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             cp.get_default_memory_pool().free_all_blocks()
             cp.cuda.Device().synchronize()
 
-            print("---")
-            print("blocks_per_grid: ", blocks_per_grid, " ", type(blocks_per_grid))
-            print("threads_per_block: ", threads_per_block, " ", type(threads_per_block))
-            print("d_seqs_mat1_transposed: ", d_seqs_mat1_transposed.shape, " ", d_seqs_mat1_transposed.dtype)
-            print("d_seqs_mat2_transposed: ", d_seqs_mat2_transposed.shape, " ", d_seqs_mat2_transposed.dtype)
-            print("d_seqs_L1: ", d_seqs_L1.shape, " ", d_seqs_L1.dtype)
-            print("d_seqs_L2: ", d_seqs_L2.shape, " ", d_seqs_L2.dtype)
-            print("seqs_original_indices: ", seqs_original_indices.shape, " ", seqs_original_indices.dtype)
-            print("seqs2_original_indices_blocks: ", seqs2_original_indices_blocks.shape, " ", seqs2_original_indices_blocks.dtype)
-            print("self.cutoff: ", self.cutoff, " ", type(self.cutoff))
-            print("d_data_matrix: ", d_data_matrix.shape, " ", d_data_matrix.dtype)
-            print("d_indices_matrix: ", d_indices_matrix.shape, " ", d_indices_matrix.dtype)
-            print("d_row_element_counts: ", d_row_element_counts.shape, " ", d_row_element_counts.dtype)
-            print("block_offset: ", block_offset, " ", type(block_offset))
-            
-            print("seqs_mat1_rows: ", seqs_mat1_rows, " ", type(seqs_mat1_rows))
-            print("seqs_mat2_rows: ", seqs_mat2_rows, " ", type(seqs_mat2_rows))
-            print("seqs_mat1_cols: ", seqs_mat1_cols, " ", type(seqs_mat1_cols))
-            print("seqs_mat2_cols: ", seqs_mat2_cols, " ", type(seqs_mat2_cols))
-            print("d_data_matrix_cols: ", d_data_matrix_cols, " ", type(d_data_matrix_cols))
-            print("d_indices_matrix_cols: ", d_indices_matrix_cols, " ", type(d_indices_matrix_cols))
-
-            print("is_symmetric: ", is_symmetric, " ", type(is_symmetric))
-
-            print("---")
-
             start_kernel = time.time()
 
             hamming_kernel(
@@ -1094,12 +1052,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
             blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
             blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
-
-            print("d_data: ", d_data.shape, " ", d_data.dtype)
-            print("d_indices: ", d_indices.shape, " ", d_indices.dtype)
-            print("d_data_matrix: ", d_data_matrix.shape, " ", d_data_matrix.dtype)
-            print("d_indices_matrix: ", d_indices_matrix.shape, " ", d_indices_matrix.dtype)
-            print("d_indptr: ", d_indptr.shape, " ", d_indptr.dtype)
             
             create_csr_kernel(
                 (blocks_per_grid_x, blocks_per_grid_y),
