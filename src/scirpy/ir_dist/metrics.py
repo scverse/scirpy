@@ -812,10 +812,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             not implemented for the GPU hamming calculator yet.
         """
         import cupy as cp
-
-        start_gpu_hamming_mat = time.time()
-
-        start_sorting = time.time()
+        from tqdm import tqdm
 
         seqs_lengths = np.vectorize(len)(seqs)
         seqs_original_indices = np.argsort(seqs_lengths)
@@ -825,18 +822,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs2_original_indices = np.argsort(seqs2_lengths)
         seqs2 = seqs2[seqs2_original_indices]
 
-        end_sorting = time.time()
-        print("sorting seqs by length time taken: ", end_sorting - start_sorting)
-
-        start_preparation = time.time()
-
         seqs_original_indices = cp.asarray(seqs_original_indices, dtype=np.int32)
         seqs2_original_indices = cp.asarray(seqs2_original_indices, dtype=np.int32)
 
         is_symmetric = False
 
         max_seq_len = max(len(s) for s in (*seqs, *seqs2))
-        print(f"max_seq_len: {max_seq_len}")
 
         def _seqs2mat_fast(seqs: Sequence[str], max_len: None | int = None) -> tuple[np.ndarray, np.ndarray]:
             if max_len is None:
@@ -855,9 +846,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
-
-        end_preparation = time.time()
-        print("preparation time taken: ", end_preparation - start_preparation)
 
         hamming_kernel = cp.RawKernel(
             r"""
@@ -951,8 +939,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         ):
             import cupy as cp
 
-            create_input_matrices_start = time.time()
-
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
             d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8))
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32))
@@ -978,19 +964,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
 
             cp.cuda.Device().synchronize()
-            create_input_matrices_end = time.time()
-            print("create_input_matrices time taken: ", create_input_matrices_end - create_input_matrices_start)
-
-            start_compile = time.time()
-            hamming_kernel.compile()
-            end_compile = time.time()
-            print("compile time taken: ", end_compile - start_compile)
 
             # For performance testing, we free all memory blocks and synchronize with the device
             cp.get_default_memory_pool().free_all_blocks()
             cp.cuda.Device().synchronize()
-
-            start_kernel = time.time()
 
             hamming_kernel(
                 (blocks_per_grid,),
@@ -1019,12 +996,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             cp.cuda.Device().synchronize()
 
-            end_kernel = time.time()
-            time_taken = end_kernel - start_kernel
-            print("hamming kernel time taken: ", time_taken)
-
-            start_create_csr = time.time()
-
             row_element_counts = d_row_element_counts.get()
 
             indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
@@ -1032,10 +1003,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_indptr = cp.asarray(indptr)
 
             n_elements = indptr[-1]
-
-            print("n_elements: ", n_elements)
             row_max_len = np.max(row_element_counts)
-            print("row max len of block: ", row_max_len)
 
             assert (
                 row_max_len <= max_block_width
@@ -1076,12 +1044,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
             cp.cuda.Device().synchronize()
 
-            end_create_csr = time.time()
-            print("end_create_csr time taken: ", end_create_csr - start_create_csr)
-
-            return res, time_taken
-
-        start_split_blocks = time.time()
+            return res
 
         # Set the number of blocks for the calculation. A higher number can be more memory friendly, whereas
         # a lower number can improve the performance.
@@ -1094,13 +1057,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         result_blocks = [None] * n_blocks
 
         block_offset = start_column
-        time_sum_blocks = 0
 
-        end_split_blocks = time.time()
-        print("split_blocks time taken: ", end_split_blocks - start_split_blocks)
-
-        for i in range(0, n_blocks):
-            result_blocks[i], time_taken = calc_block_gpu(
+        print(f"\nStart GPU calculations for {n_blocks} matrix blocks:")
+        
+        for i in tqdm(range(0, n_blocks), desc="Processing", unit="block"):
+            result_blocks[i] = calc_block_gpu(
                 seqs_mat1,
                 seqs_mat2_blocks[i],
                 seqs_L1,
@@ -1108,34 +1069,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 seqs2_original_indices_blocks[i],
                 block_offset,
             )
-            time_sum_blocks += time_taken
             block_offset += seqs_mat2_blocks[i].shape[0]
-        print("calculate blocks time taken: ", time_sum_blocks)
-
-        start_stack_matrix = time.time()
 
         result_sparse = result_blocks[0]
         for i in range(1, len(result_blocks)):
             result_sparse += result_blocks[i]
 
-        size_in_bytes = result_sparse.data.nbytes + result_sparse.indices.nbytes + result_sparse.indptr.nbytes
-        size_in_gb = size_in_bytes / (1024**3)
-        print(f"Size of the CSR matrix: {size_in_gb:.6f} GB")
-
         row_element_counts_gpu = np.diff(result_sparse.indptr)
 
-        start_sort_indices = time.time()
         result_sparse.sort_indices()
-        end_sort_indices = time.time()
-        print("sorting indices of csr matrix time taken: ", end_sort_indices - start_sort_indices)
-
-        print("final result max row element count: ", np.max(row_element_counts_gpu))
-
-        end_stack_matrix = time.time()
-        print("stack matrix time taken: ", end_stack_matrix - start_stack_matrix)
-
-        end_gpu_hamming_mat = time.time()
-        print("gpu_hamming_mat time taken: ", end_gpu_hamming_mat - start_gpu_hamming_mat)
 
         # Returns the results in a way that fits the current interface, could be improved later
         return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
