@@ -851,13 +851,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 L[i] = len(seq)
             return mat, L
 
-        # If not ascii compatible, the following can be used:
-        # unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
-        # seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
-        # seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
-
-        seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
-        seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
+        try:
+            seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
+            seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
+        except Exception as e:
+            print(f"An error occurred while converting sequences: {type(e).__name__} - {str(e)}")
+            print("Retrying with implementation for non ascii sequences")
+            unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
+            seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
+            seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
 
         hamming_kernel = cp.RawKernel(
             r"""
