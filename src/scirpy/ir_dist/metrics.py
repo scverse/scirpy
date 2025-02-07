@@ -763,6 +763,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     cutoff:
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
+    gpu_n_blocks:
+        Number of blocks in which the final result matrix should be computed. Each block reserves GPU memory
+        in which the computed result block has to fit in sparse representation. Lower values give better performance 
+        but increase the risk of running out of reserved memory. This value should be chosen based on the 
+        estimated sparsity of the result matrix and the size of the GPU device memory.
+    gpu_block_width:
+        Maximum width of blocks in which the final result matrix should be computed. Each block reserves GPU memory
+        in which the computed result block has to fit in sparse representation. Higher values allow for a lower
+        number of result blocks (gpu_n_blocks) which increases the performances. This value should be chosen based on
+        the GPU device memory.
     """
 
     def __init__(
