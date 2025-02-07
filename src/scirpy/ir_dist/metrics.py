@@ -890,20 +890,20 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
                 for (int col = 0; col < seqs_mat2_rows; col++) {
                     if ((! is_symmetric ) || (col + block_offset) >= row) {
-                        int seq2_len = seqs_L2[col];//tex1Dfetch<int>(tex_L2, col); // seqs_L2[col];
+                        int seq2_len = seqs_L2[col];
                         char distance = 1;
 
                         if (seq1_len == seq2_len) {
                             for (int i = 0; i < seq1_len; i++) {
-                                char tex_val1 = seqs_mat1[i*seqs_mat1_rows+row];
-                                char tex_val2 = seqs_mat2[i*seqs_mat2_rows+col];
+                                char val1 = seqs_mat1[i*seqs_mat1_rows+row];
+                                char val2 = seqs_mat2[i*seqs_mat2_rows+col];
 
-                                if( tex_val1 != tex_val2) {
+                                if(val1 != val2) {
                                     distance++;
                                 }
                             }
                             if (distance <= cutoff + 1) {
-                                int seqs2_original_index = seqs2_original_indices[col];//tex1Dfetch<int>(seqs2_original_indices, col);
+                                int seqs2_original_index = seqs2_original_indices[col];
                                 data[seqs_original_index * data_cols + row_end_index] = distance;
                                 indices[seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
                                 row_end_index++;
@@ -917,7 +917,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         """,
             "hamming_kernel",
             options=("--maxrregcount=256",),
-        )  # , '--ptxas-options=-v', '-lineinfo'))
+        )
 
         create_csr_kernel = cp.RawKernel(
             r"""
