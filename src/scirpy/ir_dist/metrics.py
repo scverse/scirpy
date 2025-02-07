@@ -769,9 +769,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         self,
         *,
         cutoff: int = 2,
+        gpu_n_blocks: int = 10,
+        gpu_block_width: int = 1000,
     ):
         super().__init__(n_jobs=1, n_blocks=1)
         self.cutoff = cutoff
+        self.gpu_n_blocks = gpu_n_blocks
+        self.gpu_block_width = gpu_block_width
 
     def _gpu_hamming_mat(
         self,
@@ -944,7 +948,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             # Due to performance reasons and since we expect the result matrix to be very sparse, we
             # set a maximum result width for the current block
-            max_block_width = 1100
+            max_block_width = self.gpu_block_width
 
             d_data_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=cp.int8)
             d_indices_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=np.int32)
@@ -1037,7 +1041,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         # Set the number of blocks for the calculation. A higher number can be more memory friendly, whereas
         # a lower number can improve the performance.
         # block_width = 4096
-        n_blocks = 10  # or use: seqs_mat2.shape[0] // block_width + 1
+        n_blocks = self.gpu_n_blocks  # or use: seqs_mat2.shape[0] // block_width + 1
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
@@ -1046,7 +1050,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         block_offset = start_column
 
-        print(f"\nStart GPU calculations for {n_blocks} matrix blocks:")
+        print(f"\nStart GPU calculations for {n_blocks} sparse matrix result blocks of max width {self.gpu_block_width}:")
         
         for i in tqdm(range(0, n_blocks), desc="Processing", unit="block"):
             result_blocks[i] = calc_block_gpu(
