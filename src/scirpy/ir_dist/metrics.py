@@ -1026,7 +1026,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
             blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
             blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
-            
+
             create_csr_kernel(
                 (blocks_per_grid_x, blocks_per_grid_y),
                 threads_per_block,
