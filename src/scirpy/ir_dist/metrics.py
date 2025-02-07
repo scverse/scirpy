@@ -765,8 +765,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         use of sparse matrices.
     gpu_n_blocks:
         Number of blocks in which the final result matrix should be computed. Each block reserves GPU memory
-        in which the computed result block has to fit in sparse representation. Lower values give better performance 
-        but increase the risk of running out of reserved memory. This value should be chosen based on the 
+        in which the computed result block has to fit in sparse representation. Lower values give better performance
+        but increase the risk of running out of reserved memory. This value should be chosen based on the
         estimated sparsity of the result matrix and the size of the GPU device memory.
     gpu_block_width:
         Maximum width of blocks in which the final result matrix should be computed. Each block reserves GPU memory
@@ -1061,8 +1061,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         block_offset = start_column
 
-        print(f"\nStart GPU calculations for {n_blocks} sparse matrix result blocks of max width {self.gpu_block_width}:")
-        
+        print(
+            f"\nStart GPU calculations for {n_blocks} sparse matrix result blocks of max width {self.gpu_block_width}:"
+        )
+
         for i in tqdm(range(0, n_blocks), desc="Processing", unit="block"):
             result_blocks[i] = calc_block_gpu(
                 seqs_mat1,
