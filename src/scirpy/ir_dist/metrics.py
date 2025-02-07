@@ -1052,8 +1052,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         # Set the number of blocks for the calculation. A higher number can be more memory friendly, whereas
         # a lower number can improve the performance.
-        # block_width = 4096
-        n_blocks = self.gpu_n_blocks  # or use: seqs_mat2.shape[0] // block_width + 1
+        n_blocks = self.gpu_n_blocks
 
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
