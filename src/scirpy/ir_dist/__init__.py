@@ -35,7 +35,16 @@ def IrNeighbors(*args, **kwargs):
 
 
 MetricType = (
-    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming", "gpu_haming", "normalized_hamming", "tcrdist"]
+    Literal[
+        "alignment",
+        "fastalignment",
+        "identity",
+        "levenshtein",
+        "hamming",
+        "gpu_haming",
+        "normalized_hamming",
+        "tcrdist",
+    ]
     | metrics.DistanceCalculator
 )
 
