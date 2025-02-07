@@ -754,7 +754,7 @@ def test_gpu_hamming_reference():
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
 
-    gpu_hamming_calculator = GPUHammingDistanceCalculator(cutoff=2)
+    gpu_hamming_calculator = GPUHammingDistanceCalculator(cutoff=2, gpu_n_blocks=5, gpu_block_width=500)
     res = gpu_hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
