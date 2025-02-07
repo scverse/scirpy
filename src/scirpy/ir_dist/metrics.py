@@ -1,10 +1,8 @@
 import abc
 import itertools
-import time
 import warnings
 from collections.abc import Sequence
 
-# from numba import cuda
 import joblib
 import matplotlib.pyplot as plt
 import numba as nb
@@ -963,12 +961,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
             d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
 
-            cp.cuda.Device().synchronize()
-
-            # For performance testing, we free all memory blocks and synchronize with the device
-            cp.get_default_memory_pool().free_all_blocks()
-            cp.cuda.Device().synchronize()
-
             hamming_kernel(
                 (blocks_per_grid,),
                 (threads_per_block,),
@@ -993,8 +985,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     is_symmetric,
                 ),
             )
-
-            cp.cuda.Device().synchronize()
 
             row_element_counts = d_row_element_counts.get()
 
@@ -1042,8 +1032,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             indices = d_indices.get()
 
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
-            cp.cuda.Device().synchronize()
-
             return res
 
         # Set the number of blocks for the calculation. A higher number can be more memory friendly, whereas
