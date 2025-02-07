@@ -855,7 +855,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
             seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
         except UnicodeError:
-            print(f"UnicodeError error occurred while converting sequences, retrying with implementation for non ascii sequences")
+            print(
+                "UnicodeError error occurred while converting sequences, retrying with implementation for non ascii sequences"
+            )
             unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
             seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
             seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
