@@ -868,7 +868,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
             seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
         except UnicodeError:
-            print(
+            logging.info(
                 "UnicodeError error occurred while converting sequences, retrying with implementation for non ascii sequences"
             )
             unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
@@ -1075,7 +1075,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         block_offset = start_column
 
-        print(
+        logging.info(
             f"\nStart GPU calculations for {n_blocks} sparse matrix result blocks of max width {self.gpu_block_width}:"
         )
 
