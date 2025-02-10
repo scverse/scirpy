@@ -61,7 +61,7 @@ metric
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
       * `gpu_hamming` -- Hamming distance for CDR3 sequences of equal length calculated with a GPU.
-        See \:class:`~scirpy.ir_dist.metrics.GPUHammingDistanceCalculator`.
+        See :class:`~scirpy.ir_dist.metrics.GPUHammingDistanceCalculator`.
       * `normalized_hamming` -- Normalized Hamming distance (in percent) for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the

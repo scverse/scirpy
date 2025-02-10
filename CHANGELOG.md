@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [Unreleased]
+
+### Additions
+
+- Add GPU implementation of Hamming distance ([#541](https://github.com/scverse/scirpy/pull/541))
+
+### Documentation
+
+- Add tutorial with tips for large datasets ([#541](https://github.com/scverse/scirpy/pull/541))
+
 ## v0.20.1
 
 ### Fixes
