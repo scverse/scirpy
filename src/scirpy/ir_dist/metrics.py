@@ -758,6 +758,19 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
+    For performance reasons, the computation of the final result matrix is split up into several blocks. The parameter
+    gpu_n_blocks determines the number of those blocks. The parameter gpu_block_width determines how much GPU memory
+    is reserved for the computed result of each block in SPARSE representation.
+
+    E.g. there is a 1000x1000 (dense represenation) not yet computed result matrix with gpu_n_blocks=10 and gpu_block_width=20.
+    Then the result matrix is computed in 10 blocks of  1000x100 (dense representation). Each of these blocks needs to fit into
+    a 1000x20 block in SPARSE representation once computed and this 1000x20 block needs to fit into GPU memory. So there shouldn't
+    be a resulting row in a block that has more than 20 values <= cutoff.
+
+    The parameter gpu_block_width should be chosen based on the available GPU memory. Choosing lower values for gpu_n_blocks increases
+    the performance but also increases the risk of running out of reserved memory, since the result blocks that need to fit into the
+    reserved GPU memory in sparse representation get bigger.
+
     Parameters
     ----------
     cutoff:
@@ -771,7 +784,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     gpu_block_width:
         Maximum width of blocks in which the final result matrix should be computed. Each block reserves GPU memory
         in which the computed result block has to fit in sparse representation. Higher values allow for a lower
-        number of result blocks (gpu_n_blocks) which increases the performances. This value should be chosen based on
+        number of result blocks (gpu_n_blocks) which increases the performance. This value should be chosen based on
         the GPU device memory.
     """
 
