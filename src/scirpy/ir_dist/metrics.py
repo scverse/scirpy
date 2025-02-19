@@ -1106,7 +1106,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         the already calculated blocks.
         Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
         Consider choosing a smaller cutoff to resolve this issue."""
-        
+
         result_sparse = result_blocks[0]
         for i in range(1, len(result_blocks)):
             result_sparse += result_blocks[i]
