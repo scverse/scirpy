@@ -1017,19 +1017,25 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             )
 
             row_element_counts = d_row_element_counts.get()
+            row_max_len = np.max(row_element_counts)
+            row_element_sum = np.sum(row_element_counts, dtype=np.int64)
+
+            assert (
+                row_max_len <= max_block_width
+            ), f"""ERROR: The chosen result block width is too small to hold all result values of the current block.
+            Chosen width: {max_block_width}, Necessary width: {row_max_len}."""
+
+            assert (
+                row_element_sum <= np.iinfo(np.int32).max
+            ), f"""ERROR: There are too many result values to be held by the resulting CSR matrix of the current block.
+            Current number: {row_element_sum}, Maximum number: {np.iinfo(np.int32).max}.
+            Choose a higher number of blocks to resolve the problem."""
 
             indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
             indptr[1:] = np.cumsum(row_element_counts)
             d_indptr = cp.asarray(indptr)
 
             n_elements = indptr[-1]
-            row_max_len = np.max(row_element_counts)
-
-            assert (
-                row_max_len <= max_block_width
-            ), f""""ERROR: The chosen result block width is too small to hold all result values of the current block.
-            Chosen width: {max_block_width}, Necessary width: {row_max_len}"""
-
             data = np.zeros(n_elements, dtype=np.int32)
             d_data = cp.zeros_like(data)
 
@@ -1090,6 +1096,17 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             )
             block_offset += seqs_mat2_blocks[i].shape[0]
 
+        num_elements = 0
+        for i in range(0, len(result_blocks)):
+            num_elements += result_blocks[i].indptr[-1]
+
+        assert (
+            num_elements <= np.iinfo(np.int32).max
+        ), f"""ERROR: The overall number of result values is too high to construct the final CSR matrix by combining
+        the already calculated blocks.
+        Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
+        Consider choosing a smaller cutoff to resolve this issue."""
+        
         result_sparse = result_blocks[0]
         for i in range(1, len(result_blocks)):
             result_sparse += result_blocks[i]
