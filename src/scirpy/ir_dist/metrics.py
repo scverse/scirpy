@@ -1029,7 +1029,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 row_element_sum <= np.iinfo(np.int32).max
             ), f"""ERROR: There are too many result values to be held by the resulting CSR matrix of the current block.
             Current number: {row_element_sum}, Maximum number: {np.iinfo(np.int32).max}.
-            Choose a higher number of blocks to resolve the problem."""
+            Consider choosing a smaller cutoff to resolve this issue."""
 
             indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
             indptr[1:] = np.cumsum(row_element_counts)
