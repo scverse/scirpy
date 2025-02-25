@@ -396,7 +396,7 @@ def _seqs2mat(
     mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
     L = np.zeros(len(seqs), dtype=np.int8)
     for si, s in enumerate(seqs):
-        L[si] = len(s)
+        L[si] = min(len(s), max_len)
         for aai in range(max_len):
             if aai >= len(s):
                 break
@@ -752,6 +752,375 @@ class HammingDistanceCalculator(_MetricDistanceCalculator):
     _metric_mat = _hamming_mat
 
 
+class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
+    """Computes pairwise distances between gene sequences based on the "hamming" distance metric with GPU support.
+
+    The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
+
+    For performance reasons, the computation of the final result matrix is split up into several blocks. The parameter
+    gpu_n_blocks determines the number of those blocks. The parameter gpu_block_width determines how much GPU memory
+    is reserved for the computed result of each block in SPARSE representation.
+
+    E.g. there is a 1000x1000 (dense represenation) not yet computed result matrix with gpu_n_blocks=10 and gpu_block_width=20.
+    Then the result matrix is computed in 10 blocks of  1000x100 (dense representation). Each of these blocks needs to fit into
+    a 1000x20 block in SPARSE representation once computed and this 1000x20 block needs to fit into GPU memory. So there shouldn't
+    be a resulting row in a block that has more than 20 values <= cutoff.
+
+    The parameter gpu_block_width should be chosen based on the available GPU memory. Choosing lower values for gpu_n_blocks increases
+    the performance but also increases the risk of running out of reserved memory, since the result blocks that need to fit into the
+    reserved GPU memory in sparse representation get bigger.
+
+    Parameters
+    ----------
+    cutoff:
+        Will eleminate distances > cutoff to make efficient
+        use of sparse matrices.
+    gpu_n_blocks:
+        Number of blocks in which the final result matrix should be computed. Each block reserves GPU memory
+        in which the computed result block has to fit in sparse representation. Lower values give better performance
+        but increase the risk of running out of reserved memory. This value should be chosen based on the
+        estimated sparsity of the result matrix and the size of the GPU device memory.
+    gpu_block_width:
+        Maximum width of blocks in which the final result matrix should be computed. Each block reserves GPU memory
+        in which the computed result block has to fit in sparse representation. Higher values allow for a lower
+        number of result blocks (gpu_n_blocks) which increases the performance. This value should be chosen based on
+        the GPU device memory.
+    """
+
+    def __init__(
+        self,
+        *,
+        cutoff: int = 2,
+        gpu_n_blocks: int = 10,
+        gpu_block_width: int = 1000,
+    ):
+        super().__init__(n_jobs=1, n_blocks=1)
+        self.cutoff = cutoff
+        self.gpu_n_blocks = gpu_n_blocks
+        self.gpu_block_width = gpu_block_width
+
+    def _gpu_hamming_mat(
+        self,
+        *,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+        """Computes the pairwise hamming distances for sequences in seqs and seqs2 with GPU support.
+
+        Parameters
+        ----------
+        seqs/2:
+            A python sequence of strings representing gene sequences
+        is_symmetric:
+            Determines whether the final result matrix is symmetric, assuming that this function is
+            only used to compute a block of a bigger result matrix
+        start_column:
+            Determines at which column the calculation should be started. This is only used if this function is
+            used to compute a block of a bigger result matrix that is symmetric
+
+        Returns
+        -------
+        data_rows:
+            List with array containing the non-zero data values of the result matrix,
+            needed to create the final scipy CSR result matrix later
+        indices_rows:
+            List with array containing the non-zero entry column indeces of the result matrix,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts:
+            Array with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_mins:
+            Always returns a numpy array containing None because the computation of the minimum distance per row is
+            not implemented for the GPU hamming calculator yet.
+        """
+        import cupy as cp
+        from tqdm import tqdm
+
+        seqs_lengths = np.vectorize(len)(seqs)
+        seqs_original_indices = np.argsort(seqs_lengths)
+        seqs = seqs[seqs_original_indices]
+
+        seqs2_lengths = np.vectorize(len)(seqs2)
+        seqs2_original_indices = np.argsort(seqs2_lengths)
+        seqs2 = seqs2[seqs2_original_indices]
+
+        seqs_original_indices = cp.asarray(seqs_original_indices, dtype=np.int32)
+        seqs2_original_indices = cp.asarray(seqs2_original_indices, dtype=np.int32)
+
+        is_symmetric = False
+
+        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
+        def _seqs2mat_fast(seqs: Sequence[str], max_len: None | int = None) -> tuple[np.ndarray, np.ndarray]:
+            if max_len is None:
+                max_len = np.max([len(s) for s in seqs])
+            mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
+            L = np.zeros(len(seqs), dtype=np.int8)
+            for i, seq in enumerate(seqs):
+                mat[i][0 : len(seq)] = np.frombuffer(seq.encode("ascii"), dtype=np.uint8)
+                L[i] = len(seq)
+            return mat, L
+
+        try:
+            seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
+            seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
+        except UnicodeError:
+            logging.info(
+                "UnicodeError error occurred while converting sequences, retrying with implementation for non ascii sequences"
+            )
+            unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
+            seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
+            seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+
+        hamming_kernel = cp.RawKernel(
+            r"""
+        extern "C" __global__ __launch_bounds__(256)
+        void hamming_kernel(
+            const char* __restrict__ seqs_mat1,
+            const char* __restrict__ seqs_mat2,
+            const int* __restrict__ seqs_L1,
+            const int* seqs_L2,
+            const int* __restrict__ seqs_original_indices,
+            const int* seqs2_original_indices,
+            const int cutoff,
+            char* __restrict__ data,
+            int* __restrict__ indices,
+            int* __restrict__ row_element_counts,
+            const int block_offset,
+            const int seqs_mat1_rows,
+            const int seqs_mat2_rows,
+            const int seqs_mat1_cols,
+            const int seqs_mat2_cols,
+            const int data_cols,
+            const int indices_cols,
+            const bool is_symmetric
+        ) {
+            int row = blockDim.x * blockIdx.x + threadIdx.x;
+            if (row < seqs_mat1_rows) {
+                int seqs_original_index = seqs_original_indices[row];
+                int seq1_len = seqs_L1[row];
+                int row_end_index = 0;
+
+                for (int col = 0; col < seqs_mat2_rows; col++) {
+                    if ((! is_symmetric ) || (col + block_offset) >= row) {
+                        int seq2_len = seqs_L2[col];
+                        char distance = 1;
+
+                        if (seq1_len == seq2_len) {
+                            for (int i = 0; i < seq1_len; i++) {
+                                char val1 = seqs_mat1[i*seqs_mat1_rows+row];
+                                char val2 = seqs_mat2[i*seqs_mat2_rows+col];
+
+                                if(val1 != val2) {
+                                    distance++;
+                                }
+                            }
+                            if (distance <= cutoff + 1) {
+                                int seqs2_original_index = seqs2_original_indices[col];
+                                data[seqs_original_index * data_cols + row_end_index] = distance;
+                                indices[seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
+                                row_end_index++;
+                            }
+                        }
+                    }
+                }
+                row_element_counts[seqs_original_index] = row_end_index;
+            }
+        }
+        """,
+            "hamming_kernel",
+            options=("--maxrregcount=256",),
+        )
+
+        create_csr_kernel = cp.RawKernel(
+            r"""
+        extern "C" __global__
+        void create_csr_kernel(
+            int* data, int* indices,
+            char* data_matrix, int* indices_matrix,
+            int* indptr, int data_matrix_rows, int data_matrix_cols, int data_rows, int indices_matrix_cols
+        ) {
+            int row = blockDim.x * blockIdx.x + threadIdx.x;
+            int col = blockDim.y * blockIdx.y + threadIdx.y;
+
+            if (row < data_matrix_rows && col < data_matrix_cols) {
+                int row_start = indptr[row];
+                int row_end = indptr[row + 1];
+                int row_end_index = row_end - row_start;
+                int data_index = row_start + col;
+
+                if ((data_index < data_rows) && (col < row_end_index)) {
+                    data[data_index] = data_matrix[row * data_matrix_cols + col];
+                    indices[data_index] = indices_matrix[row * indices_matrix_cols + col];
+                }
+            }
+        }
+        """,
+            "create_csr_kernel",
+        )
+
+        def calc_block_gpu(
+            seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset
+        ):
+            import cupy as cp
+
+            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
+            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8))
+            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32))
+            d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32))
+
+            # Due to performance reasons and since we expect the result matrix to be very sparse, we
+            # set a maximum result width for the current block
+            max_block_width = self.gpu_block_width
+
+            d_data_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=cp.int8)
+            d_indices_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=np.int32)
+            d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=np.int32)
+
+            threads_per_block = 256
+            blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
+
+            seqs_mat1_rows, seqs_mat1_cols = seqs_mat1.shape
+            seqs_mat2_rows, seqs_mat2_cols = seqs_mat2_block.shape
+            d_data_matrix_cols = max_block_width
+            d_indices_matrix_cols = max_block_width
+
+            d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
+            d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
+
+            hamming_kernel(
+                (blocks_per_grid,),
+                (threads_per_block,),
+                (
+                    d_seqs_mat1_transposed,
+                    d_seqs_mat2_transposed,
+                    d_seqs_L1,
+                    d_seqs_L2,
+                    seqs_original_indices,
+                    seqs2_original_indices_blocks,
+                    self.cutoff,
+                    d_data_matrix,
+                    d_indices_matrix,
+                    d_row_element_counts,
+                    block_offset,
+                    seqs_mat1_rows,
+                    seqs_mat2_rows,
+                    seqs_mat1_cols,
+                    seqs_mat2_cols,
+                    d_data_matrix_cols,
+                    d_indices_matrix_cols,
+                    is_symmetric,
+                ),
+            )
+
+            row_element_counts = d_row_element_counts.get()
+            row_max_len = np.max(row_element_counts)
+            row_element_sum = np.sum(row_element_counts, dtype=np.int64)
+
+            assert (
+                row_max_len <= max_block_width
+            ), f"""ERROR: The chosen result block width is too small to hold all result values of the current block.
+            Chosen width: {max_block_width}, Necessary width: {row_max_len}."""
+
+            assert (
+                row_element_sum <= np.iinfo(np.int32).max
+            ), f"""ERROR: There are too many result values to be held by the resulting CSR matrix of the current block.
+            Current number: {row_element_sum}, Maximum number: {np.iinfo(np.int32).max}.
+            Consider choosing a smaller cutoff to resolve this issue."""
+
+            indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
+            indptr[1:] = np.cumsum(row_element_counts)
+            d_indptr = cp.asarray(indptr)
+
+            n_elements = indptr[-1]
+            data = np.zeros(n_elements, dtype=np.int32)
+            d_data = cp.zeros_like(data)
+
+            indices = np.zeros(n_elements, dtype=np.int32)
+            d_indices = cp.zeros_like(indices)
+
+            threads_per_block = (1, 256)
+            blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
+            blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
+            blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
+
+            create_csr_kernel(
+                (blocks_per_grid_x, blocks_per_grid_y),
+                threads_per_block,
+                (
+                    d_data,
+                    d_indices,
+                    d_data_matrix,
+                    d_indices_matrix,
+                    d_indptr,
+                    d_data_matrix.shape[0],
+                    d_data_matrix.shape[1],
+                    d_data.shape[0],
+                    d_indices_matrix.shape[1],
+                ),
+            )
+
+            data = d_data.get()
+            indptr = d_indptr.get()
+            indices = d_indices.get()
+
+            res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
+            return res
+
+        # Set the number of blocks for the calculation. A higher number can be more memory friendly, whereas
+        # a lower number can improve the performance.
+        n_blocks = self.gpu_n_blocks
+
+        seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
+        seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
+        seqs2_original_indices_blocks = np.array_split(seqs2_original_indices, n_blocks)
+        result_blocks = [None] * n_blocks
+
+        block_offset = start_column
+
+        logging.info(
+            f"\nStart GPU calculations for {n_blocks} sparse matrix result blocks of max width {self.gpu_block_width}:"
+        )
+
+        for i in tqdm(range(0, n_blocks), desc="Processing", unit="block"):
+            result_blocks[i] = calc_block_gpu(
+                seqs_mat1,
+                seqs_mat2_blocks[i],
+                seqs_L1,
+                seqs_L2_blocks[i],
+                seqs2_original_indices_blocks[i],
+                block_offset,
+            )
+            block_offset += seqs_mat2_blocks[i].shape[0]
+
+        num_elements = 0
+        for i in range(0, len(result_blocks)):
+            num_elements += result_blocks[i].indptr[-1]
+
+        assert (
+            num_elements <= np.iinfo(np.int32).max
+        ), f"""ERROR: The overall number of result values is too high to construct the final CSR matrix by combining
+        the already calculated blocks.
+        Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
+        Consider choosing a smaller cutoff to resolve this issue."""
+
+        result_sparse = result_blocks[0]
+        for i in range(1, len(result_blocks)):
+            result_sparse += result_blocks[i]
+
+        row_element_counts_gpu = np.diff(result_sparse.indptr)
+
+        result_sparse.sort_indices()
+
+        # Returns the results in a way that fits the current interface, could be improved later
+        return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
+
+    _metric_mat = _gpu_hamming_mat
+
+
 class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
@@ -837,9 +1206,6 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         ----------
         seqs/2:
             A python sequence of strings representing gene sequences
-        seqs_L1/2:
-            A vector containing the length of each sequence in the respective seqs_mat matrix,
-            without the padding in seqs_mat
         is_symmetric:
             Determines whether the final result matrix is symmetric, assuming that this function is
             only used to compute a block of a bigger result matrix

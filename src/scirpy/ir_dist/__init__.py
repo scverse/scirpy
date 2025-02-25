@@ -35,7 +35,16 @@ def IrNeighbors(*args, **kwargs):
 
 
 MetricType = (
-    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming", "normalized_hamming", "tcrdist"]
+    Literal[
+        "alignment",
+        "fastalignment",
+        "identity",
+        "levenshtein",
+        "hamming",
+        "gpu_haming",
+        "normalized_hamming",
+        "tcrdist",
+    ]
     | metrics.DistanceCalculator
 )
 
@@ -51,6 +60,8 @@ metric
         See :class:`~scirpy.ir_dist.metrics.TCRdistDistanceCalculator`.
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
+      * `gpu_hamming` -- Hamming distance for CDR3 sequences of equal length calculated with a GPU.
+        See :class:`~scirpy.ir_dist.metrics.GPUHammingDistanceCalculator`.
       * `normalized_hamming` -- Normalized Hamming distance (in percent) for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the
@@ -105,6 +116,8 @@ def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "normalized_hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, normalize=True, **kwargs)
+    elif metric == "gpu_hamming":
+        dist_calc = metrics.GPUHammingDistanceCalculator(**kwargs)
     elif metric == "tcrdist":
         dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
@@ -184,6 +197,8 @@ def _ir_dist(
         Like `chain_idx_key`, but for `reference`.
     **kwargs
         Arguments are passed to the respective :class:`~scirpy.ir_dist.metrics.DistanceCalculator` class.
+        Check out the distance calculator for the respective metric to see parameters specific to
+        individual distance calculators that can be passed via kwargs.
 
     Returns
     -------
