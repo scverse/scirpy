@@ -12,7 +12,7 @@ from sphinx.ext.napoleon import NumpyDocstring
 def _process_return(lines: Iterable[str]) -> Generator[str, None, None]:
     for line in lines:
         if m := re.fullmatch(r"(?P<param>\w+)\s+:\s+(?P<type>[\w.]+)", line):
-            yield f'-{m["param"]} (:class:`~{m["type"]}`)'
+            yield f"-{m['param']} (:class:`~{m['type']}`)"
         else:
             yield line
 

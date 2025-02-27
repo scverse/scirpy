@@ -136,9 +136,9 @@ class ClonotypeNeighbors:
             for tmp_arm in self._receptor_arm_cols:
                 primary_is_nan = clonotypes[f"{tmp_arm}_1_{self.sequence_key}"] == "nan"
                 secondary_is_nan = clonotypes[f"{tmp_arm}_2_{self.sequence_key}"] == "nan"
-                assert not np.sum(
-                    ~secondary_is_nan[primary_is_nan]
-                ), "There must not be a secondary chain if there is no primary one"
+                assert not np.sum(~secondary_is_nan[primary_is_nan]), (
+                    "There must not be a secondary chain if there is no primary one"
+                )
 
         return cell_indices, clonotypes
 
@@ -327,7 +327,7 @@ class ClonotypeNeighbors:
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups["match_columns"]
             distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups["match_columns"]
             if distance_matrix_name != distance_matrix_name_reverse:
-                raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
+                raise ValueError("Forward and reverse lookup tablese must be defined on the same distance matrices.")
             reverse_lookup_values = np.vstack(list(reverse.lookup.values()))
             reverse_lookup_keys = np.zeros(reverse.size, dtype=np.int64)
             reverse_lookup_keys[list(reverse.lookup.keys())] = np.arange(len(list(reverse.lookup.keys())))
@@ -416,7 +416,7 @@ class ClonotypeNeighbors:
             distance_matrix_name, forward, _ = self.neighbor_finder.lookups[f"{tmp_arm}_{c1}_{segment_suffix}"]
             distance_matrix_name_reverse, _, reverse = self.neighbor_finder.lookups[f"{tmp_arm}_{c2}_{segment_suffix}"]
             if distance_matrix_name != distance_matrix_name_reverse:
-                raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
+                raise ValueError("Forward and reverse lookup tablese must be defined on the same distance matrices.")
             empty_row = np.array([np.zeros(reverse.size, dtype=bool)])
             reverse_lookup_values = np.vstack((*reverse.lookup.values(), empty_row))
             reverse_lookup_keys = np.full(id_len, -1, dtype=np.int32)

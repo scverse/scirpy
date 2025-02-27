@@ -101,9 +101,9 @@ def layout_fr_size_aware(
         # ensure that it is an array
         scale = np.array(scale)
 
-    assert len(origin) == len(
-        scale
-    ), f"Arguments `origin` (d={len(origin)}) and `scale` (d={len(scale)}) need to have the same number of dimensions!"
+    assert len(origin) == len(scale), (
+        f"Arguments `origin` (d={len(origin)}) and `scale` (d={len(scale)}) need to have the same number of dimensions!"
+    )
     dimensionality = len(origin)
 
     unique_nodes = _get_unique_nodes(edge_list)
@@ -114,9 +114,9 @@ def layout_fr_size_aware(
     else:
         # 1) check input dimensionality
         dimensionality_node_positions = np.array(list(node_positions.values())).shape[1]
-        assert (
-            dimensionality_node_positions == dimensionality
-        ), f"The dimensionality of values of `node_positions` (d={dimensionality_node_positions}) must match the dimensionality of `origin`/ `scale` (d={dimensionality})!"
+        assert dimensionality_node_positions == dimensionality, (
+            f"The dimensionality of values of `node_positions` (d={dimensionality_node_positions}) must match the dimensionality of `origin`/ `scale` (d={dimensionality})!"
+        )
 
         is_valid = _is_within_bbox(list(node_positions.values()), origin=origin, scale=scale)
         if not np.all(is_valid):

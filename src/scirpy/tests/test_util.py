@@ -302,9 +302,7 @@ def test_layout_components(arrange_boxes, component_layout):
     try:
         layout_components(g, arrange_boxes=arrange_boxes, component_layout=component_layout)
     except ImportError:
-        warnings.warn(
-            f"The '{component_layout}' layout-test was skipped because rectangle " "packer is not installed. "
-        )
+        warnings.warn(f"The '{component_layout}' layout-test was skipped because rectangle packer is not installed. ")
 
 
 def test_translate_dna_to_protein(adata_tra):

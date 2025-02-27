@@ -109,7 +109,7 @@ def _get_igraph_from_adjacency(adj: csr_matrix, simplify=True):
 
     if g.vcount() != adj.shape[0]:
         logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. " "Your adjacency matrix contained redundant nodes."
+            f"The constructed graph has only {g.vcount()} nodes. Your adjacency matrix contained redundant nodes."
         )  # type: ignore
 
     if simplify:
