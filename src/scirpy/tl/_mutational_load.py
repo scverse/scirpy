@@ -8,7 +8,7 @@ from scirpy.util import DataHandler
 
 
 @nb.njit
-def _hamming_distance(sequence: str | None, germline: str | None, ignore_chars: tuple[str] = (".", "N")):
+def _hamming_distance(sequence: str | None, germline: str | None, ignore_chars: tuple[str]):
     """Compute the hamming distance between two strings. Characters in `ignore_chars` are not counted towards the distance"""
     if sequence is None or germline is None:
         return None
@@ -25,7 +25,8 @@ def _hamming_distance(sequence: str | None, germline: str | None, ignore_chars: 
             distance += 1
 
     if num_chars == 0:
-        return None  # can be used as a flag for filtering
+        # no useful comparison has been performed -- return None -> can be used as a flag for filtering
+        return None
 
     return distance
 
@@ -107,7 +108,7 @@ def mutational_load(
     frequency
         Specify to obtain either total or relative counts
     ignore_chars
-        A list of characters to ignore while calculating differences. The default "None" ignors the following:
+        A list of characters to ignore while calculating differences. The default s to ignore the following:
         * `"N"` - masked or degraded nucleotide, i.e. D-segment is recommended to mask, because of lower sequence quality
         * `"."` - "IMGT-gaps", distinct from "normal gaps ('-')" => beneficial to ignore, because sometimes sequence alignments are "clipped" at the beginning, which would cause artificial mutations
     {inplace}
