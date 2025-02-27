@@ -115,7 +115,12 @@ def repertoire_overlap(
         dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
         distM = distM.iloc[dd["leaves"], :]
         if heatmap_cats is None:
-            ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
+            ax = sns.clustermap(
+                1 - distM,
+                col_linkage=linkage,
+                row_cluster=False,
+                **kwargs,
+            )
         else:
             ax = sns.clustermap(
                 1 - distM,
