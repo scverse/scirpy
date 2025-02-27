@@ -32,13 +32,42 @@ def _hamming_distance(sequence: str | None, germline: str | None, ignore_chars: 
     return distance
 
 
+@nb.njit(nb.types.Tuple((nb.optional(nb.int32), nb.optional(nb.int32)))(nb.types.unicode_type, nb.types.unicode_type))
+def _get_slice(region, junction):
+    """Get the start and end coordinates for a given region identifier.
+
+    Reference: https://shazam.readthedocs.io/en/stable/topics/setRegionBoundaries/
+    """
+    if region == "full":
+        return None, None
+    elif region == "v":
+        return 0, 312
+    elif region == "fwr1":
+        return 0, 78
+    elif region == "cdr1":
+        return 78, 114
+    elif region == "fwr2":
+        return 114, 165
+    elif region == "cdr2":
+        return 165, 195
+    elif region == "fwr3":
+        return 195, 312
+    elif region == "cdr3":
+        # For CDR3, we need to handle the junction length
+        return 312, 312 + len(junction) - 6  # Adjusted based on junction length
+    elif region == "fwr4":
+        # FWR4 starts after the junction
+        return 312 + len(junction) - 6, None
+    else:
+        raise ValueError("Invalid region")
+
+
 @nb.njit()
 def _apply_hamming_to_chains(
     ab: ak.ArrayBuilder,
-    start: int | None = None,
-    end: int | None = None,
+    ab_freq: ak.ArrayBuilder,
+    region: str,
     *,
-    add_junction_length: bool = False,
     arr_sequence: ak.Array,
     arr_germline: ak.Array,
     arr_junction: ak.Array,
@@ -56,13 +85,16 @@ def _apply_hamming_to_chains(
         arr_sequence, arr_germline, arr_junction
     ):
         assert len(r_seq) == len(r_germ) == len(r_junc)
-        ab.begin_list()
+        ab.begin_list(), ab_freq.begin_list()
         for seq, germline, junction in zip(r_seq, r_germ, r_junc):  # noqa: B905 (`strict` not supported by numba)
-            if add_junction_length:
-                end += len(junction)
-            ab.append(_hamming_distance(seq[start:end], germline[start:end], ignore_chars))
-        ab.end_list()
-    return ab
+            start, end = _get_slice(region, junction)
+            seq_sliced = seq[start:end]
+            germline_sliced = germline[start:end]
+            dist = _hamming_distance(seq_sliced, germline_sliced, ignore_chars)
+            ab.append(dist)
+            ab_freq.append(dist / len(seq_sliced))
+        ab.end_list(), ab_freq.end_list()
+    return ab, ab_freq
 
 
 @DataHandler.inject_param_docs()
@@ -82,6 +114,8 @@ def mutational_load(
     """\
     Calculates observable mutation by comparing sequences with corresponding germline alignments and counting differences.
     Needs germline alignment information, which can be obtained by using the interoperability to Dandelion (https://sc-dandelion.readthedocs.io/en/latest/notebooks/5_dandelion_diversity_and_mutation-10x_data.html)
+
+    https://shazam.readthedocs.io/en/stable/topics/setRegionBoundaries/
 
     Parameters
     ----------
@@ -128,46 +162,11 @@ def mutational_load(
         "arr_sequence": params.airr[sequence_key],
         "arr_germline": params.airr[germline_key],
         "arr_junction": params.airr[junction_key],
+        "ignore_chars": ignore_chars,
     }
 
-    if "full" in regions:
-        params.airr["mutation_count"] = _apply_hamming_to_chains(ak.ArrayBuilder(), None, None, **arrays).snapshot()
-
-    if "v" in regions:
-        # calculate SHM up to nucleotide 312. Referring to the IMGT unique numbering scheme this includes:
-        # fwr1, cdr1, fwr2, cdr2, fwr3, but not cdr3 and fwr4
-        params.airr["v_mutation_count"] = _apply_hamming_to_chains(ak.ArrayBuilder(), 0, 312, **arrays).snapshot()
-
-    regions = {
-        "fwr1": {"start": 0, "end": 78},
-        "cdr1": (78, 114),
-        "fwr2": (114, 165),
-        "cdr2": (165, 195),
-        "fwr3": (195, 312),
-        # "cdr3": (312, 312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6),
-        # "fwr4": (
-        #     312 + airr_df.iloc[row].loc[f"{chain}_junction_len"] - 6,
-        #     len(airr_df.iloc[row].loc[f"{chain}_{germline_key}"]),
-        # ),
-    }
-    for region, (start, end) in regions.items():
-        if region in regions:
-            params.airr[f"{region}_mutation_count"] = _apply_hamming_to_chains(
-                ak.ArrayBuilder(),
-                start,
-                end,
-                # sequence_key=sequence_key,
-                # germline_key=germline_key,
-                # ignore_chars=ignore_chars,
-            ).snapshot()
-
-    # calculate frequencies
-    if frequency:
-        for region in regions:
-            # TODO
-            if region in ["fwr4", "cdr3"]:
-                continue
-            key = "" if region == "full" else f"{region}_"
-            params.airr[f"{key}mutation_freq"] = params.airr[f"{key}mutation_count"] / ak.str.length(
-                params.airr[sequence_key]
-            )
+    for region in regions:
+        key = "" if region == "full" else f"{region}_"
+        ab, ab_freq = _apply_hamming_to_chains(ak.ArrayBuilder(), ak.ArrayBuilder(), region, **arrays)
+        params.airr[f"{key}mutation_count"] = ab.snapshot()
+        params.airr[f"{key}mutation_freq"] = ab_freq.snapshot()
