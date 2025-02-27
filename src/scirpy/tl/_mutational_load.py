@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from importlib.util import find_spec
 
 import awkward as ak
 import numba as nb
@@ -33,15 +34,14 @@ def _hamming_distance(sequence: str | None, germline: str | None, ignore_chars: 
 
 @nb.njit()
 def _apply_hamming_to_chains(
-    arr: ak.Array,
     ab: ak.ArrayBuilder,
     start: int | None = None,
     end: int | None = None,
-    # add_junction: bool = False,
     *,
-    # sequence_key: str = "sequence_alignment",
-    # germline_key: str = "germline_alignment_d_mask",
-    # junction_key: str = "junction",
+    add_junction_length: bool = False,
+    arr_sequence: ak.Array,
+    arr_germline: ak.Array,
+    arr_junction: ak.Array,
     ignore_chars: tuple[str],
 ) -> ak.ArrayBuilder:
     """
@@ -51,19 +51,16 @@ def _apply_hamming_to_chains(
     `(start, end)` refer to a slice to select subregions of the alignment.
     If `add_junction` is True, the length of the `junction` sequence is added to the `end` index.
     """
-    sequence_key: str = "sequence_alignment"
-    germline_key: str = "germline_alignment_d_mask"
-    for row in arr:
+    assert len(arr_sequence) == len(arr_germline) == len(arr_junction)
+    for r_seq, r_germ, r_junc in zip(  # noqa: B905 (`strict` not supported by numba)
+        arr_sequence, arr_germline, arr_junction
+    ):
+        assert len(r_seq) == len(r_germ) == len(r_junc)
         ab.begin_list()
-        for chain in row:
-            # if add_junction:
-            #     if chain[junction_key] is not None:
-            #         end += len(chain[junction_key])
-            #     else:
-            #         # Can't compute sequence if junction not available
-            #         ab.append(None)
-            #         continue
-            ab.append(_hamming_distance(chain[sequence_key][start:end], chain[germline_key][start:end], ignore_chars))
+        for seq, germline, junction in zip(r_seq, r_germ, r_junc):  # noqa: B905 (`strict` not supported by numba)
+            if add_junction_length:
+                end += len(junction)
+            ab.append(_hamming_distance(seq[start:end], germline[start:end], ignore_chars))
         ab.end_list()
     return ab
 
@@ -78,8 +75,9 @@ def mutational_load(
     chain_idx_key="chain_indices",
     sequence_key: str = "sequence_alignment",
     germline_key: str = "germline_alignment_d_mask",
-    junction_col: str = "junction",
+    junction_key: str = "junction",
     ignore_chars: Sequence[str] = (".", "N"),
+    frequency: bool = False,
 ) -> None | pd.DataFrame:
     """\
     Calculates observable mutation by comparing sequences with corresponding germline alignments and counting differences.
@@ -106,7 +104,7 @@ def mutational_load(
     junction_col
         Awkward array key to access junction region information
     frequency
-        Specify to obtain either total or relative counts
+        If `True`, compute relative counts in addition to absolute counts (requires `pyarrow` as optional dependency).
     ignore_chars
         A list of characters to ignore while calculating differences. The default s to ignore the following:
         * `"N"` - masked or degraded nucleotide, i.e. D-segment is recommended to mask, because of lower sequence quality
@@ -120,69 +118,28 @@ def mutational_load(
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     ignore_chars = tuple(ignore_chars)
 
-    @nb.njit()
-    def _apply_hamming_to_chains(
-        arr: ak.Array,
-        ab: ak.ArrayBuilder,
-        start: int | None = None,
-        end: int | None = None,
-        # add_junction: bool = False,
-        *,
-        # sequence_key: str = "sequence_alignment",
-        # germline_key: str = "germline_alignment_d_mask",
-        # junction_key: str = "junction",
-        ignore_chars: tuple[str],
-    ) -> ak.ArrayBuilder:
-        """
-        Compute the (abolute) mutational load between IMGT aligned sequence and germline for all chains in the scirpy-formatted
-        AIRR Awkward array.
+    if frequency:
+        if find_spec("pyarrow") is None:
+            raise ImportError(
+                "Calculating frequencies requires `pyarrow` as optional dependency. Run `pip install pyarrow` to install it."
+            ) from None
 
-        `(start, end)` refer to a slice to select subregions of the alignment.
-        If `add_junction` is True, the length of the `junction` sequence is added to the `end` index.
-        """
-        for row in arr:
-            ab.begin_list()
-            for chain in row:
-                # if add_junction:
-                #     if chain[junction_key] is not None:
-                #         end += len(chain[junction_key])
-                #     else:
-                #         # Can't compute sequence if junction not available
-                #         ab.append(None)
-                #         continue
-                ab.append(
-                    _hamming_distance(chain[sequence_key][start:end], chain[germline_key][start:end], ignore_chars)
-                )
-            ab.end_list()
-        return ab
+    arrays = {
+        "arr_sequence": params.airr[sequence_key],
+        "arr_germline": params.airr[germline_key],
+        "arr_junction": params.airr[junction_key],
+    }
 
     if "full" in regions:
-        params.airr["mutation_count"] = _apply_hamming_to_chains(
-            params.airr,
-            ak.ArrayBuilder(),
-            None,
-            None,
-            # sequence_key=sequence_key,
-            # germline_key=germline_key,
-            # ignore_chars=ignore_chars,
-        ).snapshot()
-    # params.airr["mutation_freq"] = params.airr["mutation_count"] / ak.str.length(params.airr[sequence_key])
+        params.airr["mutation_count"] = _apply_hamming_to_chains(ak.ArrayBuilder(), None, None, **arrays).snapshot()
 
     if "v" in regions:
         # calculate SHM up to nucleotide 312. Referring to the IMGT unique numbering scheme this includes:
         # fwr1, cdr1, fwr2, cdr2, fwr3, but not cdr3 and fwr4
-        params.airr["v_mutation_count"] = _apply_hamming_to_chains(
-            params.airr,
-            ak.ArrayBuilder(),
-            0,
-            312,
-            # sequence_key=sequence_key,
-            # germline_key=germline_key,
-            # ignore_chars=ignore_chars,
-        ).snapshot()
+        params.airr["v_mutation_count"] = _apply_hamming_to_chains(ak.ArrayBuilder(), 0, 312, **arrays).snapshot()
 
     regions = {
-        "fwr1": (0, 78),
+        "fwr1": {"start": 0, "end": 78},
         "cdr1": (78, 114),
         "fwr2": (114, 165),
         "cdr2": (165, 195),
@@ -196,7 +153,6 @@ def mutational_load(
     for region, (start, end) in regions.items():
         if region in regions:
             params.airr[f"{region}_mutation_count"] = _apply_hamming_to_chains(
-                params.airr,
                 ak.ArrayBuilder(),
                 start,
                 end,
@@ -206,11 +162,12 @@ def mutational_load(
             ).snapshot()
 
     # calculate frequencies
-    for region in regions:
-        # TODO
-        if region in ["fwr4", "cdr3"]:
-            continue
-        key = "" if region == "full" else f"{region}_"
-        params.airr[f"{key}mutation_freq"] = params.airr[f"{key}mutation_count"] / ak.str.length(
-            params.airr[sequence_key]
-        )
+    if frequency:
+        for region in regions:
+            # TODO
+            if region in ["fwr4", "cdr3"]:
+                continue
+            key = "" if region == "full" else f"{region}_"
+            params.airr[f"{key}mutation_freq"] = params.airr[f"{key}mutation_count"] / ak.str.length(
+                params.airr[sequence_key]
+            )
