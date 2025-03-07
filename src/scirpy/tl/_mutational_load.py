@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Literal
 
 import awkward as ak
 import numba as nb
@@ -122,7 +123,17 @@ def _apply_hamming_to_chains(
 def mutational_load(
     adata: DataHandler.TYPE,
     *,
-    regions: Sequence[str] = ("full", "v", "fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"),
+    regions: Sequence[Literal["full", "v", "fwr1", "fwr2", "fwr3", "fwr4", "cdr1", "cdr2", "cdr3"]] = (
+        "full",
+        "v",
+        "fwr1",
+        "fwr2",
+        "fwr3",
+        "fwr4",
+        "cdr1",
+        "cdr2",
+        "cdr3",
+    ),
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
@@ -132,40 +143,57 @@ def mutational_load(
     ignore_chars: Sequence[str] = (".", "N"),
 ) -> None:
     """\
-    Calculates observable mutation by comparing sequences with corresponding germline alignments and counting differences.
-    Needs germline alignment information, which can be obtained by using the interoperability to Dandelion (https://sc-dandelion.readthedocs.io/en/latest/notebooks/5_dandelion_diversity_and_mutation-10x_data.html)
+    Calculates absolute and relative mutational load of receptor sequences based on germline alignment.
 
-    https://shazam.readthedocs.io/en/stable/topics/setRegionBoundaries/
+    Receptor sequences MUST be IMGT-aligned and the corresponding germline sequence MUST be available
+    (See `sequence_key` and `germline_key` parameters).
+
+    IMGT-alignments can be obtained by using the `interoperability with Dandelion <https://sc-dandelion.readthedocs.io/en/latest/notebooks/5_dandelion_diversity_and_mutation-10x_data.html>`_.
+
+    Region boundaries are implemented as described in the `shazam documentation <https://shazam.readthedocs.io/en/stable/topics/setRegionBoundaries/>`_
+    which follows the `IMGT unique numbering scheme <https://doi.org/10.1016/S0145-305X(02)00039-3>`_.
 
     Parameters
     ----------
     {adata}
+    regions
+        Specify for which regions to calculate the mutational load. By default, calculate it for *all* regions.
+        The segments follow the definition described in the `shazam documentation <https://shazam.readthedocs.io/en/stable/topics/setRegionBoundaries/>`_.
+
+         * `full`: the full sequence without any sub-regions/divisions
+         * `v`: Only V_segment (Nucleotides 1 to 312)
+         * `fwr1`: Positions 1 to 78.
+         * `cdr1`: Positions 79 to 114.
+         * `fwr2`: Positions 115 to 165.
+         * `cdr2`: Positions 166 to 195.
+         * `fwr3`: Positions 196 to 312.
+         * `cdr3`: Positions 313 to (313 + juncLength - 6) since the junction sequence includes (on the left) the last codon from FWR3 and (on the right) the first codon from FWR4.
+         * `fwr4`: Positions (313 + juncLength - 6 + 1) to the end of the sequence.
     {airr_mod}
     {airr_key}
     chain_idx_key
         Key to select chain indices
     sequence_key
-        Awkward array key to access sequence alignment information
+        Awkward array key to access sequence alignment information. The sequence must be IMGT-aligned.
     germline_key
-        Awkward array key to access germline alignment information -> best practice mask D-gene segment (https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-015-0243-2)
-    chains
-        One or multiple chains from which to use CDR3 sequences
-    region
-        Specify the way mutations of the V segment are calculated according to IMGT unique numbering scheme (https://doi.org/10.1016/S0145-305X(02)00039-3)
-        * `"IMGT_V(D)J"` - Includes the entire available sequence and germline alignment without any sub-regions/divisions
-        * `"IMGT_V_segment"` - Only V_segment as defined by the IMGT unique numbering scheme is included => Nucleotide 1 to 312
-        * `"subregion"` - Similar to IMGT_V(D)J, but independent calculation of each subregion (CDR1-3 and FWR1-4, respectively)
-    junction_col
-        Awkward array key to access junction region information
+        Awkward array key to access germline alignment information. This must be the TMGT germline reference.
+    junction_key
+        Awkward array key to access the nucleotide junction sequence. This information is required to obtain
+        the junction length required to calculate the coordinates of the `cdr3` and `fwr4` regions.
     ignore_chars
-        A list of characters to ignore while calculating differences. The default s to ignore the following:
-        * `"N"` - masked or degraded nucleotide, i.e. D-segment is recommended to mask, because of lower sequence quality
-        * `"."` - "IMGT-gaps", distinct from "normal gaps ('-')" => beneficial to ignore, because sometimes sequence alignments are "clipped" at the beginning, which would cause artificial mutations
+        A list of characters to ignore while calculating differences. The default is to ignore the following:
+
+         * `"N"`: masked or degraded nucleotide. For instance, it is recommended to mask the D-segment, because of lower sequence quality
+         * `"."`: "IMGT-gaps", distinct from "normal gaps ('-')". It is beneficial to ignore these, because sometimes
+           sequence alignments are "clipped" at the beginning, which would inflate the mutaiton count.
     {inplace}
 
     Returns
     -------
-    Depending on the value of inplace adds a column to adata `.obs` or returns a pd.DataFrame
+    A value for each chain is stored in the awkward array used as input (typically `adata.obsm["airr"]`) under the keys
+    `"{region}_mutation_count"` and `"{region}_mutation_freq" for each region specified in the `regions` parameter.
+    The mutational load for the `"full"` region is stored in `mutation_count` and `mutation_freq`, respectively
+    (i.e. without the `{region}` prefix). Use :func:`scirpy.get.airr` to retrieve the values as a Dataframe.
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     ignore_chars = tuple(ignore_chars)
