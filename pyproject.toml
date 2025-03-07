@@ -110,7 +110,7 @@ omit = [
 [tool.pytest.ini_options]
 testpaths = "src/scirpy/tests"
 xfail_strict = true
-addopts = [ "-m 'not gpu'" ]
+addopts = [ "-m not gpu" ]
 markers = [
     "conda: marks a subset of tests to be ran on the Bioconda CI.",
     "extra: marks tests that require extra dependencies.",
