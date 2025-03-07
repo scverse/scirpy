@@ -191,9 +191,9 @@ def mutational_load(
     Returns
     -------
     A value for each chain is stored in the awkward array used as input (typically `adata.obsm["airr"]`) under the keys
-    `"{region}_mutation_count"` and `"{region}_mutation_freq" for each region specified in the `regions` parameter.
+    `"{{region}}_mutation_count"` and `"{{region}}_mutation_freq" for each region specified in the `regions` parameter.
     The mutational load for the `"full"` region is stored in `mutation_count` and `mutation_freq`, respectively
-    (i.e. without the `{region}` prefix). Use :func:`scirpy.get.airr` to retrieve the values as a Dataframe.
+    (i.e. without the `{{region}}` prefix). Use :func:`scirpy.get.airr` to retrieve the values as a Dataframe.
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
     ignore_chars = tuple(ignore_chars)
