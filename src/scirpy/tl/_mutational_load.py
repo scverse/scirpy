@@ -101,18 +101,21 @@ def _apply_hamming_to_chains(
         assert len(r_seq) == len(r_germ) == len(r_junc)
         ab.begin_list(), ab_freq.begin_list()
         for seq, germline, junction in zip(r_seq, r_germ, r_junc):  # noqa: B905 (`strict` not supported by numba)
-            if len(seq) != len(germline):
-                raise ValueError(
-                    "Length aligned sequences length does not match. Are you sure sequences are IMGT aligned?"
-                )
-            start, end = _get_slice(region, junction)
-            # workaround: numba doesn't support slicing with `None`, see https://github.com/numba/numba/issues/7948
-            # therefore setting to 0 == start and len(seq) == end
-            start = 0 if start < 0 else start
-            end = len(seq) if end < 0 else end
-            seq_sliced = seq[start:end]
-            germline_sliced = germline[start:end]
-            dist = _hamming_distance(seq_sliced, germline_sliced, ignore_chars)
+            if seq is None or germline is None:
+                dist = None
+            else:
+                if len(seq) != len(germline):
+                    raise ValueError(
+                        "Length aligned sequences length does not match. Are you sure sequences are IMGT aligned?"
+                    )
+                start, end = _get_slice(region, junction)
+                # workaround: numba doesn't support slicing with `None`, see https://github.com/numba/numba/issues/7948
+                # therefore setting to 0 == start and len(seq) == end
+                start = 0 if start < 0 else start
+                end = len(seq) if end < 0 else end
+                seq_sliced = seq[start:end]
+                germline_sliced = germline[start:end]
+                dist = _hamming_distance(seq_sliced, germline_sliced, ignore_chars)
             ab.append(dist)
             ab_freq.append(None if dist is None else dist / len(seq_sliced))
         ab.end_list(), ab_freq.end_list()
@@ -177,7 +180,7 @@ def mutational_load(
         Awkward array key to access sequence alignment information. The sequence must be IMGT-aligned.
     germline_key
         Awkward array key to access germline alignment information. This must be the TMGT germline reference.
-        It is recommended to mask the d-segment with `N`s (see <Yaari et al. (2015))
+        It is recommended to mask the d-segment with `N`s (see `Yaari et al. (2015) <https://doi.org/10.1186/s13073-015-0243-2>`_)
     junction_key
         Awkward array key to access the nucleotide junction sequence. This information is required to obtain
         the junction length required to calculate the coordinates of the `cdr3` and `fwr4` regions.
@@ -186,7 +189,7 @@ def mutational_load(
 
         * `"N"`: masked or degraded nucleotide. For instance, it is recommended to mask the D-segment, because of lower sequence quality
         * `"."`: "IMGT-gaps", distinct from "normal gaps ('-')". It is beneficial to ignore these, because sometimes
-           sequence alignments are "clipped" at the beginning, which would inflate the mutaiton count.
+          sequence alignments are "clipped" at the beginning, which would inflate the mutaiton count.
 
     Returns
     -------
