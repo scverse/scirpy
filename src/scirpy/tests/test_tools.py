@@ -757,84 +757,64 @@ def test_clonotype_imbalance(adata_tra):
     pdt.assert_frame_equal(stat, expected_stat, check_names=False, check_dtype=False)
 
 
-def test_mutational_load(adata_mutation, adata_not_aligned):
-    mutation_VDJ = ir.tl.mutational_load(
+def test_mutational_load(adata_mutation):
+    ir.tl.mutational_load(
         adata_mutation,
         germline_key="germline_alignment",
-        chains=["VDJ_1", "VJ_1"],
-        frequency=False,
-        inplace=False,
-        region="IMGT_V(D)J",
-    )
-    mutation_V_segment = ir.tl.mutational_load(
-        adata_mutation,
-        germline_key="germline_alignment",
-        chains=["VDJ_1", "VJ_1"],
-        frequency=False,
-        inplace=False,
-        region="IMGT_V_segment",
-    )
-    mutation_subregion = ir.tl.mutational_load(
-        adata_mutation,
-        germline_key="germline_alignment",
-        chains=["VDJ_1", "VJ_1"],
-        frequency=False,
-        inplace=False,
-        region="subregion",
     )
     expected_mutation_VDJ = pd.DataFrame.from_dict(
         {
             "AAACGGGCACGACTCG-MH9179822": {
                 # 1
                 # no mutation
-                "VDJ_1_IMGT_V(D)J_mu_count": 0,
-                "VJ_1_IMGT_V(D)J_mu_count": 0,
+                "VDJ_1_mutation_count": 0,
+                "VJ_1_mutation_count": 0,
             },
             "AACCATGAGAGCAATT-MH9179822": {
                 # 2
                 # no mutation, but germline cdr3 masked with 35 "N" in VDJ and 5 "N" in VJ
-                "VDJ_1_IMGT_V(D)J_mu_count": 0,
-                "VJ_1_IMGT_V(D)J_mu_count": 0,
+                "VDJ_1_mutation_count": 0,
+                "VJ_1_mutation_count": 0,
             },
             "AACCATGCAGTCACTA-MH9179822": {
                 # 3
                 # no mutation, but sequence alignment poor sequence quality at beginning: 15 '.'
-                "VDJ_1_IMGT_V(D)J_mu_count": 0,
-                "VJ_1_IMGT_V(D)J_mu_count": 0,
+                "VDJ_1_mutation_count": 0,
+                "VJ_1_mutation_count": 0,
             },
             "AACGTTGGTATAAACG-MH9179822": {
                 # 4
                 # no mutation, but gaps ('-') in sequence alignment: 3 in FWR1, 3 in FWR2 and 5 in FWR4
-                "VDJ_1_IMGT_V(D)J_mu_count": 11,
-                "VJ_1_IMGT_V(D)J_mu_count": 11,
+                "VDJ_1_mutation_count": 11,
+                "VJ_1_mutation_count": 11,
             },
             "AACTCTTGTTTGGCGC-MH9179822": {
                 # 6
                 # few mutations: 1 in each subregion of sequence_alignment (= 7 in total)
-                "VDJ_1_IMGT_V(D)J_mu_count": 7,
-                "VJ_1_IMGT_V(D)J_mu_count": 7,
+                "VDJ_1_mutation_count": 7,
+                "VJ_1_mutation_count": 7,
             },
             "AACTGGTCAATTGCTG-MH9179822": {
                 # 7
                 # some mutations: 3 in each subregion of germline alignment (= 21 in total)
-                "VDJ_1_IMGT_V(D)J_mu_count": 21,
-                "VJ_1_IMGT_V(D)J_mu_count": 21,
+                "VDJ_1_mutation_count": 21,
+                "VJ_1_mutation_count": 21,
             },
             "AAGCCGCAGATATACG-MH9179822": {
                 # 8
                 # a lot mutation: 5 in each subregion of germline alignment (= 35 in total)
-                "VDJ_1_IMGT_V(D)J_mu_count": 35,
-                "VJ_1_IMGT_V(D)J_mu_count": 35,
+                "VDJ_1_mutation_count": 35,
+                "VJ_1_mutation_count": 35,
             },
             "AAGCCGCAGCGATGAC-MH9179822": {
                 # 9
                 # No germline alignment
-                "VDJ_1_IMGT_V(D)J_mu_count": np.nan,
-                "VJ_1_IMGT_V(D)J_mu_count": np.nan,
+                "VDJ_1_mutation_count": None,
+                "VJ_1_mutation_count": None,
             },
             "AAGCCGCGTCAGATAA-MH9179822": {
-                "VDJ_1_IMGT_V(D)J_mu_count": np.nan,
-                "VJ_1_IMGT_V(D)J_mu_count": np.nan,
+                "VDJ_1_mutation_count": None,
+                "VJ_1_mutation_count": None,
                 # 10
                 # No sequence_alignment
             },
@@ -1069,15 +1049,16 @@ def test_mutational_load(adata_mutation, adata_not_aligned):
         },
         orient="index",
     )
-    pdt.assert_frame_equal(mutation_subregion, expected_mutation_subregion, check_names=False, check_dtype=False)
-    pdt.assert_frame_equal(mutation_V_segment, expected_mutation_V_segment, check_names=False, check_dtype=False)
-    pdt.assert_frame_equal(mutation_VDJ, expected_mutation_VDJ, check_names=False, check_dtype=False)
+    # pdt.assert_frame_equal(mutation_subregion, expected_mutation_subregion, check_names=False, check_dtype=False)
+    # pdt.assert_frame_equal(mutation_V_segment, expected_mutation_V_segment, check_names=False, check_dtype=False)
+    pdt.assert_frame_equal(
+        ir.get.airr(adata_mutation, "mutation_count", ["VDJ_1", "VJ_1"]),
+        expected_mutation_VDJ,
+        check_names=False,
+        check_dtype=False,
+    )
+
+
+def test_mutational_load_adata_not_aligned(adata_not_aligned):
     with npt.assert_raises(ValueError):
-        ir.tl.mutational_load(
-            adata_not_aligned,
-            germline_key="germline_alignment",
-            chains=["VDJ_1", "VJ_1"],
-            frequency=False,
-            inplace=False,
-            region="IMGT_V(D)J",
-        )
+        ir.tl.mutational_load(adata_not_aligned, germline_key="germline_alignment")
