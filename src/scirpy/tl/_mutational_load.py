@@ -160,15 +160,15 @@ def mutational_load(
         Specify for which regions to calculate the mutational load. By default, calculate it for *all* regions.
         The segments follow the definition described in the `shazam documentation <https://shazam.readthedocs.io/en/stable/topics/setRegionBoundaries/>`_.
 
-         * `full`: the full sequence without any sub-regions/divisions
-         * `v`: Only V_segment (Nucleotides 1 to 312)
-         * `fwr1`: Positions 1 to 78.
-         * `cdr1`: Positions 79 to 114.
-         * `fwr2`: Positions 115 to 165.
-         * `cdr2`: Positions 166 to 195.
-         * `fwr3`: Positions 196 to 312.
-         * `cdr3`: Positions 313 to (313 + juncLength - 6) since the junction sequence includes (on the left) the last codon from FWR3 and (on the right) the first codon from FWR4.
-         * `fwr4`: Positions (313 + juncLength - 6 + 1) to the end of the sequence.
+        * `full`: the full sequence without any sub-regions/divisions
+        * `v`: Only V_segment (Nucleotides 1 to 312)
+        * `fwr1`: Positions 1 to 78.
+        * `cdr1`: Positions 79 to 114.
+        * `fwr2`: Positions 115 to 165.
+        * `cdr2`: Positions 166 to 195.
+        * `fwr3`: Positions 196 to 312.
+        * `cdr3`: Positions 313 to (313 + juncLength - 6) since the junction sequence includes (on the left) the last codon from FWR3 and (on the right) the first codon from FWR4.
+        * `fwr4`: Positions (313 + juncLength - 6 + 1) to the end of the sequence.
     {airr_mod}
     {airr_key}
     chain_idx_key
@@ -177,16 +177,16 @@ def mutational_load(
         Awkward array key to access sequence alignment information. The sequence must be IMGT-aligned.
     germline_key
         Awkward array key to access germline alignment information. This must be the TMGT germline reference.
+        It is recommended to mask the d-segment with `N`s (see <Yaari et al. (2015))
     junction_key
         Awkward array key to access the nucleotide junction sequence. This information is required to obtain
         the junction length required to calculate the coordinates of the `cdr3` and `fwr4` regions.
     ignore_chars
         A list of characters to ignore while calculating differences. The default is to ignore the following:
 
-         * `"N"`: masked or degraded nucleotide. For instance, it is recommended to mask the D-segment, because of lower sequence quality
-         * `"."`: "IMGT-gaps", distinct from "normal gaps ('-')". It is beneficial to ignore these, because sometimes
+        * `"N"`: masked or degraded nucleotide. For instance, it is recommended to mask the D-segment, because of lower sequence quality
+        * `"."`: "IMGT-gaps", distinct from "normal gaps ('-')". It is beneficial to ignore these, because sometimes
            sequence alignments are "clipped" at the beginning, which would inflate the mutaiton count.
-    {inplace}
 
     Returns
     -------
