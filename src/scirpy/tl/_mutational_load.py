@@ -20,12 +20,13 @@ def _hamming_distance(sequence: str | None, germline: str | None, ignore_chars: 
         return None
     ignore_chars: tuple[str] = (".", "N")
     distance = 0
+    # count number of compared characters
     num_chars = len(sequence)
 
     for l1, l2 in zip(sequence, germline):  # noqa: B905 (`strict` not supported by numba)
         if l1 in ignore_chars or l2 in ignore_chars:
             num_chars -= 1
-        if l1 != l2:
+        elif l1 != l2:
             distance += 1
 
     if num_chars == 0:
