@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning][].
 
 - Fix missing kwargs in `pl.repertoire_overlap` ([#599](https://github.com/scverse/scirpy/pull/599)).
 
+### Additions
+
+- Add `tl.mutational_load` to compute absolute and relative mutational load on IMGT-aligned sequences.
+  This is useful for assessin somatic hypermutation in B cells ([#573](https://github.com/scverse/scirpy/pull/573)).
+
 ## v0.21.0
 
 ### Additions
