@@ -1,0 +1,27 @@
+diff a/.gitignore b/.gitignore	(rejected hunks)
+@@ -6,24 +6,15 @@ buck-out/
+ # Compiled files
+ .venv/
+ __pycache__/
+-.mypy_cache/
+-.ruff_cache/
++.*cache/
+ 
+ # Distribution / packaging
+-/build/
+ /dist/
+-/*.egg-info/
+ 
+ # Tests and coverage
+-/.pytest_cache/
+-/.cache/
+ /data/
+ /node_modules/
+ 
+ # docs
+ /docs/generated/
+ /docs/_build/
+-
+-# IDEs
+-/.idea/
+-/.vscode/

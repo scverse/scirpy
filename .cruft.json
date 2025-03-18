@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/scverse/cookiecutter-scverse",
-  "commit": "87a407a65408d75a949c0b54b19fd287475a56f8",
-  "checkout": "v0.4.0",
+  "commit": "d5857890b2974433049688420be89207fc914db8",
+  "checkout": "test",
   "context": {
     "cookiecutter": {
       "project_name": "scirpy",
@@ -10,8 +10,9 @@
       "author_full_name": "Gregor Sturm",
       "author_email": "mail@gregor-sturm.de",
       "github_user": "grst",
-      "project_repo": "https://github.com/scverse/scirpy",
+      "github_repo": "scirpy",
       "license": "BSD 3-Clause License",
+      "ide_integration": true,
       "_copy_without_render": [
         ".github/workflows/build.yaml",
         ".github/workflows/test.yaml",
@@ -22,7 +23,8 @@
         "lstrip_blocks": true,
         "trim_blocks": true
       },
-      "_template": "https://github.com/scverse/cookiecutter-scverse"
+      "_template": "https://github.com/scverse/cookiecutter-scverse",
+      "_commit": "d5857890b2974433049688420be89207fc914db8"
     }
   },
   "directory": null

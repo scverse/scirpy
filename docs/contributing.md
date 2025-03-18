@@ -1,21 +1,44 @@
 # Contributing guide
 
 Scanpy provides extensive [developer documentation][scanpy developer guide], most of which applies to this project, too.
-This document will not reproduce the entire content from there. Instead, it aims at summarizing the most important
-information to get you started on contributing.
+This document will not reproduce the entire content from there.
+Instead, it aims at summarizing the most important information to get you started on contributing.
 
-We assume that you are already familiar with git and with making pull requests on GitHub. If not, please refer
-to the [scanpy developer guide][].
+We assume that you are already familiar with git and with making pull requests on GitHub.
+If not, please refer to the [scanpy developer guide][].
+
+[scanpy developer guide]: https://scanpy.readthedocs.io/en/latest/dev/index.html
 
 ## Installing dev dependencies
 
-In addition to the packages needed to _use_ this package, you need additional python packages to _run tests_ and _build
-the documentation_. It's easy to install them using `pip`:
+In addition to the packages needed to _use_ this package,
+you need additional python packages to [run tests](#writing-tests) and [build the documentation](#docs-building).
+
+:::::{tabs}
+::::{group-tab} Hatch
+The easiest way is to get familiar with [hatch environments][], with which these tasks are simply:
+
+```bash
+hatch test  # defined in the table [tool.hatch.envs.hatch-test] in pyproject.toml
+hatch run docs:build  # defined in the table [tool.hatch.envs.docs]
+```
+
+::::
+
+::::{group-tab} Pip
+If you prefer managing environments manually, you can use `pip`:
 
 ```bash
 cd scirpy
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev,test,doc]"
 ```
+
+::::
+:::::
+
+[hatch environments]: https://hatch.pypa.io/latest/tutorials/environment/basic-usage/
 
 ## Code-style
 
@@ -28,10 +51,11 @@ To enable pre-commit locally, simply run
 pre-commit install
 ```
 
-in the root of the repository. Pre-commit will automatically download all dependencies when it is run for the first time.
+in the root of the repository.
+Pre-commit will automatically download all dependencies when it is run for the first time.
 
-Alternatively, you can rely on the [pre-commit.ci][] service enabled on GitHub. If you didn't run `pre-commit` before
-pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
+Alternatively, you can rely on the [pre-commit.ci][] service enabled on GitHub.
+If you didn't run `pre-commit` before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
 
 If pre-commit.ci added a commit on a branch you still have been working on locally, simply use
 

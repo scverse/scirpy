@@ -1,0 +1,18 @@
+diff a/docs/conf.py b/docs/conf.py	(rejected hunks)
+@@ -37,7 +37,7 @@ needs_sphinx = "4.0"
+ html_context = {
+     "display_github": True,  # Integrate GitHub
+     "github_user": "grst",
+-    "github_repo": "https://github.com/scverse/scirpy",
++    "github_repo": project_name,
+     "github_version": "main",
+     "conf_py_path": "/docs/",
+ }
+@@ -93,6 +94,7 @@ source_suffix = {
+ intersphinx_mapping = {
+     "python": ("https://docs.python.org/3", None),
+     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
++    "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
+     "numpy": ("https://numpy.org/doc/stable/", None),
+ }
+ 

@@ -1,0 +1,10 @@
+diff a/docs/_templates/autosummary/class.rst b/docs/_templates/autosummary/class.rst	(rejected hunks)
+@@ -35,7 +35,7 @@ Methods table
+ {% block attributes_documentation %}
+ {% if attributes %}
+ Attributes
+-~~~~~~~~~~~
++~~~~~~~~~~
+ 
+ {% for item in attributes %}
+ 
