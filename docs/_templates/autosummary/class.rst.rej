@@ -5,6 +5,6 @@ diff a/docs/_templates/autosummary/class.rst b/docs/_templates/autosummary/class
  Attributes
 -~~~~~~~~~~~
 +~~~~~~~~~~
- 
+
  {% for item in attributes %}
- 
+

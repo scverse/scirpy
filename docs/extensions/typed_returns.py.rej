@@ -7,4 +7,4 @@ diff a/docs/extensions/typed_returns.py b/docs/extensions/typed_returns.py	(reje
 +            yield f"-{m['param']} (:class:`~{m['type']}`)"
          else:
              yield line
- 
+

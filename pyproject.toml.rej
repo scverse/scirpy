@@ -4,7 +4,7 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
  build-backend = "hatchling.build"
 -requires = ["hatchling"]
 +requires = [ "hatchling" ]
- 
+
  [project]
  name = "scirpy"
  version = "0.0.1"
@@ -90,7 +90,7 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
 +urls.Documentation = "https://scirpy.readthedocs.io/"
 +urls.Homepage = "https://github.com/grst/scirpy"
 +urls.Source = "https://github.com/grst/scirpy"
- 
+
 -[tool.coverage.run]
 -source = ["scirpy"]
 -omit = [
@@ -99,7 +99,7 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
 +[tool.hatch.envs.default]
 +installer = "uv"
 +features = [ "dev" ]
- 
+
 -[tool.pytest.ini_options]
 -testpaths = ["tests"]
 -xfail_strict = true
@@ -114,18 +114,18 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
 +
 +[tool.hatch.envs.hatch-test]
 +features = [ "test" ]
- 
+
  [tool.ruff]
  line-length = 120
 -src = ["src"]
 -extend-include = ["*.ipynb"]
 +src = [ "src" ]
 +extend-include = [ "*.ipynb" ]
- 
+
 -[tool.ruff.format]
 -docstring-code-format = true
 +format.docstring-code-format = true
- 
+
 -[tool.ruff.lint]
 -select = [
 -    "F",  # Errors detected by Pyflakes
@@ -197,7 +197,7 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
 +lint.per-file-ignores."docs/*" = [ "I" ]
 +lint.per-file-ignores."tests/*" = [ "D" ]
 +lint.pydocstyle.convention = "numpy"
- 
+
 -[tool.ruff.lint.pydocstyle]
 -convention = "numpy"
 +[tool.pytest.ini_options]
@@ -206,7 +206,7 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
 +addopts = [
 +  "--import-mode=importlib", # allow using test files with same name
 +]
- 
+
 -[tool.ruff.lint.per-file-ignores]
 -"docs/*" = ["I"]
 -"tests/*" = ["D"]
@@ -216,7 +216,7 @@ diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
 +omit = [
 +  "**/test_*.py",
 +]
- 
+
  [tool.cruft]
  skip = [
 -    "tests",

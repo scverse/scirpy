@@ -15,4 +15,4 @@ diff a/docs/conf.py b/docs/conf.py	(rejected hunks)
 +    "scanpy": ("https://scanpy.readthedocs.io/en/stable/", None),
      "numpy": ("https://numpy.org/doc/stable/", None),
  }
- 
+

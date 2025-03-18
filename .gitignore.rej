@@ -6,18 +6,18 @@ diff a/.gitignore b/.gitignore	(rejected hunks)
 -.mypy_cache/
 -.ruff_cache/
 +.*cache/
- 
+
  # Distribution / packaging
 -/build/
  /dist/
 -/*.egg-info/
- 
+
  # Tests and coverage
 -/.pytest_cache/
 -/.cache/
  /data/
  /node_modules/
- 
+
  # docs
  /docs/generated/
  /docs/_build/
