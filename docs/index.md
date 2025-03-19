@@ -6,10 +6,13 @@
 :hidden: true
 :maxdepth: 1
 
-api.md
-changelog.md
+data-structure
+tutorials
+api
+ir-biology
+glossary
 contributing.md
-references.md
-
-notebooks/example
+changelog.md
+versions
+zzz_bibliography
 ```

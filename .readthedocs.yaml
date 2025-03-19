@@ -4,6 +4,14 @@ build:
   os: ubuntu-20.04
   tools:
     python: "3.10"
+  jobs:
+    # workaround to properly install the airr package with all dependencies
+    post_install:
+      - python -m pip install --no-cache-dir yamlordereddictloader
+    # additional debugging information
+    pre_build:
+      - python -c "import scirpy"
+      - pip freeze
 sphinx:
   configuration: docs/conf.py
   # disable this for more lenient docs builds

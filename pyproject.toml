@@ -1,135 +1,201 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = [ "hatchling" ]
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "scirpy"
-version = "0.0.1"
-description = "A very interesting piece of code"
+name = 'scirpy'
+dynamic = ["version"]
+description = "Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"
 readme = "README.md"
-license = { file = "LICENSE" }
-maintainers = [
-  { name = "Gregor Sturm", email = "mail@gregor-sturm.de" },
-]
+requires-python = '>= 3.10'
+license = {file = "LICENSE"}
 authors = [
-  { name = "Gregor Sturm" },
+    {name = "Gregor Sturm"},
+    {name = "Tamas Szabo"},
 ]
-requires-python = ">=3.10"
-classifiers = [
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+maintainers = [
+    {name = "Gregor Sturm", email="mail@gregor-sturm.de"}
 ]
-dependencies = [
-  "anndata",
-  # for debug logging (referenced from the issue template)
-  "session-info2",
-]
-optional-dependencies.dev = [
-  "pre-commit",
-  "twine>=4.0.2",
-]
-optional-dependencies.doc = [
-  "docutils>=0.8,!=0.18.*,!=0.19.*",
-  "ipykernel",
-  "ipython",
-  "myst-nb>=1.1",
-  "pandas",
-  # Until pybtex >0.24.0 releases: https://bitbucket.org/pybtex-devs/pybtex/issues/169/
-  "setuptools",
-  "sphinx>=4",
-  "sphinx-autodoc-typehints",
-  "sphinx-book-theme>=1",
-  "sphinx-copybutton",
-  "sphinx-tabs",
-  "sphinxcontrib-bibtex>=1",
-  "sphinxext-opengraph",
-]
-optional-dependencies.test = [
-  "coverage",
-  "pytest",
-]
-# https://docs.pypi.org/project_metadata/#project-urls
 urls.Documentation = "https://scirpy.readthedocs.io/"
-urls.Homepage = "https://github.com/grst/scirpy"
-urls.Source = "https://github.com/grst/scirpy"
+urls.Source = "https://github.com/scverse/scirpy"
+urls.Home-page = "https://github.com/scverse/scirpy"
+dependencies = [
+    'anndata>=0.9',
+    'awkward>=2.1.0',
+    'mudata>=0.2.3',
+    'scanpy>=1.9.3',
+    'pandas>=1.5,!=2.1.2',
+    'numpy>=1.17.0',
+    'scipy',
+    'scikit-learn',
+    'python-levenshtein',
+    # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
+    'igraph != 0.10.0,!=0.10.1',
+    'networkx>=2.5',
+    'squarify',
+    'airr>=1.4.1',
+    'tqdm>=4.63', # https://github.com/tqdm/tqdm/issues/1082
+    'adjustText>=0.7',
+    'numba>=0.41.0',
+    'pooch>=1.7.0',
+    'pycairo>=1.20; sys_platform == "win32"',
+    'joblib>=1.3.1',
+    'logomaker != 0.8.5',
+]
 
-[tool.hatch.envs.default]
-installer = "uv"
-features = [ "dev" ]
+[project.optional-dependencies]
+dev = [
+    "pre-commit"
+]
+doc = [
+    "docutils>=0.8,!=0.18.*,!=0.19.*",
+    'sphinx>=7,<7.4', # https://github.com/sphinx-doc/sphinx/issues/12589
+    "sphinx-book-theme>=1.0.0",
+    "myst-nb>=1.1.0",
+    'sphinxcontrib-bibtex>=1.0.0',
+    "sphinx-autodoc-typehints",
+    # for tutorial
+    'ipykernel',
+    'ipython',
+    "sphinx-copybutton",
+    "sphinxext-opengraph",
+    'leidenalg',
+    'myst_nb',
+    'jupytext',
+    'pycairo',
+    'jupyter_client',
+    'sc-dandelion',
+    'muon>0.1.6',
+    # for executing notebooks on CI
+    'nbconvert',
+    # I don't know why this would be needed, but it complains about zarr missing when building
+    # the documentation. Probably related to importing some types from anndata.
+    'zarr',
+]
+test = [
+    'pytest',
+    'coverage',
+    'black',
+    'sc-dandelion>=0.3.5',
+    'scikit-bio>=0.5.7',
+    'rectangle-packer',
+    'parasail != 1.2.1',
+]
+cupy = [
+    'cupy-cuda12x',
+]
+dandelion = [
+    'sc-dandelion>=0.3.5',
+]
+diversity = [
+    'scikit-bio>=0.5.7'
+]
+rpack = [
+    'rectangle-packer',
+]
+parasail = [
+    # parasail 1.2.1 fails to be installd on MacOS
+    'parasail != 1.2.1',
+]
 
-[tool.hatch.envs.docs]
-features = [ "doc" ]
-scripts.build = "sphinx-build -M html docs docs/_build {args}"
-scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
-scripts.clean = "git clean -fdX -- {args:docs}"
+[tool.hatch.version]
+source = "vcs"
 
-[tool.hatch.envs.hatch-test]
-features = [ "test" ]
+[tool.coverage.run]
+source = ["scirpy"]
+omit = [
+    "**/test_*.py",
+]
+
+[tool.pytest.ini_options]
+testpaths = "src/scirpy/tests"
+xfail_strict = true
+addopts = [ "-m not gpu" ]
+markers = [
+    "conda: marks a subset of tests to be ran on the Bioconda CI.",
+    "extra: marks tests that require extra dependencies.",
+    "gpu: mark test to run on GPU",
+]
+minversion = 6.0
+norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__']
+
 
 [tool.ruff]
 line-length = 120
-src = [ "src" ]
-extend-include = [ "*.ipynb" ]
+src = ["src"]
+extend-include = ["*.ipynb"]
 
-format.docstring-code-format = true
+[tool.ruff.format]
+docstring-code-format = true
 
-lint.select = [
-  "B",      # flake8-bugbear
-  "BLE",    # flake8-blind-except
-  "C4",     # flake8-comprehensions
-  "D",      # pydocstyle
-  "E",      # Error detected by Pycodestyle
-  "F",      # Errors detected by Pyflakes
-  "I",      # isort
-  "RUF100", # Report unused noqa directives
-  "TID",    # flake8-tidy-imports
-  "UP",     # pyupgrade
-  "W",      # Warning detected by Pycodestyle
+[tool.ruff.lint]
+select = [
+    "F",  # Errors detected by Pyflakes
+    "E",  # Error detected by Pycodestyle
+    "W",  # Warning detected by Pycodestyle
+    "I",  # isort
+    "D",  # pydocstyle
+    "B",  # flake8-bugbear
+    "TID",  # flake8-tidy-imports
+    "C4",  # flake8-comprehensions
+    "BLE",  # flake8-blind-except
+    "UP",  # pyupgrade
+    "RUF100",  # Report unused noqa directives
 ]
-lint.ignore = [
-  "B008", # Errors from function calls in argument defaults. These are fine when the result is immutable.
-  "D100", # Missing docstring in public module
-  "D104", # Missing docstring in public package
-  "D105", # __magic__ methods are often self-explanatory, allow missing docstrings
-  "D107", # Missing docstring in __init__
-  # Disable one in each pair of mutually incompatible rules
-  "D203", # We don’t want a blank line before a class docstring
-  "D213", # <> We want docstrings to start immediately after the opening triple quote
-  "D400", # first line should end with a period [Bug: doesn’t work with single-line docstrings]
-  "D401", # First line should be in imperative mood; try rephrasing
-  "E501", # line too long -> we accept long comment lines; formatter gets rid of long code lines
-  "E731", # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
-  "E741", # allow I, O, l as variable names -> I is the identity matrix
+ignore = [
+    # line too long -> we accept long comment lines; formatter gets rid of long code lines
+    "E501",
+    # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
+    "E731",
+    # allow I, O, l as variable names -> I is the identity matrix
+    "E741",
+    # Missing docstring in public package
+    "D104",
+    # Missing docstring in public module
+    "D100",
+    # Missing docstring in __init__
+    "D107",
+    # Errors from function calls in argument defaults. These are fine when the result is immutable.
+    "B008",
+    # __magic__ methods are often self-explanatory, allow missing docstrings
+    "D105",
+    # first line should end with a period [Bug: doesn't work with single-line docstrings]
+    "D400",
+    # First line should be in imperative mood; try rephrasing
+    "D401",
+    ## Disable one in each pair of mutually incompatible rules
+    # We don’t want a blank line before a class docstring
+    "D203",
+    # We want docstrings to start immediately after the opening triple quote
+    "D213",
+    # missing docstring in public function
+    "D103",
+    # 1 blank line required between summary line and description
+    "D205",
+    # no explicit `stackelvel` keywork argument found
+    "B028",
+    # Use `r"""` if any backslashes in a docstring
+    "D301"
 ]
-lint.per-file-ignores."*/__init__.py" = [ "F401" ]
-lint.per-file-ignores."docs/*" = [ "I" ]
-lint.per-file-ignores."tests/*" = [ "D" ]
-lint.pydocstyle.convention = "numpy"
 
-[tool.pytest.ini_options]
-testpaths = [ "tests" ]
-xfail_strict = true
-addopts = [
-  "--import-mode=importlib", # allow using test files with same name
-]
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
-[tool.coverage.run]
-source = [ "scirpy" ]
-omit = [
-  "**/test_*.py",
-]
+[tool.ruff.lint.per-file-ignores]
+"docs/*" = ["I"]
+"tests/*" = ["D"]
+"*/__init__.py" = ["F401"]
+"src/scirpy/datasets/_processing_scripts/*" = ["B018", "E402"]
+"*.ipynb" = ["E402"] # Module level import not at top of cell
 
 [tool.cruft]
 skip = [
-  "tests",
-  "src/**/__init__.py",
-  "src/**/basic.py",
-  "docs/api.md",
-  "docs/changelog.md",
-  "docs/references.bib",
-  "docs/references.md",
-  "docs/notebooks/example.ipynb",
+    "tests",
+    "src/**/__init__.py",
+    "src/**/basic.py",
+    "docs/api.md",
+    "docs/changelog.md",
+    "docs/references.bib",
+    "docs/references.md",
+    "docs/notebooks/example.ipynb",
 ]

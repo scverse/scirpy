@@ -1,7 +1,7 @@
 from importlib.metadata import version
 
-from . import pl, pp, tl
+from . import datasets, get, io, ir_dist, pl, pp, tl, util
 
-__all__ = ["pl", "pp", "tl"]
+__all__ = ["datasets", "get", "io", "ir_dist", "pl", "pp", "tl", "util"]
 
 __version__ = version("scirpy")
