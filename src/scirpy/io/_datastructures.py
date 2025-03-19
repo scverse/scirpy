@@ -181,4 +181,4 @@ class AirrCell(MutableMapping):
         """Generate an empty chain dictionary, containing all required AIRR
         columns, but set to `None`
         """
-        return {field: None for field in get_rearrangement_schema().required}
+        return dict.fromkeys(get_rearrangement_schema().required)
