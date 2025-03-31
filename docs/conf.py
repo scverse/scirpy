@@ -9,7 +9,6 @@ import sys
 from datetime import datetime
 from importlib.metadata import metadata
 from pathlib import Path
-
 import os
 
 
@@ -143,7 +142,6 @@ html_static_path = ["_static"]
 html_title = project_name
 html_logo = "img/scirpy_logo.png"
 html_css_files = ["css/custom.css"]
-
 
 html_theme_options = {
     "repository_url": repository_url,

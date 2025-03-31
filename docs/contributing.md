@@ -42,6 +42,7 @@ git pull --rebase
 to integrate the changes into yours.
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
+
 Finally, most editors have an _autoformat on save_ feature. Consider enabling this option for [ruff][ruff-editors]
 and [prettier][prettier-editors].
 
@@ -103,6 +104,7 @@ on how to write documentation.
 
 The documentation is set-up to render jupyter notebooks stored in the `docs/notebooks` directory using [myst-nb][].
 Currently, only notebooks in `.ipynb` format are supported that will be included with both their input and output cells.
+
 It is your reponsibility to update and re-run the notebook whenever necessary.
 
 If you are interested in automatically running notebooks as part of the continuous integration, please check
