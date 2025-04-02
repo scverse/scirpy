@@ -536,6 +536,9 @@ def _plot_clonotype_network_panel(
         size_legend_ax = fig.add_subplot(gs[3, 1])
         ax = fig.add_subplot(gs[:, 0])
         ax.grid(False)
+        # remove ticks if added back with the new subplot
+        ax.set_xticks([])
+        ax.set_yticks([])
 
     # Generate plot
     sct = None
