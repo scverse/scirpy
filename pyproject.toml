@@ -119,14 +119,8 @@ scripts.clean = "git clean -fdX -- {args:docs}"
 
 [tool.hatch.envs.hatch-test]
 features = [ "test" ]
-default-args = ["src/scirpy/tests", "-n", "4"]
+default-args = [ "src/scirpy/tests", "-n", "4" ]
 parallel = true
-
-[tool.coverage.run]
-source = ["scirpy"]
-omit = [
-    "**/test_*.py",
-]
 
 [tool.ruff]
 line-length = 120
