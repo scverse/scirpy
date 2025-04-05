@@ -70,7 +70,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> AnnData | MuData:
     # of a certain cell.
     has_chain = []
     for _, row in obs.iterrows():
-        has_chain_dict = {k: False for k in ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]}
+        has_chain_dict = dict.fromkeys(["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"], False)
         for c in cols:
             # if any of the columns has that chain, we set the value to True
             _, receptor_arm, chain, var = c.split("_", 3)

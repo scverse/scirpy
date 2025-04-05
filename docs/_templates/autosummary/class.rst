@@ -14,6 +14,7 @@ Attributes table
 .. autosummary::
 {% for item in attributes %}
     ~{{ fullname }}.{{ item }}
+
 {%- endfor %}
 {% endif %}
 {% endblock %}
