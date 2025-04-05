@@ -121,53 +121,33 @@ in the root of the repository.
 Continuous integration will automatically run the tests on all pull requests and test
 against the minimum and maximum supported Python version.
 
-Additionally, there's a CI job that tests against pre-releases of all dependencies (if there are any).
-The purpose of this check is to detect incompatibilities of new package versions early on and
-gives you time to fix the issue or reach out to the developers of the dependency before the package is released to a wider audience.
+Additionally, there's a CI job that tests against pre-releases of all dependencies
+(if there are any). The purpose of this check is to detect incompatibilities
+of new package versions early on and gives you time to fix the issue or reach
+out to the developers of the dependency before the package is released to a wider audience.
 
-## Publishing a release
+[scanpy-test-docs]: https://scanpy.readthedocs.io/en/latest/dev/testing.html#writing-tests
 
-### Updating the version number
+## Making a release
 
-Before making a release, you need to update the version number in the `pyproject.toml` file.
-Please adhere to [Semantic Versioning][semver], in brief
+1. **Review and update the changelog.** Make sure the changelog is up-to-date and change the top line from `[Unreleased]` to the version number you intend to publish.
+2. **Create a release on GitHub.** Navigate to the "Releases" page of this project on GitHub. Specify vX.X.X as a tag name and create a release. For more information, see [managing GitHub releases][].
 
-> Given a version number MAJOR.MINOR.PATCH, increment the:
->
-> 1. MAJOR version when you make incompatible API changes,
-> 2. MINOR version when you add functionality in a backwards compatible manner, and
-> 3. PATCH version when you make backwards compatible bug fixes.
->
-> Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
-
-Once you are done, commit and push your changes and navigate to the "Releases" page of this project on GitHub.
-Specify `vX.X.X` as a tag name and create a release.
-For more information, see [managing GitHub releases][].
-This will automatically create a git tag and trigger a Github workflow that creates a release on [PyPI][].
-
-[semver]: https://semver.org/
-[managing GitHub releases]: https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
-[pypi]: https://pypi.org/
+**That's it!** The release will be built automatically and published on PyPI using GitHub actions using the [trusted publishing workflow](https://docs.pypi.org/trusted-publishers/).
+Scirpy uses [hatch-vcs](https://github.com/ofek/hatch-vcs) to automaticlly retrieve the version number from the git tag. Therefore, it is not necessary to bump versions in the code.
 
 ## Writing documentation
 
-Please write documentation for new or changed features and use-cases.
-This project uses [sphinx][] with the following features:
+Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
 
-- The [myst][] extension allows to write documentation in markdown/Markedly Structured Text
+- the [myst][] extension allows to write documentation in markdown/Markedly Structured Text
 - [Numpy-style docstrings][numpydoc] (through the [napoloen][numpydoc-napoleon] extension).
 - Jupyter notebooks as tutorials through [myst-nb][] (See [Tutorials with myst-nb](#tutorials-with-myst-nb-and-jupyter-notebooks))
-- [sphinx-autodoc-typehints][], to automatically reference annotated input and output types
+- [Sphinx autodoc typehints][], to automatically reference annotated input and output types
 - Citations (like {cite:p}`Virshup_2023`) can be included with [sphinxcontrib-bibtex](https://sphinxcontrib-bibtex.readthedocs.io/)
 
-See scanpy’s {doc}`scanpy:dev/documentation` for more information on how to write your own.
-
-[sphinx]: https://www.sphinx-doc.org/en/master/
-[myst]: https://myst-parser.readthedocs.io/en/latest/intro.html
-[myst-nb]: https://myst-nb.readthedocs.io/en/latest/
-[numpydoc-napoleon]: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
-[numpydoc]: https://numpydoc.readthedocs.io/en/latest/format.html
-[sphinx-autodoc-typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
+See the [scanpy developer docs](https://scanpy.readthedocs.io/en/latest/dev/documentation.html) for more information
+on how to write documentation.
 
 ### Tutorials with myst-nb and jupyter notebooks
 
@@ -212,3 +192,29 @@ make html
 
 ::::
 :::::
+
+<!-- Links -->
+
+[scanpy developer guide]: https://scanpy.readthedocs.io/en/latest/dev/index.html
+[cookiecutter-scverse-instance]: https://cookiecutter-scverse-instance.readthedocs.io/en/latest/template_usage.html
+[github quickstart guide]: https://docs.github.com/en/get-started/quickstart/create-a-repo?tool=webui
+[codecov]: https://about.codecov.io/sign-up/
+[codecov docs]: https://docs.codecov.com/docs
+[codecov bot]: https://docs.codecov.com/docs/team-bot
+[codecov app]: https://github.com/apps/codecov
+[pre-commit.ci]: https://pre-commit.ci/
+[readthedocs.org]: https://readthedocs.org/
+[myst-nb]: https://myst-nb.readthedocs.io/en/latest/
+[jupytext]: https://jupytext.readthedocs.io/en/latest/
+[pre-commit]: https://pre-commit.com/
+[anndata]: https://github.com/scverse/anndata
+[mudata]: https://github.com/scverse/mudata
+[pytest]: https://docs.pytest.org/
+[semver]: https://semver.org/
+[sphinx]: https://www.sphinx-doc.org/en/master/
+[myst]: https://myst-parser.readthedocs.io/en/latest/intro.html
+[numpydoc-napoleon]: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
+[numpydoc]: https://numpydoc.readthedocs.io/en/latest/format.html
+[sphinx autodoc typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
+[pypi]: https://pypi.org/
+[managing GitHub releases]: https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository

@@ -1,0 +1,6 @@
+{
+  "restructuredtext.confPath": "${workspaceFolder}/docs",
+  "editor.rulers": [
+    88
+  ],
+}
