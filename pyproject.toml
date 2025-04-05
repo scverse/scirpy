@@ -64,6 +64,7 @@ optional-dependencies.doc = [
   # for tutorial
   "ipykernel",
   "ipython",
+  "ipywidgets",
   "jupyter-client",
   "jupytext",
   "leidenalg",
@@ -82,7 +83,7 @@ optional-dependencies.doc = [
   "sphinxext-opengraph",
   # I don't know why this would be needed, but it complains about zarr missing when building
   # the documentation. Probably related to importing some types from anndata.
-  "zarr",
+  "zarr<3",
 ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS
