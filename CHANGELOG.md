@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning][].
 
 - Ensure that clonotype network plots don't have any axis ticks ([#607](https://github.com/scverse/scirpy/pull/607)).
 
+### Chore
+
+- Update template to v0.5.0 ([#608](https://github.com/scverse/scirpy/pull/608/), [#606](https://github.com/scverse/scirpy/pull/606/))
+
 ## v0.22.0
 
 ### Fixes
