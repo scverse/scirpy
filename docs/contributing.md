@@ -153,7 +153,6 @@ hatch run docs:open
 [pre-commit]: https://pre-commit.com/
 [anndata]: https://github.com/scverse/anndata
 [mudata]: https://github.com/scverse/mudata
-[pytest]: https://docs.pytest.org/
 [semver]: https://semver.org/
 [sphinx]: https://www.sphinx-doc.org/en/master/
 [myst]: https://myst-parser.readthedocs.io/en/latest/intro.html
