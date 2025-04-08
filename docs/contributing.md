@@ -7,8 +7,6 @@ Instead, it aims at summarizing the most important information to get you starte
 We assume that you are already familiar with git and with making pull requests on GitHub.
 If not, please refer to the [scanpy developer guide][].
 
-[scanpy developer guide]: https://scanpy.readthedocs.io/en/latest/dev/index.html
-
 ## Installing dev dependencies
 
 In addition to the packages needed to _use_ this package,
@@ -52,10 +50,6 @@ While the [pre-commit.ci][] is useful, we strongly encourage installing and runn
 Finally, most editors have an _autoformat on save_ feature.
 Consider enabling this option for [ruff][ruff-editors] and [biome][biome-editors].
 
-[pre-commit]: https://pre-commit.com/
-[pre-commit.ci]: https://pre-commit.ci/
-[ruff-editors]: https://docs.astral.sh/ruff/integrations/
-[biome-editors]: https://biomejs.dev/guides/integrate-in-editor/
 
 (writing-tests)=
 
@@ -82,7 +76,6 @@ hatch test --all  # test with all supported Python versions
 
 in the root of the repository.
 
-[pytest]: https://docs.pytest.org/
 
 ### Continuous integration
 
@@ -169,3 +162,6 @@ hatch run docs:open
 [sphinx autodoc typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
 [pypi]: https://pypi.org/
 [managing GitHub releases]: https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
+[ruff-editors]: https://docs.astral.sh/ruff/integrations/
+[biome-editors]: https://biomejs.dev/guides/integrate-in-editor/
+[pytest]: https://docs.pytest.org/
