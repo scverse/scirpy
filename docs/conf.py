@@ -5,12 +5,11 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
+import os
 import sys
 from datetime import datetime
 from importlib.metadata import metadata
 from pathlib import Path
-import os
-
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE / "extensions"))

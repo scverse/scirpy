@@ -9,12 +9,11 @@
 {% block attributes %}
 {% if attributes %}
 Attributes table
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. autosummary::
 {% for item in attributes %}
-    ~{{ fullname }}.{{ item }}
-
+    ~{{ name }}.{{ item }}
 {%- endfor %}
 {% endif %}
 {% endblock %}
@@ -27,7 +26,7 @@ Methods table
 .. autosummary::
 {% for item in methods %}
     {%- if item != '__init__' %}
-    ~{{ fullname }}.{{ item }}
+    ~{{ name }}.{{ item }}
     {%- endif -%}
 {%- endfor %}
 {% endif %}

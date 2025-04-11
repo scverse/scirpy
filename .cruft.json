@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/scverse/cookiecutter-scverse",
-  "commit": "83d178f1d000c547cc772368f82568bb72735d39",
-  "checkout": "test2",
+  "commit": "94ef9fb6f9ad8cfe65a3d9575679c03c80c49cd1",
+  "checkout": "v0.5.0",
   "context": {
     "cookiecutter": {
       "project_name": "scirpy",
@@ -13,12 +13,22 @@
       "github_repo": "scirpy",
       "license": "BSD 3-Clause License",
       "ide_integration": true,
-      "project_repo": "https://github.com/scverse/scirpy",
-      "license": "BSD 3-Clause License",
       "_copy_without_render": [
         ".github/workflows/build.yaml",
         ".github/workflows/test.yaml",
         "docs/_templates/autosummary/**.rst"
+      ],
+      "_exclude_on_template_update": [
+        "CHANGELOG.md",
+        "LICENSE",
+        "README.md",
+        "docs/api.md",
+        "docs/index.md",
+        "docs/notebooks/example.ipynb",
+        "docs/references.bib",
+        "docs/references.md",
+        "src/**",
+        "tests/**"
       ],
       "_render_devdocs": false,
       "_jinja2_env_vars": {
@@ -26,7 +36,7 @@
         "trim_blocks": true
       },
       "_template": "https://github.com/scverse/cookiecutter-scverse",
-      "_commit": "83d178f1d000c547cc772368f82568bb72735d39"
+      "_commit": "94ef9fb6f9ad8cfe65a3d9575679c03c80c49cd1"
     }
   },
   "directory": null
