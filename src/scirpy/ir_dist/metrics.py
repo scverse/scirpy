@@ -1107,12 +1107,44 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
         Consider choosing a smaller cutoff to resolve this issue."""
 
-        result_sparse = result_blocks[0]
-        for i in range(1, len(result_blocks)):
-            result_sparse += result_blocks[i]
+        @nb.njit
+        def csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements):
+            data = np.empty(num_elements, dtype=block_data[0].dtype)
+            indices = np.empty(num_elements, dtype=block_indices[0].dtype)
+            indptr = np.zeros(num_rows + 1, dtype=np.int32)
+
+            ptr = 0
+            for row in range(num_rows):
+                for b in range(len(block_indptrs)):
+                    start = block_indptrs[b][row]
+                    end = block_indptrs[b][row + 1]
+                    count = end - start
+
+                    for j in range(count):
+                        data[ptr + j] = block_data[b][start + j]
+                        indices[ptr + j] = block_indices[b][start + j]
+
+                    ptr += count
+                indptr[row + 1] = ptr
+
+            return data, indices, indptr
+
+        def csr_union(blocks):
+            num_rows = blocks[0].shape[0]
+            num_elements = sum(b.nnz for b in blocks)
+
+            block_data = [b.data for b in blocks]
+            block_indices = [b.indices for b in blocks]
+            block_indptrs = [b.indptr for b in blocks]
+
+            data, indices, indptr = csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements)
+
+            shape = blocks[0].shape
+            return csr_matrix((data, indices, indptr), shape=shape)
+
+        result_sparse = csr_union(result_blocks)
 
         row_element_counts_gpu = np.diff(result_sparse.indptr)
-
         result_sparse.sort_indices()
 
         # Returns the results in a way that fits the current interface, could be improved later
