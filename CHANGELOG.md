@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+### Performance improvements
+
+- The stacking of the result matrix blocks of the GPU implementation of the Hamming distance metric has been reimplemented with Numba ([#617](https://github.com/scverse/scirpy/pull/617)).
+
 ### Fixes
 
 - Ensure that clonotype network plots don't have any axis ticks ([#607](https://github.com/scverse/scirpy/pull/607)).
