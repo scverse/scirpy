@@ -130,6 +130,9 @@ def _read_10x_vdj_json(
         chain["productive"] = contig["productive"]
         chain["is_cell"] = contig["is_cell"]
         chain["high_confidence"] = contig["high_confidence"]
+        chain["sequence"] = contig["sequence"]
+        chain["aa_sequence"] = contig["aa_sequence"]
+        chain["sequence_id"] = contig["contig_name"]
 
         # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
         fwrs = [f"fwr{i}" for i in range(1, 5)]
