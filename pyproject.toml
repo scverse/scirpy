@@ -34,7 +34,7 @@ dependencies = [
   "logomaker!=0.8.5",
   "mudata>=0.2.3",
   "networkx>=2.5",
-  "numba>=0.41",
+  "numba>=0.57",
   "numpy>=1.17",
   "pandas>=1.5,!=2.1.2",
   "pooch>=1.7",
