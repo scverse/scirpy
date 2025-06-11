@@ -1107,7 +1107,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
         Consider choosing a smaller cutoff to resolve this issue."""
 
-
         @nb.njit
         def csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements):
             data = np.empty(num_elements, dtype=block_data[0].dtype)
@@ -1130,7 +1129,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             return data, indices, indptr
 
-
         def csr_union(blocks):
             num_rows = blocks[0].shape[0]
             num_elements = sum(b.nnz for b in blocks)
@@ -1143,7 +1141,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             shape = blocks[0].shape
             return csr_matrix((data, indices, indptr), shape=shape)
-            
 
         result_sparse = csr_union(result_blocks)
 
