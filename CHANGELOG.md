@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+### Performance improvements
+
+- The stacking of the result matrix blocks of the GPU implementation of the Hamming distance metric has been reimplemented with Numba ([#617](https://github.com/scverse/scirpy/pull/617)).
+
 ### Fixes
 
 - Ensure that clonotype network plots don't have any axis ticks ([#607](https://github.com/scverse/scirpy/pull/607)).
@@ -18,6 +22,10 @@ and this project adheres to [Semantic Versioning][].
 ### Chore
 
 - Update template to v0.5.0 ([#608](https://github.com/scverse/scirpy/pull/608/), [#606](https://github.com/scverse/scirpy/pull/606/))
+
+### Documentation
+
+- Fix code snippet for merging AIRR data into unimodal AnnData in "data structure" section ([#620](https://github.com/scverse/scirpy/pull/620/))
 
 ## v0.22.0
 
