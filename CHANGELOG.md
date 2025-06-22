@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 - Ensure that clonotype network plots don't have any axis ticks ([#607](https://github.com/scverse/scirpy/pull/607)).
+- Load `sequence`, `sequence_aa` and `sequence_id` fields when reading from 10x JSON format ([#619](https://github.com/scverse/scirpy/pull/619)).
 
 ### Chore
 
