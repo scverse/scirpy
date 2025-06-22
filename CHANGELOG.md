@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning][].
 
 - Update template to v0.5.0 ([#608](https://github.com/scverse/scirpy/pull/608/), [#606](https://github.com/scverse/scirpy/pull/606/))
 
+### Documentation
+
+- Fix code snippet for merging AIRR data into unimodal AnnData in "data structure" section
+
 ## v0.22.0
 
 ### Fixes
