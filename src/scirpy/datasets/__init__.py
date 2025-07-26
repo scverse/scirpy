@@ -26,7 +26,7 @@ from scirpy.util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
 
-_FIGSHARE = pooch.create(
+_AWS_EXAMPLEDATA = pooch.create(
     path=pooch.os_cache("scirpy"),
     base_url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/scirpy",
     version=version("scirpy"),
@@ -72,7 +72,7 @@ def wu2020() -> MuData:
 
         {processing_code}
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("wu2020.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("wu2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -93,7 +93,7 @@ def wu2020_3k() -> MuData:
 
         {processing_code}
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("wu2020_3k.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("wu2020_3k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -121,7 +121,7 @@ def maynard2020() -> MuData:
 
         {processing_code}
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("maynard2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -144,7 +144,7 @@ def stephenson2021_5k() -> MuData:
     To  speed up computation time, we solely included 5 samples from each of the COVID-19-positive groups and randomly subsampled down to a total of 5k cells.
 
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("stephenson2021_5k.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("stephenson2021_5k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
