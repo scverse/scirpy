@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [Unreleased]
+
+### Chore
+
+- Example datasets are now hosted on AWS S3 instead of figshare. This should increase reliability and speed ([#628](https://github.com/scverse/scirpy/pull/628)).
+
 ## v0.22.1
 
 ### Performance improvements
