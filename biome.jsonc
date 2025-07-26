@@ -1,9 +1,9 @@
 {
-    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
     "formatter": { "useEditorconfig": true },
     "overrides": [
         {
-            "include": ["./.vscode/*.json", "**/*.jsonc"],
+            "includes": [".vscode/**/*.json", "**/*.jsonc"],
             "json": {
                 "formatter": { "trailingCommas": "all" },
                 "parser": {
