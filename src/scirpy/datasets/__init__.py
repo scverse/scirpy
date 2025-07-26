@@ -28,7 +28,7 @@ HERE = Path(__file__).parent
 
 _FIGSHARE = pooch.create(
     path=pooch.os_cache("scirpy"),
-    base_url="doi:10.6084/m9.figshare.22249894.v2",
+    base_url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/scirpy",
     version=version("scirpy"),
     version_dev="main",
     env="SCIRPY_DATA_DIR",
