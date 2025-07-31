@@ -284,6 +284,38 @@ def test_alpha_diversity(adata_diversity):
     )
 
 
+def test_alpha_diversity_mudata_groupby_fix(adata_diversity):
+    """
+    Test for issue #630: KeyError when using groupby with MuData.
+    
+    This test specifically checks that alpha_diversity works correctly with MuData
+    when the groupby column is present in mdata.obs but not in the AIRR modality.
+    """
+    # Only test with MuData instance
+    if not isinstance(adata_diversity, MuData):
+        pytest.skip("This test is specific to MuData")
+    
+    # The issue occurs when groupby column is in mdata.obs but inplace=True
+    # This should not raise a KeyError after the fix
+    ir.tl.alpha_diversity(
+        adata_diversity, 
+        groupby="group", 
+        target_col="clonotype_", 
+        inplace=True,
+        key_added="test_alpha_diversity_fix"
+    )
+    
+    # Verify the result was stored correctly
+    assert "airr:test_alpha_diversity_fix" in adata_diversity.obs.columns
+    
+    # Verify the values are correct
+    expected_values = np.array([0.0] * 4 + [1.0] * 4)  # Same as normalized_shannon_entropy test
+    npt.assert_equal(
+        adata_diversity.obs["airr:test_alpha_diversity_fix"].values,
+        expected_values,
+    )
+
+
 def test_group_abundance():
     obs = pd.DataFrame.from_records(
         [
