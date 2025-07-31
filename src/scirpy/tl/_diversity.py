@@ -146,6 +146,6 @@ def alpha_diversity(
     if inplace:
         metric_name = metric if isinstance(metric, str) else metric.__name__
         key_added = f"{metric_name}_{target_col}" if key_added is None else key_added
-        params.set_obs(key_added, params.adata.obs[groupby].map(diversity))
+        params.set_obs(key_added, params.get_obs(groupby).map(diversity))
     else:
         return pd.DataFrame().from_dict(diversity, orient="index")
