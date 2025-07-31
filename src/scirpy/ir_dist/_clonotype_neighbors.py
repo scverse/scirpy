@@ -419,8 +419,13 @@ class ClonotypeNeighbors:
                 raise ValueError("Forward and reverse lookup tablese must be defined on the same distance matrices.")
             empty_row = np.array([np.zeros(reverse.size, dtype=bool)])
             reverse_lookup_values = np.vstack((*reverse.lookup.values(), empty_row))
-            reverse_lookup_keys = np.full(id_len, -1, dtype=np.int32)
             keys_array = np.fromiter(reverse.lookup.keys(), dtype=int, count=len(reverse.lookup))
+            # Size reverse_lookup_keys to accommodate the maximum key value + 1
+            # This fixes IndexError when keys reference indices in the full distance matrix
+            # that exceed the current batch size (id_len)
+            max_key = np.max(keys_array) if len(keys_array) > 0 else -1
+            reverse_lookup_keys_size = max(max_key + 1, id_len) if max_key >= 0 else id_len
+            reverse_lookup_keys = np.full(reverse_lookup_keys_size, -1, dtype=np.int32)
             reverse_lookup_keys[keys_array] = np.arange(len(keys_array))
             gene_segment_mask = sp.csr_matrix(
                 (np.empty(len(has_distance_mask.indices)), has_distance_mask.indices, has_distance_mask.indptr),
