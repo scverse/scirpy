@@ -178,6 +178,7 @@ def _read_10x_vdj_csv(
                 c_call=chain_series["c_gene"],
                 is_cell=chain_series["is_cell"],
                 high_confidence=chain_series["high_confidence"],
+                sequence_id=chain_series["contig_id"],
             )
 
             # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}

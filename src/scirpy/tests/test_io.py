@@ -341,6 +341,30 @@ def test_read_10x_csv():
 
 
 @pytest.mark.conda
+def test_read_10x_csv_sequence_id():
+    """Test that contig_id from CSV is properly mapped to sequence_id in AIRR format"""
+    anndata = read_10x_vdj(TESTDATA / "10x/filtered_contig_annotations.csv")
+    obs = anndata.obs.join(
+        ir.get.airr(
+            anndata,
+            ["sequence_id", "junction_aa"],
+            ["VDJ_1", "VJ_1", "VDJ_2", "VJ_2"],
+        )
+    )
+    
+    # Check that sequence_id is present and contains expected contig_id values
+    cell1 = obs.iloc[1, :]  # AAACCTGAGTACGCCC-1
+    assert cell1.name == "AAACCTGAGTACGCCC-1"
+    
+    # From the CSV: VDJ_1 has junction_aa "CASSLGPSTDTQYF" which corresponds to contig_1
+    # VJ_1 has junction_aa "CAMRVGGSQGNLIF" which corresponds to contig_3
+    assert cell1["VDJ_1_junction_aa"] == "CASSLGPSTDTQYF"
+    assert cell1["VJ_1_junction_aa"] == "CAMRVGGSQGNLIF"
+    assert cell1["VDJ_1_sequence_id"] == "AAACCTGAGTACGCCC-1_contig_1"
+    assert cell1["VJ_1_sequence_id"] == "AAACCTGAGTACGCCC-1_contig_3"
+
+
+@pytest.mark.conda
 @pytest.mark.parametrize(
     "testfile",
     [
