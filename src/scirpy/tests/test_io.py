@@ -303,6 +303,7 @@ def test_read_10x_csv():
                 "j_call",
                 "c_call",
                 "locus",
+                "sequence_id",
             ],
             ["VDJ_1", "VJ_1", "VDJ_2", "VJ_2"],
         )
