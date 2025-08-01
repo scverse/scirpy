@@ -303,6 +303,7 @@ def test_read_10x_csv():
                 "j_call",
                 "c_call",
                 "locus",
+                "sequence_id",
             ],
             ["VDJ_1", "VJ_1", "VDJ_2", "VJ_2"],
         )
@@ -313,6 +314,7 @@ def test_read_10x_csv():
     cell3 = obs.iloc[4, :]
 
     assert cell1.name == "AAACCTGAGTACGCCC-1"
+    assert cell1["VDJ_1_sequence_id"] == "AAACCTGAGTACGCCC-1_contig_1"
     assert cell1["VDJ_1_junction_aa"] == "CASSLGPSTDTQYF"
     assert cell1["VDJ_1_junction"] == "TGTGCCAGCAGCTTGGGACCTAGCACAGATACGCAGTATTTT"
     assert cell1["VDJ_1_umi_count"] == 55
@@ -326,6 +328,7 @@ def test_read_10x_csv():
     assert cell1["VDJ_1_locus"] == "TRB"
 
     assert cell2.name == "AAACCTGGTCCGTTAA-1"
+    assert cell2["VJ_1_sequence_id"] == "AAACCTGGTCCGTTAA-1_contig_4"
     assert cell2["VJ_1_junction_aa"] == "CALNTGGFKTIF"
     assert cell2["VJ_2_junction_aa"] == "CAVILDARLMF"
     assert cell2["VJ_1_umi_count"] == 5
