@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning][].
 
 - Example datasets are now hosted on AWS S3 instead of figshare. This should increase reliability and speed ([#628](https://github.com/scverse/scirpy/pull/628)).
 
+### Fixes
+
+- Contig ID is now read into `sequence_id` AIRR field from 10x Genomics CSV files ([#635](https://github.com/scverse/scirpy/pull/635)).
+
 ## v0.22.1
 
 ### Performance improvements
