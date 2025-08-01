@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## [Unreleased]
 
+### Fixes
+
+- Fix `tl.alpha_diversity` issue with `inplace=True` ([#632](https://github.com/scverse/scirpy/issues/632)).
+
 ### Chore
 
 - Example datasets are now hosted on AWS S3 instead of figshare. This should increase reliability and speed ([#628](https://github.com/scverse/scirpy/pull/628)).
