@@ -7,13 +7,8 @@ name = "scirpy"
 description = "Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"
 readme = "README.md"
 license = { file = "LICENSE" }
-maintainers = [
-  { name = "Gregor Sturm", email = "mail@gregor-sturm.de" },
-]
-authors = [
-  { name = "Gregor Sturm" },
-  { name = "Tamas Szabo" },
-]
+maintainers = [ { name = "Gregor Sturm", email = "mail@gregor-sturm.de" } ]
+authors = [ { name = "Gregor Sturm" }, { name = "Tamas Szabo" } ]
 requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -28,8 +23,6 @@ dependencies = [
   "airr>=1.4.1",
   "anndata>=0.9",
   "awkward>=2.1",
-  # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
-  "igraph!=0.10,!=0.10.1",
   "joblib>=1.3.1",
   "logomaker!=0.8.5",
   "mudata>=0.2.3",
@@ -39,7 +32,6 @@ dependencies = [
   "pandas>=1.5,!=2.1.2",
   "pooch>=1.7",
   "pycairo>=1.20; sys_platform=='win32'",
-  "python-levenshtein",
   "scanpy>=1.9.3",
   "scikit-learn",
   "scipy",
@@ -47,18 +39,10 @@ dependencies = [
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
 
-optional-dependencies.cupy = [
-  "cupy-cuda12x",
-]
-optional-dependencies.dandelion = [
-  "sc-dandelion>=0.3.5",
-]
-optional-dependencies.dev = [
-  "pre-commit",
-]
-optional-dependencies.diversity = [
-  "scikit-bio>=0.5.7",
-]
+optional-dependencies.cupy = [ "cupy-cuda12x" ]
+optional-dependencies.dandelion = [ "sc-dandelion>=0.3.5" ]
+optional-dependencies.dev = [ "pre-commit" ]
+optional-dependencies.diversity = [ "scikit-bio>=0.5.7" ]
 optional-dependencies.doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
   # for tutorial
@@ -85,13 +69,16 @@ optional-dependencies.doc = [
   # the documentation. Probably related to importing some types from anndata.
   "zarr<3",
 ]
+optional-dependencies.igraph = [
+  # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
+  "igraph!=0.10,!=0.10.1",
+]
+optional-dependencies.levenshtein = [ "python-levenshtein" ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS
   "parasail!=1.2.1",
 ]
-optional-dependencies.rpack = [
-  "rectangle-packer",
-]
+optional-dependencies.rpack = [ "rectangle-packer" ]
 optional-dependencies.test = [
   "black",
   "coverage",
@@ -177,10 +164,15 @@ lint.ignore = [
   # allow I, O, l as variable names -> I is the identity matrix
   "E741",
 ]
-lint.per-file-ignores."*.ipynb" = [ "E402" ] # Module level import not at top of cell
+lint.per-file-ignores."*.ipynb" = [
+  "E402",
+] # Module level import not at top of cell
 lint.per-file-ignores."*/__init__.py" = [ "F401" ]
 lint.per-file-ignores."docs/*" = [ "I" ]
-lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [ "B018", "E402" ]
+lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [
+  "B018",
+  "E402",
+]
 lint.per-file-ignores."tests/*" = [ "D" ]
 lint.pydocstyle.convention = "numpy"
 
@@ -198,9 +190,7 @@ norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__' ]
 
 [tool.coverage.run]
 source = [ "scirpy" ]
-omit = [
-  "**/test_*.py",
-]
+omit = [ "**/test_*.py" ]
 
 [tool.cruft]
 skip = [

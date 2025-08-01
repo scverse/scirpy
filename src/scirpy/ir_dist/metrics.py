@@ -9,7 +9,6 @@ import numba as nb
 import numpy as np
 import scipy.sparse
 import scipy.spatial
-from Levenshtein import distance as levenshtein_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
@@ -306,7 +305,8 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     events.
 
     This class relies on `Python-levenshtein <https://github.com/ztane/python-Levenshtein>`_
-    to calculate the distances.
+    to calculate the distances. `Python-levenshtein` is an optional dependency that is not installed with
+    scirpy by default. You can install it with `pip install python-levenshtein`.
 
     Choosing a cutoff:
         Each modification stands for a deletion, addition or modification event.
@@ -322,9 +322,18 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
     """
 
     def __init__(self, cutoff: int = 2, **kwargs):
+        # Already fail during init if optional dependency not available. Otherwise will throw obscure error message
+        # from a worker thread
+        try:
+            from Levenshtein import distance  # noqa
+        except ImportError:
+            raise ImportError("Please install optional dependency: pip install python-levenshtein.") from None
+
         super().__init__(cutoff, **kwargs)
 
     def _compute_block(self, seqs1, seqs2, origin):
+        from Levenshtein import distance as levenshtein_dist
+
         origin_row, origin_col = origin
         if seqs2 is not None:
             # compute the full matrix
