@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 - Fix `tl.alpha_diversity` issue with `inplace=True` ([#632](https://github.com/scverse/scirpy/issues/632)).
+- Contig ID is now read into `sequence_id` AIRR field from 10x Genomics CSV files ([#635](https://github.com/scverse/scirpy/pull/635)).
 
 ### Chore
 
