@@ -17,7 +17,7 @@ from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, 
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
-from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model, get_rearrangement_schema
+from ._util import _IOLogger, _read_airr_rearrangement_df, doc_airr_fields, doc_working_model, get_rearrangement_schema
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -352,6 +352,7 @@ def read_tracer(path: str | Path, **kwargs) -> AnnData:
 
 @_doc_params(
     doc_working_model=doc_working_model,
+    doc_airr_fields=doc_airr_fields,
     cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
 )
 def read_airr(
@@ -365,14 +366,7 @@ def read_airr(
     """\
     Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
 
-    Even though data without these fields can be imported, the following columns are required by scirpy
-    for a meaningful analysis:
-
-     * `cell_id`
-     * `productive`
-     * `locus` containing a valid IMGT locus name
-     * at least one of `consensus_count`, `duplicate_count`, or `umi_count`
-     * at least one of `junction_aa` or `junction`.
+    {doc_airr_fields}
 
     {doc_working_model}
 
