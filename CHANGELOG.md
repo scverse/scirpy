@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning][].
 
 - Fix `tl.alpha_diversity` issue with `inplace=True` ([#632](https://github.com/scverse/scirpy/issues/632)).
 - Contig ID is now read into `sequence_id` AIRR field from 10x Genomics CSV files ([#635](https://github.com/scverse/scirpy/pull/635)).
+- Fix an issue in `tl.define_clonotype_clusters` that occured when there were more unique V genes than receptor configurations ([#639](https://github.com/scverse/scirpy/pull/639)).
 
 ### Chore
 
