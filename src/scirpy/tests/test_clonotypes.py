@@ -12,6 +12,8 @@ from mudata import MuData
 
 import scirpy as ir
 
+from . import TESTDATA
+
 
 @pytest.mark.parametrize("key_added", [None, "my_key"])
 @pytest.mark.parametrize("inplace", [True, False])
@@ -390,8 +392,6 @@ def test_clonotype_convergence(adata_clonotype):
 
 
 def test_j_gene_matching():
-    from . import TESTDATA
-
     data = ad.read_h5ad(TESTDATA / "clonotypes_test_data/j_gene_test_data.h5ad")
 
     ir.tl.define_clonotype_clusters(
@@ -407,3 +407,22 @@ def test_j_gene_matching():
     clustering = data.obs["test_j_gene"].tolist()
     expected = ["0", "0", "0", "0", "0", "1", "1", "1", "1", "1", "1", "1", "1", "2", "2", "2", "2", "2"]
     assert np.array_equal(clustering, expected)
+
+
+def test_gene_segment_matching_index_error_issue_625():
+    """Regression test for #625, where an IndexError occured during gene segment matching."""
+    adata = ir.io.read_airr(TESTDATA / "airr" / "issue_625.tsv")
+    ir.pp.index_chains(adata)
+    ir.tl.chain_qc(adata)
+    ir.pp.ir_dist(adata, metric="normalized_hamming", cutoff=15, sequence="nt", histogram=False)
+    ir.tl.define_clonotype_clusters(
+        adata,
+        sequence="nt",
+        metric="normalized_hamming",
+        receptor_arms="all",
+        dual_ir="any",
+        same_v_gene=True,
+        same_j_gene=True,
+        partitions="fastgreedy",
+        key_added="clone_id_similarity",
+    )
