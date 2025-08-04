@@ -11,10 +11,10 @@ from anndata import AnnData
 from scirpy.util import DataHandler, _doc_params, tqdm
 
 from ._datastructures import AirrCell
-from ._util import _IOLogger, doc_working_model
+from ._util import _IOLogger, doc_airr_fields, doc_working_model
 
 
-@_doc_params(doc_working_model=doc_working_model)
+@_doc_params(doc_working_model=doc_working_model, doc_airr_fields=doc_airr_fields)
 def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> AnnData:
     """\
     Convert a collection of :class:`~scirpy.io.AirrCell` objects to :class:`~anndata.AnnData`.
