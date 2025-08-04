@@ -22,8 +22,6 @@ def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
 
-    {doc_airr_fields}
-
     {doc_working_model}
 
     Parameters

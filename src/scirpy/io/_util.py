@@ -16,17 +16,6 @@ doc_working_model = """\
     For more information, see :ref:`data-structure`.
 """
 
-doc_airr_fields = """\
-Even though data without these fields can be imported, the following columns are required by scirpy
-for a meaningful analysis:
-
-    * `cell_id`
-    * `productive`
-    * `locus` containing a valid IMGT locus name
-    * at least one of `consensus_count`, `duplicate_count`, or `umi_count`
-    * at least one of `junction_aa` or `junction`.
-"""
-
 
 def get_rearrangement_reader():
     """Defer importing from airr package until it is used, since this is very slow"""
