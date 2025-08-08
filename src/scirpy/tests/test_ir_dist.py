@@ -25,7 +25,7 @@ def adata_cdr3_mock_distance_calculator():
     """Mock distances for the adata_cdr3 fixture"""
 
     class MockDistanceCalculator(DistanceCalculator):
-        def __init__(self, n_jobs=None):
+        def __init__(self, n_jobs=-1):
             pass
 
         def calc_dist_mat(self, seqs, seqs2=None):
@@ -543,7 +543,7 @@ def test_compute_distances_second_anndata(
     npt.assert_equal(dist, expected_dist if not swap_query_reference else expected_dist.T)
 
 
-@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment"])
+@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment", "tcrdist", "hamming"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
     adata_empty = adata_cdr3.mod["airr"].copy() if isinstance(adata_cdr3, MuData) else adata_cdr3.copy()
     # reset chain indices such that no chain will actually be used.

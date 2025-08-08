@@ -30,6 +30,7 @@ def test_chain_qc():
             [False, "IGK", "IGH", "nan", "nan"],
             [False, "IGL", "IGH", "IGL", "IGH"],
             [False, "IGL", "IGH", "IGK", "IGH"],
+            [False, "IGK", "IGH", "IGL", "IGH"],
             [False, "nan", "IGH", "nan", "IGH"],
             [False, "TRA", "TRB", "TRG", "TRB"],
             [False, "IGK", "TRB", "nan", "nan"],
@@ -69,6 +70,7 @@ def test_chain_qc():
                 "BCR",
                 "BCR",
                 "BCR",
+                "BCR",
                 "TCR",
                 "ambiguous",
                 "TCR",
@@ -91,7 +93,8 @@ def test_chain_qc():
                 "TRA+TRB",
                 "IGH+IGK",
                 "IGH+IGL",
-                "ambiguous",
+                "IGH+IGK/L",
+                "IGH+IGK/L",
                 "IGH",
                 "ambiguous",
                 "ambiguous",
@@ -463,6 +466,7 @@ def test_repertoire_overlap(adata_tra):
     npt.assert_equal(res.values, expected_cnt.values)
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize(
     "permutation_test,fdr_correction,expected_scores,expected_pvalues",
     [
@@ -751,3 +755,328 @@ def test_clonotype_imbalance(adata_tra):
     stat = stat.sort_values(by="clone_id")
     stat = stat.reset_index().iloc[:, 1:5]
     pdt.assert_frame_equal(stat, expected_stat, check_names=False, check_dtype=False)
+
+
+@pytest.mark.parametrize(
+    "region_vars,expected",
+    [
+        [
+            "mutation_count",
+            pd.DataFrame.from_dict(
+                {
+                    "AAACGGGCACGACTCG-MH9179822": {
+                        # 1
+                        # no mutation
+                        "VDJ_1_mutation_count": 0,
+                        "VJ_1_mutation_count": 0,
+                    },
+                    "AACCATGAGAGCAATT-MH9179822": {
+                        # 2
+                        # no mutation, but germline cdr3 masked with 35 "N" in VDJ and 5 "N" in VJ
+                        "VDJ_1_mutation_count": 0,
+                        "VJ_1_mutation_count": 0,
+                    },
+                    "AACCATGCAGTCACTA-MH9179822": {
+                        # 3
+                        # no mutation, but sequence alignment poor sequence quality at beginning: 15 '.'
+                        "VDJ_1_mutation_count": 0,
+                        "VJ_1_mutation_count": 0,
+                    },
+                    "AACGTTGGTATAAACG-MH9179822": {
+                        # 4
+                        # no mutation, but gaps ('-') in sequence alignment: 3 in FWR1, 3 in FWR2 and 5 in FWR4
+                        "VDJ_1_mutation_count": 11,
+                        "VJ_1_mutation_count": 11,
+                    },
+                    "AACTCTTGTTTGGCGC-MH9179822": {
+                        # 6
+                        # few mutations: 1 in each subregion of sequence_alignment (= 7 in total)
+                        "VDJ_1_mutation_count": 7,
+                        "VJ_1_mutation_count": 7,
+                    },
+                    "AACTGGTCAATTGCTG-MH9179822": {
+                        # 7
+                        # some mutations: 3 in each subregion of germline alignment (= 21 in total)
+                        "VDJ_1_mutation_count": 21,
+                        "VJ_1_mutation_count": 21,
+                    },
+                    "AAGCCGCAGATATACG-MH9179822": {
+                        # 8
+                        # a lot mutation: 5 in each subregion of germline alignment (= 35 in total)
+                        "VDJ_1_mutation_count": 35,
+                        "VJ_1_mutation_count": 35,
+                    },
+                    "AAGCCGCAGCGATGAC-MH9179822": {
+                        # 9
+                        # No germline alignment
+                        "VDJ_1_mutation_count": None,
+                        "VJ_1_mutation_count": None,
+                    },
+                    "AAGCCGCGTCAGATAA-MH9179822": {
+                        "VDJ_1_mutation_count": None,
+                        "VJ_1_mutation_count": None,
+                        # 10
+                        # No sequence_alignment
+                    },
+                },
+                orient="index",
+            ),
+        ],
+        [
+            "v_mutation_count",
+            pd.DataFrame.from_dict(
+                {
+                    "AAACGGGCACGACTCG-MH9179822": {
+                        # 1
+                        # no mutation
+                        "VDJ_1_v_mutation_count": 0,
+                        "VJ_1_v_mutation_count": 0,
+                    },
+                    "AACCATGAGAGCAATT-MH9179822": {
+                        # 2
+                        # no mutation, but germline cdr3 masked with 35 "N" in VDJ and 5 "N" in VJ
+                        "VDJ_1_v_mutation_count": 0,
+                        "VJ_1_v_mutation_count": 0,
+                    },
+                    "AACCATGCAGTCACTA-MH9179822": {
+                        # 3
+                        # no mutation, but sequence alignment poor sequence quality at beginning: 15 '.'
+                        "VDJ_1_v_mutation_count": 0,
+                        "VJ_1_v_mutation_count": 0,
+                    },
+                    "AACGTTGGTATAAACG-MH9179822": {
+                        # 4
+                        # no mutation, but gaps ('-') in sequence alignment: 3 in FWR1, 3 in FWR2 and 5 in FWR4
+                        "VDJ_1_v_mutation_count": 6,
+                        "VJ_1_v_mutation_count": 6,
+                    },
+                    "AACTCTTGTTTGGCGC-MH9179822": {
+                        # 6
+                        # few mutations: 1 in each subregion of sequence_alignment (= 7 in total)
+                        "VDJ_1_v_mutation_count": 5,
+                        "VJ_1_v_mutation_count": 5,
+                    },
+                    "AACTGGTCAATTGCTG-MH9179822": {
+                        # 7
+                        # some mutations: 3 in each subregion of germline alignment (= 21 in total)
+                        "VDJ_1_v_mutation_count": 15,
+                        "VJ_1_v_mutation_count": 15,
+                    },
+                    "AAGCCGCAGATATACG-MH9179822": {
+                        # 8
+                        # a lot mutation: 5 in each subregion of germline alignment (= 35 in total)
+                        "VDJ_1_v_mutation_count": 25,
+                        "VJ_1_v_mutation_count": 25,
+                    },
+                    "AAGCCGCAGCGATGAC-MH9179822": {
+                        # 9
+                        # No germline alignment
+                        "VDJ_1_v_mutation_count": None,
+                        "VJ_1_v_mutation_count": None,
+                    },
+                    "AAGCCGCGTCAGATAA-MH9179822": {
+                        # 10
+                        # No sequence_alignment
+                        "VDJ_1_v_mutation_count": None,
+                        "VJ_1_v_mutation_count": None,
+                    },
+                },
+                orient="index",
+            ),
+        ],
+        [
+            (
+                "fwr1_mutation_count",
+                "cdr1_mutation_count",
+                "fwr2_mutation_count",
+                "cdr2_mutation_count",
+                "fwr3_mutation_count",
+                "cdr3_mutation_count",
+                "fwr4_mutation_count",
+            ),
+            pd.DataFrame.from_dict(
+                {
+                    "AAACGGGCACGACTCG-MH9179822": {
+                        # 1
+                        # no mutation
+                        "VDJ_1_fwr1_mutation_count": 0,
+                        "VDJ_1_cdr1_mutation_count": 0,
+                        "VDJ_1_fwr2_mutation_count": 0,
+                        "VDJ_1_cdr2_mutation_count": 0,
+                        "VDJ_1_fwr3_mutation_count": 0,
+                        "VDJ_1_cdr3_mutation_count": 0,
+                        "VDJ_1_fwr4_mutation_count": 0,
+                        "VJ_1_fwr1_mutation_count": 0,
+                        "VJ_1_cdr1_mutation_count": 0,
+                        "VJ_1_fwr2_mutation_count": 0,
+                        "VJ_1_cdr2_mutation_count": 0,
+                        "VJ_1_fwr3_mutation_count": 0,
+                        "VJ_1_cdr3_mutation_count": 0,
+                        "VJ_1_fwr4_mutation_count": 0,
+                    },
+                    "AACCATGAGAGCAATT-MH9179822": {
+                        # 2
+                        # no mutation, but germline cdr3 masked with 35 "N" in VDJ and 5 "N" in VJ
+                        "VDJ_1_fwr1_mutation_count": 0,
+                        "VDJ_1_cdr1_mutation_count": 0,
+                        "VDJ_1_fwr2_mutation_count": 0,
+                        "VDJ_1_cdr2_mutation_count": 0,
+                        "VDJ_1_fwr3_mutation_count": 0,
+                        "VDJ_1_cdr3_mutation_count": 0,
+                        "VDJ_1_fwr4_mutation_count": 0,
+                        "VJ_1_fwr1_mutation_count": 0,
+                        "VJ_1_cdr1_mutation_count": 0,
+                        "VJ_1_fwr2_mutation_count": 0,
+                        "VJ_1_cdr2_mutation_count": 0,
+                        "VJ_1_fwr3_mutation_count": 0,
+                        "VJ_1_cdr3_mutation_count": 0,
+                        "VJ_1_fwr4_mutation_count": 0,
+                    },
+                    "AACCATGCAGTCACTA-MH9179822": {
+                        # 3
+                        # no mutation, but sequence alignment poor sequence quality at beginning: 15 '.'
+                        "VDJ_1_fwr1_mutation_count": 0,
+                        "VDJ_1_cdr1_mutation_count": 0,
+                        "VDJ_1_fwr2_mutation_count": 0,
+                        "VDJ_1_cdr2_mutation_count": 0,
+                        "VDJ_1_fwr3_mutation_count": 0,
+                        "VDJ_1_cdr3_mutation_count": 0,
+                        "VDJ_1_fwr4_mutation_count": 0,
+                        "VJ_1_fwr1_mutation_count": 0,
+                        "VJ_1_cdr1_mutation_count": 0,
+                        "VJ_1_fwr2_mutation_count": 0,
+                        "VJ_1_cdr2_mutation_count": 0,
+                        "VJ_1_fwr3_mutation_count": 0,
+                        "VJ_1_cdr3_mutation_count": 0,
+                        "VJ_1_fwr4_mutation_count": 0,
+                    },
+                    "AACGTTGGTATAAACG-MH9179822": {
+                        # 4
+                        # no mutation, but gaps ('-') in sequence alignment: 3 in FWR1, 3 in FWR2 and 5 in FWR4
+                        "VDJ_1_fwr1_mutation_count": 3,
+                        "VDJ_1_cdr1_mutation_count": 0,
+                        "VDJ_1_fwr2_mutation_count": 3,
+                        "VDJ_1_cdr2_mutation_count": 0,
+                        "VDJ_1_fwr3_mutation_count": 0,
+                        "VDJ_1_cdr3_mutation_count": 0,
+                        "VDJ_1_fwr4_mutation_count": 5,
+                        "VJ_1_fwr1_mutation_count": 3,
+                        "VJ_1_cdr1_mutation_count": 0,
+                        "VJ_1_fwr2_mutation_count": 3,
+                        "VJ_1_cdr2_mutation_count": 0,
+                        "VJ_1_fwr3_mutation_count": 0,
+                        "VJ_1_cdr3_mutation_count": 0,
+                        "VJ_1_fwr4_mutation_count": 5,
+                    },
+                    "AACTCTTGTTTGGCGC-MH9179822": {
+                        # 6
+                        # few mutations: 1 in each subregion of sequence_alignment (= 7 in total)
+                        "VDJ_1_fwr1_mutation_count": 1,
+                        "VDJ_1_cdr1_mutation_count": 1,
+                        "VDJ_1_fwr2_mutation_count": 1,
+                        "VDJ_1_cdr2_mutation_count": 1,
+                        "VDJ_1_fwr3_mutation_count": 1,
+                        "VDJ_1_cdr3_mutation_count": 1,
+                        "VDJ_1_fwr4_mutation_count": 1,
+                        "VJ_1_fwr1_mutation_count": 1,
+                        "VJ_1_cdr1_mutation_count": 1,
+                        "VJ_1_fwr2_mutation_count": 1,
+                        "VJ_1_cdr2_mutation_count": 1,
+                        "VJ_1_fwr3_mutation_count": 1,
+                        "VJ_1_cdr3_mutation_count": 1,
+                        "VJ_1_fwr4_mutation_count": 1,
+                    },
+                    "AACTGGTCAATTGCTG-MH9179822": {
+                        # 7
+                        # some mutations: 3 in each subregion of germline alignment (= 21 in total)
+                        "VDJ_1_fwr1_mutation_count": 3,
+                        "VDJ_1_cdr1_mutation_count": 3,
+                        "VDJ_1_fwr2_mutation_count": 3,
+                        "VDJ_1_cdr2_mutation_count": 3,
+                        "VDJ_1_fwr3_mutation_count": 3,
+                        "VDJ_1_cdr3_mutation_count": 3,
+                        "VDJ_1_fwr4_mutation_count": 3,
+                        "VJ_1_fwr1_mutation_count": 3,
+                        "VJ_1_cdr1_mutation_count": 3,
+                        "VJ_1_fwr2_mutation_count": 3,
+                        "VJ_1_cdr2_mutation_count": 3,
+                        "VJ_1_fwr3_mutation_count": 3,
+                        "VJ_1_cdr3_mutation_count": 3,
+                        "VJ_1_fwr4_mutation_count": 3,
+                    },
+                    "AAGCCGCAGATATACG-MH9179822": {
+                        # 8
+                        # a lot mutation: 5 in each subregion of germline alignment (= 35 in total)
+                        "VDJ_1_fwr1_mutation_count": 5,
+                        "VDJ_1_cdr1_mutation_count": 5,
+                        "VDJ_1_fwr2_mutation_count": 5,
+                        "VDJ_1_cdr2_mutation_count": 5,
+                        "VDJ_1_fwr3_mutation_count": 5,
+                        "VDJ_1_cdr3_mutation_count": 5,
+                        "VDJ_1_fwr4_mutation_count": 5,
+                        "VJ_1_fwr1_mutation_count": 5,
+                        "VJ_1_cdr1_mutation_count": 5,
+                        "VJ_1_fwr2_mutation_count": 5,
+                        "VJ_1_cdr2_mutation_count": 5,
+                        "VJ_1_fwr3_mutation_count": 5,
+                        "VJ_1_cdr3_mutation_count": 5,
+                        "VJ_1_fwr4_mutation_count": 5,
+                    },
+                    "AAGCCGCAGCGATGAC-MH9179822": {
+                        # 9
+                        # No germline alignment
+                        "VDJ_1_fwr1_mutation_count": None,
+                        "VDJ_1_cdr1_mutation_count": None,
+                        "VDJ_1_fwr2_mutation_count": None,
+                        "VDJ_1_cdr2_mutation_count": None,
+                        "VDJ_1_fwr3_mutation_count": None,
+                        "VDJ_1_cdr3_mutation_count": None,
+                        "VDJ_1_fwr4_mutation_count": None,
+                        "VJ_1_fwr1_mutation_count": None,
+                        "VJ_1_cdr1_mutation_count": None,
+                        "VJ_1_fwr2_mutation_count": None,
+                        "VJ_1_cdr2_mutation_count": None,
+                        "VJ_1_fwr3_mutation_count": None,
+                        "VJ_1_cdr3_mutation_count": None,
+                        "VJ_1_fwr4_mutation_count": None,
+                    },
+                    "AAGCCGCGTCAGATAA-MH9179822": {
+                        # 10
+                        # No sequence_alignment
+                        "VDJ_1_fwr1_mutation_count": None,
+                        "VDJ_1_cdr1_mutation_count": None,
+                        "VDJ_1_fwr2_mutation_count": None,
+                        "VDJ_1_cdr2_mutation_count": None,
+                        "VDJ_1_fwr3_mutation_count": None,
+                        "VDJ_1_cdr3_mutation_count": None,
+                        "VDJ_1_fwr4_mutation_count": None,
+                        "VJ_1_fwr1_mutation_count": None,
+                        "VJ_1_cdr1_mutation_count": None,
+                        "VJ_1_fwr2_mutation_count": None,
+                        "VJ_1_cdr2_mutation_count": None,
+                        "VJ_1_fwr3_mutation_count": None,
+                        "VJ_1_cdr3_mutation_count": None,
+                        "VJ_1_fwr4_mutation_count": None,
+                    },
+                },
+                orient="index",
+            ),
+        ],
+    ],
+)
+def test_mutational_load(adata_mutation, region_vars, expected):
+    ir.tl.mutational_load(
+        adata_mutation,
+        germline_key="germline_alignment",
+    )
+    pdt.assert_frame_equal(
+        ir.get.airr(adata_mutation, region_vars, ["VDJ_1", "VJ_1"]),
+        expected,
+        check_names=False,
+        check_dtype=False,
+    )
+
+
+def test_mutational_load_adata_not_aligned(adata_not_aligned):
+    with npt.assert_raises(ValueError):
+        ir.tl.mutational_load(adata_not_aligned, germline_key="germline_alignment")

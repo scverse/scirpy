@@ -168,7 +168,12 @@ V(D)J gene usage
 
    tl.spectratype
 
+Calculating mutations
+^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+   :toctree: ./generated
 
+   tl.mutational_load
 
 Plotting: `pl`
 --------------
@@ -204,7 +209,7 @@ when calling the plotting function or need to be precomputed and stored in
    pl.clonotype_modularity
    pl.clonotype_network
    pl.clonotype_imbalance
-
+   pl.logoplot_cdr3_motif
 
 
 Base plotting functions: `pl.base`
@@ -246,6 +251,7 @@ Example datasets
    datasets.wu2020
    datasets.wu2020_3k
    datasets.maynard2020
+   datasets.stephenson2021_5k
 
 Reference databases
 ^^^^^^^^^^^^^^^^^^^
@@ -300,5 +306,7 @@ distance metrics
    ir_dist.metrics.IdentityDistanceCalculator
    ir_dist.metrics.LevenshteinDistanceCalculator
    ir_dist.metrics.HammingDistanceCalculator
+   ir_dist.metrics.GPUHammingDistanceCalculator
    ir_dist.metrics.AlignmentDistanceCalculator
    ir_dist.metrics.FastAlignmentDistanceCalculator
+   ir_dist.metrics.TCRdistDistanceCalculator

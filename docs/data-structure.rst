@@ -177,9 +177,9 @@ Here is one way how the AIRR data can be merged into an AnnData object that alre
     # Map each cell barcode to its respective numeric index (assumes obs_names are unique)
     barcode2idx = {barcode: i for i, barcode in enumerate(adata_airr.obs_names)}
     # Generate a slice for the awkward array that retrieves the corresponding row
-    # from `adata_airr` for each barcode in `adata_gex`. `-1` will generate all
-    # "None"s for barcodes that are not in `adata_airr`
-    idx = [barcode2idx.get(barcode, -1) for barcode in adata_gex.obs_names]
+    # from `adata_airr` for each barcode in `adata_gex`.
+    # "None" will be used for barcodes that are not in `adata_airr`
+    idx = [barcode2idx.get(barcode, None) for barcode in adata_gex.obs_names]
     adata_gex.obsm["airr"] = adata_airr.obsm["airr"][idx]
 
 

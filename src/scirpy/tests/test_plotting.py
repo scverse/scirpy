@@ -1,4 +1,5 @@
 # pylama:ignore=W0611,W0404
+import logomaker
 import matplotlib.pyplot as plt
 import pytest
 import seaborn as sns
@@ -86,6 +87,7 @@ def test_vdj_usage(adata_vdj, full_combination):
     assert isinstance(p, plt.Axes)
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize("matrix_type", ["array", "csr", "csc"])
 @pytest.mark.parametrize("use_raw", [False, None])
 @pytest.mark.parametrize("cmap", [None, "cividis"])
@@ -115,18 +117,19 @@ def test_clonotype_modularity(adata_clonotype_modularity, jitter, show_size_lege
     )
 
 
+@pytest.mark.extra
+@pytest.mark.parametrize(
+    "adata_clonotype_network,kwargs",
+    [[{}, {}], [{"key_added": "foo"}, {"basis": "foo"}]],
+    indirect=["adata_clonotype_network"],
+)
 @pytest.mark.parametrize("color_by_n_cells", [True, False])
 @pytest.mark.parametrize("scale_by_n_cells", [True, False])
 @pytest.mark.parametrize("show_size_legend", [True, False])
 @pytest.mark.parametrize("show_legend", [True, False])
 @pytest.mark.parametrize("show_labels", [True, False])
 def test_clonotype_network(
-    adata_clonotype_network,
-    color_by_n_cells,
-    scale_by_n_cells,
-    show_size_legend,
-    show_legend,
-    show_labels,
+    adata_clonotype_network, color_by_n_cells, scale_by_n_cells, show_size_legend, show_legend, show_labels, kwargs
 ):
     adata = adata_clonotype_network
     p = pl.clonotype_network(
@@ -136,10 +139,12 @@ def test_clonotype_network(
         show_size_legend=show_size_legend,
         show_legend=show_legend,
         show_labels=show_labels,
+        **kwargs,
     )
     assert isinstance(p, plt.Axes)
 
 
+@pytest.mark.extra
 @pytest.mark.parametrize("show_size_legend", [True, False])
 @pytest.mark.parametrize("show_legend", [True, False])
 def test_clonotype_network_pie(
@@ -155,3 +160,9 @@ def test_clonotype_network_pie(
         show_legend=show_legend,
     )
     assert isinstance(p, plt.Axes)
+
+
+@pytest.mark.extra
+def test_logoplot(adata_cdr3):
+    p = pl.logoplot_cdr3_motif(adata_cdr3, chains="VJ_1")
+    assert isinstance(p, logomaker.Logo)

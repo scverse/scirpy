@@ -141,9 +141,7 @@ class AirrCell(MutableMapping):
             self._chain_fields = list(chain.keys())
 
         if "locus" not in chain:
-            self._logger.warning(
-                "`locus` field not specified, but required for most scirpy functionality. "
-            )  # type: ignore
+            self._logger.warning("`locus` field not specified, but required for most scirpy functionality. ")  # type: ignore
         elif chain["locus"] not in self.VALID_LOCI:
             self._logger.warning(f"Non-standard locus name: {chain['locus']} ")  # type: ignore
 
@@ -183,4 +181,4 @@ class AirrCell(MutableMapping):
         """Generate an empty chain dictionary, containing all required AIRR
         columns, but set to `None`
         """
-        return {field: None for field in get_rearrangement_schema().required}
+        return dict.fromkeys(get_rearrangement_schema().required)

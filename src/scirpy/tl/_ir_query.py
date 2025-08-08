@@ -2,7 +2,7 @@ import itertools
 import json
 from collections import Counter
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ from scanpy import logging
 
 from scirpy.ir_dist import MetricType, _get_metric_key
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from scirpy.util import DataHandler, _is_na, tqdm
+from scirpy.util import DataHandler, _is_na, read_cell_indices, tqdm
 
 from ._clonotypes import _common_doc, _common_doc_parallelism, _doc_clonotype_definition, _validate_parameters
 
@@ -86,11 +86,11 @@ def ir_query(
     receptor_arms: Literal["VJ", "VDJ", "all", "any"] = "all",
     dual_ir: Literal["any", "primary_only", "all"] = "any",
     same_v_gene: bool = False,
-    match_columns: Union[Sequence[str], str, None] = None,
-    key_added: Optional[str] = None,
-    distance_key: Optional[str] = None,
+    match_columns: Sequence[str] | str | None = None,
+    key_added: str | None = None,
+    distance_key: str | None = None,
     inplace: bool = True,
-    n_jobs: Optional[int] = -1,
+    n_jobs: int = -1,
     chunksize: int = 2000,
     airr_mod: str = "airr",
     airr_key: str = "airr",
@@ -98,7 +98,7 @@ def ir_query(
     airr_mod_ref: str = "airr",
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
-) -> Optional[dict]:
+) -> dict | None:
     """\
     Query a referece database for matching immune cell receptors.
 
@@ -166,9 +166,9 @@ def ir_query(
     A dictionary containing
      * `distances`: A sparse distance matrix between unique receptor configurations
        in `adata` aund unique receptor configurations in `reference`.
-     * `cell_indices`: A dict of arrays, containing the the `adata.obs_names`
+     * `cell_indices`: A dict of lists, containing the the `adata.obs_names`
        (cell indices) for each row in the distance matrix.
-     * `cell_indices_reference`: A dict of arrays, containing the `reference.obs_names`
+     * `cell_indices_reference`: A dict of lists, containing the `reference.obs_names`
        for each column in the distance matrix.
 
     If `inplace` is `True`, this is added to `adata.uns[key_added]`.
@@ -206,8 +206,8 @@ def ir_query(
     # Return or store results
     clonotype_distance_res = {
         "distances": clonotype_dist,
-        "cell_indices": ctn.cell_indices,
-        "cell_indices_reference": ctn.cell_indices2,
+        "cell_indices": json.dumps(ctn.cell_indices),
+        "cell_indices_reference": json.dumps(ctn.cell_indices2),
     }
     if inplace:
         params.adata.uns[key_added] = clonotype_distance_res
@@ -223,9 +223,9 @@ def ir_query_annotate_df(
     *,
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
-    include_ref_cols: Optional[Sequence[str]] = None,
+    include_ref_cols: Sequence[str] | None = None,
     include_query_cols: Sequence[str] = (),
-    query_key: Optional[str] = None,
+    query_key: str | None = None,
     suffix: str = "",
     airr_mod: str = "airr",
     airr_mod_ref: str = "airr",
@@ -284,10 +284,13 @@ def ir_query_annotate_df(
     res = params.adata.uns[query_key]
     dist = res["distances"]
 
+    cell_indices = read_cell_indices(res["cell_indices"])
+    cell_indices_reference = read_cell_indices(res["cell_indices_reference"])
+
     def get_pairs():
-        for i, query_cells in res["cell_indices"].items():
+        for i, query_cells in cell_indices.items():
             reference_cells = itertools.chain.from_iterable(
-                res["cell_indices_reference"][str(k)] for k in dist[int(i), :].indices
+                cell_indices_reference[str(k)] for k in dist[int(i), :].indices
             )
             yield from itertools.product(query_cells, reference_cells)
 
@@ -311,13 +314,13 @@ def ir_query_annotate(
     sequence: Literal["aa", "nt"] = "aa",
     metric: MetricType = "identity",
     strategy: Literal["json", "unique-only", "most-frequent"] = "unique-only",
-    include_ref_cols: Optional[Sequence[str]] = None,
-    query_key: Optional[str] = None,
+    include_ref_cols: Sequence[str] | None = None,
+    query_key: str | None = None,
     suffix: str = "",
     inplace=True,
     airr_mod: str = "airr",
     airr_mod_ref: str = "airr",
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """
     Annotate cells based on the result of :func:`~scirpy.tl.ir_query`.
 
@@ -394,9 +397,7 @@ def ir_query_annotate(
                     "unique-only": _reduce_unique_only,
                     "most-frequent": _reduce_most_frequent,
                     "json": _reduce_json,
-                }[
-                    strategy
-                ](  # type: ignore
+                }[strategy](  # type: ignore
                     x
                 )
 

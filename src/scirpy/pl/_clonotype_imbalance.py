@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,11 +18,11 @@ def clonotype_imbalance(
     groupby: str,
     case_label: str,
     *,
-    control_label: Union[None, str] = None,
+    control_label: None | str = None,
     target_col: str = "clone_id",
-    additional_hue: Union[None, str, bool] = None,
+    additional_hue: None | str | bool = None,
     top_n: int = 10,
-    fraction: Union[None, str, bool] = None,
+    fraction: None | str | bool = None,
     inplace: bool = True,
     plot_type: Literal["volcano", "box", "bar", "strip"] = "box",
     key_added: str = "clonotype_imbalance",
@@ -84,7 +84,7 @@ def clonotype_imbalance(
     params = DataHandler(adata, airr_mod)
     if key_added not in params.adata.uns:
         sc.logging.warning(
-            "Clonotype imbalance not found." " Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
+            "Clonotype imbalance not found. Running `ir.tl.clonotype_imbalance` and storing under {key_added}"
         )
 
         tl.clonotype_imbalance(

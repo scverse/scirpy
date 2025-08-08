@@ -1,5 +1,5 @@
 from importlib.metadata import version
-from typing import Any, Union
+from typing import Any
 
 import awkward as ak
 import numpy as np
@@ -25,7 +25,7 @@ def _normalize_df_types(df: pd.DataFrame):
         df.loc[df[col] == "False", col] = False
 
 
-def _squarify(matrix: Union[list[list], np.ndarray]):
+def _squarify(matrix: list[list] | np.ndarray):
     """Squarify a upper triangular matrix"""
     matrix = np.array(matrix)
     assert matrix.shape[0] == matrix.shape[1], "only works for square matrices"
@@ -35,7 +35,7 @@ def _squarify(matrix: Union[list[list], np.ndarray]):
     return matrix
 
 
-def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuData]:
+def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> AnnData | MuData:
     """Generate an AnnData object from a obs dataframe formatted according to the old obs-based scheam.
 
     This is used to convert test cases from unittests. Writing them from scratch
@@ -70,7 +70,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
     # of a certain cell.
     has_chain = []
     for _, row in obs.iterrows():
-        has_chain_dict = {k: False for k in ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]}
+        has_chain_dict = dict.fromkeys(["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"], False)
         for c in cols:
             # if any of the columns has that chain, we set the value to True
             _, receptor_arm, chain, var = c.split("_", 3)
@@ -81,7 +81,7 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> Union[AnnData, MuDat
     # Now we build a list of chain dictionaries and chain indices row by row
     cell_list = []
     chain_idx_list = []
-    for has_chain_dict, (_, row) in zip(has_chain, obs.iterrows()):
+    for has_chain_dict, (_, row) in zip(has_chain, obs.iterrows(), strict=False):
         tmp_chains = []
         tmp_chain_idx: dict[str, Any] = {k: [None, None] for k in ["VJ", "VDJ"]}
         for chain, row_has_chain in has_chain_dict.items():

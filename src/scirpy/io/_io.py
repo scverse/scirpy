@@ -6,7 +6,7 @@ import sys
 from collections.abc import Collection, Iterable, Sequence
 from glob import iglob
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, 
 from . import _tracerlib
 from ._convert_anndata import from_airr_cells, to_airr_cells
 from ._datastructures import AirrCell
-from ._util import _IOLogger, _read_airr_rearrangement_df, doc_working_model, get_rearrangement_schema
+from ._util import _IOLogger, _read_airr_rearrangement_df, doc_airr_fields, doc_working_model, get_rearrangement_schema
 
 # patch sys.modules to enable pickle import.
 # see https://stackoverflow.com/questions/2121874/python-pckling-after-changing-a-modules-directory
@@ -46,7 +46,7 @@ def _cdr3_from_junction(junction_aa, junction_nt):
 
 
 def _read_10x_vdj_json(
-    path: Union[str, Path],
+    path: str | Path,
     filtered: bool = True,
 ) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `all_contig_annotations.json` file"""
@@ -125,11 +125,14 @@ def _read_10x_vdj_json(
         chain["locus"] = chain_type
         chain["junction"] = contig["cdr3_seq"]
         chain["junction_aa"] = contig["cdr3"]
-        chain["duplicate_count"] = contig["umi_count"]
+        chain["umi_count"] = contig["umi_count"]
         chain["consensus_count"] = contig["read_count"]
         chain["productive"] = contig["productive"]
         chain["is_cell"] = contig["is_cell"]
         chain["high_confidence"] = contig["high_confidence"]
+        chain["sequence"] = contig["sequence"]
+        chain["sequence_aa"] = contig["aa_sequence"]
+        chain["sequence_id"] = contig["contig_name"]
 
         # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
         fwrs = [f"fwr{i}" for i in range(1, 5)]
@@ -148,7 +151,7 @@ def _read_10x_vdj_json(
 
 
 def _read_10x_vdj_csv(
-    path: Union[str, Path],
+    path: str | Path,
     filtered: bool = True,
 ) -> Iterable[AirrCell]:
     """Read IR data from a 10x genomics `_contig_annotations.csv` file"""
@@ -166,7 +169,7 @@ def _read_10x_vdj_csv(
                 locus=chain_series["chain"],
                 junction_aa=chain_series["cdr3"],
                 junction=chain_series["cdr3_nt"],
-                duplicate_count=chain_series["umis"],
+                umi_count=chain_series["umis"],
                 consensus_count=chain_series["reads"],
                 productive=_is_true2(chain_series["productive"]),
                 v_call=chain_series["v_gene"],
@@ -175,6 +178,7 @@ def _read_10x_vdj_csv(
                 c_call=chain_series["c_gene"],
                 is_cell=chain_series["is_cell"],
                 high_confidence=chain_series["high_confidence"],
+                sequence_id=chain_series["contig_id"],
             )
 
             # additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}
@@ -199,7 +203,7 @@ def _read_10x_vdj_csv(
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_10x_vdj(path: Union[str, Path], filtered: bool = True, include_fields: Any = None, **kwargs) -> AnnData:
+def read_10x_vdj(path: str | Path, filtered: bool = True, include_fields: Any = None, **kwargs) -> AnnData:
     """\
     Read :term:`AIRR` data from 10x Genomics cell-ranger output.
 
@@ -241,7 +245,7 @@ def read_10x_vdj(path: Union[str, Path], filtered: bool = True, include_fields: 
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
+def read_tracer(path: str | Path, **kwargs) -> AnnData:
     """\
     Read data from `TraCeR <https://github.com/Teichlab/tracer>`_ (:cite:`Stubbington2016-kh`).
 
@@ -348,11 +352,12 @@ def read_tracer(path: Union[str, Path], **kwargs) -> AnnData:
 
 @_doc_params(
     doc_working_model=doc_working_model,
+    doc_airr_fields=doc_airr_fields,
     cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
 )
 def read_airr(
-    path: Union[str, Sequence[str], Path, Sequence[Path], pd.DataFrame, Sequence[pd.DataFrame]],
-    use_umi_count_col: Union[bool, Literal["auto"]] = "auto",
+    path: str | Sequence[str] | Path | Sequence[Path] | pd.DataFrame | Sequence[pd.DataFrame],
+    use_umi_count_col: None = None,  # deprecated, kept for backwards-compatibility
     infer_locus: bool = True,
     cell_attributes: Collection[str] = DEFAULT_AIRR_CELL_ATTRIBUTES,
     include_fields: Any = None,
@@ -361,14 +366,7 @@ def read_airr(
     """\
     Read data from `AIRR rearrangement <https://docs.airr-community.org/en/latest/datarep/rearrangements.html>`_ format.
 
-    Even though data without these fields can be imported, the following columns are required by scirpy
-    for a meaningful analysis:
-
-     * `cell_id`
-     * `productive`
-     * `locus` containing a valid IMGT locus name
-     * at least one of `consensus_count`, `duplicate_count`, or `umi_count`
-     * at least one of `junction_aa` or `junction`.
+    {doc_airr_fields}
 
     {doc_working_model}
 
@@ -380,10 +378,9 @@ def read_airr(
         as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
         Alternatively, this can be a pandas data frame.
     use_umi_count_col
-        Whether to add UMI counts from the non-strandard (but common) `umi_count`
-        column. When this column is used, the UMI counts are moved over to the
-        standard `duplicate_count` column. Default: Use `umi_count` if there is
-        no `duplicate_count` column present.
+        Deprecated, has no effect as of v0.16. Since v1.4 of the AIRR standard, `umi_count`
+        is an official field in the Rearrangement schema and preferred over `duplicate_count`.
+        `umi_count` now always takes precedence over `duplicate_count`.
     infer_locus
         Try to infer the `locus` column from gene names, in case it is not specified.
     cell_attributes
@@ -406,18 +403,8 @@ def read_airr(
     airr_cells = {}
     logger = _IOLogger()
 
-    if isinstance(path, (str, Path, pd.DataFrame)):
-        path: list[Union[str, Path, pd.DataFrame]] = [path]  # type: ignore
-
-    def _decide_use_umi_count_col(chain_dict):
-        """Logic to decide whether or not to use counts form the `umi_counts` column."""
-        if "umi_count" in chain_dict and use_umi_count_col == "auto" and "duplicate_count" not in chain_dict:
-            logger.warning("Renaming the non-standard `umi_count` column to `duplicate_count`. ")  # type: ignore
-            return True
-        elif use_umi_count_col is True:
-            return True
-        else:
-            return False
+    if isinstance(path, str | Path | pd.DataFrame):
+        path: list[str | Path | pd.DataFrame] = [path]  # type: ignore
 
     for tmp_path_or_df in path:
         if isinstance(tmp_path_or_df, pd.DataFrame):
@@ -437,9 +424,6 @@ def read_airr(
                     cell_attribute_fields=cell_attributes,
                 )
                 airr_cells[cell_id] = tmp_cell
-
-            if _decide_use_umi_count_col(chain_dict):
-                chain_dict["duplicate_count"] = get_rearrangement_schema().to_int(chain_dict.pop("umi_count"))
 
             if infer_locus and "locus" not in chain_dict:
                 logger.warning(
@@ -489,7 +473,7 @@ def _infer_locus_from_gene_names(chain_dict, *, keys=("v_call", "d_call", "j_cal
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
+def read_bracer(path: str | Path, **kwargs) -> AnnData:
     """\
     Read data from `BraCeR <https://github.com/Teichlab/bracer>`_ (:cite:`Lindeman2018`).
 
@@ -560,7 +544,7 @@ def read_bracer(path: Union[str, Path], **kwargs) -> AnnData:
     return from_airr_cells(bcr_cells.values(), **kwargs)
 
 
-def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) -> None:
+def write_airr(adata: DataHandler.TYPE, filename: str | Path, **kwargs) -> None:
     """Export :term:`IR` data to :term:`AIRR` Rearrangement `tsv` format.
 
     Parameters
@@ -595,47 +579,32 @@ def write_airr(adata: DataHandler.TYPE, filename: Union[str, Path], **kwargs) ->
     writer.close()
 
 
-def to_dandelion(adata: DataHandler.TYPE, **kwargs):
+def to_dandelion(adata: DataHandler.TYPE):
     """Export data to `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
     Parameters
     ----------
     adata
         annotated data matrix with :term:`IR` annotations.
-    **kwargs
-        additional arguments passed to :func:`~scirpy.io.to_airr_cells`
 
     Returns
     -------
     `Dandelion` object.
     """
     try:
-        import dandelion as ddl
+        from dandelion import from_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
-    airr_cells = to_airr_cells(adata, **kwargs)
 
-    contig_dicts = {}
-    for tmp_cell in airr_cells:
-        for i, chain in enumerate(tmp_cell.to_airr_records(), start=1):
-            # dandelion-specific modifications
-            chain.update(
-                {
-                    "sequence_id": f"{tmp_cell.cell_id}_contig_{i}",
-                }
-            )
-            contig_dicts[chain["sequence_id"]] = chain
-
-    data = pd.DataFrame.from_dict(contig_dicts, orient="index")
-    return ddl.Dandelion(ddl.load_data(data))
+    return from_scirpy(adata)
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
+def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, **kwargs) -> AnnData:
     """\
     Import data from `Dandelion <https://github.com/zktuong/dandelion>`_ (:cite:`Stephenson2021`).
 
-    Internally calls :func:`scirpy.io.read_airr`.
+    Internally calls `dandelion.to_scirpy`.
 
     {doc_working_model}
 
@@ -646,8 +615,10 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     transfer
         Whether to execute `dandelion.tl.transfer` to transfer all data
         to the :class:`anndata.AnnData` instance.
+    to_mudata
+        Return MuData object instead of AnnData object.
     **kwargs
-        Additional arguments passed to :func:`scirpy.io.read_airr`.
+        Additional arguments passed to `dandelion.to_scirpy`.
 
     Returns
     -------
@@ -655,24 +626,15 @@ def from_dandelion(dandelion, transfer: bool = False, **kwargs) -> AnnData:
     :ref:`data-structure`.
     """
     try:
-        import dandelion as ddl
+        from dandelion import to_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
-    dandelion_df = dandelion.data.copy()
-    # replace "unassigned" with None
-    for col in dandelion_df.columns:
-        dandelion_df.loc[dandelion_df[col] == "unassigned", col] = None
-
-    adata = read_airr(dandelion_df, **kwargs)
-
-    if transfer:
-        ddl.tl.transfer(adata, dandelion)  # need to make a version that is not so verbose?
-    return adata
+    return to_scirpy(dandelion, transfer=transfer, to_mudata=to_mudata, **kwargs)
 
 
 @_doc_params(doc_working_model=doc_working_model)
-def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
+def read_bd_rhapsody(path: str | Path, **kwargs) -> AnnData:
     """\
     Read :term:`IR` data from the BD Rhapsody Analysis Pipeline.
 
@@ -742,7 +704,7 @@ def read_bd_rhapsody(path: Union[str, Path], **kwargs) -> AnnData:
                 "junction_aa": _get(row, "CDR3_Translation"),
                 "productive": row["Productive"],
                 "consensus_count": row["Read_Count"],
-                "duplicate_count": row["Molecule_Count"],
+                "umi_count": row["Molecule_Count"],
             }
         )
         tmp_cell.add_chain(tmp_chain)

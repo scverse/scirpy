@@ -6,7 +6,6 @@ Adapted from https://stackoverflow.com/questions/57423743/networkx-is-there-a-wa
 
 import warnings
 from collections.abc import Mapping, Sequence
-from typing import Optional
 
 import igraph as ig
 import numpy as np
@@ -15,13 +14,13 @@ import numpy as np
 def layout_fr_size_aware(
     graph: ig.Graph,
     *,
-    k: Optional[float] = None,
-    scale: Optional[tuple[float, float]] = None,
-    origin: Optional[tuple[float, float]] = None,
+    k: float | None = None,
+    scale: tuple[float, float] | None = None,
+    origin: tuple[float, float] | None = None,
     total_iterations: int = 50,
     initial_temperature: float = 1.0,
-    node_positions: Optional[Mapping[int, tuple[float, float]]] = None,
-    fixed_nodes: Optional[Sequence] = None,
+    node_positions: Mapping[int, tuple[float, float]] | None = None,
+    fixed_nodes: Sequence | None = None,
     base_node_size: float = 1e-2,
     size_power: float = 0.5,
 ) -> np.ndarray:
@@ -102,9 +101,9 @@ def layout_fr_size_aware(
         # ensure that it is an array
         scale = np.array(scale)
 
-    assert len(origin) == len(
-        scale
-    ), f"Arguments `origin` (d={len(origin)}) and `scale` (d={len(scale)}) need to have the same number of dimensions!"
+    assert len(origin) == len(scale), (
+        f"Arguments `origin` (d={len(origin)}) and `scale` (d={len(scale)}) need to have the same number of dimensions!"
+    )
     dimensionality = len(origin)
 
     unique_nodes = _get_unique_nodes(edge_list)
@@ -115,10 +114,8 @@ def layout_fr_size_aware(
     else:
         # 1) check input dimensionality
         dimensionality_node_positions = np.array(list(node_positions.values())).shape[1]
-        assert (
-            dimensionality_node_positions == dimensionality
-        ), "The dimensionality of values of `node_positions` (d={}) must match the dimensionality of `origin`/ `scale` (d={})!".format(
-            dimensionality_node_positions, dimensionality
+        assert dimensionality_node_positions == dimensionality, (
+            f"The dimensionality of values of `node_positions` (d={dimensionality_node_positions}) must match the dimensionality of `origin`/ `scale` (d={dimensionality})!"
         )
 
         is_valid = _is_within_bbox(list(node_positions.values()), origin=origin, scale=scale)
@@ -175,7 +172,7 @@ def layout_fr_size_aware(
     adjacency = adjacency + adjacency.transpose()
 
     if k is None:
-        area = np.product(scale)
+        area = np.prod(scale)
         k = np.sqrt(area / float(total_nodes))
 
     temperatures = _get_temperature_decay(initial_temperature, total_iterations)
@@ -318,7 +315,7 @@ def _edge_list_to_adjacency_matrix(edge_list, edge_weights=None):
     nodes = sources + targets
     unique = set(nodes)
     indices = range(len(unique))
-    node_to_idx = dict(zip(unique, indices))
+    node_to_idx = dict(zip(unique, indices, strict=False))
 
     source_indices = [node_to_idx[source] for source in sources]
     target_indices = [node_to_idx[target] for target in targets]

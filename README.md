@@ -13,15 +13,17 @@ It seamlessly integrates with [scanpy][] and [mudata][] and provides various mod
 
 [//]: # "numfocus-fiscal-sponsor-attribution"
 
-Scirpy is part of the scverse project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
-Please consider making a tax-deductible [donation](https://numfocus.org/donate-to-scverse) to help the project pay for developer time, professional services, travel, workshops, and a variety of other needs.
+scirpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
+If you like scverse® and want to support our mission, please consider making a tax-deductible [donation](https://numfocus.org/donate-to-scverse) to help the project pay for developer time, professional services, travel, workshops, and a variety of other needs.
 
+<div align="center">
 <a href="https://numfocus.org/project/scverse">
   <img
     src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
     width="200"
   >
 </a>
+</div>
 
 [badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/scirpy/test.yaml?branch=main
 [link-tests]: https://github.com/scverse/scirpy/actions/workflows/test.yml
@@ -42,12 +44,12 @@ Please consider making a tax-deductible [donation](https://numfocus.org/donate-t
 
 Please refer to the [documentation][link-docs]. In particular, the
 
--   [Tutorial][link-tutorial], and the
--   [API documentation][link-api].
+- [Tutorial][link-tutorial], and the
+- [API documentation][link-api].
 
 ## Installation
 
-You need to have Python 3.9 or newer installed on your system. If you don't have
+You need to have Python 3.10 or newer installed on your system. If you don't have
 Python installed, we recommend installing [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
 
 There are several alternative options to install scirpy:
@@ -88,8 +90,8 @@ See the [changelog][changelog].
 
 We are happy to assist with problems when using scirpy.
 
--   If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the [scverse discourse][scverse-discourse].
--   For bug report or feature requests, please use the [issue tracker][issue-tracker].
+- If you need help with scirpy or have questions regarding single-cell immune-cell receptor analysis in general, please join us in the [scverse discourse][scverse-discourse].
+- For bug report or feature requests, please use the [issue tracker][issue-tracker].
 
 We try to respond within two working days, however fixing bugs or implementing new features
 can take substantially longer, depending on the availability of our developers.

@@ -1,4 +1,5 @@
 """Convert IrCells to AnnData and vice-versa"""
+
 from collections.abc import Iterable
 from importlib.metadata import version
 from typing import cast
@@ -10,16 +11,18 @@ from anndata import AnnData
 from scirpy.util import DataHandler, _doc_params, tqdm
 
 from ._datastructures import AirrCell
-from ._util import _IOLogger, doc_working_model
+from ._util import _IOLogger, doc_airr_fields, doc_working_model
 
 
-@_doc_params(doc_working_model=doc_working_model)
+@_doc_params(doc_working_model=doc_working_model, doc_airr_fields=doc_airr_fields)
 def from_airr_cells(airr_cells: Iterable[AirrCell], key_added: str = "airr") -> AnnData:
     """\
     Convert a collection of :class:`~scirpy.io.AirrCell` objects to :class:`~anndata.AnnData`.
 
     This is useful for converting arbitrary data formats into
     the scirpy :ref:`data-structure`.
+
+    {doc_airr_fields}
 
     {doc_working_model}
 
@@ -86,7 +89,7 @@ def to_airr_cells(adata: DataHandler.TYPE, *, airr_mod: str = "airr", airr_key: 
         tmp_airr = ak.to_list(params.airr[i : i + CHUNKSIZE])
         tmp_obs = params.adata.obs.iloc[i : i + CHUNKSIZE].to_dict(orient="index")
 
-        for (cell_id, row), chains in zip(tmp_obs.items(), tmp_airr):
+        for (cell_id, row), chains in zip(tmp_obs.items(), tmp_airr, strict=False):
             tmp_cell = AirrCell(cast(str, cell_id), logger=logger)
             # add cell-level metadata
             tmp_cell.update(row)

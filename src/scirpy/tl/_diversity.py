@@ -1,4 +1,5 @@
-from typing import Callable, Optional, Union, cast
+from collections.abc import Callable
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -48,12 +49,12 @@ def alpha_diversity(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    metric: Union[str, Callable[[np.ndarray], Union[int, float]]] = "normalized_shannon_entropy",
+    metric: str | Callable[[np.ndarray], int | float] = "normalized_shannon_entropy",
     inplace: bool = True,
-    key_added: Union[None, str] = None,
+    key_added: None | str = None,
     airr_mod: str = "airr",
     **kwargs,
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """\
     Computes the alpha diversity of clonotypes within a group.
 
@@ -68,15 +69,12 @@ def alpha_diversity(
         `normalized to group size <https://math.stackexchange.com/a/945172>`__.
 
     D50:
-        The diversity index (D50) is a measure of the diversity of an immune repertoire of J individual cells
-        (the total number of CDR3s) composed of S distinct CDR3s in a ranked dominance configuration where ri
-        is the abundance of the ith most abundant CDR3, r1 is the abundance of the most abundant CDR3, r2 is the
-        abundance of the second most abundant CDR3, and so on. C is the minimum number of distinct CDR3s,
-        amounting to >50% of the total sequencing reads. D50 therefore is given by C/S x 100.
-        `<https://patents.google.com/patent/WO2012097374A1/en>`__.
+        D50 is a measure of the minimum number of distinct clonotypes totalling greater than 50% of total clonotype
+        counts in a given group, as a percentage out of the total number of clonotypes.
+        Adapted from `<https://patents.google.com/patent/WO2012097374A1/en>`__.
 
     DXX:
-        Similar to D50 where XX indicates the percent of J (the total number of CDR3s).
+        Similar to D50 where XX indicates the percentage of total clonotype counts threshold.
         Requires to pass the `percentage` keyword argument which can be within 0 and
         100.
 
@@ -126,9 +124,7 @@ def alpha_diversity(
                 if "percentage" in kwargs:
                     diversity[k] = _dxx(tmp_counts, percentage=cast(int, kwargs.get("percentage")))
                 else:
-                    raise ValueError(
-                        "DXX requires the `percentage` keyword argument, which can " "range from 0 to 100."
-                    )
+                    raise ValueError("DXX requires the `percentage` keyword argument, which can range from 0 to 100.")
             else:
                 # make skbio an optional dependency
                 try:
@@ -150,6 +146,6 @@ def alpha_diversity(
     if inplace:
         metric_name = metric if isinstance(metric, str) else metric.__name__
         key_added = f"{metric_name}_{target_col}" if key_added is None else key_added
-        params.set_obs(key_added, params.adata.obs[groupby].map(diversity))
+        params.set_obs(key_added, params.get_obs(groupby).map(diversity))
     else:
         return pd.DataFrame().from_dict(diversity, orient="index")

@@ -26,9 +26,9 @@ from scirpy.util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
 
-_FIGSHARE = pooch.create(
+_AWS_EXAMPLEDATA = pooch.create(
     path=pooch.os_cache("scirpy"),
-    base_url="doi:10.6084/m9.figshare.22249894.v1",
+    base_url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/scirpy",
     version=version("scirpy"),
     version_dev="main",
     env="SCIRPY_DATA_DIR",
@@ -36,6 +36,7 @@ _FIGSHARE = pooch.create(
         "wu2020.h5mu": "md5:ed30d9c1c44cae544f4c080a2451118b",
         "wu2020_3k.h5mu": "md5:12c57c790f8a403751304c9de5a18cbf",
         "maynard2020.h5mu": "md5:da64ac62e3e92c80eaf0e8eef6537ac7",
+        "stephenson2021_5k.h5mu": "md5:6ea26f9d95525371ff9028f8e99ed474",
     },
 )
 _POOCH_INFO = dedent(
@@ -71,7 +72,7 @@ def wu2020() -> MuData:
 
         {processing_code}
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("wu2020.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("wu2020.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -92,7 +93,7 @@ def wu2020_3k() -> MuData:
 
         {processing_code}
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("wu2020_3k.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("wu2020_3k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -120,7 +121,30 @@ def maynard2020() -> MuData:
 
         {processing_code}
     """
-    fname = cast(PathLike, _FIGSHARE.fetch("maynard2020.h5mu", progressbar=True))
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("maynard2020.h5mu", progressbar=True))
+    return mudata.read_h5mu(fname)
+
+
+@_doc_params(
+    processing_code=indent(_read_to_str(HERE / "_processing_scripts/maynard2020.py"), " " * 8),
+    pooch_info=_POOCH_INFO,
+)
+def stephenson2021_5k() -> MuData:
+    """\
+    Return the dataset from :cite:`Stephenson2021` as MuData object, downsampled
+    to 5000 BCR-containing cells.
+
+    The original study sequenced 1,141,860 cells from 143 PBMC samples collected from patients with different severity of COVID-19 and control groups.
+    Gene expression, TCR-enriched and BCR-enriched libraries were prepared for each sample according to 10x Genomics protocol and NovaSeq 6000 was used for sequencing.
+
+    A preprocessed dataset for the transciptome library was obtained from `Array Express <https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-10026>`__
+    A preprocessed dataset for the BCR-enriched library was obtained from `clatworthylab's GitHub <https://github.com/clatworthylab/COVID_analysis>`__
+    Both dataset have already passed quality control and all cells that didn't express BCR were discarded.
+
+    To  speed up computation time, we solely included 5 samples from each of the COVID-19-positive groups and randomly subsampled down to a total of 5k cells.
+
+    """
+    fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("stephenson2021_5k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
 
 
@@ -162,7 +186,7 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
         urllib.request.urlretrieve(url, d / "vdjdb.tar.gz")
         with zipfile.ZipFile(d / "vdjdb.tar.gz") as zf:
             zf.extractall(d)
-        df = pd.read_csv(d / "vdjdb_full.txt", sep="\t", low_memory=False)
+        df = pd.read_csv(next(iter(d.glob("**/vdjdb_full.txt"))), sep="\t", low_memory=False)
 
     tcr_cells = []
     for idx, row in tqdm(df.iterrows(), total=df.shape[0], desc="Processing VDJDB entries"):
@@ -221,7 +245,6 @@ def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
             "meta.donor.MHC",
             "meta.donor.MHC.method",
             "meta.structure.id",
-            "vdjdb.score",
         ]
         for f in INCLUDE_CELL_METADATA_FIELDS:
             cell[f] = row[f]

@@ -2,7 +2,7 @@ import warnings
 from collections.abc import Hashable, Mapping, Sequence
 from functools import reduce
 from operator import mul
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ def merge_coo_matrices(mats: Sequence[coo_matrix], shape=None) -> coo_matrix:
     if not len(mats) or shape is None or reduce(mul, shape) == 0:
         return coo_matrix((0, 0) if shape is None else shape)
 
-    data, row, col = zip(*((x.data, x.row, x.col) for x in mats))
+    data, row, col = zip(*((x.data, x.row, x.col) for x in mats), strict=False)
 
     return sp.coo_matrix((np.hstack(data), (np.hstack(row), np.hstack(col))), shape=shape)
 
@@ -93,7 +93,7 @@ def reduce_and(*args, chain_count):
 
 
 class ReverseLookupTable:
-    def __init__(self, dist_type: Literal["boolean", "numeric"], size: int):
+    def __init__(self, dist_type: Literal["boolean", "numeric"], size: int, dist_mat: np.ndarray | sp.csr_matrix):
         """Reverse lookup table holds a mask that indicates which objects
         are neighbors of an object with a given index `i`.
 
@@ -113,18 +113,29 @@ class ReverseLookupTable:
             Either `boolean` or `numeric`
         size
             The size of the masks.
+        dist_mat
+            A pointer to the associated distance matrix. This makes it easier to find the
+            corresponding distance matrix from an instance of the ReverseLookupTable
         """
         if dist_type not in ["boolean", "numeric"]:
             raise ValueError("invalid dist_type")
         self.dist_type = dist_type
         self.size = size
         self.lookup: dict[Hashable, sp.coo_matrix] = {}
+        self.dist_mat = dist_mat
+
+    @property
+    def dist_mat_size(self) -> int:
+        assert self.dist_mat.shape is not None
+        assert self.dist_mat.shape[0] == self.dist_mat.shape[1]
+        return self.dist_mat.shape[0]
 
     @staticmethod
     def from_dict_of_indices(
         dict_of_indices: Mapping,
         dist_type: Literal["boolean", "numeric"],
         size: int,
+        dist_mat: np.ndarray | sp.csr_matrix,
     ):
         """Convert a dict of indices to a ReverseLookupTable of row masks.
 
@@ -137,7 +148,7 @@ class ReverseLookupTable:
         size
             The size of the masks
         """
-        rlt = ReverseLookupTable(dist_type, size)
+        rlt = ReverseLookupTable(dist_type, size, dist_mat)
 
         # convert into coo matrices (numeric distances) or numpy boolean arrays.
         for k, v in dict_of_indices.items():
@@ -174,7 +185,7 @@ class ReverseLookupTable:
 
 
 class DoubleLookupNeighborFinder:
-    def __init__(self, feature_table: pd.DataFrame, feature_table2: Optional[pd.DataFrame] = None):
+    def __init__(self, feature_table: pd.DataFrame, feature_table2: pd.DataFrame | None = None):
         """
         A datastructure to efficiently retrieve distances based on different features.
 
@@ -233,68 +244,97 @@ class DoubleLookupNeighborFinder:
 
     def lookup(
         self,
-        object_id: int,
-        forward_lookup_table: str,
-        reverse_lookup_table: Union[str, None] = None,
-    ) -> Union[coo_matrix, np.ndarray]:
-        """Get ids of neighboring objects from a lookup table.
+        object_ids: np.ndarray[int],
+        forward_lookup_table_name: str,
+        reverse_lookup_table_name: str | None = None,
+    ) -> sp.csr_matrix:
+        """
+        Creates a distance matrix between objects with the given ids based on a feature distance matrix.
 
-        Performs the following lookup:
+        To get the distance between two objects we need to look up the features of the two objects.
+        The distance between those two features is then the distance between the two objects.
 
-            object_id -> dist_mat -> neighboring features -> neighboring objects.
+        To do so, we first use the `object_ids` together with the `forward_lookup_table` to look up
+        the indices of the objects in the feature `distance_matrix`. Afterwards we pick the according row for each object
+        out of the `distance_matrix` and construct a `rows` matrix (n_object_ids x n_features).
 
-        where an object is a clonotype in our case (but could be used for something else)
-
-        "nan"s are not looked up via the distance matrix, they return a row of zeros
+        "nan"s (index = -1) are not looked up in the feature `distance_matrix`, they return a row of zeros
         instead.
+
+        Then we use the entries of the `reverse_lookup_table` to construct a `reverse_lookup_matrix` (n_features x n_object_ids).
+        By multiplying the `rows` matrix with the `reverse_lookup_matrix` we get the final `object_distance_matrix` that shows
+        the distances between the objects with the given `object_ids` regarding a certain feature column.
+
+        It might not be obvious at the first sight that the matrix multiplication between `rows` and `reverse_lookup_matrix` gives
+        us the desired result. But this trick allows us to use the built-in sparse matrix multiplication of `scipy.sparse`
+        for enhanced performance.
 
         Parameters
         ----------
-        object_id
-            The row index of the feature_table.
-        forward_lookup_table
+        object_ids
+            The row indices of the feature_table.
+        forward_lookup_table_name
             The unique identifier of a lookup table previously added via
             `add_lookup_table`.
-        reverse_lookup_table
+        reverse_lookup_table_name
             The unique identifier of the lookup table used for the reverse lookup.
             If not provided will use the same lookup table for forward and reverse
             lookup. This is useful to calculate distances across features from
             different columns of the feature table (e.g. primary and secondary VJ chains).
-        """
-        distance_matrix_name, forward, reverse = self.lookups[forward_lookup_table]
 
-        if reverse_lookup_table is not None:
-            distance_matrix_name_reverse, _, reverse = self.lookups[reverse_lookup_table]
+        Returns
+        -------
+        object_distance_matrix
+            A CSR matrix containing the pairwise distances between objects with the
+            given `object_ids` regarding a certain feature column.
+        """
+        distance_matrix_name, forward_lookup_table, reverse_lookup_table = self.lookups[forward_lookup_table_name]
+
+        if reverse_lookup_table_name is not None:
+            distance_matrix_name_reverse, _, reverse_lookup_table = self.lookups[reverse_lookup_table_name]
             if distance_matrix_name != distance_matrix_name_reverse:
-                raise ValueError("Forward and reverse lookup tablese must be defined " "on the same distance matrices.")
+                raise ValueError("Forward and reverse lookup tablese must be defined on the same distance matrices.")
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
-        idx_in_dist_mat = forward[object_id]
-        if idx_in_dist_mat == -1:  # nan
-            return reverse.empty()
-        else:
-            # get distances from the distance matrix...
-            row = distance_matrix[idx_in_dist_mat, :]
 
-            if reverse.is_boolean:
-                assert (
-                    len(row.indices) == 1  # type: ignore
-                ), "Boolean reverse lookup only works for identity distance matrices."
-                return reverse[row.indices[0]]  # type: ignore
-            else:
-                # ... and get column indices directly from sparse row
-                # sum concatenates coo matrices
-                return merge_coo_matrices(
-                    (reverse[i] * multiplier for i, multiplier in zip(row.indices, row.data)),  # type: ignore
-                    shape=(1, reverse.size),
-                )
+        if np.max(distance_matrix.data) > np.iinfo(np.uint8).max:
+            raise OverflowError(
+                "The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)"
+            )
+
+        indices_in_dist_mat = forward_lookup_table[object_ids]
+        indptr = np.empty(distance_matrix.indptr.shape[0] + 1, dtype=np.int64)
+        indptr[:-1] = distance_matrix.indptr
+        indptr[-1] = indptr[-2]
+        distance_matrix_extended = sp.csr_matrix(
+            (distance_matrix.data.astype(np.uint8), distance_matrix.indices, indptr),
+            shape=(distance_matrix.shape[0] + 1, distance_matrix.shape[1]),
+        )
+        rows = distance_matrix_extended[indices_in_dist_mat, :]
+
+        reverse_matrix_data = [np.array([], dtype=np.uint8)] * rows.shape[1]
+        reverse_matrix_col = [np.array([], dtype=np.int64)] * rows.shape[1]
+        nnz_array = np.zeros(rows.shape[1], dtype=np.int64)
+
+        for key, value in reverse_lookup_table.lookup.items():
+            reverse_matrix_data[key] = value.data
+            reverse_matrix_col[key] = value.col
+            nnz_array[key] = value.nnz
+
+        data = np.concatenate(reverse_matrix_data)
+        col = np.concatenate(reverse_matrix_col)
+        indptr = np.concatenate([np.array([0], dtype=np.int64), np.cumsum(nnz_array)])
+
+        reverse_matrix = sp.csr_matrix((data, col, indptr), shape=(rows.shape[1], reverse_lookup_table.size))
+        object_distance_matrix = rows * reverse_matrix
+        return object_distance_matrix
 
     def add_distance_matrix(
         self,
         name: str,
         distance_matrix: sp.csr_matrix,
         labels: Sequence,
-        labels2: Optional[Sequence] = None,
+        labels2: Sequence | None = None,
     ):
         """Add a distance matrix.
 
@@ -385,4 +425,6 @@ class DoubleLookupNeighborFinder:
             except KeyError:
                 tmp_reverse_lookup[tmp_key] = [i]
 
-        return ReverseLookupTable.from_dict_of_indices(tmp_reverse_lookup, dist_type, self.n_cols)
+        return ReverseLookupTable.from_dict_of_indices(
+            tmp_reverse_lookup, dist_type, self.n_cols, self.distance_matrices[distance_matrix]
+        )

@@ -103,13 +103,13 @@ def _get_igraph_from_adjacency(adj: csr_matrix, simplify=True):
 
     g = ig.Graph(directed=not simplify)
     g.add_vertices(adj.shape[0])  # this adds adjacency.shape[0] vertices
-    g.add_edges(list(zip(sources, targets)))
+    g.add_edges(list(zip(sources, targets, strict=False)))
 
     g.es["weight"] = weights
 
     if g.vcount() != adj.shape[0]:
         logging.warning(
-            f"The constructed graph has only {g.vcount()} nodes. " "Your adjacency matrix contained redundant nodes."
+            f"The constructed graph has only {g.vcount()} nodes. Your adjacency matrix contained redundant nodes."
         )  # type: ignore
 
     if simplify:
@@ -144,7 +144,7 @@ def _get_sparse_from_igraph(graph, *, simplified, weight_attr=None):
     shape = graph.vcount()
     shape = (shape, shape)
     if len(edges) > 0:
-        adj_mat = csr_matrix((weights, zip(*edges)), shape=shape)
+        adj_mat = csr_matrix((weights, list(zip(*edges, strict=False))), shape=shape)
         if simplified:
             # make symmetrical and add diagonal
             adj_mat = adj_mat + adj_mat.T - sparse.diags(adj_mat.diagonal()) + sparse.diags(np.ones(adj_mat.shape[0]))

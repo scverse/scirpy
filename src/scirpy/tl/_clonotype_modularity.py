@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import scipy.sparse
@@ -19,13 +19,13 @@ def clonotype_modularity(
     target_col="clone_id",
     connectivity_key="gex:connectivities",
     permutation_test: Literal["approx", "exact"] = "approx",
-    n_permutations: Optional[int] = None,
+    n_permutations: int | None = None,
     key_added: str = "clonotype_modularity",
     inplace: bool = True,
     fdr_correction: bool = True,
     random_state: int = 0,
     airr_mod: str = "airr",
-) -> Optional[tuple[dict[str, float], dict[str, float]]]:
+) -> tuple[dict[str, float], dict[str, float]] | None:
     """\
     Identifies clonotypes or clonotype clusters consisting of cells that are
     more transcriptionally related than expected by chance by computing the
@@ -147,6 +147,7 @@ def clonotype_modularity(
             zip(
                 modularity_pvalues.keys(),
                 fdrcorrection(list(modularity_pvalues.values()))[1],
+                strict=False,
             )
         )
 
@@ -238,18 +239,11 @@ class _ClonotypeModularity:
         # This is also the bottleneck of the process, s.t. naively parallelizing
         # does not lead to a speed gain.
 
-        # logging.info(
-        #     "NB: Computation happens in chunks. The progressbar only advances "
-        #     "when a chunk has finished. "
-        # )  # type: ignore
         background_distribution = np.vstack(
             list(
                 map(
                     self._get_background_distribution,
                     tqdm(range(n_permutations)),
-                    # chunksize=chunksize,
-                    # max_workers=n_jobs if n_jobs is not None else cpu_count(),
-                    # tqdm_class=tqdm,
                 )
             )
         )
@@ -321,7 +315,8 @@ class _ClonotypeModularity:
                 nb_dist = distributions_per_size[subgraph.vcount()]
                 # restrict pvalues to float precision
                 pvalue_dict[clonotype] = max(
-                    1 - nb_dist.cdf(subgraph.ecount() - 1), np.finfo(np.float32).tiny  # type: ignore
+                    1 - nb_dist.cdf(subgraph.ecount() - 1),
+                    np.finfo(np.float32).tiny,  # type: ignore
                 )
 
         return pvalue_dict

@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,16 +20,16 @@ def repertoire_overlap(
     groupby: str,
     *,
     target_col: str = "clone_id",
-    pair_to_plot: Union[None, Sequence[str]] = None,
-    heatmap_cats: Union[None, Sequence[str]] = None,
+    pair_to_plot: None | Sequence[str] = None,
+    heatmap_cats: None | Sequence[str] = None,
     dendro_only: bool = False,
     overlap_measure: str = "jaccard",
-    overlap_threshold: Union[None, float] = None,
-    fraction: Union[None, str, bool] = None,
+    overlap_threshold: None | float = None,
+    fraction: None | str | bool = None,
     added_key: str = "repertoire_overlap",
     airr_mod: str = "airr",
     **kwargs,
-) -> Union[sns.matrix.ClusterGrid, plt.Axes]:
+) -> sns.matrix.ClusterGrid | plt.Axes:
     """\
     Visualizes overlap betwen a pair of samples on a scatter plot or
     all samples on a heatmap or draws a dendrogram of samples only.
@@ -116,7 +115,12 @@ def repertoire_overlap(
         dd = sc_hierarchy.dendrogram(linkage, labels=df.index, no_plot=True)
         distM = distM.iloc[dd["leaves"], :]
         if heatmap_cats is None:
-            ax = sns.clustermap(1 - distM, col_linkage=linkage, row_cluster=False)
+            ax = sns.clustermap(
+                1 - distM,
+                col_linkage=linkage,
+                row_cluster=False,
+                **kwargs,
+            )
         else:
             ax = sns.clustermap(
                 1 - distM,

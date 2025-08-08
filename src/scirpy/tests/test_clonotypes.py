@@ -2,6 +2,7 @@
 import sys
 from typing import cast
 
+import anndata as ad
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -10,6 +11,8 @@ import pytest
 from mudata import MuData
 
 import scirpy as ir
+
+from . import TESTDATA
 
 
 @pytest.mark.parametrize("key_added", [None, "my_key"])
@@ -207,6 +210,7 @@ def test_clonotype_clusters_end_to_end(
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
+@pytest.mark.extra
 @pytest.mark.xfail(
     sys.platform == "win32",
     reason="Inconsistent coordinates with igraph on windows (got introduced only after release of python-igraph 0.9.11)",
@@ -264,11 +268,59 @@ def test_clonotype_network(adata_conn, min_cells, min_nodes, layout, size_aware,
         size_aware=size_aware,
         layout=layout,
         inplace=False,
+        mask_obs=None,
     )
-    # print(coords)
     npt.assert_almost_equal(coords.values, np.array(expected), decimal=1)
 
 
+@pytest.mark.extra
+def test_clonotype_network_mask_obs(adata_conn):
+    expected = [
+        [34.854376, 96.0],
+        [34.854376, 96.0],
+        [93.076805, 27.643534],
+        [np.nan, np.nan],
+        [np.nan, np.nan],
+        [np.nan, np.nan],
+        [22.889353, 1.0],
+        [1.0, 65.74282],
+        [96.0, 51.195539],
+        [np.nan, np.nan],
+        [np.nan, np.nan],
+    ]
+
+    boolean_mask = np.array([1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0], dtype=bool)
+    adata_conn.obs["boolean_mask"] = boolean_mask
+
+    coords1 = ir.tl.clonotype_network(
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        min_cells=1,
+        min_nodes=1,
+        size_aware=True,
+        layout="components",
+        inplace=False,
+        mask_obs=boolean_mask,
+    )
+
+    coords2 = ir.tl.clonotype_network(
+        adata_conn,
+        sequence="aa",
+        metric="alignment",
+        min_cells=1,
+        min_nodes=1,
+        size_aware=True,
+        layout="components",
+        inplace=False,
+        mask_obs="boolean_mask",
+    )
+
+    npt.assert_almost_equal(coords1.values, np.array(expected), decimal=1)
+    npt.assert_almost_equal(coords2.values, np.array(expected), decimal=1)
+
+
+@pytest.mark.extra
 def test_clonotype_network_igraph(adata_clonotype_network):
     g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
     print(lo.coords)
@@ -336,4 +388,41 @@ def test_clonotype_convergence(adata_clonotype):
             ["not convergent"] * 3 + [np.nan] * 2 + ["not convergent"] * 5,
             categories=["convergent", "not convergent"],
         ),
+    )
+
+
+def test_j_gene_matching():
+    data = ad.read_h5ad(TESTDATA / "clonotypes_test_data/j_gene_test_data.h5ad")
+
+    ir.tl.define_clonotype_clusters(
+        data,
+        sequence="nt",
+        metric="normalized_hamming",
+        receptor_arms="all",
+        dual_ir="any",
+        same_j_gene=True,
+        key_added="test_j_gene",
+    )
+
+    clustering = data.obs["test_j_gene"].tolist()
+    expected = ["0", "0", "0", "0", "0", "1", "1", "1", "1", "1", "1", "1", "1", "2", "2", "2", "2", "2"]
+    assert np.array_equal(clustering, expected)
+
+
+def test_gene_segment_matching_index_error_issue_625():
+    """Regression test for #625, where an IndexError occured during gene segment matching."""
+    adata = ir.io.read_airr(TESTDATA / "airr" / "issue_625.tsv")
+    ir.pp.index_chains(adata)
+    ir.tl.chain_qc(adata)
+    ir.pp.ir_dist(adata, metric="normalized_hamming", cutoff=15, sequence="nt", histogram=False)
+    ir.tl.define_clonotype_clusters(
+        adata,
+        sequence="nt",
+        metric="normalized_hamming",
+        receptor_arms="all",
+        dual_ir="any",
+        same_v_gene=True,
+        same_j_gene=True,
+        partitions="fastgreedy",
+        key_added="clone_id_similarity",
     )

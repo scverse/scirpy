@@ -4,7 +4,9 @@ sinfo-requirements.txt
 !.vscode/settings.json.default
 notebooks
 tutorial
+/data
 .idea
+/node_modules/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -136,3 +138,5 @@ dmypy.json
 .pyre/
 
 .DS_Store
+
+uv.lock

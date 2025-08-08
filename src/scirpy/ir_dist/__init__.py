@@ -1,4 +1,5 @@
 """Compute distances between immune receptor sequences"""
+
 import itertools
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
@@ -29,14 +30,23 @@ def TcrNeighbors(*args, **kwargs):
 
 def IrNeighbors(*args, **kwargs):
     raise RuntimeError(
-        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` " "or `sequence_dist` for that functionality. "
+        "IrNeighbors has been removed in v0.7.0. Use either `ir_dist` or `sequence_dist` for that functionality. "
     )
 
 
-MetricType = Union[
-    Literal["alignment", "fastalignment", "identity", "levenshtein", "hamming"],
-    metrics.DistanceCalculator,
-]
+MetricType = (
+    Literal[
+        "alignment",
+        "fastalignment",
+        "identity",
+        "levenshtein",
+        "hamming",
+        "gpu_haming",
+        "normalized_hamming",
+        "tcrdist",
+    ]
+    | metrics.DistanceCalculator
+)
 
 _doc_metrics = """\
 metric
@@ -46,7 +56,13 @@ metric
         This metric implies a cutoff of 0.
       * `levenshtein` -- Levenshtein edit distance.
         See :class:`~scirpy.ir_dist.metrics.LevenshteinDistanceCalculator`.
+      * `tcrdist` -- Distance based on pairwise sequence alignments between TCR CDR3 sequences based on the tcrdist metric.
+        See :class:`~scirpy.ir_dist.metrics.TCRdistDistanceCalculator`.
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
+        See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
+      * `gpu_hamming` -- Hamming distance for CDR3 sequences of equal length calculated with a GPU.
+        See :class:`~scirpy.ir_dist.metrics.GPUHammingDistanceCalculator`.
+      * `normalized_hamming` -- Normalized Hamming distance (in percent) for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
@@ -72,7 +88,7 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_jobs=-1, **kwargs):
+def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-1, **kwargs):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
@@ -98,6 +114,12 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
         dist_calc = metrics.LevenshteinDistanceCalculator(n_jobs=n_jobs, **kwargs)
     elif metric == "hamming":
         dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, **kwargs)
+    elif metric == "normalized_hamming":
+        dist_calc = metrics.HammingDistanceCalculator(n_jobs=n_jobs, normalize=True, **kwargs)
+    elif metric == "gpu_hamming":
+        dist_calc = metrics.GPUHammingDistanceCalculator(**kwargs)
+    elif metric == "tcrdist":
+        dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 
@@ -107,21 +129,22 @@ def _get_distance_calculator(metric: MetricType, cutoff: Union[int, None], *, n_
 @DataHandler.inject_param_docs(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def _ir_dist(
     adata: DataHandler.TYPE,
-    reference: Optional[DataHandler.TYPE] = None,
+    reference: DataHandler.TYPE | None = None,
     *,
     metric: MetricType = "identity",
-    cutoff: Union[int, None] = None,
+    cutoff: int | None = None,
     sequence: Literal["aa", "nt"] = "nt",
-    key_added: Union[str, None] = None,
+    key_added: str | None = None,
     inplace: bool = True,
-    n_jobs: Union[int, None] = -1,
+    n_jobs: int = -1,
     airr_mod: str = "airr",
     airr_key: str = "airr",
     chain_idx_key: str = "chain_indices",
     airr_mod_ref: str = "airr",
     airr_key_ref: str = "airr",
     chain_idx_key_ref: str = "chain_indices",
-) -> Union[dict, None]:
+    **kwargs,
+) -> dict | None:
     """\
     Computes a sequence-distance metric between all unique :term:`VJ <Chain locus>`
     :term:`CDR3` sequences and between all unique :term:`VDJ <Chain locus>`
@@ -157,10 +180,12 @@ def _ir_dist(
         If true, store the result in `adata.uns`. Otherwise return a dictionary
         with the results.
     n_jobs
-        Number of cores to use for distance calculation. Passed on to
-        :class:`scirpy.ir_dist.metrics.DistanceCalculator`. :class:`joblib.Parallel` is
+        Number of cores to use for distance calculation. :class:`joblib.Parallel` is
         used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
         backend (e.g. `dask`) and adjust other configuration options.
+        The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba`
+        for parallelization with multithreading instead.
+
     {airr_mod}
     {airr_key}
     {chain_idx_key}
@@ -170,6 +195,10 @@ def _ir_dist(
         Like `airr_key`, but for `reference`.
     chain_idx_key_ref
         Like `chain_idx_key`, but for `reference`.
+    **kwargs
+        Arguments are passed to the respective :class:`~scirpy.ir_dist.metrics.DistanceCalculator` class.
+        Check out the distance calculator for the respective metric to see parameters specific to
+        individual distance calculators that can be passed via kwargs.
 
     Returns
     -------
@@ -226,7 +255,7 @@ def _ir_dist(
                 result[chain_type][tmp_key] = unique_seqs
 
     # compute distance matrices
-    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs)
+    dist_calc = _get_distance_calculator(metric, cutoff, n_jobs=n_jobs, **kwargs)
     for chain_type in ["VJ", "VDJ"]:
         logging.info(f"Computing sequence x sequence distance matrix for {chain_type} sequences.")  # type: ignore
         result[chain_type]["distances"] = dist_calc.calc_dist_mat(
@@ -243,11 +272,11 @@ def _ir_dist(
 @_doc_params(metric=_doc_metrics, cutoff=_doc_cutoff, dist_mat=metrics._doc_dist_mat)
 def sequence_dist(
     seqs: Sequence[str],
-    seqs2: Optional[Sequence[str]] = None,
+    seqs2: Sequence[str] | None = None,
     *,
     metric: MetricType = "identity",
-    cutoff: Union[None, int] = None,
-    n_jobs: Union[None, int] = -1,
+    cutoff: None | int = None,
+    n_jobs: int = -1,
     **kwargs,
 ) -> csr_matrix:
     """
