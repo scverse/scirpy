@@ -6,7 +6,10 @@ import seaborn as sns
 from mudata import MuData
 from scipy import sparse
 
-from scirpy import pl
+from scirpy import pl, tl
+from scirpy.io import read_h5mu
+
+from . import TESTDATA
 
 
 def test_clonal_expansion(adata_clonotype):
@@ -39,6 +42,14 @@ def test_group_abundance_default(adata_clonotype):
         groupby="tcr:clone_id",
         target_col="tcr:group",
     )
+    assert isinstance(p, plt.Axes)
+
+
+def test_group_abundance_non_overlapping_gex_airr():
+    """Regression test for #641"""
+    mdata = read_h5mu(TESTDATA / "wu2020_200.h5mu")
+    tl.chain_qc(mdata)
+    p = pl.group_abundance(mdata, groupby="airr:receptor_subtype")
     assert isinstance(p, plt.Axes)
 
 

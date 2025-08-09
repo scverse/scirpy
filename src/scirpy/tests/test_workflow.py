@@ -76,3 +76,21 @@ def test_workflow(adata_path, save_intermediates, upgrade_schema, obs_expected, 
     # adata.obs.to_pickle(obs_expected, protocol=4)
 
     pdt.assert_frame_equal(adata.obs, adata_obs_expected, check_dtype=False, check_categorical=False)
+
+
+def test_workflow_mudata_non_overlapping_gex_airr():
+    """Test if the workflow still works when gene expression and AIRR data do not have exactly the same dimension.
+
+    Testdataset was created as
+
+    >>> mdata = ir.datasets.wu2020_3k()
+    >>> mdata = MuData({"gex": mdata["gex"][50:200], "airr": mdata["airr"][:150]})
+    """
+    mdata = ir.io.read_h5mu(TESTDATA / "wu2020_200.h5mu")
+
+    ir.tl.chain_qc(mdata)
+    ir.pp.ir_dist(mdata)
+    ir.tl.define_clonotypes(mdata)
+    ir.tl.clonotype_network(mdata)
+    ir.tl.clonal_expansion(mdata)
+    ir.pl.clonotype_network(mdata)
