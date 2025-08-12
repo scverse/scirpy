@@ -13,6 +13,7 @@ from pytest import approx
 import scirpy as ir
 from scirpy.util import DataHandler
 
+from . import TESTDATA
 from .util import _make_adata
 
 
@@ -290,9 +291,9 @@ def test_group_abundance():
             ["cell1", "A", "ct1"],
             ["cell2", "A", "ct1"],
             ["cell3", "A", "ct1"],
-            ["cell3", "A", "NaN"],
-            ["cell4", "B", "ct1"],
-            ["cell5", "B", "ct2"],
+            ["cell4", "A", "NaN"],
+            ["cell5", "B", "ct1"],
+            ["cell6", "B", "ct2"],
         ],
         columns=["cell_id", "group", "clone_id"],
     ).set_index("cell_id")
@@ -330,6 +331,18 @@ def test_group_abundance():
         orient="index",
     )
     npt.assert_equal(res.values, expected_frac.values)
+
+
+def test_group_abundance_non_overlapping_gex_airr():
+    """Regression test for #641"""
+    mdata = ir.io.read_h5mu(TESTDATA / "wu2020_200.h5mu")
+    ir.tl.chain_qc(mdata)
+    res = ir.tl.group_abundance(mdata, groupby="airr:receptor_subtype")
+    assert res.to_dict(orient="records") == [
+        {"True": 149.0, "False": 0.0},
+        {"True": 0.0, "False": 50.0},
+        {"True": 1.0, "False": 0.0},
+    ]
 
 
 def test_spectratype(adata_tra):

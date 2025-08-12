@@ -12,17 +12,22 @@ from . import base
 from .styling import _get_colors
 
 
+@DataHandler.inject_param_docs()
 def group_abundance(
     adata: AnnData | MuData,
     groupby: str,
     target_col: str = "has_ir",
     *,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     normalize: None | str | bool = None,
     max_cols: None | int = None,
     sort: Literal["count", "alphabetical"] | Sequence[str] = "count",
     **kwargs,
 ) -> plt.Axes:
-    """Plots the number of cells per group, split up by a categorical variable.
+    """\
+    Plots the number of cells per group, split up by a categorical variable.
 
     Generates a stacked bar chart with one bar per group. Stacks
     are colored according to the categorical variable specified in `target_col`.
@@ -31,14 +36,16 @@ def group_abundance(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     groupby
         Group by this column from `obs`. For instance, "sample" or "diagnosis".
     target_col
         Column on which to compute the abundance.
         Defaults to `has_ir` which computes the number of all cells
         that have a T-cell receptor.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
     normalize
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, the name
@@ -62,7 +69,16 @@ def group_abundance(
     -------
     Axes object
     """
-    abundance = tl.group_abundance(adata, groupby, target_col=target_col, fraction=normalize, sort=sort)
+    abundance = tl.group_abundance(
+        adata,
+        groupby,
+        target_col=target_col,
+        airr_mod=airr_mod,
+        airr_key=airr_key,
+        chain_idx_key=chain_idx_key,
+        fraction=normalize,
+        sort=sort,
+    )
 
     if abundance.shape[0] > 100 and max_cols is None:
         raise ValueError(

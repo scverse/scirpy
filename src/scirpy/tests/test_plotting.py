@@ -38,6 +38,7 @@ def test_group_abundance_default(adata_clonotype):
         adata_clonotype,
         groupby="tcr:clone_id",
         target_col="tcr:group",
+        airr_mod="tcr",
     )
     assert isinstance(p, plt.Axes)
 
