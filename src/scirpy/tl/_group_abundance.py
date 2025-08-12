@@ -90,7 +90,7 @@ def group_abundance(
     sort
         How to arrange the dataframe columns.
         Default is by the category count ("count").
-        Other options are "alphabetical" or to provide a list of column names.
+        Other options are "alphabetical" or to provide a list of categories.
         By providing an explicit list, the DataFrame can also be subsetted to
         specific categories.
 
@@ -105,8 +105,6 @@ def group_abundance(
     get_cols = [x for x in [groupby, target_col] if x != "has_ir"]
     if isinstance(fraction, str):
         get_cols.append(fraction)
-    if not isinstance(sort, str):
-        get_cols.extend(sort)
     ir_obs = params.get_obs(get_cols)
     ir_obs["has_ir"] = "False"
     ir_obs.loc[params.adata.obs_names, "has_ir"] = _has_ir(params).astype(str)
