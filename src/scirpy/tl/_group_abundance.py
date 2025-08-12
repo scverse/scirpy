@@ -54,9 +54,7 @@ def _group_abundance(
     return result_df
 
 
-DataHandler.inject_param_docs()
-
-
+@DataHandler.inject_param_docs()
 def group_abundance(
     adata: DataHandler.TYPE,
     groupby: str,
