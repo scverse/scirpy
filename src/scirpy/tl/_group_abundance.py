@@ -3,8 +3,6 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from anndata import AnnData
-from mudata import MuData
 
 from scirpy.get import _has_ir
 from scirpy.util import DataHandler, _is_na, _normalize_counts
@@ -56,11 +54,17 @@ def _group_abundance(
     return result_df
 
 
+DataHandler.inject_param_docs()
+
+
 def group_abundance(
-    adata: AnnData | MuData,
+    adata: DataHandler.TYPE,
     groupby: str,
     target_col: str = "has_ir",
     *,
+    airr_mod="airr",
+    airr_key="airr",
+    chain_idx_key="chain_indices",
     fraction: None | str | bool = None,
     sort: Literal["count", "alphabetical"] | Sequence[str] = "count",
 ) -> pd.DataFrame:
@@ -71,14 +75,16 @@ def group_abundance(
 
     Parameters
     ----------
-    adata
-        AnnData object to work on.
+    {adata}
     groupby
         Group by this column from `obs`. E.g, sample, or group.
     target_col
         Caregorical variable from `obs` according to which the abundance/fractions
         will be computed. This defaults to "has_ir", simply counting
         the number of cells with a detected :term:`IR` by group.
+    {airr_mod}
+    {airr_key}
+    {chain_idx_key}
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column
@@ -94,19 +100,13 @@ def group_abundance(
     -------
     Returns a data frame with the number (or fraction) of cells per group.
     """
-    ir_obs = adata.obs
+    params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
-    # TODO temporarily adding `has_ir` is a temporary workaround to make this function work
-    # with the new datastructure (has_ir doesn't exist anymore by default) until
-    # This whole function is rewritten (see https://github.com/scverse/scirpy/issues/232)
-    if target_col == "has_ir" and "has_ir" not in adata.obs.columns:
-        ir_obs = ir_obs.copy().assign(
-            # TODO I didn't expose the params check keyword arguments in this function
-            # because the whole function needs to be rewritten.
-            has_ir=_has_ir(DataHandler.default(adata)).astype(str)
-        )
-
-    if target_col not in ir_obs.columns:
-        raise ValueError("`target_col` not found in obs`")
+    # has_ir column not present by default since new data structure. As a workaround, we manually add it.
+    # Eventually, this function needs to  be rewritten, see #232
+    get_cols = [x for x in [groupby, target_col] if x != "has_ir"]
+    ir_obs = params.get_obs(get_cols)
+    ir_obs["has_ir"] = "False"
+    ir_obs.loc[params.adata.obs_names, "has_ir"] = _has_ir(params).astype(str)
 
     return _group_abundance(ir_obs, groupby, target_col=target_col, fraction=fraction, sort=sort)
