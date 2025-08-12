@@ -105,6 +105,10 @@ def group_abundance(
     # has_ir column not present by default since new data structure. As a workaround, we manually add it.
     # Eventually, this function needs to  be rewritten, see #232
     get_cols = [x for x in [groupby, target_col] if x != "has_ir"]
+    if isinstance(fraction, str):
+        get_cols.append(fraction)
+    if not isinstance(sort, str):
+        get_cols.extend(sort)
     ir_obs = params.get_obs(get_cols)
     ir_obs["has_ir"] = "False"
     ir_obs.loc[params.adata.obs_names, "has_ir"] = _has_ir(params).astype(str)
