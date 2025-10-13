@@ -76,7 +76,7 @@ def repertoire_overlap(
 
     params = DataHandler(adata, airr_mod)
     tl.repertoire_overlap(
-        adata,
+        params,
         groupby=groupby,
         target_col=target_col,
         overlap_measure=overlap_measure,
