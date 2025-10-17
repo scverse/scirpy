@@ -1,0 +1,51 @@
+name: conda
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -e {0} # -e to fail on error
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.11"
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          mamba-version: "*"
+          channels: conda-forge,bioconda
+          channel-priority: strict
+          python-version: ${{ matrix.python }}
+
+      - name: install conda build
+        run: |
+          mamba install -y boa conda-verify python=${{ matrix.python }}
+        shell: bash
+
+      - name: build and test package
+        run: |
+          cd .conda
+          conda mambabuild --no-anaconda-upload .
+        shell: bash
