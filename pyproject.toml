@@ -70,8 +70,8 @@ optional-dependencies.doc = [
   "sphinx-tabs",
   "sphinxcontrib-bibtex>=1",
   "sphinxext-opengraph",
-  # needed for AnnData type hints
-  "zarr",
+  # TODO needed for AnnData type hints
+  "zarr<3",
 ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS

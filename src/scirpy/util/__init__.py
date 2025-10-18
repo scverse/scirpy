@@ -1,10 +1,9 @@
-import contextlib
 import json
 import os
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from textwrap import dedent
-from typing import Any, Literal, Optional, Union, cast, overload
+from typing import Any, Union, cast, overload
 
 import awkward as ak
 import numpy as np
