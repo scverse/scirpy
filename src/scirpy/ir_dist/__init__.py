@@ -1,12 +1,9 @@
 """Compute distances between immune receptor sequences"""
 
-import itertools
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
-from anndata import AnnData
-from mudata import MuData
 from scanpy import logging
 from scipy.sparse import csr_matrix
 
