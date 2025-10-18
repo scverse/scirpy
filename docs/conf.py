@@ -64,6 +64,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
+    "sphinx_tabs.tabs",
     "sphinx.ext.mathjax",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinxext.opengraph",
@@ -185,4 +186,5 @@ nitpick_ignore = [
     ("py:meth", "mudata.MuData.update"),
     ("py:class", "awkward.highlevel.Array"),
     ("py:class", "logomaker.src.Logo.Logo"),
+    ("py:data", "typing.Union"),
 ]

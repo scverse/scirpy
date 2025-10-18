@@ -7,13 +7,8 @@ name = "scirpy"
 description = "Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"
 readme = "README.md"
 license = { file = "LICENSE" }
-maintainers = [
-  { name = "Gregor Sturm", email = "mail@gregor-sturm.de" },
-]
-authors = [
-  { name = "Gregor Sturm" },
-  { name = "Tamas Szabo" },
-]
+maintainers = [ { name = "Gregor Sturm", email = "mail@gregor-sturm.de" } ]
+authors = [ { name = "Gregor Sturm" }, { name = "Tamas Szabo" } ]
 requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -21,6 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dynamic = [ "version" ]
 dependencies = [
@@ -47,18 +43,10 @@ dependencies = [
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
 
-optional-dependencies.cupy = [
-  "cupy-cuda12x",
-]
-optional-dependencies.dandelion = [
-  "sc-dandelion>=0.3.5",
-]
-optional-dependencies.dev = [
-  "pre-commit",
-]
-optional-dependencies.diversity = [
-  "scikit-bio>=0.5.7",
-]
+optional-dependencies.cupy = [ "cupy-cuda12x" ]
+optional-dependencies.dandelion = [ "sc-dandelion>=0.3.5" ]
+optional-dependencies.dev = [ "pre-commit" ]
+optional-dependencies.diversity = [ "scikit-bio>=0.5.7" ]
 optional-dependencies.doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
   # for tutorial
@@ -79,19 +67,17 @@ optional-dependencies.doc = [
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
   "sphinx-copybutton",
+  "sphinx-tabs",
   "sphinxcontrib-bibtex>=1",
   "sphinxext-opengraph",
-  # I don't know why this would be needed, but it complains about zarr missing when building
-  # the documentation. Probably related to importing some types from anndata.
+  # TODO needed for AnnData type hints
   "zarr<3",
 ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS
   "parasail!=1.2.1",
 ]
-optional-dependencies.rpack = [
-  "rectangle-packer",
-]
+optional-dependencies.rpack = [ "rectangle-packer" ]
 optional-dependencies.test = [
   "black",
   "coverage",
@@ -114,14 +100,31 @@ features = [ "dev" ]
 
 [tool.hatch.envs.docs]
 features = [ "doc" ]
-scripts.build = "sphinx-build -M html docs docs/_build {args}"
+scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
 
+# Test the lowest and highest supported Python versions with normal deps
+[[tool.hatch.envs.hatch-test.matrix]]
+deps = [ "stable" ]
+python = [ "3.10", "3.13" ]
+
+# Test the newest supported Python version also with pre-release deps
+[[tool.hatch.envs.hatch-test.matrix]]
+deps = [ "pre" ]
+python = [ "3.13" ]
+
 [tool.hatch.envs.hatch-test]
-features = [ "test" ]
-default-args = [ "src/scirpy/tests", "-n", "4" ]
-parallel = true
+features = [ "dev", "test" ]
+
+[tool.hatch.envs.hatch-test.overrides]
+# If the matrix variable `deps` is set to "pre",
+# set the environment variable `UV_PRERELEASE` to "allow".
+matrix.deps.env-vars = [
+  { key = "UV_PRERELEASE", value = "allow", if = [
+    "pre",
+  ] },
+]
 
 [tool.ruff]
 line-length = 120
@@ -177,10 +180,15 @@ lint.ignore = [
   # allow I, O, l as variable names -> I is the identity matrix
   "E741",
 ]
-lint.per-file-ignores."*.ipynb" = [ "E402" ] # Module level import not at top of cell
+lint.per-file-ignores."*.ipynb" = [
+  "E402",
+] # Module level import not at top of cell
 lint.per-file-ignores."*/__init__.py" = [ "F401" ]
 lint.per-file-ignores."docs/*" = [ "I" ]
-lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [ "B018", "E402" ]
+lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [
+  "B018",
+  "E402",
+]
 lint.per-file-ignores."tests/*" = [ "D" ]
 lint.pydocstyle.convention = "numpy"
 
@@ -193,14 +201,12 @@ markers = [
   "extra: marks tests that require extra dependencies.",
   "gpu: mark test to run on GPU",
 ]
-minversion = 6.0
+minversion = "6.0"
 norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__' ]
 
 [tool.coverage.run]
 source = [ "scirpy" ]
-omit = [
-  "**/test_*.py",
-]
+omit = [ "**/test_*.py" ]
 
 [tool.cruft]
 skip = [
