@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Fixes
+
+- Fix that `pl.repertoire_overlap` ignored the `airr_mod` parameter ([#650](https://github.com/scverse/scirpy/pull/650)).
+
 ### Chore
 
 - Template update to v0.6.0
