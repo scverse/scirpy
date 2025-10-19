@@ -1,3 +1,5 @@
+import gzip
+import json
 import os
 import os.path
 import tempfile
@@ -39,6 +41,16 @@ _AWS_EXAMPLEDATA = pooch.create(
         "stephenson2021_5k.h5mu": "md5:6ea26f9d95525371ff9028f8e99ed474",
     },
 )
+_IGGYTOP = pooch.create(
+    path=pooch.os_cache("scirpy"),
+    base_url="doi:10.5281/zenodo.15754598",
+    version=version("scirpy"),
+    version_dev="main",
+    env="SCIRPY_DATA_DIR",
+    registry=None,
+)
+
+
 _POOCH_INFO = dedent(
     """\
     .. note::
@@ -52,6 +64,29 @@ _POOCH_INFO = dedent(
         to a path of your preference.
     """
 )
+
+
+def iggytop(database=None) -> AnnData:
+    if not _IGGYTOP.registry:
+        _IGGYTOP.load_registry_from_doi()
+
+    fname = cast(PathLike, _IGGYTOP.fetch("iggytop_15072025.json.gz", progressbar=True))
+    with gzip.open(fname) as f:
+        iggytop = json.load(f)
+
+    def _get_airr_cells():
+        for cell_data in iggytop:
+            airr_cell = AirrCell(cell_data["cell_id"])
+            for k, v in cell_data.get("cell_attributes", {}).items():
+                if k == "cell_id":
+                    continue
+                airr_cell[k] = v
+
+            for chain in cell_data.get("chains", []):
+                airr_cell.add_chain(chain)
+            yield airr_cell
+
+    return from_airr_cells(list(_get_airr_cells()))
 
 
 @_doc_params(
