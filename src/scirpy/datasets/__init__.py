@@ -70,6 +70,7 @@ def iggytop(database=None) -> AnnData:
     if not _IGGYTOP.registry:
         _IGGYTOP.load_registry_from_doi()
 
+    logging.info("Downloading database")
     fname = cast(PathLike, _IGGYTOP.fetch("iggytop_15072025.json.gz", progressbar=True))
     with gzip.open(fname) as f:
         iggytop = json.load(f)
@@ -86,7 +87,12 @@ def iggytop(database=None) -> AnnData:
                 airr_cell.add_chain(chain)
             yield airr_cell
 
-    return from_airr_cells(list(_get_airr_cells()))
+    logging.info("Building AnnData")
+    adata = from_airr_cells(list(_get_airr_cells()))
+
+    adata.uns["DB"] = {"name": "iggytop-full", "date_downloaded": datetime.now().isoformat()}
+
+    return adata
 
 
 @_doc_params(
