@@ -124,7 +124,7 @@ def clonotype_imbalance(
         df = df.sort_values(by="pValue")
         df = df.head(n=top_n)
 
-        tclt_df = adata.uns[key_added]["abundance"]
+        tclt_df = params.adata.uns[key_added]["abundance"]
         tclt_df = tclt_df.loc[tclt_df[target_col].isin(df[target_col]), :]
 
         if additional_hue is None:
