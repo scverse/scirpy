@@ -24,8 +24,6 @@ dependencies = [
   "airr>=1.4.1",
   "anndata>=0.9",
   "awkward>=2.1",
-  # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
-  "igraph!=0.10,!=0.10.1",
   "joblib>=1.3.1",
   "logomaker!=0.8.5",
   "mudata>=0.2.3",
@@ -35,7 +33,6 @@ dependencies = [
   "pandas>=1.5,!=2.1.2",
   "pooch>=1.7",
   "pycairo>=1.20; sys_platform=='win32'",
-  "python-levenshtein",
   "scanpy>=1.9.3",
   "scikit-learn",
   "scipy",
@@ -73,6 +70,11 @@ optional-dependencies.doc = [
   # TODO needed for AnnData type hints
   "zarr<3",
 ]
+optional-dependencies.igraph = [
+  # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
+  "igraph!=0.10,!=0.10.1",
+]
+optional-dependencies.levenshtein = [ "python-levenshtein" ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS
   "parasail!=1.2.1",
