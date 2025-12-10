@@ -153,7 +153,10 @@ def index_chains(
 @nb.njit
 def _awkward_len_inner(arr, ab):
     for row in arr:
-        ab.append(len(row))
+        if row is None:
+            ab.append(0)
+        else:
+            ab.append(len(row))
     return ab
 
 
@@ -165,8 +168,9 @@ def _awkward_len(arr):
 def _awkward_isin_inner(arr, haystack, ab):
     for row in arr:
         ab.begin_list()
-        for v in row:
-            ab.append(v in haystack)
+        if row is not None:
+            for v in row:
+                ab.append(v in haystack)
         ab.end_list()
     return ab
 
