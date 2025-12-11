@@ -60,6 +60,7 @@ jobs:
 
     name: ${{ matrix.env.label }}
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ contains(matrix.env.name, 'pre') }}
 
     steps:
       - uses: actions/checkout@v4
