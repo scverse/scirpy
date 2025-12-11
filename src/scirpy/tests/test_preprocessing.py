@@ -57,8 +57,25 @@ from .util import _make_airr_chains_valid
                 {"VJ": [1, None], "VDJ": [0, 2], "multichain": False},
             ],
         ),
+        (
+            [
+                # fmt: off
+                [
+                    {"locus": "TRA", "junction_aa": "AAA", "umi_count": 3, "productive": True},
+                    {"locus": "TRA", "junction_aa": "KKK", "umi_count": 6, "productive": True},
+                    {"locus": "TRB", "junction_aa": "LLL", "umi_count": 3, "productive": True},
+                ],
+                None,
+                # fmt: on
+            ],
+            [
+                # VJ_1, VDJ_1, VJ_2, VDJ_2, multichain
+                {"VJ": [1, 0], "VDJ": [2, None], "multichain": False},
+                {"VJ": None, "VDJ": None, "multichain": False},
+            ],
+        ),
     ],
-    ids=["using deprecated duplicate_count column", "standard case, multiple rows"],
+    ids=["using deprecated duplicate_count column", "standard case, multiple rows", "missing AIRR data"],
 )
 def test_index_chains(airr_chains, expected_index):
     """Test that chain indexing works as expected (default parameters)"""

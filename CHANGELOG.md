@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
+- Fix that `pp.index_chains` did not work with an AnnData object where gene expression and AIRR data
+  did not  perfectly overlap ([#660](https://github.com/scverse/scirpy/pull/660)).
 - Fix that `pl.repertoire_overlap` ignored the `airr_mod` parameter ([#650](https://github.com/scverse/scirpy/pull/650)).
 - Fix that `pl.clonotype_imbalance` ignored the `airr_mod` parameter ([#657](https://github.com/scverse/scirpy/pull/657)).
 
