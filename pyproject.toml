@@ -88,8 +88,7 @@ doc = [
   "sphinxcontrib-bibtex>=1",
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
-  # TODO needed for AnnData type hints
-  "zarr<3",
+  "zarr",
 ]
 
 [tool.hatch.version]
@@ -117,6 +116,8 @@ python = [ "3.14" ]
 
 [tool.hatch.envs.hatch-test]
 dependency-groups = [ "dev", "test" ]
+default-args = [
+] # accounting for non-default tests path (specified via pytest.ini_options)
 
 [tool.hatch.envs.hatch-test.overrides]
 # If the matrix variable `deps` is set to "pre",
@@ -200,7 +201,7 @@ addopts = [
   "--import-mode=importlib", # allow using test files with same name
   "-m not gpu",
 ]
-testpaths = "src/scirpy/tests"
+testpaths = [ "src/scirpy/tests" ]
 markers = [
   "conda: marks a subset of tests to be ran on the Bioconda CI.",
   "extra: marks tests that require extra dependencies.",
