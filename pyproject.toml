@@ -56,6 +56,7 @@ urls.Source = "https://github.com/scverse/scirpy"
 [dependency-groups]
 dev = [ "pre-commit" ]
 test = [
+  "anndata>=0.12.6",     # workaround zarr incompatibilities
   "black",
   "coverage",
   "parasail!=1.2.1",
@@ -63,6 +64,7 @@ test = [
   "rectangle-packer",
   "sc-dandelion>=0.3.5",
   "scikit-bio>=0.5.7",
+  "zarr>=3",             # woraround zarr incompatibilities
 ]
 doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
@@ -88,7 +90,7 @@ doc = [
   "sphinxcontrib-bibtex>=1",
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
-  "zarr",
+  "zarr",                     # required for anndata typehints
 ]
 
 [tool.hatch.version]
