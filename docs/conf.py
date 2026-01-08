@@ -190,5 +190,6 @@ nitpick_ignore = [
     ("py:meth", "mudata.MuData.update"),
     ("py:class", "awkward.highlevel.Array"),
     ("py:class", "logomaker.src.Logo.Logo"),
+    ("py:class", "pathlib._local.Path"),
     ("py:data", "typing.Union"),
 ]

@@ -26,32 +26,23 @@ jobs:
           - tutorial_5k_bcr.ipynb
         os:
           - ubuntu-latest
-        python:
-          - "3.13"
-
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: ${{ matrix.python }}
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python }}
-          cache: "pip"
-          cache-dependency-path: "**/pyproject.toml"
-
+          filter: blob:none
+          fetch-depth: 0
       - name: Install system dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y libcairo2-dev pkg-config
-      - name: Install dependencies
-        run: |
-          pip install ".[doc]"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: pyproject.toml
       - name: Test
         env:
           MPLBACKEND: agg
           PLATFORM: ${{ matrix.os }}
           DISPLAY: :42
         run: |
-          jupytext -k python3 --execute docs/tutorials/${{ matrix.tutorial }}
+          uvx hatch run docs:run_tutorial docs/tutorials/${{ matrix.tutorial }}

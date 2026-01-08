@@ -29,7 +29,7 @@ dependencies = [
   "logomaker!=0.8.5",
   "mudata>=0.2.3",
   "networkx>=2.5",
-  "numba>=0.57",
+  "numba>=0.60",
   "numpy>=1.17",
   "pandas>=1.5,!=2.1.2",
   "pooch>=1.7",
@@ -56,15 +56,12 @@ urls.Source = "https://github.com/scverse/scirpy"
 [dependency-groups]
 dev = [ "pre-commit" ]
 test = [
-  "anndata>=0.12.6",     # workaround zarr incompatibilities
+  "anndata>=0.12",
   "black",
   "coverage",
-  "parasail!=1.2.1",
   "pytest",
   "rectangle-packer",
-  "sc-dandelion>=0.3.5",
-  "scikit-bio>=0.5.7",
-  "zarr>=3",             # woraround zarr incompatibilities
+  "scirpy[dandelion,diversity,parasail]",
 ]
 doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
@@ -90,8 +87,8 @@ doc = [
   "sphinxcontrib-bibtex>=1",
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
-  "zarr",                     # required for anndata typehints
 ]
+gpu = [ "scirpy[cupy]" ]
 
 [tool.hatch.version]
 source = "vcs"
@@ -105,6 +102,12 @@ dependency-groups = [ "doc" ]
 scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
+scripts.run_tutorial = "jupytext -k python3 --execute {args}"
+
+[tool.hatch.envs.gpu]
+python = "3.13"
+dependency-groups = [ "gpu", "test", "dev" ]
+scripts.test = "pytest -m gpu"
 
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
