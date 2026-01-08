@@ -45,4 +45,4 @@ jobs:
           PLATFORM: ${{ matrix.os }}
           DISPLAY: :42
         run: |
-          uvx hatch docs:run_tutorial docs/tutorials/${{ matrix.tutorial }}
+          uvx hatch run docs:run_tutorial docs/tutorials/${{ matrix.tutorial }}
