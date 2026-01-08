@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## v0.22.5
+
+### Fixes
+
+- Change base URL for example datasets to https://exampledata.scverse.org ([#665](https://github.com/scverse/scirpy/pull/650))
+
 ## v0.22.4
 
 ### Fixes
