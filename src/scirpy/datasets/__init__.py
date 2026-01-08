@@ -28,7 +28,7 @@ HERE = Path(__file__).parent
 
 _AWS_EXAMPLEDATA = pooch.create(
     path=pooch.os_cache("scirpy"),
-    base_url="https://scverse-exampledata.s3.eu-west-1.amazonaws.com/scirpy",
+    base_url="https://exampledata.scverse.org/scirpy",
     version=version("scirpy"),
     version_dev="main",
     env="SCIRPY_DATA_DIR",
