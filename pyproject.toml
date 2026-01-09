@@ -56,7 +56,7 @@ urls.Source = "https://github.com/scverse/scirpy"
 [dependency-groups]
 dev = [ "pre-commit" ]
 test = [
-  "anndata>=0.9",
+  "anndata>=0.12",
   "black",
   "coverage",
   "parasail!=1.2.1",
@@ -89,7 +89,6 @@ doc = [
   "sphinxcontrib-bibtex>=1",
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
-  "zarr",                     # required for anndata typehints
 ]
 
 [tool.hatch.version]
