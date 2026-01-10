@@ -105,6 +105,7 @@ scripts.clean = "git clean -fdX -- {args:docs}"
 scripts.run_tutorial = "jupytext -k python3 --execute {args}"
 
 [tool.hatch.envs.gpu]
+python = "3.13"
 dependency-groups = [ "gpu", "test", "dev" ]
 scripts.test = "pytest -m gpu"
 
