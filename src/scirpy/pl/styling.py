@@ -4,11 +4,27 @@ from typing import Literal
 import matplotlib.pyplot as plt
 from cycler import Cycler
 from mudata import MuData
-from scanpy.plotting._utils import (
-    _set_colors_for_categorical_obs,
-    _set_default_colors_for_categorical_obs,
-    _validate_palette,
-)
+
+# TODO should not use private scanpy functions, but still waiting for "anndata-plot" package
+# that exposes this functionality as a public API
+try:
+    # scanpy < 1.12
+    from scanpy.plotting._utils import (
+        _set_colors_for_categorical_obs as set_colors_for_categorical_obs,
+    )
+    from scanpy.plotting._utils import (
+        _set_default_colors_for_categorical_obs as set_default_colors_for_categorical_obs,
+    )
+    from scanpy.plotting._utils import (
+        _validate_palette as validate_palette,
+    )
+except ImportError:
+    # scanpy >= 1.12
+    from scanpy.plotting._utils import (
+        set_colors_for_categorical_obs,
+        set_default_colors_for_categorical_obs,
+        validate_palette,
+    )
 
 from scirpy.util import DataHandler
 
@@ -145,11 +161,11 @@ def _get_colors(
         categories = values.categories  # type: ignore
         color_key = f"{obs_key}_colors"
         if palette is not None:
-            _set_colors_for_categorical_obs(uns_lookup, obs_key, palette)
+            set_colors_for_categorical_obs(uns_lookup, obs_key, palette)
         elif color_key not in uns_lookup.uns or len(uns_lookup.uns[color_key]) < len(categories):
             #  set a default palette in case that no colors or few colors are found
-            _set_default_colors_for_categorical_obs(uns_lookup, obs_key)
+            set_default_colors_for_categorical_obs(uns_lookup, obs_key)
         else:
-            _validate_palette(uns_lookup, obs_key)
+            validate_palette(uns_lookup, obs_key)
 
         return dict(zip(categories, uns_lookup.uns[color_key], strict=False))
