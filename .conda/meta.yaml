@@ -16,12 +16,12 @@ build:
 
 requirements:
   host:
-    - python >=3.10
+    - python >=3.11
     - hatchling
     - hatch-vcs
 
   run:
-    - python >=3.10
+    - python >=3.11
     - anndata >=0.9
     - awkward >=2.1.0
     - mudata >=0.2.3
