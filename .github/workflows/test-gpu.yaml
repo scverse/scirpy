@@ -47,7 +47,7 @@ jobs:
           cache-dependency-glob: pyproject.toml
 
       - name: Run test
-        run: uvx hatch test -m gpu
+        run: uvx hatch run gpu:test
 
       - name: Remove 'run-gpu-ci' Label
         if: always()

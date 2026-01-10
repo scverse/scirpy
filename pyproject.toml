@@ -59,11 +59,9 @@ test = [
   "anndata>=0.12",
   "black",
   "coverage",
-  "parasail!=1.2.1",
   "pytest",
   "rectangle-packer",
-  "sc-dandelion>=0.3.5",
-  "scikit-bio>=0.5.7",
+  "scirpy[dandelion,diversity,parasail]",
 ]
 doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
@@ -90,6 +88,7 @@ doc = [
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
 ]
+gpu = [ "scirpy[cupy]" ]
 
 [tool.hatch.version]
 source = "vcs"
@@ -104,6 +103,10 @@ scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
 scripts.run_tutorial = "jupytext -k python3 --execute {args}"
+
+[tool.hatch.envs.gpu]
+dependency-groups = [ "gpu", "test", "dev" ]
+scripts.test = "pytest -m gpu"
 
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
