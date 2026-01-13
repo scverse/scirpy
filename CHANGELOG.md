@@ -12,7 +12,11 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
-- Change base URL for example datasets to https://exampledata.scverse.org ([#665](https://github.com/scverse/scirpy/pull/650))
+- Change base URL for example datasets to https://exampledata.scverse.org ([#665](https://github.com/scverse/scirpy/pull/665))
+
+### Chore
+
+- Template update to v0.7.0. Use hatch also for custom CI jobs. ([#664](https://github.com/scverse/scirpy/pull/664))
 
 ## v0.22.4
 
