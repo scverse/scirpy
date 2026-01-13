@@ -9,10 +9,9 @@ readme = "README.md"
 license = { file = "LICENSE" }
 maintainers = [ { name = "Gregor Sturm", email = "mail@gregor-sturm.de" } ]
 authors = [ { name = "Gregor Sturm" }, { name = "Tamas Szabo" } ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -30,7 +29,7 @@ dependencies = [
   "logomaker!=0.8.5",
   "mudata>=0.2.3",
   "networkx>=2.5",
-  "numba>=0.57",
+  "numba>=0.60",
   "numpy>=1.17",
   "pandas>=1.5,!=2.1.2",
   "pooch>=1.7",
@@ -42,12 +41,29 @@ dependencies = [
   "squarify",
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
-
 optional-dependencies.cupy = [ "cupy-cuda12x" ]
 optional-dependencies.dandelion = [ "sc-dandelion>=0.3.5" ]
-optional-dependencies.dev = [ "pre-commit" ]
 optional-dependencies.diversity = [ "scikit-bio>=0.5.7" ]
-optional-dependencies.doc = [
+optional-dependencies.parasail = [
+  # parasail 1.2.1 fails to be installd on MacOS
+  "parasail!=1.2.1",
+]
+optional-dependencies.rpack = [ "rectangle-packer" ]
+urls.Documentation = "https://scirpy.readthedocs.io/"
+urls.Home-page = "https://github.com/scverse/scirpy"
+urls.Source = "https://github.com/scverse/scirpy"
+
+[dependency-groups]
+dev = [ "pre-commit" ]
+test = [
+  "anndata>=0.12",
+  "black",
+  "coverage",
+  "pytest",
+  "rectangle-packer",
+  "scirpy[dandelion,diversity,parasail]",
+]
+doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
   # for tutorial
   "ipykernel",
@@ -69,53 +85,44 @@ optional-dependencies.doc = [
   "sphinx-copybutton",
   "sphinx-tabs",
   "sphinxcontrib-bibtex>=1",
+  "sphinxcontrib-katex",
   "sphinxext-opengraph",
-  # TODO needed for AnnData type hints
-  "zarr<3",
 ]
-optional-dependencies.parasail = [
-  # parasail 1.2.1 fails to be installd on MacOS
-  "parasail!=1.2.1",
-]
-optional-dependencies.rpack = [ "rectangle-packer" ]
-optional-dependencies.test = [
-  "black",
-  "coverage",
-  "parasail!=1.2.1",
-  "pytest",
-  "rectangle-packer",
-  "sc-dandelion>=0.3.5",
-  "scikit-bio>=0.5.7",
-]
-urls.Documentation = "https://scirpy.readthedocs.io/"
-urls.Home-page = "https://github.com/scverse/scirpy"
-urls.Source = "https://github.com/scverse/scirpy"
+gpu = [ "scirpy[cupy]" ]
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.envs.default]
 installer = "uv"
-features = [ "dev" ]
+dependency-groups = [ "dev" ]
 
 [tool.hatch.envs.docs]
-features = [ "doc" ]
+dependency-groups = [ "doc" ]
 scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 scripts.clean = "git clean -fdX -- {args:docs}"
+scripts.run_tutorial = "jupytext -k python3 --execute {args}"
+
+[tool.hatch.envs.gpu]
+python = "3.13"
+dependency-groups = [ "gpu", "test", "dev" ]
+scripts.test = "pytest -m gpu"
 
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
 deps = [ "stable" ]
-python = [ "3.10", "3.13" ]
+python = [ "3.11", "3.14" ]
 
 # Test the newest supported Python version also with pre-release deps
 [[tool.hatch.envs.hatch-test.matrix]]
 deps = [ "pre" ]
-python = [ "3.13" ]
+python = [ "3.14" ]
 
 [tool.hatch.envs.hatch-test]
-features = [ "dev", "test" ]
+dependency-groups = [ "dev", "test" ]
+default-args = [
+] # accounting for non-default tests path (specified via pytest.ini_options)
 
 [tool.hatch.envs.hatch-test.overrides]
 # If the matrix variable `deps` is set to "pre",
@@ -192,10 +199,14 @@ lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [
 lint.per-file-ignores."tests/*" = [ "D" ]
 lint.pydocstyle.convention = "numpy"
 
-[tool.pytest.ini_options]
-testpaths = "src/scirpy/tests"
+[tool.pytest]
+strict = true
 xfail_strict = true
-addopts = [ "-m not gpu" ]
+addopts = [
+  "--import-mode=importlib", # allow using test files with same name
+  "-m not gpu",
+]
+testpaths = [ "src/scirpy/tests" ]
 markers = [
   "conda: marks a subset of tests to be ran on the Bioconda CI.",
   "extra: marks tests that require extra dependencies.",
