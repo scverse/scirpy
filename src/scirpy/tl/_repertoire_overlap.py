@@ -81,7 +81,7 @@ def repertoire_overlap(
     # Create a table of clonotype presence
     if overlap_threshold is None:  # Consider a fuction that finds an optimal threshold...
         overlap_threshold = 0
-    pr_df = df.applymap(lambda x: 1 if x > overlap_threshold else 0)
+    pr_df = (df > overlap_threshold).astype(int)
 
     # Compute distances and linkage
     distM = sc_distance.pdist(pr_df, overlap_measure)  # type:ignore
