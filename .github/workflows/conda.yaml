@@ -22,7 +22,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.14"
 
     env:
       OS: ${{ matrix.os }}
