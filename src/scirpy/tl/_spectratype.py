@@ -69,7 +69,7 @@ def spectratype(
     obs = params.get_obs(obs_cols)
 
     # Combine (potentially) multiple length columns into one
-    obs["lengths"] = airr_df.applymap(len).apply(combine_fun, axis=1)
+    obs["lengths"] = airr_df.map(len).apply(combine_fun, axis=1)
 
     cdr3_lengths = _group_abundance(obs, groupby="lengths", target_col=target_col, fraction=fraction)
 
