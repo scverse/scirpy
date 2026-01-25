@@ -9,10 +9,9 @@ readme = "README.md"
 license = { file = "LICENSE" }
 maintainers = [ { name = "Gregor Sturm", email = "mail@gregor-sturm.de" } ]
 authors = [ { name = "Gregor Sturm" }, { name = "Tamas Szabo" } ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -112,7 +111,7 @@ scripts.test = "pytest -m gpu"
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
 deps = [ "stable" ]
-python = [ "3.11", "3.14" ]
+python = [ "3.12", "3.14" ]
 
 # Test the newest supported Python version also with pre-release deps
 [[tool.hatch.envs.hatch-test.matrix]]
