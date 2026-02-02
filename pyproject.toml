@@ -90,9 +90,6 @@ doc = [
 ]
 gpu = [ "scirpy[cupy]" ]
 
-[tool.hatch.version]
-source = "vcs"
-
 [tool.hatch.envs.default]
 installer = "uv"
 dependency-groups = [ "dev" ]
@@ -109,6 +106,11 @@ python = "3.13"
 dependency-groups = [ "gpu", "test", "dev" ]
 scripts.test = "pytest -m gpu"
 
+[tool.hatch.envs.hatch-test]
+dependency-groups = [ "dev", "test" ]
+default-args = [
+] # accounting for non-default tests path (specified via pytest.ini_options)
+
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
 deps = [ "stable" ]
@@ -119,11 +121,6 @@ python = [ "3.11", "3.14" ]
 deps = [ "pre" ]
 python = [ "3.14" ]
 
-[tool.hatch.envs.hatch-test]
-dependency-groups = [ "dev", "test" ]
-default-args = [
-] # accounting for non-default tests path (specified via pytest.ini_options)
-
 [tool.hatch.envs.hatch-test.overrides]
 # If the matrix variable `deps` is set to "pre",
 # set the environment variable `UV_PRERELEASE` to "allow".
@@ -132,6 +129,9 @@ matrix.deps.env-vars = [
     "pre",
   ] },
 ]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff]
 line-length = 120
