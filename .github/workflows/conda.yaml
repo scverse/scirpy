@@ -45,4 +45,4 @@ jobs:
 
       - name: build and test package
         run: |
-          cd .conda && rattler-build build
+          cd .conda && rattler-build build -c conda-forge -c bioconda
