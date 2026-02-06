@@ -2,7 +2,6 @@ import warnings
 from itertools import combinations
 from typing import cast
 
-import awkward as ak
 import igraph as ig
 import numpy as np
 import numpy.testing as npt
@@ -22,7 +21,6 @@ from scirpy.util import (
     _is_true,
     _normalize_counts,
     _translate_dna_to_protein,
-    awkward_get_dtype_nested_list,
 )
 from scirpy.util._negative_binomial import fit_nbinom
 from scirpy.util.graph import (
@@ -411,23 +409,3 @@ def test_igraph_from_adjacency(matrix, is_symmetric, simplify):
 )
 def test_fit_negative_binomial(X, expected):
     npt.assert_almost_equal(fit_nbinom(X), expected, decimal=5)
-
-
-@pytest.mark.parametrize(
-    "arr,expected",
-    [
-        pytest.param(ak.Array([["foo", "bar"], ["baz"]]), "str", id="string"),
-        pytest.param(ak.Array([[b"foo", b"bar"], [b"baz"]]), "str", id="bytestring"),
-        pytest.param(ak.Array([[1, 2, 3], [4, 5]]), np.dtype("int64"), id="int64"),
-        pytest.param(ak.Array([[1.0, 2.0], [3.0, 4.0, 5.0]]), np.dtype("float64"), id="float64"),
-        pytest.param(ak.Array([[True, False], [True]]), np.dtype("bool"), id="bool"),
-        pytest.param(ak.Array(np.array([[1, 2], [3, 0]], dtype=np.int32)), np.dtype("int32"), id="int32"),
-        pytest.param(ak.Array([[["a", "b"], ["c"]], [["d"]]]), "str", id="deeply_nested_string"),
-        pytest.param(ak.Array([[""], []]), "str", id="empty_string"),
-        pytest.param(ak.Array([["foo", None], [None, "bar"]]), "str", id="option_type_string"),
-        pytest.param(ak.Array([[1, None], [None, 2]]), np.dtype("int64"), id="option_type_int"),
-    ],
-)
-def test_awkward_get_dtype_nested_list(arr, expected):
-    """Test awkward_get_dtype_nested_list returns correct dtype for various array types."""
-    assert awkward_get_dtype_nested_list(arr) == expected

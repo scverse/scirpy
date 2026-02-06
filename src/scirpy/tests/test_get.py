@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pandas.testing as pdt
 import pytest
 
@@ -19,7 +20,7 @@ def test_obs_context(adata_cdr3):
     ) as a:
         assert a.obs is adata_cdr3.obs
         assert np.all(a.obs["foo"] == "bar")
-        assert a.obs["VJ_1_cdr3"].tolist() == ["AAA", "AHA", np.nan, "AAA", "AAA"]
+        assert a.obs["VJ_1_cdr3"].tolist() == ["AAA", "AHA", pd.NA, "AAA", "AAA"]
     pdt.assert_frame_equal(obs_pre, adata_cdr3.obs)
 
 
@@ -29,7 +30,7 @@ def test_airr_context(adata_cdr3, kwargs):
         assert adata_cdr3.obs["VJ_1_junction_aa"].tolist() == [
             "AAA",
             "AHA",
-            np.nan,
+            pd.NA,
             "AAA",
             "AAA",
         ]

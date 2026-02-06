@@ -623,38 +623,3 @@ def read_cell_indices(cell_indices: dict[str, np.ndarray[str]] | str) -> dict[st
         raise TypeError(
             f"Unsupported type for cell_indices: {type(cell_indices)}. Expected str (json) or dict[str, np.ndarray[str]]."
         )
-
-
-def awkward_get_dtype_nested_list(arr: ak.Array) -> np.dtype | str:
-    """Given an awkward array with the structure of a nested list, return the dtype of the elements.
-
-    This assumes that the stucture is a nested list, e.g. [[str, str], [str, str, str]] where all elements
-    have the same type. This assumption holds for slices of our airr datastructure.
-
-    A string type is inferred based on the `__array__` property of the awkward array.
-    """
-    arr_type: Any = ak.type(arr)
-
-    # Traverse the type hierarchy to find the innermost type
-    # Check for string/bytestring at each level since they appear as ListType with __array__ parameter
-    while hasattr(arr_type, "content"):
-        if hasattr(arr_type, "parameters") and arr_type.parameters:
-            array_type = arr_type.parameters.get("__array__")
-            if array_type in ("string", "bytestring"):
-                return "str"  # string dtype, support added in pandas 3.0
-        arr_type = arr_type.content
-
-    if hasattr(arr_type, "type"):
-        arr_type = arr_type.type
-
-    # Check for string types via __array__ parameter at the final level
-    if hasattr(arr_type, "parameters") and arr_type.parameters:
-        array_type = arr_type.parameters.get("__array__")
-        if array_type in ("string", "bytestring"):
-            return "str"  # string dtype, support added in pandas 3.0
-
-    # Return the numpy dtype from primitive (NumpyType.primitive returns dtype string like 'int64')
-    if hasattr(arr_type, "primitive"):
-        return ak.types.primitive_to_dtype(arr_type.primitive)
-
-    raise ValueError(f"Could not determine dtype from awkward array type: {ak.type(arr)}")
