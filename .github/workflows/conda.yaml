@@ -39,10 +39,12 @@ jobs:
           channel-priority: strict
           python-version: ${{ matrix.python }}
 
-      - name: install conda build
+      - name: install rattler-build
         run: |
           mamba install -y rattler-build python=${{ matrix.python }}
+        shell: bash
 
       - name: build and test package
         run: |
           cd .conda && rattler-build build -c conda-forge -c bioconda
+        shell: bash
