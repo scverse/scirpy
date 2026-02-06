@@ -111,8 +111,13 @@ scripts.test = "pytest -m gpu"
 
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
-deps = [ "stable", "minver" ]
+deps = [ "stable" ]
 python = [ "3.12", "3.14" ]
+
+# Test the lowest supported package versions with the lowest supported python version
+[[tool.hatch.envs.hatch-test.matrix]]
+deps = [ "minver" ]
+python = [ "3.12" ]
 
 # Test the newest supported Python version also with pre-release deps
 [[tool.hatch.envs.hatch-test.matrix]]
