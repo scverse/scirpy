@@ -122,7 +122,7 @@ intersphinx_mapping = {
     "networkx": ("https://networkx.org/documentation/networkx-1.10", None),
     "dandelion": ("https://sc-dandelion.readthedocs.io/en/latest", None),
     "muon": ("https://muon.readthedocs.io/en/latest", None),
-    "mudata": ("https://mudata.readthedocs.io/en/latest", None),
+    "mudata": ("https://mudata.readthedocs.io/stable/objects.inv", None),
     "awkward": ("https://awkward-array.org/doc/main", None),
     "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest", None),
