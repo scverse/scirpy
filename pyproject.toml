@@ -110,7 +110,7 @@ scripts.test = "pytest -m gpu"
 
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
-deps = [ "stable" ]
+deps = [ "stable", "minver" ]
 python = [ "3.12", "3.14" ]
 
 # Test the newest supported Python version also with pre-release deps
@@ -130,6 +130,14 @@ matrix.deps.env-vars = [
   { key = "UV_PRERELEASE", value = "allow", if = [
     "pre",
   ] },
+]
+# If the matrix variable `deps` is set to "minver", install minimum versions.
+matrix.deps.dependencies = [
+  { value = "pandas<3", if = [ "minver" ] },
+  { value = "numpy<2.1", if = [ "minver" ] },
+  { value = "scipy<1.14", if = [ "minver" ] },
+  { value = "matplotlib<3.10", if = [ "minver" ] },
+  { value = "networkx<3.4", if = [ "minver" ] },
 ]
 
 [tool.ruff]
