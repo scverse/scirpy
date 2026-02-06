@@ -188,7 +188,7 @@ def test_ir_query_annotate_df(query_reference, same_v_gene, match_columns, expec
                 ("cell2", "ambiguous"),
                 ("cell3", "CELL3"),
                 ("cell4", "CELL4"),
-                ("cell10", np.nan),
+                ("cell10", None),
             ],
         ),
         (
@@ -197,7 +197,7 @@ def test_ir_query_annotate_df(query_reference, same_v_gene, match_columns, expec
                 ("cell2", "ambiguous"),
                 ("cell3", "CELL3"),
                 ("cell4", "CELL4"),
-                ("cell10", np.nan),
+                ("cell10", None),
             ],
         ),
         (
@@ -209,7 +209,7 @@ def test_ir_query_annotate_df(query_reference, same_v_gene, match_columns, expec
                 ),
                 ("cell3", json.dumps({"CELL3": 1})),
                 ("cell4", json.dumps({"CELL4": 1})),
-                ("cell10", np.nan),
+                ("cell10", None),
             ],
         ),
     ],
