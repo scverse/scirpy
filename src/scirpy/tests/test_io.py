@@ -833,7 +833,7 @@ def test_airr_df():
         "orphan VDJ",
     ]
     obs = ir.get.airr(adata, "locus", ["VJ_1", "VDJ_1"])
-    assert obs["VJ_1_locus"].tolist() == ["IGL", None, None]
+    assert obs["VJ_1_locus"].tolist() == ["IGL", pd.NA, pd.NA]
     assert obs["VDJ_1_locus"].tolist() == ["IGH"] * 3
 
 
