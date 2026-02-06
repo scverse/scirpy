@@ -76,6 +76,7 @@ doc = [
   "myst-nb>=1.1",
   # for executing notebooks on CI
   "nbconvert",
+  "pandas>=3",
   "pycairo",
   "sc-dandelion",
   "sphinx>=7,<7.4",           # https://github.com/sphinx-doc/sphinx/issues/12589
@@ -133,11 +134,21 @@ matrix.deps.env-vars = [
 ]
 # If the matrix variable `deps` is set to "minver", install minimum versions.
 matrix.deps.dependencies = [
-  { value = "pandas<3", if = [ "minver" ] },
-  { value = "numpy<2.1", if = [ "minver" ] },
-  { value = "scipy<1.14", if = [ "minver" ] },
-  { value = "matplotlib<3.10", if = [ "minver" ] },
-  { value = "networkx<3.4", if = [ "minver" ] },
+  { value = "pandas<3", if = [
+    "minver",
+  ] },
+  { value = "numpy<2.1", if = [
+    "minver",
+  ] },
+  { value = "scipy<1.14", if = [
+    "minver",
+  ] },
+  { value = "matplotlib<3.10", if = [
+    "minver",
+  ] },
+  { value = "networkx<3.4", if = [
+    "minver",
+  ] },
 ]
 
 [tool.ruff]

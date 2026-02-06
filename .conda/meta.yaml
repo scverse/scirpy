@@ -16,17 +16,17 @@ build:
 
 requirements:
   host:
-    - python >=3.11
+    - python >=3.12
     - hatchling
     - hatch-vcs
 
   run:
-    - python >=3.11
+    - python >=3.12
     - anndata >=0.9
     - awkward >=2.1.0
     - mudata >=0.2.3
     - scanpy >=1.9.3
-    - pandas >=1.5,!=2.1.2
+    - pandas >=2.3.0
     - numpy >=1.17.0
     - scipy
     - scikit-learn
