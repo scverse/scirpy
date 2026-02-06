@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## v0.22.6
+
+### Fixes
+
+- Fix incompatibilities with pandas 3.0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+
+### Chore
+
+- Require python >= 3.12, in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+- Add "minimum versions" CI job that tests against minimum version of scientific python libraries in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+
 ## v0.22.5
 
 ### Fixes
