@@ -45,8 +45,8 @@ def test_ir_query(adata_cdr3, adata_cdr3_2, metric, key1, key2):
 @pytest.mark.parametrize(
     "input,expected",
     [
-        ([], np.nan),
-        ([np.nan], np.nan),
+        ([], None),
+        ([np.nan], None),
         (["a", "b", np.nan], "ambiguous"),
         (["a", "a"], "a"),
         (["a", "a", np.nan], "a"),
@@ -60,8 +60,8 @@ def test_reduce_unique_only(input, expected):
 @pytest.mark.parametrize(
     "input,expected",
     [
-        ([], np.nan),
-        ([np.nan], np.nan),
+        ([], None),
+        ([np.nan], None),
         (["a", "b", np.nan], "ambiguous"),
         (["a", "a"], "a"),
         (["a", "a", "b"], "a"),
