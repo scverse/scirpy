@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: bash -e {0} # -e to fail on error
+        shell: bash -el {0} # -l for login shell (conda), -e to fail on error
 
     strategy:
       fail-fast: false
@@ -42,9 +42,7 @@ jobs:
       - name: install rattler-build
         run: |
           mamba install -y rattler-build python=${{ matrix.python }}
-        shell: bash
 
       - name: build and test package
         run: |
           cd .conda && rattler-build build -c conda-forge -c bioconda
-        shell: bash
