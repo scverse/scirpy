@@ -41,11 +41,8 @@ jobs:
 
       - name: install conda build
         run: |
-          mamba install -y boa conda-verify python=${{ matrix.python }}
-        shell: bash
+          mamba install -y rattler-build python=${{ matrix.python }}
 
       - name: build and test package
         run: |
-          cd .conda
-          conda mambabuild --no-anaconda-upload .
-        shell: bash
+          cd .conda && rattler-build build

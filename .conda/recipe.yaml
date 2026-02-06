@@ -1,9 +1,6 @@
-{% set name = "scirpy" %}
-{% set version = "develop" %}
-
 package:
-  name: {{ name|lower }}
-  version: {{ version }}
+  name: scirpy
+  version: develop
 
 source:
   path: ".."
@@ -11,12 +8,12 @@ source:
 build:
   number: 0
   noarch: python
-  script:
-    - "{{ PYTHON }} -m pip install . --ignore-installed --no-deps -vv"
+  script: python -m pip install . --ignore-installed --no-deps -vv
 
 requirements:
   host:
     - python >=3.12
+    - pip
     - hatchling
     - hatch-vcs
 
@@ -42,30 +39,32 @@ requirements:
     - joblib >=1.3.1
     - logomaker !=0.8.5
 
-test:
-  source_files:
-    - docs
-  requires:
-    - pytest
-    - leidenalg
-    - jupytext
-    - pycairo
-    - jupyter_client
-    - ipykernel
-    - nbconvert
-    - muon >= 0.1.5
-  imports:
-    - scirpy
-  commands:
-    - pytest --pyargs scirpy -m "not extra and not gpu"
+tests:
+  - python:
+      imports:
+        - scirpy
+  - script:
+      - pytest --pyargs scirpy -m "not extra and not gpu"
+    requirements:
+      run:
+        - pytest
+        - leidenalg
+        - jupytext
+        - pycairo
+        - jupyter_client
+        - ipykernel
+        - nbconvert
+        - muon >=0.1.5
+    files:
+      source:
+        - docs
 
 about:
-  home: https://scirpy.scverse.org
-  dev_url: https://github.com/scverse/scirpy
-  license: BSD-3
-  license_family: BSD
+  homepage: https://scirpy.scverse.org
+  repository: https://github.com/scverse/scirpy
+  license: BSD-3-Clause
   summary: A Scanpy extension for analyzing single-cell T-cell receptor sequencing data.
 
 extra:
   identifiers:
-   - doi:10.1101/2020.04.10.035865
+    - doi:10.1101/2020.04.10.035865
