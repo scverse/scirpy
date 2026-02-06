@@ -8,8 +8,9 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from mudata import MuData
+from pandas.api.extensions import ExtensionArray
 
-from scirpy.util import DataHandler
+from scirpy.util import DataHandler, awkward_get_dtype_nested_list
 
 _VALID_CHAINS = ["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
 ChainType = Literal["VJ_1", "VJ_2", "VDJ_1", "VDJ_2"]
@@ -79,7 +80,7 @@ def _airr_col(
     chain_indices: ak.Array,
     airr_variable: str,
     chain: ChainType,
-) -> np.ndarray:
+) -> np.ndarray | pd.api.extensions.ExtensionArray:
     """Called by `airr()` to retrieve a single column"""
     chain = chain.upper()  # type: ignore
     if chain not in _VALID_CHAINS:
@@ -91,8 +92,11 @@ def _airr_col(
 
     idx = chain_indices[:, receptor_arm, chain_i]
     mask = ~ak.to_numpy(ak.is_none(idx))
+    dtype = pd.array(ak.to_numpy(airr_data[[], airr_variable, []])).dtype
 
-    result = np.full((len(idx),), fill_value=None, dtype=object)
+    # dtype = awkward_get_dtype_nested_list(airr_data[airr_variable])
+    # type: ignore needed due to incomplete pandas type stubs for pd.array with numpy array input
+    # result: ExtensionArray = pd.array([None] * len(idx), dtype=dtype)  # type: ignore[call-overload]
 
     # to_numpy would be faster, but it doesn't work with strings (as this would create an object dtype
     # which is not allowed as per the awkward documentation)
@@ -104,8 +108,10 @@ def _airr_col(
         # astype(int) is required if idx[mask] is an empty array of unknown type.
         ak.to_numpy(idx[mask], allow_missing=False).astype(int),
     ]
-    result[mask] = ak.to_list(_ak_slice)
-    return result
+    np_slice = ak.to_numpy(_ak_slice)
+    result = pd.Series([None] * len(idx), dtype=dtype)
+    result[mask] = np_slice
+    return result.array
 
 
 @contextmanager
