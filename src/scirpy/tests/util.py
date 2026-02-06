@@ -21,8 +21,11 @@ def _normalize_df_types(df: pd.DataFrame):
         if df[col].dtype.name == "category":
             df[col] = df[col].astype(str)
         df.loc[_is_na(df[col]), col] = None
-        df.loc[df[col] == "True", col] = True
-        df.loc[df[col] == "False", col] = False
+        if any(df[col] == "True") or any(df[col] == "False"):
+            new_col = pd.array([None], dtype="boolean").repeat(df.shape[0])
+            new_col[np.asarray(df[col] == "True")] = True
+            new_col[np.asarray(df[col] == "False")] = False
+            df[col] = new_col
 
 
 def _squarify(matrix: list[list] | np.ndarray):
