@@ -47,6 +47,7 @@ tests:
       - pytest --pyargs scirpy -m "not extra and not gpu"
     requirements:
       run:
+        - hatch-vcs
         - pytest
         - leidenalg
         - jupytext
