@@ -76,7 +76,6 @@ doc = [
   "myst-nb>=1.1",
   # for executing notebooks on CI
   "nbconvert",
-  "pandas>=3",
   "pycairo",
   "sc-dandelion",
   "sphinx>=7,<7.4",           # https://github.com/sphinx-doc/sphinx/issues/12589
