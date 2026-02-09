@@ -79,7 +79,7 @@ doc = [
   "nbconvert",
   "pycairo",
   "sc-dandelion",
-  "sphinx>=7,<7.4",           # https://github.com/sphinx-doc/sphinx/issues/12589
+  "sphinx>=7,<7.4",                  # https://github.com/sphinx-doc/sphinx/issues/12589
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
   "sphinx-copybutton",
@@ -90,54 +90,38 @@ doc = [
 ]
 gpu = [ "scirpy[cupy]" ]
 
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.envs.default]
-installer = "uv"
-dependency-groups = [ "dev" ]
-
-[tool.hatch.envs.docs]
-dependency-groups = [ "doc" ]
-scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
-scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
-scripts.clean = "git clean -fdX -- {args:docs}"
-scripts.run_tutorial = "jupytext -k python3 --execute {args}"
-
-[tool.hatch.envs.gpu]
-python = "3.13"
-dependency-groups = [ "gpu", "test", "dev" ]
-scripts.test = "pytest -m gpu"
-
-# Test the lowest and highest supported Python versions with normal deps
-[[tool.hatch.envs.hatch-test.matrix]]
-deps = [ "stable" ]
-python = [ "3.11", "3.14" ]
-
-# Test the newest supported Python version also with pre-release deps
-[[tool.hatch.envs.hatch-test.matrix]]
-deps = [ "pre" ]
-python = [ "3.14" ]
-
-[tool.hatch.envs.hatch-test]
-dependency-groups = [ "dev", "test" ]
-default-args = [
-] # accounting for non-default tests path (specified via pytest.ini_options)
-
-[tool.hatch.envs.hatch-test.overrides]
+[tool.hatch]
+envs.default.installer = "uv"
+envs.default.dependency-groups = [ "dev" ]
+envs.docs.dependency-groups = [ "doc" ]
+envs.docs.scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
+envs.docs.scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
+envs.docs.scripts.clean = "git clean -fdX -- {args:docs}"
+envs.docs.scripts.run_tutorial = "jupytext -k python3 --execute {args}"
+envs.gpu.python = "3.13"
+envs.gpu.dependency-groups = [ "gpu", "test", "dev" ]
+envs.gpu.scripts.test = "pytest -m gpu"
+envs.hatch-test.dependency-groups = [ "dev", "test" ]
+envs.hatch-test.default-args = []  # accounting for non-default tests path (specified via pytest.ini_options)
+envs.hatch-test.matrix = [
+  # Test the lowest and highest supported Python versions with normal deps
+  { deps = [ "stable" ], python = [ "3.11", "3.14" ] },
+  # Test the newest supported Python version also with pre-release deps
+  { deps = [ "pre" ], python = [ "3.14" ] },
+]
 # If the matrix variable `deps` is set to "pre",
 # set the environment variable `UV_PRERELEASE` to "allow".
-matrix.deps.env-vars = [
+envs.hatch-test.overrides.matrix.deps.env-vars = [
   { key = "UV_PRERELEASE", value = "allow", if = [
     "pre",
   ] },
 ]
+version.source = "vcs"
 
 [tool.ruff]
 line-length = 120
 src = [ "src" ]
 extend-include = [ "*.ipynb" ]
-
 format.docstring-code-format = true
 lint.select = [
   "B",      # flake8-bugbear
@@ -189,7 +173,7 @@ lint.ignore = [
 ]
 lint.per-file-ignores."*.ipynb" = [
   "E402",
-] # Module level import not at top of cell
+]
 lint.per-file-ignores."*/__init__.py" = [ "F401" ]
 lint.per-file-ignores."docs/*" = [ "I" ]
 lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [
@@ -213,11 +197,11 @@ markers = [
   "gpu: mark test to run on GPU",
 ]
 minversion = "6.0"
-norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__' ]
+norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__" ]
 
-[tool.coverage.run]
-source = [ "scirpy" ]
-omit = [ "**/test_*.py" ]
+[tool.coverage]
+run.omit = [ "**/test_*.py" ]
+run.source = [ "scirpy" ]
 
 [tool.cruft]
 skip = [
