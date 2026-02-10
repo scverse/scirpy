@@ -592,7 +592,11 @@ def to_dandelion(adata: DataHandler.TYPE):
     `Dandelion` object.
     """
     try:
-        from dandelion import from_scirpy
+        try:
+            from dandelion import from_scirpy
+        except ImportError:
+            # moved in dandelion 1.0 pre-release
+            from dandelion.tools import from_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
@@ -626,7 +630,11 @@ def from_dandelion(dandelion, transfer: bool = False, to_mudata: bool = False, *
     :ref:`data-structure`.
     """
     try:
-        from dandelion import to_scirpy
+        try:
+            from dandelion import to_scirpy
+        except ImportError:
+            # moved in dandelion 1.0 pre-release
+            from dandelion.tools import to_scirpy
     except ImportError:
         raise ImportError("Please install dandelion: pip install sc-dandelion.") from None
 
