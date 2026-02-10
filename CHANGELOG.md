@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## v0.23.0
+
+### Changes
+
+- Fix incompatibilities with pandas 3.0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+  As part of that change, we make use of the new `string` dtype in pandas. Since this
+  changes some outputs, this is considered as a minor bump rather than a patch release.
+
+### Chore
+
+- Require python >= 3.12, in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+- Add "minimum versions" CI job that tests against minimum version of scientific python libraries in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+- Update conda-build CI job to use `rattler-build` ([#672](https://github.com/scverse/scirpy/pull/672)).
+
 ## v0.22.5
 
 ### Fixes

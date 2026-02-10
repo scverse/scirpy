@@ -80,9 +80,9 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
         dual_ir="all",
     )  # type: ignore
     print(clonotypes)
-    expected = ["0", "0", "1", "2", "nan"]
+    expected = ["0", "0", "1", "2", np.nan]
     expected_size = [2, 2, 1, 1, np.nan]
-    npt.assert_equal(clonotypes.values.astype(str), expected)
+    pdt.assert_extension_array_equal(clonotypes.array, pd.array(expected), check_dtype=False)
     npt.assert_equal(clonotype_size.values, expected_size)
 
 

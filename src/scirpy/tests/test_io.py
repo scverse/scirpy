@@ -510,8 +510,8 @@ def test_read_airr_issue280():
     """Test that reading the example shown in issue #280 works."""
     anndata = read_airr(TESTDATA / "airr" / "tra_issue_280.tsv")
     obs = ir.get.airr(anndata, "junction_aa", ["VDJ_1", "VJ_1"])
-    assert obs["VDJ_1_junction_aa"][0] == "CASSLGGESQNTLYF"
-    assert obs["VJ_1_junction_aa"][0] == "CAARGNRIFF"
+    assert obs["VDJ_1_junction_aa"].iloc[0] == "CASSLGGESQNTLYF"
+    assert obs["VJ_1_junction_aa"].iloc[0] == "CAARGNRIFF"
 
 
 @pytest.mark.conda
@@ -833,7 +833,7 @@ def test_airr_df():
         "orphan VDJ",
     ]
     obs = ir.get.airr(adata, "locus", ["VJ_1", "VDJ_1"])
-    assert obs["VJ_1_locus"].tolist() == ["IGL", None, None]
+    assert obs["VJ_1_locus"].tolist() == ["IGL", pd.NA, pd.NA]
     assert obs["VDJ_1_locus"].tolist() == ["IGH"] * 3
 
 

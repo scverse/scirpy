@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from mudata import MuData
+from pandas.api.extensions import ExtensionArray
 
 from scirpy.util import DataHandler
 
@@ -79,7 +80,7 @@ def _airr_col(
     chain_indices: ak.Array,
     airr_variable: str,
     chain: ChainType,
-) -> np.ndarray:
+) -> np.ndarray | pd.api.extensions.ExtensionArray:
     """Called by `airr()` to retrieve a single column"""
     chain = chain.upper()  # type: ignore
     if chain not in _VALID_CHAINS:
@@ -92,19 +93,23 @@ def _airr_col(
     idx = chain_indices[:, receptor_arm, chain_i]
     mask = ~ak.to_numpy(ak.is_none(idx))
 
-    result = np.full((len(idx),), fill_value=None, dtype=object)
+    # get dtype via empty slice of array
+    dtype = pd.array(ak.to_numpy(airr_data[[], airr_variable, []])).dtype
 
-    # to_numpy would be faster, but it doesn't work with strings (as this would create an object dtype
-    # which is not allowed as per the awkward documentation)
-    # Currently the performance hit doesn't seem to be a deal breaker, can maybe revisit this in the future.
-    # It is anyway not very efficient to create a result array with an object dtype.
     _ak_slice = airr_data[
         np.where(mask)[0],
         airr_variable,
         # astype(int) is required if idx[mask] is an empty array of unknown type.
         ak.to_numpy(idx[mask], allow_missing=False).astype(int),
     ]
-    result[mask] = ak.to_list(_ak_slice)
+    np_slice = ak.to_numpy(_ak_slice)
+    # Workaround pandas-dev/pandas#63879 bug with masked arrays
+    if isinstance(np_slice, np.ma.MaskedArray):
+        np_slice = np_slice.soften_mask()
+        mask[mask] = ~np_slice.mask
+        np_slice = np_slice.compressed()
+    result = pd.array([None], dtype=dtype).repeat(len(idx))
+    result[mask] = np_slice
     return result
 
 
@@ -138,7 +143,7 @@ def obs_context(data: AnnData | MuData, temp_cols: pd.DataFrame | Mapping[str, A
         to obs using :py:meth:`pandas.DataFrame.assign`. It is also possible to pass a :class:`~pandas.DataFrame` in
         which case the columns of the DataFrame will be added to `obs` and matched based on the index.
     """
-    orig_obs = data.obs.copy()
+    orig_obs = data.obs
     data.obs = data.obs.assign(**cast(Mapping, temp_cols))
     data.strings_to_categoricals()
     try:

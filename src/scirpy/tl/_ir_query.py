@@ -39,7 +39,7 @@ def _reduce_unique_only(values: np.ndarray):
     """
     values = values[~pd.isnull(values)]
     if values.size == 0:
-        return np.nan
+        return None
     elif np.unique(values).size == 1:
         return values[0]
     else:
@@ -52,7 +52,7 @@ def _reduce_most_frequent(values: np.ndarray):
     """
     values = values[~pd.isnull(values)]
     if values.size == 0:
-        return np.nan
+        return None
     else:
         c = Counter(values)
         if (len(c)) == 1:
@@ -398,7 +398,7 @@ def ir_query_annotate(
                     "most-frequent": _reduce_most_frequent,
                     "json": _reduce_json,
                 }[strategy](  # type: ignore
-                    x
+                    x.values
                 )
 
         except KeyError:
@@ -407,7 +407,7 @@ def ir_query_annotate(
 
     # convert nan-equivalents to real nan values.
     for col in df_res:
-        df_res.loc[_is_na(df_res[col]), col] = np.nan
+        df_res.loc[_is_na(df_res[col]), col] = None
 
     if inplace:
         for col in df_res:

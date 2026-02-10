@@ -9,10 +9,9 @@ readme = "README.md"
 license = { file = "LICENSE" }
 maintainers = [ { name = "Gregor Sturm", email = "mail@gregor-sturm.de" } ]
 authors = [ { name = "Gregor Sturm" }, { name = "Tamas Szabo" } ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -31,13 +30,14 @@ dependencies = [
   "networkx>=2.5",
   "numba>=0.60",
   "numpy>=1.17",
-  "pandas>=1.5,!=2.1.2",
+  "pandas>=2.3",
   "pooch>=1.7",
   "pycairo>=1.20; sys_platform=='win32'",
   "python-levenshtein",
   "scanpy>=1.9.3",
   "scikit-learn",
   "scipy",
+  "setuptools<82",                        # workaround until airr package is fixed https://github.com/airr-community/airr-standards/issues/856
   "squarify",
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
@@ -112,7 +112,12 @@ scripts.test = "pytest -m gpu"
 # Test the lowest and highest supported Python versions with normal deps
 [[tool.hatch.envs.hatch-test.matrix]]
 deps = [ "stable" ]
-python = [ "3.11", "3.14" ]
+python = [ "3.12", "3.14" ]
+
+# Test the lowest supported package versions with the lowest supported python version
+[[tool.hatch.envs.hatch-test.matrix]]
+deps = [ "minver" ]
+python = [ "3.12" ]
 
 # Test the newest supported Python version also with pre-release deps
 [[tool.hatch.envs.hatch-test.matrix]]
@@ -130,6 +135,24 @@ default-args = [
 matrix.deps.env-vars = [
   { key = "UV_PRERELEASE", value = "allow", if = [
     "pre",
+  ] },
+]
+# If the matrix variable `deps` is set to "minver", install minimum versions.
+matrix.deps.dependencies = [
+  { value = "pandas<3", if = [
+    "minver",
+  ] },
+  { value = "numpy<2.1", if = [
+    "minver",
+  ] },
+  { value = "scipy<1.14", if = [
+    "minver",
+  ] },
+  { value = "matplotlib<3.10", if = [
+    "minver",
+  ] },
+  { value = "networkx<3.4", if = [
+    "minver",
   ] },
 ]
 

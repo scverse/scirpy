@@ -99,7 +99,7 @@ def logoplot_cdr3_motif(
     sequence_list = []
     for chain in chains:
         for sequence in airr_df[chain + "_" + cdr3_col]:
-            if sequence is not None:
+            if not pd.isnull(sequence):
                 sequence_list.append(sequence)
 
     motif = alignment_to_matrix(

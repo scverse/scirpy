@@ -15,14 +15,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: bash -e {0} # -e to fail on error
+        shell: bash -el {0} # -l for login shell (conda), -e to fail on error
 
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.14"
 
     env:
       OS: ${{ matrix.os }}
@@ -39,13 +39,10 @@ jobs:
           channel-priority: strict
           python-version: ${{ matrix.python }}
 
-      - name: install conda build
+      - name: install rattler-build
         run: |
-          mamba install -y boa conda-verify python=${{ matrix.python }}
-        shell: bash
+          mamba install -y rattler-build python=${{ matrix.python }}
 
       - name: build and test package
         run: |
-          cd .conda
-          conda mambabuild --no-anaconda-upload .
-        shell: bash
+          cd .conda && rattler-build build -c conda-forge -c bioconda
