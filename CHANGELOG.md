@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## v0.22.6
+## v0.23.0
 
-### Fixes
+### Changes
 
 - Fix incompatibilities with pandas 3.0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+  As part of that change, we make use of the new `string` dtype in pandas. Since this
+  changes some outputs, this is considered as a minor bump rather than a patch release.
 
 ### Chore
 
