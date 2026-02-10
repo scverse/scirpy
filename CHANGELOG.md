@@ -16,10 +16,6 @@ and this project adheres to [Semantic Versioning][].
   As part of that change, we make use of the new `string` dtype in pandas. Since this
   changes some outputs, this is considered as a minor bump rather than a patch release.
 
-### Fixes
-
-- Fix to_scirpy/from_scirpy API change in dandelion 1.x ([#672](https://github.com/scverse/scirpy/pull/672)).
-
 ### Chore
 
 - Require python >= 3.12, in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
