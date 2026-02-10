@@ -37,6 +37,7 @@ dependencies = [
   "scanpy>=1.9.3",
   "scikit-learn",
   "scipy",
+  "setuptools<82",                        # workaround until airr package is fixed https://github.com/airr-community/airr-standards/issues/856
   "squarify",
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
