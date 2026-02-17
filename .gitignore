@@ -137,6 +137,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# rattler
+.conda/output
+
 .DS_Store
 
 uv.lock

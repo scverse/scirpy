@@ -8,11 +8,39 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.23.0
+
+### Changes
+
+- Fix incompatibilities with pandas 3.0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+  As part of that change, we make use of the new `string` dtype in pandas. Since this
+  changes some outputs, this is considered as a minor bump rather than a patch release.
+
+### Chore
+
+- Require python >= 3.12, in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+- Add "minimum versions" CI job that tests against minimum version of scientific python libraries in accordance with SPEC0 ([#672](https://github.com/scverse/scirpy/pull/672)).
+- Update conda-build CI job to use `rattler-build` ([#672](https://github.com/scverse/scirpy/pull/672)).
+
+## v0.22.5
 
 ### Fixes
 
+- Change base URL for example datasets to https://exampledata.scverse.org ([#665](https://github.com/scverse/scirpy/pull/665)).
+- Fix use of private scanpy plotting API that got renamed ([#667](https://github.com/scverse/scirpy/pull/667)).
+
+### Chore
+
+- Template update to v0.7.0. Use hatch also for custom CI jobs. ([#664](https://github.com/scverse/scirpy/pull/664)).
+
+## v0.22.4
+
+### Fixes
+
+- Fix that `pp.index_chains` did not work with an AnnData object where gene expression and AIRR data
+  did not  perfectly overlap ([#660](https://github.com/scverse/scirpy/pull/660)).
 - Fix that `pl.repertoire_overlap` ignored the `airr_mod` parameter ([#650](https://github.com/scverse/scirpy/pull/650)).
+- Fix that `pl.clonotype_imbalance` ignored the `airr_mod` parameter ([#657](https://github.com/scverse/scirpy/pull/657)).
 
 ### Chore
 
