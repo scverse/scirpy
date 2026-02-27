@@ -2,6 +2,8 @@ import json
 
 import numpy as np
 import numpy.testing as npt
+import pandas as pd
+import pandas.testing as pdt
 import pytest
 from mudata import MuData
 
@@ -241,4 +243,4 @@ def test_ir_query_annotate(query_reference, strategy, expected):
     actual = list(query.obs[key].items())
     print(actual)
 
-    assert actual == expected
+    pdt.assert_series_equal(query.obs[key], pd.Series(dict(expected)), check_names=False)
