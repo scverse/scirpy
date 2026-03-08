@@ -623,7 +623,9 @@ def _plot_clonotype_network_panel(
         if pie_colors is not None:
             for pc in pie_colors:
                 used_colors.update(pc.keys())
-        visible_cat_colors = {cat: c for cat, c in cat_colors.items() if c in used_colors} if used_colors else cat_colors
+        visible_cat_colors = (
+            {cat: c for cat, c in cat_colors.items() if c in used_colors} if used_colors else cat_colors
+        )
         for cat, color in visible_cat_colors.items():
             # use empty scatter to set labels
             legend_ax.scatter([], [], c=color, label=cat)
