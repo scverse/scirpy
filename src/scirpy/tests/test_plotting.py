@@ -164,6 +164,38 @@ def test_clonotype_network_pie(
 
 
 @pytest.mark.extra
+def test_clonotype_network_pie_legend_filters_unused(adata_clonotype_network):
+    """Legend should only contain categories present in the plotted network.
+
+    Regression test for https://github.com/scverse/scirpy/issues/679
+    """
+    import numpy as np
+
+    adata = adata_clonotype_network
+    # Add an extra category that no cell in the network has, to ensure
+    # the legend filters it out.
+    obs_col = "receptor_type"
+    tmp_ad = adata.mod["airr"] if isinstance(adata, MuData) else adata
+    tmp_ad.obs[obs_col] = tmp_ad.obs[obs_col].cat.add_categories("extra_unused")
+
+    fig = plt.gcf()
+    fig.clear()
+    p = pl.clonotype_network(adata, color=obs_col, show_legend=True)
+    assert isinstance(p, plt.Axes)
+
+    # Collect legend labels from all axes in the figure
+    legend_labels = []
+    for ax in fig.get_axes():
+        legend = ax.get_legend()
+        if legend is not None:
+            legend_labels.extend([t.get_text() for t in legend.get_texts()])
+
+    assert "extra_unused" not in legend_labels, (
+        f"Legend should not contain unused category 'extra_unused', got: {legend_labels}"
+    )
+
+
+@pytest.mark.extra
 def test_logoplot(adata_cdr3):
     p = pl.logoplot_cdr3_motif(adata_cdr3, chains="VJ_1")
     assert isinstance(p, logomaker.Logo)
