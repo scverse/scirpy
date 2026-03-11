@@ -617,9 +617,16 @@ def _plot_clonotype_network_panel(
                 **text_kwds,
             )
 
-    # add legend for categorical colors
+    # add legend for categorical colors, showing only categories present in the plot
     if cat_colors is not None and show_legend:
-        for cat, color in cat_colors.items():
+        used_colors = set()
+        if pie_colors is not None:
+            for pc in pie_colors:
+                used_colors.update(pc.keys())
+        visible_cat_colors = (
+            {cat: c for cat, c in cat_colors.items() if c in used_colors} if used_colors else cat_colors
+        )
+        for cat, color in visible_cat_colors.items():
             # use empty scatter to set labels
             legend_ax.scatter([], [], c=color, label=cat)
         legend_ax.legend(
@@ -627,7 +634,7 @@ def _plot_clonotype_network_panel(
             loc="center left",
             # bbox_to_anchor=(1, 0.5),
             fontsize=legend_fontsize,
-            ncol=(1 if len(cat_colors) <= 14 else 2 if len(cat_colors) <= 30 else 3),
+            ncol=(1 if len(visible_cat_colors) <= 14 else 2 if len(visible_cat_colors) <= 30 else 3),
         )
         legend_ax.axis("off")
 
