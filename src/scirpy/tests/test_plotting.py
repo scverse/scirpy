@@ -169,8 +169,6 @@ def test_clonotype_network_pie_legend_filters_unused(adata_clonotype_network):
 
     Regression test for https://github.com/scverse/scirpy/issues/679
     """
-    import numpy as np
-
     adata = adata_clonotype_network
     # Add an extra category that no cell in the network has, to ensure
     # the legend filters it out.
