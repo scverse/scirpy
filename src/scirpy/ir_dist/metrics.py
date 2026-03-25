@@ -617,7 +617,7 @@ class HammingDistanceCalculator(_MetricDistanceCalculator):
         seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, np.ndarray]:
         """Computes the pairwise hamming distances for sequences in seqs and seqs2.
 
         This function is a wrapper and contains an inner JIT compiled numba function without parameters. The reason for this is

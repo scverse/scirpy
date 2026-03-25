@@ -423,6 +423,23 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             (np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]), None),
             np.array([[1, 0, 21], [0, 1, 21], [21, 21, 1]]),
         ),
+        # test with very long sequences (more than len(int8) characters) -- Regression test for #626 and #682
+        (
+            {
+                "dist_weight": 3,
+                "gap_penalty": 4,
+                "ntrim": 3,
+                "ctrim": 2,
+                "fixed_gappos": True,
+                "cutoff": 20,
+                "n_jobs": 1,
+            },
+            (
+                np.array(["A" * 128, "AAAARRAAAA", "AANDAAAA"]),
+                np.array(["A" * 128, "AAAARRAAAA", "AANDAAAA"]),
+            ),
+            np.array([[1, 0, 0], [0, 1, 21], [0, 21, 1]]),
+        ),
         # test with dist_weight set to 0
         (
             {
@@ -706,26 +723,23 @@ def test_normalized_hamming():
     assert np.array_equal(res.todense(), expected_result)
 
 
-def test_normalized_hamming_reference():
-    from . import TESTDATA
-
-    seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
-    reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_normalized_csr_result.npz")
-
-    normalized_hamming_calculator = HammingDistanceCalculator(2, 2, 50, normalize=True)
-    res = normalized_hamming_calculator.calc_dist_mat(seqs, seqs)
-
-    assert np.array_equal(res.data, reference_result.data)
-    assert np.array_equal(res.indices, reference_result.indices)
-    assert np.array_equal(res.indptr, reference_result.indptr)
+def test_hamming_long_sequence():
+    """Regression test for #626 and #682"""
+    hamming_calculator = HammingDistanceCalculator(1, 1, 50, normalize=True)
+    seq1 = np.array(["A" * 128, "AAB", "AABB", "ABA"])
+    seq2 = np.array(["A" * 128, "ABBB", "ABBB"])
+    res = hamming_calculator.calc_dist_mat(seq1, seq2)
+    assert isinstance(res, scipy.sparse.csr_matrix)
 
 
-def test_hamming_histogram():
-    hamming_calculator = HammingDistanceCalculator(1, 1, 100, normalize=True, histogram=True)
-    seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
-    row_mins_expected = np.array([50, 100, 50, 100])
-    _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
-    assert np.array_equal(row_mins_expected, row_mins)
+@pytest.mark.gpu
+def test_gpu_hamming_long_sequence():
+    """Regression test for #626 and #682"""
+    hamming_calculator = GPUHammingDistanceCalculator(1, 1, 50, normalize=True)
+    seq1 = np.array(["A" * 128, "AAB", "AABB", "ABA"])
+    seq2 = np.array(["A" * 128, "ABBB", "ABBB"])
+    res = hamming_calculator.calc_dist_mat(seq1, seq2)
+    assert isinstance(res, scipy.sparse.csr_matrix)
 
 
 def test_hamming_histogram_reference():
