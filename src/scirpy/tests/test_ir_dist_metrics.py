@@ -735,7 +735,7 @@ def test_hamming_long_sequence():
 @pytest.mark.gpu
 def test_gpu_hamming_long_sequence():
     """Regression test for #626 and #682"""
-    hamming_calculator = GPUHammingDistanceCalculator(1, 1, 50, normalize=True)
+    hamming_calculator = GPUHammingDistanceCalculator(1, 1, 50)
     seq1 = np.array(["A" * 128, "AAB", "AABB", "ABA"])
     seq2 = np.array(["A" * 128, "ABBB", "ABBB"])
     res = hamming_calculator.calc_dist_mat(seq1, seq2)
