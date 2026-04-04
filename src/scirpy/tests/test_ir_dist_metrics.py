@@ -673,6 +673,52 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert np.array_equal(res.todense(), expected_result)
 
 
+@pytest.mark.parametrize(
+    "kwargs,expected_offdiag",
+    [
+        ({}, 5),
+        ({"base_matrix": "blosum62"}, 5),
+        ({"base_matrix": "blosum62", "chain_type": "VDJ"}, 5),
+        ({"base_matrix": "tcrblosum", "chain_type": "VJ"}, 4),
+        ({"base_matrix": "tcrblosum", "chain_type": "VDJ"}, 5),
+    ],
+)
+def test_tcrdist_base_matrix_selection(kwargs, expected_offdiag):
+    seqs = np.array(["AAACAAAA", "AAARAAAA"])
+    tcrdist_calculator = TCRdistDistanceCalculator(cutoff=20, n_jobs=1, **kwargs)
+    res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
+    assert isinstance(res, scipy.sparse.csr_matrix)
+    npt.assert_array_equal(
+        res.toarray(),
+        np.array([[1, expected_offdiag], [expected_offdiag, 1]]),
+    )
+
+
+def test_sequence_dist_tcrdist_tcrblosum_vj():
+    seqs = np.array(["AAACAAAA", "AAARAAAA"])
+    res = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+    )
+    npt.assert_array_equal(res.toarray(), np.array([[1, 4], [4, 1]]))
+
+
+@pytest.mark.parametrize(
+    "kwargs,match",
+    [
+        ({"base_matrix": "tcrblosum"}, r"`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`\."),
+        ({"base_matrix": "foo"}, r"Unknown `base_matrix`: 'foo'"),
+    ],
+)
+def test_tcrdist_base_matrix_validation(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        TCRdistDistanceCalculator(**kwargs)
+
+
 def test_tcrdist_reference():
     # test tcrdist against reference implementation
     from . import TESTDATA
