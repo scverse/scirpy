@@ -2,6 +2,7 @@ import abc
 import itertools
 import warnings
 from collections.abc import Sequence
+from typing import Literal
 
 import joblib
 import matplotlib.pyplot as plt
