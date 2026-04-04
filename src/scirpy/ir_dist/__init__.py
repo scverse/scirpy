@@ -85,7 +85,7 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-1, **kwargs):
+def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-1, chain_type: Literal["VJ", "VDJ"] | None = None, **kwargs):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
@@ -116,7 +116,7 @@ def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-
     elif metric == "gpu_hamming":
         dist_calc = metrics.GPUHammingDistanceCalculator(**kwargs)
     elif metric == "tcrdist":
-        dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, **kwargs)
+        dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, chain_type=chain_type, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 
