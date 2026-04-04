@@ -676,11 +676,11 @@ def test_tcrdist(test_parameters, test_input, expected_result):
 @pytest.mark.parametrize(
     "kwargs,expected_offdiag",
     [
-        ({}, 5),
-        ({"base_matrix": "blosum62"}, 5),
-        ({"base_matrix": "blosum62", "chain_type": "VDJ"}, 5),
-        ({"base_matrix": "tcrblosum", "chain_type": "VJ"}, 4),
-        ({"base_matrix": "tcrblosum", "chain_type": "VDJ"}, 5),
+        ({}, 13),
+        ({"base_matrix": "blosum62"}, 13),
+        ({"base_matrix": "blosum62", "chain_type": "VDJ"}, 13),
+        ({"base_matrix": "tcrblosum", "chain_type": "VJ"}, 10),
+        ({"base_matrix": "tcrblosum", "chain_type": "VDJ"}, 13),
     ],
 )
 def test_tcrdist_base_matrix_selection(kwargs, expected_offdiag):
@@ -704,7 +704,7 @@ def test_sequence_dist_tcrdist_tcrblosum_vj():
         base_matrix="tcrblosum",
         chain_type="VJ",
     )
-    npt.assert_array_equal(res.toarray(), np.array([[1, 4], [4, 1]]))
+    npt.assert_array_equal(res.toarray(), np.array([[1, 10], [10, 1]]))
 
 
 @pytest.mark.parametrize(
