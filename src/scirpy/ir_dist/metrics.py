@@ -1183,6 +1183,13 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     histogram:
         Determines whether a nearest neighbor histogram should be created
+    base_matrix:
+        Amino acid distance matrix used by TCRdist. `"blosum62"` uses the original
+        BLOSUM62-derived TCRdist distance matrix, while `"tcrblosum"` uses
+        TCRBLOSUM-derived matrices.
+    chain_type:
+        Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain
+        matrix and `"VDJ"` selects the beta-chain matrix.
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
