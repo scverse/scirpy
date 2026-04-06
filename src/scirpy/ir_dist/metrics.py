@@ -1187,11 +1187,12 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     base_matrix:
         Amino acid distance matrix used by TCRdist. `"blosum62"` uses the original
         BLOSUM62-derived TCRdist distance matrix, while `"tcrblosum"` uses
-        TCRBLOSUM-derived matrices.
+        TCRBLOSUM-derived matrices. Depending on `chain_type`, either the
+        TCRBLOSUM alpha- or beta-chain matrix is used.
     chain_type:
-        Required when `base_matrix="tcrblosum"` and calling `sequence_dist`.
-        `"VJ"` selects the alpha-chain matrix and `"VDJ"` selects the beta-chain matrix.
-        In `ir_dist`, this value is set automatically and should not be provided.
+        Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain matrix
+        and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
+        is set automatically and should not be provided.
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
