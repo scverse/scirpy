@@ -85,7 +85,9 @@ def _get_metric_key(metric: MetricType) -> str:
     return "custom" if isinstance(metric, metrics.DistanceCalculator) else metric  # type: ignore
 
 
-def _get_distance_calculator(metric: MetricType, cutoff: int | None, *, n_jobs=-1, chain_type: Literal["VJ", "VDJ"] | None = None, **kwargs):
+def _get_distance_calculator(
+    metric: MetricType, cutoff: int | None, *, n_jobs=-1, chain_type: Literal["VJ", "VDJ"] | None = None, **kwargs
+):
     """Returns an instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`
     given a metric.
 
