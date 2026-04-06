@@ -1189,8 +1189,9 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         BLOSUM62-derived TCRdist distance matrix, while `"tcrblosum"` uses
         TCRBLOSUM-derived matrices.
     chain_type:
-        Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain
-        matrix and `"VDJ"` selects the beta-chain matrix.
+        Required when `base_matrix="tcrblosum"` and calling `sequence_dist`.
+        `"VJ"` selects the alpha-chain matrix and `"VDJ"` selects the beta-chain matrix.
+        In `ir_dist`, this value is set automatically and should not be provided.
     """
 
     parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
