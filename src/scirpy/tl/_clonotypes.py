@@ -405,8 +405,10 @@ def define_clonotypes(
         logging.info("ir_dist for sequence='nt' and metric='identity' not found. Computing with default parameters.")  # type: ignore
         ir_dist(params, metric="identity", sequence="nt", key_added="ir_dist_nt_identity")
     if "distance_key" in kwargs:
-        logging.warn("distance_key has been overwritten by \"ir_dist_nt_identity\". For custom distance_key options call define_clonotype_clusters directly.")
-        kwargs = {k: v for k, v in kwargs if k!="distance_key"}
+        logging.warn(
+            'distance_key has been overwritten by "ir_dist_nt_identity". For custom distance_key options call define_clonotype_clusters directly.'
+        )
+        kwargs = {k: v for k, v in kwargs if k != "distance_key"}
     return define_clonotype_clusters(
         params,
         key_added=key_added,
