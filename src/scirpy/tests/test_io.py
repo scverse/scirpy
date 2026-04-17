@@ -284,7 +284,8 @@ def test_convert_dandelion(anndata_from_10x_sample):
             del tmp_chain2["sequence_id"]
             del tmp_chain2["rearrangement_status"]
 
-            assert tmp_chain1 == tmp_chain2
+            # dandelion adds additional fields
+            assert tmp_chain1 == {k: tmp_chain2[k] for k in tmp_chain1}
 
 
 @pytest.mark.conda

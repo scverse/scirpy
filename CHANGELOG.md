@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## v0.23.1
+
+### Fixes
+
+ - Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
+ - Fix overflow error that occured in `ir.pp.ir_dist` with sequences longer than 127 characters ([#683](https://github.com/scverse/scirpy/pull/680))
+
 ## v0.23.0
 
 ### Changes
@@ -15,6 +22,10 @@ and this project adheres to [Semantic Versioning][].
 - Fix incompatibilities with pandas 3.0 ([#672](https://github.com/scverse/scirpy/pull/672)).
   As part of that change, we make use of the new `string` dtype in pandas. Since this
   changes some outputs, this is considered as a minor bump rather than a patch release.
+
+### Fixes
+
+- Fix to_scirpy/from_scirpy API change in dandelion 1.x ([#672](https://github.com/scverse/scirpy/pull/672)).
 
 ### Chore
 
