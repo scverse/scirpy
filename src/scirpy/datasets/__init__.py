@@ -41,14 +41,22 @@ _AWS_EXAMPLEDATA = pooch.create(
         "stephenson2021_5k.h5mu": "md5:6ea26f9d95525371ff9028f8e99ed474",
     },
 )
-_IGGYTOP = pooch.create(
-    path=pooch.os_cache("scirpy"),
-    base_url="doi:10.5281/zenodo.15754598",
-    version=version("scirpy"),
-    version_dev="main",
-    env="SCIRPY_DATA_DIR",
-    registry=None,
-)
+
+
+def _get_iggytop_registry(tag: str = "latest") -> pooch.Pooch:
+    metadata_json = pooch.retrieve(
+        f"https://github.com/biocypher/iggytop/releases/download/{tag}/metadata.json", known_hash=None
+    )
+    with Path(metadata_json).open() as f:
+        metadata = json.load(f)
+
+    return pooch.create(
+        path=pooch.os_cache("scirpy") / "iggytop",
+        base_url=f"https://github.com/biocypher/iggytop/releases/download/{metadata['iggytop_version']}",
+        version=metadata["iggytop_version"],
+        env="SCIRPY_IGGYTOP_DATA_DIR",
+        registry={k: f"sha256:{v}" for k, v in metadata["assets"].items()},
+    )
 
 
 _POOCH_INFO = dedent(
@@ -66,33 +74,9 @@ _POOCH_INFO = dedent(
 )
 
 
-def iggytop(database=None) -> AnnData:
-    if not _IGGYTOP.registry:
-        _IGGYTOP.load_registry_from_doi()
-
-    logging.info("Downloading database")
-    fname = cast(PathLike, _IGGYTOP.fetch("iggytop_15072025.json.gz", progressbar=True))
-    with gzip.open(fname) as f:
-        iggytop = json.load(f)
-
-    def _get_airr_cells():
-        for cell_data in iggytop:
-            airr_cell = AirrCell(cell_data["cell_id"])
-            for k, v in cell_data.get("cell_attributes", {}).items():
-                if k == "cell_id":
-                    continue
-                airr_cell[k] = v
-
-            for chain in cell_data.get("chains", []):
-                airr_cell.add_chain(chain)
-            yield airr_cell
-
-    logging.info("Building AnnData")
-    adata = from_airr_cells(list(_get_airr_cells()))
-
-    adata.uns["DB"] = {"name": "iggytop-full", "date_downloaded": datetime.now().isoformat()}
-
-    return adata
+def iggytop(database=None, tag: str = "latest") -> AnnData:
+    # adata.uns["DB"] = {"name": "iggytop-full", "date_downloaded": datetime.now().isoformat()}
+    pass
 
 
 @_doc_params(
