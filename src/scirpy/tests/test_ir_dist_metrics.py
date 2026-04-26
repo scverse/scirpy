@@ -662,6 +662,96 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 0, 21], [0, 1, 21], [21, 21, 1]]),
         ),
+        # test base_matrix selection with a simple sequence pair
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 13, 13], [13, 1, 13], [13, 13, 1]]),
+        ),
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+                "base_matrix": "blosum62",
+                "chain_type": "VDJ",
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 13, 13], [13, 1, 13], [13, 13, 1]]),
+        ),
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VJ",
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 10, 13], [10, 1, 13], [13, 13, 1]]),
+        ),
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VDJ",
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 13, 13], [13, 1, 13], [13, 13, 1]]),
+        ),
+        # test expected_result for a second simple sequence pair
+        (
+            {
+                "cutoff": 1000,
+                "n_jobs": 1,
+                "base_matrix": "blosum62",
+            },
+            (
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+            ),
+            np.array([[1, 22, 25], [22, 1, 25], [25, 25, 1]]),
+        ),
+        (
+            {
+                "cutoff": 1000,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VJ",
+            },
+            (
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+            ),
+            np.array([[1, 19, 25], [19, 1, 25], [25, 25, 1]]),
+        ),
+        (
+            {
+                "cutoff": 1000,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VDJ",
+            },
+            (
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+            ),
+            np.array([[1, 25, 25], [25, 1, 25], [25, 25, 1]]),
+        ),
     ],
 )
 def test_tcrdist(test_parameters, test_input, expected_result):
@@ -671,6 +761,33 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
+
+def test_sequence_dist_tcrdist_tcrblosum():
+    # `sequence_dist` needs an explicit `chain_type` for `tcrdist` with `tcrblosum`;
+    # `ir_dist` handles this automatically.
+    seqs = np.array(["AAACAAAA", "AAARAAAA"])
+    res = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+    )
+    npt.assert_array_equal(res.toarray(), np.array([[1, 10], [10, 1]]))
+
+
+@pytest.mark.parametrize(
+    "kwargs,match",
+    [
+        ({"base_matrix": "tcrblosum"}, r"`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`\."),
+        ({"base_matrix": "foo"}, r"Unknown `base_matrix`: 'foo'"),
+    ],
+)
+def test_tcrdist_base_matrix_validation(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        TCRdistDistanceCalculator(**kwargs)
 
 
 def test_tcrdist_reference():
