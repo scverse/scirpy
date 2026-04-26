@@ -1,7 +1,10 @@
+import gzip
+import json
 import os
 import os.path
 import tempfile
 import urllib.request
+import warnings
 import zipfile
 from datetime import datetime
 from importlib.metadata import version
@@ -13,6 +16,7 @@ from typing import cast
 import mudata
 import pandas as pd
 import pooch
+import requests
 import scanpy as sc
 from anndata import AnnData
 from mudata import MuData
@@ -25,13 +29,14 @@ from scirpy.pp import index_chains
 from scirpy.util import _doc_params, _read_to_str, tqdm
 
 HERE = Path(__file__).parent
+DATASET_ENV_VAR = "SCIRPY_DATA_DIR"
 
 _AWS_EXAMPLEDATA = pooch.create(
     path=pooch.os_cache("scirpy"),
     base_url="https://exampledata.scverse.org/scirpy",
     version=version("scirpy"),
     version_dev="main",
-    env="SCIRPY_DATA_DIR",
+    env=DATASET_ENV_VAR,
     registry={
         "wu2020.h5mu": "md5:ed30d9c1c44cae544f4c080a2451118b",
         "wu2020_3k.h5mu": "md5:12c57c790f8a403751304c9de5a18cbf",
@@ -39,19 +44,180 @@ _AWS_EXAMPLEDATA = pooch.create(
         "stephenson2021_5k.h5mu": "md5:6ea26f9d95525371ff9028f8e99ed474",
     },
 )
+
 _POOCH_INFO = dedent(
-    """\
+    f"""\
     .. note::
-        Scirpy example datasets are managed through `Pooch <https://github.com/fatiando/pooch>`_.
+        Scirpy datasets are managed through `Pooch <https://github.com/fatiando/pooch>`_.
 
         By default, the dataset will be downloaded into your operating system's default
         cache directory (See :func:`pooch.os_cache` for more details). If it has already been
         downloaded, it will be retrieved from the cache.
 
-        You can override the default cache dir by setting the `SCIRPY_DATA_DIR` environment variable
+        You can override the default cache dir by setting the `{DATASET_ENV_VAR}` environment variable
         to a path of your preference.
     """
 )
+
+
+def _get_iggytop_registry(tag: str = "latest") -> pooch.Pooch:
+    """
+    Create pooch registry based on iggytop metadata.json file obtained from GitHub.
+
+    If 'latest' tag is specified, always fetch the latest metadata.json file.
+    If an explicit tag is specified, rely on pooch to deal with caching.
+    """
+    iggytop_cache_dir = Path(os.environ.get(DATASET_ENV_VAR) or pooch.os_cache("scirpy")) / "iggytop"
+    if tag == "latest":
+        # in case of latest, always fetch the latest metadata file from GitHub
+        response = requests.get("https://github.com/biocypher/iggytop/releases/latest/download/metadata.json")
+        response.raise_for_status()
+        metadata = response.json()
+        logging.info(
+            f"Requested 'latest' version of iggytop. We recommend setting `tag=\"{metadata['iggytop_version']}\"` for reproducibility."
+        )
+    else:
+        # in case tag is specified, use pooch to download and cache the file
+        metadata_json = pooch.retrieve(
+            f"https://github.com/biocypher/iggytop/releases/download/{tag}/metadata.json",
+            known_hash=None,
+            path=iggytop_cache_dir,
+        )
+        with Path(metadata_json).open() as f:
+            metadata = json.load(f)
+
+    return pooch.create(
+        path=iggytop_cache_dir,
+        base_url=f"https://github.com/biocypher/iggytop/releases/download/{metadata['iggytop_version']}",
+        version=metadata["iggytop_version"].replace("data-", ""),
+        registry={k: f"sha256:{v}" for k, v in metadata["assets"].items()},
+    )
+
+
+@_doc_params(pooch_info=_POOCH_INFO)
+def iggytop(*, deduplicated: bool = True, tag: str = "latest") -> AnnData:
+    """\
+    Return the `IggyTop <https://iggytop.readthedocs.io/en/latest/>`_ database as an AnnData object.
+
+    IggyTop (**I**mmunological **G**raph **Y**ielding **T**op receptor-epitope pairings)
+    is a harmonized database of immunoreceptor-epitope pairings integrating data from
+    multiple sources: IEDB, VDJdb, McPAS-TCR, CEDAR, ITRAP, TRAIT, TCR3d, and NeoTCR.
+    V(D)J genes are normalized to IMGT standards and CDR3 sequences are harmonized following
+    `AIRR standards <https://docs.airr-community.org/en/stable/datarep/rearrangements.html>`_.
+    Pre-built datasets are released bimonthly.
+
+    By default, a deduplicated version of the dataset is returned. Use this version if you'd like
+    to work with the integrated resource combining data from all source datasets. If you prefer to work
+    with a single resource, set `deduplicated=False` and filter the resource of interest via
+    `.obs["source"]`.
+
+    {pooch_info}
+
+    Parameters
+    ----------
+    deduplicated
+        If `True`, return the deduplicated and 10X-filtered dataset. If `False`, return
+        the full merged dataset including all source records.
+    tag
+        The IggyTop release tag to use. Defaults to ``"latest"``, which always fetches
+        the most recent release. For reproducibility, pin a specific release tag
+        (e.g. ``"data-2026.04.25.075304"``).
+
+    Returns
+    -------
+    An AnnData object containing immunoreceptor-epitope pairings from IggyTop
+    in `obsm["airr"]`. Each entry is represented as if it was a cell, but without
+    gene expression data.
+    """
+    iggytop_registry = _get_iggytop_registry(tag)
+    if deduplicated:
+        return sc.read_h5ad(iggytop_registry.fetch("deduplicated_anndata.h5ad"))
+    else:
+        return sc.read_h5ad(iggytop_registry.fetch("merged_anndata.h5ad"))
+
+
+@_doc_params(pooch_info=_POOCH_INFO)
+def vdjdb(cached: bool | None = None, *, cache_path: None = None, tag: str = "latest") -> AnnData:
+    """\
+    Download VDJdb through IggyTop <https://iggytop.readthedocs.io/en/latest/>`_.
+
+    `VDJdb <https://vdjdb.cdr3.net/>`_ :cite:`vdjdb` is a curated database of
+    T-cell receptor (TCR) sequences with known antigen specificities.
+
+    As of v0.24, this is a wrapper around :func:`~scirpy.datasets.iggytop`.
+
+    {pooch_info}
+
+    Parameters
+    ----------
+    cached
+        Deprecated as of v0.24. Has no effect. Caching is handled through `pooch` now.
+    cache_path
+        Deprecated as of v0.24. Has no effect.
+    tag
+        The IggyTop release tag to use. Defaults to ``"latest"``, which always fetches
+        the most recent release. For reproducibility, pin a specific release tag
+        (e.g. ``"data-2026.04.25.075304"``).
+
+    Returns
+    -------
+    An AnnData object containing all entries from VDJDB in `obsm["airr"]`.
+    Each entry is represented as if it was a cell, but without gene expression.
+    Metadata is stored in `adata.uns["DB"]`.
+    """
+    if cached is not None or cache_path is not None:
+        warnings.warn(
+            "The arguments `cached` and `cache_path` are deprecated since v0.24 and have no effect."
+            "Caching is now handled through Pooch.",
+            category=FutureWarning,
+        )
+    adata = iggytop(deduplicated=False, tag=tag)
+    adata = adata[adata.obs["source"] == "VDJDB"].copy()
+    adata.uns["DB"]["name"] = "VDJDB"
+
+    return adata
+
+
+@_doc_params(pooch_info=_POOCH_INFO)
+def iedb(cached: bool | None = None, *, cache_path=None, tag: str = "latest") -> AnnData:
+    """\
+    Download IEDB through IggyTop <https://iggytop.readthedocs.io/en/latest/>`_.
+
+    :cite:`iedb` is a curated database of
+    T-cell receptor (TCR) sequences with known antigen specificities.
+
+    As of v0.24, this is a wrapper around :func:`~scirpy.datasets.iggytop`.
+
+    {pooch_info}
+
+    Parameters
+    ----------
+    cached
+        Deprecated as of v0.24. Has no effect.
+    cache_path
+        Deprecated as of v0.24. Has no effect.
+    tag
+        The IggyTop release tag to use. Defaults to ``"latest"``, which always fetches
+        the most recent release. For reproducibility, pin a specific release tag
+        (e.g. ``"data-2026.04.25.075304"``).
+
+    Returns
+    -------
+    An AnnData object containing all entries from IEDB in `obsm["airr"]`.
+    Each entry is represented as if it was a cell, but without gene expression.
+    Metadata is stored in `adata.uns["DB"]`.
+    """
+    if cached is not None or cache_path is not None:
+        warnings.warn(
+            "The arguments `cached` and `cache_path` are deprecated since v0.24 and have no effect."
+            "Caching is now handled through Pooch.",
+            category=FutureWarning,
+        )
+    adata = iggytop(deduplicated=False, tag=tag)
+    adata = adata[adata.obs["source"] == "IEDB"].copy()
+    adata.uns["DB"]["name"] = "IEDB"
+
+    return adata
 
 
 @_doc_params(
@@ -146,270 +312,3 @@ def stephenson2021_5k() -> MuData:
     """
     fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("stephenson2021_5k.h5mu", progressbar=True))
     return mudata.read_h5mu(fname)
-
-
-def vdjdb(cached: bool = True, *, cache_path="data/vdjdb.h5ad") -> AnnData:
-    """\
-    Download VDJdb and process it into an AnnData object.
-
-    `VDJdb <https://vdjdb.cdr3.net/>`_ :cite:`vdjdb` is a curated database of
-    T-cell receptor (TCR) sequences with known antigen specificities.
-
-    Parameters
-    ----------
-    cached
-        If `True`, attempt to read from the `data` directory before downloading
-    cache_path
-        Location where the h5ad object will be saved
-
-    Returns
-    -------
-    An anndata object containing all entries from VDJDB in `obsm["airr"]`.
-    Each entry is represented as if it was a cell, but without gene expression.
-    Metadata is stored in `adata.uns["DB"]`.
-    """
-    if cached:
-        try:
-            return sc.read_h5ad(cache_path)
-        except OSError:
-            pass
-
-    logging.info("Downloading latest version of VDJDB")
-    with urllib.request.urlopen(
-        "https://raw.githubusercontent.com/antigenomics/vdjdb-db/master/latest-version.txt"
-    ) as url:
-        latest_versions = url.read().decode().split()
-    url = latest_versions[0]
-
-    with tempfile.TemporaryDirectory() as d:
-        d = Path(d)
-        urllib.request.urlretrieve(url, d / "vdjdb.tar.gz")
-        with zipfile.ZipFile(d / "vdjdb.tar.gz") as zf:
-            zf.extractall(d)
-        df = pd.read_csv(next(iter(d.glob("**/vdjdb_full.txt"))), sep="\t", low_memory=False)
-
-    tcr_cells = []
-    for idx, row in tqdm(df.iterrows(), total=df.shape[0], desc="Processing VDJDB entries"):
-        cell = AirrCell(cell_id=str(idx))
-        if not pd.isnull(row["cdr3.alpha"]):
-            alpha_chain = AirrCell.empty_chain_dict()
-            alpha_chain.update(
-                {
-                    "locus": "TRA",
-                    "junction_aa": row["cdr3.alpha"],
-                    "v_call": row["v.alpha"],
-                    "j_call": row["j.alpha"],
-                    "consensus_count": 0,
-                    "productive": True,
-                }
-            )
-            cell.add_chain(alpha_chain)
-
-        if not pd.isnull(row["cdr3.beta"]):
-            beta_chain = AirrCell.empty_chain_dict()
-            beta_chain.update(
-                {
-                    "locus": "TRB",
-                    "junction_aa": row["cdr3.beta"],
-                    "v_call": row["v.beta"],
-                    "d_call": row["d.beta"],
-                    "j_call": row["j.beta"],
-                    "consensus_count": 0,
-                    "productive": True,
-                }
-            )
-            cell.add_chain(beta_chain)
-
-        INCLUDE_CELL_METADATA_FIELDS = [
-            "species",
-            "mhc.a",
-            "mhc.b",
-            "mhc.class",
-            "antigen.epitope",
-            "antigen.gene",
-            "antigen.species",
-            "reference.id",
-            "method.identification",
-            "method.frequency",
-            "method.singlecell",
-            "method.sequencing",
-            "method.verification",
-            "meta.study.id",
-            "meta.cell.subset",
-            "meta.subject.cohort",
-            "meta.subject.id",
-            "meta.replica.id",
-            "meta.clone.id",
-            "meta.epitope.id",
-            "meta.tissue",
-            "meta.donor.MHC",
-            "meta.donor.MHC.method",
-            "meta.structure.id",
-        ]
-        for f in INCLUDE_CELL_METADATA_FIELDS:
-            cell[f] = row[f]
-        tcr_cells.append(cell)
-
-    logging.info("Converting to AnnData object")
-    adata = from_airr_cells(tcr_cells)
-    index_chains(adata)
-
-    adata.uns["DB"] = {"name": "VDJDB", "date_downloaded": datetime.now().isoformat()}
-
-    # store cache
-    os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
-    adata.write_h5ad(cast(os.PathLike, cache_path))
-
-    return adata
-
-
-def iedb(cached: bool = True, *, cache_path="data/iedb.h5ad") -> AnnData:
-    """\
-    Download IEBD v3 and process it into an AnnData object.
-
-    :cite:`iedb` is a curated database of
-    T-cell receptor (TCR) sequences with known antigen specificities.
-
-    Parameters
-    ----------
-    cached
-        If `True`, attempt to read from the `data` directory before downloading
-    cache_path
-        Location where the h5ad object will be saved
-
-    Returns
-    -------
-    An anndata object containing all entries from IEDB in `obsm["airr"]`.
-    Each entry is represented as if it was a cell, but without gene expression.
-    Metadata is stored in `adata.uns["DB"]`.
-    """
-    if cached:
-        try:
-            return sc.read_h5ad(cache_path)
-        except OSError:
-            pass
-    logger = _IOLogger()
-
-    url = "https://www.iedb.org/downloader.php?file_name=doc/receptor_full_v3.zip"
-
-    with tempfile.TemporaryDirectory() as d:
-        d = Path(d)
-        urllib.request.urlretrieve(url, d / "receptor_full_v3.zip")
-        with zipfile.ZipFile(d / "receptor_full_v3.zip") as zf:
-            zf.extractall(d)
-        iedb_df = pd.concat(
-            [
-                pd.read_csv(
-                    d / x,
-                    index_col=None,
-                    header=[0, 1],
-                    sep=",",
-                    na_values=["None"],
-                    true_values=["True"],
-                    low_memory=False,
-                )
-                for x in ["tcr_full_v3.csv", "bcr_full_v3.csv"]
-            ]
-        ).reset_index(drop=True)
-
-    # deal with multiindex (join by " " to single index). This is how columns were
-    # named before an IEDB update in 2023-04
-    iedb_df.columns = iedb_df.columns.to_series().apply(lambda x: " ".join(x))
-    iedb_df = iedb_df.drop_duplicates()
-    iedb_df = iedb_df.drop_duplicates(
-        [
-            "Chain 1 CDR3 Curated",
-            "Chain 2 CDR3 Curated",
-            "Epitope Source Organism",
-            "Epitope Source Molecule",
-            "Receptor Reference Name",
-            "Chain 1 Type",
-            "Chain 2 Type",
-        ]
-    )
-
-    # If no curated CDR3 sequence or V/D/J gene is available, the calculated one is used.
-    def replace_curated(input_1, input_2):
-        calculated_1 = input_1.replace("Curated", "Calculated")
-        iedb_df.loc[iedb_df[input_1].isna(), input_1] = iedb_df[calculated_1]
-        iedb_df[input_1] = iedb_df[input_1].str.upper()
-        calculated_2 = input_2.replace("Curated", "Calculated")
-        iedb_df.loc[iedb_df[input_2].isna(), input_2] = iedb_df[calculated_2]
-        iedb_df[input_2] = iedb_df[input_2].str.upper()
-
-    replace_curated("Chain 1 CDR3 Curated", "Chain 2 CDR3 Curated")
-    replace_curated("Chain 1 Curated V Gene", "Chain 2 Curated V Gene")
-    replace_curated("Chain 1 Curated D Gene", "Chain 2 Curated D Gene")
-    replace_curated("Chain 1 Curated J Gene", "Chain 2 Curated J Gene")
-
-    iedb_df["cell_id"] = iedb_df.reset_index(drop=True).index
-
-    accepted_chains = ["alpha", "beta", "heavy", "light", "gamma", "delta"]
-    iedb_df = iedb_df[(iedb_df["Chain 1 Type"].isin(accepted_chains)) & (iedb_df["Chain 2 Type"].isin(accepted_chains))]
-
-    receptor_dict = {
-        "alpha": "TRA",
-        "beta": "TRB",
-        "heavy": "IGH",
-        # IEDB does not distinguish between lambda and kappa
-        "light": None,
-        "gamma": "TRG",
-        "delta": "TRD",
-    }
-
-    tcr_cells = []
-    for _, row in iedb_df.iterrows():
-        cell = AirrCell(cell_id=row["cell_id"], logger=logger)
-        chain1 = AirrCell.empty_chain_dict()
-        chain2 = AirrCell.empty_chain_dict()
-        cell["Receptor IEDB Receptor ID"] = row["Receptor IEDB Receptor ID"]
-        cell["Epitope Source Molecule"] = row["Epitope Source Molecule"]
-        cell["Epitope Source Organism"] = row["Epitope Source Organism"]
-        cell["Receptor Reference Namee"] = row["Receptor Reference Name"]
-        cell["Reference IEDB IRI"] = row["Reference IEDB IRI"]
-        cell["Epitope IEDB IRI"] = row["Epitope IEDB IRI"]
-        chain1.update(
-            {
-                "locus": receptor_dict[row["Chain 1 Type"]],
-                "junction_aa": row["Chain 1 CDR3 Curated"],
-                "junction": None,
-                "consensus_count": None,
-                "v_call": row["Chain 1 Curated V Gene"],
-                "d_call": None,
-                "j_call": row["Chain 1 Curated J Gene"],
-                "productive": True,
-            }
-        )
-        chain2.update(
-            {
-                "locus": receptor_dict[row["Chain 2 Type"]],
-                "junction_aa": row["Chain 2 CDR3 Curated"],
-                "junction": None,
-                "consensus_count": None,
-                "v_call": row["Chain 2 Curated V Gene"],
-                "d_call": row["Chain 2 Curated D Gene"],
-                "j_call": row["Chain 2 Curated J Gene"],
-                "productive": True,
-            }
-        )
-        for chain_dict in [chain1, chain2]:
-            # Since IEDB does not distinguish between lambda and kappa light chains, we need
-            # to call them from the gene names
-            if chain_dict["locus"] is None:
-                chain_dict["locus"] = _infer_locus_from_gene_names(chain_dict, keys=("v_call", "d_call", "j_call"))
-            cell.add_chain(chain_dict)
-
-        tcr_cells.append(cell)
-
-    logging.info("Converting to AnnData object")
-    iedb = from_airr_cells(tcr_cells)
-    iedb_df = iedb_df.set_index(iedb.obs.index)
-
-    iedb.uns["DB"] = {"name": "IEDB", "date_downloaded": datetime.now().isoformat()}
-    index_chains(iedb)
-
-    # store cache
-    os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
-    iedb.write_h5ad(cast(os.PathLike, cache_path))
-
-    return iedb
