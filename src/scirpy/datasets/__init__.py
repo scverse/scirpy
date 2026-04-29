@@ -99,7 +99,7 @@ def iggytop(*, deduplicated: bool = True, tag: str = "latest") -> AnnData:
     """\
     Return the `IggyTop <https://iggytop.readthedocs.io/en/latest/>`_ database as an AnnData object.
 
-    IggyTop (**I**mmunological **G**raph **Y**ielding **T**op receptor-epitope pairings)
+    IggyTop (Immunological Graph Yielding Top receptor-epitope pairings)
     is a harmonized database of immunoreceptor-epitope pairings integrating data from
     multiple sources: IEDB, VDJdb, McPAS-TCR, CEDAR, ITRAP, TRAIT, TCR3d, and NeoTCR.
     V(D)J genes are normalized to IMGT standards and CDR3 sequences are harmonized following
@@ -139,7 +139,7 @@ def iggytop(*, deduplicated: bool = True, tag: str = "latest") -> AnnData:
 @_doc_params(pooch_info=_POOCH_INFO)
 def vdjdb(cached: bool | None = None, *, cache_path: None = None, tag: str = "latest") -> AnnData:
     """\
-    Download VDJdb through IggyTop <https://iggytop.readthedocs.io/en/latest/>`_.
+    Download VDJdb through `IggyTop <https://iggytop.readthedocs.io/en/latest/>`_.
 
     `VDJdb <https://vdjdb.cdr3.net/>`_ :cite:`vdjdb` is a curated database of
     T-cell receptor (TCR) sequences with known antigen specificities.
@@ -181,7 +181,7 @@ def vdjdb(cached: bool | None = None, *, cache_path: None = None, tag: str = "la
 @_doc_params(pooch_info=_POOCH_INFO)
 def iedb(cached: bool | None = None, *, cache_path=None, tag: str = "latest") -> AnnData:
     """\
-    Download IEDB through IggyTop <https://iggytop.readthedocs.io/en/latest/>`_.
+    Download IEDB through `IggyTop <https://iggytop.readthedocs.io/en/latest/>`_.
 
     :cite:`iedb` is a curated database of
     T-cell receptor (TCR) sequences with known antigen specificities.
