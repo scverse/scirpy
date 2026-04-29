@@ -361,7 +361,6 @@ def define_clonotypes(
     adata: DataHandler.TYPE,
     *,
     key_added: str = "clone_id",
-    distance_key: str | None = None,
     airr_mod="airr",
     airr_key="airr",
     chain_idx_key="chain_indices",
@@ -399,16 +398,21 @@ def define_clonotypes(
 
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
-    if distance_key is None and "ir_dist_nt_identity" not in params.adata.uns:
+    if "ir_dist_nt_identity" not in params.adata.uns:
         # For the case of "clonotypes" we want to compute the distance automatically
         # if it doesn't exist yet. Since it's just a sparse ID matrix, this
         # should be instant.
         logging.info("ir_dist for sequence='nt' and metric='identity' not found. Computing with default parameters.")  # type: ignore
-        ir_dist(params, metric="identity", sequence="nt", key_added=distance_key)
-
+        ir_dist(params, metric="identity", sequence="nt", key_added="ir_dist_nt_identity")
+    if "distance_key" in kwargs:
+        logging.warn(
+            'distance_key has been overwritten by "ir_dist_nt_identity". For custom distance_key options call define_clonotype_clusters directly.'
+        )
+        kwargs = {k: v for k, v in kwargs if k != "distance_key"}
     return define_clonotype_clusters(
         params,
         key_added=key_added,
+        distance_key="ir_dist_nt_identity",
         sequence="nt",
         metric="identity",
         partitions="connected",
