@@ -259,6 +259,7 @@ Reference databases
 .. autosummary::
    :toctree: ./generated
 
+   datasets.iggytop
    datasets.vdjdb
    datasets.iedb
 
