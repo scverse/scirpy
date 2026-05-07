@@ -282,18 +282,19 @@ class IdentityDistanceCalculator(DistanceCalculator):
             # In this case, the offsetted distance matrix is the identity matrix
             return scipy.sparse.identity(len(seqs), dtype=self.DTYPE, format="csr")
         else:
-            # actually compare the values
-            def coord_generator():
-                for (i1, s1), (i2, s2) in itertools.product(enumerate(seqs), enumerate(seqs2)):
-                    if s1 == s2:
-                        yield 1, i1, i2
+            cols_by_seq = {}
+            for i2, s2 in enumerate(seqs2):
+                cols_by_seq.setdefault(s2, []).append(i2)
 
-            try:
-                d, row, col = zip(*coord_generator(), strict=False)
-            except ValueError:
-                # happens when there is no match at all
-                d, row, col = (), (), ()
+            row = []
+            col = []
+            for i1, s1 in enumerate(seqs):
+                matching_cols = cols_by_seq.get(s1)
+                if matching_cols is not None:
+                    row.extend([i1] * len(matching_cols))
+                    col.extend(matching_cols)
 
+            d = np.ones(len(row), dtype=self.DTYPE)
             return coo_matrix((d, (row, col)), dtype=self.DTYPE, shape=(len(seqs), len(seqs2))).tocsr()
 
 
