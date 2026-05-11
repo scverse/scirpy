@@ -54,6 +54,8 @@ metric
       * `levenshtein` -- Levenshtein edit distance.
         See :class:`~scirpy.ir_dist.metrics.LevenshteinDistanceCalculator`.
       * `tcrdist` -- Distance based on pairwise sequence alignments between TCR CDR3 sequences based on the tcrdist metric.
+        Uses the BLOSUM62 substitution matrix by default. TCRBLOSUM alpha/beta substitution matrices can be selected with
+        `base_matrix="tcrblosum"`.
         See :class:`~scirpy.ir_dist.metrics.TCRdistDistanceCalculator`.
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
