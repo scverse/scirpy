@@ -344,7 +344,7 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
         return result
 
 
-def _make_numba_matrix(
+def _substitution_to_distance_matrix(
     substitution_matrix: np.ndarray,
     alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX*",
     matrix_alphabet: str = "ARNDCQEGHILKMFPSTWYV",
@@ -1319,7 +1319,7 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         self.histogram = histogram
 
         if base_matrix == "blosum62":
-            self.tcr_nb_distance_matrix = _make_numba_matrix(
+            self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
                 self.blosum62_substitution_matrix,
                 self.parasail_aa_alphabet_with_unknown,
                 self.matrix_alphabet,
@@ -1343,7 +1343,7 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                 )
             )
 
-            self.tcr_nb_distance_matrix = _make_numba_matrix(
+            self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
                 tcrdist_substitution_matrix,
                 self.parasail_aa_alphabet_with_unknown,
                 self.matrix_alphabet,

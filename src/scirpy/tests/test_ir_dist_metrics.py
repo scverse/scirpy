@@ -16,7 +16,7 @@ from scirpy.ir_dist.metrics import (
     LevenshteinDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
-    _make_numba_matrix,
+    _substitution_to_distance_matrix,
 )
 
 from .util import _squarify
@@ -69,7 +69,7 @@ def test_squarify():
     )
 
 
-def test_make_numba_matrix_converts_substitution_matrix():
+def test_substitution_to_distance_matrix_converts_substitution_matrix():
     substitution_matrix = np.array(
         [
             [4, 3, 0, -1],
@@ -80,7 +80,7 @@ def test_make_numba_matrix_converts_substitution_matrix():
         dtype=np.int32,
     )
 
-    distance_matrix = _make_numba_matrix(
+    distance_matrix = _substitution_to_distance_matrix(
         substitution_matrix,
         alphabet="ABCD*",
         matrix_alphabet="ABCD",
@@ -102,7 +102,7 @@ def test_make_numba_matrix_converts_substitution_matrix():
         ),
     )
 
-    uncapped_distance_matrix = _make_numba_matrix(
+    uncapped_distance_matrix = _substitution_to_distance_matrix(
         substitution_matrix,
         alphabet="ABCD*",
         matrix_alphabet="ABCD",
