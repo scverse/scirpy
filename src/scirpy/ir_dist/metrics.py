@@ -1203,8 +1203,8 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     base_matrix:
         Amino acid substitution matrix used by TCRdist. `"blosum62"` uses the original
         BLOSUM62 substitution matrix, while `"tcrblosum"` uses TCRBLOSUM substitution
-        matrices. Depending on `chain_type`, either the TCRBLOSUM alpha- or beta-chain
-        matrix is used.
+        matrices (:cite:`TCRBLOSUM`). Depending on `chain_type`, either the TCRBLOSUM
+        alpha- or beta-chain matrix is used.
     distance_cap:
         Maximum distance assigned to a mismatch after converting substitution scores to distances.
         The default value, `"default"`, keeps the original behavior: BLOSUM62 uses a cap of `4`,
