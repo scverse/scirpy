@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+### Performance improvements
+
+  - Speed up identity distance metric computation for comparisons between two different sequence arrays.
+
 ## v0.24.0
 
 ### Additions
