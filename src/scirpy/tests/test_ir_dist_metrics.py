@@ -835,11 +835,59 @@ def test_sequence_dist_tcrdist_tcrblosum():
     npt.assert_array_equal(res.toarray(), np.array([[1, 7], [7, 1]]))
 
 
+def test_sequence_dist_tcrdist_distance_cap():
+    seqs = np.array(["AAACAAAA", "AAAHAAAA"])
+
+    default_tcrblosum = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+    )
+    npt.assert_array_equal(default_tcrblosum.toarray(), np.array([[1, 16], [16, 1]]))
+
+    capped_tcrblosum = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+        distance_cap=4,
+    )
+    npt.assert_array_equal(capped_tcrblosum.toarray(), np.array([[1, 13], [13, 1]]))
+
+    custom_capped_tcrblosum = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+        distance_cap=2,
+    )
+    npt.assert_array_equal(custom_capped_tcrblosum.toarray(), np.array([[1, 7], [7, 1]]))
+
+    uncapped_blosum62 = ir.ir_dist.sequence_dist(
+        np.array(["AAACAAAA", "AAARAAAA"]),
+        metric="tcrdist",
+        cutoff=1000,
+        n_jobs=1,
+        base_matrix="blosum62",
+        distance_cap=None,
+    )
+    npt.assert_array_equal(uncapped_blosum62.toarray(), np.array([[1, 22], [22, 1]]))
+
+
 @pytest.mark.parametrize(
     "kwargs,match",
     [
         ({"base_matrix": "tcrblosum"}, r"`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`\."),
         ({"base_matrix": "foo"}, r"Unknown `base_matrix`: 'foo'"),
+        ({"distance_cap": -1}, r"`distance_cap` must be non-negative, `None`, or 'default'\."),
+        ({"distance_cap": "foo"}, r"`distance_cap` must be non-negative, `None`, or 'default'\."),
     ],
 )
 def test_tcrdist_base_matrix_validation(kwargs, match):

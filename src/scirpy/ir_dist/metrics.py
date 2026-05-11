@@ -1205,6 +1205,11 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         BLOSUM62 substitution matrix, while `"tcrblosum"` uses TCRBLOSUM substitution
         matrices. Depending on `chain_type`, either the TCRBLOSUM alpha- or beta-chain
         matrix is used.
+    distance_cap:
+        Maximum distance assigned to a mismatch after converting substitution scores to distances.
+        The default value, `"default"`, keeps the original behavior: BLOSUM62 uses a cap of `4`,
+        while TCRBLOSUM distances are uncapped. Set to an integer to choose a cap explicitly, or
+        `None` for uncapped distances.
     chain_type:
         Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain matrix
         and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
@@ -1308,6 +1313,7 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         n_blocks: int = 1,
         histogram: bool = False,
         base_matrix: Literal["blosum62", "tcrblosum"] = "blosum62",
+        distance_cap: int | None | Literal["default"] = "default",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
         self.dist_weight = dist_weight
@@ -1317,13 +1323,18 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         self.fixed_gappos = fixed_gappos
         self.cutoff = cutoff
         self.histogram = histogram
+        if distance_cap != "default" and distance_cap is not None and not isinstance(distance_cap, int):
+            raise ValueError("`distance_cap` must be non-negative, `None`, or 'default'.")
+        if isinstance(distance_cap, int) and distance_cap < 0:
+            raise ValueError("`distance_cap` must be non-negative, `None`, or 'default'.")
 
         if base_matrix == "blosum62":
+            matrix_distance_cap = 4 if distance_cap == "default" else distance_cap
             self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
                 self.blosum62_substitution_matrix,
                 self.parasail_aa_alphabet_with_unknown,
                 self.matrix_alphabet,
-                distance_cap=4,
+                distance_cap=matrix_distance_cap,
                 distance_offset=4,
             )
 
@@ -1343,11 +1354,12 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                 )
             )
 
+            matrix_distance_cap = None if distance_cap == "default" else distance_cap
             self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
                 tcrdist_substitution_matrix,
                 self.parasail_aa_alphabet_with_unknown,
                 self.matrix_alphabet,
-                distance_cap=None,
+                distance_cap=matrix_distance_cap,
                 distance_offset=max_score + 1,
             )
 
