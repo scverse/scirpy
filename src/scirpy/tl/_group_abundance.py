@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from scirpy.get import _has_ir
-from scirpy.util import DataHandler, _is_na, _normalize_counts
+from scirpy.util import DataHandler, _normalize_counts
 
 
 def _group_abundance(
@@ -17,7 +17,7 @@ def _group_abundance(
     sort: Literal["count", "alphabetical"] | Sequence[str] = "count",
 ) -> pd.DataFrame:
     # remove NA rows
-    na_mask = _is_na(ir_obs[groupby]) | _is_na(ir_obs[target_col])
+    na_mask = pd.isna(ir_obs[groupby]) | pd.isna(ir_obs[target_col])
     ir_obs = ir_obs.loc[~na_mask, :]
 
     # normalize to fractions

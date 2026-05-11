@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.cluster import hierarchy as sc_hierarchy
 from scipy.spatial import distance as sc_distance
 
-from scirpy.util import DataHandler, _is_na, _normalize_counts
+from scirpy.util import DataHandler, _normalize_counts
 
 
 @DataHandler.inject_param_docs()
@@ -65,7 +65,7 @@ def repertoire_overlap(
         obs[normalize] = params.get_obs(normalize)
 
     # Remove NA rows
-    na_mask = _is_na(obs[groupby]) | _is_na(obs[target_col])
+    na_mask = pd.isna(obs[groupby]) | pd.isna(obs[target_col])
     df = obs.loc[~na_mask, :].copy()
 
     # Normalize to fractions

@@ -7,7 +7,7 @@ import pandas as pd
 from scanpy import logging
 
 from scirpy import get
-from scirpy.util import DataHandler, _is_na
+from scirpy.util import DataHandler
 
 
 @DataHandler.inject_param_docs()
@@ -176,10 +176,10 @@ def _chain_pairing(
 
     logging.debug("Done initalizing")
 
-    mask_has_vj1 = ~_is_na(get.airr(params, "junction_aa", "VJ_1").values)
-    mask_has_vdj1 = ~_is_na(get.airr(params, "junction_aa", "VDJ_1").values)
-    mask_has_vj2 = ~_is_na(get.airr(params, "junction_aa", "VJ_2").values)
-    mask_has_vdj2 = ~_is_na(get.airr(params, "junction_aa", "VDJ_2").values)
+    mask_has_vj1 = ~pd.isna(get.airr(params, "junction_aa", "VJ_1").values)
+    mask_has_vdj1 = ~pd.isna(get.airr(params, "junction_aa", "VDJ_1").values)
+    mask_has_vj2 = ~pd.isna(get.airr(params, "junction_aa", "VJ_2").values)
+    mask_has_vdj2 = ~pd.isna(get.airr(params, "junction_aa", "VDJ_2").values)
 
     logging.debug("Done with masks")
 

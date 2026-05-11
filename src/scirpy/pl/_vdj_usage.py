@@ -4,10 +4,11 @@ from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from scirpy.get import airr as get_airr
 from scirpy.io import AirrCell
-from scirpy.util import DataHandler, _is_na, _normalize_counts
+from scirpy.util import DataHandler, _normalize_counts
 
 from .styling import _init_ax
 
@@ -163,7 +164,7 @@ def vdj_usage(
 
         # Draw gene segments
         for i, (segment_size, gene) in list(enumerate(zip(segment_sizes, genes, strict=False)))[:max_segments][::-1]:
-            if _is_na(gene):
+            if pd.isna(gene):
                 gene = "none"
             gene_tops[col_name][gene] = bottom + segment_size
             if draw_bars:
@@ -229,7 +230,7 @@ def vdj_usage(
                 try:
                     tmp_gene = ribbon[target_pair[0]]
                     tmp_col = target_pair[0]
-                    tmp_gene = "none" if _is_na(tmp_gene) else tmp_gene
+                    tmp_gene = "none" if pd.isna(tmp_gene) else tmp_gene
                     ribbon_color = gene_colors[tmp_col][tmp_gene]
                 except KeyError:
                     # Don't draw ribbon if the source gene is not drawn.
@@ -237,7 +238,7 @@ def vdj_usage(
 
             for col_name in target_pair:
                 gene = ribbon[col_name]
-                if _is_na(gene):
+                if pd.isna(gene):
                     gene = "none"
                 if gene not in tmp_gene_tops[col_name]:
                     gene = "other"

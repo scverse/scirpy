@@ -4,7 +4,7 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-from scirpy.util import DataHandler, _is_na
+from scirpy.util import DataHandler
 
 
 def _shannon_entropy(counts: np.ndarray):
@@ -105,7 +105,7 @@ def alpha_diversity(
     """
     params = DataHandler(adata, airr_mod)
     ir_obs = params.get_obs([target_col, groupby])
-    ir_obs = ir_obs.loc[~_is_na(ir_obs[target_col]), :]
+    ir_obs = ir_obs.loc[~pd.isna(ir_obs[target_col]), :]
     clono_counts = ir_obs.groupby([groupby, target_col], observed=True).size().reset_index(name="count")
 
     diversity = {}

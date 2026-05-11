@@ -2,13 +2,14 @@ from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 import scipy.sparse
 import scipy.stats
 from mudata import MuData
 from scanpy import logging
 from statsmodels.stats.multitest import fdrcorrection
 
-from scirpy.util import DataHandler, _is_na, tqdm
+from scirpy.util import DataHandler, tqdm
 from scirpy.util._negative_binomial import fit_nbinom
 from scirpy.util.graph import _get_igraph_from_adjacency
 
@@ -107,7 +108,7 @@ def clonotype_modularity(
         n_permutations = 1000 if permutation_test == "approx" else 10000
 
     clonotype_per_cell = params.get_obs(target_col)
-    cells_with_valid_clonotype = clonotype_per_cell[~_is_na(clonotype_per_cell.values)].index
+    cells_with_valid_clonotype = clonotype_per_cell[~pd.isna(clonotype_per_cell.values)].index
     data_subset = params.data[cells_with_valid_clonotype.values, :]
     try:
         connectivities = data_subset.obsp[connectivity_key]

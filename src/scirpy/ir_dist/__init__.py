@@ -1,3 +1,5 @@
+import pandas as pd
+
 """Compute distances between immune receptor sequences"""
 
 from collections.abc import Sequence
@@ -8,7 +10,7 @@ from scanpy import logging
 from scipy.sparse import csr_matrix
 
 from scirpy.get import airr as get_airr
-from scirpy.util import DataHandler, _doc_params, _is_na, deprecated
+from scirpy.util import DataHandler, _doc_params, deprecated
 
 from . import metrics
 
@@ -237,7 +239,7 @@ def _ir_dist(
         tmp_seqs = np.concatenate(
             [get_airr(tmp_adata, key, f"{chain_type}_{chain_id}").values for chain_id in ["1", "2"]]  # type: ignore
         )
-        return np.unique([x.upper() for x in tmp_seqs[~_is_na(tmp_seqs)]])
+        return np.unique([x.upper() for x in tmp_seqs[~pd.isna(tmp_seqs)]])
 
     for i, tmp_params in enumerate([params, params_ref]):
         if tmp_params is not None:
