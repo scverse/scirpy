@@ -166,10 +166,45 @@ def test_clonotypes_end_to_end1(adata_define_clonotypes):
         (
             "VDJ",
             "primary_only",
+            False,
+            None,
+            [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 3, np.nan],
+            [5, 5, 5, 1, 5, np.nan, 5, 1, 2, 2, np.nan],
+        ),
+        (
+            "VDJ",
+            "primary_only",
             True,
             None,
             [0, 0, 0, 1, 0, np.nan, 0, 2, 3, 4, 5],
             [5, 5, 5, 1, 5, np.nan, 5, 1, 1, 1, 1],
+        ),
+        (
+            "VJ",
+            "primary_only",
+            False,
+            None,
+            [0, 0, 1, 1, 0, np.nan, 0, 0, 0, np.nan, np.nan],
+            [6, 6, 2, 2, 6, np.nan, 6, 6, 6, np.nan, np.nan],
+        ),
+        (
+            "VJ",
+            "all",
+            False,
+            None,
+            [0, 0, 1, 1, 2, np.nan, 2, 0, 2, np.nan, np.nan],
+            [3, 3, 2, 2, 3, np.nan, 3, 3, 3, np.nan, np.nan],
+        ),
+        (
+            "VJ",
+            "all",
+            True,
+            None,
+            # TODO: the last two cells get assigned clonotype cluster 5 because they have a v gene, but no junction_aa sequence
+            # Do we want that? Or should it be np.nan if no sequence exists? Typically this would
+            # be filtered out before.
+            [0, 1, 2, 3, 4, np.nan, 4, 1, 4, np.nan, np.nan],
+            [1, 1, 2, 1, 3, np.nan, 3, 2, 3, np.nan, np.nan],
         ),
         # v gene and receptor type
         (
@@ -206,7 +241,7 @@ def test_clonotype_clusters_end_to_end(
         same_v_gene=same_v_gene,
     )  # type: ignore
     print(clonotypes)
-    npt.assert_equal(list(clonotypes.values), [str(x) if not np.isnan(x) else x for x in expected])
+    assert list(clonotypes.values) == [str(x) if not np.isnan(x) else x for x in expected]
     npt.assert_almost_equal(clonotype_size.values, expected_size)
 
 
