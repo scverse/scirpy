@@ -1346,6 +1346,9 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
             else:
                 raise ValueError("`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`.")
 
+            # Use one `distance_offset` across alpha and beta matrices so equal substitution scores
+            # map to equal distances for both chain types. This keeps VJ and VDJ distances on a
+            # shared scale for clonotype clustering.
             off_diagonal = ~np.eye(len(self.matrix_alphabet), dtype=bool)
             max_score = int(
                 max(
