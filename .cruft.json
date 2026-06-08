@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/scverse/cookiecutter-scverse",
-  "commit": "6ff5b92b5d44ea6d8a88e47538475718d467db95",
-  "checkout": "v0.7.0",
+  "commit": "50f4600a5bf63c821650bd5d5496ea3036b84db5",
+  "checkout": "test9",
   "context": {
     "cookiecutter": {
       "project_name": "scirpy",
@@ -36,7 +36,7 @@
         "trim_blocks": true
       },
       "_template": "https://github.com/scverse/cookiecutter-scverse",
-      "_commit": "6ff5b92b5d44ea6d8a88e47538475718d467db95"
+      "_commit": "50f4600a5bf63c821650bd5d5496ea3036b84db5"
     }
   },
   "directory": null

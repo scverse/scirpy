@@ -33,8 +33,9 @@ it is still possible to use different tools to manage dependencies, such as `uv`
 In addition to the packages needed to _use_ this package,
 you need additional python packages to [run tests](#writing-tests) and [build the documentation](#docs-building).
 
-:::::{tabs}
-::::{group-tab} Hatch
+:::::{tab-set}
+::::{tab-item} Hatch
+:sync: hatch
 
 On the command line, you typically interact with hatch through its command line interface (CLI).
 Running one of the following commands will automatically resolve the environments for testing and
@@ -94,7 +95,8 @@ In this future, this may become easier through a hatch vscode extension.
 
 ::::
 
-::::{group-tab} uv
+::::{tab-item} uv
+:sync: uv
 
 A popular choice for managing virtual environments is [uv][].
 The main disadvantage compared to hatch is that it supports only a single environment per project at a time,
@@ -103,7 +105,7 @@ This can have undesired side-effects,
 such as requiring to install a lower version of a library your project depends on,
 only because an outdated sphinx plugin pins an older version.
 
-To initalize a virtual environment in the `.venv` directory of your project, simply run
+To initialize a virtual environment in the `.venv` directory of your project, simply run
 
 ```bash
 uv sync --all-extras
@@ -113,7 +115,8 @@ The `.venv` directory is typically automatically discovered by IDEs such as VS C
 
 ::::
 
-::::{group-tab} Pip
+::::{tab-item} Pip
+:sync: pip
 
 Pip is nowadays mostly superseded by environment manager such as [hatch][].
 However, for the sake of completeness, and since it’s ubiquitously available,
@@ -184,8 +187,9 @@ hatch env find hatch-test  # list all possible test environment paths
 
 Alternatively, you can run all tests from the command line by executing
 
-:::::{tabs}
-::::{group-tab} Hatch
+:::::{tab-set}
+::::{tab-item} Hatch
+:sync: hatch
 
 ```bash
 hatch test  # test with the highest supported Python version
@@ -195,7 +199,8 @@ hatch test --all  # test with all supported Python versions
 
 ::::
 
-::::{group-tab} uv
+::::{tab-item} uv
+:sync: uv
 
 ```bash
 uv run pytest
@@ -203,7 +208,8 @@ uv run pytest
 
 ::::
 
-::::{group-tab} Pip
+::::{tab-item} Pip
+:sync: pip
 
 ```bash
 source .venv/bin/activate
@@ -297,8 +303,9 @@ please check out [this feature request][issue-render-notebooks] in the `cookiecu
 
 ### Building the docs locally
 
-:::::{tabs}
-::::{group-tab} Hatch
+:::::{tab-set}
+::::{tab-item} Hatch
+:sync: hatch
 
 ```bash
 hatch run docs:build
@@ -307,7 +314,8 @@ hatch run docs:open
 
 ::::
 
-::::{group-tab} uv
+::::{tab-item} uv
+:sync: uv
 
 ```bash
 cd docs
@@ -317,7 +325,8 @@ uv run sphinx-build -M html . _build -W
 
 ::::
 
-::::{group-tab} Pip
+::::{tab-item} Pip
+:sync: pip
 
 ```bash
 source .venv/bin/activate
