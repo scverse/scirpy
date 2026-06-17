@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning][].
     framework) so they are comparable across samples of different sequencing depth, and a
     warning is raised when a fair comparison is not supported. Estimation is delegated to
     the [hillrep](https://github.com/KilianMaire/hillrep) package, installed via the
-    `diversity` extra (PR_NUMBER_PLACEHOLDER).
+    `diversity` extra ([#714](https://github.com/scverse/scirpy/pull/714)).
 
 ### Performance improvements
 
