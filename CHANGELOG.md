@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Additions
+
+  - Add `tl.hill_diversity_profile` and `tl.convert_hill_table` for coverage-standardized
+    Hill-number diversity. Profiles are standardized to a common sample coverage (iNEXT
+    framework) so they are comparable across samples of different sequencing depth, and a
+    warning is raised when a fair comparison is not supported. Estimation is delegated to
+    the [hillrep](https://github.com/KilianMaire/hillrep) package, installed via the
+    `diversity` extra (PR_NUMBER_PLACEHOLDER).
+
 ### Performance improvements
 
   - Speed up identity distance metric computation for comparisons between two different sequence arrays.

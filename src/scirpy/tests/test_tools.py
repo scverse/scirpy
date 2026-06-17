@@ -1093,3 +1093,75 @@ def test_mutational_load(adata_mutation, region_vars, expected):
 def test_mutational_load_adata_not_aligned(adata_not_aligned):
     with npt.assert_raises(ValueError):
         ir.tl.mutational_load(adata_not_aligned, germline_key="germline_alignment")
+
+
+def _adata_from_counts(counts: dict[str, list[int]], mudata: bool = False):
+    """Build a minimal AnnData/MuData whose obs encodes the given per-group clonotype counts.
+
+    ``counts`` maps a group label to a list of clonotype abundances. Each abundance
+    is expanded into that many cells sharing one clonotype id, so that collapsing
+    ``obs`` back by (group, clonotype) recovers the original counts exactly.
+    """
+    records = []
+    for group, abundances in counts.items():
+        for clone_idx, n in enumerate(abundances):
+            for _ in range(n):
+                records.append([f"{group}_ct{clone_idx}", group])
+    obs = pd.DataFrame(records, columns=["clonotype_", "group"])
+    obs.index = [f"cell{i}" for i in range(len(obs))]
+    return _make_adata(obs, mudata)
+
+
+# two well-sampled groups of different depth: comparable at a common coverage < 1
+_HILL_COUNTS = {
+    "A": [30, 20, 14, 10, 7, 5, 4, 3, 2, 2, 1, 1, 1, 1, 1],
+    "B": [90, 60, 42, 30, 22, 16, 12, 9, 7, 5, 4, 3, 2, 2, 1, 1, 1, 1],
+}
+
+
+@pytest.mark.extra
+@pytest.mark.parametrize("mudata", [False, True], ids=["AnnData", "MuData"])
+def test_hill_diversity_profile(mudata):
+    import warnings
+
+    import hillrep
+
+    adata = _adata_from_counts(_HILL_COUNTS, mudata)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # the happy path must not warn
+        res = ir.tl.hill_diversity_profile(adata, groupby="group", target_col="clonotype_", q_min=0, q_max=2, q_step=1)
+
+    # the adapter must reproduce hillrep's coverage-standardized estimate exactly
+    ref = hillrep.compare(_HILL_COUNTS, level="coverage", q=[0.0, 1.0, 2.0], n_boot=0)
+    expected = ref.pivot(index="order_q", columns="assemblage", values="qD")
+
+    assert list(res.columns) == ["A", "B"]
+    for q in (0.0, 1.0, 2.0):
+        for grp in ("A", "B"):
+            npt.assert_allclose(res.loc[q, grp], expected.loc[q, grp], rtol=1e-9)
+
+
+@pytest.mark.extra
+def test_hill_diversity_profile_warns_when_not_comparable():
+    # group "A" is heavily undersampled with no doubletons: a fair comparison is not supported
+    counts = {"A": [3, 1, 1, 1, 1], "B": [120, 60, 40, 30, 20, 12, 8, 5, 3, 2, 1, 1]}
+    adata = _adata_from_counts(counts)
+    with pytest.warns(UserWarning, match="cannot be compared"):
+        ir.tl.hill_diversity_profile(adata, groupby="group", target_col="clonotype_")
+
+
+@pytest.mark.extra
+def test_convert_hill_table():
+    adata = _adata_from_counts(_HILL_COUNTS)
+    profile = ir.tl.hill_diversity_profile(adata, groupby="group", target_col="clonotype_", q_min=0, q_max=2, q_step=1)
+
+    div = ir.tl.convert_hill_table(profile, convert_to="diversity")
+    assert list(div.index) == ["Observed richness", "Shannon entropy", "Inverse Simpson", "Gini-Simpson"]
+    npt.assert_allclose(div.loc["Observed richness"].to_numpy(dtype=float), profile.loc[0].to_numpy(dtype=float))
+    npt.assert_allclose(div.loc["Shannon entropy"].to_numpy(dtype=float), np.log(profile.loc[1].to_numpy(dtype=float)))
+    npt.assert_allclose(div.loc["Inverse Simpson"].to_numpy(dtype=float), profile.loc[2].to_numpy(dtype=float))
+    npt.assert_allclose(div.loc["Gini-Simpson"].to_numpy(dtype=float), 1 - 1 / profile.loc[2].to_numpy(dtype=float))
+
+    with pytest.raises(ValueError):
+        ir.tl.convert_hill_table(profile, convert_to="not_a_mode")
