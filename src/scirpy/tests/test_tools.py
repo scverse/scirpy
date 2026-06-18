@@ -1165,3 +1165,41 @@ def test_convert_hill_table():
 
     with pytest.raises(ValueError):
         ir.tl.convert_hill_table(profile, convert_to="not_a_mode")
+
+
+def test_convert_hill_table_modes():
+    # operates on a plain DataFrame, so it needs no optional dependency
+    profile = pd.DataFrame({"A": [10.0, 6.0, 4.0], "B": [20.0, 12.0, 8.0]}, index=[0, 1, 2])
+
+    div = ir.tl.convert_hill_table(profile, convert_to="diversity")
+    npt.assert_allclose(div.loc["Shannon entropy"].to_numpy(dtype=float), np.log(profile.loc[1].to_numpy(dtype=float)))
+    npt.assert_allclose(div.loc["Gini-Simpson"].to_numpy(dtype=float), 1 - 1 / profile.loc[2].to_numpy(dtype=float))
+
+    ef = ir.tl.convert_hill_table(profile, convert_to="evenness_factor")
+    npt.assert_allclose(ef.to_numpy(dtype=float), (profile / profile.loc[0]).to_numpy(dtype=float))
+
+    rel = ir.tl.convert_hill_table(profile, convert_to="relative_evenness")
+    npt.assert_allclose(rel.to_numpy(dtype=float), (np.log(profile) / np.log(profile.loc[0])).to_numpy(dtype=float))
+
+    with pytest.raises(ValueError, match="Invalid"):
+        ir.tl.convert_hill_table(profile, convert_to="nope")
+
+    with pytest.raises(ValueError, match="missing diversity order"):
+        ir.tl.convert_hill_table(profile.drop(index=2), convert_to="diversity")
+
+
+def test_hill_diversity_profile_requires_hillrep(monkeypatch):
+    import builtins
+
+    from scirpy.tl import _diversity
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "hillrep":
+            raise ImportError("simulated missing hillrep")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    with pytest.raises(ImportError, match="pip install hillrep"):
+        _diversity._import_hillrep()
