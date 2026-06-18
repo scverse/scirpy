@@ -218,7 +218,7 @@ lint.pydocstyle.convention = "numpy"
 
 [tool.pytest]
 addopts = [
-  "--import-mode=importlib", # allow using test files with same name
+  "--import-mode=importlib",      # allow using test files with same name
   "-m not gpu and not dandelion", # dandelion breaks too often because of version conflicts (itroduces a ton of transitive dependencies)
 ]
 markers = [
