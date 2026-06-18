@@ -43,7 +43,7 @@ dependencies = [
 ]
 optional-dependencies.cupy = [ "cupy-cuda12x" ]
 optional-dependencies.dandelion = [ "sc-dandelion>=0.3.5" ]
-optional-dependencies.diversity = [ "scikit-bio>=0.5.7" ]
+optional-dependencies.diversity = [ "hillrep>=0.3", "scikit-bio>=0.5.7" ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS
   "parasail!=1.2.1",
@@ -79,6 +79,7 @@ doc = [
   "nbconvert",
   "pycairo",
   "sc-dandelion>=0.5",
+  "scirpy[diversity]",               # hillrep for the Hill diversity tutorial section
   "sphinx>=7,<7.4",                  # https://github.com/sphinx-doc/sphinx/issues/12589
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
