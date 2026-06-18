@@ -59,7 +59,7 @@ test = [
   "anndata>=0.12",
   "black",
   "coverage",
-  "pytest",
+  "pytest!=9.1",                          # https://github.com/pytest-dev/pytest/issues/14591
   "rectangle-packer",
   "scirpy[dandelion,diversity,parasail]",
 ]
@@ -104,11 +104,24 @@ envs.gpu.scripts.test = "pytest -m gpu"
 envs.gpu.dependency-groups = [ "gpu", "test", "dev" ]
 envs.hatch-test.matrix = [
   # Test the lowest and highest supported Python versions with normal deps
-  { deps = [ "stable" ], python = [ "3.12", "3.14" ] },
+  { deps = [
+    "stable",
+  ], python = [
+    "3.12",
+    "3.14",
+  ] },
   # Test the lowest supported package versions with the lowest supported python version
-  { deps = [ "minver" ], python = [ "3.12" ] },
+  { deps = [
+    "minver",
+  ], python = [
+    "3.12",
+  ] },
   # Test the newest supported Python version also with pre-release deps
-  { deps = [ "pre" ], python = [ "3.14" ] },
+  { deps = [
+    "pre",
+  ], python = [
+    "3.14",
+  ] },
 ]
 # If the matrix variable `deps` is set to "minver", install minimum versions.
 envs.hatch-test.overrides.matrix.deps.dependencies = [
