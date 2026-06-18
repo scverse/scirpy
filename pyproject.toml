@@ -59,9 +59,9 @@ test = [
   "anndata>=0.12",
   "black",
   "coverage",
-  "pytest!=9.1",                          # https://github.com/pytest-dev/pytest/issues/14591
+  "pytest!=9.1",                # https://github.com/pytest-dev/pytest/issues/14591
   "rectangle-packer",
-  "scirpy[dandelion,diversity,parasail]",
+  "scirpy[diversity,parasail]",
 ]
 doc = [
   "docutils>=0.8,!=0.18.*,!=0.19.*",
@@ -78,7 +78,7 @@ doc = [
   # for executing notebooks on CI
   "nbconvert",
   "pycairo",
-  "sc-dandelion",
+  "sc-dandelion>=0.5",
   "sphinx>=7,<7.4",                  # https://github.com/sphinx-doc/sphinx/issues/12589
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
@@ -220,6 +220,7 @@ lint.pydocstyle.convention = "numpy"
 addopts = [
   "--import-mode=importlib", # allow using test files with same name
   "-m not gpu",
+  "-m not dandelion",        # dandelion breaks too often because of version conflicts (itroduces a ton of transitive dependencies)
 ]
 markers = [
   "conda: marks a subset of tests to be ran on the Bioconda CI.",
