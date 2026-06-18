@@ -247,6 +247,7 @@ def test_write_airr_none_field_issue_454(tmp_path):
 
 # @pytest.mark.xfail(reason="dandelion is incompatible with latest anndata", raises=ImportError)
 @pytest.mark.extra
+@pytest.mark.dandelion
 @pytest.mark.parametrize(
     "anndata_from_10x_sample",
     [

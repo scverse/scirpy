@@ -48,7 +48,7 @@ tests:
     requirements:
       run:
         - hatch-vcs
-        - pytest
+        - pytest !=9.1.0
         - leidenalg
         - jupytext
         - pycairo
