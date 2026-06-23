@@ -16,6 +16,7 @@ from scirpy.ir_dist.metrics import (
     LevenshteinDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
+    _substitution_to_distance_matrix,
 )
 
 from .util import _squarify
@@ -64,6 +65,62 @@ def test_squarify():
                 [0, 2, 1, 2],
                 [0, 2, 2, 1],
             ]
+        ),
+    )
+
+
+def test_substitution_to_distance_matrix_converts_substitution_matrix():
+    substitution_matrix = np.array(
+        [
+            [4, 3, 0, -1],
+            [3, 4, 2, 1],
+            [0, 2, 4, -2],
+            [-1, 1, -2, 4],
+        ],
+        dtype=np.int32,
+    )
+
+    distance_matrix = _substitution_to_distance_matrix(
+        substitution_matrix,
+        alphabet="ABCD*",
+        matrix_alphabet="ABCD",
+        distance_cap=4,
+        distance_offset=4,
+    )
+
+    npt.assert_array_equal(
+        distance_matrix,
+        np.array(
+            [
+                [0, 1, 4, 4, 0],
+                [1, 0, 2, 3, 0],
+                [4, 2, 0, 4, 0],
+                [4, 3, 4, 0, 0],
+                [0, 0, 0, 0, 0],
+            ],
+            dtype=np.int32,
+        ),
+    )
+
+    uncapped_distance_matrix = _substitution_to_distance_matrix(
+        substitution_matrix,
+        alphabet="ABCD*",
+        matrix_alphabet="ABCD",
+        distance_cap=None,
+        distance_offset=4,
+    )
+
+    npt.assert_array_equal(
+        uncapped_distance_matrix,
+        np.array(
+            [
+                [0, 1, 4, 5, 0],
+                [1, 0, 2, 3, 0],
+                [4, 2, 0, 6, 0],
+                [5, 3, 6, 0, 0],
+                [0, 0, 0, 0, 0],
+            ],
+            dtype=np.int32,
         ),
     )
 
@@ -662,6 +719,96 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 0, 21], [0, 1, 21], [21, 21, 1]]),
         ),
+        # test base_matrix selection with a simple sequence pair
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 13, 13], [13, 1, 13], [13, 13, 1]]),
+        ),
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+                "base_matrix": "blosum62",
+                "chain_type": "VDJ",
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 13, 13], [13, 1, 13], [13, 13, 1]]),
+        ),
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VJ",
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 7, 16], [7, 1, 10], [16, 10, 1]]),
+        ),
+        (
+            {
+                "cutoff": 20,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VDJ",
+            },
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 0, 19], [0, 1, 10], [19, 10, 1]]),
+        ),
+        # test expected_result for a second simple sequence pair
+        (
+            {
+                "cutoff": 1000,
+                "n_jobs": 1,
+                "base_matrix": "blosum62",
+            },
+            (
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+            ),
+            np.array([[1, 22, 25], [22, 1, 25], [25, 25, 1]]),
+        ),
+        (
+            {
+                "cutoff": 1000,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VJ",
+            },
+            (
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+            ),
+            np.array([[1, 13, 31], [13, 1, 19], [31, 19, 1]]),
+        ),
+        (
+            {
+                "cutoff": 1000,
+                "n_jobs": 1,
+                "base_matrix": "tcrblosum",
+                "chain_type": "VDJ",
+            },
+            (
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+                np.array(["AAACAKAA", "AAARAQAA", "AAAHAWAA"]),
+            ),
+            np.array([[1, 34, 28], [34, 1, 19], [28, 19, 1]]),
+        ),
     ],
 )
 def test_tcrdist(test_parameters, test_input, expected_result):
@@ -671,6 +818,81 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
+
+def test_sequence_dist_tcrdist_tcrblosum():
+    # `sequence_dist` needs an explicit `chain_type` for `tcrdist` with `tcrblosum`;
+    # `ir_dist` handles this automatically.
+    seqs = np.array(["AAACAAAA", "AAARAAAA"])
+    res = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+    )
+    npt.assert_array_equal(res.toarray(), np.array([[1, 7], [7, 1]]))
+
+
+def test_sequence_dist_tcrdist_distance_cap():
+    seqs = np.array(["AAACAAAA", "AAAHAAAA"])
+
+    default_tcrblosum = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+    )
+    npt.assert_array_equal(default_tcrblosum.toarray(), np.array([[1, 16], [16, 1]]))
+
+    capped_tcrblosum = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+        distance_cap=4,
+    )
+    npt.assert_array_equal(capped_tcrblosum.toarray(), np.array([[1, 13], [13, 1]]))
+
+    custom_capped_tcrblosum = ir.ir_dist.sequence_dist(
+        seqs,
+        metric="tcrdist",
+        cutoff=20,
+        n_jobs=1,
+        base_matrix="tcrblosum",
+        chain_type="VJ",
+        distance_cap=2,
+    )
+    npt.assert_array_equal(custom_capped_tcrblosum.toarray(), np.array([[1, 7], [7, 1]]))
+
+    uncapped_blosum62 = ir.ir_dist.sequence_dist(
+        np.array(["AAACAAAA", "AAARAAAA"]),
+        metric="tcrdist",
+        cutoff=1000,
+        n_jobs=1,
+        base_matrix="blosum62",
+        distance_cap=None,
+    )
+    npt.assert_array_equal(uncapped_blosum62.toarray(), np.array([[1, 22], [22, 1]]))
+
+
+@pytest.mark.parametrize(
+    "kwargs,match",
+    [
+        ({"base_matrix": "tcrblosum"}, r"`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`\."),
+        ({"base_matrix": "foo"}, r"Unknown `base_matrix`: 'foo'"),
+        ({"distance_cap": -1}, r"`distance_cap` must be non-negative, `None`, or 'default'\."),
+        ({"distance_cap": "foo"}, r"`distance_cap` must be non-negative, `None`, or 'default'\."),
+    ],
+)
+def test_tcrdist_base_matrix_validation(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        TCRdistDistanceCalculator(**kwargs)
 
 
 def test_tcrdist_reference():
