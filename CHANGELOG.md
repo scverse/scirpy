@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Additions
+
+  - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
+    `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
+
 ### Performance improvements
 
  - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
