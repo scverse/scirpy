@@ -17,7 +17,11 @@ and this project adheres to [Semantic Versioning][].
 
 ### Performance improvements
 
-  - Speed up identity distance metric computation for comparisons between two different sequence arrays.
+ - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
+
+### Chore
+
+ - Clean up unneeded dependency constraints in pyproject.toml ([#718](https://github.com/scverse/scirpy/pull/718)).
 
 ## v0.24.0
 

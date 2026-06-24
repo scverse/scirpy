@@ -19,7 +19,7 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "adjusttext>=0.7",
-  "airr>=1.4.1",
+  "airr>=1.6.1",
   "anndata>=0.9",
   "awkward>=2.1",
   # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
@@ -37,12 +37,11 @@ dependencies = [
   "scanpy>=1.9.3",
   "scikit-learn",
   "scipy",
-  "setuptools<82",                        # workaround until airr package is fixed https://github.com/airr-community/airr-standards/issues/856
   "squarify",
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
 optional-dependencies.cupy = [ "cupy-cuda12x" ]
-optional-dependencies.dandelion = [ "sc-dandelion>=0.3.5" ]
+optional-dependencies.dandelion = [ "sc-dandelion>=0.5" ]
 optional-dependencies.diversity = [ "scikit-bio>=0.5.7" ]
 optional-dependencies.parasail = [
   # parasail 1.2.1 fails to be installd on MacOS
@@ -57,15 +56,13 @@ urls.Source = "https://github.com/scverse/scirpy"
 dev = [ "pre-commit" ]
 test = [
   "anndata>=0.12",
-  "black",
   "coverage",
-  "pytest!=9.1",                # https://github.com/pytest-dev/pytest/issues/14591
-  "rectangle-packer",
-  "scirpy[diversity,parasail]",
+  "pytest!=9.1",                      # https://github.com/pytest-dev/pytest/issues/14591
+  "scirpy[diversity,parasail,rpack]",
 ]
 doc = [
+  # includes dependencies to run notebooks on CI
   "docutils>=0.8,!=0.18.*,!=0.19.*",
-  # for tutorial
   "ipykernel",
   "ipython",
   "ipywidgets",
@@ -75,11 +72,10 @@ doc = [
   "muon>0.1.6",
   "myst-nb",
   "myst-nb>=1.1",
-  # for executing notebooks on CI
   "nbconvert",
   "pycairo",
-  "sc-dandelion>=0.5",
-  "sphinx>=7,<7.4",                  # https://github.com/sphinx-doc/sphinx/issues/12589
+  "scirpy[dandelion]",
+  "sphinx>=7",
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
   "sphinx-copybutton",
