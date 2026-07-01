@@ -775,18 +775,19 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    For performance reasons, the computation of the final result matrix is split up into several blocks. The parameter
-    gpu_col_blocks determines the number of those blocks. The parameter gpu_block_width determines how much GPU memory
-    is reserved for the computed result of each block in SPARSE representation.
+    For performance reasons, the computation of the final result matrix is split into a grid of row and column blocks.
+    `gpu_row_blocks` splits the query sequences into horizontal chunks, while `gpu_col_blocks` splits the reference
+    sequences into vertical chunks. Each row/column block pair is computed on the GPU and converted to a sparse CSR
+    block before the blocks are combined again.
 
-    E.g. there is a 1000x1000 (dense represenation) not yet computed result matrix with gpu_col_blocks=10 and gpu_block_width=20.
-    Then the result matrix is computed in 10 blocks of  1000x100 (dense representation). Each of these blocks needs to fit into
-    a 1000x20 block in SPARSE representation once computed and this 1000x20 block needs to fit into GPU memory. So there shouldn't
-    be a resulting row in a block that has more than 20 values <= cutoff.
+    `gpu_block_width` controls how many sparse result entries are reserved per row for each row/column block pair.
+    For example, with a 1000 x 1000 dense result matrix, `gpu_row_blocks=2`, `gpu_col_blocks=10`, and
+    `gpu_block_width=20`, each GPU block covers roughly 500 x 100 dense comparisons and reserves enough GPU memory
+    for at most 20 retained distances below the cutoff per row in that block. Therefore, no row within a single row/column block pair
+    may contain more than `gpu_block_width` distances `<= cutoff`.
 
-    The parameter gpu_block_width should be chosen based on the available GPU memory. Choosing lower values for gpu_col_blocks increases
-    the performance but also increases the risk of running out of reserved memory, since the result blocks that need to fit into the
-    reserved GPU memory in sparse representation get bigger.
+    Larger numbers of row or column blocks reduce per-block memory pressure but add block-management overhead. Larger
+    values for `gpu_block_width` can avoid sparse buffer overflows but require more GPU memory.
 
     Parameters
     ----------
@@ -794,18 +795,14 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
     gpu_col_blocks:
-        Number of blocks in which the final result matrix should be computed. Each block reserves GPU memory
-        in which the computed result block has to fit in sparse representation. Lower values give better performance
-        but increase the risk of running out of reserved memory. This value should be chosen based on the
-        estimated sparsity of the result matrix and the size of the GPU device memory.
+        Number of column blocks used to split the final result matrix. Lower values reduce block-management overhead
+        but increase the size of each GPU block and therefore memory pressure.
     gpu_row_blocks:
-        Number of row blocks in which the final result matrix should be computed. Higher values can reduce
-        memory pressure and improve length homogeneity within a row block, but also add block-management overhead.
+        Number of row blocks used to split the final result matrix. Higher values reduce per-block memory pressure
+        and can improve sequence length homogeneity within a block, but add block-management overhead.
     gpu_block_width:
-        Maximum width of blocks in which the final result matrix should be computed. Each block reserves GPU memory
-        in which the computed result block has to fit in sparse representation. Higher values allow for a lower
-        number of result blocks (gpu_col_blocks) which increases the performance. This value should be chosen based on
-        the GPU device memory.
+        Maximum number of retained sparse entries per row and row/column block pair. Higher values tolerate denser
+        results within a block but require more GPU memory.
     benchmark:
         If True, print coarse-grained timings for the main phases of the GPU hamming calculation.
     """
