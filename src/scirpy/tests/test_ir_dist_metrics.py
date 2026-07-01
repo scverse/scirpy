@@ -970,6 +970,20 @@ def test_gpu_hamming_cutoff_guard():
         GPUHammingDistanceCalculator(cutoff=126)
 
 
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"gpu_col_blocks": 0}, "`gpu_col_blocks` must be >= 1"),
+        ({"gpu_row_blocks": 0}, "`gpu_row_blocks` must be >= 1"),
+        ({"gpu_block_width": 0}, "`gpu_block_width` must be >= 1"),
+    ],
+)
+def test_gpu_hamming_block_parameter_guards(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        GPUHammingDistanceCalculator(**kwargs)
+
+
 def test_hamming_histogram_reference():
     from . import TESTDATA
 

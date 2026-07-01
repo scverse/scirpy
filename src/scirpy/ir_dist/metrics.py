@@ -825,6 +825,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 "GPUHammingDistanceCalculator only supports cutoff <= 125 because the intermediate "
                 "GPU buffer stores distances as signed int8 values and uses distance + 1 encoding."
             )
+        if gpu_col_blocks < 1:
+            raise ValueError("`gpu_col_blocks` must be >= 1.")
+        if gpu_row_blocks < 1:
+            raise ValueError("`gpu_row_blocks` must be >= 1.")
+        if gpu_block_width < 1:
+            raise ValueError("`gpu_block_width` must be >= 1.")
         self.cutoff = cutoff
         self.gpu_col_blocks = gpu_col_blocks
         self.gpu_row_blocks = gpu_row_blocks
