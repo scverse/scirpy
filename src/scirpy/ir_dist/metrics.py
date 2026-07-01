@@ -776,15 +776,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
     For performance reasons, the computation of the final result matrix is split up into several blocks. The parameter
-    gpu_n_blocks determines the number of those blocks. The parameter gpu_block_width determines how much GPU memory
+    gpu_col_blocks determines the number of those blocks. The parameter gpu_block_width determines how much GPU memory
     is reserved for the computed result of each block in SPARSE representation.
 
-    E.g. there is a 1000x1000 (dense represenation) not yet computed result matrix with gpu_n_blocks=10 and gpu_block_width=20.
+    E.g. there is a 1000x1000 (dense represenation) not yet computed result matrix with gpu_col_blocks=10 and gpu_block_width=20.
     Then the result matrix is computed in 10 blocks of  1000x100 (dense representation). Each of these blocks needs to fit into
     a 1000x20 block in SPARSE representation once computed and this 1000x20 block needs to fit into GPU memory. So there shouldn't
     be a resulting row in a block that has more than 20 values <= cutoff.
 
-    The parameter gpu_block_width should be chosen based on the available GPU memory. Choosing lower values for gpu_n_blocks increases
+    The parameter gpu_block_width should be chosen based on the available GPU memory. Choosing lower values for gpu_col_blocks increases
     the performance but also increases the risk of running out of reserved memory, since the result blocks that need to fit into the
     reserved GPU memory in sparse representation get bigger.
 
@@ -793,29 +793,43 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     cutoff:
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
-    gpu_n_blocks:
+    gpu_col_blocks:
         Number of blocks in which the final result matrix should be computed. Each block reserves GPU memory
         in which the computed result block has to fit in sparse representation. Lower values give better performance
         but increase the risk of running out of reserved memory. This value should be chosen based on the
         estimated sparsity of the result matrix and the size of the GPU device memory.
+    gpu_row_blocks:
+        Number of row blocks in which the final result matrix should be computed. Higher values can reduce
+        memory pressure and improve length homogeneity within a row block, but also add block-management overhead.
     gpu_block_width:
         Maximum width of blocks in which the final result matrix should be computed. Each block reserves GPU memory
         in which the computed result block has to fit in sparse representation. Higher values allow for a lower
-        number of result blocks (gpu_n_blocks) which increases the performance. This value should be chosen based on
+        number of result blocks (gpu_col_blocks) which increases the performance. This value should be chosen based on
         the GPU device memory.
+    benchmark:
+        If True, print coarse-grained timings for the main phases of the GPU hamming calculation.
     """
 
     def __init__(
         self,
         *,
         cutoff: int = 2,
-        gpu_n_blocks: int = 10,
+        gpu_col_blocks: int = 10,
+        gpu_row_blocks: int = 1,
         gpu_block_width: int = 1000,
+        benchmark: bool = False,
     ):
         super().__init__(n_jobs=1, n_blocks=1)
+        if cutoff > 126:
+            raise ValueError(
+                "GPUHammingDistanceCalculator only supports cutoff <= 126 because the intermediate "
+                "GPU buffer stores distances as signed int8 values and uses distance + 1 encoding."
+            )
         self.cutoff = cutoff
-        self.gpu_n_blocks = gpu_n_blocks
+        self.gpu_col_blocks = gpu_col_blocks
+        self.gpu_row_blocks = gpu_row_blocks
         self.gpu_block_width = gpu_block_width
+        self.benchmark = benchmark
 
     def _gpu_hamming_mat(
         self,
@@ -854,18 +868,49 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             not implemented for the GPU hamming calculator yet.
         """
         import cupy as cp
+        import time
         from tqdm import tqdm
 
-        seqs_lengths = np.vectorize(len)(seqs)
-        seqs_original_indices = np.argsort(seqs_lengths)
-        seqs = seqs[seqs_original_indices]
+        benchmark = self.benchmark
+        benchmark_timers: dict[str, float] = {}
+        benchmark_wall_start = time.perf_counter()
 
-        seqs2_lengths = np.vectorize(len)(seqs2)
-        seqs2_original_indices = np.argsort(seqs2_lengths)
-        seqs2 = seqs2[seqs2_original_indices]
+        def _benchmark_add(label: str, start: float) -> None:
+            if benchmark:
+                benchmark_timers[label] = benchmark_timers.get(label, 0.0) + (time.perf_counter() - start)
 
-        seqs_original_indices = cp.asarray(seqs_original_indices, dtype=np.int32)
-        seqs2_original_indices = cp.asarray(seqs2_original_indices, dtype=np.int32)
+        n_col_blocks = self.gpu_col_blocks
+        n_row_blocks = self.gpu_row_blocks
+
+        phase_start = time.perf_counter()
+        seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
+        seqs_sorted_per_block = []
+        seqs_original_indices_blocks = []
+
+        for seqs_block in seqs_blocks:
+            seqs_block_lengths = np.vectorize(len)(seqs_block)
+            seqs_block_sort_indices = np.argsort(seqs_block_lengths)
+            seqs_sorted_per_block.append(seqs_block[seqs_block_sort_indices])
+            seqs_original_indices_blocks.append(cp.asarray(seqs_block_sort_indices.astype(np.int32)))
+
+        seqs = np.concatenate(seqs_sorted_per_block)
+
+        seqs2_blocks = np.array_split(np.asarray(seqs2), n_col_blocks)
+        seqs2_sorted_per_block = []
+        seqs2_original_indices_blocks = []
+        seqs2_block_start = 0
+
+        for seqs2_block in seqs2_blocks:
+            seqs2_block_lengths = np.vectorize(len)(seqs2_block)
+            seqs2_block_sort_indices = np.argsort(seqs2_block_lengths)
+            seqs2_sorted_per_block.append(seqs2_block[seqs2_block_sort_indices])
+            seqs2_original_indices_blocks.append(
+                cp.asarray((seqs2_block_sort_indices + seqs2_block_start).astype(np.int32))
+            )
+            seqs2_block_start += len(seqs2_block)
+
+        seqs2 = np.concatenate(seqs2_sorted_per_block)
+        _benchmark_add("preprocess_and_sort", phase_start)
 
         is_symmetric = False
 
@@ -881,17 +926,23 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 L[i] = len(seq)
             return mat, L
 
+        phase_start = time.perf_counter()
         try:
             seqs_mat1, seqs_L1 = _seqs2mat_fast(seqs, max_len=max_seq_len)
             seqs_mat2, seqs_L2 = _seqs2mat_fast(seqs2, max_len=max_seq_len)
+            _benchmark_add("seqs2mat_fast", phase_start)
         except UnicodeError:
+            _benchmark_add("seqs2mat_fast", phase_start)
             logging.info(
                 "UnicodeError error occurred while converting sequences, retrying with implementation for non ascii sequences"
             )
             unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
+            phase_start = time.perf_counter()
             seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
             seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
+            _benchmark_add("seqs2mat_fallback", phase_start)
 
+        phase_start = time.perf_counter()
         hamming_kernel = cp.RawKernel(
             r"""
         extern "C" __global__ __launch_bounds__(256)
@@ -933,12 +984,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
                                 if(val1 != val2) {
                                     distance++;
+                                    if (distance > cutoff + 1) {
+                                        break;
+                                    }
                                 }
                             }
                             if (distance <= cutoff + 1) {
                                 int seqs2_original_index = seqs2_original_indices[col];
-                                data[seqs_original_index * data_cols + row_end_index] = distance;
-                                indices[seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
+                                data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
+                                indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
                                 row_end_index++;
                             }
                         }
@@ -970,24 +1024,32 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 int data_index = row_start + col;
 
                 if ((data_index < data_rows) && (col < row_end_index)) {
-                    data[data_index] = data_matrix[row * data_matrix_cols + col];
-                    indices[data_index] = indices_matrix[row * indices_matrix_cols + col];
+                    data[data_index] = data_matrix[(long long)row * data_matrix_cols + col];
+                    indices[data_index] = indices_matrix[(long long)row * indices_matrix_cols + col];
                 }
             }
         }
-        """,
+            """,
             "create_csr_kernel",
         )
+        _benchmark_add("kernel_setup", phase_start)
 
-        def calc_block_gpu(
-            seqs_mat1, seqs_mat2_block, seqs_L1_block, seqs_L2, seqs2_original_indices_blocks, block_offset
+        def calc_col_block_gpu(
+            seqs_mat1,
+            seqs_mat2_block,
+            seqs_L1_block,
+            seqs_L2,
+            seqs_original_indices_block,
+            seqs2_original_indices_block,
+            block_offset,
         ):
-            import cupy as cp
-
+            block_start = time.perf_counter()
+            phase_start = time.perf_counter()
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
             d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8))
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32))
             d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32))
+            _benchmark_add("gpu_transfer_to_device", phase_start)
 
             # Due to performance reasons and since we expect the result matrix to be very sparse, we
             # set a maximum result width for the current block
@@ -1005,9 +1067,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_data_matrix_cols = max_block_width
             d_indices_matrix_cols = max_block_width
 
+            phase_start = time.perf_counter()
             d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
             d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
+            _benchmark_add("gpu_transpose_copy", phase_start)
 
+            phase_start = time.perf_counter()
             hamming_kernel(
                 (blocks_per_grid,),
                 (threads_per_block,),
@@ -1016,8 +1081,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_seqs_mat2_transposed,
                     d_seqs_L1,
                     d_seqs_L2,
-                    seqs_original_indices,
-                    seqs2_original_indices_blocks,
+                    seqs_original_indices_block,
+                    seqs2_original_indices_block,
                     self.cutoff,
                     d_data_matrix,
                     d_indices_matrix,
@@ -1032,8 +1097,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     is_symmetric,
                 ),
             )
+            cp.cuda.Stream.null.synchronize()
+            _benchmark_add("gpu_hamming_kernel", phase_start)
 
+            phase_start = time.perf_counter()
             row_element_counts = d_row_element_counts.get()
+            _benchmark_add("gpu_row_counts_get", phase_start)
             row_max_len = np.max(row_element_counts)
             row_element_sum = np.sum(row_element_counts, dtype=np.int64)
 
@@ -1064,6 +1133,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
             blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
 
+            phase_start = time.perf_counter()
             create_csr_kernel(
                 (blocks_per_grid_x, blocks_per_grid_y),
                 threads_per_block,
@@ -1079,50 +1149,29 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_indices_matrix.shape[1],
                 ),
             )
+            cp.cuda.Stream.null.synchronize()
+            _benchmark_add("gpu_create_csr_kernel", phase_start)
 
+            phase_start = time.perf_counter()
             data = d_data.get()
             indptr = d_indptr.get()
             indices = d_indices.get()
+            _benchmark_add("gpu_transfer_to_host", phase_start)
 
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
+            _benchmark_add("gpu_col_blocks_total", block_start)
             return res
 
-        # Set the number of blocks for the calculation. A higher number can be more memory friendly, whereas
-        # a lower number can improve the performance.
-        n_blocks = self.gpu_n_blocks
-
-        seqs_mat2_blocks = np.array_split(seqs_mat2, n_blocks)
-        seqs_L2_blocks = np.array_split(seqs_L2, n_blocks)
-        seqs2_original_indices_blocks = np.array_split(seqs2_original_indices, n_blocks)
-        result_blocks = [None] * n_blocks
-
-        block_offset = start_column
+        phase_start = time.perf_counter()
+        seqs_mat1_blocks = np.array_split(seqs_mat1, n_row_blocks)
+        seqs_L1_blocks = np.array_split(seqs_L1, n_row_blocks)
+        seqs_mat2_blocks = np.array_split(seqs_mat2, n_col_blocks)
+        seqs_L2_blocks = np.array_split(seqs_L2, n_col_blocks)
+        _benchmark_add("matrix_block_split", phase_start)
 
         logging.info(
-            f"\nStart GPU calculations for {n_blocks} sparse matrix result blocks of max width {self.gpu_block_width}:"
+            f"\nStart GPU calculations for {n_row_blocks} row blocks x {n_col_blocks} column blocks of max width {self.gpu_block_width}:"
         )
-
-        for i in tqdm(range(0, n_blocks), desc="Processing", unit="block"):
-            result_blocks[i] = calc_block_gpu(
-                seqs_mat1,
-                seqs_mat2_blocks[i],
-                seqs_L1,
-                seqs_L2_blocks[i],
-                seqs2_original_indices_blocks[i],
-                block_offset,
-            )
-            block_offset += seqs_mat2_blocks[i].shape[0]
-
-        num_elements = 0
-        for i in range(0, len(result_blocks)):
-            num_elements += result_blocks[i].indptr[-1]
-
-        assert (
-            num_elements <= np.iinfo(np.int32).max
-        ), f"""ERROR: The overall number of result values is too high to construct the final CSR matrix by combining
-        the already calculated blocks.
-        Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
-        Consider choosing a smaller cutoff to resolve this issue."""
 
         @nb.njit
         def csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements):
@@ -1147,6 +1196,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             return data, indices, indptr
 
         def csr_union(blocks):
+            phase_start = time.perf_counter()
             num_rows = blocks[0].shape[0]
             num_elements = sum(b.nnz for b in blocks)
 
@@ -1157,12 +1207,92 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             data, indices, indptr = csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements)
 
             shape = blocks[0].shape
-            return csr_matrix((data, indices, indptr), shape=shape)
+            result = csr_matrix((data, indices, indptr), shape=shape)
+            _benchmark_add("csr_union", phase_start)
+            return result
 
-        result_sparse = csr_union(result_blocks)
+        def calc_row_block_gpu(seqs_mat1_block, seqs_L1_block, seqs_original_indices_block):
+            row_block_start = time.perf_counter()
+            result_blocks = [None] * n_col_blocks
+            block_offset = start_column
+
+            for i in range(0, n_col_blocks):
+                result_blocks[i] = calc_col_block_gpu(
+                    seqs_mat1_block,
+                    seqs_mat2_blocks[i],
+                    seqs_L1_block,
+                    seqs_L2_blocks[i],
+                    seqs_original_indices_block,
+                    seqs2_original_indices_blocks[i],
+                    block_offset,
+                )
+                block_offset += seqs_mat2_blocks[i].shape[0]
+
+            num_elements = 0
+            for i in range(0, len(result_blocks)):
+                num_elements += result_blocks[i].indptr[-1]
+
+            assert (
+                num_elements <= np.iinfo(np.int32).max
+            ), f"""ERROR: The overall number of result values is too high to construct the final CSR matrix by combining
+            the already calculated blocks.
+            Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
+            Consider choosing a smaller cutoff to resolve this issue."""
+
+            result_sparse = csr_union(result_blocks)
+            phase_start = time.perf_counter()
+            result_sparse.sort_indices()
+            _benchmark_add("row_block_sort_indices", phase_start)
+            _benchmark_add("row_block_total", row_block_start)
+            return result_sparse
+
+        row_blocks = [None] * n_row_blocks
+        phase_start = time.perf_counter()
+        with tqdm(total=n_row_blocks * n_col_blocks, desc="Processing", unit="block") as progress_bar:
+            for row_block_idx in range(n_row_blocks):
+                row_blocks[row_block_idx] = calc_row_block_gpu(
+                    seqs_mat1_blocks[row_block_idx],
+                    seqs_L1_blocks[row_block_idx],
+                    seqs_original_indices_blocks[row_block_idx],
+                )
+                progress_bar.update(n_col_blocks)
+        _benchmark_add("all_row_blocks", phase_start)
+
+        phase_start = time.perf_counter()
+        result_sparse = scipy.sparse.vstack(row_blocks, format="csr")
+        _benchmark_add("final_vstack", phase_start)
 
         row_element_counts_gpu = np.diff(result_sparse.indptr)
+        phase_start = time.perf_counter()
         result_sparse.sort_indices()
+        _benchmark_add("final_sort_indices", phase_start)
+
+        if benchmark:
+            total_wall = time.perf_counter() - benchmark_wall_start
+            print("GPU hamming benchmark")
+            print(f"  total_wall: {total_wall:.3f}s")
+            for label in (
+                "preprocess_and_sort",
+                "seqs2mat_fast",
+                "seqs2mat_fallback",
+                "kernel_setup",
+                "matrix_block_split",
+                "gpu_transfer_to_device",
+                "gpu_transpose_copy",
+                "gpu_hamming_kernel",
+                "gpu_row_counts_get",
+                "gpu_create_csr_kernel",
+                "gpu_transfer_to_host",
+                "gpu_col_blocks_total",
+                "csr_union",
+                "row_block_sort_indices",
+                "row_block_total",
+                "all_row_blocks",
+                "final_vstack",
+                "final_sort_indices",
+            ):
+                if label in benchmark_timers:
+                    print(f"  {label}: {benchmark_timers[label]:.3f}s")
 
         # Returns the results in a way that fits the current interface, could be improved later
         return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
