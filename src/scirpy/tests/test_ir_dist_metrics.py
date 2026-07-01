@@ -966,8 +966,8 @@ def test_gpu_hamming_long_sequence():
 
 @pytest.mark.gpu
 def test_gpu_hamming_cutoff_guard():
-    with pytest.raises(ValueError, match="cutoff <= 126"):
-        GPUHammingDistanceCalculator(cutoff=127)
+    with pytest.raises(ValueError, match="cutoff <= 125"):
+        GPUHammingDistanceCalculator(cutoff=126)
 
 
 def test_hamming_histogram_reference():

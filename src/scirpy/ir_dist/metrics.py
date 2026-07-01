@@ -820,9 +820,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         benchmark: bool = False,
     ):
         super().__init__(n_jobs=1, n_blocks=1)
-        if cutoff > 126:
+        if cutoff > 125:
             raise ValueError(
-                "GPUHammingDistanceCalculator only supports cutoff <= 126 because the intermediate "
+                "GPUHammingDistanceCalculator only supports cutoff <= 125 because the intermediate "
                 "GPU buffer stores distances as signed int8 values and uses distance + 1 encoding."
             )
         self.cutoff = cutoff
