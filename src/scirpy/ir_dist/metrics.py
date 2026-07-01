@@ -1109,16 +1109,18 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             row_max_len = np.max(row_element_counts)
             row_element_sum = np.sum(row_element_counts, dtype=np.int64)
 
-            assert (
-                row_max_len <= max_block_width
-            ), f"""ERROR: The chosen result block width is too small to hold all result values of the current block.
-            Chosen width: {max_block_width}, Necessary width: {row_max_len}."""
+            if row_max_len > max_block_width:
+                raise ValueError(
+                    "The chosen result block width is too small to hold all result values of the current block. "
+                    f"Chosen width: {max_block_width}, necessary width: {row_max_len}."
+                )
 
-            assert (
-                row_element_sum <= np.iinfo(np.int32).max
-            ), f"""ERROR: There are too many result values to be held by the resulting CSR matrix of the current block.
-            Current number: {row_element_sum}, Maximum number: {np.iinfo(np.int32).max}.
-            Consider choosing a smaller cutoff to resolve this issue."""
+            if row_element_sum > np.iinfo(np.int32).max:
+                raise ValueError(
+                    "There are too many result values to be held by the resulting CSR matrix of the current block. "
+                    f"Current number: {row_element_sum}, maximum number: {np.iinfo(np.int32).max}. "
+                    "Consider choosing a smaller cutoff to resolve this issue."
+                )
 
             indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
             indptr[1:] = np.cumsum(row_element_counts)
