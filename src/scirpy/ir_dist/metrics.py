@@ -1048,10 +1048,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         ):
             block_start = time.perf_counter()
             phase_start = time.perf_counter()
-            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8))
-            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8))
-            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32))
-            d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32))
+            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8, copy=False))
+            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8, copy=False))
+            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32, copy=False))
+            d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32, copy=False))
             _benchmark_add("gpu_transfer_to_device", phase_start)
 
             # Due to performance reasons and since we expect the result matrix to be very sparse, we
