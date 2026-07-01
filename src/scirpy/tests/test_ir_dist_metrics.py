@@ -954,6 +954,16 @@ def test_hamming_long_sequence():
     assert isinstance(res, scipy.sparse.csr_matrix)
 
 
+def test_hamming_histogram_reference():
+    from . import TESTDATA
+
+    seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
+    hamming_calculator = HammingDistanceCalculator(2, 2, 100, normalize=True, histogram=True)
+    row_mins_ref = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_histogram_result.npy")
+    _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
+    assert np.array_equal(row_mins_ref, row_mins)
+
+
 @pytest.mark.gpu
 def test_gpu_hamming_long_sequence():
     """Regression test for #626 and #682"""
@@ -984,16 +994,6 @@ def test_gpu_hamming_block_parameter_guards(kwargs, message):
         GPUHammingDistanceCalculator(**kwargs)
 
 
-def test_hamming_histogram_reference():
-    from . import TESTDATA
-
-    seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
-    hamming_calculator = HammingDistanceCalculator(2, 2, 100, normalize=True, histogram=True)
-    row_mins_ref = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_histogram_result.npy")
-    _, _, _, row_mins = hamming_calculator._hamming_mat(seqs=seqs, seqs2=seqs)
-    assert np.array_equal(row_mins_ref, row_mins)
-
-
 def test_tcrdist_histogram_not_implemented():
     # Change once histogram is implemented for tcrdist
     with pytest.raises(NotImplementedError, match=None):
@@ -1003,14 +1003,22 @@ def test_tcrdist_histogram_not_implemented():
 
 
 @pytest.mark.gpu
-def test_gpu_hamming_reference():
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"gpu_col_blocks": 5, "gpu_block_width": 500},
+        {"gpu_row_blocks": 3, "gpu_col_blocks": 5, "gpu_block_width": 500},
+        {"gpu_col_blocks": 7, "gpu_block_width": 500},
+    ],
+)
+def test_gpu_hamming_reference(kwargs):
     # test hamming distance against reference implementation
     from . import TESTDATA
 
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
 
-    gpu_hamming_calculator = GPUHammingDistanceCalculator(cutoff=2, gpu_col_blocks=5, gpu_block_width=500)
+    gpu_hamming_calculator = GPUHammingDistanceCalculator(cutoff=2, **kwargs)
     res = gpu_hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
