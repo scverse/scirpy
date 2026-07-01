@@ -923,7 +923,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             if max_len is None:
                 max_len = np.max([len(s) for s in seqs])
             mat = -1 * np.ones((len(seqs), max_len), dtype=np.int8)
-            L = np.zeros(len(seqs), dtype=np.int8 if max_len <= np.iinfo(np.int8).max else np.int16)
+            L = np.zeros(len(seqs), dtype=np.int32)
             for i, seq in enumerate(seqs):
                 mat[i][0 : len(seq)] = np.frombuffer(seq.encode("ascii"), dtype=np.uint8)
                 L[i] = len(seq)
