@@ -182,6 +182,8 @@ nitpick_ignore = [
     ("py:class", "a set-like object providing a view on D's items"),
     ("py:class", "a set-like object providing a view on D's keys"),
     ("py:class", "v, remove specified key and return the corresponding value."),
+    # Python >= 3.13 wraps the `pop` docstring, so the return type token no longer includes "value."
+    ("py:class", "v, remove specified key and return the corresponding"),
     ("py:class", "(k, v), remove and return some (key, value) pair"),
     ("py:class", "D.get(k,d), also set D[k]=d if k not in D"),
     ("py:class", "None.  Update D from mapping/iterable E and F."),
