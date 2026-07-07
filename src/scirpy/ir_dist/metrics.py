@@ -1237,12 +1237,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             for i in range(0, len(result_blocks)):
                 num_elements += result_blocks[i].indptr[-1]
 
-            assert (
-                num_elements <= np.iinfo(np.int32).max
-            ), f"""ERROR: The overall number of result values is too high to construct the final CSR matrix by combining
-            the already calculated blocks.
-            Current number: {num_elements}, Maximum number: {np.iinfo(np.int32).max}.
-            Consider choosing a smaller cutoff to resolve this issue."""
+            if num_elements > np.iinfo(np.int32).max:
+                raise ValueError(
+                    "The overall number of result values is too high to construct the final CSR matrix by combining "
+                    "the already calculated blocks. "
+                    f"Current number: {num_elements}, maximum number: {np.iinfo(np.int32).max}. "
+                    "Consider choosing a smaller cutoff to resolve this issue."
+                )
 
             result_sparse = csr_union(result_blocks)
             phase_start = time.perf_counter()
