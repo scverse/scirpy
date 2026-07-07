@@ -945,8 +945,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const int seqs_mat1_cols,
             const int seqs_mat2_cols,
             const int data_cols,
-            const int indices_cols,
-            const bool is_symmetric
+            const int indices_cols
         ) {
             int row = blockDim.x * blockIdx.x + threadIdx.x;
             if (row < seqs_mat1_rows) {
@@ -955,28 +954,26 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 int row_end_index = 0;
 
                 for (int col = 0; col < seqs_mat2_rows; col++) {
-                    if ((! is_symmetric ) || (col + block_offset) >= row) {
-                        int seq2_len = seqs_L2[col];
-                        char distance = 1;
+                    int seq2_len = seqs_L2[col];
+                    char distance = 1;
 
-                        if (seq1_len == seq2_len) {
-                            for (int i = 0; i < seq1_len; i++) {
-                                char val1 = seqs_mat1[i*seqs_mat1_rows+row];
-                                char val2 = seqs_mat2[i*seqs_mat2_rows+col];
+                    if (seq1_len == seq2_len) {
+                        for (int i = 0; i < seq1_len; i++) {
+                            char val1 = seqs_mat1[i*seqs_mat1_rows+row];
+                            char val2 = seqs_mat2[i*seqs_mat2_rows+col];
 
-                                if(val1 != val2) {
-                                    distance++;
-                                    if (distance > cutoff + 1) {
-                                        break;
-                                    }
+                            if(val1 != val2) {
+                                distance++;
+                                if (distance > cutoff + 1) {
+                                    break;
                                 }
                             }
-                            if (distance <= cutoff + 1) {
-                                int seqs2_original_index = seqs2_original_indices[col];
-                                data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
-                                indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
-                                row_end_index++;
-                            }
+                        }
+                        if (distance <= cutoff + 1) {
+                            int seqs2_original_index = seqs2_original_indices[col];
+                            data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
+                            indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
+                            row_end_index++;
                         }
                     }
                 }
@@ -1069,7 +1066,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     seqs_mat2_cols,
                     d_data_matrix_cols,
                     d_indices_matrix_cols,
-                    False,
                 ),
             )
 
