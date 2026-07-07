@@ -873,6 +873,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         n_row_blocks = self.gpu_row_blocks
 
         seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
+        seqs_block_starts = np.cumsum([0] + [len(block) for block in seqs_blocks[:-1]])
         seqs_sorted_per_block = []
         seqs_original_indices_blocks = []
 
@@ -885,6 +886,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs = np.concatenate(seqs_sorted_per_block)
 
         seqs2_blocks = np.array_split(np.asarray(seqs2), n_col_blocks)
+        seqs2_block_starts = np.cumsum([0] + [len(block) for block in seqs2_blocks[:-1]])
         seqs2_sorted_per_block = []
         seqs2_original_indices_blocks = []
         seqs2_block_start = 0
@@ -1175,9 +1177,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         def calc_row_block_gpu(row_block_idx, seqs_mat1_block, seqs_L1_block, seqs_original_indices_block):
             result_blocks = []
             block_offset = start_column
-            start_col_block = row_block_idx if is_symmetric else 0
+            row_start = seqs_block_starts[row_block_idx]
 
-            for i in range(start_col_block, n_col_blocks):
+            for i in range(0, n_col_blocks):
+                col_end = seqs2_block_starts[i] + seqs_mat2_blocks[i].shape[0]
+                # Skip calculation of blocks below the diagonal if the result matrix is symmetric.
+                if is_symmetric and col_end <= row_start:
+                    block_offset += seqs_mat2_blocks[i].shape[0]
+                    continue
+
                 result_blocks.append(
                     calc_col_block_gpu(
                         seqs_mat1_block,
