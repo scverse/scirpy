@@ -1009,6 +1009,8 @@ def test_tcrdist_histogram_not_implemented():
         {"gpu_col_blocks": 5, "gpu_block_width": 500},
         {"gpu_row_blocks": 3, "gpu_col_blocks": 5, "gpu_block_width": 500},
         {"gpu_col_blocks": 7, "gpu_block_width": 500},
+        {"gpu_row_blocks": 5, "gpu_col_blocks": 3, "gpu_block_width": 500},
+        {"gpu_row_blocks": 11, "gpu_col_blocks": 17, "gpu_block_width": 503},
     ],
 )
 def test_gpu_hamming_reference(kwargs):
