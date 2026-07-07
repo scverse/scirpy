@@ -1174,15 +1174,27 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             result = csr_matrix((data, indices, indptr), shape=shape)
             return result
 
+        def skip_col_block(row_block_idx, col_block_idx):
+            row_start = seqs_block_starts[row_block_idx]
+            col_end = seqs2_block_starts[col_block_idx] + seqs_mat2_blocks[col_block_idx].shape[0]
+            return is_symmetric and col_end <= row_start
+
+        def count_blocks_to_compute():
+            n_blocks_to_compute = 0
+            for row_block_idx in range(n_row_blocks):
+                for col_block_idx in range(n_col_blocks):
+                    if not skip_col_block(row_block_idx, col_block_idx):
+                        n_blocks_to_compute += 1
+            return n_blocks_to_compute
+
         def calc_row_block_gpu(row_block_idx, seqs_mat1_block, seqs_L1_block, seqs_original_indices_block):
             result_blocks = []
+            n_calculated_blocks = 0
             block_offset = start_column
-            row_start = seqs_block_starts[row_block_idx]
 
             for i in range(0, n_col_blocks):
-                col_end = seqs2_block_starts[i] + seqs_mat2_blocks[i].shape[0]
                 # Skip calculation of blocks below the diagonal if the result matrix is symmetric.
-                if is_symmetric and col_end <= row_start:
+                if skip_col_block(row_block_idx, i):
                     block_offset += seqs_mat2_blocks[i].shape[0]
                     continue
 
@@ -1197,10 +1209,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         block_offset,
                     )
                 )
+                n_calculated_blocks += 1
                 block_offset += seqs_mat2_blocks[i].shape[0]
 
             if not result_blocks:
-                return csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0]))
+                return csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0])), n_calculated_blocks
 
             num_elements = 0
             for i in range(0, len(result_blocks)):
@@ -1216,18 +1229,18 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             result_sparse = csr_union(result_blocks)
             result_sparse.sort_indices()
-            return result_sparse
+            return result_sparse, n_calculated_blocks
 
         row_blocks = [None] * n_row_blocks
-        with tqdm(total=n_row_blocks * n_col_blocks, desc="Processing", unit="block") as progress_bar:
+        with tqdm(total=count_blocks_to_compute(), desc="Processing", unit="block") as progress_bar:
             for row_block_idx in range(n_row_blocks):
-                row_blocks[row_block_idx] = calc_row_block_gpu(
+                row_blocks[row_block_idx], n_calculated_blocks = calc_row_block_gpu(
                     row_block_idx,
                     seqs_mat1_blocks[row_block_idx],
                     seqs_L1_blocks[row_block_idx],
                     seqs_original_indices_blocks[row_block_idx],
                 )
-                progress_bar.update(n_col_blocks)
+                progress_bar.update(n_calculated_blocks)
 
         result_sparse = scipy.sparse.vstack(row_blocks, format="csr")
 
