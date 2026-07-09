@@ -1689,6 +1689,10 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
                         continue
 
                     seq2_len = seqs_L2[col_index]
+                    len_diff = abs(seq1_len - seq2_len)
+                    if len_diff * gap_penalty > cutoff:
+                        continue
+
                     min_self_score = self_scores1[row_index]
                     if self_scores2[col_index] < min_self_score:
                         min_self_score = self_scores2[col_index]
