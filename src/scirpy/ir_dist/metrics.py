@@ -1682,13 +1682,14 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
                 row_end_index = 0
                 seq1_len = seqs_L1[row_index]
 
-                for col_index in range(start_column + row_index * is_symmetric, num_cols):
-                    if is_symmetric and col_index == start_column + row_index:
-                        data_row_matrix[thread_id, row_end_index] = 1
-                        indices_row_matrix[thread_id, row_end_index] = col_index
-                        row_end_index += 1
-                        continue
+                col_start = start_column + row_index * is_symmetric
+                if is_symmetric:
+                    data_row_matrix[thread_id, row_end_index] = 1
+                    indices_row_matrix[thread_id, row_end_index] = col_start
+                    row_end_index += 1
+                    col_start += 1
 
+                for col_index in range(col_start, num_cols):
                     seq2_len = seqs_L2[col_index]
                     len_diff = abs(seq1_len - seq2_len)
                     if len_diff * gap_penalty > cutoff:
