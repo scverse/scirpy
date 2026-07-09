@@ -1563,8 +1563,37 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
 
     parasail_aa_alphabet = TCRdistDistanceCalculator.parasail_aa_alphabet
     parasail_aa_alphabet_with_unknown = TCRdistDistanceCalculator.parasail_aa_alphabet_with_unknown
-    matrix_alphabet = TCRdistDistanceCalculator.matrix_alphabet
+    tcrblosum_matrix_alphabet = TCRdistDistanceCalculator.matrix_alphabet
     blosum62_substitution_matrix = TCRdistDistanceCalculator.blosum62_substitution_matrix
+    blosum62_with_ambiguous_substitution_matrix = np.array(
+        [
+            # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V   B   Z   X
+            [ 4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1,  0, -3, -2,  0, -2, -1,  0],  # A
+            [-1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3, -1,  0, -1],  # R
+            [-2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1,  0, -4, -2, -3,  3,  0, -1],  # N
+            [-2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3,  4,  1, -1],  # D
+            [ 0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1, -3, -3, -2],  # C
+            [-1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2,  0,  3, -1],  # Q
+            [-1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1],  # E
+            [ 0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3, -1, -2, -1],  # G
+            [-2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3,  0,  0, -1],  # H
+            [-1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3, -3, -3, -1],  # I
+            [-1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1, -4, -3, -1],  # L
+            [-1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2,  0,  1, -1],  # K
+            [-1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1, -3, -1, -1],  # M
+            [-2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1, -3, -3, -1],  # F
+            [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2, -2, -1, -2],  # P
+            [ 1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4,  1, -3, -2, -2,  0,  0,  0],  # S
+            [ 0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1,  5, -2, -2,  0, -1, -1,  0],  # T
+            [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3, -4, -3, -2],  # W
+            [-2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1, -3, -2, -1],  # Y
+            [ 0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2,  0, -3, -1,  4, -3, -2, -1],  # V
+            [-2, -1,  3,  4, -3,  0,  1, -1,  0, -3, -4,  0, -3, -3, -2,  0, -1, -4, -3, -3,  4,  1, -1],  # B
+            [-1,  0,  0,  1, -3,  3,  4, -2,  0, -3, -3,  1, -1, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1],  # Z
+            [ 0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2,  0,  0, -2, -1, -1, -1, -1, -1],  # X
+        ],
+        dtype=np.int32,
+    )
     tcrblosum_alpha_substitution_matrix = TCRdistDistanceCalculator.tcrblosum_alpha_substitution_matrix
     tcrblosum_beta_substitution_matrix = TCRdistDistanceCalculator.tcrblosum_beta_substitution_matrix
 
@@ -1587,8 +1616,10 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         self.histogram = histogram
 
         if base_matrix == "blosum62":
-            substitution_matrix = self.blosum62_substitution_matrix
+            substitution_matrix = self.blosum62_with_ambiguous_substitution_matrix
+            matrix_alphabet = self.parasail_aa_alphabet
         elif base_matrix == "tcrblosum":
+            matrix_alphabet = self.tcrblosum_matrix_alphabet
             if chain_type == "VJ":
                 substitution_matrix = self.tcrblosum_alpha_substitution_matrix
             elif chain_type == "VDJ":
@@ -1598,18 +1629,18 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         else:
             raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
 
-        self.nw_substitution_matrix = self._make_numba_substitution_matrix(substitution_matrix)
+        self.nw_substitution_matrix = self._make_numba_substitution_matrix(substitution_matrix, matrix_alphabet)
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
 
-    def _make_numba_substitution_matrix(self, substitution_matrix: np.ndarray) -> np.ndarray:
+    def _make_numba_substitution_matrix(self, substitution_matrix: np.ndarray, matrix_alphabet: str) -> np.ndarray:
         score_matrix = np.zeros(
             (len(self.parasail_aa_alphabet_with_unknown), len(self.parasail_aa_alphabet_with_unknown)),
             dtype=np.int32,
         )
-        if substitution_matrix.shape != (len(self.matrix_alphabet), len(self.matrix_alphabet)):
+        if substitution_matrix.shape != (len(matrix_alphabet), len(matrix_alphabet)):
             raise ValueError("`substitution_matrix` must be square and match `matrix_alphabet`.")
-        for i, aa1 in enumerate(self.matrix_alphabet):
-            for j, aa2 in enumerate(self.matrix_alphabet):
+        for i, aa1 in enumerate(matrix_alphabet):
+            for j, aa2 in enumerate(matrix_alphabet):
                 score_matrix[self.parasail_aa_alphabet.index(aa1), self.parasail_aa_alphabet.index(aa2)] = (
                     substitution_matrix[i, j]
                 )
