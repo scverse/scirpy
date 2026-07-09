@@ -1529,6 +1529,220 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     _metric_mat = _tcrdist_mat
 
 
+class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
+    """Computes pairwise global-alignment distances with linear-gap Needleman-Wunsch.
+
+    The distance is computed like the alignment metric:
+    ``min(self_score(seq1), self_score(seq2)) - alignment_score(seq1, seq2)``.
+    With `base_matrix="blosum62"` and a linear gap penalty matching both the
+    gap-open and gap-extension penalties of the parasail alignment metric, this
+    follows the same scoring model for canonical amino-acid sequences.
+
+    Parameters
+    ----------
+    gap_penalty:
+        Linear penalty for each gap position.
+    cutoff:
+        Will eleminate distances > cutoff to make efficient use of sparse matrices.
+    n_jobs:
+        Number of numba parallel threads to use for the pairwise distance calculation.
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel.
+    base_matrix:
+        Amino acid substitution matrix. `"blosum62"` uses BLOSUM62, while
+        `"tcrblosum"` uses TCRBLOSUM alpha/beta substitution matrices depending on
+        `chain_type`.
+    chain_type:
+        Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain matrix
+        and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
+        is set automatically and should not be provided.
+    """
+
+    parasail_aa_alphabet = TCRdistDistanceCalculator.parasail_aa_alphabet
+    parasail_aa_alphabet_with_unknown = TCRdistDistanceCalculator.parasail_aa_alphabet_with_unknown
+    matrix_alphabet = TCRdistDistanceCalculator.matrix_alphabet
+    blosum62_substitution_matrix = TCRdistDistanceCalculator.blosum62_substitution_matrix
+    tcrblosum_alpha_substitution_matrix = TCRdistDistanceCalculator.tcrblosum_alpha_substitution_matrix
+    tcrblosum_beta_substitution_matrix = TCRdistDistanceCalculator.tcrblosum_beta_substitution_matrix
+
+    def __init__(
+        self,
+        cutoff: int | None = 10,
+        *,
+        gap_penalty: int = 11,
+        n_jobs: int = -1,
+        n_blocks: int = 1,
+        histogram: bool = False,
+        base_matrix: Literal["blosum62", "tcrblosum"] = "blosum62",
+        chain_type: Literal["VJ", "VDJ"] | None = None,
+    ):
+        if gap_penalty < 0:
+            raise ValueError("`gap_penalty` must be non-negative.")
+
+        self.cutoff = 10 if cutoff is None else cutoff
+        self.gap_penalty = gap_penalty
+        self.histogram = histogram
+
+        if base_matrix == "blosum62":
+            substitution_matrix = self.blosum62_substitution_matrix
+        elif base_matrix == "tcrblosum":
+            if chain_type == "VJ":
+                substitution_matrix = self.tcrblosum_alpha_substitution_matrix
+            elif chain_type == "VDJ":
+                substitution_matrix = self.tcrblosum_beta_substitution_matrix
+            else:
+                raise ValueError("`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`.")
+        else:
+            raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
+
+        self.nw_substitution_matrix = self._make_numba_substitution_matrix(substitution_matrix)
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
+
+    def _make_numba_substitution_matrix(self, substitution_matrix: np.ndarray) -> np.ndarray:
+        score_matrix = np.zeros(
+            (len(self.parasail_aa_alphabet_with_unknown), len(self.parasail_aa_alphabet_with_unknown)),
+            dtype=np.int32,
+        )
+        if substitution_matrix.shape != (len(self.matrix_alphabet), len(self.matrix_alphabet)):
+            raise ValueError("`substitution_matrix` must be square and match `matrix_alphabet`.")
+        for i, aa1 in enumerate(self.matrix_alphabet):
+            for j, aa2 in enumerate(self.matrix_alphabet):
+                score_matrix[self.parasail_aa_alphabet.index(aa1), self.parasail_aa_alphabet.index(aa2)] = (
+                    substitution_matrix[i, j]
+                )
+        return score_matrix
+
+    def _needleman_wunsch_mat(
+        self,
+        *,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, np.ndarray]:
+        """Computes pairwise linear-gap Needleman-Wunsch distances."""
+        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
+
+        cutoff = self.cutoff
+        gap_penalty = self.gap_penalty
+        substitution_matrix = self.nw_substitution_matrix
+        start_column *= is_symmetric
+
+        nb.set_num_threads(_get_usable_cpus(n_jobs=self.n_jobs, use_numba=True))
+        num_threads = nb.get_num_threads()
+        jit_parallel = num_threads > 1
+
+        @nb.njit
+        def _self_scores(seqs_mat, seqs_L):
+            scores = np.zeros(seqs_mat.shape[0], dtype=np.int32)
+            for row in range(seqs_mat.shape[0]):
+                score = 0
+                for i in range(seqs_L[row]):
+                    aa = seqs_mat[row, i]
+                    score += substitution_matrix[aa, aa]
+                scores[row] = score
+            return scores
+
+        self_scores1 = _self_scores(seqs_mat1, seqs_L1)
+        self_scores2 = (
+            self_scores1
+            if is_symmetric and seqs_mat1.shape[0] == seqs_mat2.shape[0]
+            else _self_scores(seqs_mat2, seqs_L2)
+        )
+
+        @nb.jit(nopython=True, parallel=jit_parallel, nogil=True)
+        def _nb_needleman_wunsch_mat():
+            assert seqs_mat1.shape[0] == seqs_L1.shape[0]
+            assert seqs_mat2.shape[0] == seqs_L2.shape[0]
+
+            num_rows = seqs_mat1.shape[0]
+            num_cols = seqs_mat2.shape[0]
+            max_len = seqs_mat1.shape[1]
+
+            data_rows = nb.typed.List()
+            indices_rows = nb.typed.List()
+            row_element_counts = np.zeros(num_rows, dtype=np.int32)
+
+            empty_row = np.zeros(0, dtype=np.int32)
+            for _ in range(0, num_rows):
+                data_rows.append([empty_row])
+                indices_rows.append([empty_row])
+
+            data_row_matrix = np.empty((num_threads, num_cols), dtype=np.int32)
+            indices_row_matrix = np.empty((num_threads, num_cols), dtype=np.int32)
+            previous_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
+            current_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
+
+            for row_index in nb.prange(num_rows):
+                thread_id = nb.get_thread_id()
+                row_end_index = 0
+                seq1_len = seqs_L1[row_index]
+
+                for col_index in range(start_column + row_index * is_symmetric, num_cols):
+                    if is_symmetric and col_index == start_column + row_index:
+                        data_row_matrix[thread_id, row_end_index] = 1
+                        indices_row_matrix[thread_id, row_end_index] = col_index
+                        row_end_index += 1
+                        continue
+
+                    seq2_len = seqs_L2[col_index]
+                    min_self_score = self_scores1[row_index]
+                    if self_scores2[col_index] < min_self_score:
+                        min_self_score = self_scores2[col_index]
+
+                    for j in range(seq2_len + 1):
+                        previous_rows[thread_id, j] = -j * gap_penalty
+
+                    for i in range(1, seq1_len + 1):
+                        current_rows[thread_id, 0] = -i * gap_penalty
+                        aa1 = seqs_mat1[row_index, i - 1]
+
+                        for j in range(1, seq2_len + 1):
+                            aa2 = seqs_mat2[col_index, j - 1]
+                            match_score = previous_rows[thread_id, j - 1] + substitution_matrix[aa1, aa2]
+                            delete_score = previous_rows[thread_id, j] - gap_penalty
+                            insert_score = current_rows[thread_id, j - 1] - gap_penalty
+
+                            best_score = match_score
+                            if delete_score > best_score:
+                                best_score = delete_score
+                            if insert_score > best_score:
+                                best_score = insert_score
+
+                            current_rows[thread_id, j] = best_score
+
+                        for j in range(seq2_len + 1):
+                            previous_rows[thread_id, j] = current_rows[thread_id, j]
+
+                    distance = min_self_score - previous_rows[thread_id, seq2_len] + 1
+
+                    if distance <= cutoff + 1:
+                        data_row_matrix[thread_id, row_end_index] = distance
+                        indices_row_matrix[thread_id, row_end_index] = col_index
+                        row_end_index += 1
+
+                data_rows[row_index][0] = data_row_matrix[thread_id, 0:row_end_index].copy()
+                indices_rows[row_index][0] = indices_row_matrix[thread_id, 0:row_end_index].copy()
+                row_element_counts[row_index] = row_end_index
+
+            data_rows_flat = []
+            indices_rows_flat = []
+
+            for i in range(len(data_rows)):
+                data_rows_flat.append(data_rows[i][0])
+                indices_rows_flat.append(indices_rows[i][0])
+
+            return data_rows_flat, indices_rows_flat, row_element_counts
+
+        data_rows, indices_rows, row_element_counts = _nb_needleman_wunsch_mat()
+        return data_rows, indices_rows, row_element_counts, np.array([None])
+
+    _metric_mat = _needleman_wunsch_mat
+
+
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
