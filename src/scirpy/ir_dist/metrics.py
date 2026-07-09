@@ -1678,6 +1678,8 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
             previous_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
             current_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
 
+            band_width = max_len if gap_penalty == 0 else cutoff // gap_penalty
+
             for row_index in nb.prange(num_rows):
                 thread_id = nb.get_thread_id()
                 row_end_index = 0
@@ -1700,29 +1702,50 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
                     if self_scores2[col_index] < min_self_score:
                         min_self_score = self_scores2[col_index]
 
-                    for j in range(seq2_len + 1):
+                    band_start = 1 - band_width
+                    band_end = 1 + band_width
+
+                    j_end = min(band_width, seq2_len)
+
+                    for j in range(j_end + 1):
                         previous_rows[thread_id, j] = -j * gap_penalty
 
                     for i in range(1, seq1_len + 1):
-                        current_rows[thread_id, 0] = -i * gap_penalty
                         aa1 = seqs_mat1[row_index, i - 1]
 
-                        for j in range(1, seq2_len + 1):
+                        j_start = max(1, band_start)
+                        j_end = min(seq2_len, band_end)
+
+                        if i <= band_width:
+                            current_rows[thread_id, 0] = -i * gap_penalty
+
+                        for j in range(j_start, j_end + 1):
                             aa2 = seqs_mat2[col_index, j - 1]
                             match_score = previous_rows[thread_id, j - 1] + substitution_matrix[aa1, aa2]
-                            delete_score = previous_rows[thread_id, j] - gap_penalty
-                            insert_score = current_rows[thread_id, j - 1] - gap_penalty
-
                             best_score = match_score
-                            if delete_score > best_score:
-                                best_score = delete_score
-                            if insert_score > best_score:
-                                best_score = insert_score
+
+                            if band_width == 0:
+                                best_score = match_score
+                            elif j == band_start:
+                                delete_score = previous_rows[thread_id, j] - gap_penalty
+                                best_score = max(match_score, delete_score)
+                            elif j == band_end:
+                                insert_score = current_rows[thread_id, j - 1] - gap_penalty
+                                best_score = max(match_score, insert_score)
+                            else:
+                                delete_score = previous_rows[thread_id, j] - gap_penalty
+                                insert_score = current_rows[thread_id, j - 1] - gap_penalty
+                                best_score = max(match_score, delete_score, insert_score)
 
                             current_rows[thread_id, j] = best_score
 
-                        for j in range(seq2_len + 1):
+                        copy_start = j_start * (i > band_width)
+
+                        for j in range(copy_start, j_end + 1):
                             previous_rows[thread_id, j] = current_rows[thread_id, j]
+
+                        band_start += 1
+                        band_end += 1
 
                     distance = min_self_score - previous_rows[thread_id, seq2_len] + 1
 
