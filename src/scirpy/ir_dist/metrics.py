@@ -14,7 +14,7 @@ from Levenshtein import distance as levenshtein_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 
-from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated
+from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated, tqdm
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -551,7 +551,9 @@ class _MetricDistanceCalculator(abc.ABC):
             arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(self.n_blocks)]
 
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
-            results = joblib.Parallel(return_as="list")(delayed_jobs)
+            results_iter = joblib.Parallel(return_as="generator")(delayed_jobs)
+            results_iter = tqdm(results_iter, total=len(delayed_jobs), desc="Computing distance blocks")
+            results = list(results_iter)
 
             block_matrices_csr, block_row_mins = zip(*results, strict=False)
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
