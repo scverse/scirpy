@@ -1778,7 +1778,7 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
                         band_start += 1
                         band_end += 1
 
-                    distance = min_self_score - previous_rows[thread_id, seq2_len] + 1
+                    distance = max(0, min_self_score - previous_rows[thread_id, seq2_len]) + 1
 
                     if distance <= cutoff + 1:
                         data_row_matrix[thread_id, row_end_index] = distance
