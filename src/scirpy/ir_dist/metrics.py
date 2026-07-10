@@ -1195,14 +1195,14 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
-        Will eleminate distances > cutoff to make efficient
+        Will eliminate distances > cutoff to make efficient
         use of sparse matrices.
     n_jobs:
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     histogram:
-        Determines whether a nearest neighbor histogram should be created
+        Determines whether a nearest neighbor histogram should be created. Not implemented for this metric
     base_matrix:
         Amino acid substitution matrix used by TCRdist. `"blosum62"` uses the original
         BLOSUM62 substitution matrix, while `"tcrblosum"` uses TCRBLOSUM substitution
@@ -1544,21 +1544,23 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
     Parameters
     ----------
     gap_penalty:
-        Linear penalty for each gap position.
+        Linear penalty for each gap position
     cutoff:
-        Will eleminate distances > cutoff to make efficient use of sparse matrices.
+        Will eliminate distances > cutoff to make efficient use of sparse matrices
     n_jobs:
-        Number of numba parallel threads to use for the pairwise distance calculation.
+        Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
-        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel.
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    histogram:
+        Determines whether a nearest neighbor histogram should be created. Not implemented for this metric
     base_matrix:
         Amino acid substitution matrix. `"blosum62"` uses BLOSUM62, while
         `"tcrblosum"` uses TCRBLOSUM alpha/beta substitution matrices depending on
-        `chain_type`.
+        `chain_type`
     chain_type:
         Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain matrix
         and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
-        is set automatically and should not be provided.
+        is set automatically and should not be provided
     """
 
     parasail_aa_alphabet = TCRdistDistanceCalculator.parasail_aa_alphabet

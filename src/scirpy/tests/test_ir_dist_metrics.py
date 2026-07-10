@@ -14,6 +14,7 @@ from scirpy.ir_dist.metrics import (
     HammingDistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
+    NeedlemanWunschDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
     _substitution_to_distance_matrix,
@@ -980,6 +981,14 @@ def test_tcrdist_histogram_not_implemented():
         tcrdist_calculator = TCRdistDistanceCalculator(histogram=True)
         seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
         _ = tcrdist_calculator.calc_dist_mat(seqs, seqs)
+
+
+def test_needleman_wunsch_histogram_not_implemented():
+    # Change once histogram is implemented for needleman_wunsch
+    with pytest.raises(NotImplementedError, match=None):
+        needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(histogram=True)
+        seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
+        _ = needleman_wunsch_calculator.calc_dist_mat(seqs, seqs)
 
 
 @pytest.mark.gpu
