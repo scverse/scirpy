@@ -1535,11 +1535,16 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
 class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
     """Computes pairwise global-alignment distances with linear-gap Needleman-Wunsch.
 
-    The distance is computed like the alignment metric:
+    For each sequence pair, a global alignment score is computed using the
+    Needleman-Wunsch dynamic programming algorithm with one linear gap penalty
+    for every gap position. The alignment score is converted into a distance by
+    subtracting it from the best possible self-alignment score of the two
+    sequences:
     ``min(self_score(seq1), self_score(seq2)) - alignment_score(seq1, seq2)``.
-    With `base_matrix="blosum62"` and a linear gap penalty matching both the
-    gap-open and gap-extension penalties of the parasail alignment metric, this
-    follows the same scoring model for canonical amino-acid sequences.
+    Distances are therefore small for sequence pairs that can be globally
+    aligned with few or conservative substitutions and short gaps, and larger
+    for sequence pairs requiring strongly penalized substitutions or many gap
+    positions.
 
     Parameters
     ----------
