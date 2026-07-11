@@ -1,5 +1,5 @@
 {
-  "template": "https://github.com/scverse/cookiecutter-scverse",
+  "template": "/home/sturm/tmp/tmpw08791i6",
   "commit": "50f4600a5bf63c821650bd5d5496ea3036b84db5",
   "checkout": "test9",
   "context": {
@@ -35,8 +35,8 @@
         "lstrip_blocks": true,
         "trim_blocks": true
       },
-      "_template": "https://github.com/scverse/cookiecutter-scverse",
-      "_commit": "50f4600a5bf63c821650bd5d5496ea3036b84db5"
+      "_template": "/home/sturm/tmp/tmpw08791i6",
+      "_commit": "b3a632a76791de94aac0781e750bc305c359ab9f"
     }
   },
   "directory": null
