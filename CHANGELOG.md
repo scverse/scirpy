@@ -18,10 +18,16 @@ and this project adheres to [Semantic Versioning][].
     warning is raised when a fair comparison is not supported. Estimation is delegated to
     the [hillrep](https://github.com/KilianMaire/hillrep) package, installed via the
     `diversity` extra ([#714](https://github.com/scverse/scirpy/pull/714)).
+  - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
+    `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
 
 ### Performance improvements
 
-  - Speed up identity distance metric computation for comparisons between two different sequence arrays.
+ - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
+
+### Chore
+
+ - Clean up unneeded dependency constraints in pyproject.toml ([#718](https://github.com/scverse/scirpy/pull/718)).
 
 ## v0.24.0
 
