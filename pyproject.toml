@@ -75,7 +75,7 @@ doc = [
   "nbconvert",
   "pycairo",
   "scirpy[dandelion]",
-  "scirpy[diversity]",                 # hillrep for the Hill diversity tutorial section
+  "scirpy[diversity]",               # hillrep for the Hill diversity tutorial section
   "sphinx>=7",
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
