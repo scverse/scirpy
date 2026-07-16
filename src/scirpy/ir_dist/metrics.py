@@ -1627,6 +1627,8 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         base_matrix: Literal["blosum62", "tcrblosum"] = "blosum62",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
+        if cutoff < 0:
+            raise ValueError("`cutoff` must be non-negative.")
         if gap_penalty < 0:
             raise ValueError("`gap_penalty` must be non-negative.")
 
@@ -1729,6 +1731,8 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
             previous_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
             current_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
 
+            # Only alignment paths within a band around the diagonal can stay within the cutoff,
+            # because each step away from the diagonal requires one gap penalty.
             band_width = max_len if gap_penalty == 0 else cutoff // gap_penalty
 
             for row_index in nb.prange(num_rows):
@@ -1746,12 +1750,12 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
                 for col_index in range(col_start, num_cols):
                     seq2_len = seqs_L2[col_index]
                     len_diff = abs(seq1_len - seq2_len)
+
+                    # Skip pairs whose length difference alone cannot stay within the cutoff.
                     if len_diff * gap_penalty > cutoff:
                         continue
 
-                    min_self_score = self_scores1[row_index]
-                    if self_scores2[col_index] < min_self_score:
-                        min_self_score = self_scores2[col_index]
+                    min_self_score = min(self_scores1[row_index], self_scores2[col_index])
 
                     band_start = 1 - band_width
                     band_end = 1 + band_width
