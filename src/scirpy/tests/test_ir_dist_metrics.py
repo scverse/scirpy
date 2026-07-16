@@ -968,6 +968,7 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     ],
 )
 def test_needleman_wunsch(test_parameters, test_input, expected_result):
+    # Check direct calculator results for small edge cases and parameter combinations.
     needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(**test_parameters)
     seq1, seq2 = test_input
 
@@ -979,6 +980,7 @@ def test_needleman_wunsch(test_parameters, test_input, expected_result):
 
 
 def test_needleman_wunsch_clamps_negative_scores():
+    # Ambiguous X scores can yield negative raw distances and should be clamped to zero.
     seqs = np.array(["X", "A", "XX", "AA"])
     needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(cutoff=10, gap_penalty=4, n_jobs=1)
     expected_result = np.array([[1, 1, 4, 4], [1, 1, 3, 5], [4, 3, 1, 1], [4, 5, 1, 1]])
@@ -1098,6 +1100,7 @@ def test_tcrdist_base_matrix_validation(kwargs, match):
     ],
 )
 def test_needleman_wunsch_base_matrix_validation(kwargs, match):
+    # Invalid matrix and gap settings should fail before distance computation starts.
     with pytest.raises(ValueError, match=match):
         NeedlemanWunschDistanceCalculator(**kwargs)
 
@@ -1212,7 +1215,7 @@ def test_tcrdist_histogram_not_implemented():
 
 
 def test_needleman_wunsch_histogram_not_implemented():
-    # Change once histogram is implemented for needleman_wunsch
+    # Histogram mode should fail explicitly until it is implemented for needleman_wunsch.
     with pytest.raises(NotImplementedError, match=None):
         needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(histogram=True)
         seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
