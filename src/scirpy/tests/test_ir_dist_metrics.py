@@ -1140,7 +1140,7 @@ def test_needleman_wunsch_reference():
     needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(
         cutoff=20,
         gap_penalty=4,
-        n_jobs=2,
+        n_jobs=8,
         n_blocks=2,
     )
 
