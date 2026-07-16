@@ -201,6 +201,49 @@ def test_ir_dist_tcrdist_tcrblosum_chain_routing(mudata):
     npt.assert_array_equal(res["VDJ"]["distances"].toarray(), np.array([[1, 19], [19, 1]]))
 
 
+@pytest.mark.parametrize("mudata", [False, True], ids=["AnnData", "MuData"])
+def test_ir_dist_needleman_wunsch_tcrblosum_chain_routing(mudata):
+    # `ir_dist` should automatically route VJ to TCRBLOSUM alpha and VDJ to beta.
+    adata = _make_adata(
+        pd.DataFrame(
+            [
+                ["cell1", "AAACAAAA", "AAACAAAA", "TRA", "TRB"],
+                ["cell2", "AAAHAAAA", "AAAHAAAA", "TRA", "TRB"],
+            ],
+            columns=[
+                "cell_id",
+                "IR_VJ_1_junction_aa",
+                "IR_VDJ_1_junction_aa",
+                "IR_VJ_1_locus",
+                "IR_VDJ_1_locus",
+            ],
+        ).set_index("cell_id"),
+        mudata,
+    )
+
+    ir.pp.ir_dist(
+        adata,
+        metric="needleman_wunsch",
+        sequence="aa",
+        cutoff=20,
+        gap_penalty=4,
+        base_matrix="tcrblosum",
+        key_added="ir_dist_needleman_wunsch_tcrblosum",
+        n_jobs=1,
+    )
+
+    res = (
+        adata.mod["airr"].uns["ir_dist_needleman_wunsch_tcrblosum"]
+        if isinstance(adata, MuData)
+        else adata.uns["ir_dist_needleman_wunsch_tcrblosum"]
+    )
+    expected_seqs = np.array(["AAACAAAA", "AAAHAAAA"])
+    npt.assert_array_equal(res["VJ"]["seqs"], expected_seqs)
+    npt.assert_array_equal(res["VDJ"]["seqs"], expected_seqs)
+    npt.assert_array_equal(res["VJ"]["distances"].toarray(), np.array([[1, 5], [5, 1]]))
+    npt.assert_array_equal(res["VDJ"]["distances"].toarray(), np.array([[1, 6], [6, 1]]))
+
+
 @pytest.mark.parametrize("with_adata2", [False, True])
 @pytest.mark.parametrize("joblib_backend", ["loky", "multiprocessing", "threading"])
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -581,7 +624,7 @@ def test_compute_distances_second_anndata(
     npt.assert_equal(dist, expected_dist if not swap_query_reference else expected_dist.T)
 
 
-@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment", "tcrdist", "hamming"])
+@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment", "tcrdist", "hamming", "needleman_wunsch"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
     adata_empty = adata_cdr3.mod["airr"].copy() if isinstance(adata_cdr3, MuData) else adata_cdr3.copy()
     # reset chain indices such that no chain will actually be used.
