@@ -878,6 +878,15 @@ def test_tcrdist(test_parameters, test_input, expected_result):
             ),
             np.array([[1, 4, 1, 4], [4, 1, 4, 1], [1, 4, 1, 4], [4, 1, 4, 1]]),
         ),
+        # test ambiguous X scores with asymmetric arrays
+        (
+            {"cutoff": 6, "gap_penalty": 2, "n_jobs": 1},
+            (
+                np.array(["X", "AX", "XA", "AA"]),
+                np.array(["A", "XX", "AA"]),
+            ),
+            np.array([[1, 2, 2], [2, 1, 1], [2, 1, 1], [3, 1, 1]]),
+        ),
         # test empty input arrays
         (
             {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
@@ -943,15 +952,6 @@ def test_tcrdist(test_parameters, test_input, expected_result):
                 np.array(["AA", "AAA", "AHA"]),
             ),
             np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-        ),
-        # test ambiguous X scores
-        (
-            {"cutoff": 10, "gap_penalty": 4, "n_jobs": 1},
-            (
-                np.array(["X", "A", "XX", "AA"]),
-                np.array(["X", "A", "XX", "AA"]),
-            ),
-            np.array([[1, 1, 4, 4], [1, 1, 3, 5], [4, 3, 1, 1], [4, 5, 1, 1]]),
         ),
         # test very small input sequences
         (
