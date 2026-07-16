@@ -1096,6 +1096,7 @@ def test_tcrdist_base_matrix_validation(kwargs, match):
     [
         ({"base_matrix": "tcrblosum"}, r"`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`\."),
         ({"base_matrix": "foo"}, r"Unknown `base_matrix`: 'foo'"),
+        ({"cutoff": -1}, r"`cutoff` must be non-negative\."),
         ({"gap_penalty": -1}, r"`gap_penalty` must be non-negative\."),
     ],
 )
