@@ -1618,7 +1618,7 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: int | None = 10,
+        cutoff: int = 10,
         *,
         gap_penalty: int = 11,
         n_jobs: int = -1,
@@ -1630,7 +1630,7 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         if gap_penalty < 0:
             raise ValueError("`gap_penalty` must be non-negative.")
 
-        self.cutoff = 10 if cutoff is None else cutoff
+        self.cutoff = cutoff
         self.gap_penalty = gap_penalty
         self.histogram = histogram
 
