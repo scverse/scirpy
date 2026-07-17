@@ -14,13 +14,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: "Triage: Check if GPU tests are allowed to run"
     if: (!contains(github.event.pull_request.labels.*.name, 'skip-gpu-ci'))
     runs-on: ubuntu-latest
     steps:
-      - uses: flying-sheep/check@v1
+      - uses: flying-sheep/check@e10bb11109d1434ab16729bd988d78d65d47e163 # v1
         with:
           success: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-gpu-ci') }}
 
@@ -33,16 +36,17 @@ jobs:
       run:
         shell: bash -el {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           filter: blob:none
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Nvidia SMI sanity check
         run: nvidia-smi
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           cache-dependency-glob: pyproject.toml
 
