@@ -9,7 +9,7 @@ the [scientific Python tutorials][], or the [scanpy developer guide][].
 
 [pyopensci tutorials]: https://www.pyopensci.org/learn.html
 [scientific Python tutorials]: https://learn.scientific-python.org/development/tutorials/
-[scanpy developer guide]: https://scanpy.readthedocs.io/en/latest/dev/index.html
+[scanpy developer guide]: https://scanpy.scverse.org/page/dev/
 
 :::{tip} The *hatch* project manager
 
@@ -46,11 +46,21 @@ hatch test  # defined in the table [tool.hatch.envs.hatch-test] in pyproject.tom
 hatch run docs:build  # defined in the table [tool.hatch.envs.docs]
 ```
 
-When using an IDE such as VS Code,
-you’ll have to point the editor at the paths to the virtual environments manually.
-The environment you typically want to use as your main development environment is the `hatch-test`
-environment with the latest Python version.
+### VS Code
 
+If you are using VS code, install the [hatch-code][] extension.
+Additionally, make sure that the `vscode-python-environments` extension is installed (should be by default)
+and `"python.useEnvironmentsExtension": true` is activated in your `settings.json`.
+
+Next, open the "Python Environment Managers" sidebar.
+You can do so by opening the command palette (Ctrl+Shift+P) and searching for `Python: Focus on Environment Managers View`.
+It will show a collapsible list where you can expand "Hatch"
+and activate an environment by clicking on the checkmark next to it.
+As the main development environment, we recommend to use `hatch-test` with the latest supported Python version.
+
+### Other IDEs
+
+For other IDEs, you’ll have to point the editor at the paths to the virtual environments manually.
 To get a list of all environments for your projects, run
 
 ```bash
@@ -63,7 +73,7 @@ This will list “Standalone” environments and a table of “Matrix” environ
 +------------+---------+--------------------------+----------+---------------------------------+-------------+
 | Name       | Type    | Envs                     | Features | Dependencies                    | Scripts     |
 +------------+---------+--------------------------+----------+---------------------------------+-------------+
-| hatch-test | virtual | hatch-test.py3.11-stable | dev      | coverage-enable-subprocess==1.0 | cov-combine |
+| hatch-test | virtual | hatch-test.py3.12-stable | dev      | coverage-enable-subprocess==1.0 | cov-combine |
 |            |         | hatch-test.py3.14-stable | test     | coverage[toml]~=7.4             | cov-report  |
 |            |         | hatch-test.py3.14-pre    |          | pytest-mock~=3.12               | run         |
 |            |         |                          |          | pytest-randomly~=3.15           | run-cov     |
@@ -74,6 +84,7 @@ This will list “Standalone” environments and a table of “Matrix” environ
 ```
 
 From the `Envs` column, select the environment name you want to use for development.
+As the main development environment, we recommend to use `hatch-test` with the latest supported Python version.
 In this example, it would be `hatch-test.py3.14-stable`.
 
 Next, create the environment with
@@ -88,10 +99,8 @@ Then, obtain the path to the environment using
 hatch env find hatch-test.py3.14-stable
 ```
 
-In case you are using VScode, now open the command palette (Ctrl+Shift+P) and search for `Python: Select Interpreter`.
-Choose `Enter Interpreter Path` and paste the path to the virtual environment from above.
+and manually point it to the python binary.
 
-In this future, this may become easier through a hatch vscode extension.
 
 ::::
 
@@ -134,24 +143,26 @@ The `.venv` directory is typically automatically discovered by IDEs such as VS C
 :::::
 
 [hatch environments]: https://hatch.pypa.io/latest/tutorials/environment/basic-usage/
+[hatch-code]: https://marketplace.visualstudio.com/items?itemName=PyPA.hatch
 [uv]: https://docs.astral.sh/uv/
 
 ## Code-style
 
-This package uses [pre-commit][] to enforce consistent code-styles.
-On every commit, pre-commit checks will either automatically fix issues with the code, or raise an error message.
+This package uses [pre-commit][]-style hooks to enforce consistent code-styles.
+We recommend running them with [prek][], a fast, drop-in replacement for `pre-commit` that reads the same `.pre-commit-config.yaml`.
+On every commit, the checks will either automatically fix issues with the code, or raise an error message.
 
-To enable pre-commit locally, simply run
+To enable the checks locally, install [prek][] (e.g. with `uv tool install prek`) and run
 
 ```bash
-pre-commit install
+prek install
 ```
 
 in the root of the repository.
-Pre-commit will automatically download all dependencies when it is run for the first time.
+prek will automatically download all dependencies when it is run for the first time.
 
 Alternatively, you can rely on the [pre-commit.ci][] service enabled on GitHub.
-If you didn’t run `pre-commit` before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
+If you didn’t run the checks before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
 
 If pre-commit.ci added a commit on a branch you still have been working on locally, simply use
 
@@ -160,12 +171,13 @@ git pull --rebase
 ```
 
 to integrate the changes into yours.
-While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
+While the [pre-commit.ci][] is useful, we strongly encourage installing and running the checks locally first to understand their usage.
 
 Finally, most editors have an _autoformat on save_ feature.
 Consider enabling this option for [ruff][ruff-editors] and [biome][biome-editors].
 
 [pre-commit]: https://pre-commit.com/
+[prek]: https://prek.j178.dev/
 [pre-commit.ci]: https://pre-commit.ci/
 [ruff-editors]: https://docs.astral.sh/ruff/integrations/
 [biome-editors]: https://biomejs.dev/guides/integrate-in-editor/
@@ -178,12 +190,8 @@ This package uses [pytest][] for automated testing.
 Please write {doc}`scanpy:dev/testing` for every function added to the package.
 
 Most IDEs integrate with pytest and provide a GUI to run tests.
-Just point yours to one of the environments returned by
-
-```bash
-hatch env create hatch-test  # create test environments for all supported versions
-hatch env find hatch-test  # list all possible test environment paths
-```
+If you set up your virtual environments as described in [installing dev dependencies](#installing-dev-dependencies),
+test cases should be automatically discovered by your IDE.
 
 Alternatively, you can run all tests from the command line by executing
 
@@ -274,11 +282,11 @@ This project uses [sphinx][] with the following features:
 
 See scanpy’s {doc}`scanpy:dev/documentation` for more information on how to write your own.
 
-[sphinx]: https://www.sphinx-doc.org/en/master/
-[myst]: https://myst-parser.readthedocs.io/en/latest/intro.html
-[myst-nb]: https://myst-nb.readthedocs.io/en/latest/
-[numpydoc-napoleon]: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
-[numpydoc]: https://numpydoc.readthedocs.io/en/latest/format.html
+[sphinx]: https://www.sphinx-doc.org/
+[myst]: https://myst-parser.readthedocs.io/page/intro.html
+[myst-nb]: https://myst-nb.readthedocs.io/
+[numpydoc-napoleon]: https://www.sphinx-doc.org/page/usage/extensions/napoleon.html
+[numpydoc]: https://numpydoc.readthedocs.io/page/format.html
 [sphinx-autodoc-typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
 
 ### Tutorials with myst-nb and jupyter notebooks

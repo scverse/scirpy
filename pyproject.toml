@@ -14,10 +14,9 @@ maintainers = [
 authors = [
   { name = "Gregor Sturm" },
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -34,7 +33,7 @@ urls.Source = "https://github.com/grst/scirpy"
 
 [dependency-groups]
 dev = [
-  "pre-commit",
+  "prek",
   "twine>=4.0.2",
 ]
 test = [
@@ -47,6 +46,7 @@ doc = [
   "ipython",
   "myst-nb>=1.1",
   "pandas",
+  "scverse-misc[sphinx]>=0.1.2",
   "sphinx>=8.1",
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
@@ -66,7 +66,7 @@ envs.docs.scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
 envs.docs.dependency-groups = [ "doc" ]
 envs.hatch-test.matrix = [
   # Test the lowest and highest supported Python versions with normal deps
-  { deps = [ "stable" ], python = [ "3.11", "3.14" ] },
+  { deps = [ "stable" ], python = [ "3.12", "3.14" ] },
   # Test the newest supported Python version also with pre-release deps
   { deps = [ "pre" ], python = [ "3.14" ] },
 ]
