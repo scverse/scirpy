@@ -1,0 +1,609 @@
+[
+    {
+        "barcode": "AAACCTGAGATAGTCA-1",
+        "contig_name": "AAACCTGAGATAGTCA-1_contig_1",
+        "sequence": "TTCCTCTGCTCTGGCAGCAGATCTCCCAGAGGGAGCAGCCTGACCACATCACTGGCCCAGAAGAGGAGGCGTCTGTCCCCCAGACTAGCTGAAGGAAAGGCTGGCTTGGATGATGCTCTGCTCTCTCCTTGCCCTTCTCCTGGGCACTTTCTTTGGGGTCAGATCTCAGACTATTCATCAATGGCCAGCGACCCTGGTGCAGCCTGTGGGCAGCCCGCTCTCTCTGGAGTGCACTGTGGAGGGAACATCAAACCCCAACCTATACTGGTACCGACAGGCTGCAGGCAGGGGCCTCCAGCTGCTCTTCTACTCCGTTGGTATTGGCCAGATCAGCTCTGAGGTGCCCCAGAATCTCTCAGCCTCCAGACCCCAGGACCGGCAGTTCATCCTGAGTTCTAAGAAGCTCCTTCTCAGTGACTCTGGCTTCTATCTCTGTGCCTGGGGAAGGACAGGGCCGAGGACTGAAGCTTTCTTTGGACAAGGCACCAGACTCACAGTTGTAGAGGACCTGAACAAGGTGTTCCCACCCGAGGTCGCTGTGTTTGAGCCATCAGA",
+        "quals": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+        "fraction_of_reads_for_this_barcode_provided_as_input_to_assembly": 1.0,
+        "read_count": 403,
+        "umi_count": 1,
+        "start_codon_pos": 112,
+        "stop_codon_pos": null,
+        "aa_sequence": "MLCSLLALLLGTFFGVRSQTIHQWPATLVQPVGSPLSLECTVEGTSNPNLYWYRQAAGRGLQLLFYSVGIGQISSEVPQNLSASRPQDRQFILSSKKLLLSDSGFYLCAWGRTGPRTEAFFGQGTRLTVVEDLNKVFPPEVAVFEPS",
+        "frame": null,
+        "cdr3": "CAWGRTGPRTEAFF",
+        "cdr3_seq": "TGTGCCTGGGGAAGGACAGGGCCGAGGACTGAAGCTTTCTTT",
+        "cdr3_start": 433,
+        "cdr3_stop": 475,
+        "fwr1": null,
+        "cdr1": null,
+        "fwr2": null,
+        "cdr2": null,
+        "fwr3": null,
+        "fwr4": null,
+        "annotations": [
+            {
+                "contig_match_start": 0,
+                "contig_match_end": 112,
+                "annotation_match_start": 0,
+                "annotation_match_end": 112,
+                "annotation_length": 112,
+                "cigar": "112M443S",
+                "score": 224,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBV30",
+                    "feature_id": 618,
+                    "gene_name": "TRBV30",
+                    "region_type": "5'UTR"
+                }
+            },
+            {
+                "contig_match_start": 112,
+                "contig_match_end": 447,
+                "annotation_match_start": 0,
+                "annotation_match_end": 335,
+                "annotation_length": 335,
+                "cigar": "112S335M108S",
+                "score": 650,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBV30",
+                    "feature_id": 619,
+                    "gene_name": "TRBV30",
+                    "region_type": "L-REGION+V-REGION"
+                }
+            },
+            {
+                "contig_match_start": 455,
+                "contig_match_end": 503,
+                "annotation_match_start": 0,
+                "annotation_match_end": 48,
+                "annotation_length": 48,
+                "cigar": "455S48M52S",
+                "score": 81,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBJ1-1",
+                    "feature_id": 536,
+                    "gene_name": "TRBJ1-1",
+                    "region_type": "J-REGION"
+                }
+            },
+            {
+                "contig_match_start": 503,
+                "contig_match_end": 555,
+                "annotation_match_start": 0,
+                "annotation_match_end": 52,
+                "annotation_length": 530,
+                "cigar": "503S52M",
+                "score": 104,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBC1",
+                    "feature_id": 531,
+                    "gene_name": "TRBC1",
+                    "region_type": "C-REGION"
+                }
+            }
+        ],
+        "clonotype": null,
+        "info": {
+            "raw_clonotype_id": null,
+            "raw_consensus_id": null,
+            "exact_subclonotype_id": null
+        },
+        "high_confidence": false,
+        "validated_umis": ["ACCGTACGTT"],
+        "non_validated_umis": [],
+        "invalidated_umis": [],
+        "is_cell": false,
+        "productive": true,
+        "filtered": true,
+        "is_gex_cell": false,
+        "is_asm_cell": false,
+        "full_length": true
+    },
+    {
+        "barcode": "AAACCTGAGTTGCAGG-1",
+        "contig_name": "AAACCTGAGTTGCAGG-1_contig_1",
+        "sequence": "GGGGCTCTGCTTTTGCTCACAGTGACCCTGATTGGGCAAAGCTCCCATCCTTCCCTGACCCTGCCATGGGCACCAGGCTCCTCTGCTGGGCGGCCCTCTGTCTCCTGGGAGCAGAACTCACAGAAGCTGGAGTTGCCCAGTCTCCCAGATATAAGATTATAGAGAAAAGGCAGAGTGTGGCTTTTTGGTGCAATCCTATATCTGGCCATGCTACCCTTTACTGGTACCAGCAGATCCTGGGACAGGGCCCAAAGCTTCTGATTCAGTTTCAGAATAACGGTGTAGTGGATGATTCACAGTTGCCTAAGGATCGATTTTCTGCAGAGAGGCTCAAAGGAGTAGACTCCACTCTCAAGATCCAGCCTGCAAAGCTTGAGGACTCGGCCGTGTATCTCTGTGCCAGCAGCTTAGGCCTCTGGGGCAATCAGCCCCAGCATTTTGGTGATGGGACTCGACTCTCCATCCTAGAGGACCTGAACAAGGTGTTCCCACCCGAGGTCGCTGTGTTTGAGCCATCAGA",
+        "quals": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+        "fraction_of_reads_for_this_barcode_provided_as_input_to_assembly": 1.0,
+        "read_count": 596,
+        "umi_count": 1,
+        "start_codon_pos": 65,
+        "stop_codon_pos": null,
+        "aa_sequence": "MGTRLLCWAALCLLGAELTEAGVAQSPRYKIIEKRQSVAFWCNPISGHATLYWYQQILGQGPKLLIQFQNNGVVDDSQLPKDRFSAERLKGVDSTLKIQPAKLEDSAVYLCASSLGLWGNQPQHFGDGTRLSILEDLNKVFPPEVAVFEPS",
+        "frame": null,
+        "cdr3": "CASSLGLWGNQPQHF",
+        "cdr3_seq": "TGTGCCAGCAGCTTAGGCCTCTGGGGCAATCAGCCCCAGCATTTT",
+        "cdr3_start": 395,
+        "cdr3_stop": 440,
+        "fwr1": null,
+        "cdr1": null,
+        "fwr2": null,
+        "cdr2": null,
+        "fwr3": null,
+        "fwr4": null,
+        "annotations": [
+            {
+                "contig_match_start": 65,
+                "contig_match_end": 407,
+                "annotation_match_start": 0,
+                "annotation_match_end": 342,
+                "annotation_length": 342,
+                "cigar": "65S342M113S",
+                "score": 679,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBV11-2",
+                    "feature_id": 733,
+                    "gene_name": "TRBV11-2",
+                    "region_type": "L-REGION+V-REGION"
+                }
+            },
+            {
+                "contig_match_start": 418,
+                "contig_match_end": 468,
+                "annotation_match_start": 0,
+                "annotation_match_end": 50,
+                "annotation_length": 50,
+                "cigar": "418S50M52S",
+                "score": 90,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBJ1-5",
+                    "feature_id": 540,
+                    "gene_name": "TRBJ1-5",
+                    "region_type": "J-REGION"
+                }
+            },
+            {
+                "contig_match_start": 468,
+                "contig_match_end": 520,
+                "annotation_match_start": 0,
+                "annotation_match_end": 52,
+                "annotation_length": 530,
+                "cigar": "468S52M",
+                "score": 104,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBC1",
+                    "feature_id": 531,
+                    "gene_name": "TRBC1",
+                    "region_type": "C-REGION"
+                }
+            }
+        ],
+        "clonotype": null,
+        "info": {
+            "raw_clonotype_id": null,
+            "raw_consensus_id": null,
+            "exact_subclonotype_id": null
+        },
+        "high_confidence": false,
+        "validated_umis": ["ATGATGCGTA"],
+        "non_validated_umis": [],
+        "invalidated_umis": [],
+        "is_cell": false,
+        "productive": true,
+        "filtered": true,
+        "is_gex_cell": false,
+        "is_asm_cell": false,
+        "full_length": true
+    },
+    {
+        "barcode": "AAACCTGCACAGGTTT-1",
+        "contig_name": "AAACCTGCACAGGTTT-1_contig_1",
+        "sequence": "AGACACAGTGCTGCCTGCCCCTTTGTGCCATGGGCTCCAGGCTGCTCTGTTGGGTGCTGCTTTGTCTCCTGGGAGCAGGCCCAGTAAAGGCTGGAGTCACTCAAACTCCAAGATATCTGATCAAAACGAGAGGACAGCAAGTGACACTGAGCTGCTCCCCTATCTCTGGGCATAGGAGTGTATCCTGGTACCAACAGACCCCAGGACAGGGCCTTCAGTTCCTCTTTGAATACTTCAGTGAGACACAGAGAAACAAAGGAAACTTCCCTGGTCGATTCTCAGGGCGCCAGTTCTCTAACTCTCGCTCTGAGATGAATGTGAGCACCTTGGAGCTGGGGGACTCGGCCCTTTATCTTTGCGCCAGCAGCTGGATGGATAGGGGTGAAGCTTTCTTTGGACAAGGCACCAGACTCACAGTTGTAGAGGACCTGAACAAGGTGTTCCCACCCGAGGTCGCTGTGTTTGAGCCATCAGA",
+        "quals": "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+        "fraction_of_reads_for_this_barcode_provided_as_input_to_assembly": 1.0,
+        "read_count": 5872,
+        "umi_count": 10,
+        "start_codon_pos": 29,
+        "stop_codon_pos": null,
+        "aa_sequence": "MGSRLLCWVLLCLLGAGPVKAGVTQTPRYLIKTRGQQVTLSCSPISGHRSVSWYQQTPGQGLQFLFEYFSETQRNKGNFPGRFSGRQFSNSRSEMNVSTLELGDSALYLCASSWMDRGEAFFGQGTRLTVVEDLNKVFPPEVAVFEPS",
+        "frame": null,
+        "cdr3": "CASSWMDRGEAFF",
+        "cdr3_seq": "TGCGCCAGCAGCTGGATGGATAGGGGTGAAGCTTTCTTT",
+        "cdr3_start": 356,
+        "cdr3_stop": 395,
+        "fwr1": {
+            "start": 86,
+            "stop": 164,
+            "nt_seq": "AAGGCTGGAGTCACTCAAACTCCAAGATATCTGATCAAAACGAGAGGACAGCAAGTGACACTGAGCTGCTCCCCTATC",
+            "aa_seq": "KAGVTQTPRYLIKTRGQQVTLSCSPI"
+        },
+        "cdr1": {
+            "start": 164,
+            "stop": 179,
+            "nt_seq": "TCTGGGCATAGGAGT",
+            "aa_seq": "SGHRS"
+        },
+        "fwr2": {
+            "start": 179,
+            "stop": 230,
+            "nt_seq": "GTATCCTGGTACCAACAGACCCCAGGACAGGGCCTTCAGTTCCTCTTTGAA",
+            "aa_seq": "VSWYQQTPGQGLQFLFE"
+        },
+        "cdr2": {
+            "start": 230,
+            "stop": 248,
+            "nt_seq": "TACTTCAGTGAGACACAG",
+            "aa_seq": "YFSETQ"
+        },
+        "fwr3": {
+            "start": 248,
+            "stop": 356,
+            "nt_seq": "AGAAACAAAGGAAACTTCCCTGGTCGATTCTCAGGGCGCCAGTTCTCTAACTCTCGCTCTGAGATGAATGTGAGCACCTTGGAGCTGGGGGACTCGGCCCTTTATCTT",
+            "aa_seq": "RNKGNFPGRFSGRQFSNSRSEMNVSTLELGDSALYL"
+        },
+        "fwr4": {
+            "start": 395,
+            "stop": 423,
+            "nt_seq": "GGACAAGGCACCAGACTCACAGTTGTAG",
+            "aa_seq": "GQGTRLTVV"
+        },
+        "annotations": [
+            {
+                "contig_match_start": 0,
+                "contig_match_end": 29,
+                "annotation_match_start": 280,
+                "annotation_match_end": 309,
+                "annotation_length": 309,
+                "cigar": "29M446S",
+                "score": 58,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBV5-1",
+                    "feature_id": 630,
+                    "gene_name": "TRBV5-1",
+                    "region_type": "5'UTR"
+                }
+            },
+            {
+                "contig_match_start": 29,
+                "contig_match_end": 372,
+                "annotation_match_start": 0,
+                "annotation_match_end": 343,
+                "annotation_length": 343,
+                "cigar": "29S343M103S",
+                "score": 676,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBV5-1",
+                    "feature_id": 631,
+                    "gene_name": "TRBV5-1",
+                    "region_type": "L-REGION+V-REGION"
+                }
+            },
+            {
+                "contig_match_start": 382,
+                "contig_match_end": 423,
+                "annotation_match_start": 7,
+                "annotation_match_end": 48,
+                "annotation_length": 48,
+                "cigar": "382S41M52S",
+                "score": 82,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBJ1-1",
+                    "feature_id": 536,
+                    "gene_name": "TRBJ1-1",
+                    "region_type": "J-REGION"
+                }
+            },
+            {
+                "contig_match_start": 423,
+                "contig_match_end": 475,
+                "annotation_match_start": 0,
+                "annotation_match_end": 52,
+                "annotation_length": 530,
+                "cigar": "423S52M",
+                "score": 104,
+                "feature": {
+                    "chain": "TRB",
+                    "display_name": "TRBC1",
+                    "feature_id": 531,
+                    "gene_name": "TRBC1",
+                    "region_type": "C-REGION"
+                }
+            }
+        ],
+        "clonotype": null,
+        "info": {
+            "raw_clonotype_id": "clonotype1330",
+            "raw_consensus_id": "clonotype1330_consensus_1",
+            "exact_subclonotype_id": "1"
+        },
+        "high_confidence": true,
+        "validated_umis": [
+            "ACCCCTTGCC",
+            "AGAAAGTGTA",
+            "CATTAGTCTA",
+            "CGATCGTACA",
+            "CTTTTTCAGT",
+            "GGTGTTATTC",
+            "TGATCTCCGG"
+        ],
+        "non_validated_umis": ["GTTGTTCTTG"],
+        "invalidated_umis": ["ATGATATTCG", "ATTTCGGATA"],
+        "is_cell": true,
+        "productive": true,
+        "filtered": true,
+        "is_gex_cell": true,
+        "is_asm_cell": true,
+        "full_length": true
+    },
+    {
+        "barcode": "AAACCTGCACAGGTTT-1",
+        "contig_name": "AAACCTGCACAGGTTT-1_contig_2",
+        "sequence": "AGATCAGAAGAGGAGGCTTCTCACCCTGCAGCAGGGACCTGTGAGCATGGCATGCCCTGGCTTCCTGTGGGCACTTGTGATCTCCACCTGTCTTGAATTTAGCATGGCTCAGACAGTCACTCAGTCTCAACCAGAGATGTCTGTGCAGGAGGCAGAGACCGTGACCCTGAGCTGCACATATGACACCAGTGAGAGTGATTATTATTTATTCTGGTACAAGCAGCCTCCCAGCAGGCAGATGATTCTCGTTATTCGCCAAGAAGCTTATAAGCAACAGAATGCAACAGAGAATCGTTTCTCTGTGAACTTCCAGAAAGCAGCCAAATCCTTCAGTCTCAAGATCTCAGACTCACAGCTGGGGGATGCCGCGATGTATTTCTGTGCTCTTTATAAGGTCACCGGTAACCAGTTCTATTTTGGGACAGGGACAAGTTTGACGGTCATTCCAAATATCCAGAACCCTGACCCTGCCGTGTACCAGCTGAGAGACT",
+        "quals": "IIIII]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+        "fraction_of_reads_for_this_barcode_provided_as_input_to_assembly": 1.0,
+        "read_count": 1653,
+        "umi_count": 5,
+        "start_codon_pos": 46,
+        "stop_codon_pos": null,
+        "aa_sequence": "MACPGFLWALVISTCLEFSMAQTVTQSQPEMSVQEAETVTLSCTYDTSESDYYLFWYKQPPSRQMILVIRQEAYKQQNATENRFSVNFQKAAKSFSLKISDSQLGDAAMYFCALYKVTGNQFYFGTGTSLTVIPNIQNPDPAVYQLRD",
+        "frame": null,
+        "cdr3": "CALYKVTGNQFYF",
+        "cdr3_seq": "TGTGCTCTTTATAAGGTCACCGGTAACCAGTTCTATTTT",
+        "cdr3_start": 379,
+        "cdr3_stop": 418,
+        "fwr1": {
+            "start": 106,
+            "stop": 184,
+            "nt_seq": "GCTCAGACAGTCACTCAGTCTCAACCAGAGATGTCTGTGCAGGAGGCAGAGACCGTGACCCTGAGCTGCACATATGAC",
+            "aa_seq": "AQTVTQSQPEMSVQEAETVTLSCTYD"
+        },
+        "cdr1": {
+            "start": 184,
+            "stop": 205,
+            "nt_seq": "ACCAGTGAGAGTGATTATTAT",
+            "aa_seq": "TSESDYY"
+        },
+        "fwr2": {
+            "start": 205,
+            "stop": 256,
+            "nt_seq": "TTATTCTGGTACAAGCAGCCTCCCAGCAGGCAGATGATTCTCGTTATTCGC",
+            "aa_seq": "LFWYKQPPSRQMILVIR"
+        },
+        "cdr2": {
+            "start": 256,
+            "stop": 280,
+            "nt_seq": "CAAGAAGCTTATAAGCAACAGAAT",
+            "aa_seq": "QEAYKQQN"
+        },
+        "fwr3": {
+            "start": 280,
+            "stop": 379,
+            "nt_seq": "GCAACAGAGAATCGTTTCTCTGTGAACTTCCAGAAAGCAGCCAAATCCTTCAGTCTCAAGATCTCAGACTCACAGCTGGGGGATGCCGCGATGTATTTC",
+            "aa_seq": "ATENRFSVNFQKAAKSFSLKISDSQLGDAAMYF"
+        },
+        "fwr4": {
+            "start": 418,
+            "stop": 449,
+            "nt_seq": "GGGACAGGGACAAGTTTGACGGTCATTCCAA",
+            "aa_seq": "GTGTSLTVIP"
+        },
+        "annotations": [
+            {
+                "contig_match_start": 0,
+                "contig_match_end": 46,
+                "annotation_match_start": 0,
+                "annotation_match_end": 46,
+                "annotation_length": 46,
+                "cigar": "46M445S",
+                "score": 92,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAV38-2/DV8",
+                    "feature_id": 506,
+                    "gene_name": "TRAV38-2/DV8",
+                    "region_type": "5'UTR"
+                }
+            },
+            {
+                "contig_match_start": 46,
+                "contig_match_end": 385,
+                "annotation_match_start": 0,
+                "annotation_match_end": 339,
+                "annotation_length": 349,
+                "cigar": "46S339M106S",
+                "score": 678,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAV38-2/DV8",
+                    "feature_id": 507,
+                    "gene_name": "TRAV38-2/DV8",
+                    "region_type": "L-REGION+V-REGION"
+                }
+            },
+            {
+                "contig_match_start": 393,
+                "contig_match_end": 449,
+                "annotation_match_start": 0,
+                "annotation_match_end": 56,
+                "annotation_length": 56,
+                "cigar": "393S56M42S",
+                "score": 102,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAJ49",
+                    "feature_id": 436,
+                    "gene_name": "TRAJ49",
+                    "region_type": "J-REGION"
+                }
+            },
+            {
+                "contig_match_start": 449,
+                "contig_match_end": 491,
+                "annotation_match_start": 0,
+                "annotation_match_end": 42,
+                "annotation_length": 422,
+                "cigar": "449S42M",
+                "score": 84,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAC",
+                    "feature_id": 393,
+                    "gene_name": "TRAC",
+                    "region_type": "C-REGION"
+                }
+            }
+        ],
+        "clonotype": null,
+        "info": {
+            "raw_clonotype_id": "clonotype1330",
+            "raw_consensus_id": "clonotype1330_consensus_2",
+            "exact_subclonotype_id": "1"
+        },
+        "high_confidence": true,
+        "validated_umis": ["ACTAGATCGC", "TCTAAGCTCT", "TGGGTTATGG"],
+        "non_validated_umis": ["TGTTAACCAT"],
+        "invalidated_umis": ["GCGGGGCGTA"],
+        "is_cell": true,
+        "productive": true,
+        "filtered": true,
+        "is_gex_cell": true,
+        "is_asm_cell": true,
+        "full_length": true
+    },
+    {
+        "barcode": "AAACCTGCACATCTTT-1",
+        "contig_name": "AAACCTGCACATCTTT-1_contig_1",
+        "sequence": "CTGGAAGACCACCTGGGCTGTCATTGAGCTCTGGTGCCAGGAGGAATGGACAAGATCTTAGGAGCATCATTTTTAGTTCTGTGGCTTCAACTATGCTGGGTGAGTGGCCAACAGAAGGAGAAAAGTGACCAGCAGCAGGTGAAACAAAGTCCTCAATCTTTGATAGTCCAGAAAGGAGGGATTTCAATTATAAACTGTGCTTATGAGAACACTGCGTTTGACTACTTTCCATGGTACCAACAATTCCCTGGGAAAGGCCCTGCATTATTGATAGCCATACGTCCAGATGTGAGTGAAAAGAAAGAAGGAAGATTCACAATCTCCTTCAATAAAAGTGCCAAGCAGTTCTCATTGCATATCATGGATTCCCAGCCTGGAGACTCAGCCACCTACTTCTGTGCAGCAAGGTCGGAAGGTTCTGCAAGGCAACTGACCTTTGGATCTGGGACACAATTGACTGTTTTACCTGATATCCAGAACCCTGACCCTGCCGTGTACCAGCTGAGAGACT",
+        "quals": "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+        "fraction_of_reads_for_this_barcode_provided_as_input_to_assembly": 1.0,
+        "read_count": 1118,
+        "umi_count": 3,
+        "start_codon_pos": 45,
+        "stop_codon_pos": null,
+        "aa_sequence": "MDKILGASFLVLWLQLCWVSGQQKEKSDQQQVKQSPQSLIVQKGGISIINCAYENTAFDYFPWYQQFPGKGPALLIAIRPDVSEKKEGRFTISFNKSAKQFSLHIMDSQPGDSATYFCAARSEGSARQLTFGSGTQLTVLPDIQNPDPAVYQLRD",
+        "frame": null,
+        "cdr3": "CAARSEGSARQLTF",
+        "cdr3_seq": "TGTGCAGCAAGGTCGGAAGGTTCTGCAAGGCAACTGACCTTT",
+        "cdr3_start": 396,
+        "cdr3_stop": 438,
+        "fwr1": {
+            "start": 129,
+            "stop": 207,
+            "nt_seq": "CAGCAGCAGGTGAAACAAAGTCCTCAATCTTTGATAGTCCAGAAAGGAGGGATTTCAATTATAAACTGTGCTTATGAG",
+            "aa_seq": "QQQVKQSPQSLIVQKGGISIINCAYE"
+        },
+        "cdr1": {
+            "start": 207,
+            "stop": 225,
+            "nt_seq": "AACACTGCGTTTGACTAC",
+            "aa_seq": "NTAFDY"
+        },
+        "fwr2": {
+            "start": 225,
+            "stop": 276,
+            "nt_seq": "TTTCCATGGTACCAACAATTCCCTGGGAAAGGCCCTGCATTATTGATAGCC",
+            "aa_seq": "FPWYQQFPGKGPALLIA"
+        },
+        "cdr2": {
+            "start": 276,
+            "stop": 297,
+            "nt_seq": "ATACGTCCAGATGTGAGTGAA",
+            "aa_seq": "IRPDVSE"
+        },
+        "fwr3": {
+            "start": 297,
+            "stop": 396,
+            "nt_seq": "AAGAAAGAAGGAAGATTCACAATCTCCTTCAATAAAAGTGCCAAGCAGTTCTCATTGCATATCATGGATTCCCAGCCTGGAGACTCAGCCACCTACTTC",
+            "aa_seq": "KKEGRFTISFNKSAKQFSLHIMDSQPGDSATYF"
+        },
+        "fwr4": {
+            "start": 438,
+            "stop": 469,
+            "nt_seq": "GGATCTGGGACACAATTGACTGTTTTACCTG",
+            "aa_seq": "GSGTQLTVLP"
+        },
+        "annotations": [
+            {
+                "contig_match_start": 0,
+                "contig_match_end": 45,
+                "annotation_match_start": 0,
+                "annotation_match_end": 45,
+                "annotation_length": 45,
+                "cigar": "45M466S",
+                "score": 90,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAV23/DV6",
+                    "feature_id": 484,
+                    "gene_name": "TRAV23/DV6",
+                    "region_type": "5'UTR"
+                }
+            },
+            {
+                "contig_match_start": 45,
+                "contig_match_end": 409,
+                "annotation_match_start": 0,
+                "annotation_match_end": 364,
+                "annotation_length": 364,
+                "cigar": "45S364M102S",
+                "score": 713,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAV23/DV6",
+                    "feature_id": 485,
+                    "gene_name": "TRAV23/DV6",
+                    "region_type": "L-REGION+V-REGION"
+                }
+            },
+            {
+                "contig_match_start": 414,
+                "contig_match_end": 469,
+                "annotation_match_start": 8,
+                "annotation_match_end": 63,
+                "annotation_length": 63,
+                "cigar": "414S55M42S",
+                "score": 110,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAJ22",
+                    "feature_id": 407,
+                    "gene_name": "TRAJ22",
+                    "region_type": "J-REGION"
+                }
+            },
+            {
+                "contig_match_start": 469,
+                "contig_match_end": 511,
+                "annotation_match_start": 0,
+                "annotation_match_end": 42,
+                "annotation_length": 422,
+                "cigar": "469S42M",
+                "score": 84,
+                "feature": {
+                    "chain": "TRA",
+                    "display_name": "TRAC",
+                    "feature_id": 393,
+                    "gene_name": "TRAC",
+                    "region_type": "C-REGION"
+                }
+            }
+        ],
+        "clonotype": null,
+        "info": {
+            "raw_clonotype_id": "clonotype4513",
+            "raw_consensus_id": "clonotype4513_consensus_2",
+            "exact_subclonotype_id": "1"
+        },
+        "high_confidence": true,
+        "validated_umis": ["ATTCAAACAG", "CTTCGGATTG"],
+        "non_validated_umis": [],
+        "invalidated_umis": ["TATCGTTGTT"],
+        "is_cell": true,
+        "productive": true,
+        "filtered": true,
+        "is_gex_cell": true,
+        "is_asm_cell": true,
+        "full_length": true
+    }
+]

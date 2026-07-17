@@ -1,0 +1,3 @@
+# Always pair ipynb notebooks to md files
+default_jupytext_formats = "ipynb"
+default_notebook_metadata_filter = "-kernelspec"

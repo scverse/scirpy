@@ -1,0 +1,6 @@
+_build
+scirpy.*.rst
+tutorials/*-Copy*
+tutorials/data
+generated
+__latexindent*

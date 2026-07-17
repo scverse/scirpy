@@ -1,11 +1,10 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = [ "hatchling" ]
+requires = [ "hatch-vcs", "hatchling" ]
 
 [project]
 name = "scirpy"
-version = "0.0.1"
-description = "A very interesting piece of code"
+description = "Python library for single-cell adaptive immune receptor repertoire (AIRR) analysis"
 readme = "README.md"
 license = { file = "LICENSE" }
 maintainers = [
@@ -13,6 +12,7 @@ maintainers = [
 ]
 authors = [
   { name = "Gregor Sturm" },
+  { name = "Tamas Szabo" },
 ]
 requires-python = ">=3.12"
 classifiers = [
@@ -21,31 +21,65 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
+dynamic = [ "version" ]
 dependencies = [
-  "anndata",
-  # for debug logging (referenced from the issue template)
-  "session-info2",
+  "adjusttext>=0.7",
+  "airr>=1.6.1",
+  "anndata>=0.9",
+  "awkward>=2.1",
+  # 0.10.0 and 0.10.1 have the bug described in https://github.com/igraph/python-igraph/issues/570
+  "igraph!=0.10,!=0.10.1",
+  "joblib>=1.3.1",
+  "logomaker!=0.8.5",
+  "mudata>=0.2.3",
+  "networkx>=2.5",
+  "numba>=0.60",
+  "numpy>=1.17",
+  "pandas>=2.3",
+  "pooch>=1.7",
+  "pycairo>=1.20; sys_platform=='win32'",
+  "python-levenshtein",
+  "scanpy>=1.9.3",
+  "scikit-learn",
+  "scipy",
+  "squarify",
+  "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
-# https://docs.pypi.org/project_metadata/#project-urls
+optional-dependencies.cupy = [ "cupy-cuda12x" ]
+optional-dependencies.dandelion = [ "sc-dandelion>=0.5" ]
+optional-dependencies.diversity = [ "scikit-bio>=0.5.7" ]
+optional-dependencies.parasail = [
+  # parasail 1.2.1 fails to be installd on MacOS
+  "parasail!=1.2.1",
+]
+optional-dependencies.rpack = [ "rectangle-packer" ]
 urls.Documentation = "https://scirpy.readthedocs.io/"
-urls.Homepage = "https://github.com/grst/scirpy"
-urls.Source = "https://github.com/grst/scirpy"
+urls.Home-page = "https://github.com/scverse/scirpy"
+urls.Source = "https://github.com/scverse/scirpy"
 
 [dependency-groups]
-dev = [
-  "prek",
-  "twine>=4.0.2",
-]
+dev = [ "prek" ]
 test = [
-  "coverage>=7.10",
-  "pytest",
-  "pytest-cov",     # For VS Code’s coverage functionality
+  "anndata>=0.12",
+  "coverage",
+  "pytest!=9.1",                      # https://github.com/pytest-dev/pytest/issues/14591
+  "scirpy[diversity,parasail,rpack]",
 ]
 doc = [
+  # includes dependencies to run notebooks on CI
+  "docutils>=0.8,!=0.18.*,!=0.19.*",
   "ipykernel",
   "ipython",
+  "ipywidgets",
+  "jupyter-client",
+  "jupytext",
+  "leidenalg",
+  "muon>0.1.6",
+  "myst-nb",
   "myst-nb>=1.1",
-  "pandas",
+  "nbconvert",
+  "pycairo",
+  "scirpy[dandelion]",
   "scverse-misc[sphinx]>=0.1.2",
   "sphinx>=8.1",
   "sphinx-autodoc-typehints",
@@ -56,25 +90,67 @@ doc = [
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
 ]
+gpu = [ "scirpy[cupy]" ]
 
 [tool.hatch]
+version.source = "vcs"
 envs.default.installer = "uv"
 envs.default.dependency-groups = [ "dev" ]
 envs.docs.scripts.build = "sphinx-build -M html docs docs/_build -W {args}"
 envs.docs.scripts.clean = "git clean -fdX -- {args:docs}"
 envs.docs.scripts.open = "python -m webbrowser -t docs/_build/html/index.html"
+envs.docs.scripts.run_tutorial = "jupytext -k python3 --execute {args}"
 envs.docs.dependency-groups = [ "doc" ]
+envs.gpu.python = "3.13"
+envs.gpu.scripts.test = "pytest -m gpu"
+envs.gpu.dependency-groups = [ "gpu", "test", "dev" ]
 envs.hatch-test.matrix = [
   # Test the lowest and highest supported Python versions with normal deps
-  { deps = [ "stable" ], python = [ "3.12", "3.14" ] },
+  { deps = [
+    "stable",
+  ], python = [
+    "3.12",
+    "3.14",
+  ] },
+  # Test the lowest supported package versions with the lowest supported python version
+  { deps = [
+    "minver",
+  ], python = [
+    "3.12",
+  ] },
   # Test the newest supported Python version also with pre-release deps
-  { deps = [ "pre" ], python = [ "3.14" ] },
+  { deps = [
+    "pre",
+  ], python = [
+    "3.14",
+  ] },
+]
+# If the matrix variable `deps` is set to "minver", install minimum versions.
+envs.hatch-test.overrides.matrix.deps.dependencies = [
+  { value = "pandas<3", if = [
+    "minver",
+  ] },
+  { value = "numpy<2.1", if = [
+    "minver",
+  ] },
+  { value = "scipy<1.14", if = [
+    "minver",
+  ] },
+  { value = "matplotlib<3.10", if = [
+    "minver",
+  ] },
+  { value = "networkx<3.4", if = [
+    "minver",
+  ] },
 ]
 # If the matrix variable `deps` is set to "pre",
 # set the environment variable `UV_PRERELEASE` to "allow".
 envs.hatch-test.overrides.matrix.deps.env-vars = [
-  { value = "allow", key = "UV_PRERELEASE", if = [ "pre" ] },
+  { value = "allow", key = "UV_PRERELEASE", if = [
+    "pre",
+  ] },
 ]
+envs.hatch-test.default-args = []  # accounting for non-default tests path (specified via pytest.ini_options)
 envs.hatch-test.dependency-groups = [ "dev", "test" ]
 
 [tool.ruff]
@@ -96,31 +172,68 @@ lint.select = [
   "W",      # Warning detected by Pycodestyle
 ]
 lint.ignore = [
-  "B008", # Errors from function calls in argument defaults. These are fine when the result is immutable.
-  "D100", # Missing docstring in public module
-  "D104", # Missing docstring in public package
-  "D105", # __magic__ methods are often self-explanatory, allow missing docstrings
-  "D107", # Missing docstring in __init__
-  # Disable one in each pair of mutually incompatible rules
-  "D203", # We don’t want a blank line before a class docstring
-  "D213", # <> We want docstrings to start immediately after the opening triple quote
-  "D400", # first line should end with a period [Bug: doesn’t work with single-line docstrings]
-  "D401", # First line should be in imperative mood; try rephrasing
-  "E501", # line too long -> we accept long comment lines; formatter gets rid of long code lines
-  "E731", # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
-  "E741", # allow I, O, l as variable names -> I is the identity matrix
+  # Errors from function calls in argument defaults. These are fine when the result is immutable.
+  "B008",
+  # no explicit `stackelvel` keywork argument found
+  "B028",
+  # Missing docstring in public module
+  "D100",
+  # missing docstring in public function
+  "D103",
+  # Missing docstring in public package
+  "D104",
+  # __magic__ methods are often self-explanatory, allow missing docstrings
+  "D105",
+  # Missing docstring in __init__
+  "D107",
+  ## Disable one in each pair of mutually incompatible rules
+  # We don’t want a blank line before a class docstring
+  "D203",
+  # 1 blank line required between summary line and description
+  "D205",
+  # We want docstrings to start immediately after the opening triple quote
+  "D213",
+  # Use `r"""` if any backslashes in a docstring
+  "D301",
+  # first line should end with a period [Bug: doesn't work with single-line docstrings]
+  "D400",
+  # First line should be in imperative mood; try rephrasing
+  "D401",
+  # line too long -> we accept long comment lines; formatter gets rid of long code lines
+  "E501",
+  # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
+  "E731",
+  # allow I, O, l as variable names -> I is the identity matrix
+  "E741",
 ]
+lint.per-file-ignores."*.ipynb" = [
+  "E402",
+]  # Module level import not at top of cell
 lint.per-file-ignores."*/__init__.py" = [ "F401" ]
 lint.per-file-ignores."docs/*" = [ "I" ]
+lint.per-file-ignores."src/scirpy/datasets/_processing_scripts/*" = [
+  "B018",
+  "E402",
+]
 lint.per-file-ignores."tests/*" = [ "D" ]
 lint.pydocstyle.convention = "numpy"
 
 [tool.pytest]
 addopts = [
-  "--import-mode=importlib", # allow using test files with same name
+  "--import-mode=importlib",      # allow using test files with same name
+  "-m not gpu and not dandelion", # dandelion breaks too often because of version conflicts (itroduces a ton of transitive dependencies)
 ]
+markers = [
+  "conda: marks a subset of tests to be ran on the Bioconda CI.",
+  "extra: marks tests that require extra dependencies.",
+  "gpu: mark test to run on GPU",
+  "dandelion: markes test that have dandelion as dependency",
+]
+minversion = "6.0"
+norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__" ]
 strict = true
-testpaths = [ "tests" ]
+testpaths = [ "src/scirpy/tests" ]
+xfail_strict = true
 
 [tool.coverage]
 run.omit = [

@@ -1,0 +1,2 @@
+# Pickle files (for testing) should always have UNIX line endings.
+*.pkl text eol=lf
