@@ -53,7 +53,7 @@ urls.Home-page = "https://github.com/scverse/scirpy"
 urls.Source = "https://github.com/scverse/scirpy"
 
 [dependency-groups]
-dev = [ "pre-commit" ]
+dev = [ "prek" ]
 test = [
   "anndata>=0.12",
   "coverage",
@@ -75,11 +75,12 @@ doc = [
   "nbconvert",
   "pycairo",
   "scirpy[dandelion]",
-  "sphinx>=7",
+  "scverse-misc[sphinx]>=0.1.2",
+  "sphinx>=8.1",
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
   "sphinx-copybutton",
-  "sphinx-tabs",
+  "sphinx-design",
   "sphinxcontrib-bibtex>=1",
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
@@ -231,10 +232,12 @@ xfail_strict = true
 
 [tool.coverage]
 run.omit = [ "**/test_*.py" ]
+run.patch = [ "subprocess" ]
 run.source = [ "scirpy" ]
 
 [tool.cruft]
 skip = [
+  ".git",
   "tests",
   "src/**/__init__.py",
   "src/**/basic.py",
