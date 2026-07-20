@@ -36,7 +36,7 @@ MetricType = (
         "identity",
         "levenshtein",
         "hamming",
-        "gpu_haming",
+        "gpu_hamming",
         "normalized_hamming",
         "tcrdist",
         "needleman_wunsch",
