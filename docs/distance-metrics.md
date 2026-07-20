@@ -21,14 +21,14 @@ meaning for `normalized_hamming`, `tcrdist`, and `needleman_wunsch`.
 | Metric | Sequence | Description |
 | --- | --- | --- |
 | `identity` | nt or aa | Exact matching that connects only identical receptor sequences |
-| `normalized_hamming` | nt or aa | Percentage of mismatched positions in equal-length sequences; commonly used for BCR clonal-family inference |
 | `hamming` | nt or aa | Number of mismatched positions between equal-length sequences |
+| `normalized_hamming` | nt or aa | Percentage of mismatched positions in equal-length sequences; commonly used for BCR clonal-family inference |
 | `gpu_hamming` | nt or aa | GPU-accelerated Hamming distance for large comparisons; requires CuPy |
 | `levenshtein` | nt or aa | General edit distance counting substitutions, insertions, and deletions with equal cost |
-| `tcrdist` | aa | TCR CDR3 distance with TCR-specific substitution scores, gap costs, and terminal trimming |
+| `tcrdist` | aa | TCR CDR3 distance with amino-acid substitution scores, gap costs, and terminal trimming |
 | `needleman_wunsch` | aa | Global amino-acid alignment using a substitution matrix and linear gap penalty |
-| `alignment` | aa | Deprecated global alignment using BLOSUM62 and affine gap penalties |
-| `fastalignment` | aa | Deprecated alignment distance with a heuristic mismatch prefilter |
+| `alignment` | aa | Deprecated global alignment with affine gap penalties; use `needleman_wunsch` when penalties for opening and extending gaps are equal |
+| `fastalignment` | aa | Deprecated alignment with a heuristic mismatch prefilter; use `needleman_wunsch` when penalties for opening and extending gaps are equal |
 
 ## Exact sequence identity
 
