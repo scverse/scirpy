@@ -8,6 +8,7 @@
 
 data-structure
 tutorials
+distance-metrics
 api
 ir-biology
 glossary
