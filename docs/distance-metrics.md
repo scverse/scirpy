@@ -50,7 +50,8 @@ of sequence pairs with different lengths.
 
 For BCR data, we recommend `normalized_hamming` on nucleotide junction sequences because somatic hypermutation acts
 at the nucleotide level {cite}`Yaari.2015`. A cutoff of `15`, corresponding to at least 85% sequence identity, can be
-used as a starting point and should be adapted to the dataset.
+used as a starting point and should be adapted to the dataset. See the {doc}`BCR analysis tutorial
+<tutorials/tutorial_5k_bcr>` for a detailed example.
 
 ```python
 ir.pp.ir_dist(
