@@ -18,17 +18,17 @@ meaning for `normalized_hamming`, `tcrdist`, and `needleman_wunsch`.
 
 ## Quick reference
 
-| Use case | Recommended metric | Sequence | Description |
-| --- | --- | --- | --- |
-| Exact receptor matching | `identity` | nt or aa | Matches identical sequences |
-| BCR clonal-family inference | `normalized_hamming` | nt or aa | Percentage of mismatched positions |
-| Position-wise mismatches between equal-length sequences | `hamming` | nt or aa | Number of mismatched positions |
-| Large equal-length comparisons on a GPU | `gpu_hamming` | nt or aa | GPU-accelerated Hamming distance |
-| General edit distance | `levenshtein` | nt or aa | Minimum number of single-character edits |
-| TCR CDR3 similarity | `tcrdist` | aa | TCR-specific substitution and gap costs |
-| Global amino-acid alignment with linear gaps | `needleman_wunsch` | aa | Global alignment with a linear gap penalty |
-| Legacy global alignment | `alignment` | aa | Global alignment with affine gap penalties |
-| Legacy heuristic alignment | `fastalignment` | aa | Heuristically prefiltered alignment distance |
+| Metric | Sequence | Description |
+| --- | --- | --- |
+| `identity` | nt or aa | Exact matching that connects only identical receptor sequences |
+| `normalized_hamming` | nt or aa | Percentage of mismatched positions in equal-length sequences; commonly used for BCR clonal-family inference |
+| `hamming` | nt or aa | Number of mismatched positions between equal-length sequences |
+| `gpu_hamming` | nt or aa | GPU-accelerated Hamming distance for large comparisons; requires CuPy |
+| `levenshtein` | nt or aa | General edit distance counting substitutions, insertions, and deletions with equal cost |
+| `tcrdist` | aa | TCR CDR3 distance with TCR-specific substitution scores, gap costs, and terminal trimming |
+| `needleman_wunsch` | aa | Global amino-acid alignment using a substitution matrix and linear gap penalty |
+| `alignment` | aa | Deprecated global alignment using BLOSUM62 and affine gap penalties |
+| `fastalignment` | aa | Deprecated alignment distance with a heuristic mismatch prefilter |
 
 ## Exact sequence identity
 
