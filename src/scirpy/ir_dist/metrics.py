@@ -1832,7 +1832,7 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
 @deprecated(
     Deprecation(
         "0.15.0",
-        "`FastAlignmentDistanceCalculator` achieves (depending on the settings) identical results at a higher speed.",
+        "If `gap_open == gap_extend`, use `NeedlemanWunschDistanceCalculator` instead.",
     )
 )
 @_doc_params(params=_doc_params_parallel_distance_calculator)
@@ -1956,6 +1956,12 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         )
 
 
+@deprecated(
+    Deprecation(
+        "0.15.0",
+        "If `gap_open == gap_extend`, use `NeedlemanWunschDistanceCalculator` instead.",
+    )
+)
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\

@@ -67,10 +67,12 @@ metric
       * `normalized_hamming` -- Normalized Hamming distance (in percent) for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
       * `alignment` -- Distance based on pairwise sequence alignments using the
-        BLOSUM62 matrix. This option is incompatible with nucleotide sequences.
+        BLOSUM62 matrix. Deprecated; if `gap_open == gap_extend`, use `needleman_wunsch` instead.
+        This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
       * `fastalignment` -- Distance based on pairwise sequence alignments using the
         BLOSUM62 matrix. Faster implementation of `alignment` with some loss.
+        Deprecated; if `gap_open == gap_extend`, use `needleman_wunsch` instead.
         This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.FastAlignmentDistanceCalculator`.
       * any instance of :class:`~scirpy.ir_dist.metrics.DistanceCalculator`.
