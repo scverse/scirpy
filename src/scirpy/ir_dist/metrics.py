@@ -1620,7 +1620,7 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         self,
         cutoff: int = 10,
         *,
-        gap_penalty: int = 11,
+        gap_penalty: int = 4,
         n_jobs: int = -1,
         n_blocks: int = 1,
         histogram: bool = False,
