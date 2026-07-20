@@ -18,17 +18,17 @@ meaning for `normalized_hamming`, `tcrdist`, and `needleman_wunsch`.
 
 ## Quick reference
 
-| Use case | Recommended metric | Sequence | Main consideration |
+| Use case | Recommended metric | Sequence | Description |
 | --- | --- | --- | --- |
-| Exact receptor matching | `identity` | nt or aa | Only identical sequences are connected |
-| BCR clonal-family inference | `normalized_hamming` | nt | Commonly combined with V- and J-gene matching |
-| Position-wise mismatches between equal-length sequences | `hamming` | nt or aa | Sequences of different lengths are never connected |
-| Large equal-length comparisons on a GPU | `gpu_hamming` | nt or aa | Requires the optional CuPy dependency |
-| General edit distance | `levenshtein` | nt or aa | Treats substitutions, insertions, and deletions equally |
-| TCR CDR3 similarity | `tcrdist` | aa | TCR-specific scoring and trimming |
-| Global amino-acid alignment with linear gaps | `needleman_wunsch` | aa | Supports BLOSUM62 and TCRBLOSUM |
-| Legacy global alignment | `alignment` | aa | Deprecated; see {ref}`deprecated-alignment-metrics` |
-| Legacy heuristic alignment | `fastalignment` | aa | Deprecated; see {ref}`deprecated-alignment-metrics` |
+| Exact receptor matching | `identity` | nt or aa | Matches identical sequences |
+| BCR clonal-family inference | `normalized_hamming` | nt or aa | Percentage of mismatched positions |
+| Position-wise mismatches between equal-length sequences | `hamming` | nt or aa | Number of mismatched positions |
+| Large equal-length comparisons on a GPU | `gpu_hamming` | nt or aa | GPU-accelerated Hamming distance |
+| General edit distance | `levenshtein` | nt or aa | Minimum number of single-character edits |
+| TCR CDR3 similarity | `tcrdist` | aa | TCR-specific substitution and gap costs |
+| Global amino-acid alignment with linear gaps | `needleman_wunsch` | aa | Global alignment with a linear gap penalty |
+| Legacy global alignment | `alignment` | aa | Global alignment with affine gap penalties |
+| Legacy heuristic alignment | `fastalignment` | aa | Heuristically prefiltered alignment distance |
 
 ## Exact sequence identity
 
