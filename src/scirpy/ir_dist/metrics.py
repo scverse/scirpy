@@ -1872,8 +1872,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 
     @deprecated(
         """\
-        FastAlignmentDistanceCalculator achieves (depending on the settings) identical results
-        at a higher speed.
+        If `gap_open == gap_extend`, use NeedlemanWunschDistanceCalculator instead.
         """
     )
     def __init__(
@@ -2024,6 +2023,11 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         Estimate of the average mismatch penalty
     """
 
+    @deprecated(
+        """\
+        If `gap_open == gap_extend`, use NeedlemanWunschDistanceCalculator instead.
+        """
+    )
     def __init__(
         self,
         cutoff: int = 10,

@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning][].
 ### Additions
 
   - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
-    `metric="needleman_wunsch"`.
+    `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
+    deprecated. When `gap_open == gap_extend`, use `needleman_wunsch` instead.
   - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
     `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
 
