@@ -8,4 +8,5 @@ Tutorials
    tutorials/tutorial_io.ipynb
    tutorials/tutorial_3k_tcr.ipynb
    tutorials/tutorial_5k_bcr.ipynb
+   distance-metrics
    tutorials/large-datasets.md
