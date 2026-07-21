@@ -59,6 +59,23 @@ account for insertions, deletions, or the biochemical similarity of amino acids.
 sequence type: different nucleotide sequences that encode the same amino-acid sequence match only with
 `sequence="aa"`.
 
+**Identity distance example:**
+
+Comparing the CDR3 amino-acid sequence `CASSLGQETQYF` with an identical sequence gives a match at every position:
+
+:::{table}
+:class: distance-example
+
+| Position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | L | G | Q | E | T | Q | Y | F |
+| CDR3 2 | C | A | S | S | L | G | Q | E | T | Q | Y | F |
+| Comparison | = | = | = | = | = | = | = | = | = | = | = | = |
+:::
+
+The identity distance is `0`, so the pair is retained. A mismatch at any position would place the pair above the
+fixed cutoff of `0`.
+
 ## Hamming distances
 
 The `hamming` metric counts positions at which two sequences differ. It only compares sequences of equal length.
@@ -92,6 +109,24 @@ The `gpu_hamming` metric computes the non-normalized Hamming distance on a compa
 datasets but does not change the biological interpretation of the metric. See
 {ref}`the GPU instructions <gpu-hamming-distance>` for installation and usage.
 
+**Hamming distance example:**
+
+Comparing the equal-length CDR3 amino-acid sequences `CASSLGQETQYF` and `CASSLAQETQFF` reveals mismatches at
+positions 6 and 11:
+
+:::{table}
+:class: distance-example
+
+| Position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | L | **G** | Q | E | T | Q | **Y** | F |
+| CDR3 2 | C | A | S | S | L | **A** | Q | E | T | Q | **F** | F |
+| Comparison | = | = | = | = | = | **x** | = | = | = | = | **x** | = |
+:::
+
+Here, `=` marks a match and `x` a mismatch. The Hamming distance is `2`, and `gpu_hamming` returns the same distance.
+The normalized Hamming distance is `2 / 12 * 100`, rounded by Scirpy to `17` percent.
+
 ## Levenshtein distance
 
 The `levenshtein` metric counts the minimum number of single-character substitutions, insertions, and deletions
@@ -105,6 +140,24 @@ distance, particularly for large datasets.
 ```python
 ir.pp.ir_dist(mdata, metric="levenshtein", sequence="aa", cutoff=2)
 ```
+
+**Levenshtein distance example:**
+
+Comparing the CDR3 amino-acid sequences `CASSLGQETQYF` and `CASSGQAETQYRF` requires one deletion and two
+insertions. The second sequence is one amino acid longer:
+
+:::{table}
+:class: distance-example
+
+| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | **L** | G | Q | **-** | E | T | Q | Y | **-** | F |
+| CDR3 2 | C | A | S | S | **-** | G | Q | **A** | E | T | Q | Y | **R** | F |
+| Edit | = | = | = | = | **delete** | = | = | **insert** | = | = | = | = | **insert** | = |
+:::
+
+One minimal transformation deletes `L` at alignment position 5 and inserts `A` and `R` at alignment positions 8 and
+13, respectively. With unit cost for each operation, the Levenshtein distance is therefore `3`.
 
 ## TCRdist
 
@@ -144,6 +197,24 @@ ir.pp.ir_dist(
 )
 ```
 
+**TCRdist example:**
+
+With the default parameters, comparing `CASSLGQETQYF` and `CASSLAQETQYF` trims the first three and last two
+positions. The only remaining difference is the substitution from `G` to `A` at position 6:
+
+:::{table}
+:class: distance-example
+
+| Position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | L | **G** | Q | E | T | Q | Y | F |
+| CDR3 2 | C | A | S | S | L | **A** | Q | E | T | Q | Y | F |
+| Scoring | trim | trim | trim | = | = | **mismatch** | = | = | = | = | trim | trim |
+:::
+
+The default BLOSUM62 scoring converts this substitution to a mismatch distance of `4`. Applying the default
+`dist_weight=3` gives a TCRdist distance of `12`.
+
 ## Needleman-Wunsch distance
 
 Use `needleman_wunsch` when the complete amino-acid junction sequence should be aligned globally. Scirpy implements
@@ -171,6 +242,23 @@ ir.pp.ir_dist(
 The default substitution matrix is [BLOSUM62](https://doi.org/10.1073/pnas.89.22.10915). As with `tcrdist`,
 `base_matrix="tcrblosum"` enables chain-specific [TCRBLOSUM](https://doi.org/10.1093/bib/bbae602) matrices.
 
+**Needleman-Wunsch distance example:**
+
+Comparing `CASSLGQETQYF` and `CASSLAGQETQYF` requires one gap in the global alignment:
+
+:::{table}
+:class: distance-example
+
+| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | L | **-** | G | Q | E | T | Q | Y | F |
+| CDR3 2 | C | A | S | S | L | **A** | G | Q | E | T | Q | Y | F |
+| Scoring | = | = | = | = | = | **gap** | = | = | = | = | = | = | = |
+:::
+
+All amino acids match after introducing the gap. With `gap_penalty=4`, the single gap position gives a
+Needleman-Wunsch distance of `4`.
+
 (deprecated-alignment-metrics)=
 
 ## Deprecated alignment metrics
@@ -184,6 +272,24 @@ Both metrics allow separate penalties for opening and extending a gap. When thei
 parameters are equal, use `needleman_wunsch` for substantially faster execution. To retain the same linear gap cost,
 set the `gap_penalty` parameter of `needleman_wunsch` to the value of `gap_open` (= `gap_extend`). Needleman-Wunsch is
 not an equivalent replacement when different gap-open and gap-extension penalties are required.
+
+**Deprecated alignment distance example:**
+
+Comparing `CASSLGQETQYF` and `CASSLARGQETQYF` introduces a gap of length two:
+
+:::{table}
+:class: distance-example
+
+| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | L | **-** | **-** | G | Q | E | T | Q | Y | F |
+| CDR3 2 | C | A | S | S | L | **A** | **R** | G | Q | E | T | Q | Y | F |
+| Scoring | = | = | = | = | = | **open** | **extend** | = | = | = | = | = | = | = |
+:::
+
+With `gap_open=4` and `gap_extend=1`, both deprecated metrics assign a distance of `5`: `4` for opening the gap and
+`1` for extending it by one position. This separate treatment of gap opening and extension cannot be reproduced by
+the linear gap penalty of `needleman_wunsch`.
 
 ## Choosing a cutoff
 
