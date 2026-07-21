@@ -45,8 +45,16 @@ errors, somatic hypermutation, or convergent receptors with similar amino-acid s
 ## Hamming distances
 
 The `hamming` metric counts positions at which two sequences differ. It only compares sequences of equal length.
-`normalized_hamming` reports the percentage of different positions instead, providing a common scale for comparisons
-of sequence pairs with different lengths.
+`normalized_hamming` reports the percentage of different positions instead, providing a common scale across
+equal-length sequence pairs of varying lengths.
+
+Hamming distances are fast, easy to interpret, and work well when substitutions are the main source of variation and
+every mismatch should have the same weight. They are therefore useful for large datasets and, for example, for
+comparing equal-length BCR nucleotide junctions that differ through somatic point mutations.
+
+They are less suitable when insertions, deletions, or the biochemical similarity of amino-acid substitutions matter.
+A single insertion shifts all subsequent positions and can make otherwise similar sequences appear highly dissimilar;
+in these cases, use an edit or alignment-based metric instead.
 
 For BCR data, we recommend `normalized_hamming` on nucleotide junction sequences because somatic hypermutation acts
 at the nucleotide level {cite}`Yaari.2015`. A cutoff of `15`, corresponding to at least 85% sequence identity, can be
