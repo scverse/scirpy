@@ -321,7 +321,7 @@ Scirpy offsets stored distances by one so that identical sequences can be repres
 
 Choose and validate the cutoff separately for each metric. Scirpy's default cutoff for a metric can serve as a starting
 point, but should not be assumed to be appropriate for every dataset. Depending on the application, useful strategies
-include using thresholds established in the literature, inspecting nearest-neighbor distance distributions, and
+include using approaches established in the literature, inspecting nearest-neighbor distance distributions, and
 evaluating cluster stability or agreement with known receptor annotations. Avoid selecting a cutoff solely to
 reproduce the matrix density of another metric.
 
