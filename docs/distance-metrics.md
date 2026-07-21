@@ -78,8 +78,12 @@ datasets but does not change the biological interpretation of the metric. See
 ## Levenshtein distance
 
 The `levenshtein` metric counts the minimum number of single-character substitutions, insertions, and deletions
-needed to transform one sequence into another. All operations have unit cost. It is useful as a general-purpose edit
-distance, but it does not distinguish conservative from unlikely amino-acid substitutions.
+needed to transform one sequence into another. It is easy to interpret, works with nucleotide and amino-acid
+sequences of different lengths, and is useful when insertions or deletions are expected.
+
+All operations have unit cost. Consequently, the metric does not distinguish conservative from unlikely amino-acid
+substitutions and does not use a substitution matrix or receptor-specific scoring. It is also slower than Hamming
+distance, particularly for large datasets.
 
 ```python
 ir.pp.ir_dist(mdata, metric="levenshtein", sequence="aa", cutoff=2)
