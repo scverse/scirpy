@@ -8,8 +8,9 @@ defining {term}`clonotype clusters <Clonotype cluster>` or querying reference da
 are not connected.
 
 {func}`scirpy.pp.ir_dist` computes distances between all unique VJ and VDJ junction sequences in a dataset and stores
-the resulting sparse distance matrices for downstream analyses. The lower-level
-{func}`scirpy.ir_dist.sequence_dist` function computes a sparse distance matrix between arbitrary sequence arrays.
+the resulting sparse distance matrices for downstream analyses. Only distances at or below the cutoff are stored.
+{func}`scirpy.ir_dist.sequence_dist` computes a sparse distance matrix between arbitrary sequence arrays and likewise
+retains only distances at or below the cutoff.
 
 The choice of metric should first reflect the biological question, such as exact clonotype matching, BCR clonal-family
 inference, or amino-acid similarity between TCRs. It also depends on the receptor and sequence type: nucleotide
