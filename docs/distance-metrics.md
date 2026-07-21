@@ -32,15 +32,20 @@ meaning for `normalized_hamming`, `tcrdist`, and `needleman_wunsch`.
 
 ## Exact sequence identity
 
-Use `identity` when cells should be grouped only if their junction sequences are identical. The true distance between
-identical sequences is zero, and the cutoff is therefore always set to zero.
+Use `identity` when cells should be grouped only if their junction sequences are identical. The metric is fast, easy
+to interpret, and requires no metric-specific parameters. The distance between identical sequences is zero, so the
+cutoff is always zero.
 
 ```python
 ir.pp.ir_dist(mdata, metric="identity", sequence="nt")
 ```
 
-This is the default and the most conservative choice for defining clonotypes. It does not account for sequencing
-errors, somatic hypermutation, or convergent receptors with similar amino-acid sequences.
+This is the default and the most conservative choice for defining clonotypes. A single sequence difference prevents
+two receptors from being connected, so the metric does not account for sequencing errors, somatic hypermutation, or
+convergent receptors with similar amino-acid sequences. It provides no graded measure of similarity and does not
+account for insertions, deletions, or the biochemical similarity of amino acids. Results also depend on the selected
+sequence type: different nucleotide sequences that encode the same amino-acid sequence match only with
+`sequence="aa"`.
 
 ## Hamming distances
 
