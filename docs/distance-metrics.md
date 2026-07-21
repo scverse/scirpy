@@ -233,9 +233,10 @@ The metric optimizes gap placement, supports sequences of different lengths, and
 for the biochemical similarity of amino acids. Unlike `tcrdist`, it compares the complete sequence without
 TCR-specific trimming or gap-placement assumptions.
 
-As a dynamic-programming alignment, it is more computationally expensive than Hamming distance or `tcrdist`. Global
-alignment is also less suitable when only a local region is expected to be similar. Moreover, useful parameter values
-and cutoffs are less intuitive than for simple edit distances.
+As a dynamic-programming alignment, it is more computationally expensive than Hamming distance or `tcrdist`. Unlike
+`tcrdist`, Needleman-Wunsch can place multiple gaps at different positions in an alignment. This additional
+flexibility only comes into play when the cutoff is high enough to permit the combined penalties of multiple gap
+positions. Moreover, useful parameter values and cutoffs are less intuitive than for simple edit distances.
 
 ```python
 ir.pp.ir_dist(
