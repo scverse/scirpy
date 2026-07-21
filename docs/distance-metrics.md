@@ -83,6 +83,10 @@ Use `tcrdist` for TCR CDR3 amino-acid similarity following the TCRdist scoring s
 combines substitution scores, length differences, terminal trimming, and configurable gap placement. Its defaults
 match the original TCRdist parameters.
 
+From a technical perspective, `tcrdist` can also be applied to BCR amino-acid junction sequences. However, this use is
+less well supported by the literature than nucleotide-based distances for BCR clonal-family inference
+{cite}`Yaari.2015`, so its parameters and cutoff require application-specific validation.
+
 ```python
 ir.pp.ir_dist(
     mdata,
