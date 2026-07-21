@@ -71,6 +71,7 @@ Comparing the CDR3 amino-acid sequence `CASSLGQETQYF` with an identical sequence
 | CDR3 1 | C | A | S | S | L | G | Q | E | T | Q | Y | F |
 | CDR3 2 | C | A | S | S | L | G | Q | E | T | Q | Y | F |
 | Comparison | = | = | = | = | = | = | = | = | = | = | = | = |
+| Distance | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 :::
 
 The identity distance is `0`, so the pair is retained. A mismatch at any position would place the pair above the
@@ -122,6 +123,7 @@ positions 6 and 11:
 | CDR3 1 | C | A | S | S | L | **G** | Q | E | T | Q | **Y** | F |
 | CDR3 2 | C | A | S | S | L | **A** | Q | E | T | Q | **F** | F |
 | Comparison | = | = | = | = | = | **x** | = | = | = | = | **x** | = |
+| Distance | 0 | 0 | 0 | 0 | 0 | **1** | 0 | 0 | 0 | 0 | **1** | 0 |
 :::
 
 Here, `=` marks a match and `x` a mismatch. The Hamming distance is `2`, and `gpu_hamming` returns the same distance.
@@ -153,7 +155,8 @@ insertions. The second sequence is one amino acid longer:
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | CDR3 1 | C | A | S | S | **L** | G | Q | **-** | E | T | Q | Y | **-** | F |
 | CDR3 2 | C | A | S | S | **-** | G | Q | **A** | E | T | Q | Y | **R** | F |
-| Edit | = | = | = | = | **delete** | = | = | **insert** | = | = | = | = | **insert** | = |
+| Comparison | = | = | = | = | **delete** | = | = | **insert** | = | = | = | = | **insert** | = |
+| Distance | 0 | 0 | 0 | 0 | **1** | 0 | 0 | **1** | 0 | 0 | 0 | 0 | **1** | 0 |
 :::
 
 One minimal transformation deletes `L` at alignment position 5 and inserts `A` and `R` at alignment positions 8 and
@@ -199,21 +202,27 @@ ir.pp.ir_dist(
 
 **TCRdist example:**
 
-With the default parameters, comparing `CASSLGQETQYF` and `CASSLAQETQYF` trims the first three and last two
-positions. The only remaining difference is the substitution from `G` to `A` at position 6:
+The sequence `CASSVGARQDTQYF` is two amino acids longer than `CASSIGQETQYF` and also contains two substitutions.
+With the default `fixed_gappos=True`, TCRdist determines the split position in the shorter sequence as
+`min(6, 3 + (L_short - 5) // 2)`. Here, `L_short=12`, so the sequence is split after position 6. The first part is
+aligned to the N-terminal end and the second part to the C-terminal end of the longer sequence, leaving a gap of
+length two between them. TCRdist additionally trims the first three and last two amino acids:
 
 :::{table}
 :class: distance-example
 
-| Position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
-| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| CDR3 1 | C | A | S | S | L | **G** | Q | E | T | Q | Y | F |
-| CDR3 2 | C | A | S | S | L | **A** | Q | E | T | Q | Y | F |
-| Scoring | trim | trim | trim | = | = | **mismatch** | = | = | = | = | trim | trim |
+| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | **I** | G | **-** | **-** | Q | **E** | T | Q | Y | F |
+| CDR3 2 | C | A | S | S | **V** | G | **A** | **R** | Q | **D** | T | Q | Y | F |
+| Comparison | trim | trim | trim | = | **x** | = | **gap** | **gap** | = | **x** | = | = | trim | trim |
+| Distance | 0 | 0 | 0 | 0 | **3** | 0 | **4** | **4** | 0 | **6** | 0 | 0 | 0 | 0 |
 :::
 
-The default BLOSUM62 scoring converts this substitution to a mismatch distance of `4`. Applying the default
-`dist_weight=3` gives a TCRdist distance of `12`.
+With default BLOSUM62 scoring and `dist_weight=3`, the `I` to `V` and `E` to `D` substitutions contribute `3` and
+`6`, respectively.
+The two additional positions contribute `4` each through the default `gap_penalty`, giving a total TCRdist distance
+of `3 + 4 + 4 + 6 = 17`.
 
 ## Needleman-Wunsch distance
 
@@ -244,20 +253,23 @@ The default substitution matrix is [BLOSUM62](https://doi.org/10.1073/pnas.89.22
 
 **Needleman-Wunsch distance example:**
 
-Comparing `CASSLGQETQYF` and `CASSLAGQETQYF` requires one gap in the global alignment:
+Comparing `CASSIGQETQYF` and `CASSAVGQQTRKQYF` produces one gap of length one, another gap of length two, and two
+substitutions in the optimal global alignment:
 
 :::{table}
 :class: distance-example
 
-| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
-| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| CDR3 1 | C | A | S | S | L | **-** | G | Q | E | T | Q | Y | F |
-| CDR3 2 | C | A | S | S | L | **A** | G | Q | E | T | Q | Y | F |
-| Scoring | = | = | = | = | = | **gap** | = | = | = | = | = | = | = |
+| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | **-** | **I** | G | Q | **E** | T | **-** | **-** | Q | Y | F |
+| CDR3 2 | C | A | S | S | **A** | **V** | G | Q | **Q** | T | **R** | **K** | Q | Y | F |
+| Comparison | = | = | = | = | **gap** | **x** | = | = | **x** | = | **gap** | **gap** | = | = | = |
+| Distance | 0 | 0 | 0 | 0 | **4** | **1** | 0 | 0 | **3** | 0 | **4** | **4** | 0 | 0 | 0 |
 :::
 
-All amino acids match after introducing the gap. With `gap_penalty=4`, the single gap position gives a
-Needleman-Wunsch distance of `4`.
+With BLOSUM62, the `I` to `V` and `E` to `Q` substitutions contribute `1` and `3`, respectively, relative to the
+best self-alignment score. With `gap_penalty=4`, each of the three gap positions contributes `4`, giving a total
+Needleman-Wunsch distance of `4 + 1 + 3 + 4 + 4 = 16`.
 
 (deprecated-alignment-metrics)=
 
@@ -275,21 +287,25 @@ not an equivalent replacement when different gap-open and gap-extension penaltie
 
 **Deprecated alignment distance example:**
 
-Comparing `CASSLGQETQYF` and `CASSLARGQETQYF` introduces a gap of length two:
+Using the same sequences as in the Needleman-Wunsch example, `CASSIGQETQYF` and `CASSAVGQQTRKQYF`, makes the
+difference between gap opening and gap extension explicit:
 
 :::{table}
 :class: distance-example
 
-| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
-| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| CDR3 1 | C | A | S | S | L | **-** | **-** | G | Q | E | T | Q | Y | F |
-| CDR3 2 | C | A | S | S | L | **A** | **R** | G | Q | E | T | Q | Y | F |
-| Scoring | = | = | = | = | = | **open** | **extend** | = | = | = | = | = | = | = |
+| Alignment position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| CDR3 1 | C | A | S | S | **-** | **I** | G | Q | **E** | T | **-** | **-** | Q | Y | F |
+| CDR3 2 | C | A | S | S | **A** | **V** | G | Q | **Q** | T | **R** | **K** | Q | Y | F |
+| Comparison | = | = | = | = | **open** | **x** | = | = | **x** | = | **open** | **extend** | = | = | = |
+| Distance | 0 | 0 | 0 | 0 | **4** | **1** | 0 | 0 | **3** | 0 | **4** | **1** | 0 | 0 | 0 |
 :::
 
-With `gap_open=4` and `gap_extend=1`, both deprecated metrics assign a distance of `5`: `4` for opening the gap and
-`1` for extending it by one position. This separate treatment of gap opening and extension cannot be reproduced by
-the linear gap penalty of `needleman_wunsch`.
+With `gap_open=4` and `gap_extend=1`, the gap of length one costs `4`, whereas the gap of length two costs `4 + 1`.
+Together with substitution contributions of `1` and `3`, both deprecated metrics assign a total distance of
+`4 + 1 + 3 + 4 + 1 = 13`. In contrast, `needleman_wunsch` applies `gap_penalty=4` to every gap position and therefore
+assigns distance `16` to the same alignment. This distinction between opening and extending a gap is the reason
+Needleman-Wunsch is only an equivalent replacement when `gap_open` and `gap_extend` are equal.
 
 ## Choosing a cutoff
 
