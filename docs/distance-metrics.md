@@ -205,7 +205,7 @@ The sequence `CASSVGARQDTQYF` is two amino acids longer than `CASSIGQETQYF` and 
 With the default `fixed_gappos=True`, TCRdist determines the split position in the shorter sequence using a formula
 based on the sequence lengths. Here, the sequence is split after position 6. The first part is aligned to the
 N-terminal end and the second part to the C-terminal end of the longer sequence, leaving a gap of length two between
-them. TCRdist additionally trims the first three and last two amino acids:
+them. By default, TCRdist additionally trims the first three and last two amino acids:
 
 :::{table}
 :class: distance-example
