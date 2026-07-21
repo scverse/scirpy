@@ -154,10 +154,11 @@ Scirpy offsets stored distances by one so that identical sequences can be repres
 - stored value `d + 1` represents true distance `d`;
 - stored value `0` means that the true distance is greater than the cutoff.
 
-Choose and validate the cutoff separately for each metric. Depending on the application, useful strategies include
-using thresholds established in the literature, inspecting nearest-neighbor distance distributions, and evaluating
-cluster stability or agreement with known receptor annotations. Avoid selecting a cutoff solely to reproduce the
-matrix density of another metric.
+Choose and validate the cutoff separately for each metric. Scirpy's default cutoff for a metric can serve as a starting
+point, but should not be assumed to be appropriate for every dataset. Depending on the application, useful strategies
+include using thresholds established in the literature, inspecting nearest-neighbor distance distributions, and
+evaluating cluster stability or agreement with known receptor annotations. Avoid selecting a cutoff solely to
+reproduce the matrix density of another metric.
 
 ## Custom distance calculators
 
