@@ -202,10 +202,10 @@ ir.pp.ir_dist(
 **TCRdist example:**
 
 The sequence `CASSVGARQDTQYF` is two amino acids longer than `CASSIGQETQYF` and also contains two substitutions.
-With the default `fixed_gappos=True`, TCRdist determines the split position in the shorter sequence as
-`min(6, 3 + (L_short - 5) // 2)`. Here, `L_short=12`, so the sequence is split after position 6. The first part is
-aligned to the N-terminal end and the second part to the C-terminal end of the longer sequence, leaving a gap of
-length two between them. TCRdist additionally trims the first three and last two amino acids:
+With the default `fixed_gappos=True`, TCRdist determines the split position in the shorter sequence using a formula
+based on the sequence lengths. Here, the sequence is split after position 6. The first part is aligned to the
+N-terminal end and the second part to the C-terminal end of the longer sequence, leaving a gap of length two between
+them. TCRdist additionally trims the first three and last two amino acids:
 
 :::{table}
 :class: distance-example
