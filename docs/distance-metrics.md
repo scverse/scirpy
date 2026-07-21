@@ -92,9 +92,8 @@ A single insertion shifts all subsequent positions and can make otherwise simila
 in these cases, use an edit or alignment-based metric instead.
 
 For BCR data, we recommend `normalized_hamming` on nucleotide junction sequences because somatic hypermutation acts
-at the nucleotide level {cite}`Yaari.2015`. A cutoff of `15`, corresponding to at least 85% sequence identity, can be
-used as a starting point and should be adapted to the dataset. See the {doc}`BCR analysis tutorial
-<tutorials/tutorial_5k_bcr>` for a detailed example.
+at the nucleotide level {cite}`Yaari.2015`. See the {doc}`BCR analysis tutorial <tutorials/tutorial_5k_bcr>` for an
+example of selecting and validating a cutoff for BCR clonal-family inference.
 
 ```python
 ir.pp.ir_dist(
