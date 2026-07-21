@@ -2,18 +2,30 @@
 
 # Choosing a sequence distance metric
 
-Scirpy uses sequence distances to connect similar immune receptors when defining
-{term}`clonotype clusters <Clonotype cluster>` or querying reference datasets.
-{func}`scirpy.pp.ir_dist` computes distances between all unique VJ and VDJ junction sequences in a dataset, while
-{func}`scirpy.ir_dist.sequence_dist` computes distances between arbitrary sequence arrays.
+Sequence distances quantify how dissimilar two immune-receptor sequences are. Smaller distances indicate greater
+similarity, and identical sequences have distance zero. Scirpy uses a distance cutoff to connect similar receptors when
+defining {term}`clonotype clusters <Clonotype cluster>` or querying reference datasets; sequence pairs above the cutoff
+are not connected.
 
-The choice of metric depends primarily on the biological question, receptor type, sequence type, and whether
-insertions or deletions should be considered. Runtime and memory requirements are secondary considerations; see
-{doc}`tutorials/large-datasets` for performance advice.
+{func}`scirpy.pp.ir_dist` computes distances between all unique VJ and VDJ junction sequences in a dataset and stores
+the resulting sparse distance matrices for downstream analyses. The lower-level
+{func}`scirpy.ir_dist.sequence_dist` function computes a sparse distance matrix between arbitrary sequence arrays.
+
+The choice of metric should first reflect the biological question, such as exact clonotype matching, BCR clonal-family
+inference, or amino-acid similarity between TCRs. It also depends on the receptor and sequence type: nucleotide
+distances retain information about synonymous mutations, whereas amino-acid distances focus on changes to the encoded
+receptor. If insertions and deletions are relevant, an edit or alignment-based metric is preferable to a positional
+metric such as Hamming distance.
+
+Runtime and memory requirements are secondary considerations, although they can become limiting for large datasets.
+The metric, cutoff, number and length of unique sequences, and density of the resulting matrix all affect computational
+cost. See {doc}`tutorials/large-datasets` for performance advice.
 
 :::{important}
-Distances and cutoffs are not directly comparable between metrics. For example, a cutoff of `10` has a different
-meaning for `normalized_hamming`, `tcrdist`, and `needleman_wunsch`.
+Distances and cutoffs are not directly comparable between metrics because their scales and scoring rules differ. For
+example, a `normalized_hamming` cutoff of `10` permits up to 10% mismatched positions, whereas cutoffs of `10` for
+`tcrdist` and `needleman_wunsch` refer to substitution- and gap-based scoring schemes. Select and validate the cutoff
+separately for each metric.
 :::
 
 ## Quick reference
