@@ -96,9 +96,10 @@ ir.pp.ir_dist(
 )
 ```
 
-BLOSUM62 is used by default. TCRBLOSUM matrices can be selected with `base_matrix="tcrblosum"`; when using
-{func}`scirpy.pp.ir_dist`, Scirpy automatically selects the alpha-chain matrix for VJ sequences and the beta-chain
-matrix for VDJ sequences.
+[BLOSUM62](https://doi.org/10.1073/pnas.89.22.10915) is the default amino-acid substitution matrix. The TCR-specific
+[TCRBLOSUM](https://doi.org/10.1093/bib/bbae602) substitution matrices can be selected with
+`base_matrix="tcrblosum"`; when using {func}`scirpy.pp.ir_dist`, Scirpy automatically selects the alpha-chain matrix
+for VJ sequences and the beta-chain matrix for VDJ sequences.
 
 ```python
 ir.pp.ir_dist(
