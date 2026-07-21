@@ -133,6 +133,14 @@ Use `needleman_wunsch` when the complete amino-acid junction sequence should be 
 Needleman-Wunsch alignment with a linear gap penalty. It converts the alignment score into a distance relative to the
 best self-alignment score of the two sequences.
 
+The metric optimizes gap placement, supports sequences of different lengths, and uses a substitution matrix to account
+for the biochemical similarity of amino acids. Unlike `tcrdist`, it compares the complete sequence without
+TCR-specific trimming or gap-placement assumptions.
+
+As a dynamic-programming alignment, it is more computationally expensive than Hamming distance or `tcrdist`. Global
+alignment is also less suitable when only a local region is expected to be similar. Moreover, useful parameter values
+and cutoffs are less intuitive than for simple edit distances.
+
 ```python
 ir.pp.ir_dist(
     mdata,
@@ -154,9 +162,10 @@ The `alignment` and `fastalignment` metrics are deprecated. Both use BLOSUM62 an
 optional Parasail dependency. `alignment` applies lossless length-based prefiltering, while `fastalignment` adds a
 heuristic mismatch filter that improves performance but can produce false negatives.
 
-Use `needleman_wunsch` when `gap_open` and `gap_extend` are equal. To retain the same linear gap cost, set
-`gap_penalty=gap_open`. Needleman-Wunsch is not an equivalent replacement when different gap-open and gap-extension
-penalties are required.
+Both metrics allow separate penalties for opening and extending a gap. When their `gap_open` and `gap_extend`
+parameters are equal, use `needleman_wunsch` for substantially faster execution. To retain the same linear gap cost,
+set the `gap_penalty` parameter of `needleman_wunsch` to the value of `gap_open` (= `gap_extend`). Needleman-Wunsch is
+not an equivalent replacement when different gap-open and gap-extension penalties are required.
 
 ## Choosing a cutoff
 
