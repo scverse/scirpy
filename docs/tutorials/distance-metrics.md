@@ -131,8 +131,8 @@ The normalized Hamming distance is `2 / 12 * 100`, rounded by Scirpy to `17` per
 ## Levenshtein distance
 
 The `levenshtein` metric counts the minimum number of single-character substitutions, insertions, and deletions
-needed to transform one sequence into another. It is easy to interpret, works with nucleotide and amino-acid
-sequences of different lengths, and is useful when insertions or deletions are expected.
+needed to transform one sequence into another {cite}`Levenshtein.1966`. It is easy to interpret, works with nucleotide
+and amino-acid sequences of different lengths, and is useful when insertions or deletions are expected.
 
 All operations have unit cost. Consequently, the metric does not distinguish conservative from unlikely amino-acid
 substitutions and does not use a substitution matrix or receptor-specific scoring. It is also slower than Hamming
@@ -226,8 +226,8 @@ of `3 + 4 + 4 + 6 = 17`.
 ## Needleman-Wunsch distance
 
 Use `needleman_wunsch` when the complete amino-acid junction sequence should be aligned globally. Scirpy implements
-Needleman-Wunsch alignment with a linear gap penalty. It converts the alignment score into a distance relative to the
-best self-alignment score of the two sequences.
+Needleman-Wunsch alignment with a linear gap penalty {cite}`NeedlemanWunsch.1970`. It converts the alignment score into
+a distance relative to the best self-alignment score of the two sequences.
 
 The metric optimizes gap placement, supports sequences of different lengths, and uses a substitution matrix to account
 for the biochemical similarity of amino acids. Unlike `tcrdist`, it compares the complete sequence without
