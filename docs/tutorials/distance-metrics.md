@@ -19,7 +19,7 @@ metric such as Hamming distance.
 
 Runtime and memory requirements are secondary considerations, although they can become limiting for large datasets.
 The metric, cutoff, number and length of unique sequences, and density of the resulting matrix all affect computational
-cost. See {doc}`tutorials/large-datasets` for performance advice.
+cost. See {doc}`large-datasets` for performance advice.
 
 :::{important}
 Distances and cutoffs are not directly comparable between metrics because their scales and scoring rules differ. For
@@ -92,7 +92,7 @@ A single insertion shifts all subsequent positions and can make otherwise simila
 in these cases, use an edit or alignment-based metric instead.
 
 For BCR data, we recommend `normalized_hamming` on nucleotide junction sequences because somatic hypermutation acts
-at the nucleotide level {cite}`Yaari.2015`. See the {doc}`BCR analysis tutorial <tutorials/tutorial_5k_bcr>` for an
+at the nucleotide level {cite}`Yaari.2015`. See the {doc}`BCR analysis tutorial <tutorial_5k_bcr>` for an
 example of selecting and validating a cutoff for BCR clonal-family inference.
 
 ```python
