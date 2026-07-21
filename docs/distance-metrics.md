@@ -151,16 +151,17 @@ ir.pp.ir_dist(
 )
 ```
 
-The default substitution matrix is BLOSUM62. As with `tcrdist`, `base_matrix="tcrblosum"` enables chain-specific
-TCRBLOSUM matrices.
+The default substitution matrix is [BLOSUM62](https://doi.org/10.1073/pnas.89.22.10915). As with `tcrdist`,
+`base_matrix="tcrblosum"` enables chain-specific [TCRBLOSUM](https://doi.org/10.1093/bib/bbae602) matrices.
 
 (deprecated-alignment-metrics)=
 
 ## Deprecated alignment metrics
 
-The `alignment` and `fastalignment` metrics are deprecated. Both use BLOSUM62 and affine-gap parameters through the
-optional Parasail dependency. `alignment` applies lossless length-based prefiltering, while `fastalignment` adds a
-heuristic mismatch filter that improves performance but can produce false negatives.
+The `alignment` and `fastalignment` metrics are deprecated. Both use
+[BLOSUM62](https://doi.org/10.1073/pnas.89.22.10915) and affine-gap parameters through the optional Parasail
+dependency. `alignment` applies lossless length-based prefiltering, while `fastalignment` adds a heuristic mismatch
+filter that improves performance but can produce false negatives.
 
 Both metrics allow separate penalties for opening and extending a gap. When their `gap_open` and `gap_extend`
 parameters are equal, use `needleman_wunsch` for substantially faster execution. To retain the same linear gap cost,
