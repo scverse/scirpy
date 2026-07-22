@@ -970,9 +970,11 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                             }
                         }
                         if (distance <= cutoff + 1) {
-                            int seqs2_original_index = seqs2_original_indices[col];
-                            data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
-                            indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
+                            if (row_end_index < data_cols) {
+                                int seqs2_original_index = seqs2_original_indices[col];
+                                data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
+                                indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
+                            }
                             row_end_index++;
                         }
                     }
