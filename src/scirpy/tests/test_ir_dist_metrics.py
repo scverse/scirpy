@@ -965,13 +965,61 @@ def test_hamming_histogram_reference():
 
 
 @pytest.mark.gpu
-def test_gpu_hamming_long_sequence():
-    """Regression test for #626 and #682"""
-    hamming_calculator = GPUHammingDistanceCalculator(cutoff=50, gpu_col_blocks=1, gpu_block_width=50)
-    seq1 = np.array(["A" * 128, "AAB", "AABB", "ABA"])
-    seq2 = np.array(["A" * 128, "ABBB", "ABBB"])
-    res = hamming_calculator.calc_dist_mat(seq1, seq2)
+@pytest.mark.parametrize(
+    "test_parameters,test_input,expected_result",
+    [
+        # Regression test for #626 and #682: sequence lengths exceeding the int8 range.
+        (
+            {"cutoff": 50, "gpu_col_blocks": 1, "gpu_block_width": 50},
+            (np.array(["A" * 128, "AAB", "AABB", "ABA"]), np.array(["A" * 128, "ABBB", "ABBB"])),
+            np.array([[1, 0, 0], [0, 0, 0], [0, 2, 2], [0, 0, 0]]),
+        ),
+        # Symmetric calculation split into outer joblib blocks and internal GPU blocks.
+        (
+            {"cutoff": 2, "n_blocks": 2, "gpu_row_blocks": 2, "gpu_col_blocks": 2, "gpu_block_width": 3},
+            (np.array(["AAAA", "AAAT", "AATT", "TTTT"]), None),
+            np.array([[1, 2, 3, 0], [2, 1, 2, 0], [3, 2, 1, 3], [0, 0, 3, 1]]),
+        ),
+        # Asymmetric calculation split into outer joblib blocks and internal GPU blocks.
+        (
+            {"cutoff": 2, "n_blocks": 2, "gpu_row_blocks": 2, "gpu_col_blocks": 2, "gpu_block_width": 3},
+            (np.array(["AAAA", "AATA", "HHHH", "WWWW"]), np.array(["WWWW", "AAAA", "ATAA"])),
+            np.array([[0, 1, 2], [0, 2, 3], [0, 0, 0], [1, 0, 0]]),
+        ),
+        # Distances above the cutoff and comparisons between sequences of unequal length are omitted.
+        (
+            {"cutoff": 1, "gpu_row_blocks": 3, "gpu_col_blocks": 3, "gpu_block_width": 2},
+            (np.array(["AAA", "AAT", "AAAA", "TTT"]), None),
+            np.array([[1, 2, 0, 0], [2, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]),
+        ),
+        # Duplicate sequences are retained as separate zero-distance entries with distance + 1 encoding.
+        (
+            {"cutoff": 0, "gpu_row_blocks": 2, "gpu_col_blocks": 2, "gpu_block_width": 2},
+            (np.array(["AAA", "AAA", "AAT"]), None),
+            np.array([[1, 1, 0], [1, 1, 0], [0, 0, 1]]),
+        ),
+        # Block counts exceeding the number of sequences are reduced to avoid empty internal GPU blocks.
+        (
+            {"cutoff": 1, "n_blocks": 5, "gpu_row_blocks": 5, "gpu_col_blocks": 5, "gpu_block_width": 2},
+            (np.array(["AAA", "AAT"]), None),
+            np.array([[1, 2], [2, 1]]),
+        ),
+    ],
+)
+def test_gpu_hamming(test_parameters, test_input, expected_result):
+    hamming_calculator = GPUHammingDistanceCalculator(**test_parameters)
+    res = hamming_calculator.calc_dist_mat(*test_input)
+
     assert isinstance(res, scipy.sparse.csr_matrix)
+    npt.assert_array_equal(res.toarray(), expected_result)
+
+
+@pytest.mark.gpu
+def test_gpu_hamming_block_width_guard():
+    hamming_calculator = GPUHammingDistanceCalculator(cutoff=0, gpu_col_blocks=1, gpu_block_width=1)
+
+    with pytest.raises(ValueError, match="result block width is too small"):
+        hamming_calculator.calc_dist_mat(np.array(["AAA", "AAA"]))
 
 
 @pytest.mark.gpu
@@ -1008,6 +1056,7 @@ def test_tcrdist_histogram_not_implemented():
     [
         {"gpu_col_blocks": 5, "gpu_block_width": 500},
         {"gpu_row_blocks": 3, "gpu_col_blocks": 5, "gpu_block_width": 500},
+        {"n_blocks": 3, "gpu_row_blocks": 3, "gpu_col_blocks": 5, "gpu_block_width": 500},
         {"gpu_col_blocks": 7, "gpu_block_width": 500},
         {"gpu_row_blocks": 5, "gpu_col_blocks": 3, "gpu_block_width": 500},
         {"gpu_row_blocks": 11, "gpu_col_blocks": 17, "gpu_block_width": 503},

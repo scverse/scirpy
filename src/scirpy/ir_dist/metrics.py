@@ -794,6 +794,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     cutoff:
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
+    n_blocks:
+        Number of outer row blocks submitted through joblib. This can be used with a distributed joblib backend to
+        distribute the calculation across multiple GPU workers.
     gpu_col_blocks:
         Number of column blocks used to split the final result matrix. Lower values reduce block-management overhead
         but increase the size of each GPU block and therefore memory pressure.
@@ -809,11 +812,12 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         self,
         *,
         cutoff: int = 2,
+        n_blocks: int = 1,
         gpu_col_blocks: int = 10,
         gpu_row_blocks: int = 1,
         gpu_block_width: int = 1000,
     ):
-        super().__init__(n_jobs=1, n_blocks=1)
+        super().__init__(n_jobs=1, n_blocks=n_blocks)
         if cutoff > 125:
             raise ValueError(
                 "GPUHammingDistanceCalculator only supports cutoff <= 125 because the intermediate "
@@ -837,7 +841,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs2: Sequence[str],
         is_symmetric: bool = False,
         start_column: int = 0,
-    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray]:
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, np.ndarray]:
         """Computes the pairwise hamming distances for sequences in seqs and seqs2 with GPU support.
 
         Parameters
@@ -848,8 +852,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             Determines whether the final result matrix is symmetric, assuming that this function is
             only used to compute a block of a bigger result matrix
         start_column:
-            Determines at which column the calculation should be started. This is only used if this function is
-            used to compute a block of a bigger result matrix that is symmetric
+            Global row offset of an outer row block scheduled by joblib. Used to skip column blocks below the diagonal
+            when computing a symmetric result matrix.
 
         Returns
         -------
@@ -939,11 +943,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             char* __restrict__ data,
             int* __restrict__ indices,
             int* __restrict__ row_element_counts,
-            const int block_offset,
             const int seqs_mat1_rows,
             const int seqs_mat2_rows,
-            const int seqs_mat1_cols,
-            const int seqs_mat2_cols,
             const int data_cols,
             const int indices_cols
         ) {
@@ -1021,7 +1022,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_L2,
             seqs_original_indices_block,
             seqs2_original_indices_block,
-            block_offset,
         ):
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8, copy=False))
             d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8, copy=False))
@@ -1039,8 +1039,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             threads_per_block = 256
             blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
 
-            seqs_mat1_rows, seqs_mat1_cols = seqs_mat1.shape
-            seqs_mat2_rows, seqs_mat2_cols = seqs_mat2_block.shape
+            seqs_mat1_rows = seqs_mat1.shape[0]
+            seqs_mat2_rows = seqs_mat2_block.shape[0]
             d_data_matrix_cols = max_block_width
             d_indices_matrix_cols = max_block_width
 
@@ -1061,11 +1061,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_data_matrix,
                     d_indices_matrix,
                     d_row_element_counts,
-                    block_offset,
                     seqs_mat1_rows,
                     seqs_mat2_rows,
-                    seqs_mat1_cols,
-                    seqs_mat2_cols,
                     d_data_matrix_cols,
                     d_indices_matrix_cols,
                 ),
@@ -1173,7 +1170,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             return result
 
         def skip_col_block(row_block_idx, col_block_idx):
-            row_start = seqs_block_starts[row_block_idx]
+            row_start = start_column + seqs_block_starts[row_block_idx]
             col_end = seqs2_block_starts[col_block_idx] + seqs_mat2_blocks[col_block_idx].shape[0]
             return is_symmetric and col_end <= row_start
 
@@ -1188,12 +1185,10 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         def calc_row_block_gpu(row_block_idx, seqs_mat1_block, seqs_L1_block, seqs_original_indices_block):
             result_blocks = []
             n_calculated_blocks = 0
-            block_offset = start_column
 
             for i in range(0, n_col_blocks):
                 # Skip calculation of blocks below the diagonal if the result matrix is symmetric.
                 if skip_col_block(row_block_idx, i):
-                    block_offset += seqs_mat2_blocks[i].shape[0]
                     continue
 
                 result_blocks.append(
@@ -1204,11 +1199,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         seqs_L2_blocks[i],
                         seqs_original_indices_block,
                         seqs2_original_indices_blocks[i],
-                        block_offset,
                     )
                 )
                 n_calculated_blocks += 1
-                block_offset += seqs_mat2_blocks[i].shape[0]
 
             if not result_blocks:
                 return csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0])), n_calculated_blocks
