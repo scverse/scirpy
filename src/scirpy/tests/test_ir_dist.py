@@ -172,8 +172,8 @@ def test_ir_dist_gpu_hamming(adata_cdr3):
         metric="gpu_hamming",
         sequence="aa",
         cutoff=2,
-        gpu_col_blocks=2,
-        gpu_row_blocks=2,
+        gpu_col_blocks=10,
+        gpu_row_blocks=10,
         gpu_block_width=3,
     )
     res = (

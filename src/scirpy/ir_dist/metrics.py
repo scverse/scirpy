@@ -869,8 +869,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         import cupy as cp
         from tqdm import tqdm
 
-        n_col_blocks = self.gpu_col_blocks
-        n_row_blocks = self.gpu_row_blocks
+        n_col_blocks = min(self.gpu_col_blocks, len(seqs2))
+        n_row_blocks = min(self.gpu_row_blocks, len(seqs))
 
         seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
         seqs_block_starts = np.cumsum([0] + [len(block) for block in seqs_blocks[:-1]])
