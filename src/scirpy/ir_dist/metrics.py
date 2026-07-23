@@ -794,17 +794,17 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    For performance reasons, the rows and columns of the final result matrix are grouped into blocks for GPU
-    computation. `gpu_block_rows` and `gpu_block_cols` control how many matrix rows and columns are grouped into each
-    block. Each block is computed on the GPU and converted to a sparse CSR block before the blocks are combined again.
+    For performance reasons, the rows and columns of the final result matrix are grouped into tiles for GPU
+    computation. `gpu_tile_rows` and `gpu_tile_cols` control how many matrix rows and columns are grouped into each
+    tile. Each tile is computed on the GPU and converted to a sparse CSR matrix before the tiles are combined again.
 
-    `gpu_buffer_cols` controls how many buffer columns are initially reserved for sparse result entries in each row of
-    a block. Because only distances at or below the cutoff are retained, the number of entries that need to be stored
-    is usually considerably smaller than the number of columns in the block. If necessary, the buffer is enlarged and
-    the calculation is retried.
+    `gpu_tile_buffer_cols` controls how many buffer columns are initially reserved for sparse result entries in each
+    row of a tile. Because only distances at or below the cutoff are retained, the number of entries that need to be
+    stored is usually considerably smaller than the number of columns in the tile. If necessary, the buffer is
+    enlarged and the calculation is retried.
 
-    Smaller blocks reduce per-block memory pressure but add block-management overhead. Larger values for
-    `gpu_buffer_cols` can avoid retries but require more GPU memory.
+    Smaller tiles reduce per-tile memory pressure but add tile-management overhead. Larger values for
+    `gpu_tile_buffer_cols` can avoid retries but require more GPU memory.
 
     Parameters
     ----------
@@ -812,14 +812,14 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         Will eleminate distances > cutoff to make efficient
         use of sparse matrices.
     n_blocks:
-        Number of outer row blocks submitted through joblib. This can be used with a distributed joblib backend to
+        Number of outer row partitions submitted through joblib. This can be used with a distributed joblib backend to
         distribute the calculation across multiple GPU workers.
-    gpu_block_rows:
-        Number of result matrix rows per GPU block.
-    gpu_block_cols:
-        Number of result matrix columns per GPU block.
-    gpu_buffer_cols:
-        Initial number of retained sparse entries reserved per row of each block. Higher values can avoid retries for
+    gpu_tile_rows:
+        Number of result matrix rows per GPU tile.
+    gpu_tile_cols:
+        Number of result matrix columns per GPU tile.
+    gpu_tile_buffer_cols:
+        Initial number of retained sparse entries reserved per row of each tile. Higher values can avoid retries for
         denser results but require more GPU memory.
     """
 
@@ -828,9 +828,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         *,
         cutoff: int = 2,
         n_blocks: int = 1,
-        gpu_block_rows: int = 100_000,
-        gpu_block_cols: int = 100_000,
-        gpu_buffer_cols: int = 1000,
+        gpu_tile_rows: int = 100_000,
+        gpu_tile_cols: int = 100_000,
+        gpu_tile_buffer_cols: int = 1000,
     ):
         super().__init__(n_jobs=1, n_blocks=n_blocks)
         if cutoff > 125:
@@ -838,16 +838,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 "GPUHammingDistanceCalculator only supports cutoff <= 125 because the intermediate "
                 "GPU buffer stores distances as signed int8 values and uses distance + 1 encoding."
             )
-        if gpu_block_rows < 1:
-            raise ValueError("`gpu_block_rows` must be >= 1.")
-        if gpu_block_cols < 1:
-            raise ValueError("`gpu_block_cols` must be >= 1.")
-        if gpu_buffer_cols < 1:
-            raise ValueError("`gpu_buffer_cols` must be >= 1.")
+        if gpu_tile_rows < 1:
+            raise ValueError("`gpu_tile_rows` must be >= 1.")
+        if gpu_tile_cols < 1:
+            raise ValueError("`gpu_tile_cols` must be >= 1.")
+        if gpu_tile_buffer_cols < 1:
+            raise ValueError("`gpu_tile_buffer_cols` must be >= 1.")
         self.cutoff = cutoff
-        self.gpu_block_rows = gpu_block_rows
-        self.gpu_block_cols = gpu_block_cols
-        self.gpu_buffer_cols = gpu_buffer_cols
+        self.gpu_tile_rows = gpu_tile_rows
+        self.gpu_tile_cols = gpu_tile_cols
+        self.gpu_tile_buffer_cols = gpu_tile_buffer_cols
 
     def _gpu_hamming_mat(
         self,
@@ -888,8 +888,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         import cupy as cp
         from tqdm import tqdm
 
-        n_col_blocks = (len(seqs2) + self.gpu_block_cols - 1) // self.gpu_block_cols
-        n_row_blocks = (len(seqs) + self.gpu_block_rows - 1) // self.gpu_block_rows
+        n_col_blocks = (len(seqs2) + self.gpu_tile_cols - 1) // self.gpu_tile_cols
+        n_row_blocks = (len(seqs) + self.gpu_tile_rows - 1) // self.gpu_tile_rows
 
         seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
         seqs_block_starts = np.cumsum([0] + [len(block) for block in seqs_blocks[:-1]])
@@ -1091,7 +1091,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             if required_buffer_width > buffer_width:
                 # The buffer was too small, so retry with the required buffer size.
                 print(
-                    f"GPU Hamming buffer retry for a {seqs_mat1_rows} x {seqs_mat2_rows} block: "
+                    f"GPU Hamming buffer retry for a {seqs_mat1_rows} x {seqs_mat2_rows} tile: "
                     f"{buffer_width} -> {required_buffer_width}",
                     flush=True,
                 )
@@ -1152,7 +1152,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_L2_blocks = np.array_split(seqs_L2, n_col_blocks)
 
         logging.info(
-            f"\nStart GPU calculations for {n_row_blocks} row blocks x {n_col_blocks} column blocks:"
+            f"\nStart GPU calculations for {n_row_blocks} row tiles x {n_col_blocks} column tiles:"
         )
 
         @nb.njit
@@ -1255,7 +1255,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             return result_sparse, n_calculated_blocks, buffer_width
 
         row_blocks = [None] * n_row_blocks
-        buffer_width = self.gpu_buffer_cols
+        buffer_width = self.gpu_tile_buffer_cols
         with tqdm(total=count_blocks_to_compute(), desc="Processing", unit="block") as progress_bar:
             for row_block_idx in range(n_row_blocks):
                 row_blocks[row_block_idx], n_calculated_blocks, buffer_width = calc_row_block_gpu(
