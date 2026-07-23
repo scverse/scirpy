@@ -974,6 +974,12 @@ def test_hamming_histogram_reference():
             (np.array(["A" * 128, "AAB", "AABB", "ABA"]), np.array(["A" * 128, "ABBB", "ABBB"])),
             np.array([[1, 0, 0], [0, 0, 0], [0, 2, 2], [0, 0, 0]]),
         ),
+        # The maximum supported cutoff retains distance 125 with distance + 1 encoding and omits distance 126.
+        (
+            {"cutoff": 125},
+            (np.array(["A" * 127]), np.array(["B" * 125 + "AA", "B" * 126 + "A"])),
+            np.array([[126, 0]]),
+        ),
         # Symmetric calculation split into outer joblib blocks and internal GPU tiles.
         (
             {"cutoff": 2, "n_blocks": 2, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 3},
