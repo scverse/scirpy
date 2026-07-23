@@ -554,9 +554,7 @@ class _MetricDistanceCalculator(abc.ABC):
                 # parallel jobs. Increasing n_blocks for better load balancing instead would add block-processing
                 # overhead.
                 partition_fractions = np.arange(self.n_blocks + 1) / self.n_blocks
-                partition_boundaries = np.rint(
-                    len(seqs) * (1 - np.sqrt(1 - partition_fractions))
-                ).astype(int)
+                partition_boundaries = np.rint(len(seqs) * (1 - np.sqrt(1 - partition_fractions))).astype(int)
             else:
                 partition_boundaries = np.rint(np.linspace(0, len(seqs), self.n_blocks + 1)).astype(int)
 
@@ -1086,7 +1084,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     d_indices_matrix = None
                 return d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width
 
-            d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width = run_hamming_kernel(buffer_width)
+            d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width = run_hamming_kernel(
+                buffer_width
+            )
 
             if required_buffer_width > buffer_width:
                 # The buffer was too small, so retry with the required buffer size.
@@ -1150,9 +1150,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_col_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_col_blocks)
 
-        logging.info(
-            f"\nStart GPU calculations for {n_row_blocks} row tiles x {n_col_blocks} column tiles:"
-        )
+        logging.info(f"\nStart GPU calculations for {n_row_blocks} row tiles x {n_col_blocks} column tiles:")
 
         @nb.njit
         def csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements):
