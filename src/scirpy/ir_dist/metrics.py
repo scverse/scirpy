@@ -545,10 +545,31 @@ class _MetricDistanceCalculator(abc.ABC):
         seqs2 = np.array(seqs2)
         is_symmetric = np.array_equal(seqs, seqs2)
 
-        if self.n_blocks > 1:
-            split_seqs = np.array_split(seqs, self.n_blocks)
-            start_columns = np.cumsum([0] + [len(seq) for seq in split_seqs[:-1]])
-            arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(self.n_blocks)]
+        if self.n_blocks < 2:
+            distance_matrix_csr, row_mins = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
+        else:
+            if is_symmetric:
+                # Computing only the upper triangle of a symmetric result matrix gives earlier row partitions more
+                # work, so use shorter partitions at the beginning to balance the number of comparisons across
+                # parallel jobs. Increasing n_blocks for better load balancing instead would add block-processing
+                # overhead.
+                partition_fractions = np.arange(self.n_blocks + 1) / self.n_blocks
+                partition_boundaries = np.rint(
+                    len(seqs) * (1 - np.sqrt(1 - partition_fractions))
+                ).astype(int)
+            else:
+                partition_boundaries = np.rint(np.linspace(0, len(seqs), self.n_blocks + 1)).astype(int)
+
+            split_seqs = np.split(seqs, partition_boundaries[1:-1])
+            arguments = [
+                (
+                    split_seqs[x],
+                    seqs2,
+                    is_symmetric,
+                    partition_boundaries[x],
+                )
+                for x in range(self.n_blocks)
+            ]
 
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
             results = joblib.Parallel(return_as="list")(delayed_jobs)
@@ -556,8 +577,6 @@ class _MetricDistanceCalculator(abc.ABC):
             block_matrices_csr, block_row_mins = zip(*results, strict=False)
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
             row_mins = np.concatenate(block_row_mins)
-        else:
-            distance_matrix_csr, row_mins = self._calc_dist_mat_block(seqs, seqs2, is_symmetric)
 
         if is_symmetric:
             upper_triangular_distance_matrix = distance_matrix_csr
@@ -813,8 +832,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         *,
         cutoff: int = 2,
         n_blocks: int = 1,
-        gpu_col_blocks: int = 10,
-        gpu_row_blocks: int = 1,
+        gpu_col_block_size: int = 100_000,
+        gpu_row_block_size: int = 100_000,
         gpu_block_width: int = 1000,
     ):
         super().__init__(n_jobs=1, n_blocks=n_blocks)
@@ -823,15 +842,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 "GPUHammingDistanceCalculator only supports cutoff <= 125 because the intermediate "
                 "GPU buffer stores distances as signed int8 values and uses distance + 1 encoding."
             )
-        if gpu_col_blocks < 1:
-            raise ValueError("`gpu_col_blocks` must be >= 1.")
-        if gpu_row_blocks < 1:
-            raise ValueError("`gpu_row_blocks` must be >= 1.")
+        if gpu_col_block_size < 1:
+            raise ValueError("`gpu_col_block_size` must be >= 1.")
+        if gpu_row_block_size < 1:
+            raise ValueError("`gpu_row_block_size` must be >= 1.")
         if gpu_block_width < 1:
             raise ValueError("`gpu_block_width` must be >= 1.")
         self.cutoff = cutoff
-        self.gpu_col_blocks = gpu_col_blocks
-        self.gpu_row_blocks = gpu_row_blocks
+        self.gpu_col_block_size = gpu_col_block_size
+        self.gpu_row_block_size = gpu_row_block_size
         self.gpu_block_width = gpu_block_width
 
     def _gpu_hamming_mat(
@@ -873,8 +892,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         import cupy as cp
         from tqdm import tqdm
 
-        n_col_blocks = min(self.gpu_col_blocks, len(seqs2))
-        n_row_blocks = min(self.gpu_row_blocks, len(seqs))
+        n_col_blocks = (len(seqs2) + self.gpu_col_block_size - 1) // self.gpu_col_block_size
+        n_row_blocks = (len(seqs) + self.gpu_row_block_size - 1) // self.gpu_row_block_size
 
         seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
         seqs_block_starts = np.cumsum([0] + [len(block) for block in seqs_blocks[:-1]])
