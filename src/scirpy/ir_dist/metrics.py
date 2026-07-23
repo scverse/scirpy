@@ -794,19 +794,17 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    For performance reasons, the computation of the final result matrix is split into a grid of row and column blocks.
-    `gpu_row_blocks` splits the query sequences into horizontal chunks, while `gpu_col_blocks` splits the reference
-    sequences into vertical chunks. Each row/column block pair is computed on the GPU and converted to a sparse CSR
-    block before the blocks are combined again.
+    For performance reasons, the rows and columns of the final result matrix are grouped into blocks for GPU
+    computation. `gpu_block_rows` and `gpu_block_cols` control how many matrix rows and columns are grouped into each
+    block. Each block is computed on the GPU and converted to a sparse CSR block before the blocks are combined again.
 
-    `gpu_block_width` controls how many sparse result entries are reserved per row for each row/column block pair.
-    For example, with a 1000 x 1000 dense result matrix, `gpu_row_blocks=2`, `gpu_col_blocks=10`, and
-    `gpu_block_width=20`, each GPU block covers roughly 500 x 100 dense comparisons and reserves enough GPU memory
-    for at most 20 retained distances below the cutoff per row in that block. Therefore, no row within a single row/column block pair
-    may contain more than `gpu_block_width` distances `<= cutoff`.
+    `gpu_buffer_cols` controls how many buffer columns are initially reserved for sparse result entries in each row of
+    a block. Because only distances at or below the cutoff are retained, the number of entries that need to be stored
+    is usually considerably smaller than the number of columns in the block. If necessary, the buffer is enlarged and
+    the calculation is retried.
 
-    Larger numbers of row or column blocks reduce per-block memory pressure but add block-management overhead. Larger
-    values for `gpu_block_width` can avoid sparse buffer overflows but require more GPU memory.
+    Smaller blocks reduce per-block memory pressure but add block-management overhead. Larger values for
+    `gpu_buffer_cols` can avoid retries but require more GPU memory.
 
     Parameters
     ----------
@@ -816,15 +814,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     n_blocks:
         Number of outer row blocks submitted through joblib. This can be used with a distributed joblib backend to
         distribute the calculation across multiple GPU workers.
-    gpu_col_blocks:
-        Number of column blocks used to split the final result matrix. Lower values reduce block-management overhead
-        but increase the size of each GPU block and therefore memory pressure.
-    gpu_row_blocks:
-        Number of row blocks used to split the final result matrix. Higher values reduce per-block memory pressure
-        and can improve sequence length homogeneity within a block, but add block-management overhead.
-    gpu_block_width:
-        Maximum number of retained sparse entries per row and row/column block pair. Higher values tolerate denser
-        results within a block but require more GPU memory.
+    gpu_block_rows:
+        Number of result matrix rows per GPU block.
+    gpu_block_cols:
+        Number of result matrix columns per GPU block.
+    gpu_buffer_cols:
+        Initial number of retained sparse entries reserved per row of each block. Higher values can avoid retries for
+        denser results but require more GPU memory.
     """
 
     def __init__(
@@ -832,9 +828,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         *,
         cutoff: int = 2,
         n_blocks: int = 1,
-        gpu_col_block_size: int = 100_000,
-        gpu_row_block_size: int = 100_000,
-        gpu_block_width: int = 1000,
+        gpu_block_rows: int = 100_000,
+        gpu_block_cols: int = 100_000,
+        gpu_buffer_cols: int = 1000,
     ):
         super().__init__(n_jobs=1, n_blocks=n_blocks)
         if cutoff > 125:
@@ -842,16 +838,16 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 "GPUHammingDistanceCalculator only supports cutoff <= 125 because the intermediate "
                 "GPU buffer stores distances as signed int8 values and uses distance + 1 encoding."
             )
-        if gpu_col_block_size < 1:
-            raise ValueError("`gpu_col_block_size` must be >= 1.")
-        if gpu_row_block_size < 1:
-            raise ValueError("`gpu_row_block_size` must be >= 1.")
-        if gpu_block_width < 1:
-            raise ValueError("`gpu_block_width` must be >= 1.")
+        if gpu_block_rows < 1:
+            raise ValueError("`gpu_block_rows` must be >= 1.")
+        if gpu_block_cols < 1:
+            raise ValueError("`gpu_block_cols` must be >= 1.")
+        if gpu_buffer_cols < 1:
+            raise ValueError("`gpu_buffer_cols` must be >= 1.")
         self.cutoff = cutoff
-        self.gpu_col_block_size = gpu_col_block_size
-        self.gpu_row_block_size = gpu_row_block_size
-        self.gpu_block_width = gpu_block_width
+        self.gpu_block_rows = gpu_block_rows
+        self.gpu_block_cols = gpu_block_cols
+        self.gpu_buffer_cols = gpu_buffer_cols
 
     def _gpu_hamming_mat(
         self,
@@ -892,8 +888,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         import cupy as cp
         from tqdm import tqdm
 
-        n_col_blocks = (len(seqs2) + self.gpu_col_block_size - 1) // self.gpu_col_block_size
-        n_row_blocks = (len(seqs) + self.gpu_row_block_size - 1) // self.gpu_row_block_size
+        n_col_blocks = (len(seqs2) + self.gpu_block_cols - 1) // self.gpu_block_cols
+        n_row_blocks = (len(seqs) + self.gpu_block_rows - 1) // self.gpu_block_rows
 
         seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
         seqs_block_starts = np.cumsum([0] + [len(block) for block in seqs_blocks[:-1]])
@@ -1041,61 +1037,68 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_L2,
             seqs_original_indices_block,
             seqs2_original_indices_block,
+            buffer_width,
         ):
             d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8, copy=False))
             d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8, copy=False))
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32, copy=False))
             d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32, copy=False))
 
-            # Due to performance reasons and since we expect the result matrix to be very sparse, we
-            # set a maximum result width for the current block
-            max_block_width = self.gpu_block_width
-
-            d_data_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=cp.int8)
-            d_indices_matrix = cp.empty((seqs_mat1.shape[0], max_block_width), dtype=np.int32)
-            d_row_element_counts = cp.zeros(seqs_mat1.shape[0], dtype=np.int32)
-
             threads_per_block = 256
             blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
 
             seqs_mat1_rows = seqs_mat1.shape[0]
             seqs_mat2_rows = seqs_mat2_block.shape[0]
-            d_data_matrix_cols = max_block_width
-            d_indices_matrix_cols = max_block_width
 
             d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
             d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
 
-            hamming_kernel(
-                (blocks_per_grid,),
-                (threads_per_block,),
-                (
-                    d_seqs_mat1_transposed,
-                    d_seqs_mat2_transposed,
-                    d_seqs_L1,
-                    d_seqs_L2,
-                    seqs_original_indices_block,
-                    seqs2_original_indices_block,
-                    self.cutoff,
-                    d_data_matrix,
-                    d_indices_matrix,
-                    d_row_element_counts,
-                    seqs_mat1_rows,
-                    seqs_mat2_rows,
-                    d_data_matrix_cols,
-                    d_indices_matrix_cols,
-                ),
-            )
+            def run_hamming_kernel(buffer_width):
+                d_data_matrix = cp.empty((seqs_mat1_rows, buffer_width), dtype=cp.int8)
+                d_indices_matrix = cp.empty((seqs_mat1_rows, buffer_width), dtype=np.int32)
+                d_row_element_counts = cp.zeros(seqs_mat1_rows, dtype=np.int32)
 
-            row_element_counts = d_row_element_counts.get()
-            row_max_len = np.max(row_element_counts)
-            row_element_sum = np.sum(row_element_counts, dtype=np.int64)
-
-            if row_max_len > max_block_width:
-                raise ValueError(
-                    "The chosen result block width is too small to hold all result values of the current block. "
-                    f"Chosen width: {max_block_width}, necessary width: {row_max_len}."
+                hamming_kernel(
+                    (blocks_per_grid,),
+                    (threads_per_block,),
+                    (
+                        d_seqs_mat1_transposed,
+                        d_seqs_mat2_transposed,
+                        d_seqs_L1,
+                        d_seqs_L2,
+                        seqs_original_indices_block,
+                        seqs2_original_indices_block,
+                        self.cutoff,
+                        d_data_matrix,
+                        d_indices_matrix,
+                        d_row_element_counts,
+                        seqs_mat1_rows,
+                        seqs_mat2_rows,
+                        buffer_width,
+                        buffer_width,
+                    ),
                 )
+                row_element_counts = d_row_element_counts.get()
+                required_buffer_width = int(np.max(row_element_counts))
+                if required_buffer_width > buffer_width:
+                    # Release undersized buffers before allocating larger ones for the retry.
+                    d_data_matrix = None
+                    d_indices_matrix = None
+                return d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width
+
+            d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width = run_hamming_kernel(buffer_width)
+
+            if required_buffer_width > buffer_width:
+                # The buffer was too small, so retry with the required buffer size.
+                print(
+                    f"GPU Hamming buffer retry for a {seqs_mat1_rows} x {seqs_mat2_rows} block: "
+                    f"{buffer_width} -> {required_buffer_width}",
+                    flush=True,
+                )
+                buffer_width = required_buffer_width
+                d_data_matrix, d_indices_matrix, row_element_counts, _ = run_hamming_kernel(buffer_width)
+
+            row_element_sum = np.sum(row_element_counts, dtype=np.int64)
 
             if row_element_sum > np.iinfo(np.int32).max:
                 raise ValueError(
@@ -1141,7 +1144,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             indices = d_indices.get()
 
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
-            return res
+            return res, buffer_width
 
         seqs_mat1_blocks = np.array_split(seqs_mat1, n_row_blocks)
         seqs_L1_blocks = np.array_split(seqs_L1, n_row_blocks)
@@ -1149,7 +1152,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_L2_blocks = np.array_split(seqs_L2, n_col_blocks)
 
         logging.info(
-            f"\nStart GPU calculations for {n_row_blocks} row blocks x {n_col_blocks} column blocks of max width {self.gpu_block_width}:"
+            f"\nStart GPU calculations for {n_row_blocks} row blocks x {n_col_blocks} column blocks:"
         )
 
         @nb.njit
@@ -1201,7 +1204,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         n_blocks_to_compute += 1
             return n_blocks_to_compute
 
-        def calc_row_block_gpu(row_block_idx, seqs_mat1_block, seqs_L1_block, seqs_original_indices_block):
+        def calc_row_block_gpu(
+            row_block_idx,
+            seqs_mat1_block,
+            seqs_L1_block,
+            seqs_original_indices_block,
+            buffer_width,
+        ):
             result_blocks = []
             n_calculated_blocks = 0
 
@@ -1210,20 +1219,24 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 if skip_col_block(row_block_idx, i):
                     continue
 
-                result_blocks.append(
-                    calc_col_block_gpu(
-                        seqs_mat1_block,
-                        seqs_mat2_blocks[i],
-                        seqs_L1_block,
-                        seqs_L2_blocks[i],
-                        seqs_original_indices_block,
-                        seqs2_original_indices_blocks[i],
-                    )
+                result_block, buffer_width = calc_col_block_gpu(
+                    seqs_mat1_block,
+                    seqs_mat2_blocks[i],
+                    seqs_L1_block,
+                    seqs_L2_blocks[i],
+                    seqs_original_indices_block,
+                    seqs2_original_indices_blocks[i],
+                    buffer_width,
                 )
+                result_blocks.append(result_block)
                 n_calculated_blocks += 1
 
             if not result_blocks:
-                return csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0])), n_calculated_blocks
+                return (
+                    csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0])),
+                    n_calculated_blocks,
+                    buffer_width,
+                )
 
             num_elements = 0
             for i in range(0, len(result_blocks)):
@@ -1239,16 +1252,18 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             result_sparse = csr_union(result_blocks)
             result_sparse.sort_indices()
-            return result_sparse, n_calculated_blocks
+            return result_sparse, n_calculated_blocks, buffer_width
 
         row_blocks = [None] * n_row_blocks
+        buffer_width = self.gpu_buffer_cols
         with tqdm(total=count_blocks_to_compute(), desc="Processing", unit="block") as progress_bar:
             for row_block_idx in range(n_row_blocks):
-                row_blocks[row_block_idx], n_calculated_blocks = calc_row_block_gpu(
+                row_blocks[row_block_idx], n_calculated_blocks, buffer_width = calc_row_block_gpu(
                     row_block_idx,
                     seqs_mat1_blocks[row_block_idx],
                     seqs_L1_blocks[row_block_idx],
                     seqs_original_indices_blocks[row_block_idx],
+                    buffer_width,
                 )
                 progress_bar.update(n_calculated_blocks)
 
