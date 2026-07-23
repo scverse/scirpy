@@ -1090,10 +1090,9 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             if required_buffer_width > buffer_width:
                 # The buffer was too small, so retry with the required buffer size.
-                print(
-                    f"GPU Hamming buffer retry for a {seqs_mat1_rows} x {seqs_mat2_rows} tile: "
-                    f"{buffer_width} -> {required_buffer_width}",
-                    flush=True,
+                logging.info(
+                    f"GPU Hamming tile buffer increased from {buffer_width} to {required_buffer_width}; "
+                    f"retrying the {seqs_mat1_rows} x {seqs_mat2_rows} tile."
                 )
                 buffer_width = required_buffer_width
                 d_data_matrix, d_indices_matrix, row_element_counts, _ = run_hamming_kernel(buffer_width)
