@@ -541,8 +541,8 @@ class _MetricDistanceCalculator(abc.ABC):
         if seqs2 is None:
             seqs2 = seqs
 
-        seqs = np.array(seqs)
-        seqs2 = np.array(seqs2)
+        seqs = np.asarray(seqs)
+        seqs2 = np.asarray(seqs2)
         is_symmetric = np.array_equal(seqs, seqs2)
 
         if self.n_blocks < 2:
