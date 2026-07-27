@@ -189,7 +189,11 @@ def clonotype_network(
         raise KeyError(f"{clonotype_key} not found in adata.uns.")
 
     if frameon is None:
-        frameon = settings._frameon
+        try:
+            frameon = settings._frameon
+        except AttributeError:
+            # Attribute got removed in scanpy >= 1.13
+            frameon = False
 
     if show_legend is None:
         show_legend = True
@@ -599,7 +603,11 @@ def _plot_clonotype_network_panel(
         )
         if edge_collection != []:
             edge_collection.set_zorder(-1)
-            edge_collection.set_rasterized(sc.settings._vector_friendly)
+            try:
+                edge_collection.set_rasterized(sc.settings._vector_friendly)
+            except AttributeError:
+                # _vector_friendly got removed in scanpy v1.13.
+                pass
 
     # add clonotype labels
     if show_labels:
