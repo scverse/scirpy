@@ -18,7 +18,6 @@ from matplotlib.colors import Colormap, is_color_like
 from mudata import MuData
 from pandas.api.types import is_categorical_dtype
 from scanpy import settings
-from scanpy.plotting._utils import ticks_formatter
 from scipy.sparse import issparse
 
 from scirpy.tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
@@ -26,6 +25,12 @@ from scirpy.util import DataHandler, read_cell_indices
 from scirpy.util.graph import _distance_to_connectivity
 
 from .styling import _get_colors, _init_ax
+
+try:
+    from scanpy.plotting._utils import ticks_formatter
+except ImportError:
+    # scanpy >= 0.13
+    from scanpy.plotting.legacy._utils import ticks_formatter
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list("grey2", ["#CCCCCC", "#000000"])
 
