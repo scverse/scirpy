@@ -298,6 +298,7 @@ IR distance utilities: `ir_dist`
 distance metrics
 ^^^^^^^^^^^^^^^^
 
+See :ref:`Choosing a sequence distance metric <distance-metrics>` for guidance on selecting a metric and cutoff.
 
 .. autosummary::
    :toctree: ./generated
@@ -311,3 +312,4 @@ distance metrics
    ir_dist.metrics.AlignmentDistanceCalculator
    ir_dist.metrics.FastAlignmentDistanceCalculator
    ir_dist.metrics.TCRdistDistanceCalculator
+   ir_dist.metrics.NeedlemanWunschDistanceCalculator

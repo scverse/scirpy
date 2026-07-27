@@ -2,3 +2,12 @@
 div.cell_output table.dataframe {
     font-size: 0.8em;
 }
+
+table.distance-example {
+    font-size: 0.9em;
+}
+
+table.distance-example th,
+table.distance-example td {
+    padding: 0.25rem 0.4rem;
+}

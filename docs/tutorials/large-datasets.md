@@ -19,15 +19,14 @@ Here is some advice on how to maximize the speed of this step:
 
 Some distance metrics are significantly faster than others. Here are the distance metrics, roughly ordered by speed:
 
-`identity` > `gpu_hamming` > `hamming` = `normalized_hamming` > `tcrdist` > `levenshtein` > `fastalignment` > `alignment`
+`identity` > `gpu_hamming` > `hamming` = `normalized_hamming` > `tcrdist` > `needleman_wunsch` > `levenshtein` > `fastalignment` > `alignment`
 
-TCRdist, fastalignment and alignment produce very similar distance matrices, but tcrdist is by far the fastest. For this
-reason, we'd always recommend to go with `tcrdist`, when looking for a metric taking into account a substitution matrix.
+See {ref}`Choosing a sequence distance metric <distance-metrics>` for guidance on selecting a metric and cutoff.
 
 ## Multi-machine parallelization with dask
 
-The `hamming`, `normalized_hamming`, `tcrdist`, `levenshtein`, `fastalignment`, and `alignment` metrics are parallelized
-using [joblib](https://joblib.readthedocs.io/en/stable/). This makes it very easy to switch the backend to
+The `hamming`, `normalized_hamming`, `tcrdist`, `needleman_wunsch`, `levenshtein`, `fastalignment`, and `alignment`
+metrics are parallelized using [joblib](https://joblib.readthedocs.io/en/stable/). This makes it very easy to switch the backend to
 [dask](https://www.dask.org/) to distribute jobs across a multi machine cluster. Note that this comes with a
 considerable overhead for communication between the workers. It's only worthwhile when processing on a single
 machine becomes infeasible.
@@ -48,6 +47,8 @@ with joblib.parallel_config(backend="dask", n_jobs=200, verbose=10):
         n_blocks = 20, # number of blocks sent to dask
     )
 ```
+
+(gpu-hamming-distance)=
 
 ## Using GPU acceleration for hamming distance
 
