@@ -392,43 +392,47 @@ def _is_symmetric(M) -> bool:
 
 def _is_na2(x):
     """Check if an object or string is NaN.
-    The function is vectorized over numpy arrays or pandas Series
-    but also works for single values.
 
-    Pandas Series are converted to numpy arrays.
+    .. warning::
+        This is only meant for sanitizing input data in the :mod:`scirpy.io` module. Within scirpy's
+        :ref:`data structure <data-structure>`, missing values are guaranteed to be `None`/`NaN`, never a
+        text representation thereof. Use :func:`pandas.isnull` there instead.
     """
     return pd.isnull(x) or x in ("NaN", "nan", "None", "N/A", "")
 
 
+#: Vectorized version of :func:`_is_na2`. Same caveats apply.
 _is_na = np.vectorize(_is_na2, otypes=[bool])
 
 
 def _is_true2(x):
-    """Evaluates true for bool(x) unless _is_false(x) evaluates true.
+    """Evaluates true for bool(x) unless _is_false2(x) evaluates true.
     I.e. strings like "false" evaluate as False.
 
-    Everything that evaluates to _is_na(x) evaluates evaluate to False.
+    Everything that evaluates to _is_na2(x) evaluates to False.
 
-    The function is vectorized over numpy arrays or pandas Series
-    but also works for single values.
+    .. warning::
+        This is only meant for sanitizing input data in the :mod:`scirpy.io` module. See :func:`_is_na2`.
     """
     return not _is_false2(x) and not _is_na2(x)
 
 
+#: Vectorized version of :func:`_is_true2`. Same caveats apply.
 _is_true = np.vectorize(_is_true2, otypes=[bool])
 
 
 def _is_false2(x):
     """Evaluates false for bool(False) and str("false")/str("False").
-    The function is vectorized over numpy arrays or pandas Series.
 
-    Everything that is NA as defined in `is_na()` evaluates to False.
+    Everything that is NA as defined in `_is_na2()` evaluates to False.
 
-    but also works for single values.
+    .. warning::
+        This is only meant for sanitizing input data in the :mod:`scirpy.io` module. See :func:`_is_na2`.
     """
     return (x in ("False", "false", "0") or not bool(x)) and not _is_na2(x)
 
 
+#: Vectorized version of :func:`_is_false2`. Same caveats apply.
 _is_false = np.vectorize(lambda x: _is_false2(np.array(x).astype(object)), otypes=[bool])
 
 

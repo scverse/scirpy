@@ -4,11 +4,12 @@ from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 from scanpy import logging
 from scipy.sparse import csr_matrix
 
 from scirpy.get import airr as get_airr
-from scirpy.util import DataHandler, _doc_params, _is_na, deprecated
+from scirpy.util import DataHandler, _doc_params, deprecated
 
 from . import metrics
 
@@ -238,10 +239,10 @@ def _ir_dist(
     # get all unique seqs for VJ and VDJ
     def _get_unique_seqs(tmp_adata, chain_type):
         """Get all unique sequences for a chain type"""
-        tmp_seqs = np.concatenate(
-            [get_airr(tmp_adata, key, f"{chain_type}_{chain_id}").values for chain_id in ["1", "2"]]  # type: ignore
+        tmp_seqs = pd.concat(
+            [get_airr(tmp_adata, key, f"{chain_type}_{chain_id}") for chain_id in ["1", "2"]]  # type: ignore
         )
-        return np.unique([x.upper() for x in tmp_seqs[~_is_na(tmp_seqs)]])
+        return np.unique(tmp_seqs.dropna().str.upper().to_numpy(dtype=str))
 
     for i, tmp_params in enumerate([params, params_ref]):
         if tmp_params is not None:

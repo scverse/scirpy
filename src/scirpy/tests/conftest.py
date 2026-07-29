@@ -558,7 +558,7 @@ def adata_diversity(request):
             ["cell1", "A", "ct1"],
             ["cell2", "A", "ct1"],
             ["cell3", "A", "ct1"],
-            ["cell3.1", "A", "NaN"],
+            ["cell3.1", "A", None],
             ["cell4", "B", "ct1"],
             ["cell5", "B", "ct2"],
             ["cell6", "B", "ct3"],

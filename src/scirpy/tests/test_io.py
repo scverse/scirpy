@@ -1,6 +1,8 @@
 from functools import lru_cache
 
+import awkward as ak
 import numpy as np
+import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
@@ -96,6 +98,135 @@ def test_airr_cell():
     assert ac["fieldB"] == "b"
     assert "fieldB" not in ac.chains[0]
     assert ac.chains[0]["fieldC"] == "c"
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        # text representations of missing values
+        pytest.param(None, None, id="None"),
+        pytest.param(np.nan, None, id="np.nan"),
+        pytest.param("", None, id="empty_str"),
+        pytest.param("nan", None, id="'nan'"),
+        pytest.param("NaN", None, id="'NaN'"),
+        pytest.param("None", None, id="'None'"),
+        pytest.param("N/A", None, id="'N/A'"),
+        # actual values are passed through unchanged
+        pytest.param("CASSYGGYF", "CASSYGGYF", id="value"),
+    ],
+)
+def test_airr_cell_sanitize_na(value, expected):
+    """Text representations of NA are converted to `None` when a chain is added to an AirrCell"""
+    ac = AirrCell("cell1")
+    chain = AirrCell.empty_chain_dict()
+    chain["junction_aa"] = value
+    ac.add_chain(chain)
+    assert ac.chains[0]["junction_aa"] == expected
+
+
+@pytest.mark.parametrize(
+    "field,value,expected",
+    [
+        # `productive` is declared as `boolean` in the AIRR rearrangement schema
+        pytest.param("productive", "True", True, id="productive-'True'"),
+        pytest.param("productive", "true", True, id="productive-'true'"),
+        pytest.param("productive", "TRUE", True, id="productive-'TRUE'"),
+        pytest.param("productive", "T", True, id="productive-'T'"),
+        pytest.param("productive", "1", True, id="productive-'1'"),
+        pytest.param("productive", "False", False, id="productive-'False'"),
+        pytest.param("productive", "false", False, id="productive-'false'"),
+        pytest.param("productive", "F", False, id="productive-'F'"),
+        pytest.param("productive", "0", False, id="productive-'0'"),
+        pytest.param("productive", True, True, id="productive-True"),
+        pytest.param("productive", False, False, id="productive-False"),
+        pytest.param("productive", "nan", None, id="productive-'nan'"),
+        # `umi_count` is declared as `integer`
+        pytest.param("umi_count", "42", 42, id="umi_count-'42'"),
+        pytest.param("umi_count", 42, 42, id="umi_count-42"),
+        pytest.param("umi_count", "None", None, id="umi_count-'None'"),
+        # `duplicate_count` is declared as `integer`, too
+        pytest.param("duplicate_count", "3", 3, id="duplicate_count-'3'"),
+        # `v_support` is declared as `number`
+        pytest.param("v_support", "0.5", 0.5, id="v_support-'0.5'"),
+        pytest.param("v_support", 0.5, 0.5, id="v_support-0.5"),
+        # `junction_aa` is declared as `string` -- must not be converted
+        pytest.param("junction_aa", "0", "0", id="junction_aa-'0'"),
+        # fields that are not part of the AIRR schema are left alone
+        pytest.param("high_confidence", "True", "True", id="high_confidence-'True'"),
+    ],
+)
+def test_airr_cell_sanitize_types(field, value, expected):
+    """Strings are cast to the type declared in the AIRR rearrangement schema.
+
+    This is what allows all downstream functions to rely on the data types in `adata.obsm["airr"]`
+    (see https://github.com/scverse/scirpy/issues/380).
+    """
+    ac = AirrCell("cell1")
+    chain = AirrCell.empty_chain_dict()
+    chain[field] = value
+    ac.add_chain(chain)
+    tmp_value = ac.chains[0][field]
+    assert tmp_value == expected or (tmp_value is None and expected is None)
+    if expected is not None:
+        assert isinstance(tmp_value, type(expected))
+
+
+@pytest.mark.parametrize("field,value", [("productive", "yes"), ("umi_count", "a lot"), ("v_support", "high")])
+def test_airr_cell_sanitize_types_invalid(field, value):
+    """Values that cannot be cast to the type declared in the AIRR schema raise an error"""
+    from airr import ValidationError
+
+    ac = AirrCell("cell1")
+    chain = AirrCell.empty_chain_dict()
+    chain[field] = value
+    with pytest.raises(ValidationError):
+        ac.add_chain(chain)
+
+
+def test_from_airr_cells_string_representations():
+    """AirrCells built from data that uses string representations of NA/True/False result in an
+    AnnData object with consistent dtypes that can be processed by the rest of scirpy.
+
+    See https://github.com/scverse/scirpy/issues/380.
+    """
+
+    def _make_cell(cell_id, **kwargs):
+        tmp_cell = AirrCell(cell_id)
+        chain = AirrCell.empty_chain_dict()
+        chain.update(kwargs)
+        tmp_cell.add_chain(chain)
+        return tmp_cell
+
+    cells = [
+        _make_cell("cell1", locus="TRA", junction_aa="CAT", productive="True", umi_count="3"),
+        _make_cell("cell2", locus="TRB", junction_aa="CAS", productive=True, umi_count=5),
+        # non-productive -> filtered out by `index_chains`
+        _make_cell("cell3", locus="TRB", junction_aa="CAR", productive="False", umi_count="2"),
+        # no junction_aa -> filtered out by `index_chains`
+        _make_cell("cell4", locus="TRB", junction_aa="nan", productive="true", umi_count="2"),
+    ]
+    adata = from_airr_cells(cells)
+
+    # no union types in the awkward array, i.e. the same field has the same type for all cells
+    airr = adata.obsm["airr"]
+    assert "union" not in str(airr.type)
+    npt.assert_equal(np.asarray(ak.to_list(ak.flatten(airr["productive"]))), np.array([True, True, False, True]))
+    npt.assert_equal(np.asarray(ak.to_list(ak.flatten(airr["umi_count"]))), np.array([3, 5, 2, 2]))
+
+    # only the productive chains with a junction_aa sequence are indexed
+    ir.pp.index_chains(adata)
+    pdt.assert_series_equal(
+        ir.get.airr(adata, "junction_aa", "VJ_1"),
+        pd.Series(["CAT", None, None, None], index=adata.obs_names),
+        check_dtype=False,
+        check_names=False,
+    )
+    pdt.assert_series_equal(
+        ir.get.airr(adata, "junction_aa", "VDJ_1"),
+        pd.Series([None, "CAS", None, None], index=adata.obs_names),
+        check_dtype=False,
+        check_names=False,
+    )
 
 
 def test_airr_cell_empty():

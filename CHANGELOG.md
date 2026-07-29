@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+### Fixes
+
+  - `AirrCell.add_chain` now casts values to the type declared in the AIRR rearrangement schema. Previously, building
+    `AirrCell` objects from data that spelled out booleans or numbers as strings (e.g. `productive="True"`) resulted in
+    an `adata.obsm["airr"]` array with union types that `pp.index_chains` could not process
+    ([#380](https://github.com/scverse/scirpy/issues/380)).
+  - `pl.vdj_usage` again shows cells without a gene call as a separate `none` segment instead of silently omitting them.
+
+### Chore
+
+  - Remove the `_is_na`/`_is_true`/`_is_false` checks outside of the `scirpy.io` module. Since scirpy guarantees the
+    data types in `adata.obsm["airr"]`, missing values can be detected with `pandas.isnull`, which is faster and easier
+    to read ([#380](https://github.com/scverse/scirpy/issues/380)).
+
 ## v0.25.0
 
 ### Fixes

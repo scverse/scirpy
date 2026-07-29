@@ -5,7 +5,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from scirpy.util import DataHandler, _is_na, _normalize_counts
+from scirpy.util import DataHandler, _normalize_counts
 
 
 def _clip_and_count(
@@ -48,7 +48,8 @@ def _clip_and_count(
         .assign(tmp_count=lambda X: pd.Categorical(_get_interval(X["tmp_count"].values), categories=categories))
     )
     clipped_count = obs.merge(clonotype_counts, how="left", on=groupby_cols)["tmp_count"]
-    clipped_count[_is_na(obs[target_col])] = "nan"
+    # `merge` resets the index, therefore we need to mask by position
+    clipped_count[obs[target_col].isnull().to_numpy()] = "nan"
     clipped_count.index = obs.index
 
     if inplace:
@@ -170,7 +171,7 @@ def summarize_clonal_expansion(
     obs[tmp_col] = expansion
 
     # filter NA values
-    obs = obs.loc[~_is_na(obs[target_col]), :]
+    obs = obs.loc[obs[target_col].notnull(), :]
 
     if summarize_by == "clone_id":
         obs.drop_duplicates(inplace=True)

@@ -291,7 +291,7 @@ def test_group_abundance():
             ["cell1", "A", "ct1"],
             ["cell2", "A", "ct1"],
             ["cell3", "A", "ct1"],
-            ["cell4", "A", "NaN"],
+            ["cell4", "A", None],
             ["cell5", "B", "ct1"],
             ["cell6", "B", "ct2"],
         ],
