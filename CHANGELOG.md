@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning][].
 ### Performance improvements
 
  - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
+ - Improve the GPU implementation of the Hamming distance metric with row and column tiling, tile skipping for
+   symmetric distance matrices, adaptive result buffers, and faster sparse tile assembly. GPU tiles can be configured
+   with `gpu_tile_rows` and `gpu_tile_cols`; `gpu_n_blocks` has been replaced by `gpu_tile_cols`, and `gpu_block_width`
+   has been replaced by `gpu_tile_buffer_cols`.
 
 ### Chore
 

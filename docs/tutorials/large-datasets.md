@@ -59,10 +59,47 @@ First, install the optional `cupy` dependency:
 !pip install scirpy[cupy]
 ```
 
-Then simply run
+Then run
 
-```
+```python
 ir.pp.ir_dist(mdata, metric="gpu_hamming")
 ```
 
-to take advantage of GPU acceleration.
+to use the first available GPU. The calculation is split into tiles. Their size can be adjusted with
+`gpu_tile_rows` and `gpu_tile_cols`: smaller tiles use less GPU memory but increase processing overhead.
+`gpu_tile_buffer_cols` controls the initially reserved space for retained distances and is enlarged automatically
+if necessary.
+
+### Using multiple GPUs
+
+Multiple GPUs can be used through the joblib dask backend and
+[dask-cuda](https://docs.rapids.ai/api/dask-cuda/stable/):
+
+```
+!pip install "dask[distributed]" dask-cuda
+```
+
+The following example creates one dask worker per GPU and divides the distance calculation into two outer
+partitions:
+
+```python
+import joblib
+from dask.distributed import Client
+from dask_cuda import LocalCUDACluster
+
+with LocalCUDACluster(
+    CUDA_VISIBLE_DEVICES="0,1",
+    n_workers=2,
+    threads_per_worker=1,
+) as cluster, Client(cluster):
+    with joblib.parallel_config(backend="dask", n_jobs=2):
+        ir.pp.ir_dist(
+            mdata,
+            metric="gpu_hamming",
+            n_blocks=2,
+        )
+```
+
+Set `CUDA_VISIBLE_DEVICES`, `n_workers`, `n_jobs`, and `n_blocks` to the number of GPUs to use. `n_blocks` controls
+the outer partitions distributed between workers, whereas `gpu_tile_rows` and `gpu_tile_cols` control the smaller
+tiles computed within each worker.
