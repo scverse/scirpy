@@ -6,17 +6,15 @@ from typing import Literal
 import numpy as np
 from scanpy import logging
 from scipy.sparse import csr_matrix
+from scverse_misc import Deprecation, deprecated
 
 from scirpy.get import airr as get_airr
-from scirpy.util import DataHandler, _doc_params, _is_na, deprecated
+from scirpy.util import DataHandler, _doc_params, _is_na
 
 from . import metrics
 
 
-@deprecated(
-    "Due to added BCR support, this function has been renamed "
-    "to `sequence_dist`. The old version will be removed in a future release. "
-)
+@deprecated(Deprecation("0.5.0", "Due to added BCR support, this function has been renamed to `sequence_dist`."))
 def tcr_dist(*args, **kwargs):
     return sequence_dist(*args, **kwargs)
 

@@ -1,6 +1,5 @@
 import abc
 import itertools
-import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -13,8 +12,14 @@ import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
+from scverse_misc import Deprecation, deprecated, deprecated_arg
 
-from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated
+from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib
+
+#: Deprecation of the object-level `block_size` parameter, shared by all `ParallelDistanceCalculator`s.
+_deprecation_block_size = Deprecation(
+    "0.15.0", "The block size is now set in the `calc_dist_mat` function instead of the object level."
+)
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -23,7 +28,7 @@ n_jobs
     Via the :class:`joblib.parallel_config` context manager, another backend (e.g. `dask`)
     can be selected.
 block_size
-    Deprecated. This is now set in `calc_dist_mat`.
+    Deprecated since v0.15.0. This is now set in `calc_dist_mat` and ignored here.
 """
 
 
@@ -112,6 +117,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
     {params}
     """
 
+    @deprecated_arg("block_size", _deprecation_block_size)
     def __init__(
         self,
         cutoff: int,
@@ -121,11 +127,6 @@ class ParallelDistanceCalculator(DistanceCalculator):
     ):
         super().__init__(cutoff)
         self.n_jobs = n_jobs
-        if block_size is not None:
-            warnings.warn(
-                "The `block_size` parameter is now set in the `calc_dist_mat` function instead of the object level. It is ignored here.",
-                category=FutureWarning,
-            )
 
     @abc.abstractmethod
     def _compute_block(
@@ -1529,6 +1530,12 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     _metric_mat = _tcrdist_mat
 
 
+@deprecated(
+    Deprecation(
+        "0.15.0",
+        "`FastAlignmentDistanceCalculator` achieves (depending on the settings) identical results at a higher speed.",
+    )
+)
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
@@ -1571,12 +1578,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         Gap extend penatly
     """
 
-    @deprecated(
-        """\
-        FastAlignmentDistanceCalculator achieves (depending on the settings) identical results
-        at a higher speed.
-        """
-    )
+    @deprecated_arg("block_size", _deprecation_block_size)
     def __init__(
         self,
         cutoff: int = 10,
@@ -1587,7 +1589,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
+        super().__init__(cutoff, n_jobs=n_jobs)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend
@@ -1725,6 +1727,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         Estimate of the average mismatch penalty
     """
 
+    @deprecated_arg("block_size", _deprecation_block_size)
     def __init__(
         self,
         cutoff: int = 10,
@@ -1736,7 +1739,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         gap_extend: int = 11,
         estimated_penalty: float = None,
     ):
-        super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
+        super().__init__(cutoff, n_jobs=n_jobs)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend

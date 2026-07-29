@@ -63,7 +63,7 @@ def test_workflow(adata_path, save_intermediates, upgrade_schema, obs_expected, 
         adata = sc.read_h5ad(adata_path)
         ir.io.upgrade_schema(adata)
     else:
-        adata = ir.io.read_10x_vdj(adata_path, include_fields=None)
+        adata = ir.io.read_10x_vdj(adata_path)
 
     adata_obs_expected = pd.read_pickle(_pd_versioned_pkl(obs_expected))
 
