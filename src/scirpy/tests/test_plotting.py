@@ -88,6 +88,16 @@ def test_vdj_usage(adata_vdj, full_combination):
     assert isinstance(p, plt.Axes)
 
 
+def test_vdj_usage_missing_genes(adata_vdj):
+    """Cells without a gene call are shown as a separate `none` segment rather than being dropped.
+
+    `adata_vdj` has 6 cells without a `VDJ_1_d_call`.
+    """
+    p = pl.vdj_usage(adata_vdj, vdj_cols=("VDJ_1_d_call",), normalize_to=False)
+    # one label per segment. Segments are labelled with the gene name, stripped of the locus prefix.
+    assert {t.get_text() for t in p.texts} == {"none", "D1", "D2"}
+
+
 @pytest.mark.extra
 @pytest.mark.parametrize("matrix_type", ["array", "csr", "csc"])
 @pytest.mark.parametrize("use_raw", [False, None])

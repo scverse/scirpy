@@ -12,7 +12,7 @@ import scanpy
 
 from scirpy.util import _is_na2
 
-from ._util import get_rearrangement_schema
+from ._util import _sanitize_airr_value, get_rearrangement_schema
 
 
 class AirrCell(MutableMapping):
@@ -121,11 +121,14 @@ class AirrCell(MutableMapping):
 
         A chain is a dictionary following
         the `AIRR Rearrangement Schema <https://docs.airr-community.org/en/latest/datarep/rearrangements.html#productive>`__.
+
+        Values are sanitized before they are stored: text representations of missing values (e.g. `"nan"`, `"None"`)
+        become `None` and strings are cast to the type declared in the AIRR schema (e.g. `"True"` -> `True`).
         """
         # ensure consistent ordering
         chain = dict(sorted(chain.items()))
-        # sanitize NA values
-        chain = {k: None if _is_na2(v) else v for k, v in chain.items()}
+        # sanitize NA values and cast strings to the type declared in the AIRR schema
+        chain = {k: _sanitize_airr_value(k, v) for k, v in chain.items()}
 
         get_rearrangement_schema().validate_header(chain.keys())
         get_rearrangement_schema().validate_row(chain)

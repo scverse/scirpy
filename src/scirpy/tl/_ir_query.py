@@ -10,7 +10,7 @@ from scanpy import logging
 
 from scirpy.ir_dist import MetricType, _get_metric_key
 from scirpy.ir_dist._clonotype_neighbors import ClonotypeNeighbors
-from scirpy.util import DataHandler, _is_na, read_cell_indices, tqdm
+from scirpy.util import DataHandler, read_cell_indices, tqdm
 
 from ._clonotypes import _common_doc, _common_doc_parallelism, _doc_clonotype_definition, _validate_parameters
 
@@ -404,10 +404,6 @@ def ir_query_annotate(
         except KeyError:
             raise ValueError("Invalid value for `strategy`.") from None
         df_res = df.groupby("_query_cell_index").aggregate(reduce_fun).reindex(params.adata.obs_names)
-
-    # convert nan-equivalents to real nan values.
-    for col in df_res:
-        df_res.loc[_is_na(df_res[col]), col] = None
 
     if inplace:
         for col in df_res:

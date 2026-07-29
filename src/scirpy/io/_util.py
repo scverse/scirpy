@@ -1,9 +1,12 @@
 import csv
 import os
 from collections import Counter
+from typing import Any
 
 import pandas as pd
 from scanpy import logging
+
+from scirpy.util import _is_na2
 
 doc_working_model = """\
 
@@ -40,6 +43,43 @@ def get_rearrangement_schema():
     from airr import RearrangementSchema
 
     return RearrangementSchema
+
+
+def _sanitize_airr_value(field: str, value: Any) -> Any:
+    """Sanitize a single value of an AIRR rearrangement record.
+
+    Text representations of missing values (e.g. `"nan"`, `"None"`, `""`) are converted to `None` and
+    values of typed AIRR fields (e.g. `productive`, `umi_count`) that are still strings are cast to
+    their native Python type (e.g. `"True"` -> `True`, `"3"` -> `3`).
+
+    This is the only place where scirpy deals with such text representations. Everything downstream
+    can rely on `adata.obsm["airr"]` having consistent data types.
+
+    Parameters
+    ----------
+    field
+        Name of the AIRR rearrangement field. Fields that are not part of the AIRR rearrangement
+        schema are only checked for missing values, since their type is unknown.
+    value
+        The value to sanitize
+
+    Returns
+    -------
+    The sanitized value.
+    """
+    if _is_na2(value):
+        return None
+    if not isinstance(value, str):
+        # only strings need to be cast -- everything else is already a native Python (or numpy) type.
+        return value
+    schema = get_rearrangement_schema()
+    converter = {"boolean": schema.to_bool, "integer": schema.to_int, "number": schema.to_float}.get(schema.type(field))
+    if converter is None:
+        # the field is not part of the schema, or is of a type that doesn't need casting (e.g. `string`)
+        return value
+    # `validate=True` raises a `ValidationError` for values that cannot be cast. This is consistent
+    # with `validate_row`, which is called on the full record in `AirrCell.add_chain`.
+    return converter(value, validate=True)
 
 
 class _IOLogger:
