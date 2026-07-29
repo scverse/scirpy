@@ -1,11 +1,19 @@
-import warnings
 from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
 import pandas as pd
+from scverse_misc import Deprecation, deprecated_arg
 
 from scirpy.util import DataHandler, _is_na, _normalize_counts
+
+#: Deprecation of the `clip_at` argument, shared by `tl.clonal_expansion` and `pl.clonal_expansion`.
+_deprecation_clip_at = Deprecation("0.14.0", "Use `breakpoints` instead.")
+
+
+def _breakpoints_from_clip_at(clip_at: int) -> list[int]:
+    """Convert the deprecated `clip_at` argument into a list of `breakpoints`."""
+    return list(range(1, clip_at))
 
 
 def _clip_and_count(
@@ -59,6 +67,7 @@ def _clip_and_count(
 
 
 @DataHandler.inject_param_docs()
+@deprecated_arg("clip_at", _deprecation_clip_at)
 def clonal_expansion(
     adata: DataHandler.TYPE,
     *,
@@ -107,8 +116,7 @@ def clonal_expansion(
     a Series with the clipped count per cell.
     """
     if clip_at is not None:
-        breakpoints = list(range(1, clip_at))
-        warnings.warn("The argument `clip_at` is deprecated. Please use `brekpoints` instead.", category=FutureWarning)
+        breakpoints = _breakpoints_from_clip_at(clip_at)
     return _clip_and_count(
         adata,
         target_col,

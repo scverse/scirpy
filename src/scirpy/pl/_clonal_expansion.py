@@ -1,13 +1,17 @@
 from collections.abc import Sequence
 from typing import Literal
 
+from scverse_misc import deprecated_arg
+
 from scirpy import tl
+from scirpy.tl._clonal_expansion import _breakpoints_from_clip_at, _deprecation_clip_at
 from scirpy.util import DataHandler
 
 from . import base
 
 
 @DataHandler.inject_param_docs()
+@deprecated_arg("clip_at", _deprecation_clip_at)
 def clonal_expansion(
     adata: DataHandler.TYPE,
     groupby: str,
@@ -74,6 +78,8 @@ def clonal_expansion(
         Additional arguments passed to :func:`scirpy.pl.base.bar`
     """
     params = DataHandler(adata, airr_mod)
+    if clip_at is not None:
+        breakpoints = _breakpoints_from_clip_at(clip_at)
     plot_df = tl.summarize_clonal_expansion(
         params,
         groupby,
@@ -82,7 +88,6 @@ def clonal_expansion(
         normalize=normalize,
         expanded_in=expanded_in,
         breakpoints=breakpoints,
-        clip_at=clip_at,
     )
     if not show_nonexpanded:
         plot_df.drop("<= 1", axis="columns", inplace=True)

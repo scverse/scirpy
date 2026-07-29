@@ -37,6 +37,7 @@ dependencies = [
   "scanpy>=1.9.3",
   "scikit-learn",
   "scipy",
+  "scverse-misc>=0.1.3",
   "squarify",
   "tqdm>=4.63",                           # https://github.com/tqdm/tqdm/issues/1082
 ]
@@ -75,7 +76,7 @@ doc = [
   "nbconvert",
   "pycairo",
   "scirpy[dandelion]",
-  "scverse-misc[sphinx]>=0.1.2",
+  "scverse-misc[sphinx]>=0.1.3",
   "sphinx>=8.1",
   "sphinx-autodoc-typehints",
   "sphinx-book-theme>=1",
