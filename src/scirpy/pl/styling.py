@@ -20,11 +20,20 @@ try:
     )
 except ImportError:
     # scanpy >= 1.12
-    from scanpy.plotting._utils import (
-        set_colors_for_categorical_obs,
-        set_default_colors_for_categorical_obs,
-        validate_palette,
-    )
+    try:
+        from scanpy.plotting._utils import (
+            set_colors_for_categorical_obs,
+            set_default_colors_for_categorical_obs,
+            validate_palette,
+        )
+    except ImportError:
+        # scanpy >= 1.13
+        from scanpy.plotting.legacy._utils import (
+            set_colors_for_categorical_obs,
+            set_default_colors_for_categorical_obs,
+            validate_palette,
+        )
+
 
 from scirpy.util import DataHandler
 

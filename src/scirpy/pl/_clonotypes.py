@@ -18,7 +18,6 @@ from matplotlib.colors import Colormap, is_color_like
 from mudata import MuData
 from pandas.api.types import is_categorical_dtype
 from scanpy import settings
-from scanpy.plotting._utils import ticks_formatter
 from scipy.sparse import issparse
 
 from scirpy.tl._clonotypes import _doc_clonotype_network, _graph_from_coordinates
@@ -26,6 +25,12 @@ from scirpy.util import DataHandler, read_cell_indices
 from scirpy.util.graph import _distance_to_connectivity
 
 from .styling import _get_colors, _init_ax
+
+try:
+    from scanpy.plotting._utils import ticks_formatter
+except ImportError:
+    # scanpy >= 0.13
+    from scanpy.plotting.legacy._utils import ticks_formatter
 
 COLORMAP_EDGES = matplotlib.colors.LinearSegmentedColormap.from_list("grey2", ["#CCCCCC", "#000000"])
 
@@ -184,7 +189,11 @@ def clonotype_network(
         raise KeyError(f"{clonotype_key} not found in adata.uns.")
 
     if frameon is None:
-        frameon = settings._frameon
+        try:
+            frameon = settings._frameon
+        except AttributeError:
+            # Attribute got moved in scanpy >= 1.13
+            frameon = sc.plotting.legacy.mpl_settings.FRAMEON
 
     if show_legend is None:
         show_legend = True
@@ -594,7 +603,12 @@ def _plot_clonotype_network_panel(
         )
         if edge_collection != []:
             edge_collection.set_zorder(-1)
-            edge_collection.set_rasterized(sc.settings._vector_friendly)
+            try:
+                vector_friendly = sc.settings._vector_friendly
+            except AttributeError:
+                # _vector_friendly got removed in scanpy v1.13.
+                vector_friendly = sc.plotting.legacy.mpl_settings.VECTOR_FRIENDLY
+            edge_collection.set_rasterized(vector_friendly)
 
     # add clonotype labels
     if show_labels:
