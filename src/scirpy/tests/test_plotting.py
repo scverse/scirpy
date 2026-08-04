@@ -197,3 +197,19 @@ def test_clonotype_network_pie_legend_filters_unused(adata_clonotype_network):
 def test_logoplot(adata_cdr3):
     p = pl.logoplot_cdr3_motif(adata_cdr3, chains="VJ_1")
     assert isinstance(p, logomaker.Logo)
+
+
+@pytest.mark.extra
+def test_logoplot_mixed_lengths_returns_multiple_logos(adata_cdr3):
+    p = pl.logoplot_cdr3_motif(adata_cdr3, chains="VDJ_1")
+    assert isinstance(p, list)
+    assert len(p) == 2
+    assert all(isinstance(logo, logomaker.Logo) for logo in p)
+    assert all("CDR3 length" in logo.ax.get_title() for logo in p)
+
+
+@pytest.mark.extra
+def test_logoplot_mixed_lengths_with_single_axis_raises(adata_cdr3):
+    _, ax = plt.subplots(1, 1)
+    with pytest.raises(ValueError, match="multiple CDR3 lengths"):
+        pl.logoplot_cdr3_motif(adata_cdr3, chains="VDJ_1", ax=ax)
