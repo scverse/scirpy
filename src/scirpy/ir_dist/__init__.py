@@ -59,6 +59,7 @@ metric
       * `needleman_wunsch` -- Distance based on linear-gap Needleman-Wunsch global alignment.
         Uses the BLOSUM62 substitution matrix by default. TCRBLOSUM alpha/beta substitution matrices
         (:cite:`TCRBLOSUM`) can be selected with `base_matrix="tcrblosum"`.
+        This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.NeedlemanWunschDistanceCalculator`.
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
         See :class:`~scirpy.ir_dist.metrics.HammingDistanceCalculator`.
@@ -192,7 +193,7 @@ def _ir_dist(
         Number of cores to use for distance calculation. :class:`joblib.Parallel` is
         used internally. Via the :class:`joblib.parallel_config` context manager, you can set another
         backend (e.g. `dask`) and adjust other configuration options.
-        The metrics `hamming`, `normalized_hamming`, and `tcrdist` utilize `numba`
+        The metrics `hamming`, `normalized_hamming`, `tcrdist`, and `needleman_wunsch` utilize `numba`
         for parallelization with multithreading instead.
 
     {airr_mod}
