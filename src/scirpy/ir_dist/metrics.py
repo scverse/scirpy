@@ -16,11 +16,6 @@ from scverse_misc import Deprecation, deprecated, deprecated_arg
 
 from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib
 
-#: Deprecation of the object-level `block_size` parameter, shared by all `ParallelDistanceCalculator`s.
-_deprecation_block_size = Deprecation(
-    "0.15.0", "The block size is now set in the `calc_dist_mat` function instead of the object level."
-)
-
 from ._substitution_matrices import (
     AA_ALPHABET_WITH_AMBIGUOUS,
     AA_ALPHABET_WITH_UNKNOWN,
@@ -30,6 +25,11 @@ from ._substitution_matrices import (
     TCRBLOSUM_BETA,
     _map_matrix_to_alphabet,
     _substitution_to_distance_matrix,
+)
+
+#: Deprecation of the object-level `block_size` parameter, shared by all `ParallelDistanceCalculator`s.
+_deprecation_block_size = Deprecation(
+    "0.15.0", "The block size is now set in the `calc_dist_mat` function instead of the object level."
 )
 
 _doc_params_parallel_distance_calculator = """\
@@ -1658,7 +1658,9 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
 @deprecated(
     Deprecation(
         "0.15.0",
-        "If `gap_open == gap_extend`, use `NeedlemanWunschDistanceCalculator` instead.",
+        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which provides "
+        "identical results while being much faster. If you actually have a use-case for affine gap penalties, please "
+        "let us know by opening an issue on GitHub.",
     )
 )
 @_doc_params(params=_doc_params_parallel_distance_calculator)
@@ -1784,8 +1786,10 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 
 @deprecated(
     Deprecation(
-        "0.15.0",
-        "If `gap_open == gap_extend`, use `NeedlemanWunschDistanceCalculator` instead.",
+        "0.25.0",
+        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which provides "
+        "identical results while being much faster. If you actually have a use-case for affine gap penalties, please "
+        "let us know by opening an issue on GitHub.",
     )
 )
 @_doc_params(params=_doc_params_parallel_distance_calculator)
