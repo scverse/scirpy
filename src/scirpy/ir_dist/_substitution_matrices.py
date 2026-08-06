@@ -75,6 +75,10 @@ def _substitution_to_distance_matrix(
     ----------
     substitution_matrix:
         Amino-acid substitution matrix in the order specified by `matrix_alphabet`.
+    alphabet:
+        Alphabet describing the rows and columns of the returned distance matrix.
+    matrix_alphabet:
+        Alphabet describing the rows and columns of `substitution_matrix`.
     distance_cap:
         Maximum distance assigned to a mismatch. If `None`, mismatch distances are uncapped.
     distance_offset:
