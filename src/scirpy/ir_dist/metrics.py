@@ -14,7 +14,7 @@ from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
 from scverse_misc import Deprecation, deprecated, deprecated_arg
 
-from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, tqdm
+from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib
 
 #: Deprecation of the object-level `block_size` parameter, shared by all `ParallelDistanceCalculator`s.
 _deprecation_block_size = Deprecation(
@@ -552,9 +552,7 @@ class _MetricDistanceCalculator(abc.ABC):
             arguments = [(split_seqs[x], seqs2, is_symmetric, start_columns[x]) for x in range(self.n_blocks)]
 
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
-            results_iter = joblib.Parallel(return_as="generator")(delayed_jobs)
-            results_iter = tqdm(results_iter, total=len(delayed_jobs), desc="Computing distance blocks")
-            results = list(results_iter)
+            results = list(_parallelize_with_joblib(delayed_jobs, total=len(delayed_jobs)))
 
             block_matrices_csr, block_row_mins = zip(*results, strict=False)
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
