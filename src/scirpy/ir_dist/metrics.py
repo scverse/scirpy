@@ -28,6 +28,8 @@ from ._substitution_matrices import (
     BLOSUM62_WITH_AMBIGUOUS,
     TCRBLOSUM_ALPHA,
     TCRBLOSUM_BETA,
+    _map_matrix_to_alphabet,
+    _substitution_to_distance_matrix,
 )
 
 _doc_params_parallel_distance_calculator = """\
@@ -352,41 +354,6 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
                 result.append((d + 1, origin_row + row, origin_col + col))
 
         return result
-
-
-def _substitution_to_distance_matrix(
-    substitution_matrix: np.ndarray,
-    alphabet: str = AA_ALPHABET_WITH_UNKNOWN,
-    matrix_alphabet: str = BLOSUM62.alphabet,
-    distance_cap: int | None = 4,
-    distance_offset: int = 4,
-) -> np.ndarray:
-    """Creates a numba compatible distance matrix from a substitution matrix.
-
-    Parameters
-    ----------
-    substitution_matrix:
-        Amino-acid substitution matrix in the order specified by `matrix_alphabet`.
-    distance_cap:
-        Maximum distance assigned to a mismatch. If `None`, mismatch distances are uncapped.
-    distance_offset:
-        Offset from which the substitution score is subtracted.
-
-    Returns
-    -------
-    distance_matrix:
-        distance lookup matrix
-    """
-    dm = np.zeros((len(alphabet), len(alphabet)), dtype=np.int32)
-    if substitution_matrix.shape != (len(matrix_alphabet), len(matrix_alphabet)):
-        raise ValueError("`substitution_matrix` must be square and match `matrix_alphabet`.")
-    for i, aa1 in enumerate(matrix_alphabet):
-        for j, aa2 in enumerate(matrix_alphabet):
-            d = 0 if aa1 == aa2 else distance_offset - substitution_matrix[i, j]
-            if distance_cap is not None:
-                d = min(distance_cap, d)
-            dm[alphabet.index(aa1), alphabet.index(aa2)] = d
-    return dm
 
 
 def _seqs2mat(
@@ -1520,24 +1487,12 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         else:
             raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
 
-        self.nw_substitution_matrix = self._make_numba_substitution_matrix(
-            substitution_matrix.matrix, substitution_matrix.alphabet
+        self.nw_substitution_matrix = _map_matrix_to_alphabet(
+            substitution_matrix.matrix,
+            substitution_matrix.alphabet,
+            AA_ALPHABET_WITH_UNKNOWN,
         )
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
-
-    def _make_numba_substitution_matrix(self, substitution_matrix: np.ndarray, matrix_alphabet: str) -> np.ndarray:
-        score_matrix = np.zeros(
-            (len(AA_ALPHABET_WITH_UNKNOWN), len(AA_ALPHABET_WITH_UNKNOWN)),
-            dtype=np.int32,
-        )
-        if substitution_matrix.shape != (len(matrix_alphabet), len(matrix_alphabet)):
-            raise ValueError("`substitution_matrix` must be square and match `matrix_alphabet`.")
-        for i, aa1 in enumerate(matrix_alphabet):
-            for j, aa2 in enumerate(matrix_alphabet):
-                score_matrix[AA_ALPHABET_WITH_AMBIGUOUS.index(aa1), AA_ALPHABET_WITH_AMBIGUOUS.index(aa2)] = (
-                    substitution_matrix[i, j]
-                )
-        return score_matrix
 
     def _needleman_wunsch_mat(
         self,
