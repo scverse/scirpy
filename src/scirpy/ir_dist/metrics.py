@@ -21,6 +21,15 @@ _deprecation_block_size = Deprecation(
     "0.15.0", "The block size is now set in the `calc_dist_mat` function instead of the object level."
 )
 
+from ._substitution_matrices import (
+    AA_ALPHABET_WITH_AMBIGUOUS,
+    AA_ALPHABET_WITH_UNKNOWN,
+    BLOSUM62,
+    BLOSUM62_WITH_AMBIGUOUS,
+    TCRBLOSUM_ALPHA,
+    TCRBLOSUM_BETA,
+)
+
 _doc_params_parallel_distance_calculator = """\
 n_jobs
     Number of jobs to use for the pairwise distance calculation, passed to
@@ -347,8 +356,8 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
 
 def _substitution_to_distance_matrix(
     substitution_matrix: np.ndarray,
-    alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX*",
-    matrix_alphabet: str = "ARNDCQEGHILKMFPSTWYV",
+    alphabet: str = AA_ALPHABET_WITH_UNKNOWN,
+    matrix_alphabet: str = BLOSUM62.alphabet,
     distance_cap: int | None = 4,
     distance_offset: int = 4,
 ) -> np.ndarray:
@@ -381,7 +390,7 @@ def _substitution_to_distance_matrix(
 
 
 def _seqs2mat(
-    seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: None | int = None
+    seqs: Sequence[str], alphabet: str = AA_ALPHABET_WITH_AMBIGUOUS, max_len: None | int = None
 ) -> tuple[np.ndarray, np.ndarray]:
     """Convert a collection of gene sequences into a
     numpy matrix of integers for fast comparison.
@@ -1171,124 +1180,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     _metric_mat = _gpu_hamming_mat
 
 
-PARASAIL_AA_ALPHABET = "ARNDCQEGHILKMFPSTWYVBZX"
-PARASAIL_AA_ALPHABET_WITH_UNKNOWN = "ARNDCQEGHILKMFPSTWYVBZX*"
-# fmt: off
-CANONICAL_AA_ALPHABET = "ARNDCQEGHILKMFPSTWYV"
-BLOSUM62_SUBSTITUTION_MATRIX = np.array(
-    [
-        # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V
-        [ 4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1,  0, -3, -2,  0],  # A
-        [-1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3],  # R
-        [-2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1,  0, -4, -2, -3],  # N
-        [-2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3],  # D
-        [ 0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1],  # C
-        [-1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2],  # Q
-        [-1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2],  # E
-        [ 0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3],  # G
-        [-2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3],  # H
-        [-1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3],  # I
-        [-1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1],  # L
-        [-1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2],  # K
-        [-1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1],  # M
-        [-2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1],  # F
-        [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2],  # P
-        [ 1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4,  1, -3, -2, -2],  # S
-        [ 0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1,  5, -2, -2,  0],  # T
-        [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3],  # W
-        [-2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1],  # Y
-        [ 0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2,  0, -3, -1,  4],  # V
-    ],
-    dtype=np.int32,
-)
-TCRBLOSUM_ALPHA_SUBSTITUTION_MATRIX = np.array(
-    [
-        # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V
-        [ 2, -1, -1, -1,  0,  0,  0,  0,  0, -1, -1, -1, -1, -1,  0,  0, -1,  0, -1,  0],  # A
-        [-1,  1,  0,  0,  1,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0, -1],  # R
-        [-1,  0,  1,  0,  0,  0,  0,  0,  0, -1, -2,  1,  0,  0,  0,  0,  0,  0,  0, -2],  # N
-        [-1,  0,  0,  1, -5,  0,  0,  0,  0, -1, -2,  0,  0,  0,  0,  0,  0,  0,  0, -1],  # D
-        [ 0,  1,  0, -5,  2, -4, -4,  0, -2, -5,  0, -5, -4, -4, -4,  0, -6, -2, -5,  0],  # C
-        [ 0,  0,  0,  0, -4,  2,  0,  0,  0, -1, -2,  1,  0,  0,  0,  0,  0,  0,  0, -2],  # Q
-        [ 0,  0,  0,  0, -4,  0,  1,  0,  1, -1,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0],  # E
-        [ 0,  0,  0,  0,  0,  0,  0,  1,  0, -2, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0],  # G
-        [ 0,  0,  0,  0, -2,  0,  1,  0,  2,  0,  0, -1,  0,  0,  1,  0,  0,  1,  0,  0],  # H
-        [-1,  0, -1, -1, -5, -1, -1, -2,  0,  3,  0, -1,  0,  0,  0,  0,  1, -1,  0,  0],  # I
-        [-1, -1, -2, -2,  0, -2,  0, -1,  0,  0,  2, -4,  0,  1,  0, -1, -1, -1,  0,  0],  # L
-        [-1,  0,  1,  0, -5,  1, -1, -1, -1, -1, -4,  3,  0, -3,  0, -2, -1, -2, -4, -3],  # K
-        [-1,  0,  0,  0, -4,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0, -1,  0],  # M
-        [-1,  0,  0,  0, -4,  0,  0,  0,  0,  0,  1, -3,  0,  1,  0,  0,  0,  0,  0,  0],  # F
-        [ 0,  0,  0,  0, -4,  0,  0,  0,  1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0],  # P
-        [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1, -2,  0,  0,  0,  1,  0,  0,  0, -1],  # S
-        [-1,  0,  0,  0, -6,  0,  0,  0,  0,  1, -1, -1,  0,  0,  0,  0,  1,  0,  0,  0],  # T
-        [ 0,  0,  0,  0, -2,  0,  0,  0,  1, -1, -1, -2,  0,  0,  0,  0,  0,  2,  0, -1],  # W
-        [-1,  0,  0,  0, -5,  0,  0,  0,  0,  0,  0, -4, -1,  0,  0,  0,  0,  0,  1, -1],  # Y
-        [ 0, -1, -2, -1,  0, -2,  0,  0,  0,  0,  0, -3,  0,  0,  0, -1,  0, -1, -1,  1],  # V
-    ],
-    dtype=np.int32,
-)
-TCRBLOSUM_BETA_SUBSTITUTION_MATRIX = np.array(
-    [
-        # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V
-        [ 0,  0,  0,  0, -5,  0, -1,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # A
-        [ 0,  2,  0,  0, -4, -1, -1,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # R
-        [ 0,  0,  1,  1, -4,  0,  0,  0,  0,  0, -1,  0,  0, -1,  0, -1,  0,  0,  0,  0],  # N
-        [ 0,  0,  1,  1, -4,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0, -1,  0,  0,  0,  0],  # D
-        [-5, -4, -4, -4,  2, -6, -5,  0, -3, -3, -5, -2, -1, -5, -4,  0, -5, -2, -5, -4],  # C
-        [ 0, -1,  0,  0, -6,  2, -1, -1, -1,  0,  1, -1,  0, -2, -1, -2, -1,  0,  0, -1],  # Q
-        [-1, -1,  0,  0, -5, -1,  2,  0, -1,  0, -1,  1,  0, -2,  0, -2,  1,  0, -1,  0],  # E
-        [ 0,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # G
-        [ 0,  0,  0,  0, -3, -1, -1,  0,  2,  0,  0, -1,  0,  2,  0, -1,  0,  0,  1,  0],  # H
-        [ 0,  0,  0,  0, -3,  0,  0,  0,  0,  2,  0,  0,  2,  0,  0,  0,  0,  0,  0,  0],  # I
-        [ 0,  0, -1,  0, -5,  1, -1,  0,  0,  0,  1,  0,  0,  0,  0, -1,  0,  0,  0,  0],  # L
-        [ 0,  0,  0,  0, -2, -1,  1,  0, -1,  0,  0,  1,  0, -1,  0,  0,  0,  0, -1,  0],  # K
-        [ 0,  0,  0,  0, -1,  0,  0,  0,  0,  2,  0,  0,  2,  0,  0,  0,  0,  0, -1,  0],  # M
-        [-1, -1, -1, -1, -5, -2, -2, -1,  2,  0,  0, -1,  0,  2,  0, -2,  0,  0,  2, -1],  # F
-        [ 0,  0,  0,  0, -4, -1,  0,  0,  0,  0,  0,  0,  0,  0,  1, -1,  0,  0, -1,  0],  # P
-        [ 0,  0, -1, -1,  0, -2, -2,  0, -1,  0, -1,  0,  0, -2, -1,  1,  0,  0, -2,  0],  # S
-        [ 0,  0,  0,  0, -5, -1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],  # T
-        [ 0,  0,  0,  0, -2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0],  # W
-        [-1, -1,  0,  0, -5,  0, -1, -1,  1,  0,  0, -1, -1,  2, -1, -2,  0,  0,  2, -1],  # Y
-        [ 0,  0,  0,  0, -4, -1,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # V
-    ],
-    dtype=np.int32,
-)
-# fmt: on
-
-
-# fmt: off
-BLOSUM62_WITH_AMBIGUOUS_SUBSTITUTION_MATRIX = np.array(
-    [
-        # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V   B   Z   X
-        [ 4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1,  0, -3, -2,  0, -2, -1,  0],  # A
-        [-1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3, -1,  0, -1],  # R
-        [-2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1,  0, -4, -2, -3,  3,  0, -1],  # N
-        [-2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3,  4,  1, -1],  # D
-        [ 0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1, -3, -3, -2],  # C
-        [-1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2,  0,  3, -1],  # Q
-        [-1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1],  # E
-        [ 0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3, -1, -2, -1],  # G
-        [-2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3,  0,  0, -1],  # H
-        [-1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3, -3, -3, -1],  # I
-        [-1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1, -4, -3, -1],  # L
-        [-1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2,  0,  1, -1],  # K
-        [-1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1, -3, -1, -1],  # M
-        [-2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1, -3, -3, -1],  # F
-        [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2, -2, -1, -2],  # P
-        [ 1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4,  1, -3, -2, -2,  0,  0,  0],  # S
-        [ 0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1,  5, -2, -2,  0, -1, -1,  0],  # T
-        [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3, -4, -3, -2],  # W
-        [-2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1, -3, -2, -1],  # Y
-        [ 0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2,  0, -3, -1,  4, -3, -2, -1],  # V
-        [-2, -1,  3,  4, -3,  0,  1, -1,  0, -3, -4,  0, -3, -3, -2,  0, -1, -4, -3, -3,  4,  1, -1],  # B
-        [-1,  0,  0,  1, -3,  3,  4, -2,  0, -3, -3,  1, -1, -3, -1,  0, -1, -3, -2, -2,  1,  4, -1],  # Z
-        [ 0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2,  0,  0, -2, -1, -1, -1, -1, -1],  # X
-    ],
-    dtype=np.int32,
-)
-# fmt: on
-
-
 class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric.
 
@@ -1335,13 +1226,6 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         is set automatically and should not be provided.
     """
 
-    parasail_aa_alphabet = PARASAIL_AA_ALPHABET
-    parasail_aa_alphabet_with_unknown = PARASAIL_AA_ALPHABET_WITH_UNKNOWN
-    matrix_alphabet = CANONICAL_AA_ALPHABET
-    blosum62_substitution_matrix = BLOSUM62_SUBSTITUTION_MATRIX
-    tcrblosum_alpha_substitution_matrix = TCRBLOSUM_ALPHA_SUBSTITUTION_MATRIX
-    tcrblosum_beta_substitution_matrix = TCRBLOSUM_BETA_SUBSTITUTION_MATRIX
-
     def __init__(
         self,
         cutoff: int = 20,
@@ -1371,45 +1255,42 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
             raise ValueError("`distance_cap` must be non-negative, `None`, or 'default'.")
 
         if base_matrix == "blosum62":
+            substitution_matrix = BLOSUM62
             matrix_distance_cap = 4 if distance_cap == "default" else distance_cap
-            self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
-                self.blosum62_substitution_matrix,
-                self.parasail_aa_alphabet_with_unknown,
-                self.matrix_alphabet,
-                distance_cap=matrix_distance_cap,
-                distance_offset=4,
-            )
+            distance_offset = 4
 
         elif base_matrix == "tcrblosum":
             if chain_type == "VJ":
-                tcrdist_substitution_matrix = self.tcrblosum_alpha_substitution_matrix
+                substitution_matrix = TCRBLOSUM_ALPHA
             elif chain_type == "VDJ":
-                tcrdist_substitution_matrix = self.tcrblosum_beta_substitution_matrix
+                substitution_matrix = TCRBLOSUM_BETA
             else:
                 raise ValueError("`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`.")
 
             # Use one `distance_offset` across alpha and beta matrices so equal substitution scores
             # map to equal distances for both chain types. This keeps VJ and VDJ distances on a
             # shared scale for clonotype clustering.
-            off_diagonal = ~np.eye(len(self.matrix_alphabet), dtype=bool)
+            off_diagonal = ~np.eye(len(substitution_matrix.alphabet), dtype=bool)
             max_score = int(
                 max(
-                    np.max(self.tcrblosum_alpha_substitution_matrix[off_diagonal]),
-                    np.max(self.tcrblosum_beta_substitution_matrix[off_diagonal]),
+                    np.max(TCRBLOSUM_ALPHA.matrix[off_diagonal]),
+                    np.max(TCRBLOSUM_BETA.matrix[off_diagonal]),
                 )
             )
 
             matrix_distance_cap = None if distance_cap == "default" else distance_cap
-            self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
-                tcrdist_substitution_matrix,
-                self.parasail_aa_alphabet_with_unknown,
-                self.matrix_alphabet,
-                distance_cap=matrix_distance_cap,
-                distance_offset=max_score + 1,
-            )
+            distance_offset = max_score + 1
 
         else:
             raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
+
+        self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
+            substitution_matrix.matrix,
+            AA_ALPHABET_WITH_UNKNOWN,
+            substitution_matrix.alphabet,
+            distance_cap=matrix_distance_cap,
+            distance_offset=distance_offset,
+        )
 
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
 
@@ -1607,14 +1488,6 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         is set automatically and should not be provided
     """
 
-    parasail_aa_alphabet = PARASAIL_AA_ALPHABET
-    parasail_aa_alphabet_with_unknown = PARASAIL_AA_ALPHABET_WITH_UNKNOWN
-    tcrblosum_matrix_alphabet = CANONICAL_AA_ALPHABET
-    blosum62_substitution_matrix = BLOSUM62_SUBSTITUTION_MATRIX
-    blosum62_with_ambiguous_substitution_matrix = BLOSUM62_WITH_AMBIGUOUS_SUBSTITUTION_MATRIX
-    tcrblosum_alpha_substitution_matrix = TCRBLOSUM_ALPHA_SUBSTITUTION_MATRIX
-    tcrblosum_beta_substitution_matrix = TCRBLOSUM_BETA_SUBSTITUTION_MATRIX
-
     def __init__(
         self,
         cutoff: int = 10,
@@ -1636,32 +1509,32 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         self.histogram = histogram
 
         if base_matrix == "blosum62":
-            substitution_matrix = self.blosum62_with_ambiguous_substitution_matrix
-            matrix_alphabet = self.parasail_aa_alphabet
+            substitution_matrix = BLOSUM62_WITH_AMBIGUOUS
         elif base_matrix == "tcrblosum":
-            matrix_alphabet = self.tcrblosum_matrix_alphabet
             if chain_type == "VJ":
-                substitution_matrix = self.tcrblosum_alpha_substitution_matrix
+                substitution_matrix = TCRBLOSUM_ALPHA
             elif chain_type == "VDJ":
-                substitution_matrix = self.tcrblosum_beta_substitution_matrix
+                substitution_matrix = TCRBLOSUM_BETA
             else:
                 raise ValueError("`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`.")
         else:
             raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
 
-        self.nw_substitution_matrix = self._make_numba_substitution_matrix(substitution_matrix, matrix_alphabet)
+        self.nw_substitution_matrix = self._make_numba_substitution_matrix(
+            substitution_matrix.matrix, substitution_matrix.alphabet
+        )
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
 
     def _make_numba_substitution_matrix(self, substitution_matrix: np.ndarray, matrix_alphabet: str) -> np.ndarray:
         score_matrix = np.zeros(
-            (len(self.parasail_aa_alphabet_with_unknown), len(self.parasail_aa_alphabet_with_unknown)),
+            (len(AA_ALPHABET_WITH_UNKNOWN), len(AA_ALPHABET_WITH_UNKNOWN)),
             dtype=np.int32,
         )
         if substitution_matrix.shape != (len(matrix_alphabet), len(matrix_alphabet)):
             raise ValueError("`substitution_matrix` must be square and match `matrix_alphabet`.")
         for i, aa1 in enumerate(matrix_alphabet):
             for j, aa2 in enumerate(matrix_alphabet):
-                score_matrix[self.parasail_aa_alphabet.index(aa1), self.parasail_aa_alphabet.index(aa2)] = (
+                score_matrix[AA_ALPHABET_WITH_AMBIGUOUS.index(aa1), AA_ALPHABET_WITH_AMBIGUOUS.index(aa2)] = (
                     substitution_matrix[i, j]
                 )
         return score_matrix
