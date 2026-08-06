@@ -13,6 +13,92 @@ CANONICAL_AA_ALPHABET = "ARNDCQEGHILKMFPSTWYV"
 AA_ALPHABET_WITH_AMBIGUOUS = f"{CANONICAL_AA_ALPHABET}BZX"
 AA_ALPHABET_WITH_UNKNOWN = f"{AA_ALPHABET_WITH_AMBIGUOUS}*"
 
+
+def _map_matrix_to_alphabet(
+    matrix: np.ndarray,
+    source_alphabet: str,
+    target_alphabet: str,
+) -> np.ndarray:
+    """Map a matrix from the source alphabet to the target alphabet.
+
+    Rows and columns for characters that occur only in `target_alphabet` are
+    initialized to zero.
+
+    Parameters
+    ----------
+    matrix:
+        Square matrix in the order specified by `source_alphabet`.
+    source_alphabet:
+        Alphabet describing the rows and columns of `matrix`.
+    target_alphabet:
+        Alphabet describing the rows and columns of the returned matrix. It must
+        contain every character from `source_alphabet`.
+
+    Returns
+    -------
+    mapped_matrix:
+        Matrix in the order specified by `target_alphabet`. Entries for target
+        characters absent from `source_alphabet` are initialized to zero.
+    """
+    expected_shape = (len(source_alphabet), len(source_alphabet))
+    if matrix.shape != expected_shape:
+        raise ValueError(f"`matrix` must have shape {expected_shape} to match `source_alphabet`.")
+
+    if len(set(source_alphabet)) != len(source_alphabet):
+        raise ValueError("`source_alphabet` must not contain duplicate characters.")
+    if len(set(target_alphabet)) != len(target_alphabet):
+        raise ValueError("`target_alphabet` must not contain duplicate characters.")
+
+    target_indices = {character: index for index, character in enumerate(target_alphabet)}
+    missing_characters = set(source_alphabet) - set(target_alphabet)
+    if missing_characters:
+        raise ValueError(
+            f"`target_alphabet` is missing characters from `source_alphabet`: {sorted(missing_characters)}"
+        )
+
+    mapped_indices = [target_indices[character] for character in source_alphabet]
+    mapped_matrix = np.zeros((len(target_alphabet), len(target_alphabet)), dtype=matrix.dtype)
+    mapped_matrix[np.ix_(mapped_indices, mapped_indices)] = matrix
+    return mapped_matrix
+
+
+def _substitution_to_distance_matrix(
+    substitution_matrix: np.ndarray,
+    alphabet: str = AA_ALPHABET_WITH_UNKNOWN,
+    matrix_alphabet: str = CANONICAL_AA_ALPHABET,
+    distance_cap: int | None = 4,
+    distance_offset: int = 4,
+) -> np.ndarray:
+    """Create a distance lookup matrix from an amino-acid substitution matrix.
+
+    Parameters
+    ----------
+    substitution_matrix:
+        Amino-acid substitution matrix in the order specified by `matrix_alphabet`.
+    distance_cap:
+        Maximum distance assigned to a mismatch. If `None`, mismatch distances are uncapped.
+    distance_offset:
+        Offset from which the substitution score is subtracted.
+
+    Returns
+    -------
+    distance_matrix:
+        Distance lookup matrix in the order specified by `alphabet`.
+    """
+    expected_shape = (len(matrix_alphabet), len(matrix_alphabet))
+    if substitution_matrix.shape != expected_shape:
+        raise ValueError(f"`substitution_matrix` must have shape {expected_shape} to match `matrix_alphabet`.")
+
+    distance_matrix = np.zeros(expected_shape, dtype=np.int32)
+    for i, aa1 in enumerate(matrix_alphabet):
+        for j, aa2 in enumerate(matrix_alphabet):
+            distance = 0 if aa1 == aa2 else distance_offset - substitution_matrix[i, j]
+            if distance_cap is not None:
+                distance = min(distance_cap, distance)
+            distance_matrix[i, j] = distance
+    return _map_matrix_to_alphabet(distance_matrix, matrix_alphabet, alphabet)
+
+
 # fmt: off
 _BLOSUM62_MATRIX = np.array(
     [

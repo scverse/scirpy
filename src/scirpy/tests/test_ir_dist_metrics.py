@@ -6,6 +6,7 @@ import pytest
 import scipy.sparse
 
 import scirpy as ir
+from scirpy.ir_dist._substitution_matrices import _substitution_to_distance_matrix
 from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     DistanceCalculator,
@@ -17,7 +18,6 @@ from scirpy.ir_dist.metrics import (
     NeedlemanWunschDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
-    _substitution_to_distance_matrix,
 )
 
 from .util import _squarify
