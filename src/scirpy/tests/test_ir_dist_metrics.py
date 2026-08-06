@@ -6,7 +6,7 @@ import pytest
 import scipy.sparse
 
 import scirpy as ir
-from scirpy.ir_dist._substitution_matrices import _substitution_to_distance_matrix
+from scirpy.ir_dist._substitution_matrices import _map_matrix_to_alphabet, _substitution_to_distance_matrix
 from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     DistanceCalculator,
@@ -70,7 +70,7 @@ def test_squarify():
     )
 
 
-def test_substitution_to_distance_matrix_converts_substitution_matrix():
+def test_substitution_to_distance_matrix():
     substitution_matrix = np.array(
         [
             [4, 3, 0, -1],
@@ -124,6 +124,45 @@ def test_substitution_to_distance_matrix_converts_substitution_matrix():
             dtype=np.int32,
         ),
     )
+
+
+def test_map_matrix_to_alphabet():
+    matrix = np.array([[1, 2], [3, 4]], dtype=np.int32)
+
+    mapped_matrix = _map_matrix_to_alphabet(matrix, source_alphabet="AB", target_alphabet="BCA")
+
+    npt.assert_array_equal(
+        mapped_matrix,
+        np.array(
+            [
+                [4, 0, 3],
+                [0, 0, 0],
+                [2, 0, 1],
+            ],
+            dtype=np.int32,
+        ),
+        strict=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("matrix", "source_alphabet", "target_alphabet", "match"),
+    [
+        (np.zeros((1, 1)), "AB", "AB", "must have shape"),
+        (np.zeros((2, 2)), "AA", "A", "source_alphabet.*duplicate"),
+        (np.zeros((2, 2)), "AB", "ABBA", "target_alphabet.*duplicate"),
+        (np.zeros((2, 2)), "AB", "AC", "missing characters"),
+    ],
+    ids=["shape", "duplicate-source", "duplicate-target", "missing-target-character"],
+)
+def test_map_matrix_to_alphabet_rejects_invalid_input(
+    matrix: np.ndarray,
+    source_alphabet: str,
+    target_alphabet: str,
+    match: str,
+):
+    with pytest.raises(ValueError, match=match):
+        _map_matrix_to_alphabet(matrix, source_alphabet, target_alphabet)
 
 
 def test_block_iter():
