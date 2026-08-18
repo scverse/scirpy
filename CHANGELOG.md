@@ -8,7 +8,13 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.25.1
+
+### Fixes
+
+ - Compatibility with `mudata >= 0.4`, where `update()` no longer pulls `obs` columns from the individual modalities
+   into the global `obs` by default. Modality-prefixed columns (e.g. `airr:clone_id`) now need to be made available
+   explicitly with `mdata.pull_obs()` ([#743](https://github.com/scverse/scirpy/issues/743)).
 
 ### Chore
 

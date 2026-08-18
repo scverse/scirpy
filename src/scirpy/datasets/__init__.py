@@ -63,6 +63,18 @@ _POOCH_INFO = dedent(
 )
 
 
+def _read_h5mu(fname: PathLike) -> MuData:
+    """Read a MuData object from a `.h5mu` file shipped with scirpy.
+
+    Since mudata v0.4, `obs` columns are not pulled from the modalities into the global `obs`
+    automatically. We do it here, so that the datasets can be used with the `{modality}:{column}`
+    syntax out of the box.
+    """
+    mdata = mudata.read_h5mu(fname)
+    mdata.pull_obs()
+    return mdata
+
+
 def _get_iggytop_registry(tag: str = "latest") -> pooch.Pooch:
     """
     Create pooch registry based on iggytop metadata.json file obtained from GitHub.
@@ -234,7 +246,7 @@ def wu2020() -> MuData:
         {processing_code}
     """
     fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("wu2020.h5mu", progressbar=True))
-    return mudata.read_h5mu(fname)
+    return _read_h5mu(fname)
 
 
 @_doc_params(
@@ -255,7 +267,7 @@ def wu2020_3k() -> MuData:
         {processing_code}
     """
     fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("wu2020_3k.h5mu", progressbar=True))
-    return mudata.read_h5mu(fname)
+    return _read_h5mu(fname)
 
 
 @_doc_params(
@@ -283,7 +295,7 @@ def maynard2020() -> MuData:
         {processing_code}
     """
     fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("maynard2020.h5mu", progressbar=True))
-    return mudata.read_h5mu(fname)
+    return _read_h5mu(fname)
 
 
 @_doc_params(
@@ -306,4 +318,4 @@ def stephenson2021_5k() -> MuData:
 
     """
     fname = cast(PathLike, _AWS_EXAMPLEDATA.fetch("stephenson2021_5k.h5mu", progressbar=True))
-    return mudata.read_h5mu(fname)
+    return _read_h5mu(fname)
