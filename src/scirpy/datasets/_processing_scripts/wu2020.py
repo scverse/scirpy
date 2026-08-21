@@ -102,6 +102,8 @@ adata_airr = anndata.concat(adatas_airr)
 adata.obsm["X_umap_orig"][:, 0] = np.max(adata.obsm["X_umap_orig"][:, 0]) - adata.obsm["X_umap_orig"][:, 0]
 
 mdata = MuData({"gex": adata, "airr": adata_airr})
+# since mudata v0.4, columns are not pulled from the modalities into the global `obs` automatically
+mdata.pull_obs()
 
 mdata
 

@@ -157,6 +157,12 @@ they can be merged in a `MuData` object. For instance:
     adata_airr = ir.io.read_10x_vdj("all_contig_annotations.json")
     adata_gex = sc.read_10x_h5("filtered_feature_bc_matrix.h5")
     mdata = MuData({"airr": adata_airr, "gex": adata_gex})
+    # since mudata v0.4, columns need to be pulled from the modalities into the global `obs` explicitly
+    mdata.pull_obs()
+
+Since mudata v0.4, `obs` columns of the individual modalities are not copied into the global `mdata.obs`
+automatically. Calling :py:meth:`mdata.pull_obs() <mudata.MuData.pull_obs>` makes them available as
+`mdata.obs[f"{modality}:{column}"]`, which is how scirpy functions refer to them (e.g. ``groupby="gex:sample"``).
 
 Scirpy functions can be applied directly to the MuData object. By default, it will retrieve AIRR data from the `"airr"`
 modality.

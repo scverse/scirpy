@@ -112,7 +112,10 @@ def _make_adata(obs: pd.DataFrame, mudata: bool = False) -> AnnData | MuData:
     )
     adata.strings_to_categoricals()
     if mudata:
-        return MuData({"airr": adata})
+        mdata = MuData({"airr": adata})
+        # since mudata v0.4, columns are not pulled from the modalities into the global `obs` automatically
+        mdata.pull_obs()
+        return mdata
     else:
         return adata
 

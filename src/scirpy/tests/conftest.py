@@ -234,6 +234,7 @@ def adata_clonotype_network(adata_conn, request):
             obs=adata_conn.obs.loc[:, []],
         )
         mdata = MuData({"gex": adata_gex, "airr": adata_conn.mod["airr"]})
+        mdata.pull_obs()
         mdata.obs["continuous"] = [3, 4, 0, 0, 7, 14, 1, 0, 2, 2, 0]
         ir.tl.clonotype_network(mdata, sequence="aa", metric="alignment", **kwargs)
         return mdata
