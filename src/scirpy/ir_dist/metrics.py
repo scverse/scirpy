@@ -20,7 +20,6 @@ from ._substitution_matrices import (
     AA_ALPHABET_WITH_AMBIGUOUS,
     AA_ALPHABET_WITH_UNKNOWN,
     BLOSUM62,
-    BLOSUM62_WITH_AMBIGUOUS,
     TCRBLOSUM_ALPHA,
     TCRBLOSUM_BETA,
     _map_matrix_to_alphabet,
@@ -1445,14 +1444,6 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     histogram:
         Determines whether a nearest neighbor histogram should be created. Not implemented for this metric
-    base_matrix:
-        Amino acid substitution matrix. `"blosum62"` uses BLOSUM62, while
-        `"tcrblosum"` uses TCRBLOSUM alpha/beta substitution matrices depending on
-        `chain_type`
-    chain_type:
-        Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain matrix
-        and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
-        is set automatically and should not be provided
     """
 
     def __init__(
@@ -1463,8 +1454,6 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         n_jobs: int = -1,
         n_blocks: int = 1,
         histogram: bool = False,
-        base_matrix: Literal["blosum62", "tcrblosum"] = "blosum62",
-        chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
         if cutoff < 0:
             raise ValueError("`cutoff` must be non-negative.")
@@ -1475,21 +1464,9 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
         self.gap_penalty = gap_penalty
         self.histogram = histogram
 
-        if base_matrix == "blosum62":
-            substitution_matrix = BLOSUM62_WITH_AMBIGUOUS
-        elif base_matrix == "tcrblosum":
-            if chain_type == "VJ":
-                substitution_matrix = TCRBLOSUM_ALPHA
-            elif chain_type == "VDJ":
-                substitution_matrix = TCRBLOSUM_BETA
-            else:
-                raise ValueError("`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`.")
-        else:
-            raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
-
         self.nw_substitution_matrix = _map_matrix_to_alphabet(
-            substitution_matrix.matrix,
-            substitution_matrix.alphabet,
+            BLOSUM62.matrix,
+            BLOSUM62.alphabet,
             AA_ALPHABET_WITH_UNKNOWN,
         )
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)

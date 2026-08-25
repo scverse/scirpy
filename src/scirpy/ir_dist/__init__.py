@@ -57,8 +57,7 @@ metric
         (:cite:`TCRBLOSUM`) can be selected with `base_matrix="tcrblosum"`.
         See :class:`~scirpy.ir_dist.metrics.TCRdistDistanceCalculator`.
       * `needleman_wunsch` -- Distance based on linear-gap Needleman-Wunsch global alignment.
-        Uses the BLOSUM62 substitution matrix by default. TCRBLOSUM alpha/beta substitution matrices
-        (:cite:`TCRBLOSUM`) can be selected with `base_matrix="tcrblosum"`.
+        Uses the BLOSUM62 substitution matrix.
         This option is incompatible with nucleotide sequences.
         See :class:`~scirpy.ir_dist.metrics.NeedlemanWunschDistanceCalculator`.
       * `hamming` -- Hamming distance for CDR3 sequences of equal length.
@@ -129,7 +128,7 @@ def _get_distance_calculator(
     elif metric == "tcrdist":
         dist_calc = metrics.TCRdistDistanceCalculator(n_jobs=n_jobs, chain_type=chain_type, **kwargs)
     elif metric == "needleman_wunsch":
-        dist_calc = metrics.NeedlemanWunschDistanceCalculator(n_jobs=n_jobs, chain_type=chain_type, **kwargs)
+        dist_calc = metrics.NeedlemanWunschDistanceCalculator(n_jobs=n_jobs, **kwargs)
     else:
         raise ValueError("Invalid distance metric.")
 

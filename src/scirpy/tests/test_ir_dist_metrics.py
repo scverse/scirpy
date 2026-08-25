@@ -908,23 +908,23 @@ def test_tcrdist(test_parameters, test_input, expected_result):
             ),
             np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]),
         ),
-        # test ambiguous BLOSUM62 symbols
+        # test ambiguous symbols, which have neutral substitution scores
         (
             {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
             (
                 np.array(["AABA", "AAZA", "AADA", "AAEA"]),
                 np.array(["AABA", "AAZA", "AADA", "AAEA"]),
             ),
-            np.array([[1, 4, 1, 4], [4, 1, 4, 1], [1, 4, 1, 4], [4, 1, 4, 1]]),
+            np.array([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 4], [1, 1, 4, 1]]),
         ),
-        # test ambiguous X scores with asymmetric arrays
+        # test neutral X scores with asymmetric arrays
         (
             {"cutoff": 6, "gap_penalty": 2, "n_jobs": 1},
             (
                 np.array(["X", "AX", "XA", "AA"]),
                 np.array(["A", "XX", "AA"]),
             ),
-            np.array([[1, 2, 2], [2, 1, 1], [2, 1, 1], [3, 1, 1]]),
+            np.array([[1, 3, 3], [3, 1, 1], [3, 1, 1], [3, 1, 1]]),
         ),
         # test empty input arrays
         (
@@ -1018,18 +1018,6 @@ def test_needleman_wunsch(test_parameters, test_input, expected_result):
     assert np.array_equal(res.todense(), expected_result)
 
 
-def test_needleman_wunsch_clamps_negative_scores():
-    # Ambiguous X scores can yield negative raw distances and should be clamped to zero.
-    seqs = np.array(["X", "A", "XX", "AA"])
-    needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(cutoff=10, gap_penalty=4, n_jobs=1)
-    expected_result = np.array([[1, 1, 4, 4], [1, 1, 3, 5], [4, 3, 1, 1], [4, 5, 1, 1]])
-
-    res = needleman_wunsch_calculator.calc_dist_mat(seqs, seqs)
-
-    assert isinstance(res, scipy.sparse.csr_matrix)
-    assert np.array_equal(res.todense(), expected_result)
-
-
 def test_sequence_dist_tcrdist_tcrblosum():
     # `sequence_dist` needs an explicit `chain_type` for `tcrdist` with `tcrblosum`;
     # `ir_dist` handles this automatically.
@@ -1043,31 +1031,6 @@ def test_sequence_dist_tcrdist_tcrblosum():
         chain_type="VJ",
     )
     npt.assert_array_equal(res.toarray(), np.array([[1, 7], [7, 1]]))
-
-
-def test_sequence_dist_needleman_wunsch_tcrblosum():
-    # `sequence_dist` needs an explicit `chain_type` for `needleman_wunsch` with `tcrblosum`;
-    # `ir_dist` handles this automatically.
-    seqs = np.array(["AAACAAAA", "AAAHAAAA"])
-    direct_calculator = NeedlemanWunschDistanceCalculator(
-        cutoff=20,
-        gap_penalty=4,
-        n_jobs=1,
-        base_matrix="tcrblosum",
-        chain_type="VJ",
-    )
-    expected_result = direct_calculator.calc_dist_mat(seqs, seqs)
-
-    res = ir.ir_dist.sequence_dist(
-        seqs,
-        metric="needleman_wunsch",
-        cutoff=20,
-        gap_penalty=4,
-        n_jobs=1,
-        base_matrix="tcrblosum",
-        chain_type="VJ",
-    )
-    npt.assert_array_equal(res.toarray(), expected_result.toarray())
 
 
 def test_sequence_dist_tcrdist_distance_cap():
@@ -1133,14 +1096,12 @@ def test_tcrdist_base_matrix_validation(kwargs, match):
 @pytest.mark.parametrize(
     "kwargs,match",
     [
-        ({"base_matrix": "tcrblosum"}, r"`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`\."),
-        ({"base_matrix": "foo"}, r"Unknown `base_matrix`: 'foo'"),
         ({"cutoff": -1}, r"`cutoff` must be non-negative\."),
         ({"gap_penalty": -1}, r"`gap_penalty` must be non-negative\."),
     ],
 )
-def test_needleman_wunsch_base_matrix_validation(kwargs, match):
-    # Invalid matrix and gap settings should fail before distance computation starts.
+def test_needleman_wunsch_parameter_validation(kwargs, match):
+    # Invalid distance settings should fail before distance computation starts.
     with pytest.raises(ValueError, match=match):
         NeedlemanWunschDistanceCalculator(**kwargs)
 
