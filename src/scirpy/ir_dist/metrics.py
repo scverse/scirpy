@@ -1635,9 +1635,9 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
 @deprecated(
     Deprecation(
         "0.15.0",
-        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which provides "
-        "identical results while being much faster. If you actually have a use-case for affine gap penalties, please "
-        "let us know by opening an issue on GitHub.",
+        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which is much "
+        "faster and provides identical results for canonical amino-acid sequences. If you actually have a use-case "
+        "for affine gap penalties, please let us know by opening an issue on GitHub.",
     )
 )
 @_doc_params(params=_doc_params_parallel_distance_calculator)
@@ -1764,9 +1764,9 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 @deprecated(
     Deprecation(
         "0.25.0",
-        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which provides "
-        "identical results while being much faster. If you actually have a use-case for affine gap penalties, please "
-        "let us know by opening an issue on GitHub.",
+        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which is much "
+        "faster and provides identical results for canonical amino-acid sequences. If you actually have a use-case "
+        "for affine gap penalties, please let us know by opening an issue on GitHub.",
     )
 )
 @_doc_params(params=_doc_params_parallel_distance_calculator)
