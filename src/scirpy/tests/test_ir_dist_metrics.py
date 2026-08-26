@@ -1134,7 +1134,7 @@ def test_needleman_wunsch_reference():
     # test needleman-wunsch against a precomputed linear-gap alignment reference
     from . import TESTDATA
 
-    seqs = np.load(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_seqs.npy")
+    seqs = np.load(TESTDATA / "needleman_wunsch_test_data/needleman_wunsch_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(
         TESTDATA / "needleman_wunsch_test_data/needleman_wunsch_WU3k_csr_result.npz"
     )
