@@ -33,6 +33,13 @@ and this project adheres to [Semantic Versioning][].
 
 ### Features
 
+  - Add `tl.hill_diversity_profile` and `tl.convert_hill_table` for coverage-standardized
+    Hill-number diversity. Profiles are standardized to a common sample coverage (iNEXT
+    framework) so they are comparable across samples of different sequencing depth. The
+    function additionally returns an assessment of whether the groups can be compared
+    at that coverage, and warns when they cannot. Estimation is delegated to the
+    [hillrep](https://github.com/KilianMaire/hillrep) package
+    ([#714](https://github.com/scverse/scirpy/pull/714)).
   - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
     `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
 
