@@ -1132,6 +1132,7 @@ def test_tcrdist_reference():
 
 def test_needleman_wunsch_reference():
     # test needleman-wunsch against a precomputed linear-gap alignment reference
+    # testdata has been derived using the original AlignmentDistanceCalculator based on parasail
     from . import TESTDATA
 
     seqs = np.load(TESTDATA / "needleman_wunsch_test_data/needleman_wunsch_WU3k_seqs.npy")
