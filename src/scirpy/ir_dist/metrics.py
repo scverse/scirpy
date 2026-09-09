@@ -20,6 +20,7 @@ from ._substitution_matrices import (
     AA_ALPHABET_WITH_AMBIGUOUS,
     AA_ALPHABET_WITH_UNKNOWN,
     BLOSUM62,
+    CANONICAL_AA_ALPHABET,
     TCRBLOSUM_ALPHA,
     TCRBLOSUM_BETA,
     _map_matrix_to_alphabet,
@@ -509,6 +510,12 @@ class _MetricDistanceCalculator(abc.ABC):
         sparse_distance_matrix = csr_matrix((data, indices, indptr), shape=(len(seqs), len(seqs2)))
         return sparse_distance_matrix, row_mins
 
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        """Hook for metric-specific input checks before block-wise computation.
+        Does nothing by default. Subclasses should override this method if they require metric-specific input checks.
+        """
+        return None
+
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Sequence[str] | None = None) -> csr_matrix:
         """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
         of the derived class and returns a CSR distance matrix. Also creates a histogram based on the minimum value
@@ -516,6 +523,8 @@ class _MetricDistanceCalculator(abc.ABC):
         """
         if seqs2 is None:
             seqs2 = seqs
+
+        self._validate_seqs(seqs, seqs2)
 
         seqs = np.array(seqs)
         seqs2 = np.array(seqs2)
@@ -1470,6 +1479,17 @@ class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
             AA_ALPHABET_WITH_UNKNOWN,
         )
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
+
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        """Warn once if input contains non-canonical amino acids."""
+        canonical_amino_acids = frozenset(CANONICAL_AA_ALPHABET)
+        sequences = seqs if seqs2 is seqs else itertools.chain(seqs, seqs2)
+        if any(not canonical_amino_acids.issuperset(seq) for seq in sequences):
+            logging.warning(
+                f"Non-canonical amino acid symbols detected. Canonical symbols are: {CANONICAL_AA_ALPHABET}. "
+                "Needleman-Wunsch assigns a substitution score of 0 "
+                "to these symbols, which may affect the resulting distances."
+            )
 
     def _needleman_wunsch_mat(
         self,

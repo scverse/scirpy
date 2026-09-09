@@ -1,4 +1,5 @@
 from functools import partial
+from unittest.mock import patch
 
 import numpy as np
 import numpy.testing as npt
@@ -1104,6 +1105,34 @@ def test_needleman_wunsch_parameter_validation(kwargs, match):
     # Invalid distance settings should fail before distance computation starts.
     with pytest.raises(ValueError, match=match):
         NeedlemanWunschDistanceCalculator(**kwargs)
+
+
+@pytest.mark.parametrize("n_blocks", [1, 2])
+@pytest.mark.parametrize(
+    "seqs,seqs2,expect_warning",
+    [
+        (["ARNDCQEGHILKMFPSTWYV", "AAA"], None, False),
+        (["AAA", "CCC"], ["DDD", "EEE"], False),
+        *[([f"AA{symbol}", "AAA"], None, True) for symbol in "BZX*?"],
+        (["AAA", "CCC"], ["AAX", "AAZ"], True),
+        (["AAX", "AAZ"], ["AAB", "AA?"], True),
+        (["AAX", "AAX"], ["AAX", "AAA"], True),
+    ],
+)
+def test_needleman_wunsch_noncanonical_warning(seqs, seqs2, expect_warning, n_blocks):
+    calculator = NeedlemanWunschDistanceCalculator(n_jobs=1, n_blocks=n_blocks)
+    with patch("scirpy.ir_dist.metrics.logging.warning") as warning:
+        result = calculator.calc_dist_mat(seqs, seqs2)
+
+    assert result.shape == (len(seqs), len(seqs if seqs2 is None else seqs2))
+    if expect_warning:
+        warning.assert_called_once_with(
+            "Non-canonical amino acid symbols detected. Canonical symbols are: ARNDCQEGHILKMFPSTWYV. "
+            "Needleman-Wunsch assigns a substitution score of 0 "
+            "to these symbols, which may affect the resulting distances."
+        )
+    else:
+        warning.assert_not_called()
 
 
 def test_tcrdist_reference():
