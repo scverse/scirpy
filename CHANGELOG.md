@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## v0.26.0
+
+### Features
+
+  - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
+    `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
+    deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
+
 ## v0.25.1
 
 ### Fixes
@@ -33,9 +41,6 @@ and this project adheres to [Semantic Versioning][].
 
 ### Features
 
-  - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
-    `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
-    deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
   - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
     `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
 
