@@ -1763,7 +1763,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
 
 @deprecated(
     Deprecation(
-        "0.25.0",
+        "0.26.0",
         "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which is much "
         "faster and provides identical results for canonical amino-acid sequences. If you actually have a use-case "
         "for affine gap penalties, please let us know by opening an issue on GitHub.",
