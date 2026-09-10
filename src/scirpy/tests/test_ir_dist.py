@@ -581,7 +581,7 @@ def test_compute_distances_second_anndata(
     npt.assert_equal(dist, expected_dist if not swap_query_reference else expected_dist.T)
 
 
-@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment", "tcrdist", "hamming"])
+@pytest.mark.parametrize("metric", ["identity", "levenshtein", "alignment", "tcrdist", "hamming", "needleman_wunsch"])
 def test_ir_dist_empty_anndata(adata_cdr3, metric):
     adata_empty = adata_cdr3.mod["airr"].copy() if isinstance(adata_cdr3, MuData) else adata_cdr3.copy()
     # reset chain indices such that no chain will actually be used.
