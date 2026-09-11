@@ -1136,7 +1136,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             )
 
             data = d_data.get()
-            indptr = d_indptr.get()
             indices = d_indices.get()
 
             res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
