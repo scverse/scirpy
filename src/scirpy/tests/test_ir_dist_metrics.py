@@ -1017,6 +1017,8 @@ def test_gpu_hamming(test_parameters, test_input, expected_result):
     res = hamming_calculator.calc_dist_mat(*test_input)
 
     assert isinstance(res, scipy.sparse.csr_matrix)
+    if test_parameters.get("n_blocks", 1) <= len(test_input[0]):
+        assert res.dtype == np.dtype("int32")
     npt.assert_array_equal(res.toarray(), expected_result)
 
 

@@ -1224,7 +1224,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
             if not result_blocks:
                 return (
-                    csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0])),
+                    csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.int32),
                     n_calculated_blocks,
                     buffer_width,
                 )
