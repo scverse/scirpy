@@ -949,7 +949,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             const char* __restrict__ seqs_mat1,
             const char* __restrict__ seqs_mat2,
             const int* __restrict__ seqs_L1,
-            const int* seqs_L2,
+            const int* __restrict__ length_starts,
+            const int* __restrict__ length_ends,
             const int* __restrict__ seqs_original_indices,
             const int* seqs2_original_indices,
             const int cutoff,
@@ -967,30 +968,29 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                 int seq1_len = seqs_L1[row];
                 int row_end_index = 0;
 
-                for (int col = 0; col < seqs_mat2_rows; col++) {
-                    int seq2_len = seqs_L2[col];
+                int col_start = length_starts[seq1_len];
+                int col_end = length_ends[seq1_len];
+                for (int col = col_start; col < col_end; col++) {
                     char distance = 1;
 
-                    if (seq1_len == seq2_len) {
-                        for (int i = 0; i < seq1_len; i++) {
-                            char val1 = seqs_mat1[i*seqs_mat1_rows+row];
-                            char val2 = seqs_mat2[i*seqs_mat2_rows+col];
+                    for (int i = 0; i < seq1_len; i++) {
+                        char val1 = seqs_mat1[i*seqs_mat1_rows+row];
+                        char val2 = seqs_mat2[i*seqs_mat2_rows+col];
 
-                            if(val1 != val2) {
-                                distance++;
-                                if (distance > cutoff + 1) {
-                                    break;
-                                }
+                        if(val1 != val2) {
+                            distance++;
+                            if (distance > cutoff + 1) {
+                                break;
                             }
                         }
-                        if (distance <= cutoff + 1) {
-                            if (row_end_index < data_cols) {
-                                int seqs2_original_index = seqs2_original_indices[col];
-                                data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
-                                indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
-                            }
-                            row_end_index++;
+                    }
+                    if (distance <= cutoff + 1) {
+                        if (row_end_index < data_cols) {
+                            int seqs2_original_index = seqs2_original_indices[col];
+                            data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
+                            indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
                         }
+                        row_end_index++;
                     }
                 }
                 row_element_counts[seqs_original_index] = row_end_index;
@@ -1032,13 +1032,13 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_mat1,
             seqs_mat2_block,
             seqs_L1_block,
-            seqs_L2,
+            length_bounds,
             seqs_original_indices_block,
             seqs2_original_indices_block,
             buffer_width,
         ):
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32, copy=False))
-            d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32, copy=False))
+            d_length_starts, d_length_ends = length_bounds
 
             threads_per_block = 256
             blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
@@ -1061,7 +1061,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                         d_seqs_mat1_transposed,
                         d_seqs_mat2_transposed,
                         d_seqs_L1,
-                        d_seqs_L2,
+                        d_length_starts,
+                        d_length_ends,
                         seqs_original_indices_block,
                         seqs2_original_indices_block,
                         self.cutoff,
@@ -1144,6 +1145,15 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         seqs_mat2_blocks = np.array_split(seqs_mat2, n_col_blocks)
         seqs_L2_blocks = np.array_split(seqs_L2, n_col_blocks)
 
+        possible_lengths = np.arange(max_seq_len + 1)
+        length_bounds_blocks = [
+            (
+                cp.asarray(np.searchsorted(lengths, possible_lengths, side="left").astype(np.int32)),
+                cp.asarray(np.searchsorted(lengths, possible_lengths, side="right").astype(np.int32)),
+            )
+            for lengths in seqs_L2_blocks
+        ]
+
         logging.info(f"\nStart GPU calculations for {n_row_blocks} row tiles x {n_col_blocks} column tiles:")
 
         @nb.njit
@@ -1214,7 +1224,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     seqs_mat1_block,
                     seqs_mat2_blocks[i],
                     seqs_L1_block,
-                    seqs_L2_blocks[i],
+                    length_bounds_blocks[i],
                     seqs_original_indices_block,
                     seqs2_original_indices_blocks[i],
                     buffer_width,
