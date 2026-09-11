@@ -1229,9 +1229,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
                     buffer_width,
                 )
 
-            num_elements = 0
-            for i in range(0, len(result_blocks)):
-                num_elements += result_blocks[i].indptr[-1]
+            num_elements = sum(int(block.indptr[-1]) for block in result_blocks)
 
             if num_elements > np.iinfo(np.int32).max:
                 raise ValueError(
