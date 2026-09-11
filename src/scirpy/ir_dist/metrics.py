@@ -1111,11 +1111,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             d_indptr = cp.asarray(indptr)
 
             n_elements = indptr[-1]
-            data = np.zeros(n_elements, dtype=np.int32)
-            d_data = cp.zeros_like(data)
-
-            indices = np.zeros(n_elements, dtype=np.int32)
-            d_indices = cp.zeros_like(indices)
+            d_data = cp.zeros(n_elements, dtype=cp.int32)
+            d_indices = cp.zeros(n_elements, dtype=cp.int32)
 
             threads_per_block = (1, 256)
             blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
