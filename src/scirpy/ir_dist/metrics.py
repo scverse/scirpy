@@ -919,7 +919,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
 
         seqs2 = np.concatenate(seqs2_sorted_per_block)
 
-        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+        max_seq_len = max(len(s) for s in itertools.chain(seqs, seqs2))
 
         def _seqs2mat_fast(seqs: Sequence[str], max_len: None | int = None) -> tuple[np.ndarray, np.ndarray]:
             if max_len is None:
@@ -938,7 +938,7 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             logging.info(
                 "UnicodeError error occurred while converting sequences, retrying with implementation for non ascii sequences"
             )
-            unique_characters = "".join(sorted({char for string in (*seqs, *seqs2) for char in string}))
+            unique_characters = "".join(sorted({char for string in itertools.chain(seqs, seqs2) for char in string}))
             seqs_mat1, seqs_L1 = _seqs2mat(seqs, alphabet=unique_characters, max_len=max_seq_len)
             seqs_mat2, seqs_L2 = _seqs2mat(seqs2, alphabet=unique_characters, max_len=max_seq_len)
 
