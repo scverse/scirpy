@@ -100,6 +100,10 @@ with LocalCUDACluster(
         )
 ```
 
-Set `CUDA_VISIBLE_DEVICES`, `n_workers`, `n_jobs`, and `n_blocks` to the number of GPUs to use. `n_blocks` controls
-the outer partitions distributed between workers, whereas `gpu_tile_rows` and `gpu_tile_cols` control the smaller
-tiles computed within each worker.
+Set `CUDA_VISIBLE_DEVICES` to a comma-separated list of GPU IDs, such as `"0,1"` for GPUs 0 and 1.
+For this setup, set `n_workers`, `n_jobs`, and `n_blocks` to the number of selected GPUs. `n_blocks` controls
+the number of outer partitions distributed between workers, whereas `gpu_tile_rows` and `gpu_tile_cols` control
+the size (rows and columns) of the smaller tiles computed within each worker.
+
+For advanced Dask-CUDA configuration and GPU memory management, see the
+[rapids-singlecell documentation](https://rapids-singlecell.readthedocs.io/en/latest/out_of_core.html).
