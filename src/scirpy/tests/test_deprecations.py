@@ -14,6 +14,7 @@ import scirpy as ir
 from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     FastAlignmentDistanceCalculator,
+    GPUHammingDistanceCalculator,
     LevenshteinDistanceCalculator,
 )
 
@@ -48,6 +49,31 @@ def _assert_no_deprecation_warning(func, arg: str, *args, **kwargs):
 def test_no_spurious_block_size_warning(calculator):
     """No warning must be raised if `block_size` is not specified"""
     _assert_no_deprecation_warning(calculator, "block_size")
+
+
+@pytest.mark.parametrize(
+    "legacy_kwargs",
+    [{"gpu_n_blocks": 2}, {"gpu_block_width": 3}, {"gpu_n_blocks": 2, "gpu_block_width": 3}],
+)
+@pytest.mark.parametrize(
+    "tile_kwargs",
+    [{}, {"gpu_tile_rows": 11, "gpu_tile_cols": 13, "gpu_tile_buffer_cols": 5}],
+)
+def test_gpu_hamming_deprecated_parameters(legacy_kwargs, tile_kwargs):
+    expected = GPUHammingDistanceCalculator(**tile_kwargs)
+    with pytest.warns(FutureWarning) as record:
+        actual = GPUHammingDistanceCalculator(**legacy_kwargs, **tile_kwargs)
+
+    assert len(record) == len(legacy_kwargs)
+    for arg in legacy_kwargs:
+        assert any(f"argument {arg} is deprecated" in str(w.message) and "ignored" in str(w.message) for w in record)
+    for attr in ("gpu_tile_rows", "gpu_tile_cols", "gpu_tile_buffer_cols"):
+        assert getattr(actual, attr) == getattr(expected, attr)
+
+
+def test_no_spurious_gpu_hamming_warning():
+    _assert_no_deprecation_warning(GPUHammingDistanceCalculator, "gpu_")
+    _assert_no_deprecation_warning(GPUHammingDistanceCalculator, "gpu_", gpu_tile_cols=13, gpu_tile_buffer_cols=5)
 
 
 def test_alignment_distance_calculator_deprecated():
