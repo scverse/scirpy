@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning][].
     `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
     deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
 
+### Performance improvements
+
+ - Improve the GPU implementation of the Hamming distance metric with row and column tiling, adaptive result buffers,
+   and other performance optimizations. GPU tiles can be configured
+   with `gpu_tile_rows`, `gpu_tile_cols`, and `gpu_tile_buffer_cols`. The previous `gpu_n_blocks` and `gpu_block_width`
+   parameters are deprecated and ignored; calls using them emit a warning and use the new parameters' defaults
+   unless the new parameters are explicitly provided.
+
 ## v0.25.1
 
 ### Fixes
@@ -47,10 +55,6 @@ and this project adheres to [Semantic Versioning][].
 ### Performance improvements
 
  - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
- - Improve the GPU implementation of the Hamming distance metric with row and column tiling, tile skipping for
-   symmetric distance matrices, adaptive result buffers, and faster sparse tile assembly. GPU tiles can be configured
-   with `gpu_tile_rows` and `gpu_tile_cols`; `gpu_n_blocks` has been replaced by `gpu_tile_cols`, and `gpu_block_width`
-   has been replaced by `gpu_tile_buffer_cols`.
 
 ### Chore
 

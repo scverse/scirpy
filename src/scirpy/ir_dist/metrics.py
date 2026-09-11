@@ -804,8 +804,24 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
     gpu_tile_buffer_cols:
         Initial number of retained sparse entries reserved per row of each tile. Higher values can avoid retries for
         denser results but require more GPU memory.
+    gpu_n_blocks:
+        Deprecated since v0.26.0 and ignored. Use `gpu_tile_cols` to set the number of columns per GPU tile.
+    gpu_block_width:
+        Deprecated since v0.26.0 and ignored. Use `gpu_tile_buffer_cols` to set the initial result buffer width.
     """
 
+    @deprecated_arg(
+        "gpu_n_blocks",
+        Deprecation(
+            "0.26.0", "This argument is ignored. Use `gpu_tile_cols` to set the number of columns per GPU tile."
+        ),
+    )
+    @deprecated_arg(
+        "gpu_block_width",
+        Deprecation(
+            "0.26.0", "This argument is ignored. Use `gpu_tile_buffer_cols` to set the initial result buffer width."
+        ),
+    )
     def __init__(
         self,
         *,
@@ -814,6 +830,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
         gpu_tile_rows: int = 100_000,
         gpu_tile_cols: int = 100_000,
         gpu_tile_buffer_cols: int = 1000,
+        gpu_n_blocks: int | None = None,
+        gpu_block_width: int | None = None,
     ):
         super().__init__(n_jobs=1, n_blocks=n_blocks)
         if cutoff > 125:
