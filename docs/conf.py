@@ -123,7 +123,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
     "networkx": ("https://networkx.org/documentation/networkx-1.10", None),
     "dandelion": ("https://sc-dandelion.readthedocs.io/en/latest", None),
-    "muon": ("https://muon.readthedocs.io/en/latest", None),
+    "muon": ("https://muon.readthedocs.io/latest", None),
     "mudata": ("https://mudata.readthedocs.io/stable/", None),
     "awkward": ("https://awkward-array.org/doc/main", None),
     "pooch": ("https://www.fatiando.org/pooch/latest", None),

@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from scverse_misc import Deprecation, deprecated_arg
 
 from scirpy.util import DataHandler, _doc_params, _is_na2, _is_true, _is_true2, _translate_dna_to_protein
 
@@ -24,6 +25,9 @@ from ._util import _IOLogger, _read_airr_rearrangement_df, doc_airr_fields, doc_
 sys.modules["tracerlib"] = _tracerlib
 
 DEFAULT_AIRR_CELL_ATTRIBUTES = "is_cell"
+
+#: Deprecation of the `include_fields` argument, shared by all `read_*` functions that used to support it.
+_deprecation_include_fields = Deprecation("0.13.0", "Has no effect. All fields are always imported.")
 
 
 def _cdr3_from_junction(junction_aa, junction_nt):
@@ -203,6 +207,7 @@ def _read_10x_vdj_csv(
 
 
 @_doc_params(doc_working_model=doc_working_model)
+@deprecated_arg("include_fields", _deprecation_include_fields)
 def read_10x_vdj(path: str | Path, filtered: bool = True, include_fields: Any = None, **kwargs) -> AnnData:
     """\
     Read :term:`AIRR` data from 10x Genomics cell-ranger output.
@@ -226,7 +231,7 @@ def read_10x_vdj(path: str | Path, filtered: bool = True, include_fields: Any = 
         If using `filtered_contig_annotations.csv` already, this option
         is futile.
     include_fields
-        Deprecated. Does not have any effect as of v0.13.
+        Does not have any effect. All fields are always imported.
     **kwargs
         are passed to :func:`~scirpy.io.from_airr_cells`.
 
@@ -355,6 +360,11 @@ def read_tracer(path: str | Path, **kwargs) -> AnnData:
     doc_airr_fields=doc_airr_fields,
     cell_attributes=f"""`({",".join([f'"{x}"' for x in DEFAULT_AIRR_CELL_ATTRIBUTES])})`""",
 )
+@deprecated_arg(
+    "use_umi_count_col",
+    Deprecation("0.16.0", "Has no effect. `umi_count` now always takes precedence over `duplicate_count`."),
+)
+@deprecated_arg("include_fields", _deprecation_include_fields)
 def read_airr(
     path: str | Sequence[str] | Path | Sequence[Path] | pd.DataFrame | Sequence[pd.DataFrame],
     use_umi_count_col: None = None,  # deprecated, kept for backwards-compatibility
@@ -378,7 +388,7 @@ def read_airr(
         as a List, e.g. `["path/to/tcr_alpha.tsv", "path/to/tcr_beta.tsv"]`.
         Alternatively, this can be a pandas data frame.
     use_umi_count_col
-        Deprecated, has no effect as of v0.16. Since v1.4 of the AIRR standard, `umi_count`
+        Has no effect. Since v1.4 of the AIRR standard, `umi_count`
         is an official field in the Rearrangement schema and preferred over `duplicate_count`.
         `umi_count` now always takes precedence over `duplicate_count`.
     infer_locus
@@ -388,7 +398,7 @@ def read_airr(
         than a chain. The values must be identical over all records belonging to a
         cell. This defaults to {cell_attributes}.
     include_fields
-        Deprecated. Does not have any effect as of v0.13.
+        Does not have any effect. All fields are always imported.
     **kwargs
         are passed to :func:`~scirpy.io.from_airr_cells`.
 

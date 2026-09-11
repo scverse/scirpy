@@ -1,6 +1,5 @@
 import json
 import os
-import warnings
 from collections.abc import Callable, Sequence
 from textwrap import dedent
 from typing import Any, Union, cast, overload
@@ -461,25 +460,6 @@ def _read_to_str(path):
     """Read a file into a string"""
     with open(path) as f:
         return f.read()
-
-
-def deprecated(message):
-    """Decorator to mark a function as deprecated"""
-    message = dedent(message)
-
-    def deprecated_decorator(func):
-        def deprecated_func(*args, **kwargs):
-            warnings.warn(
-                f"{func.__name__} is a deprecated function and will be removed in a "
-                f"future version of scirpy. {message}",
-                category=FutureWarning,
-                stacklevel=2,
-            )
-            return func(*args, **kwargs)
-
-        return deprecated_func
-
-    return deprecated_decorator
 
 
 def _translate_dna_to_protein(dna_seq: str):

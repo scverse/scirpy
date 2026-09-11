@@ -34,6 +34,7 @@ def test_group_abundance_default(adata_clonotype):
     """Regression test for #435"""
     # Change to 'tcr' as airr_mod instead of the default 'airr'.
     adata_clonotype = MuData({"tcr": adata_clonotype["airr"]})
+    adata_clonotype.pull_obs()
     p = pl.group_abundance(
         adata_clonotype,
         groupby="tcr:clone_id",

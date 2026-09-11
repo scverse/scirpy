@@ -39,7 +39,7 @@ def _read_anndata_from_10x_sample(path):
     fixtures. Therefore, we use the lru_cache instead.
     """
     print(f"Reading 10x file: {path}")
-    anndata = read_10x_vdj(path, include_fields=None)
+    anndata = read_10x_vdj(path)
     return anndata
 
 
@@ -230,7 +230,7 @@ def test_airr_roundtrip_conversion(anndata_from_10x_sample, tmp_path):
     anndata = anndata_from_10x_sample
     tmp_file = tmp_path / "test.airr.tsv"
     write_airr(anndata, tmp_file)
-    anndata2 = read_airr(tmp_file, include_fields=None)
+    anndata2 = read_airr(tmp_file)
     _normalize_df_types(anndata.obs)
     _normalize_df_types(anndata2.obs)
     pdt.assert_frame_equal(anndata.obs, anndata2.obs, check_dtype=False, check_categorical=False)
@@ -355,10 +355,7 @@ def test_read_10x_csv():
 )
 def test_read_10x_cr6(testfile):
     """Test additional cols from CR6 outputs: fwr{1,2,3,4}{,_nt} and cdr{1,2}{,_nt}"""
-    anndata = read_10x_vdj(
-        testfile,
-        include_fields=None,
-    )
+    anndata = read_10x_vdj(testfile)
     obs = anndata.obs.join(
         ir.get.airr(
             anndata,
@@ -424,7 +421,7 @@ def test_read_10x_cr6(testfile):
 
 @pytest.mark.conda
 def test_read_10x():
-    anndata = read_10x_vdj(TESTDATA / "10x/all_contig_annotations.json", include_fields=None)
+    anndata = read_10x_vdj(TESTDATA / "10x/all_contig_annotations.json")
     obs = anndata.obs.join(
         ir.get.airr(
             anndata,

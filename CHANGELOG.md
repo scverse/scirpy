@@ -8,9 +8,38 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## Unreleased
+## v0.26.0
 
-### Additions
+### Features
+
+  - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
+    `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
+    deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
+
+## v0.25.1
+
+### Fixes
+
+ - Compatibility with `mudata >= 0.4`, where `update()` no longer pulls `obs` columns from the individual modalities
+   into the global `obs` by default. Modality-prefixed columns (e.g. `airr:clone_id`) now need to be made available
+   explicitly with `mdata.pull_obs()` ([#743](https://github.com/scverse/scirpy/issues/743)).
+
+### Chore
+
+ - Use the deprecation decorators from [scverse-misc](https://scverse-misc.readthedocs.io/) for deprecated functions
+   and function arguments. `scverse-misc` is now a hard dependency. Deprecated arguments that previously did not
+   emit any warning (`include_fields` and `use_umi_count_col` of the `io.read_*` functions, `cached` and `cache_path`
+   of `datasets.vdjdb` and `datasets.iedb`) now consistently raise a `FutureWarning`, and the API documentation
+   states in which version a function or argument was deprecated ([#704](https://github.com/scverse/scirpy/issues/704)).
+   The undocumented `scirpy.util.deprecated` decorator has been removed in favor of `scverse_misc.deprecated`.
+
+## v0.25.0
+
+### Fixes
+
+  - Adjust import location of plotting utils for compatibility with scanpy >= 1.13 ([#730](https://github.com/scverse/scirpy/pull/730))
+
+### Features
 
   - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
     `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.

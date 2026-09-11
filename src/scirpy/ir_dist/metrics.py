@@ -1,6 +1,5 @@
 import abc
 import itertools
-import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -13,8 +12,25 @@ import scipy.spatial
 from Levenshtein import distance as levenshtein_dist
 from scanpy import logging
 from scipy.sparse import coo_matrix, csr_matrix
+from scverse_misc import Deprecation, deprecated, deprecated_arg
 
-from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib, deprecated
+from scirpy.util import _doc_params, _get_usable_cpus, _parallelize_with_joblib
+
+from ._substitution_matrices import (
+    AA_ALPHABET_WITH_AMBIGUOUS,
+    AA_ALPHABET_WITH_UNKNOWN,
+    BLOSUM62,
+    CANONICAL_AA_ALPHABET,
+    TCRBLOSUM_ALPHA,
+    TCRBLOSUM_BETA,
+    _map_matrix_to_alphabet,
+    _substitution_to_distance_matrix,
+)
+
+#: Deprecation of the object-level `block_size` parameter, shared by all `ParallelDistanceCalculator`s.
+_deprecation_block_size = Deprecation(
+    "0.15.0", "The block size is now set in the `calc_dist_mat` function instead of the object level."
+)
 
 _doc_params_parallel_distance_calculator = """\
 n_jobs
@@ -23,7 +39,7 @@ n_jobs
     Via the :class:`joblib.parallel_config` context manager, another backend (e.g. `dask`)
     can be selected.
 block_size
-    Deprecated. This is now set in `calc_dist_mat`.
+    Deprecated since v0.15.0. This is now set in `calc_dist_mat` and ignored here.
 """
 
 
@@ -112,6 +128,7 @@ class ParallelDistanceCalculator(DistanceCalculator):
     {params}
     """
 
+    @deprecated_arg("block_size", _deprecation_block_size)
     def __init__(
         self,
         cutoff: int,
@@ -121,11 +138,6 @@ class ParallelDistanceCalculator(DistanceCalculator):
     ):
         super().__init__(cutoff)
         self.n_jobs = n_jobs
-        if block_size is not None:
-            warnings.warn(
-                "The `block_size` parameter is now set in the `calc_dist_mat` function instead of the object level. It is ignored here.",
-                category=FutureWarning,
-            )
 
     @abc.abstractmethod
     def _compute_block(
@@ -344,43 +356,8 @@ class LevenshteinDistanceCalculator(ParallelDistanceCalculator):
         return result
 
 
-def _substitution_to_distance_matrix(
-    substitution_matrix: np.ndarray,
-    alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX*",
-    matrix_alphabet: str = "ARNDCQEGHILKMFPSTWYV",
-    distance_cap: int | None = 4,
-    distance_offset: int = 4,
-) -> np.ndarray:
-    """Creates a numba compatible distance matrix from a substitution matrix.
-
-    Parameters
-    ----------
-    substitution_matrix:
-        Amino-acid substitution matrix in the order specified by `matrix_alphabet`.
-    distance_cap:
-        Maximum distance assigned to a mismatch. If `None`, mismatch distances are uncapped.
-    distance_offset:
-        Offset from which the substitution score is subtracted.
-
-    Returns
-    -------
-    distance_matrix:
-        distance lookup matrix
-    """
-    dm = np.zeros((len(alphabet), len(alphabet)), dtype=np.int32)
-    if substitution_matrix.shape != (len(matrix_alphabet), len(matrix_alphabet)):
-        raise ValueError("`substitution_matrix` must be square and match `matrix_alphabet`.")
-    for i, aa1 in enumerate(matrix_alphabet):
-        for j, aa2 in enumerate(matrix_alphabet):
-            d = 0 if aa1 == aa2 else distance_offset - substitution_matrix[i, j]
-            if distance_cap is not None:
-                d = min(distance_cap, d)
-            dm[alphabet.index(aa1), alphabet.index(aa2)] = d
-    return dm
-
-
 def _seqs2mat(
-    seqs: Sequence[str], alphabet: str = "ARNDCQEGHILKMFPSTWYVBZX", max_len: None | int = None
+    seqs: Sequence[str], alphabet: str = AA_ALPHABET_WITH_AMBIGUOUS, max_len: None | int = None
 ) -> tuple[np.ndarray, np.ndarray]:
     """Convert a collection of gene sequences into a
     numpy matrix of integers for fast comparison.
@@ -533,6 +510,12 @@ class _MetricDistanceCalculator(abc.ABC):
         sparse_distance_matrix = csr_matrix((data, indices, indptr), shape=(len(seqs), len(seqs2)))
         return sparse_distance_matrix, row_mins
 
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        """Hook for metric-specific input checks before block-wise computation.
+        Does nothing by default. Subclasses should override this method if they require metric-specific input checks.
+        """
+        return None
+
     def calc_dist_mat(self, seqs: Sequence[str], seqs2: Sequence[str] | None = None) -> csr_matrix:
         """Calculates the pairwise distances between two vectors of gene sequences based on the distance metric
         of the derived class and returns a CSR distance matrix. Also creates a histogram based on the minimum value
@@ -540,6 +523,8 @@ class _MetricDistanceCalculator(abc.ABC):
         """
         if seqs2 is None:
             seqs2 = seqs
+
+        self._validate_seqs(seqs, seqs2)
 
         seqs = np.asarray(seqs)
         seqs2 = np.asarray(seqs2)
@@ -570,7 +555,7 @@ class _MetricDistanceCalculator(abc.ABC):
             ]
 
             delayed_jobs = [joblib.delayed(self._calc_dist_mat_block)(*args) for args in arguments]
-            results = joblib.Parallel(return_as="list")(delayed_jobs)
+            results = list(_parallelize_with_joblib(delayed_jobs, total=len(delayed_jobs)))
 
             block_matrices_csr, block_row_mins = zip(*results, strict=False)
             distance_matrix_csr = scipy.sparse.vstack(block_matrices_csr)
@@ -1299,14 +1284,14 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
-        Will eleminate distances > cutoff to make efficient
+        Will eliminate distances > cutoff to make efficient
         use of sparse matrices.
     n_jobs:
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
         Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
     histogram:
-        Determines whether a nearest neighbor histogram should be created
+        Determines whether a nearest neighbor histogram should be created. Not implemented for this metric
     base_matrix:
         Amino acid substitution matrix used by TCRdist. `"blosum62"` uses the original
         BLOSUM62 substitution matrix, while `"tcrblosum"` uses TCRBLOSUM substitution
@@ -1322,90 +1307,6 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
         is set automatically and should not be provided.
     """
-
-    parasail_aa_alphabet = "ARNDCQEGHILKMFPSTWYVBZX"
-    parasail_aa_alphabet_with_unknown = "ARNDCQEGHILKMFPSTWYVBZX*"
-    # fmt: off
-    matrix_alphabet = "ARNDCQEGHILKMFPSTWYV"
-    blosum62_substitution_matrix = np.array(
-        [
-            # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V
-            [ 4, -1, -2, -2,  0, -1, -1,  0, -2, -1, -1, -1, -1, -2, -1,  1,  0, -3, -2,  0],  # A
-            [-1,  5,  0, -2, -3,  1,  0, -2,  0, -3, -2,  2, -1, -3, -2, -1, -1, -3, -2, -3],  # R
-            [-2,  0,  6,  1, -3,  0,  0,  0,  1, -3, -3,  0, -2, -3, -2,  1,  0, -4, -2, -3],  # N
-            [-2, -2,  1,  6, -3,  0,  2, -1, -1, -3, -4, -1, -3, -3, -1,  0, -1, -4, -3, -3],  # D
-            [ 0, -3, -3, -3,  9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1],  # C
-            [-1,  1,  0,  0, -3,  5,  2, -2,  0, -3, -2,  1,  0, -3, -1,  0, -1, -2, -1, -2],  # Q
-            [-1,  0,  0,  2, -4,  2,  5, -2,  0, -3, -3,  1, -2, -3, -1,  0, -1, -3, -2, -2],  # E
-            [ 0, -2,  0, -1, -3, -2, -2,  6, -2, -4, -4, -2, -3, -3, -2,  0, -2, -2, -3, -3],  # G
-            [-2,  0,  1, -1, -3,  0,  0, -2,  8, -3, -3, -1, -2, -1, -2, -1, -2, -2,  2, -3],  # H
-            [-1, -3, -3, -3, -1, -3, -3, -4, -3,  4,  2, -3,  1,  0, -3, -2, -1, -3, -1,  3],  # I
-            [-1, -2, -3, -4, -1, -2, -3, -4, -3,  2,  4, -2,  2,  0, -3, -2, -1, -2, -1,  1],  # L
-            [-1,  2,  0, -1, -3,  1,  1, -2, -1, -3, -2,  5, -1, -3, -1,  0, -1, -3, -2, -2],  # K
-            [-1, -1, -2, -3, -1,  0, -2, -3, -2,  1,  2, -1,  5,  0, -2, -1, -1, -1, -1,  1],  # M
-            [-2, -3, -3, -3, -2, -3, -3, -3, -1,  0,  0, -3,  0,  6, -4, -2, -2,  1,  3, -1],  # F
-            [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4,  7, -1, -1, -4, -3, -2],  # P
-            [ 1, -1,  1,  0, -1,  0,  0,  0, -1, -2, -2,  0, -1, -2, -1,  4,  1, -3, -2, -2],  # S
-            [ 0, -1,  0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1,  1,  5, -2, -2,  0],  # T
-            [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1,  1, -4, -3, -2, 11,  2, -3],  # W
-            [-2, -2, -2, -3, -2, -1, -2, -3,  2, -1, -1, -2, -1,  3, -3, -2, -2,  2,  7, -1],  # Y
-            [ 0, -3, -3, -3, -1, -2, -2, -3, -3,  3,  1, -2,  1, -1, -2, -2,  0, -3, -1,  4],  # V
-        ],
-        dtype=np.int32,
-    )
-    tcrblosum_alpha_substitution_matrix = np.array(
-        [
-            # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V
-            [ 2, -1, -1, -1,  0,  0,  0,  0,  0, -1, -1, -1, -1, -1,  0,  0, -1,  0, -1,  0],  # A
-            [-1,  1,  0,  0,  1,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0, -1],  # R
-            [-1,  0,  1,  0,  0,  0,  0,  0,  0, -1, -2,  1,  0,  0,  0,  0,  0,  0,  0, -2],  # N
-            [-1,  0,  0,  1, -5,  0,  0,  0,  0, -1, -2,  0,  0,  0,  0,  0,  0,  0,  0, -1],  # D
-            [ 0,  1,  0, -5,  2, -4, -4,  0, -2, -5,  0, -5, -4, -4, -4,  0, -6, -2, -5,  0],  # C
-            [ 0,  0,  0,  0, -4,  2,  0,  0,  0, -1, -2,  1,  0,  0,  0,  0,  0,  0,  0, -2],  # Q
-            [ 0,  0,  0,  0, -4,  0,  1,  0,  1, -1,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0],  # E
-            [ 0,  0,  0,  0,  0,  0,  0,  1,  0, -2, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0],  # G
-            [ 0,  0,  0,  0, -2,  0,  1,  0,  2,  0,  0, -1,  0,  0,  1,  0,  0,  1,  0,  0],  # H
-            [-1,  0, -1, -1, -5, -1, -1, -2,  0,  3,  0, -1,  0,  0,  0,  0,  1, -1,  0,  0],  # I
-            [-1, -1, -2, -2,  0, -2,  0, -1,  0,  0,  2, -4,  0,  1,  0, -1, -1, -1,  0,  0],  # L
-            [-1,  0,  1,  0, -5,  1, -1, -1, -1, -1, -4,  3,  0, -3,  0, -2, -1, -2, -4, -3],  # K
-            [-1,  0,  0,  0, -4,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0, -1,  0],  # M
-            [-1,  0,  0,  0, -4,  0,  0,  0,  0,  0,  1, -3,  0,  1,  0,  0,  0,  0,  0,  0],  # F
-            [ 0,  0,  0,  0, -4,  0,  0,  0,  1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0],  # P
-            [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1, -2,  0,  0,  0,  1,  0,  0,  0, -1],  # S
-            [-1,  0,  0,  0, -6,  0,  0,  0,  0,  1, -1, -1,  0,  0,  0,  0,  1,  0,  0,  0],  # T
-            [ 0,  0,  0,  0, -2,  0,  0,  0,  1, -1, -1, -2,  0,  0,  0,  0,  0,  2,  0, -1],  # W
-            [-1,  0,  0,  0, -5,  0,  0,  0,  0,  0,  0, -4, -1,  0,  0,  0,  0,  0,  1, -1],  # Y
-            [ 0, -1, -2, -1,  0, -2,  0,  0,  0,  0,  0, -3,  0,  0,  0, -1,  0, -1, -1,  1],  # V
-        ],
-        dtype=np.int32,
-    )
-    tcrblosum_beta_substitution_matrix = np.array(
-        [
-            # A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V
-            [ 0,  0,  0,  0, -5,  0, -1,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # A
-            [ 0,  2,  0,  0, -4, -1, -1,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # R
-            [ 0,  0,  1,  1, -4,  0,  0,  0,  0,  0, -1,  0,  0, -1,  0, -1,  0,  0,  0,  0],  # N
-            [ 0,  0,  1,  1, -4,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0, -1,  0,  0,  0,  0],  # D
-            [-5, -4, -4, -4,  2, -6, -5,  0, -3, -3, -5, -2, -1, -5, -4,  0, -5, -2, -5, -4],  # C
-            [ 0, -1,  0,  0, -6,  2, -1, -1, -1,  0,  1, -1,  0, -2, -1, -2, -1,  0,  0, -1],  # Q
-            [-1, -1,  0,  0, -5, -1,  2,  0, -1,  0, -1,  1,  0, -2,  0, -2,  1,  0, -1,  0],  # E
-            [ 0,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # G
-            [ 0,  0,  0,  0, -3, -1, -1,  0,  2,  0,  0, -1,  0,  2,  0, -1,  0,  0,  1,  0],  # H
-            [ 0,  0,  0,  0, -3,  0,  0,  0,  0,  2,  0,  0,  2,  0,  0,  0,  0,  0,  0,  0],  # I
-            [ 0,  0, -1,  0, -5,  1, -1,  0,  0,  0,  1,  0,  0,  0,  0, -1,  0,  0,  0,  0],  # L
-            [ 0,  0,  0,  0, -2, -1,  1,  0, -1,  0,  0,  1,  0, -1,  0,  0,  0,  0, -1,  0],  # K
-            [ 0,  0,  0,  0, -1,  0,  0,  0,  0,  2,  0,  0,  2,  0,  0,  0,  0,  0, -1,  0],  # M
-            [-1, -1, -1, -1, -5, -2, -2, -1,  2,  0,  0, -1,  0,  2,  0, -2,  0,  0,  2, -1],  # F
-            [ 0,  0,  0,  0, -4, -1,  0,  0,  0,  0,  0,  0,  0,  0,  1, -1,  0,  0, -1,  0],  # P
-            [ 0,  0, -1, -1,  0, -2, -2,  0, -1,  0, -1,  0,  0, -2, -1,  1,  0,  0, -2,  0],  # S
-            [ 0,  0,  0,  0, -5, -1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],  # T
-            [ 0,  0,  0,  0, -2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0],  # W
-            [-1, -1,  0,  0, -5,  0, -1, -1,  1,  0,  0, -1, -1,  2, -1, -2,  0,  0,  2, -1],  # Y
-            [ 0,  0,  0,  0, -4, -1,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0, -1,  0],  # V
-        ],
-        dtype=np.int32,
-    )
-    # fmt: on
 
     def __init__(
         self,
@@ -1436,45 +1337,42 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
             raise ValueError("`distance_cap` must be non-negative, `None`, or 'default'.")
 
         if base_matrix == "blosum62":
+            substitution_matrix = BLOSUM62
             matrix_distance_cap = 4 if distance_cap == "default" else distance_cap
-            self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
-                self.blosum62_substitution_matrix,
-                self.parasail_aa_alphabet_with_unknown,
-                self.matrix_alphabet,
-                distance_cap=matrix_distance_cap,
-                distance_offset=4,
-            )
+            distance_offset = 4
 
         elif base_matrix == "tcrblosum":
             if chain_type == "VJ":
-                tcrdist_substitution_matrix = self.tcrblosum_alpha_substitution_matrix
+                substitution_matrix = TCRBLOSUM_ALPHA
             elif chain_type == "VDJ":
-                tcrdist_substitution_matrix = self.tcrblosum_beta_substitution_matrix
+                substitution_matrix = TCRBLOSUM_BETA
             else:
                 raise ValueError("`chain_type` must be 'VJ' or 'VDJ' when `base_matrix='tcrblosum'`.")
 
             # Use one `distance_offset` across alpha and beta matrices so equal substitution scores
             # map to equal distances for both chain types. This keeps VJ and VDJ distances on a
             # shared scale for clonotype clustering.
-            off_diagonal = ~np.eye(len(self.matrix_alphabet), dtype=bool)
+            off_diagonal = ~np.eye(len(substitution_matrix.alphabet), dtype=bool)
             max_score = int(
                 max(
-                    np.max(self.tcrblosum_alpha_substitution_matrix[off_diagonal]),
-                    np.max(self.tcrblosum_beta_substitution_matrix[off_diagonal]),
+                    np.max(TCRBLOSUM_ALPHA.matrix[off_diagonal]),
+                    np.max(TCRBLOSUM_BETA.matrix[off_diagonal]),
                 )
             )
 
             matrix_distance_cap = None if distance_cap == "default" else distance_cap
-            self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
-                tcrdist_substitution_matrix,
-                self.parasail_aa_alphabet_with_unknown,
-                self.matrix_alphabet,
-                distance_cap=matrix_distance_cap,
-                distance_offset=max_score + 1,
-            )
+            distance_offset = max_score + 1
 
         else:
             raise ValueError(f"Unknown `base_matrix`: {base_matrix!r}")
+
+        self.tcr_nb_distance_matrix = _substitution_to_distance_matrix(
+            substitution_matrix.matrix,
+            AA_ALPHABET_WITH_UNKNOWN,
+            substitution_matrix.alphabet,
+            distance_cap=matrix_distance_cap,
+            distance_offset=distance_offset,
+        )
 
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
 
@@ -1636,6 +1534,239 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     _metric_mat = _tcrdist_mat
 
 
+class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
+    """Computes pairwise global-alignment distances with linear-gap Needleman-Wunsch.
+
+    For each sequence pair, a global alignment score is computed using the
+    Needleman-Wunsch dynamic programming algorithm with one linear gap penalty
+    for every gap position. The alignment score is converted into a distance by
+    subtracting it from the best possible self-alignment score of the two
+    sequences:
+    ``min(self_score(seq1), self_score(seq2)) - alignment_score(seq1, seq2)``.
+    Distances are therefore small for sequence pairs that can be globally
+    aligned with few or conservative substitutions and short gaps, and larger
+    for sequence pairs requiring strongly penalized substitutions or many gap
+    positions.
+
+    Parameters
+    ----------
+    gap_penalty:
+        Linear penalty for each gap position
+    cutoff:
+        Will eliminate distances > cutoff to make efficient use of sparse matrices
+    n_jobs:
+        Number of numba parallel threads to use for the pairwise distance calculation
+    n_blocks:
+        Number of joblib delayed objects (blocks to compute) given to joblib.Parallel
+    histogram:
+        Determines whether a nearest neighbor histogram should be created. Not implemented for this metric
+    """
+
+    def __init__(
+        self,
+        cutoff: int = 10,
+        *,
+        gap_penalty: int = 4,
+        n_jobs: int = -1,
+        n_blocks: int = 1,
+        histogram: bool = False,
+    ):
+        if cutoff < 0:
+            raise ValueError("`cutoff` must be non-negative.")
+        if gap_penalty < 0:
+            raise ValueError("`gap_penalty` must be non-negative.")
+
+        self.cutoff = cutoff
+        self.gap_penalty = gap_penalty
+        self.histogram = histogram
+
+        self.nw_substitution_matrix = _map_matrix_to_alphabet(
+            BLOSUM62.matrix,
+            BLOSUM62.alphabet,
+            AA_ALPHABET_WITH_UNKNOWN,
+        )
+        super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
+
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        """Warn once if input contains non-canonical amino acids."""
+        canonical_amino_acids = frozenset(CANONICAL_AA_ALPHABET)
+        sequences = seqs if seqs2 is seqs else itertools.chain(seqs, seqs2)
+        if any(not canonical_amino_acids.issuperset(seq) for seq in sequences):
+            logging.warning(
+                f"Non-canonical amino acid symbols detected. Canonical symbols are: {CANONICAL_AA_ALPHABET}. "
+                "Needleman-Wunsch assigns a substitution score of 0 "
+                "to these symbols, which may affect the resulting distances."
+            )
+
+    def _needleman_wunsch_mat(
+        self,
+        *,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, np.ndarray]:
+        """Computes pairwise linear-gap Needleman-Wunsch distances."""
+        max_seq_len = max(len(s) for s in (*seqs, *seqs2))
+
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
+
+        cutoff = self.cutoff
+        gap_penalty = self.gap_penalty
+        substitution_matrix = self.nw_substitution_matrix
+        start_column *= is_symmetric
+
+        nb.set_num_threads(_get_usable_cpus(n_jobs=self.n_jobs, use_numba=True))
+        num_threads = nb.get_num_threads()
+        jit_parallel = num_threads > 1
+
+        @nb.njit
+        def _self_scores(seqs_mat, seqs_L):
+            scores = np.zeros(seqs_mat.shape[0], dtype=np.int32)
+            for row in range(seqs_mat.shape[0]):
+                score = 0
+                for i in range(seqs_L[row]):
+                    aa = seqs_mat[row, i]
+                    score += substitution_matrix[aa, aa]
+                scores[row] = score
+            return scores
+
+        self_scores1 = _self_scores(seqs_mat1, seqs_L1)
+        self_scores2 = (
+            self_scores1
+            if is_symmetric and seqs_mat1.shape[0] == seqs_mat2.shape[0]
+            else _self_scores(seqs_mat2, seqs_L2)
+        )
+
+        @nb.jit(nopython=True, parallel=jit_parallel, nogil=True)
+        def _nb_needleman_wunsch_mat():
+            assert seqs_mat1.shape[0] == seqs_L1.shape[0]
+            assert seqs_mat2.shape[0] == seqs_L2.shape[0]
+
+            num_rows = seqs_mat1.shape[0]
+            num_cols = seqs_mat2.shape[0]
+            max_len = seqs_mat1.shape[1]
+
+            data_rows = nb.typed.List()
+            indices_rows = nb.typed.List()
+            row_element_counts = np.zeros(num_rows, dtype=np.int32)
+
+            empty_row = np.zeros(0, dtype=np.int32)
+            for _ in range(0, num_rows):
+                data_rows.append([empty_row])
+                indices_rows.append([empty_row])
+
+            data_row_matrix = np.empty((num_threads, num_cols), dtype=np.int32)
+            indices_row_matrix = np.empty((num_threads, num_cols), dtype=np.int32)
+            previous_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
+            current_rows = np.empty((num_threads, max_len + 1), dtype=np.int32)
+
+            # Only alignment paths within a band around the diagonal can stay within the cutoff,
+            # because each step away from the diagonal requires one gap penalty.
+            band_width = max_len if gap_penalty == 0 else cutoff // gap_penalty
+
+            for row_index in nb.prange(num_rows):
+                thread_id = nb.get_thread_id()
+                row_end_index = 0
+                seq1_len = seqs_L1[row_index]
+
+                col_start = start_column + row_index * is_symmetric
+                if is_symmetric:
+                    data_row_matrix[thread_id, row_end_index] = 1
+                    indices_row_matrix[thread_id, row_end_index] = col_start
+                    row_end_index += 1
+                    col_start += 1
+
+                for col_index in range(col_start, num_cols):
+                    seq2_len = seqs_L2[col_index]
+                    len_diff = abs(seq1_len - seq2_len)
+
+                    # Skip pairs whose length difference alone cannot stay within the cutoff.
+                    if len_diff * gap_penalty > cutoff:
+                        continue
+
+                    min_self_score = min(self_scores1[row_index], self_scores2[col_index])
+
+                    band_start = 1 - band_width
+                    band_end = 1 + band_width
+
+                    j_end = min(band_width, seq2_len)
+
+                    for j in range(j_end + 1):
+                        previous_rows[thread_id, j] = -j * gap_penalty
+
+                    for i in range(1, seq1_len + 1):
+                        aa1 = seqs_mat1[row_index, i - 1]
+
+                        j_start = max(1, band_start)
+                        j_end = min(seq2_len, band_end)
+
+                        if i <= band_width:
+                            current_rows[thread_id, 0] = -i * gap_penalty
+
+                        for j in range(j_start, j_end + 1):
+                            aa2 = seqs_mat2[col_index, j - 1]
+                            match_score = previous_rows[thread_id, j - 1] + substitution_matrix[aa1, aa2]
+                            best_score = match_score
+
+                            if band_width == 0:
+                                best_score = match_score
+                            elif j == band_start:
+                                delete_score = previous_rows[thread_id, j] - gap_penalty
+                                best_score = max(match_score, delete_score)
+                            elif j == band_end:
+                                insert_score = current_rows[thread_id, j - 1] - gap_penalty
+                                best_score = max(match_score, insert_score)
+                            else:
+                                delete_score = previous_rows[thread_id, j] - gap_penalty
+                                insert_score = current_rows[thread_id, j - 1] - gap_penalty
+                                best_score = max(match_score, delete_score, insert_score)
+
+                            current_rows[thread_id, j] = best_score
+
+                        copy_start = j_start * (i > band_width)
+
+                        for j in range(copy_start, j_end + 1):
+                            previous_rows[thread_id, j] = current_rows[thread_id, j]
+
+                        band_start += 1
+                        band_end += 1
+
+                    distance = max(0, min_self_score - previous_rows[thread_id, seq2_len]) + 1
+
+                    if distance <= cutoff + 1:
+                        data_row_matrix[thread_id, row_end_index] = distance
+                        indices_row_matrix[thread_id, row_end_index] = col_index
+                        row_end_index += 1
+
+                data_rows[row_index][0] = data_row_matrix[thread_id, 0:row_end_index].copy()
+                indices_rows[row_index][0] = indices_row_matrix[thread_id, 0:row_end_index].copy()
+                row_element_counts[row_index] = row_end_index
+
+            data_rows_flat = []
+            indices_rows_flat = []
+
+            for i in range(len(data_rows)):
+                data_rows_flat.append(data_rows[i][0])
+                indices_rows_flat.append(indices_rows[i][0])
+
+            return data_rows_flat, indices_rows_flat, row_element_counts
+
+        data_rows, indices_rows, row_element_counts = _nb_needleman_wunsch_mat()
+        return data_rows, indices_rows, row_element_counts, np.array([None])
+
+    _metric_mat = _needleman_wunsch_mat
+
+
+@deprecated(
+    Deprecation(
+        "0.15.0",
+        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which is much "
+        "faster and provides identical results for canonical amino-acid sequences. If you actually have a use-case "
+        "for affine gap penalties, please let us know by opening an issue on GitHub.",
+    )
+)
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class AlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
@@ -1678,12 +1809,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         Gap extend penatly
     """
 
-    @deprecated(
-        """\
-        FastAlignmentDistanceCalculator achieves (depending on the settings) identical results
-        at a higher speed.
-        """
-    )
+    @deprecated_arg("block_size", _deprecation_block_size)
     def __init__(
         self,
         cutoff: int = 10,
@@ -1694,7 +1820,7 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         gap_open: int = 11,
         gap_extend: int = 11,
     ):
-        super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
+        super().__init__(cutoff, n_jobs=n_jobs)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend
@@ -1762,6 +1888,14 @@ class AlignmentDistanceCalculator(ParallelDistanceCalculator):
         )
 
 
+@deprecated(
+    Deprecation(
+        "0.26.0",
+        "If `gap_open == gap_extend` (the default), use NeedlemanWunschDistanceCalculator instead, which is much "
+        "faster and provides identical results for canonical amino-acid sequences. If you actually have a use-case "
+        "for affine gap penalties, please let us know by opening an issue on GitHub.",
+    )
+)
 @_doc_params(params=_doc_params_parallel_distance_calculator)
 class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
     """\
@@ -1832,6 +1966,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         Estimate of the average mismatch penalty
     """
 
+    @deprecated_arg("block_size", _deprecation_block_size)
     def __init__(
         self,
         cutoff: int = 10,
@@ -1843,7 +1978,7 @@ class FastAlignmentDistanceCalculator(ParallelDistanceCalculator):
         gap_extend: int = 11,
         estimated_penalty: float = None,
     ):
-        super().__init__(cutoff, n_jobs=n_jobs, block_size=block_size)
+        super().__init__(cutoff, n_jobs=n_jobs)
         self.subst_mat = subst_mat
         self.gap_open = gap_open
         self.gap_extend = gap_extend

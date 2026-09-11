@@ -1,6 +1,7 @@
 sinfo-requirements.txt
 *.code-workspace
 .vscode/*
+.devcontainer
 !.vscode/settings.json.default
 notebooks
 tutorial

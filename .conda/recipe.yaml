@@ -36,6 +36,7 @@ requirements:
     - scanpy >=1.9.3
     - scikit-learn
     - scipy
+    - scverse-misc >=0.1.3
     - squarify
     - tqdm >=4.63
 

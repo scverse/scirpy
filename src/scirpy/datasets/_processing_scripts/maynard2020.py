@@ -205,6 +205,8 @@ adata_bcr = ir.io.read_bracer(DATASET_DIR / "smartseq2_pipeline/BraCeR/filtered_
 adata_airr = ir.pp.merge_airr(adata_tcr, adata_bcr)
 
 mdata = MuData({"gex": adata, "airr": adata_airr})
+# since mudata v0.4, columns are not pulled from the modalities into the global `obs` automatically
+mdata.pull_obs()
 
 # ## check that all is right
 
