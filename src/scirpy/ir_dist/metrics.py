@@ -1037,8 +1037,6 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs2_original_indices_block,
             buffer_width,
         ):
-            d_seqs_mat1 = cp.asarray(seqs_mat1.astype(np.int8, copy=False))
-            d_seqs_mat2 = cp.asarray(seqs_mat2_block.astype(np.int8, copy=False))
             d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32, copy=False))
             d_seqs_L2 = cp.asarray(seqs_L2.astype(np.int32, copy=False))
 
@@ -1048,8 +1046,8 @@ class GPUHammingDistanceCalculator(_MetricDistanceCalculator):
             seqs_mat1_rows = seqs_mat1.shape[0]
             seqs_mat2_rows = seqs_mat2_block.shape[0]
 
-            d_seqs_mat1_transposed = cp.transpose(d_seqs_mat1).copy()
-            d_seqs_mat2_transposed = cp.transpose(d_seqs_mat2).copy()
+            d_seqs_mat1_transposed = cp.transpose(cp.asarray(seqs_mat1.astype(np.int8, copy=False))).copy()
+            d_seqs_mat2_transposed = cp.transpose(cp.asarray(seqs_mat2_block.astype(np.int8, copy=False))).copy()
 
             def run_hamming_kernel(buffer_width):
                 d_data_matrix = cp.empty((seqs_mat1_rows, buffer_width), dtype=cp.int8)
