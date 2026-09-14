@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning][].
 
 ### Features
 
+  - Add `metric="gpu_tcrdist"` for GPU-accelerated TCRdist with row and column tiling, adaptive result buffers,
+    and support for BLOSUM62 and TCRBLOSUM matrices.
+
   - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
     `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
     deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
