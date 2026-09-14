@@ -51,7 +51,7 @@ def test_no_spurious_block_size_warning(calculator):
 
 
 def test_alignment_distance_calculator_deprecated():
-    with pytest.warns(FutureWarning, match="FastAlignmentDistanceCalculator"):
+    with pytest.warns(FutureWarning, match="NeedlemanWunschDistanceCalculator"):
         AlignmentDistanceCalculator()
 
 
