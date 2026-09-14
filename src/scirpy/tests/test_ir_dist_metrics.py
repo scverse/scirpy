@@ -13,6 +13,7 @@ from scirpy.ir_dist.metrics import (
     DistanceCalculator,
     FastAlignmentDistanceCalculator,
     GPUHammingDistanceCalculator,
+    GPUTCRdistDistanceCalculator,
     HammingDistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
@@ -862,8 +863,19 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
         ),
     ],
 )
-def test_tcrdist(test_parameters, test_input, expected_result):
-    tcrdist_calculator = TCRdistDistanceCalculator(**test_parameters)
+@pytest.mark.parametrize(
+    "calculator_class",
+    [TCRdistDistanceCalculator, pytest.param(GPUTCRdistDistanceCalculator, marks=pytest.mark.gpu)],
+)
+def test_tcrdist(test_parameters, test_input, expected_result, calculator_class):
+    test_parameters = test_parameters.copy()
+    if calculator_class is GPUTCRdistDistanceCalculator:
+        test_parameters.pop("n_jobs", None)
+        if not test_parameters.get("fixed_gappos", True):
+            with pytest.raises(NotImplementedError, match="fixed_gappos=True"):
+                calculator_class(**test_parameters)
+            return
+    tcrdist_calculator = calculator_class(**test_parameters)
     seq1, seq2 = test_input
     res = tcrdist_calculator.calc_dist_mat(seq1, seq2)
     assert isinstance(res, scipy.sparse.csr_matrix)
@@ -1019,13 +1031,14 @@ def test_needleman_wunsch(test_parameters, test_input, expected_result):
     assert np.array_equal(res.todense(), expected_result)
 
 
-def test_sequence_dist_tcrdist_tcrblosum():
+@pytest.mark.parametrize("metric", ["tcrdist", pytest.param("gpu_tcrdist", marks=pytest.mark.gpu)])
+def test_sequence_dist_tcrdist_tcrblosum(metric):
     # `sequence_dist` needs an explicit `chain_type` for `tcrdist` with `tcrblosum`;
     # `ir_dist` handles this automatically.
     seqs = np.array(["AAACAAAA", "AAARAAAA"])
     res = ir.ir_dist.sequence_dist(
         seqs,
-        metric="tcrdist",
+        metric=metric,
         cutoff=20,
         n_jobs=1,
         base_matrix="tcrblosum",
@@ -1034,12 +1047,13 @@ def test_sequence_dist_tcrdist_tcrblosum():
     npt.assert_array_equal(res.toarray(), np.array([[1, 7], [7, 1]]))
 
 
-def test_sequence_dist_tcrdist_distance_cap():
+@pytest.mark.parametrize("metric", ["tcrdist", pytest.param("gpu_tcrdist", marks=pytest.mark.gpu)])
+def test_sequence_dist_tcrdist_distance_cap(metric):
     seqs = np.array(["AAACAAAA", "AAAHAAAA"])
 
     default_tcrblosum = ir.ir_dist.sequence_dist(
         seqs,
-        metric="tcrdist",
+        metric=metric,
         cutoff=20,
         n_jobs=1,
         base_matrix="tcrblosum",
@@ -1049,7 +1063,7 @@ def test_sequence_dist_tcrdist_distance_cap():
 
     capped_tcrblosum = ir.ir_dist.sequence_dist(
         seqs,
-        metric="tcrdist",
+        metric=metric,
         cutoff=20,
         n_jobs=1,
         base_matrix="tcrblosum",
@@ -1060,7 +1074,7 @@ def test_sequence_dist_tcrdist_distance_cap():
 
     custom_capped_tcrblosum = ir.ir_dist.sequence_dist(
         seqs,
-        metric="tcrdist",
+        metric=metric,
         cutoff=20,
         n_jobs=1,
         base_matrix="tcrblosum",
@@ -1071,7 +1085,7 @@ def test_sequence_dist_tcrdist_distance_cap():
 
     uncapped_blosum62 = ir.ir_dist.sequence_dist(
         np.array(["AAACAAAA", "AAARAAAA"]),
-        metric="tcrdist",
+        metric=metric,
         cutoff=1000,
         n_jobs=1,
         base_matrix="blosum62",
@@ -1313,6 +1327,95 @@ def test_gpu_hamming_tile_parameter_guards(kwargs, message):
         GPUHammingDistanceCalculator(**kwargs)
 
 
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "test_parameters,test_input,expected_result",
+    [
+        # Regression test for #626 and #682: sequence lengths exceeding the int8 range.
+        (
+            {"cutoff": 50, "gpu_tile_cols": 3, "gpu_tile_buffer_cols": 50},
+            (np.array(["A" * 128, "AAR", "AARR", "ARA"]), np.array(["A" * 128, "ARRR", "ARRR"])),
+            np.array([[1, 0, 0], [0, 0, 0], [0, 2, 2], [0, 0, 0]]),
+        ),
+        # Retain a distance exactly at the cutoff and omit one just above it.
+        (
+            {"cutoff": 125},
+            (np.array(["A" * 127]), np.array(["R" * 125 + "AA", "R" * 126 + "A"])),
+            np.array([[126, 0]]),
+        ),
+        # Symmetric calculation split into outer joblib blocks and internal GPU tiles.
+        (
+            {"cutoff": 2, "n_blocks": 2, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 3},
+            (np.array(["AAAA", "AAAT", "AATT", "TTTT"]), None),
+            np.array([[1, 2, 3, 0], [2, 1, 2, 0], [3, 2, 1, 3], [0, 0, 3, 1]]),
+        ),
+        # Asymmetric calculation split into outer joblib blocks and internal GPU tiles.
+        (
+            {"cutoff": 2, "n_blocks": 2, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 3},
+            (np.array(["AAAA", "AATA", "HHHH", "WWWW"]), np.array(["WWWW", "AAAA", "ATAA"])),
+            np.array([[0, 1, 2], [0, 2, 3], [0, 0, 0], [1, 0, 0]]),
+        ),
+        # Distances above the cutoff and comparisons between sequences of unequal length are omitted.
+        (
+            {"cutoff": 1, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 2},
+            (np.array(["AAA", "AAT", "AAAA", "TTT"]), None),
+            np.array([[1, 2, 0, 0], [2, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]),
+        ),
+        # Duplicate sequences are retained as separate zero-distance entries with distance + 1 encoding.
+        (
+            {"cutoff": 0, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 2},
+            (np.array(["AAA", "AAA", "AAT"]), None),
+            np.array([[1, 1, 0], [1, 1, 0], [0, 0, 1]]),
+        ),
+        # Outer joblib block counts exceeding the number of sequences are supported.
+        (
+            {"cutoff": 1, "n_blocks": 5, "gpu_tile_rows": 1, "gpu_tile_cols": 1, "gpu_tile_buffer_cols": 2},
+            (np.array(["AAA", "AAT"]), None),
+            np.array([[1, 2], [2, 1]]),
+        ),
+    ],
+)
+def test_gpu_tcrdist(test_parameters, test_input, expected_result):
+    tcrdist_calculator = GPUTCRdistDistanceCalculator(
+        dist_weight=1, distance_cap=1, ntrim=0, ctrim=0, gap_penalty=1000, **test_parameters
+    )
+    res = tcrdist_calculator.calc_dist_mat(*test_input)
+
+    assert isinstance(res, scipy.sparse.csr_matrix)
+    if test_parameters.get("n_blocks", 1) <= len(test_input[0]):
+        assert res.dtype == np.dtype("int32")
+    npt.assert_array_equal(res.toarray(), expected_result)
+
+
+@pytest.mark.gpu
+def test_gpu_tcrdist_buffer_retry():
+    tcrdist_calculator = GPUTCRdistDistanceCalculator(cutoff=0, gpu_tile_cols=2, gpu_tile_buffer_cols=1)
+    result = tcrdist_calculator.calc_dist_mat(np.array(["AAA", "AAA"]))
+
+    npt.assert_array_equal(result.toarray(), np.ones((2, 2)))
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("cutoff", [-1, 1.5, np.iinfo(np.int32).max])
+def test_gpu_tcrdist_cutoff_guard(cutoff):
+    with pytest.raises(ValueError, match="`cutoff` must be an integer"):
+        GPUTCRdistDistanceCalculator(cutoff=cutoff)
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"gpu_tile_rows": 0}, "`gpu_tile_rows` must be >= 1"),
+        ({"gpu_tile_cols": 0}, "`gpu_tile_cols` must be >= 1"),
+        ({"gpu_tile_buffer_cols": 0}, "`gpu_tile_buffer_cols` must be >= 1"),
+    ],
+)
+def test_gpu_tcrdist_tile_parameter_guards(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        GPUTCRdistDistanceCalculator(**kwargs)
+
+
 def test_tcrdist_histogram_not_implemented():
     # Change once histogram is implemented for tcrdist
     with pytest.raises(NotImplementedError, match=None):
@@ -1355,3 +1458,66 @@ def test_gpu_hamming_reference(kwargs):
     assert np.array_equal(res.indices, reference_result.indices)
     assert np.array_equal(res.indptr, reference_result.indptr)
     assert np.array_equal(res.todense(), reference_result.todense())
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"gpu_tile_cols": 310, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_rows": 517, "gpu_tile_cols": 310, "gpu_tile_buffer_cols": 500},
+        {"n_blocks": 3, "gpu_tile_rows": 517, "gpu_tile_cols": 310, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_cols": 222, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_rows": 310, "gpu_tile_cols": 517, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_rows": 141, "gpu_tile_cols": 92, "gpu_tile_buffer_cols": 503},
+    ],
+)
+def test_gpu_tcrdist_reference(kwargs):
+    # test tcrdist distance against reference implementation
+    from . import TESTDATA
+
+    seqs = np.load(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_seqs.npy")
+    reference_result = scipy.sparse.load_npz(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_csr_result.npz")
+
+    gpu_tcrdist_calculator = GPUTCRdistDistanceCalculator(cutoff=15, **kwargs)
+    res = gpu_tcrdist_calculator.calc_dist_mat(seqs, seqs)
+
+    assert np.array_equal(res.data, reference_result.data)
+    assert np.array_equal(res.indices, reference_result.indices)
+    assert np.array_equal(res.indptr, reference_result.indptr)
+    assert np.array_equal(res.todense(), reference_result.todense())
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("name", ["dist_weight", "gap_penalty", "ntrim", "ctrim"])
+@pytest.mark.parametrize("value", [-1, 1.5, int(np.iinfo(np.int32).max) + 1])
+def test_gpu_tcrdist_parameter_guards(name, value):
+    with pytest.raises(ValueError, match=f"`{name}` must be a non-negative 32-bit integer"):
+        GPUTCRdistDistanceCalculator(**{name: value})
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("gap_penalty", [0, 4, 5])
+def test_gpu_tcrdist_length_bounds(gap_penalty):
+    # Cover both ends of the permitted length range, and the unrestricted case with no gap penalty.
+    seqs = np.array(["AAAAA", "AAA", "AAAA"])
+    calculator = GPUTCRdistDistanceCalculator(
+        cutoff=4, gap_penalty=gap_penalty, ntrim=0, ctrim=0, gpu_tile_cols=2, gpu_tile_buffer_cols=1
+    )
+    result = calculator.calc_dist_mat(seqs)
+    expected = TCRdistDistanceCalculator(cutoff=4, gap_penalty=gap_penalty, ntrim=0, ctrim=0, n_jobs=1).calc_dist_mat(
+        seqs
+    )
+    npt.assert_array_equal(result.toarray(), expected.toarray())
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("ntrim,ctrim", [(0, 0), (3, 2), (10, 10)])
+def test_gpu_tcrdist_short_sequences(ntrim, ctrim):
+    # Short, unequal sequences exercise the CPU's floor division when locating the fixed gap.
+    seqs = np.array(["AR", "ARN", "ARND", "ARNDC"])
+    seqs2 = np.array(["ACR", "ARNC", "RARND", "ARN"])
+    kwargs = {"cutoff": 100, "ntrim": ntrim, "ctrim": ctrim}
+    result = GPUTCRdistDistanceCalculator(gpu_tile_rows=2, gpu_tile_cols=2, **kwargs).calc_dist_mat(seqs, seqs2)
+    expected = TCRdistDistanceCalculator(n_jobs=1, **kwargs).calc_dist_mat(seqs, seqs2)
+    npt.assert_array_equal(result.toarray(), expected.toarray())
