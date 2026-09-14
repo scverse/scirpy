@@ -1355,7 +1355,7 @@ def test_gpu_hamming_tile_parameter_guards(kwargs, message):
             (np.array(["AAAA", "AATA", "HHHH", "WWWW"]), np.array(["WWWW", "AAAA", "ATAA"])),
             np.array([[0, 1, 2], [0, 2, 3], [0, 0, 0], [1, 0, 0]]),
         ),
-        # Distances above the cutoff and comparisons between sequences of unequal length are omitted.
+        # Distances above the cutoff are omitted.
         (
             {"cutoff": 1, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 2},
             (np.array(["AAA", "AAT", "AAAA", "TTT"]), None),
@@ -1376,6 +1376,8 @@ def test_gpu_hamming_tile_parameter_guards(kwargs, message):
     ],
 )
 def test_gpu_tcrdist(test_parameters, test_input, expected_result):
+    # Use unit substitution costs, no trimming, and a high gap penalty to keep expected distances simple
+    # while testing tile splitting and result assembly.
     tcrdist_calculator = GPUTCRdistDistanceCalculator(
         dist_weight=1, distance_cap=1, ntrim=0, ctrim=0, gap_penalty=1000, **test_parameters
     )
@@ -1389,10 +1391,13 @@ def test_gpu_tcrdist(test_parameters, test_input, expected_result):
 
 @pytest.mark.gpu
 def test_gpu_tcrdist_buffer_retry():
-    tcrdist_calculator = GPUTCRdistDistanceCalculator(cutoff=0, gpu_tile_cols=2, gpu_tile_buffer_cols=1)
-    result = tcrdist_calculator.calc_dist_mat(np.array(["AAA", "AAA"]))
+    # Multiple retained distances per row force a retry; column lengths are deliberately unsorted.
+    tcrdist_calculator = GPUTCRdistDistanceCalculator(
+        cutoff=12, ntrim=0, ctrim=0, gpu_tile_cols=4, gpu_tile_buffer_cols=1
+    )
+    result = tcrdist_calculator.calc_dist_mat(np.array(["AAAA", "AAA"]), np.array(["AAAR", "AAAAA", "AAA", "AAAA"]))
 
-    npt.assert_array_equal(result.toarray(), np.ones((2, 2)))
+    npt.assert_array_equal(result.toarray(), np.array([[13, 5, 5, 1], [0, 9, 1, 5]]))
 
 
 @pytest.mark.gpu
@@ -1498,15 +1503,20 @@ def test_gpu_tcrdist_parameter_guards(name, value):
 
 @pytest.mark.gpu
 @pytest.mark.parametrize("gap_penalty", [0, 4, 5])
-def test_gpu_tcrdist_length_bounds(gap_penalty):
-    # Cover both ends of the permitted length range, and the unrestricted case with no gap penalty.
+@pytest.mark.parametrize(
+    "seqs2",
+    [None, np.array(["AAAAAA", "AA", "AAAA", "AAA", "AAAAA"])],
+    ids=["symmetric", "rectangular"],
+)
+def test_gpu_tcrdist_length_bounds(gap_penalty, seqs2):
+    # Cover both length bounds without relying on mirroring, and the unrestricted case with no gap penalty.
     seqs = np.array(["AAAAA", "AAA", "AAAA"])
     calculator = GPUTCRdistDistanceCalculator(
         cutoff=4, gap_penalty=gap_penalty, ntrim=0, ctrim=0, gpu_tile_cols=2, gpu_tile_buffer_cols=1
     )
-    result = calculator.calc_dist_mat(seqs)
+    result = calculator.calc_dist_mat(seqs, seqs2)
     expected = TCRdistDistanceCalculator(cutoff=4, gap_penalty=gap_penalty, ntrim=0, ctrim=0, n_jobs=1).calc_dist_mat(
-        seqs
+        seqs, seqs2
     )
     npt.assert_array_equal(result.toarray(), expected.toarray())
 
