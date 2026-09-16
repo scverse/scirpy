@@ -697,7 +697,7 @@ def clonotype_network_igraph(
         clonotype_key = params.adata.uns[basis]["clonotype_key"]
     except KeyError:
         raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?") from None
-    if f"X_{basis}" not in params.adata.obsm_keys():
+    if f"X_{basis}" not in params.adata.obsm:
         raise KeyError(f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?")
     coords, adj_mat = _graph_from_coordinates(params.adata, clonotype_key, basis)
 
