@@ -1,4 +1,5 @@
 # pylama:ignore=W0611,W0404
+import re
 import sys
 from typing import cast
 
@@ -321,8 +322,14 @@ def test_clonotype_network_mask_obs(adata_conn):
 
 
 @pytest.mark.extra
-def test_clonotype_network_igraph(adata_clonotype_network):
-    g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network)
+@pytest.mark.filterwarnings("error:.*obsm_keys.*:FutureWarning")
+@pytest.mark.parametrize(
+    "adata_clonotype_network,basis",
+    [[{}, "clonotype_network"], [{"key_added": "custom_network"}, "custom_network"]],
+    indirect=["adata_clonotype_network"],
+)
+def test_clonotype_network_igraph(adata_clonotype_network, basis):
+    g, lo = ir.tl.clonotype_network_igraph(adata_clonotype_network, basis=basis)
     print(lo.coords)
     print(g.vcount())
     assert g.vcount() == 8
@@ -341,6 +348,26 @@ def test_clonotype_network_igraph(adata_clonotype_network):
             ]
         ),
     )
+
+
+@pytest.mark.extra
+@pytest.mark.filterwarnings("error:.*obsm_keys.*:FutureWarning")
+@pytest.mark.parametrize(
+    "adata_clonotype_network,basis",
+    [[{}, "clonotype_network"], [{"key_added": "custom_network"}, "custom_network"]],
+    indirect=["adata_clonotype_network"],
+)
+@pytest.mark.parametrize("func", [ir.pl.clonotype_network, ir.tl.clonotype_network_igraph])
+def test_clonotype_network_missing_coordinates(adata_clonotype_network, basis, func):
+    """Missing layout coordinates should raise the same actionable error without deprecation warnings."""
+    adata = adata_clonotype_network
+    # For MuData, layout coordinates belong to the AIRR modality, not the global mapping.
+    airr = adata.mod["airr"] if isinstance(adata, MuData) else adata
+    del airr.obsm[f"X_{basis}"]
+
+    message = f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?"
+    with pytest.raises(KeyError, match=re.escape(message)):
+        func(adata, basis=basis)
 
 
 def test_clonotype_convergence(adata_clonotype):

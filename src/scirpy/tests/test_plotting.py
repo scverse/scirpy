@@ -125,6 +125,7 @@ def test_clonotype_modularity(adata_clonotype_modularity, jitter, show_size_lege
     [[{}, {}], [{"key_added": "foo"}, {"basis": "foo"}]],
     indirect=["adata_clonotype_network"],
 )
+@pytest.mark.filterwarnings("error:.*obsm_keys.*:FutureWarning")
 @pytest.mark.parametrize("color_by_n_cells", [True, False])
 @pytest.mark.parametrize("scale_by_n_cells", [True, False])
 @pytest.mark.parametrize("show_size_legend", [True, False])
