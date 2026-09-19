@@ -1,8 +1,10 @@
 from collections.abc import Callable
 from typing import cast
 
+import hillrep
 import numpy as np
 import pandas as pd
+from scanpy import logging
 
 from scirpy.util import DataHandler, _is_na
 
@@ -41,6 +43,131 @@ def _dxx(counts: np.ndarray, *, percentage: int):
         i += 1
 
     return i / len(freqs) * 100
+
+
+@DataHandler.inject_param_docs()
+def hill_diversity_profile(
+    adata: DataHandler.TYPE,
+    groupby: str,
+    *,
+    target_col: str = "clone_id",
+    airr_mod: str = "airr",
+    q_min: float = 0,
+    q_max: float = 2,
+    q_step: float = 1,
+) -> tuple[pd.DataFrame, "hillrep.Assessment"]:
+    """\
+    Computes a coverage-standardized Hill diversity profile for a range of diversity orders (`q`).
+
+    Hill numbers unify the common alpha diversity indices into a single family indexed
+    by an order `q` (`q=0` is observed richness, `q=1` is the exponential of Shannon
+    entropy, `q=2` is the inverse Simpson index).
+
+    Naively plugging observed frequencies into the Hill formula yields values
+    that grow with cell count, so two samples with different cell count look different
+    even when the underlying repertoire is the same.
+    This function instead standardizes all groups to a common sample coverage
+    before reporting the profile, following the iNEXT framework
+    (:cite:`Chao.2014,Hsieh.2016`),
+    so the profiles are comparable across depth.
+
+    When the groups cannot be standardized to a fully reliable shared coverage (for
+    example because one group is heavily undersampled), a warning is emitted and the
+    reason is available from the returned assessment: sometimes the honest answer is
+    that a fair comparison is not possible.
+
+    This function relies on the `hillrep <https://github.com/KilianMaire/hillrep>`__ package for the estimation.
+
+    Parameters
+    ----------
+    {adata}
+    groupby
+        Column of `obs` by which the grouping will be performed.
+    target_col
+        Column containing the clonotype annotation.
+    {airr_mod}
+    q_min
+        Lowest (start) diversity order.
+    q_max
+        Highest (end) diversity order.
+    q_step
+        Step between consecutive diversity orders.
+
+    Returns
+    -------
+    profile
+        A tidy `DataFrame` with one row per group and diversity order, with the columns
+        `assemblage` (the group), `order_q`, `m` (the standardized sample size),
+        `method`, `qD` (the Hill number), `qD_lcl`/`qD_ucl` (its confidence interval)
+        and `coverage`. This format flows directly into plotting libraries such as
+        seaborn.
+    assessment
+        A `hillrep` `Assessment` object describing whether the groups can be compared
+        fairly. Its `verdict` is one of `"reliable"`, `"caution"` or `"not_comparable"`,
+        `table` holds the per-group diagnostics (coverage, singletons/doubletons,
+        extrapolation factor) and `summary()` renders a human-readable report.
+    """
+    params = DataHandler(adata, airr_mod)
+    ir_obs = params.get_obs([target_col, groupby]).dropna(axis=0, how="any")
+    clono_counts = ir_obs.groupby([groupby, target_col], observed=True).size().reset_index(name="count")
+
+    counts_by_group = {
+        str(k): cast(pd.Series, clono_counts.loc[clono_counts[groupby] == k, "count"]).to_numpy()
+        for k in sorted(ir_obs[groupby].unique())
+    }
+
+    q_values = np.arange(q_min, q_max + q_step, q_step, dtype=float).tolist()
+
+    assessment = hillrep.assess(counts_by_group)
+    if assessment.verdict != "reliable":
+        logging.warning(
+            "The groups cannot be compared at a fully reliable common coverage. "
+            "Read the profile with caution.\n" + assessment.summary(),
+        )
+
+    tidy = hillrep.compare(counts_by_group, level="coverage", q=q_values, n_boot=0)
+
+    return tidy, assessment
+
+
+def convert_hill_table(diversity_profile: pd.DataFrame) -> pd.DataFrame:
+    """\
+    Converts a profile from :func:`~scirpy.tl.hill_diversity_profile` into the classical alpha diversity indices.
+
+    The Hill numbers of order 0, 1 and 2 are monotone transformations of the observed
+    richness, the Shannon entropy and the inverse Simpson index, so the classical
+    indices can be recovered from the profile (:cite:`Daly.2018`). Because they are
+    derived from the coverage-standardized Hill numbers, they inherit the same depth
+    correction.
+
+    Parameters
+    ----------
+    diversity_profile
+        The tidy `DataFrame` returned by :func:`~scirpy.tl.hill_diversity_profile`.
+        It must contain the diversity orders `0`, `1` and `2`.
+
+    Returns
+    -------
+    A `DataFrame` with one row per group and one column per index (observed richness,
+    Shannon entropy, inverse Simpson, Gini-Simpson).
+    """
+    missing = [q for q in (0, 1, 2) if not (diversity_profile["order_q"] == q).any()]
+    if missing:
+        raise ValueError(
+            f"The profile is missing the diversity order(s) {missing}. "
+            "`convert_hill_table` requires the orders 0, 1 and 2."
+        )
+
+    qd = diversity_profile.pivot(index="assemblage", columns="order_q", values="qD")
+    inverse_simpson = qd[2]
+    return pd.DataFrame(
+        {
+            "Observed richness": qd[0],
+            "Shannon entropy": np.log(qd[1]),
+            "Inverse Simpson": inverse_simpson,
+            "Gini-Simpson": 1 - 1 / inverse_simpson,
+        }
+    )
 
 
 @DataHandler.inject_param_docs()
