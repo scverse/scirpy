@@ -7,5 +7,6 @@ Tutorials
 
    tutorials/tutorial_io.ipynb
    tutorials/tutorial_3k_tcr.ipynb
+   tutorials/tutorial_beam_t_query.ipynb
    tutorials/tutorial_5k_bcr.ipynb
    tutorials/large-datasets.md
