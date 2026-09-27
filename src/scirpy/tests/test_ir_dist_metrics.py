@@ -1,4 +1,5 @@
 from functools import partial
+from unittest.mock import patch
 
 import numpy as np
 import numpy.testing as npt
@@ -6,6 +7,7 @@ import pytest
 import scipy.sparse
 
 import scirpy as ir
+from scirpy.ir_dist._substitution_matrices import _map_matrix_to_alphabet, _substitution_to_distance_matrix
 from scirpy.ir_dist.metrics import (
     AlignmentDistanceCalculator,
     DistanceCalculator,
@@ -14,9 +16,9 @@ from scirpy.ir_dist.metrics import (
     HammingDistanceCalculator,
     IdentityDistanceCalculator,
     LevenshteinDistanceCalculator,
+    NeedlemanWunschDistanceCalculator,
     ParallelDistanceCalculator,
     TCRdistDistanceCalculator,
-    _substitution_to_distance_matrix,
 )
 
 from .util import _squarify
@@ -69,7 +71,7 @@ def test_squarify():
     )
 
 
-def test_substitution_to_distance_matrix_converts_substitution_matrix():
+def test_substitution_to_distance_matrix():
     substitution_matrix = np.array(
         [
             [4, 3, 0, -1],
@@ -123,6 +125,45 @@ def test_substitution_to_distance_matrix_converts_substitution_matrix():
             dtype=np.int32,
         ),
     )
+
+
+def test_map_matrix_to_alphabet():
+    matrix = np.array([[1, 2], [3, 4]], dtype=np.int32)
+
+    mapped_matrix = _map_matrix_to_alphabet(matrix, source_alphabet="AB", target_alphabet="BCA")
+
+    npt.assert_array_equal(
+        mapped_matrix,
+        np.array(
+            [
+                [4, 0, 3],
+                [0, 0, 0],
+                [2, 0, 1],
+            ],
+            dtype=np.int32,
+        ),
+        strict=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("matrix", "source_alphabet", "target_alphabet", "match"),
+    [
+        (np.zeros((1, 1)), "AB", "AB", "must have shape"),
+        (np.zeros((2, 2)), "AA", "A", "source_alphabet.*duplicate"),
+        (np.zeros((2, 2)), "AB", "ABBA", "target_alphabet.*duplicate"),
+        (np.zeros((2, 2)), "AB", "AC", "missing characters"),
+    ],
+    ids=["shape", "duplicate-source", "duplicate-target", "missing-target-character"],
+)
+def test_map_matrix_to_alphabet_rejects_invalid_input(
+    matrix: np.ndarray,
+    source_alphabet: str,
+    target_alphabet: str,
+    match: str,
+):
+    with pytest.raises(ValueError, match=match):
+        _map_matrix_to_alphabet(matrix, source_alphabet, target_alphabet)
 
 
 def test_block_iter():
@@ -371,13 +412,23 @@ def test_fast_alignment_dist_with_two_seq_arrays():
 
 @pytest.mark.extra
 @pytest.mark.parametrize(
-    "metric", ["alignment", "fastalignment", "identity", "hamming", "normalized_hamming", "levenshtein", "tcrdist"]
+    "metric",
+    [
+        "alignment",
+        "fastalignment",
+        "identity",
+        "hamming",
+        "normalized_hamming",
+        "levenshtein",
+        "tcrdist",
+        "needleman_wunsch",
+    ],
 )
 @pytest.mark.parametrize("n_jobs", [-1, 1, 2])
 def test_sequence_dist_all_metrics(metric, n_jobs):
     # Smoke test, no assertions!
     # Smoke test, no assertions!
-    metrics_with_n_blocks = ["hamming", "normalized_hamming", "tcrdist"]
+    metrics_with_n_blocks = ["hamming", "normalized_hamming", "tcrdist", "needleman_wunsch"]
     n_blocks_params = [1, 2]
 
     unique_seqs = np.array(["AAA", "ARA", "AFFFFFA", "FAFAFA", "FFF"])
@@ -820,6 +871,154 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert np.array_equal(res.todense(), expected_result)
 
 
+@pytest.mark.parametrize(
+    "test_parameters,test_input,expected_result",
+    [
+        # test more complex strings with unequal length and set high cutoff such that cutoff is neglected
+        (
+            {"cutoff": 200, "gap_penalty": 11, "n_jobs": 1},
+            (
+                np.array(["AA", "AAA", "AARA", "AHA", "AHLAA"]),
+                np.array(["AA", "AAA", "AARA", "AHA", "AHLAA"]),
+            ),
+            np.array(
+                [
+                    [1, 12, 23, 12, 34],
+                    [12, 1, 12, 7, 23],
+                    [23, 12, 1, 20, 23],
+                    [12, 7, 20, 1, 23],
+                    [34, 23, 23, 23, 1],
+                ]
+            ),
+        ),
+        # test cutoff filtering
+        (
+            {"cutoff": 10, "gap_penalty": 4, "n_jobs": 1},
+            (
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+                np.array(["AAACAAAA", "AAARAAAA", "AAAHAAAA"]),
+            ),
+            np.array([[1, 9, 0], [9, 1, 6], [0, 6, 1]]),
+        ),
+        # test asymmetric sequence arrays
+        (
+            {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
+            (
+                np.array(["AAAA", "AATA", "HHHH", "WWWW"]),
+                np.array(["WWWW", "AAAA", "ATAA"]),
+            ),
+            np.array([[0, 1, 5], [0, 5, 10], [0, 0, 0], [1, 0, 0]]),
+        ),
+        # test ambiguous symbols, which have neutral substitution scores
+        (
+            {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
+            (
+                np.array(["AABA", "AAZA", "AADA", "AAEA"]),
+                np.array(["AABA", "AAZA", "AADA", "AAEA"]),
+            ),
+            np.array([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 4], [1, 1, 4, 1]]),
+        ),
+        # test neutral X scores with asymmetric arrays
+        (
+            {"cutoff": 6, "gap_penalty": 2, "n_jobs": 1},
+            (
+                np.array(["X", "AX", "XA", "AA"]),
+                np.array(["A", "XX", "AA"]),
+            ),
+            np.array([[1, 3, 3], [3, 1, 1], [3, 1, 1], [3, 1, 1]]),
+        ),
+        # test empty input arrays
+        (
+            {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
+            (np.array([]), np.array([])),
+            np.empty((0, 0)),
+        ),
+        # test standard parameters with second sequences array set to None
+        (
+            {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
+            (np.array(["AA", "AAA", "AHA"]), None),
+            np.array([[1, 5, 5], [5, 1, 7], [5, 7, 1]]),
+        ),
+        # test with gap_penalty set to 0
+        (
+            {"cutoff": 20, "gap_penalty": 0, "n_jobs": 1},
+            (
+                np.array(["AA", "AAA", "AHA"]),
+                np.array(["AA", "AAA", "AHA"]),
+            ),
+            np.array([[1, 1, 1], [1, 1, 5], [1, 5, 1]]),
+        ),
+        # test with low gap_penalty and high cutoff
+        (
+            {"cutoff": 50, "gap_penalty": 1, "n_jobs": 1},
+            (
+                np.array(["AA", "AAA", "AHA", "AHLAA"]),
+                np.array(["AA", "AAA", "AHA", "AHLAA"]),
+            ),
+            np.array([[1, 2, 2, 4], [2, 1, 7, 3], [2, 7, 1, 3], [4, 3, 3, 1]]),
+        ),
+        # test with high gap_penalty and high cutoff
+        (
+            {"cutoff": 50, "gap_penalty": 8, "n_jobs": 1},
+            (
+                np.array(["AA", "AAA", "AHA", "AHLAA"]),
+                np.array(["AA", "AAA", "AHA", "AHLAA"]),
+            ),
+            np.array([[1, 9, 9, 25], [9, 1, 7, 17], [9, 7, 1, 17], [25, 17, 17, 1]]),
+        ),
+        # test with high gap_penalty and tight cutoff filtering
+        (
+            {"cutoff": 8, "gap_penalty": 8, "n_jobs": 1},
+            (
+                np.array(["AA", "AAA", "AHA", "AHLAA"]),
+                np.array(["AA", "AAA", "AHA", "AHLAA"]),
+            ),
+            np.array([[1, 9, 9, 0], [9, 1, 7, 0], [9, 7, 1, 0], [0, 0, 0, 1]]),
+        ),
+        # test asymmetric arrays with lower gap_penalty
+        (
+            {"cutoff": 12, "gap_penalty": 2, "n_jobs": 1},
+            (
+                np.array(["AA", "AHA", "AHLAA"]),
+                np.array(["AAA", "AHAA", "WW"]),
+            ),
+            np.array([[3, 5, 0], [7, 3, 0], [5, 3, 0]]),
+        ),
+        # test with cutoff set to 0
+        (
+            {"cutoff": 0, "gap_penalty": 4, "n_jobs": 1},
+            (
+                np.array(["AA", "AAA", "AHA"]),
+                np.array(["AA", "AAA", "AHA"]),
+            ),
+            np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        ),
+        # test very small input sequences
+        (
+            {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
+            (np.array(["A"]), np.array(["C"])),
+            np.array([[5]]),
+        ),
+        # test empty second input array
+        (
+            {"cutoff": 20, "gap_penalty": 4, "n_jobs": 1},
+            (np.array(["A", "AA"]), np.array([])),
+            np.empty((2, 0)),
+        ),
+    ],
+)
+def test_needleman_wunsch(test_parameters, test_input, expected_result):
+    # Check direct calculator results for small edge cases and parameter combinations.
+    needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(**test_parameters)
+    seq1, seq2 = test_input
+
+    res = needleman_wunsch_calculator.calc_dist_mat(seq1, seq2)
+
+    assert isinstance(res, scipy.sparse.csr_matrix)
+    assert res.shape == expected_result.shape
+    assert np.array_equal(res.todense(), expected_result)
+
+
 def test_sequence_dist_tcrdist_tcrblosum():
     # `sequence_dist` needs an explicit `chain_type` for `tcrdist` with `tcrblosum`;
     # `ir_dist` handles this automatically.
@@ -895,6 +1094,47 @@ def test_tcrdist_base_matrix_validation(kwargs, match):
         TCRdistDistanceCalculator(**kwargs)
 
 
+@pytest.mark.parametrize(
+    "kwargs,match",
+    [
+        ({"cutoff": -1}, r"`cutoff` must be non-negative\."),
+        ({"gap_penalty": -1}, r"`gap_penalty` must be non-negative\."),
+    ],
+)
+def test_needleman_wunsch_parameter_validation(kwargs, match):
+    # Invalid distance settings should fail before distance computation starts.
+    with pytest.raises(ValueError, match=match):
+        NeedlemanWunschDistanceCalculator(**kwargs)
+
+
+@pytest.mark.parametrize("n_blocks", [1, 2])
+@pytest.mark.parametrize(
+    "seqs,seqs2,expect_warning",
+    [
+        (["ARNDCQEGHILKMFPSTWYV", "AAA"], None, False),
+        (["AAA", "CCC"], ["DDD", "EEE"], False),
+        *[([f"AA{symbol}", "AAA"], None, True) for symbol in "BZX*?"],
+        (["AAA", "CCC"], ["AAX", "AAZ"], True),
+        (["AAX", "AAZ"], ["AAB", "AA?"], True),
+        (["AAX", "AAX"], ["AAX", "AAA"], True),
+    ],
+)
+def test_needleman_wunsch_noncanonical_warning(seqs, seqs2, expect_warning, n_blocks):
+    calculator = NeedlemanWunschDistanceCalculator(n_jobs=1, n_blocks=n_blocks)
+    with patch("scirpy.ir_dist.metrics.logging.warning") as warning:
+        result = calculator.calc_dist_mat(seqs, seqs2)
+
+    assert result.shape == (len(seqs), len(seqs if seqs2 is None else seqs2))
+    if expect_warning:
+        warning.assert_called_once_with(
+            "Non-canonical amino acid symbols detected. Canonical symbols are: ARNDCQEGHILKMFPSTWYV. "
+            "Needleman-Wunsch assigns a substitution score of 0 "
+            "to these symbols, which may affect the resulting distances."
+        )
+    else:
+        warning.assert_not_called()
+
+
 def test_tcrdist_reference():
     # test tcrdist against reference implementation
     from . import TESTDATA
@@ -913,6 +1153,29 @@ def test_tcrdist_reference():
         n_blocks=2,
     )
     res = tcrdist_calculator.calc_dist_mat(seqs, seqs)
+
+    assert np.array_equal(res.data, reference_result.data)
+    assert np.array_equal(res.indices, reference_result.indices)
+    assert np.array_equal(res.indptr, reference_result.indptr)
+
+
+def test_needleman_wunsch_reference():
+    # test needleman-wunsch against a precomputed linear-gap alignment reference
+    # testdata has been derived using the original AlignmentDistanceCalculator based on parasail
+    from . import TESTDATA
+
+    seqs = np.load(TESTDATA / "needleman_wunsch_test_data/needleman_wunsch_WU3k_seqs.npy")
+    reference_result = scipy.sparse.load_npz(
+        TESTDATA / "needleman_wunsch_test_data/needleman_wunsch_WU3k_csr_result.npz"
+    )
+    needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(
+        cutoff=20,
+        gap_penalty=4,
+        n_jobs=4,
+        n_blocks=2,
+    )
+
+    res = needleman_wunsch_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
     assert np.array_equal(res.indices, reference_result.indices)
@@ -954,16 +1217,6 @@ def test_hamming_long_sequence():
     assert isinstance(res, scipy.sparse.csr_matrix)
 
 
-@pytest.mark.gpu
-def test_gpu_hamming_long_sequence():
-    """Regression test for #626 and #682"""
-    hamming_calculator = GPUHammingDistanceCalculator(cutoff=50, gpu_n_blocks=1, gpu_block_width=50)
-    seq1 = np.array(["A" * 128, "AAB", "AABB", "ABA"])
-    seq2 = np.array(["A" * 128, "ABBB", "ABBB"])
-    res = hamming_calculator.calc_dist_mat(seq1, seq2)
-    assert isinstance(res, scipy.sparse.csr_matrix)
-
-
 def test_hamming_histogram_reference():
     from . import TESTDATA
 
@@ -974,6 +1227,92 @@ def test_hamming_histogram_reference():
     assert np.array_equal(row_mins_ref, row_mins)
 
 
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "test_parameters,test_input,expected_result",
+    [
+        # Regression test for #626 and #682: sequence lengths exceeding the int8 range.
+        (
+            {"cutoff": 50, "gpu_tile_cols": 3, "gpu_tile_buffer_cols": 50},
+            (np.array(["A" * 128, "AAB", "AABB", "ABA"]), np.array(["A" * 128, "ABBB", "ABBB"])),
+            np.array([[1, 0, 0], [0, 0, 0], [0, 2, 2], [0, 0, 0]]),
+        ),
+        # The maximum supported cutoff retains distance 125 with distance + 1 encoding and omits distance 126.
+        (
+            {"cutoff": 125},
+            (np.array(["A" * 127]), np.array(["B" * 125 + "AA", "B" * 126 + "A"])),
+            np.array([[126, 0]]),
+        ),
+        # Symmetric calculation split into outer joblib blocks and internal GPU tiles.
+        (
+            {"cutoff": 2, "n_blocks": 2, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 3},
+            (np.array(["AAAA", "AAAT", "AATT", "TTTT"]), None),
+            np.array([[1, 2, 3, 0], [2, 1, 2, 0], [3, 2, 1, 3], [0, 0, 3, 1]]),
+        ),
+        # Asymmetric calculation split into outer joblib blocks and internal GPU tiles.
+        (
+            {"cutoff": 2, "n_blocks": 2, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 3},
+            (np.array(["AAAA", "AATA", "HHHH", "WWWW"]), np.array(["WWWW", "AAAA", "ATAA"])),
+            np.array([[0, 1, 2], [0, 2, 3], [0, 0, 0], [1, 0, 0]]),
+        ),
+        # Distances above the cutoff and comparisons between sequences of unequal length are omitted.
+        (
+            {"cutoff": 1, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 2},
+            (np.array(["AAA", "AAT", "AAAA", "TTT"]), None),
+            np.array([[1, 2, 0, 0], [2, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]),
+        ),
+        # Duplicate sequences are retained as separate zero-distance entries with distance + 1 encoding.
+        (
+            {"cutoff": 0, "gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 2},
+            (np.array(["AAA", "AAA", "AAT"]), None),
+            np.array([[1, 1, 0], [1, 1, 0], [0, 0, 1]]),
+        ),
+        # Outer joblib block counts exceeding the number of sequences are supported.
+        (
+            {"cutoff": 1, "n_blocks": 5, "gpu_tile_rows": 1, "gpu_tile_cols": 1, "gpu_tile_buffer_cols": 2},
+            (np.array(["AAA", "AAT"]), None),
+            np.array([[1, 2], [2, 1]]),
+        ),
+    ],
+)
+def test_gpu_hamming(test_parameters, test_input, expected_result):
+    hamming_calculator = GPUHammingDistanceCalculator(**test_parameters)
+    res = hamming_calculator.calc_dist_mat(*test_input)
+
+    assert isinstance(res, scipy.sparse.csr_matrix)
+    if test_parameters.get("n_blocks", 1) <= len(test_input[0]):
+        assert res.dtype == np.dtype("int32")
+    npt.assert_array_equal(res.toarray(), expected_result)
+
+
+@pytest.mark.gpu
+def test_gpu_hamming_buffer_retry():
+    hamming_calculator = GPUHammingDistanceCalculator(cutoff=0, gpu_tile_cols=2, gpu_tile_buffer_cols=1)
+    result = hamming_calculator.calc_dist_mat(np.array(["AAA", "AAA"]))
+
+    npt.assert_array_equal(result.toarray(), np.ones((2, 2)))
+
+
+@pytest.mark.gpu
+def test_gpu_hamming_cutoff_guard():
+    with pytest.raises(ValueError, match="cutoff <= 125"):
+        GPUHammingDistanceCalculator(cutoff=126)
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"gpu_tile_rows": 0}, "`gpu_tile_rows` must be >= 1"),
+        ({"gpu_tile_cols": 0}, "`gpu_tile_cols` must be >= 1"),
+        ({"gpu_tile_buffer_cols": 0}, "`gpu_tile_buffer_cols` must be >= 1"),
+    ],
+)
+def test_gpu_hamming_tile_parameter_guards(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        GPUHammingDistanceCalculator(**kwargs)
+
+
 def test_tcrdist_histogram_not_implemented():
     # Change once histogram is implemented for tcrdist
     with pytest.raises(NotImplementedError, match=None):
@@ -982,15 +1321,34 @@ def test_tcrdist_histogram_not_implemented():
         _ = tcrdist_calculator.calc_dist_mat(seqs, seqs)
 
 
+def test_needleman_wunsch_histogram_not_implemented():
+    # Histogram mode should fail explicitly until it is implemented for needleman_wunsch.
+    with pytest.raises(NotImplementedError, match=None):
+        needleman_wunsch_calculator = NeedlemanWunschDistanceCalculator(histogram=True)
+        seqs = np.array(["AAAA", "AA", "AABB", "ABA"])
+        _ = needleman_wunsch_calculator.calc_dist_mat(seqs, seqs)
+
+
 @pytest.mark.gpu
-def test_gpu_hamming_reference():
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"gpu_tile_cols": 310, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_rows": 517, "gpu_tile_cols": 310, "gpu_tile_buffer_cols": 500},
+        {"n_blocks": 3, "gpu_tile_rows": 517, "gpu_tile_cols": 310, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_cols": 222, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_rows": 310, "gpu_tile_cols": 517, "gpu_tile_buffer_cols": 500},
+        {"gpu_tile_rows": 141, "gpu_tile_cols": 92, "gpu_tile_buffer_cols": 503},
+    ],
+)
+def test_gpu_hamming_reference(kwargs):
     # test hamming distance against reference implementation
     from . import TESTDATA
 
     seqs = np.load(TESTDATA / "hamming_test_data/hamming_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "hamming_test_data/hamming_WU3k_csr_result.npz")
 
-    gpu_hamming_calculator = GPUHammingDistanceCalculator(cutoff=2, gpu_n_blocks=5, gpu_block_width=500)
+    gpu_hamming_calculator = GPUHammingDistanceCalculator(cutoff=2, **kwargs)
     res = gpu_hamming_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
