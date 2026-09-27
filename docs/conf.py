@@ -197,5 +197,7 @@ nitpick_ignore = [
     ("py:class", "awkward.behaviors.string.StringBehavior"),
     ("py:class", "logomaker.src.Logo.Logo"),
     ("py:class", "pathlib._local.Path"),
+    # hillrep does not publish a sphinx inventory
+    ("py:class", "hillrep.assess.Assessment"),
     ("py:data", "typing.Union"),
 ]
