@@ -1300,7 +1300,9 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         Set explicitly to 12 to acknowledge the new default, or to 4 to retain the previous behavior.
     ntrim/ctrim:
         Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
-        in the distance calculation.
+        in the distance calculation. Sequences with length <= ntrim + ctrim have no remaining
+        positions and trigger a warning. All their comparisons, including self-comparisons, are
+        excluded; their rows and columns remain empty without changing the matrix shape.
     fixed_gappos:
         If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
@@ -1407,6 +1409,18 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
 
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
 
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        sequences = seqs if seqs2 is seqs else itertools.chain(seqs, seqs2)
+        n_excluded = sum(len(seq) <= self.ntrim + self.ctrim for seq in sequences)
+        if n_excluded:
+            warnings.warn(
+                f"{n_excluded} input sequences have no positions remaining after trimming "
+                f"(ntrim={self.ntrim}, ctrim={self.ctrim}). All comparisons involving these sequences "
+                "are excluded, including self-comparisons. Their matrix rows and columns remain empty.",
+                UserWarning,
+                stacklevel=2,
+            )
+
     def _tcrdist_mat(
         self,
         *,
@@ -1498,10 +1512,14 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                 thread_id = nb.get_thread_id()
                 row_end_index = 0
                 seq1_len = seqs_L1[row_index]
+                if seq1_len <= ntrim + ctrim:
+                    continue
 
                 for col_index in range(start_column + row_index * is_symmetric, num_cols):
                     distance = 1
                     seq2_len = seqs_L2[col_index]
+                    if seq2_len <= ntrim + ctrim:
+                        continue
 
                     if seq1_len == seq2_len:
                         for i in range(ntrim, seq1_len - ctrim):

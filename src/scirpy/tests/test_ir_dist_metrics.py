@@ -634,7 +634,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 25, 33], [25, 1, 33], [33, 33, 1]]),
         ),
-        # test with high ntrim - trimmimg with ntrim is only possible until the beginning of the gap for sequences of unequal length
+        # Test that excessive N-terminal trimming excludes all comparisons.
         (
             {
                 "dist_weight": 3,
@@ -649,7 +649,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
             ),
-            np.array([[1, 1, 9], [1, 1, 9], [9, 9, 1]]),
+            np.zeros((3, 3)),
         ),
         # test with ctrim = 0 and cutoff set high to neglect it
         (
@@ -668,7 +668,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 25, 21], [25, 1, 21], [21, 21, 1]]),
         ),
-        # test with high ctrim - trimmimg with ctrim is only possible until the end of the gap for sequences of unequal length
+        # Test that excessive C-terminal trimming excludes all comparisons.
         (
             {
                 "dist_weight": 3,
@@ -683,7 +683,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
             ),
-            np.array([[1, 1, 21], [1, 1, 21], [21, 21, 1]]),
+            np.zeros((3, 3)),
         ),
         # test with fixed_gappos = False and a high cutoff to neglect it
         # AAAAA added at the beginning of the usual sequences to make to difference of min_gappos and max_gappos more significant
@@ -909,6 +909,72 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
+
+@pytest.mark.parametrize("fixed_gappos", [True, False])
+@pytest.mark.parametrize(
+    "seqs,seqs2,ntrim,ctrim,n_excluded,expected",
+    [
+        # Invalid lengths below and at the trimming boundary keep empty rows and columns.
+        (
+            ["AAA", "AAAAAA", "", "AAAAA", "AAAAAAA"],
+            None,
+            3,
+            2,
+            3,
+            [[0, 0, 0, 0, 0], [0, 1, 0, 0, 13], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 13, 0, 0, 1]],
+        ),
+        # Both input lists contribute to the warning count in rectangular comparisons.
+        (["AAAAAA", "AAA"], ["AAAAA", "AAAAAAA", ""], 5, 0, 3, [[0, 13, 0], [0, 0, 0]]),
+        # Fully trimmed inputs have no self-matches either.
+        (["AAA", "AAAAA"], None, 0, 5, 2, [[0, 0], [0, 0]]),
+        # Without trimming, only empty sequences are excluded.
+        (["", "AA"], None, 0, 0, 1, [[0, 0], [0, 1]]),
+        # Mixed valid and fully trimmed sequences retain only valid matches within the cutoff.
+        (
+            ["AAA", "AAAAAAAA", "AAARAAAA", "AAAAAAAAA", "AAAAA", "AAAAAAAAAA"],
+            None,
+            3,
+            2,
+            2,
+            [
+                [0, 0, 0, 0, 0, 0],
+                [0, 1, 13, 13, 0, 0],
+                [0, 13, 1, 0, 0, 0],
+                [0, 13, 0, 1, 0, 13],
+                [0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 13, 0, 1],
+            ],
+        ),
+        # Rectangular inputs combine custom trimming, mismatches, gaps, and excluded rows/columns.
+        (
+            ["AA", "AAAAAA", "AARAAA", "AAAAAAA"],
+            ["AAAAAAAA", "", "AAAAAA", "AAA", "AAAAAAA"],
+            2,
+            1,
+            3,
+            [[0, 0, 0, 0, 0], [0, 0, 1, 0, 13], [0, 0, 13, 0, 0], [13, 0, 13, 0, 1]],
+        ),
+        # No matches remain when all row sequences are fully trimmed, even with valid columns.
+        (
+            ["", "A", "AAAA", "AAAAAA"],
+            ["AAAAAAA", "AAAAAA", "AAAAAAAA", "AA", "AAAAAAA"],
+            4,
+            2,
+            6,
+            [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
+        ),
+    ],
+)
+def test_tcrdist_fully_trimmed(seqs, seqs2, ntrim, ctrim, n_excluded, expected, fixed_gappos):
+    calculator = TCRdistDistanceCalculator(
+        gap_penalty=12, ntrim=ntrim, ctrim=ctrim, fixed_gappos=fixed_gappos, n_jobs=1, n_blocks=2
+    )
+    with pytest.warns(UserWarning, match=f"{n_excluded} input sequences have no positions remaining") as caught:
+        result = calculator.calc_dist_mat(seqs, seqs2)
+    assert len(caught) == 1
+    npt.assert_array_equal(result.toarray(), expected)
+    assert result.nnz == np.count_nonzero(expected)
 
 
 @pytest.mark.parametrize("gap_penalty", [None, 4, 12])
