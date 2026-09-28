@@ -666,7 +666,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
             ),
-            np.array([[1, 25, 21], [25, 1, 21], [21, 21, 1]]),
+            np.array([[1, 25, 21], [25, 1, 33], [21, 33, 1]]),
         ),
         # Test that excessive C-terminal trimming excludes all comparisons.
         (
@@ -899,6 +899,33 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAA", "AAARAAAAA", "AAAAAAAA", "AAARAAAA"]),
             ),
             np.array([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0]]),
+        ),
+        # Fixed gaps respect N-terminal trimming beyond the original maximum gap position.
+        (
+            {"gap_penalty": 12, "ntrim": 8, "ctrim": 2, "cutoff": 30, "n_jobs": 1},
+            (
+                np.array(["AAAAAAAAAAAA", "AAAAAAARAAAA", "AAAAAAAARAAA"]),
+                np.array(["AAAAAAAAAAAAA", "AAAAAAAARAAAA", "AAAAAAAAARAAA"]),
+            ),
+            np.array([[13, 13, 25], [13, 13, 25], [25, 25, 13]]),
+        ),
+        # Fixed gaps respect C-terminal trimming that leaves just one position to compare.
+        (
+            {"gap_penalty": 12, "ntrim": 3, "ctrim": 8, "cutoff": 30, "n_jobs": 1},
+            (
+                np.array(["AAAAAAAAAAAA", "AAAARAAAAAAA", "AAARAAAAAAAA"]),
+                np.array(["AAAAAAAAAAAAA", "AAAAARAAAAAAA", "AAAARAAAAAAAA"]),
+            ),
+            np.array([[13, 13, 25], [13, 13, 25], [25, 25, 13]]),
+        ),
+        # Custom trimming moves the fixed gap within the remaining region of short sequences.
+        (
+            {"gap_penalty": 12, "ntrim": 3, "ctrim": 0, "cutoff": 30, "n_jobs": 1},
+            (
+                np.array(["AAAAAAAA", "AAAARAAA"]),
+                np.array(["AAAAAAAAA", "AAAARAAAA", "AAAAARAAA"]),
+            ),
+            np.array([[13, 25, 13], [25, 13, 25]]),
         ),
     ],
 )

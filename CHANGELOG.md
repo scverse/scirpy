@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning][].
 
 ### Changed
 
+  - Make the fixed TCRdist gap position depend on `ntrim` and `ctrim` so it stays within the
+    remaining region. Default trimming retains the previous behavior; custom trimming can change
+    distances. The variable gap-position search (`fixed_gappos=False`) is unchanged.
+
   - Exclude TCRdist comparisons involving sequences with no positions remaining after trimming,
     including self-comparisons. A warning reports the number of affected input sequences; matrix
     shape and sequence order are preserved.

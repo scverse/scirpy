@@ -1304,7 +1304,8 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         positions and trigger a warning. All their comparisons, including self-comparisons, are
         excluded; their rows and columns remain empty without changing the matrix shape.
     fixed_gappos:
-        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
+        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6) -
+        the gap position falls within the untrimmed region.
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
         Will eliminate distances > cutoff to make efficient
@@ -1529,9 +1530,11 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                         short_len = min(seq1_len, seq2_len)
                         len_diff = abs(seq1_len - seq2_len)
                         if fixed_gappos:
-                            min_gappos = min(6, 3 + (short_len - 5) // 2)
+                            gappos_limit = max(6, ntrim)
+                            min_gappos = min(gappos_limit, ntrim + (short_len - ntrim - ctrim) // 2)
                             max_gappos = min_gappos
                         else:
+                            # TODO: Adapt the dynamic gap-position search bounds to custom ntrim and ctrim values.
                             min_gappos = 5
                             max_gappos = short_len - 1 - 4
                             while min_gappos > max_gappos:
