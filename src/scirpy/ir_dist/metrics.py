@@ -1544,6 +1544,8 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                         short_len = min(seq1_len, seq2_len)
                         len_diff = abs(seq1_len - seq2_len)
                         if fixed_gappos:
+                            # Adapt the original min_gappos = min(6, 3 + (short_len - 5) // 2) formula to custom
+                            # ntrim and ctrim values, keeping the gap within the remaining region.
                             gappos_limit = max(6, ntrim)
                             min_gappos = min(gappos_limit, ntrim + (short_len - ntrim - ctrim) // 2)
                             max_gappos = min_gappos
