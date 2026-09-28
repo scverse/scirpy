@@ -1349,6 +1349,8 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         distance_cap: int | None | Literal["default"] = "default",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
+        # TODO: Remove the migration warning after a transition period and set
+        # cutoff=24 and gap_penalty=12 directly in the signature.
         default_changes = []
         if cutoff == "default":
             default_changes.append(
