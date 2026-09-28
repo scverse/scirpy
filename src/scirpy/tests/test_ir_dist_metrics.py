@@ -870,9 +870,9 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[25, 1, 0, 13], [13, 13, 0, 25], [25, 25, 13, 13]]),
         ),
-        # Test that two extra residues exceed the default cutoff with gap_penalty=12.
+        # Test that two extra residues exceed the previous cutoff with gap_penalty=12.
         (
-            {"gap_penalty": 12, "n_jobs": 1},
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 20},
             (np.array(["AAAAAAAAAA", "AAAAAAAA", "AAAAAAAAA", "AAAAAAAAAAA"]), None),
             np.array([[1, 0, 13, 13], [0, 1, 13, 0], [13, 13, 1, 0], [13, 0, 0, 1]]),
         ),
@@ -995,7 +995,7 @@ def test_tcrdist(test_parameters, test_input, expected_result):
 )
 def test_tcrdist_fully_trimmed(seqs, seqs2, ntrim, ctrim, n_excluded, expected, fixed_gappos):
     calculator = TCRdistDistanceCalculator(
-        gap_penalty=12, ntrim=ntrim, ctrim=ctrim, fixed_gappos=fixed_gappos, n_jobs=1, n_blocks=2
+        cutoff=20, gap_penalty=12, ntrim=ntrim, ctrim=ctrim, fixed_gappos=fixed_gappos, n_jobs=1, n_blocks=2
     )
     with pytest.warns(UserWarning, match=f"{n_excluded} input sequences have no positions remaining") as caught:
         result = calculator.calc_dist_mat(seqs, seqs2)
@@ -1004,12 +1004,44 @@ def test_tcrdist_fully_trimmed(seqs, seqs2, ntrim, ctrim, n_excluded, expected, 
     assert result.nnz == np.count_nonzero(expected)
 
 
+@pytest.mark.parametrize("cutoff", [None, 20, 24])
+@pytest.mark.parametrize("gap_penalty", [None, 4, 12])
+def test_tcrdist_default_warning(cutoff, gap_penalty):
+    kwargs = {name: value for name, value in (("cutoff", cutoff), ("gap_penalty", gap_penalty)) if value is not None}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        calculator = TCRdistDistanceCalculator(n_jobs=1, **kwargs)
+    assert calculator.cutoff == (24 if cutoff is None else cutoff)
+    assert calculator.gap_penalty == (12 if gap_penalty is None else gap_penalty)
+    if cutoff is None or gap_penalty is None:
+        assert len(caught) == 1
+        assert caught[0].category is UserWarning
+        message = str(caught[0].message)
+        assert ("`cutoff` has changed from 20 to 24" in message) == (cutoff is None)
+        assert ("`gap_penalty` has changed from 4 to 12" in message) == (gap_penalty is None)
+    else:
+        assert not caught
+
+
+@pytest.mark.parametrize("cutoff,expected", [(None, 25), (20, 0), (24, 25)])
+def test_sequence_dist_tcrdist_default_cutoff(cutoff, expected):
+    kwargs = {} if cutoff is None else {"cutoff": cutoff}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", UserWarning)
+        result = ir.ir_dist.sequence_dist(
+            ["AAAAAAAA"], ["AAAAAAAAAA"], metric="tcrdist", gap_penalty=12, n_jobs=1, **kwargs
+        )
+    migration_warnings = [w for w in caught if "default value of `cutoff`" in str(w.message)]
+    assert len(migration_warnings) == (cutoff is None)
+    assert result[0, 0] == expected
+
+
 @pytest.mark.parametrize("gap_penalty", [None, 4, 12])
 def test_tcrdist_gap_penalty_default(gap_penalty):
     kwargs = {} if gap_penalty is None else {"gap_penalty": gap_penalty}
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        calculator = TCRdistDistanceCalculator(n_jobs=1, **kwargs)
+        calculator = TCRdistDistanceCalculator(cutoff=24, n_jobs=1, **kwargs)
     if gap_penalty is None:
         assert len(caught) == 1
         assert caught[0].category is UserWarning

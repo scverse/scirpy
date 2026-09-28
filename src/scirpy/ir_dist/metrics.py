@@ -1308,8 +1308,9 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         the gap position falls within the untrimmed region.
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
-        Will eliminate distances > cutoff to make efficient
-        use of sparse matrices.
+        Will eliminate distances > cutoff to make efficient use of sparse matrices. Defaults to 24.
+        If omitted, emits a warning about the change from the previous default of 20.
+        Set explicitly to 24 to acknowledge the new default, or to 20 to retain the previous cutoff.
     n_jobs:
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
@@ -1334,10 +1335,10 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: int = 20,
+        cutoff: int | Literal["default"] = "default",  # resolves to 24
         *,
         dist_weight: int = 3,
-        gap_penalty: int | Literal["default"] = "default",
+        gap_penalty: int | Literal["default"] = "default",  # resolves to 12
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
@@ -1348,16 +1349,27 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         distance_cap: int | None | Literal["default"] = "default",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
+        default_changes = []
+        if cutoff == "default":
+            default_changes.append(
+                "The default value of `cutoff` has changed from 20 to 24. "
+                "Set `cutoff=24` explicitly to acknowledge the new default, "
+                "or `cutoff=20` to retain the previous cutoff."
+            )
+            cutoff = 24
         if gap_penalty == "default":
-            warnings.warn(
+            default_changes.append(
                 "The default value of `gap_penalty` has changed from 4 to 12. "
-                "This changes TCRdist distances between sequences of different lengths. "
                 "Set `gap_penalty=12` explicitly to acknowledge the new default, "
-                "or `gap_penalty=4` to retain the previous behavior.",
+                "or `gap_penalty=4` to retain the previous gap penalty."
+            )
+            gap_penalty = 12
+        if default_changes:
+            warnings.warn(
+                " ".join(default_changes) + " These changes may affect distance results and clonotype clusters.",
                 UserWarning,
                 stacklevel=2,
             )
-            gap_penalty = 12
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
         self.ntrim = ntrim

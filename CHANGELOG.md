@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning][].
 
 ### Changed
 
+  - Increase the default TCRdist `cutoff` from 20 to 24, allowing two gap positions with the new
+    default gap penalty of 12. Omitting `cutoff` emits a `UserWarning`, combined with the gap-penalty
+    warning when both defaults are used. Set `cutoff=24` explicitly to acknowledge the new default,
+    or `cutoff=20` to retain the previous cutoff. To retain both previous parameter values, also set
+    `gap_penalty=4`. The increased cutoff can add sequence matches and change clonotype clusters.
+
   - Make the fixed TCRdist gap position depend on `ntrim` and `ctrim` so it stays within the
     remaining region. Default trimming retains the previous behavior; custom trimming can change
     distances. The variable gap-position search (`fixed_gappos=False`) is unchanged.
