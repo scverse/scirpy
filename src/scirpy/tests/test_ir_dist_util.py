@@ -337,3 +337,13 @@ def test_dlnf_lookup_with_different_forward_and_reverse_tables_rect(dlnf_with_lo
         == list(dlnf_with_lookup.lookup(6, "VDJ_test", "VJ_test").todense().A1)
         == [0, 0, 0, 0, 0]
     )
+
+
+@pytest.mark.parametrize("dlnf_with_lookup", ["dlnf_square", "dlnf_rectangle"], indirect=True)
+def test_dlnf_lookup_empty_distance_matrix(dlnf_with_lookup):
+    matrix = dlnf_with_lookup.distance_matrices["test"]
+    matrix.data[:] = 0
+    matrix.eliminate_zeros()
+    result = dlnf_with_lookup.lookup(np.array([0, 1]), "VJ_test")
+    assert result.shape == (2, dlnf_with_lookup.lookups["VJ_test"][2].size)
+    assert result.nnz == 0
