@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Changed
+
+  - Increase the default TCRdist `gap_penalty` from 4 to 12 to match the authors' later implementation.
+    This changes distances between sequences of different lengths. Omitting `gap_penalty` now emits a
+    `UserWarning`; explicitly set `gap_penalty=12` to acknowledge the new default, or `gap_penalty=4`
+    to retain the previous behavior.
+
 ### Fixes
 
   - Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.

@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 from unittest.mock import patch
 
@@ -860,6 +861,45 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 34, 28], [34, 1, 19], [28, 19, 1]]),
         ),
+        # Test combined mismatch and gap costs, including distances above the cutoff.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 24},
+            (
+                np.array(["AAAAAAAA", "AAARAAAA", "AAAAAAAAAA"]),
+                np.array(["AAARAAAAA", "AAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAA"]),
+            ),
+            np.array([[25, 1, 0, 13], [13, 13, 0, 25], [25, 25, 13, 13]]),
+        ),
+        # Test that two extra residues exceed the default cutoff with gap_penalty=12.
+        (
+            {"gap_penalty": 12, "n_jobs": 1},
+            (np.array(["AAAAAAAAAA", "AAAAAAAA", "AAAAAAAAA", "AAAAAAAAAAA"]), None),
+            np.array([[1, 0, 13, 13], [0, 1, 13, 0], [13, 13, 1, 0], [13, 0, 0, 1]]),
+        ),
+        # Test that two extra residues are retained exactly at cutoff=24.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 24},
+            (np.array(["AAAAAAAAAA", "AAAAAAAA", "AAAAAAAAA", "AAAAAAAAAAA"]), None),
+            np.array([[1, 25, 13, 13], [25, 1, 13, 0], [13, 13, 1, 25], [13, 0, 25, 1]]),
+        ),
+        # Test that a single gap or mismatch is retained exactly at cutoff=12.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 12},
+            (
+                np.array(["AAAAAAAA", "AAARAAAA", "AAAAAAAAA"]),
+                np.array(["AAAAAAAAA", "AAARAAAAA", "AAAAAAAA", "AAARAAAA"]),
+            ),
+            np.array([[13, 0, 1, 13], [0, 13, 13, 1], [1, 13, 13, 0]]),
+        ),
+        # Test that cutoff=11 excludes a single gap or mismatch but retains identical sequences.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 11},
+            (
+                np.array(["AAAAAAAA", "AAARAAAA", "AAAAAAAAA"]),
+                np.array(["AAAAAAAAA", "AAARAAAAA", "AAAAAAAA", "AAARAAAA"]),
+            ),
+            np.array([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0]]),
+        ),
     ],
 )
 def test_tcrdist(test_parameters, test_input, expected_result):
@@ -869,6 +909,25 @@ def test_tcrdist(test_parameters, test_input, expected_result):
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
+
+@pytest.mark.parametrize("gap_penalty", [None, 4, 12])
+def test_tcrdist_gap_penalty_default(gap_penalty):
+    kwargs = {} if gap_penalty is None else {"gap_penalty": gap_penalty}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        calculator = TCRdistDistanceCalculator(n_jobs=1, **kwargs)
+    if gap_penalty is None:
+        assert len(caught) == 1
+        assert caught[0].category is UserWarning
+        assert "has changed from 4 to 12" in str(caught[0].message)
+    else:
+        assert not caught
+    expected_penalty = 12 if gap_penalty is None else gap_penalty
+    assert calculator.gap_penalty == expected_penalty
+    # One extra residue contributes only the gap penalty; stored distances are offset by 1.
+    result = calculator.calc_dist_mat(np.array(["AAAAAAAA"]), np.array(["AAAAAAAAA"]))
+    assert result[0, 0] == expected_penalty + 1
 
 
 @pytest.mark.parametrize(

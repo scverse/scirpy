@@ -1,5 +1,6 @@
 import abc
 import itertools
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -1286,15 +1287,17 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    Using default weight, gap penalty, ntrim and ctrim is equivalent to the
-    original distance published in :cite:`TCRdist`.
+    This implements the CDR3 component of :cite:`TCRdist`. The default gap penalty
+    is 12, following the authors' later implementation; the original paper used 8.
 
     Parameters
     ----------
     dist_weight:
         Weight applied to the mismatch distances before summing with the gap penalties
     gap_penalty:
-        Distance penalty for the difference in the length of the two sequences
+        Distance penalty per amino acid of length difference. Defaults to 12.
+        If omitted, emits a warning about the change from the previous default of 4.
+        Set explicitly to 12 to acknowledge the new default, or to 4 to retain the previous behavior.
     ntrim/ctrim:
         Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
         in the distance calculation.
@@ -1331,7 +1334,7 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         cutoff: int = 20,
         *,
         dist_weight: int = 3,
-        gap_penalty: int = 4,
+        gap_penalty: int | Literal["default"] = "default",
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
@@ -1342,6 +1345,16 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         distance_cap: int | None | Literal["default"] = "default",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
+        if gap_penalty == "default":
+            warnings.warn(
+                "The default value of `gap_penalty` has changed from 4 to 12. "
+                "This changes TCRdist distances between sequences of different lengths. "
+                "Set `gap_penalty=12` explicitly to acknowledge the new default, "
+                "or `gap_penalty=4` to retain the previous behavior.",
+                UserWarning,
+                stacklevel=2,
+            )
+            gap_penalty = 12
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
         self.ntrim = ntrim
