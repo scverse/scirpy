@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 from unittest.mock import patch
 
@@ -634,7 +635,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 25, 33], [25, 1, 33], [33, 33, 1]]),
         ),
-        # test with high ntrim - trimmimg with ntrim is only possible until the beginning of the gap for sequences of unequal length
+        # Test that excessive N-terminal trimming excludes all comparisons.
         (
             {
                 "dist_weight": 3,
@@ -649,7 +650,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
             ),
-            np.array([[1, 1, 9], [1, 1, 9], [9, 9, 1]]),
+            np.zeros((3, 3)),
         ),
         # test with ctrim = 0 and cutoff set high to neglect it
         (
@@ -666,9 +667,9 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
             ),
-            np.array([[1, 25, 21], [25, 1, 21], [21, 21, 1]]),
+            np.array([[1, 25, 21], [25, 1, 33], [21, 33, 1]]),
         ),
-        # test with high ctrim - trimmimg with ctrim is only possible until the end of the gap for sequences of unequal length
+        # Test that excessive C-terminal trimming excludes all comparisons.
         (
             {
                 "dist_weight": 3,
@@ -683,7 +684,7 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
                 np.array(["AAAAAAAAAA", "AAAARRAAAA", "AANDAAAA"]),
             ),
-            np.array([[1, 1, 21], [1, 1, 21], [21, 21, 1]]),
+            np.zeros((3, 3)),
         ),
         # test with fixed_gappos = False and a high cutoff to neglect it
         # AAAAA added at the beginning of the usual sequences to make to difference of min_gappos and max_gappos more significant
@@ -861,6 +862,72 @@ def test_sequence_dist_all_metrics(metric, n_jobs):
             ),
             np.array([[1, 34, 28], [34, 1, 19], [28, 19, 1]]),
         ),
+        # Test combined mismatch and gap costs, including distances above the cutoff.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 24},
+            (
+                np.array(["AAAAAAAA", "AAARAAAA", "AAAAAAAAAA"]),
+                np.array(["AAARAAAAA", "AAAAAAAA", "AAAAAAAAAAA", "AAAAAAAAA"]),
+            ),
+            np.array([[25, 1, 0, 13], [13, 13, 0, 25], [25, 25, 13, 13]]),
+        ),
+        # Test that two extra residues exceed the previous cutoff with gap_penalty=12.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 20},
+            (np.array(["AAAAAAAAAA", "AAAAAAAA", "AAAAAAAAA", "AAAAAAAAAAA"]), None),
+            np.array([[1, 0, 13, 13], [0, 1, 13, 0], [13, 13, 1, 0], [13, 0, 0, 1]]),
+        ),
+        # Test that two extra residues are retained exactly at cutoff=24.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 24},
+            (np.array(["AAAAAAAAAA", "AAAAAAAA", "AAAAAAAAA", "AAAAAAAAAAA"]), None),
+            np.array([[1, 25, 13, 13], [25, 1, 13, 0], [13, 13, 1, 25], [13, 0, 25, 1]]),
+        ),
+        # Test that a single gap or mismatch is retained exactly at cutoff=12.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 12},
+            (
+                np.array(["AAAAAAAA", "AAARAAAA", "AAAAAAAAA"]),
+                np.array(["AAAAAAAAA", "AAARAAAAA", "AAAAAAAA", "AAARAAAA"]),
+            ),
+            np.array([[13, 0, 1, 13], [0, 13, 13, 1], [1, 13, 13, 0]]),
+        ),
+        # Test that cutoff=11 excludes a single gap or mismatch but retains identical sequences.
+        (
+            {"gap_penalty": 12, "n_jobs": 1, "cutoff": 11},
+            (
+                np.array(["AAAAAAAA", "AAARAAAA", "AAAAAAAAA"]),
+                np.array(["AAAAAAAAA", "AAARAAAAA", "AAAAAAAA", "AAARAAAA"]),
+            ),
+            np.array([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0]]),
+        ),
+        # Fixed gaps respect N-terminal trimming beyond the original maximum gap position.
+        (
+            {"gap_penalty": 12, "ntrim": 8, "ctrim": 2, "cutoff": 30, "n_jobs": 1},
+            (
+                np.array(["AAAAAAAAAAAA", "AAAAAAARAAAA", "AAAAAAAARAAA"]),
+                np.array(["AAAAAAAAAAAAA", "AAAAAAAARAAAA", "AAAAAAAAARAAA"]),
+            ),
+            np.array([[13, 13, 25], [13, 13, 25], [25, 25, 13]]),
+        ),
+        # Fixed gaps respect C-terminal trimming that leaves just one position to compare.
+        (
+            {"gap_penalty": 12, "ntrim": 3, "ctrim": 8, "cutoff": 30, "n_jobs": 1},
+            (
+                np.array(["AAAAAAAAAAAA", "AAAARAAAAAAA", "AAARAAAAAAAA"]),
+                np.array(["AAAAAAAAAAAAA", "AAAAARAAAAAAA", "AAAARAAAAAAAA"]),
+            ),
+            np.array([[13, 13, 25], [13, 13, 25], [25, 25, 13]]),
+        ),
+        # Custom trimming moves the fixed gap within the remaining region of short sequences.
+        (
+            {"gap_penalty": 12, "ntrim": 3, "ctrim": 0, "cutoff": 30, "n_jobs": 1},
+            (
+                np.array(["AAAAAAAA", "AAAARAAA"]),
+                np.array(["AAAAAAAAA", "AAAARAAAA", "AAAAARAAA"]),
+            ),
+            np.array([[13, 25, 13], [25, 13, 25]]),
+        ),
     ],
 )
 @pytest.mark.parametrize(
@@ -881,6 +948,123 @@ def test_tcrdist(test_parameters, test_input, expected_result, calculator_class)
     assert isinstance(res, scipy.sparse.csr_matrix)
     assert res.shape == expected_result.shape
     assert np.array_equal(res.todense(), expected_result)
+
+
+@pytest.mark.parametrize("fixed_gappos", [True, False])
+@pytest.mark.parametrize(
+    "seqs,seqs2,ntrim,ctrim,n_excluded,expected",
+    [
+        # Invalid lengths below and at the trimming boundary keep empty rows and columns.
+        (
+            ["AAA", "AAAAAA", "", "AAAAA", "AAAAAAA"],
+            None,
+            3,
+            2,
+            3,
+            [[0, 0, 0, 0, 0], [0, 1, 0, 0, 13], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 13, 0, 0, 1]],
+        ),
+        # Both input lists contribute to the warning count in rectangular comparisons.
+        (["AAAAAA", "AAA"], ["AAAAA", "AAAAAAA", ""], 5, 0, 3, [[0, 13, 0], [0, 0, 0]]),
+        # Fully trimmed inputs have no self-matches either.
+        (["AAA", "AAAAA"], None, 0, 5, 2, [[0, 0], [0, 0]]),
+        # Without trimming, only empty sequences are excluded.
+        (["", "AA"], None, 0, 0, 1, [[0, 0], [0, 1]]),
+        # Mixed valid and fully trimmed sequences retain only valid matches within the cutoff.
+        (
+            ["AAA", "AAAAAAAA", "AAARAAAA", "AAAAAAAAA", "AAAAA", "AAAAAAAAAA"],
+            None,
+            3,
+            2,
+            2,
+            [
+                [0, 0, 0, 0, 0, 0],
+                [0, 1, 13, 13, 0, 0],
+                [0, 13, 1, 0, 0, 0],
+                [0, 13, 0, 1, 0, 13],
+                [0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 13, 0, 1],
+            ],
+        ),
+        # Rectangular inputs combine custom trimming, mismatches, gaps, and excluded rows/columns.
+        (
+            ["AA", "AAAAAA", "AARAAA", "AAAAAAA"],
+            ["AAAAAAAA", "", "AAAAAA", "AAA", "AAAAAAA"],
+            2,
+            1,
+            3,
+            [[0, 0, 0, 0, 0], [0, 0, 1, 0, 13], [0, 0, 13, 0, 0], [13, 0, 13, 0, 1]],
+        ),
+        # No matches remain when all row sequences are fully trimmed, even with valid columns.
+        (
+            ["", "A", "AAAA", "AAAAAA"],
+            ["AAAAAAA", "AAAAAA", "AAAAAAAA", "AA", "AAAAAAA"],
+            4,
+            2,
+            6,
+            [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
+        ),
+    ],
+)
+def test_tcrdist_fully_trimmed(seqs, seqs2, ntrim, ctrim, n_excluded, expected, fixed_gappos):
+    calculator = TCRdistDistanceCalculator(
+        cutoff=20, gap_penalty=12, ntrim=ntrim, ctrim=ctrim, fixed_gappos=fixed_gappos, n_jobs=1, n_blocks=2
+    )
+    with pytest.warns(UserWarning, match=f"{n_excluded} input sequences have no positions remaining") as caught:
+        result = calculator.calc_dist_mat(seqs, seqs2)
+    assert len(caught) == 1
+    npt.assert_array_equal(result.toarray(), expected)
+    assert result.nnz == np.count_nonzero(expected)
+
+
+@pytest.mark.parametrize("cutoff", [None, 20, 24])
+@pytest.mark.parametrize("gap_penalty", [None, 4, 12])
+def test_tcrdist_default_warning(cutoff, gap_penalty):
+    kwargs = {name: value for name, value in (("cutoff", cutoff), ("gap_penalty", gap_penalty)) if value is not None}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        calculator = TCRdistDistanceCalculator(n_jobs=1, **kwargs)
+    assert calculator.cutoff == (24 if cutoff is None else cutoff)
+    assert calculator.gap_penalty == (12 if gap_penalty is None else gap_penalty)
+    if cutoff is None or gap_penalty is None:
+        assert len(caught) == 1
+        assert caught[0].category is UserWarning
+        message = str(caught[0].message)
+        assert ("`cutoff` has changed from 20 to 24" in message) == (cutoff is None)
+        assert ("`gap_penalty` has changed from 4 to 12" in message) == (gap_penalty is None)
+    else:
+        assert not caught
+
+
+@pytest.mark.parametrize("cutoff,expected", [(None, 25), (20, 0), (24, 25)])
+def test_sequence_dist_tcrdist_default_cutoff(cutoff, expected):
+    kwargs = {} if cutoff is None else {"cutoff": cutoff}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", UserWarning)
+        result = ir.ir_dist.sequence_dist(
+            ["AAAAAAAA"], ["AAAAAAAAAA"], metric="tcrdist", gap_penalty=12, n_jobs=1, **kwargs
+        )
+    migration_warnings = [w for w in caught if "default value of `cutoff`" in str(w.message)]
+    assert len(migration_warnings) == (cutoff is None)
+    assert result[0, 0] == expected
+
+
+@pytest.mark.parametrize("gap_penalty", [None, 4, 12])
+def test_tcrdist_gap_penalty_default(gap_penalty):
+    kwargs = {} if gap_penalty is None else {"gap_penalty": gap_penalty}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        calculator = TCRdistDistanceCalculator(cutoff=24, n_jobs=1, **kwargs)
+    if gap_penalty is None:
+        assert len(caught) == 1
+        assert caught[0].category is UserWarning
+        assert "has changed from 4 to 12" in str(caught[0].message)
+    else:
+        assert not caught
+    expected_penalty = 12 if gap_penalty is None else gap_penalty
+    assert calculator.gap_penalty == expected_penalty
+    # One extra residue contributes only the gap penalty; stored distances are offset by 1.
+    result = calculator.calc_dist_mat(np.array(["AAAAAAAA"]), np.array(["AAAAAAAAA"]))
+    assert result[0, 0] == expected_penalty + 1
 
 
 @pytest.mark.parametrize(

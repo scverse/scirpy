@@ -1,5 +1,6 @@
 import abc
 import itertools
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -1286,24 +1287,30 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    Using default weight, gap penalty, ntrim and ctrim is equivalent to the
-    original distance published in :cite:`TCRdist`.
+    This implements the CDR3 component of :cite:`TCRdist`. The default gap penalty
+    is 12, following the authors' later implementation; the original paper used 8.
 
     Parameters
     ----------
     dist_weight:
         Weight applied to the mismatch distances before summing with the gap penalties
     gap_penalty:
-        Distance penalty for the difference in the length of the two sequences
+        Distance penalty per amino acid of length difference. Defaults to 12.
+        If omitted, emits a warning about the change from the previous default of 4.
+        Set explicitly to 12 to acknowledge the new default, or to 4 to retain the previous behavior.
     ntrim/ctrim:
         Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
-        in the distance calculation.
+        in the distance calculation. Sequences with length <= ntrim + ctrim have no remaining
+        positions and trigger a warning. All their comparisons, including self-comparisons, are
+        excluded; their rows and columns remain empty without changing the matrix shape.
     fixed_gappos:
-        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
+        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6) -
+        the gap position falls within the untrimmed region.
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
-        Will eliminate distances > cutoff to make efficient
-        use of sparse matrices.
+        Will eliminate distances > cutoff to make efficient use of sparse matrices. Defaults to 24.
+        If omitted, emits a warning about the change from the previous default of 20.
+        Set explicitly to 24 to acknowledge the new default, or to 20 to retain the previous cutoff.
     n_jobs:
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
@@ -1328,10 +1335,10 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: int = 20,
+        cutoff: int | Literal["default"] = "default",  # resolves to 24
         *,
         dist_weight: int = 3,
-        gap_penalty: int = 4,
+        gap_penalty: int | Literal["default"] = "default",  # resolves to 12
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
@@ -1342,6 +1349,29 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         distance_cap: int | None | Literal["default"] = "default",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
+        # TODO: Remove the migration warning after a transition period and set
+        # cutoff=24 and gap_penalty=12 directly in the signature.
+        default_changes = []
+        if cutoff == "default":
+            default_changes.append(
+                "The default value of `cutoff` has changed from 20 to 24. "
+                "Set `cutoff=24` explicitly to acknowledge the new default, "
+                "or `cutoff=20` to retain the previous cutoff."
+            )
+            cutoff = 24
+        if gap_penalty == "default":
+            default_changes.append(
+                "The default value of `gap_penalty` has changed from 4 to 12. "
+                "Set `gap_penalty=12` explicitly to acknowledge the new default, "
+                "or `gap_penalty=4` to retain the previous gap penalty."
+            )
+            gap_penalty = 12
+        if default_changes:
+            warnings.warn(
+                " ".join(default_changes) + " These changes may affect distance results and clonotype clusters.",
+                UserWarning,
+                stacklevel=2,
+            )
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
         self.ntrim = ntrim
@@ -1393,6 +1423,18 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         )
 
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
+
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        sequences = seqs if seqs2 is seqs else itertools.chain(seqs, seqs2)
+        n_excluded = sum(len(seq) <= self.ntrim + self.ctrim for seq in sequences)
+        if n_excluded:
+            warnings.warn(
+                f"{n_excluded} input sequences have no positions remaining after trimming "
+                f"(ntrim={self.ntrim}, ctrim={self.ctrim}). All comparisons involving these sequences "
+                "are excluded, including self-comparisons. Their matrix rows and columns remain empty.",
+                UserWarning,
+                stacklevel=2,
+            )
 
     def _tcrdist_mat(
         self,
@@ -1485,10 +1527,14 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                 thread_id = nb.get_thread_id()
                 row_end_index = 0
                 seq1_len = seqs_L1[row_index]
+                if seq1_len <= ntrim + ctrim:
+                    continue
 
                 for col_index in range(start_column + row_index * is_symmetric, num_cols):
                     distance = 1
                     seq2_len = seqs_L2[col_index]
+                    if seq2_len <= ntrim + ctrim:
+                        continue
 
                     if seq1_len == seq2_len:
                         for i in range(ntrim, seq1_len - ctrim):
@@ -1498,9 +1544,13 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                         short_len = min(seq1_len, seq2_len)
                         len_diff = abs(seq1_len - seq2_len)
                         if fixed_gappos:
-                            min_gappos = min(6, 3 + (short_len - 5) // 2)
+                            # Adapt the original min_gappos = min(6, 3 + (short_len - 5) // 2) formula to custom
+                            # ntrim and ctrim values, keeping the gap within the remaining region.
+                            gappos_limit = max(6, ntrim)
+                            min_gappos = min(gappos_limit, ntrim + (short_len - ntrim - ctrim) // 2)
                             max_gappos = min_gappos
                         else:
+                            # TODO: Adapt the dynamic gap-position search bounds to custom ntrim and ctrim values.
                             min_gappos = 5
                             max_gappos = short_len - 1 - 4
                             while min_gappos > max_gappos:
