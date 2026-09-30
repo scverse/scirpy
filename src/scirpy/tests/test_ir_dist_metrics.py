@@ -938,6 +938,7 @@ def test_tcrdist(test_parameters, test_input, expected_result, calculator_class)
     test_parameters = test_parameters.copy()
     if calculator_class is GPUTCRdistDistanceCalculator:
         test_parameters.pop("n_jobs", None)
+        test_parameters.update(gpu_tile_rows=2, gpu_tile_cols=2, gpu_tile_buffer_cols=1)
         if not test_parameters.get("fixed_gappos", True):
             with pytest.raises(NotImplementedError, match="fixed_gappos=True"):
                 calculator_class(**test_parameters)
@@ -950,7 +951,14 @@ def test_tcrdist(test_parameters, test_input, expected_result, calculator_class)
     assert np.array_equal(res.todense(), expected_result)
 
 
-@pytest.mark.parametrize("fixed_gappos", [True, False])
+@pytest.mark.parametrize(
+    "calculator_class,fixed_gappos",
+    [
+        (TCRdistDistanceCalculator, True),
+        (TCRdistDistanceCalculator, False),
+        pytest.param(GPUTCRdistDistanceCalculator, True, marks=pytest.mark.gpu),
+    ],
+)
 @pytest.mark.parametrize(
     "seqs,seqs2,ntrim,ctrim,n_excluded,expected",
     [
@@ -1005,13 +1013,16 @@ def test_tcrdist(test_parameters, test_input, expected_result, calculator_class)
         ),
     ],
 )
-def test_tcrdist_fully_trimmed(seqs, seqs2, ntrim, ctrim, n_excluded, expected, fixed_gappos):
-    calculator = TCRdistDistanceCalculator(
-        cutoff=20, gap_penalty=12, ntrim=ntrim, ctrim=ctrim, fixed_gappos=fixed_gappos, n_jobs=1, n_blocks=2
+def test_tcrdist_fully_trimmed(seqs, seqs2, ntrim, ctrim, n_excluded, expected, calculator_class, fixed_gappos):
+    kwargs = {"n_jobs": 1}
+    if calculator_class is GPUTCRdistDistanceCalculator:
+        kwargs = {"gpu_tile_rows": 2, "gpu_tile_cols": 2, "gpu_tile_buffer_cols": 1}
+    calculator = calculator_class(
+        cutoff=20, gap_penalty=12, ntrim=ntrim, ctrim=ctrim, fixed_gappos=fixed_gappos, n_blocks=2, **kwargs
     )
     with pytest.warns(UserWarning, match=f"{n_excluded} input sequences have no positions remaining") as caught:
         result = calculator.calc_dist_mat(seqs, seqs2)
-    assert len(caught) == 1
+    assert sum("input sequences have no positions remaining" in str(w.message) for w in caught) == 1
     npt.assert_array_equal(result.toarray(), expected)
     assert result.nnz == np.count_nonzero(expected)
 
@@ -1574,6 +1585,14 @@ def test_gpu_tcrdist(test_parameters, test_input, expected_result):
 
 
 @pytest.mark.gpu
+def test_gpu_tcrdist_defaults():
+    # Retain up to two extra residues at the default cutoff; three exceed it.
+    calculator = GPUTCRdistDistanceCalculator(gpu_tile_rows=2, gpu_tile_cols=2, gpu_tile_buffer_cols=1)
+    result = calculator.calc_dist_mat(np.array(["A" * 8, "A" * 9, "A" * 10, "A" * 11]))
+    npt.assert_array_equal(result.toarray(), [[1, 13, 25, 0], [13, 1, 13, 25], [25, 13, 1, 13], [0, 25, 13, 1]])
+
+
+@pytest.mark.gpu
 def test_gpu_tcrdist_buffer_retry():
     # Multiple retained distances per row force a retry; column lengths are deliberately unsorted.
     tcrdist_calculator = GPUTCRdistDistanceCalculator(
@@ -1581,7 +1600,7 @@ def test_gpu_tcrdist_buffer_retry():
     )
     result = tcrdist_calculator.calc_dist_mat(np.array(["AAAA", "AAA"]), np.array(["AAAR", "AAAAA", "AAA", "AAAA"]))
 
-    npt.assert_array_equal(result.toarray(), np.array([[13, 5, 5, 1], [0, 9, 1, 5]]))
+    npt.assert_array_equal(result.toarray(), np.array([[13, 13, 13, 1], [0, 0, 1, 13]]))
 
 
 @pytest.mark.gpu
@@ -1668,7 +1687,7 @@ def test_gpu_tcrdist_reference(kwargs):
     seqs = np.load(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_seqs.npy")
     reference_result = scipy.sparse.load_npz(TESTDATA / "tcrdist_test_data/tcrdist_WU3k_csr_result.npz")
 
-    gpu_tcrdist_calculator = GPUTCRdistDistanceCalculator(cutoff=15, **kwargs)
+    gpu_tcrdist_calculator = GPUTCRdistDistanceCalculator(cutoff=15, gap_penalty=4, **kwargs)
     res = gpu_tcrdist_calculator.calc_dist_mat(seqs, seqs)
 
     assert np.array_equal(res.data, reference_result.data)
@@ -1708,7 +1727,7 @@ def test_gpu_tcrdist_length_bounds(gap_penalty, seqs2):
 @pytest.mark.gpu
 @pytest.mark.parametrize("ntrim,ctrim", [(0, 0), (3, 2), (10, 10)])
 def test_gpu_tcrdist_short_sequences(ntrim, ctrim):
-    # Short, unequal sequences exercise the CPU's floor division when locating the fixed gap.
+    # Short sequences cover custom gap placement and exclusion after trimming.
     seqs = np.array(["AR", "ARN", "ARND", "ARNDC"])
     seqs2 = np.array(["ACR", "ARNC", "RARND", "ARN"])
     kwargs = {"cutoff": 100, "ntrim": ntrim, "ctrim": ctrim}
