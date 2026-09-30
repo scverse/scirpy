@@ -1842,9 +1842,6 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                 int col_end = length_ends[seq1_len];
                 for (int col = col_start; col < col_end; col++) {
                     int seq2_len = seqs_L2[col];
-                    if (seq2_len <= ntrim + ctrim) {
-                        continue;
-                    }
                     long long distance = 1 + (long long)gap_penalty * abs(seq1_len - seq2_len);
 
                     if (seq1_len == seq2_len) {
@@ -2058,9 +2055,10 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
 
         possible_lengths = np.arange(max_seq_len + 1)
         max_length_diff = self.cutoff // self.gap_penalty if self.gap_penalty else max_seq_len
+        min_lengths = np.maximum(possible_lengths - max_length_diff, self.ntrim + self.ctrim + 1)
         length_bounds_blocks = [
             (
-                cp.asarray(np.searchsorted(lengths, possible_lengths - max_length_diff, side="left").astype(np.int32)),
+                cp.asarray(np.searchsorted(lengths, min_lengths, side="left").astype(np.int32)),
                 cp.asarray(np.searchsorted(lengths, possible_lengths + max_length_diff, side="right").astype(np.int32)),
             )
             for lengths in seqs_L2_blocks
