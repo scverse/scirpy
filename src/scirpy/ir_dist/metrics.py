@@ -1608,8 +1608,8 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    Using default weight, gap penalty, ntrim and ctrim is equivalent to the
-    original distance published in :cite:`TCRdist`.
+    This implements the CDR3 component of :cite:`TCRdist`. The default gap penalty
+    is 12, following the authors' later implementation; the original paper used 8.
 
     For performance reasons, the rows and columns of the final result matrix are grouped into tiles for GPU
     computation. `gpu_tile_rows` and `gpu_tile_cols` control how many matrix rows and columns are grouped into each
@@ -1631,16 +1631,18 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
     dist_weight:
         Weight applied to the mismatch distances before summing with the gap penalties
     gap_penalty:
-        Distance penalty for the difference in the length of the two sequences
+        Distance penalty per amino acid of length difference. Defaults to 12.
     ntrim/ctrim:
         Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
-        in the distance calculation.
+        in the distance calculation. Sequences with length <= ntrim + ctrim have no remaining
+        positions and trigger a warning. All their comparisons, including self-comparisons, are
+        excluded; their rows and columns remain empty without changing the matrix shape.
     fixed_gappos:
-        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
+        If True, insert gaps at a fixed position after the cysteine residue starting the CDR3 (typically position 6) -
+        the gap position accounts for custom ntrim and ctrim values and falls within the untrimmed region.
         Only True is currently supported; False raises NotImplementedError.
     cutoff:
-        Will eliminate distances > cutoff to make efficient use of sparse matrices. Must be between 0 and
-        2**31 - 2 to allow distance + 1 encoding in the GPU result buffer.
+        Will eliminate distances > cutoff to make efficient use of sparse matrices. Defaults to 24.
     n_blocks:
         Number of outer row partitions submitted through joblib. This can be used with a distributed joblib backend to
         distribute the calculation across multiple GPU workers.

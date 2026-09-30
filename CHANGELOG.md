@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Features
+
+  - Add `metric="gpu_tcrdist"` for GPU-accelerated TCRdist. Currently only `fixed_gappos=True` is supported.
+
 ### Changed
 
   - Increase the default TCRdist `cutoff` from 20 to 24, allowing two gap positions with the new
@@ -38,9 +42,6 @@ and this project adheres to [Semantic Versioning][].
 ## v0.26.0
 
 ### Features
-
-  - Add `metric="gpu_tcrdist"` for GPU-accelerated TCRdist with row and column tiling, adaptive result buffers,
-    and support for BLOSUM62 and TCRBLOSUM matrices.
 
   - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
     `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
