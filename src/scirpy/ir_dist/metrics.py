@@ -1669,10 +1669,10 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: int = 20,
+        cutoff: int = 24,
         *,
         dist_weight: int = 3,
-        gap_penalty: int = 4,
+        gap_penalty: int = 12,
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
