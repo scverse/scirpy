@@ -181,7 +181,7 @@ def clonotype_network(
         size_power = params.adata.uns[basis]["size_power"] if size_power is None else size_power
     except KeyError:
         raise KeyError(f"{basis} not found in `adata.uns`. Did you run `tl.clonotype_network`?") from None
-    if f"X_{basis}" not in params.adata.obsm_keys():
+    if f"X_{basis}" not in params.adata.obsm:
         raise KeyError(f"X_{basis} not found in `adata.obsm`. Did you run `tl.clonotype_network`?")
     if clonotype_key not in params.adata.obs.columns:
         raise KeyError(f"{clonotype_key} not found in adata.obs.")
