@@ -1831,10 +1831,18 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                 int seq1_len = seqs_L1[row];
                 int row_end_index = 0;
 
+                if (seq1_len <= ntrim + ctrim) {
+                    row_element_counts[seqs_original_index] = 0;
+                    return;
+                }
+
                 int col_start = length_starts[seq1_len];
                 int col_end = length_ends[seq1_len];
                 for (int col = col_start; col < col_end; col++) {
                     int seq2_len = seqs_L2[col];
+                    if (seq2_len <= ntrim + ctrim) {
+                        continue;
+                    }
                     long long distance = 1 + (long long)gap_penalty * abs(seq1_len - seq2_len);
 
                     if (seq1_len == seq2_len) {
