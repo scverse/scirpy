@@ -1858,9 +1858,10 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                     else {
                         int short_len = min(seq1_len, seq2_len);
 
-                        // Equivalent to min(6, 3 + (short_len - 5) // 2) in the CPU implementation.
-                        // Needed since Python rounds integer division down, whereas CUDA C++ truncates toward zero.
-                        int gappos = min(6, (short_len + 1) / 2);
+                        // Adapt the original min_gappos = min(6, 3 + (short_len - 5) // 2) formula to custom
+                        // ntrim and ctrim values, keeping the gap within the remaining region.
+                        int gappos_limit = max(6, ntrim);
+                        int gappos = min(gappos_limit, ntrim + (short_len - ntrim - ctrim) / 2);
                         int remainder = short_len - gappos;
 
                         for (int n_i = ntrim; n_i < gappos; n_i++) {
