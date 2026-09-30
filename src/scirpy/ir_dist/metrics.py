@@ -1798,7 +1798,8 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
 
         seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
         seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
-        d_dist_mat = cp.asarray(self.tcr_nb_distance_matrix.astype(np.int32, copy=False))
+        dist_mat_weighted = self.tcr_nb_distance_matrix.astype(np.int64, copy=False) * self.dist_weight
+        d_dist_mat_weighted = cp.asarray(dist_mat_weighted)
 
         tcrdist_kernel = cp.RawKernel(
             r"""
@@ -1820,9 +1821,8 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
             const int seqs_mat2_rows,
             const int data_cols,
             const int indices_cols,
-            const int* __restrict__ aa_distance_matrix,
+            const long long* __restrict__ weighted_aa_distance_matrix,
             const int alphabet_size,
-            const int dist_weight,
             const int gap_penalty,
             const int ntrim,
             const int ctrim
@@ -1851,7 +1851,7 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                         for (int i = ntrim; i < seq1_len - ctrim; i++) {
                             char val1 = seqs_mat1[(long long)i * seqs_mat1_rows + row];
                             char val2 = seqs_mat2[(long long)i * seqs_mat2_rows + col];
-                            distance += (long long)dist_weight * aa_distance_matrix[val1 * alphabet_size + val2];
+                            distance += weighted_aa_distance_matrix[val1 * alphabet_size + val2];
                             if (distance > cutoff + 1) {
                                 break;
                             }
@@ -1869,7 +1869,7 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                         for (int n_i = ntrim; n_i < gappos; n_i++) {
                             char val1 = seqs_mat1[(long long)n_i * seqs_mat1_rows + row];
                             char val2 = seqs_mat2[(long long)n_i * seqs_mat2_rows + col];
-                            distance += (long long)dist_weight * aa_distance_matrix[val1 * alphabet_size + val2];
+                            distance += weighted_aa_distance_matrix[val1 * alphabet_size + val2];
                             if (distance > cutoff + 1) {
                                 break;
                             }
@@ -1880,7 +1880,7 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                                 int j = seq2_len - 1 - c_i;
                                 char val1 = seqs_mat1[(long long)i * seqs_mat1_rows + row];
                                 char val2 = seqs_mat2[(long long)j * seqs_mat2_rows + col];
-                                distance += (long long)dist_weight * aa_distance_matrix[val1 * alphabet_size + val2];
+                                distance += weighted_aa_distance_matrix[val1 * alphabet_size + val2];
                                 if (distance > cutoff + 1) {
                                     break;
                                 }
@@ -1979,9 +1979,8 @@ class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
                         seqs_mat2_rows,
                         buffer_width,
                         buffer_width,
-                        d_dist_mat,
+                        d_dist_mat_weighted,
                         self.tcr_nb_distance_matrix.shape[0],
-                        self.dist_weight,
                         self.gap_penalty,
                         self.ntrim,
                         self.ctrim,
