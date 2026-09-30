@@ -49,9 +49,10 @@ with joblib.parallel_config(backend="dask", n_jobs=200, verbose=10):
     )
 ```
 
-## Using GPU acceleration for hamming distance
+## Using GPU acceleration for Hamming and TCRdist
 
-The Hamming distance metric supports GPU acceleration via [cupy](https://cupy.dev/).
+The Hamming and TCRdist distance metrics support GPU acceleration via [cupy](https://cupy.dev/).
+The examples below use `gpu_hamming`; `gpu_tcrdist` supports the same GPU tile parameters.
 
 First, install the optional `cupy` dependency:
 

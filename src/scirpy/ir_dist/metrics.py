@@ -1,5 +1,6 @@
 import abc
 import itertools
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -1286,24 +1287,30 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
     The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
     Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
 
-    Using default weight, gap penalty, ntrim and ctrim is equivalent to the
-    original distance published in :cite:`TCRdist`.
+    This implements the CDR3 component of :cite:`TCRdist`. The default gap penalty
+    is 12, following the authors' later implementation; the original paper used 8.
 
     Parameters
     ----------
     dist_weight:
         Weight applied to the mismatch distances before summing with the gap penalties
     gap_penalty:
-        Distance penalty for the difference in the length of the two sequences
+        Distance penalty per amino acid of length difference. Defaults to 12.
+        If omitted, emits a warning about the change from the previous default of 4.
+        Set explicitly to 12 to acknowledge the new default, or to 4 to retain the previous behavior.
     ntrim/ctrim:
         Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
-        in the distance calculation.
+        in the distance calculation. Sequences with length <= ntrim + ctrim have no remaining
+        positions and trigger a warning. All their comparisons, including self-comparisons, are
+        excluded; their rows and columns remain empty without changing the matrix shape.
     fixed_gappos:
-        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6).
+        If True, insert gaps at a fixed position after the cysteine residue statring the CDR3 (typically position 6) -
+        the gap position falls within the untrimmed region.
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
-        Will eliminate distances > cutoff to make efficient
-        use of sparse matrices.
+        Will eliminate distances > cutoff to make efficient use of sparse matrices. Defaults to 24.
+        If omitted, emits a warning about the change from the previous default of 20.
+        Set explicitly to 24 to acknowledge the new default, or to 20 to retain the previous cutoff.
     n_jobs:
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
@@ -1328,10 +1335,10 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: int = 20,
+        cutoff: int | Literal["default"] = "default",  # resolves to 24
         *,
         dist_weight: int = 3,
-        gap_penalty: int = 4,
+        gap_penalty: int | Literal["default"] = "default",  # resolves to 12
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
@@ -1342,6 +1349,29 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         distance_cap: int | None | Literal["default"] = "default",
         chain_type: Literal["VJ", "VDJ"] | None = None,
     ):
+        # TODO: Remove the migration warning after a transition period and set
+        # cutoff=24 and gap_penalty=12 directly in the signature.
+        default_changes = []
+        if cutoff == "default":
+            default_changes.append(
+                "The default value of `cutoff` has changed from 20 to 24. "
+                "Set `cutoff=24` explicitly to acknowledge the new default, "
+                "or `cutoff=20` to retain the previous cutoff."
+            )
+            cutoff = 24
+        if gap_penalty == "default":
+            default_changes.append(
+                "The default value of `gap_penalty` has changed from 4 to 12. "
+                "Set `gap_penalty=12` explicitly to acknowledge the new default, "
+                "or `gap_penalty=4` to retain the previous gap penalty."
+            )
+            gap_penalty = 12
+        if default_changes:
+            warnings.warn(
+                " ".join(default_changes) + " These changes may affect distance results and clonotype clusters.",
+                UserWarning,
+                stacklevel=2,
+            )
         self.dist_weight = dist_weight
         self.gap_penalty = gap_penalty
         self.ntrim = ntrim
@@ -1393,6 +1423,18 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         )
 
         super().__init__(n_jobs=n_jobs, n_blocks=n_blocks, histogram=histogram)
+
+    def _validate_seqs(self, seqs: Sequence[str], seqs2: Sequence[str]) -> None:
+        sequences = seqs if seqs2 is seqs else itertools.chain(seqs, seqs2)
+        n_excluded = sum(len(seq) <= self.ntrim + self.ctrim for seq in sequences)
+        if n_excluded:
+            warnings.warn(
+                f"{n_excluded} input sequences have no positions remaining after trimming "
+                f"(ntrim={self.ntrim}, ctrim={self.ctrim}). All comparisons involving these sequences "
+                "are excluded, including self-comparisons. Their matrix rows and columns remain empty.",
+                UserWarning,
+                stacklevel=2,
+            )
 
     def _tcrdist_mat(
         self,
@@ -1485,10 +1527,14 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                 thread_id = nb.get_thread_id()
                 row_end_index = 0
                 seq1_len = seqs_L1[row_index]
+                if seq1_len <= ntrim + ctrim:
+                    continue
 
                 for col_index in range(start_column + row_index * is_symmetric, num_cols):
                     distance = 1
                     seq2_len = seqs_L2[col_index]
+                    if seq2_len <= ntrim + ctrim:
+                        continue
 
                     if seq1_len == seq2_len:
                         for i in range(ntrim, seq1_len - ctrim):
@@ -1498,9 +1544,13 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
                         short_len = min(seq1_len, seq2_len)
                         len_diff = abs(seq1_len - seq2_len)
                         if fixed_gappos:
-                            min_gappos = min(6, 3 + (short_len - 5) // 2)
+                            # Adapt the original min_gappos = min(6, 3 + (short_len - 5) // 2) formula to custom
+                            # ntrim and ctrim values, keeping the gap within the remaining region.
+                            gappos_limit = max(6, ntrim)
+                            min_gappos = min(gappos_limit, ntrim + (short_len - ntrim - ctrim) // 2)
                             max_gappos = min_gappos
                         else:
+                            # TODO: Adapt the dynamic gap-position search bounds to custom ntrim and ctrim values.
                             min_gappos = 5
                             max_gappos = short_len - 1 - 4
                             while min_gappos > max_gappos:
@@ -1550,6 +1600,592 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         return data_rows, indices_rows, row_element_counts, np.array([None])
 
     _metric_mat = _tcrdist_mat
+
+
+class GPUTCRdistDistanceCalculator(TCRdistDistanceCalculator):
+    """Computes pairwise distances between TCR CDR3 sequences based on the "tcrdist" distance metric with GPU support.
+
+    The code of this class is heavily based on `pwseqdist <https://github.com/agartland/pwseqdist/blob/master/pwseqdist>`_.
+    Reused under MIT license, Copyright (c) 2020 Andrew Fiore-Gartland.
+
+    This implements the CDR3 component of :cite:`TCRdist`. The default gap penalty
+    is 12, following the authors' later implementation; the original paper used 8.
+
+    For performance reasons, the rows and columns of the final result matrix are grouped into tiles for GPU
+    computation. `gpu_tile_rows` and `gpu_tile_cols` control how many matrix rows and columns are grouped into each
+    tile. Each tile is computed on the GPU and converted to a sparse CSR matrix before the tiles are combined again.
+
+    `gpu_tile_buffer_cols` controls how many buffer columns are initially reserved for sparse result entries in each
+    row of a tile. Because only distances at or below the cutoff are retained, the number of entries that need to be
+    stored is usually considerably smaller than the number of columns in the tile. If necessary, the buffer is
+    enlarged and the calculation is retried.
+
+    Smaller tiles reduce per-tile memory pressure but add tile-management overhead. Larger values for
+    `gpu_tile_buffer_cols` can avoid retries but require more GPU memory.
+
+    Only `fixed_gappos=True` is currently supported. Distances are accumulated using 64-bit integers;
+    the GPU result buffers and the final CSR data use 32-bit integers.
+
+    Parameters
+    ----------
+    dist_weight:
+        Weight applied to the mismatch distances before summing with the gap penalties
+    gap_penalty:
+        Distance penalty per amino acid of length difference. Defaults to 12.
+    ntrim/ctrim:
+        Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
+        in the distance calculation. Sequences with length <= ntrim + ctrim have no remaining
+        positions and trigger a warning. All their comparisons, including self-comparisons, are
+        excluded; their rows and columns remain empty without changing the matrix shape.
+    fixed_gappos:
+        If True, insert gaps at a fixed position after the cysteine residue starting the CDR3 (typically position 6) -
+        the gap position accounts for custom ntrim and ctrim values and falls within the untrimmed region.
+        Only True is currently supported; False raises NotImplementedError.
+    cutoff:
+        Will eliminate distances > cutoff to make efficient use of sparse matrices. Defaults to 24.
+    n_blocks:
+        Number of outer row partitions submitted through joblib. This can be used with a distributed joblib backend to
+        distribute the calculation across multiple GPU workers.
+    gpu_tile_rows:
+        Number of result matrix rows per GPU tile.
+    gpu_tile_cols:
+        Number of result matrix columns per GPU tile.
+    gpu_tile_buffer_cols:
+        Initial number of retained sparse entries reserved per row of each tile. Higher values can avoid retries for
+        denser results but require more GPU memory.
+    base_matrix:
+        Amino acid substitution matrix used by TCRdist. `"blosum62"` uses the original
+        BLOSUM62 substitution matrix, while `"tcrblosum"` uses TCRBLOSUM substitution
+        matrices (:cite:`TCRBLOSUM`). Depending on `chain_type`, either the TCRBLOSUM
+        alpha- or beta-chain matrix is used.
+    distance_cap:
+        Maximum distance assigned to a mismatch after converting substitution scores to distances.
+        The default value, `"default"`, keeps the original behavior: BLOSUM62 uses a cap of `4`,
+        while TCRBLOSUM distances are uncapped. Set to an integer to choose a cap explicitly, or
+        `None` for uncapped distances.
+    chain_type:
+        Required when `base_matrix="tcrblosum"`. `"VJ"` selects the alpha-chain matrix
+        and `"VDJ"` selects the beta-chain matrix. When called via `ir_dist`, this value
+        is set automatically and should not be provided.
+    """
+
+    def __init__(
+        self,
+        cutoff: int = 24,
+        *,
+        dist_weight: int = 3,
+        gap_penalty: int = 12,
+        ntrim: int = 3,
+        ctrim: int = 2,
+        fixed_gappos: bool = True,
+        n_blocks: int = 1,
+        gpu_tile_rows: int = 100_000,
+        gpu_tile_cols: int = 100_000,
+        gpu_tile_buffer_cols: int = 1000,
+        base_matrix: Literal["blosum62", "tcrblosum"] = "blosum62",
+        distance_cap: int | None | Literal["default"] = "default",
+        chain_type: Literal["VJ", "VDJ"] | None = None,
+    ):
+        if not fixed_gappos:
+            raise NotImplementedError("Only `fixed_gappos=True` is currently supported for GPU TCRdist.")
+        if not isinstance(cutoff, (int, np.integer)) or not 0 <= cutoff < np.iinfo(np.int32).max:
+            raise ValueError("`cutoff` must be an integer between 0 and 2**31 - 2.")
+        for name, value in (
+            ("dist_weight", dist_weight),
+            ("gap_penalty", gap_penalty),
+            ("ntrim", ntrim),
+            ("ctrim", ctrim),
+        ):
+            if not isinstance(value, (int, np.integer)) or not 0 <= value <= np.iinfo(np.int32).max:
+                raise ValueError(f"`{name}` must be a non-negative 32-bit integer.")
+        if gpu_tile_rows < 1:
+            raise ValueError("`gpu_tile_rows` must be >= 1.")
+        if gpu_tile_cols < 1:
+            raise ValueError("`gpu_tile_cols` must be >= 1.")
+        if gpu_tile_buffer_cols < 1:
+            raise ValueError("`gpu_tile_buffer_cols` must be >= 1.")
+
+        super().__init__(
+            cutoff=cutoff,
+            dist_weight=dist_weight,
+            gap_penalty=gap_penalty,
+            ntrim=ntrim,
+            ctrim=ctrim,
+            fixed_gappos=fixed_gappos,
+            n_jobs=1,
+            n_blocks=n_blocks,
+            base_matrix=base_matrix,
+            distance_cap=distance_cap,
+            chain_type=chain_type,
+        )
+        self.gpu_tile_rows = gpu_tile_rows
+        self.gpu_tile_cols = gpu_tile_cols
+        self.gpu_tile_buffer_cols = gpu_tile_buffer_cols
+
+    def _gpu_tcrdist_mat(
+        self,
+        *,
+        seqs: Sequence[str],
+        seqs2: Sequence[str],
+        is_symmetric: bool = False,
+        start_column: int = 0,
+    ) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, np.ndarray]:
+        """Computes the pairwise tcrdist distances for sequences in seqs and seqs2 with GPU support.
+
+        Parameters
+        ----------
+        seqs/2:
+            A python sequence of strings representing gene sequences
+        is_symmetric:
+            Determines whether the final result matrix is symmetric, assuming that this function is
+            only used to compute a block of a bigger result matrix
+        start_column:
+            Global row offset of an outer row block scheduled by joblib. Used to skip column blocks below the diagonal
+            when computing a symmetric result matrix.
+
+        Returns
+        -------
+        data_rows:
+            List with array containing the non-zero data values of the result matrix,
+            needed to create the final scipy CSR result matrix later
+        indices_rows:
+            List with array containing the non-zero entry column indeces of the result matrix,
+            needed to create the final scipy CSR result matrix later
+        row_element_counts:
+            Array with integers that indicate the amount of non-zero values of the result matrix per row,
+            needed to create the final scipy CSR result matrix later
+        row_mins:
+            Always returns a numpy array containing None because the computation of the minimum distance per row is
+            not implemented for the GPU tcrdist calculator yet.
+        """
+        import cupy as cp
+        from tqdm import tqdm
+
+        n_col_blocks = (len(seqs2) + self.gpu_tile_cols - 1) // self.gpu_tile_cols
+        n_row_blocks = (len(seqs) + self.gpu_tile_rows - 1) // self.gpu_tile_rows
+
+        seqs_blocks = np.array_split(np.asarray(seqs), n_row_blocks)
+        seqs_block_starts = np.cumsum([0] + [len(block) for block in seqs_blocks[:-1]])
+        seqs_sorted_per_block = []
+        seqs_original_indices_blocks = []
+
+        for seqs_block in seqs_blocks:
+            seqs_block_lengths = np.vectorize(len)(seqs_block)
+            seqs_block_sort_indices = np.argsort(seqs_block_lengths)
+            seqs_sorted_per_block.append(seqs_block[seqs_block_sort_indices])
+            seqs_original_indices_blocks.append(cp.asarray(seqs_block_sort_indices.astype(np.int32)))
+
+        seqs = np.concatenate(seqs_sorted_per_block)
+
+        seqs2_blocks = np.array_split(np.asarray(seqs2), n_col_blocks)
+        seqs2_block_starts = np.cumsum([0] + [len(block) for block in seqs2_blocks[:-1]])
+        seqs2_sorted_per_block = []
+        seqs2_original_indices_blocks = []
+        seqs2_block_start = 0
+
+        for seqs2_block in seqs2_blocks:
+            seqs2_block_lengths = np.vectorize(len)(seqs2_block)
+            seqs2_block_sort_indices = np.argsort(seqs2_block_lengths)
+            seqs2_sorted_per_block.append(seqs2_block[seqs2_block_sort_indices])
+            seqs2_original_indices_blocks.append(
+                cp.asarray((seqs2_block_sort_indices + seqs2_block_start).astype(np.int32))
+            )
+            seqs2_block_start += len(seqs2_block)
+
+        seqs2 = np.concatenate(seqs2_sorted_per_block)
+
+        max_seq_len = max(len(s) for s in itertools.chain(seqs, seqs2))
+
+        seqs_mat1, seqs_L1 = _seqs2mat(seqs, max_len=max_seq_len)
+        seqs_mat2, seqs_L2 = _seqs2mat(seqs2, max_len=max_seq_len)
+        dist_mat_weighted = self.tcr_nb_distance_matrix.astype(np.int64, copy=False) * self.dist_weight
+        d_dist_mat_weighted = cp.asarray(dist_mat_weighted)
+
+        tcrdist_kernel = cp.RawKernel(
+            r"""
+        extern "C" __global__ __launch_bounds__(256)
+        void tcrdist_kernel(
+            const char* __restrict__ seqs_mat1,
+            const char* __restrict__ seqs_mat2,
+            const int* __restrict__ seqs_L1,
+            const int* __restrict__ seqs_L2,
+            const int* __restrict__ length_starts,
+            const int* __restrict__ length_ends,
+            const int* __restrict__ seqs_original_indices,
+            const int* seqs2_original_indices,
+            const int cutoff,
+            int* __restrict__ data,
+            int* __restrict__ indices,
+            int* __restrict__ row_element_counts,
+            const int seqs_mat1_rows,
+            const int seqs_mat2_rows,
+            const int data_cols,
+            const int indices_cols,
+            const long long* __restrict__ weighted_aa_distance_matrix,
+            const int alphabet_size,
+            const int gap_penalty,
+            const int ntrim,
+            const int ctrim
+        ) {
+            int row = blockDim.x * blockIdx.x + threadIdx.x;
+            if (row < seqs_mat1_rows) {
+                int seqs_original_index = seqs_original_indices[row];
+                int seq1_len = seqs_L1[row];
+                int row_end_index = 0;
+
+                if (seq1_len <= ntrim + ctrim) {
+                    row_element_counts[seqs_original_index] = 0;
+                    return;
+                }
+
+                int col_start = length_starts[seq1_len];
+                int col_end = length_ends[seq1_len];
+                for (int col = col_start; col < col_end; col++) {
+                    int seq2_len = seqs_L2[col];
+                    long long distance = 1 + (long long)gap_penalty * abs(seq1_len - seq2_len);
+
+                    if (seq1_len == seq2_len) {
+                        for (int i = ntrim; i < seq1_len - ctrim; i++) {
+                            char val1 = seqs_mat1[(long long)i * seqs_mat1_rows + row];
+                            char val2 = seqs_mat2[(long long)i * seqs_mat2_rows + col];
+                            distance += weighted_aa_distance_matrix[val1 * alphabet_size + val2];
+                            if (distance > cutoff + 1) {
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        int short_len = min(seq1_len, seq2_len);
+
+                        // Adapt the original min_gappos = min(6, 3 + (short_len - 5) // 2) formula to custom
+                        // ntrim and ctrim values, keeping the gap within the remaining region.
+                        int gappos_limit = max(6, ntrim);
+                        int gappos = min(gappos_limit, ntrim + (short_len - ntrim - ctrim) / 2);
+                        int remainder = short_len - gappos;
+
+                        for (int n_i = ntrim; n_i < gappos; n_i++) {
+                            char val1 = seqs_mat1[(long long)n_i * seqs_mat1_rows + row];
+                            char val2 = seqs_mat2[(long long)n_i * seqs_mat2_rows + col];
+                            distance += weighted_aa_distance_matrix[val1 * alphabet_size + val2];
+                            if (distance > cutoff + 1) {
+                                break;
+                            }
+                        }
+                        if (distance <= cutoff + 1) {
+                            for (int c_i = ctrim; c_i < remainder; c_i++) {
+                                int i = seq1_len - 1 - c_i;
+                                int j = seq2_len - 1 - c_i;
+                                char val1 = seqs_mat1[(long long)i * seqs_mat1_rows + row];
+                                char val2 = seqs_mat2[(long long)j * seqs_mat2_rows + col];
+                                distance += weighted_aa_distance_matrix[val1 * alphabet_size + val2];
+                                if (distance > cutoff + 1) {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (distance <= cutoff + 1) {
+                        if (row_end_index < data_cols) {
+                            int seqs2_original_index = seqs2_original_indices[col];
+                            data[(long long)seqs_original_index * data_cols + row_end_index] = distance;
+                            indices[(long long)seqs_original_index * indices_cols + row_end_index] = seqs2_original_index;
+                        }
+                        row_end_index++;
+                    }
+                }
+                row_element_counts[seqs_original_index] = row_end_index;
+            }
+        }
+        """,
+            "tcrdist_kernel",
+            options=("--maxrregcount=256",),
+        )
+
+        create_csr_kernel = cp.RawKernel(
+            r"""
+        extern "C" __global__
+        void create_csr_kernel(
+            int* data, int* indices,
+            int* data_matrix, int* indices_matrix,
+            int* indptr, int data_matrix_rows, int data_matrix_cols, int data_rows, int indices_matrix_cols
+        ) {
+            int row = blockDim.x * blockIdx.x + threadIdx.x;
+            int col = blockDim.y * blockIdx.y + threadIdx.y;
+
+            if (row < data_matrix_rows && col < data_matrix_cols) {
+                int row_start = indptr[row];
+                int row_end = indptr[row + 1];
+                int row_end_index = row_end - row_start;
+                int data_index = row_start + col;
+
+                if ((data_index < data_rows) && (col < row_end_index)) {
+                    data[data_index] = data_matrix[(long long)row * data_matrix_cols + col];
+                    indices[data_index] = indices_matrix[(long long)row * indices_matrix_cols + col];
+                }
+            }
+        }
+            """,
+            "create_csr_kernel",
+        )
+
+        def calc_col_block_gpu(
+            seqs_mat1,
+            seqs_mat2_block,
+            seqs_L1_block,
+            seqs_L2_block,
+            length_bounds,
+            seqs_original_indices_block,
+            seqs2_original_indices_block,
+            buffer_width,
+        ):
+            d_seqs_L1 = cp.asarray(seqs_L1_block.astype(np.int32, copy=False))
+            d_seqs_L2 = cp.asarray(seqs_L2_block.astype(np.int32, copy=False))
+            d_length_starts, d_length_ends = length_bounds
+
+            threads_per_block = 256
+            blocks_per_grid = (seqs_mat1.shape[0] + (threads_per_block - 1)) // threads_per_block
+
+            seqs_mat1_rows = seqs_mat1.shape[0]
+            seqs_mat2_rows = seqs_mat2_block.shape[0]
+
+            d_seqs_mat1_transposed = cp.transpose(cp.asarray(seqs_mat1.astype(np.int8, copy=False))).copy()
+            d_seqs_mat2_transposed = cp.transpose(cp.asarray(seqs_mat2_block.astype(np.int8, copy=False))).copy()
+
+            def run_tcrdist_kernel(buffer_width):
+                d_data_matrix = cp.empty((seqs_mat1_rows, buffer_width), dtype=cp.int32)
+                d_indices_matrix = cp.empty((seqs_mat1_rows, buffer_width), dtype=np.int32)
+                d_row_element_counts = cp.zeros(seqs_mat1_rows, dtype=np.int32)
+
+                tcrdist_kernel(
+                    (blocks_per_grid,),
+                    (threads_per_block,),
+                    (
+                        d_seqs_mat1_transposed,
+                        d_seqs_mat2_transposed,
+                        d_seqs_L1,
+                        d_seqs_L2,
+                        d_length_starts,
+                        d_length_ends,
+                        seqs_original_indices_block,
+                        seqs2_original_indices_block,
+                        self.cutoff,
+                        d_data_matrix,
+                        d_indices_matrix,
+                        d_row_element_counts,
+                        seqs_mat1_rows,
+                        seqs_mat2_rows,
+                        buffer_width,
+                        buffer_width,
+                        d_dist_mat_weighted,
+                        self.tcr_nb_distance_matrix.shape[0],
+                        self.gap_penalty,
+                        self.ntrim,
+                        self.ctrim,
+                    ),
+                )
+                row_element_counts = d_row_element_counts.get()
+                required_buffer_width = int(np.max(row_element_counts))
+                if required_buffer_width > buffer_width:
+                    # Release undersized buffers before allocating larger ones for the retry.
+                    d_data_matrix = None
+                    d_indices_matrix = None
+                return d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width
+
+            d_data_matrix, d_indices_matrix, row_element_counts, required_buffer_width = run_tcrdist_kernel(
+                buffer_width
+            )
+
+            if required_buffer_width > buffer_width:
+                # The buffer was too small, so retry with the required buffer size.
+                logging.info(
+                    f"GPU TCRdist tile buffer increased from {buffer_width} to {required_buffer_width}; "
+                    f"retrying the {seqs_mat1_rows} x {seqs_mat2_rows} tile."
+                )
+                buffer_width = required_buffer_width
+                d_data_matrix, d_indices_matrix, row_element_counts, _ = run_tcrdist_kernel(buffer_width)
+
+            row_element_sum = np.sum(row_element_counts, dtype=np.int64)
+
+            if row_element_sum > np.iinfo(np.int32).max:
+                raise ValueError(
+                    "There are too many result values to be held by the resulting CSR matrix of the current block. "
+                    f"Current number: {row_element_sum}, maximum number: {np.iinfo(np.int32).max}. "
+                    "Consider choosing a smaller cutoff to resolve this issue."
+                )
+
+            indptr = np.zeros(seqs_mat1.shape[0] + 1, dtype=np.int32)
+            indptr[1:] = np.cumsum(row_element_counts)
+            d_indptr = cp.asarray(indptr)
+
+            n_elements = indptr[-1]
+            d_data = cp.zeros(n_elements, dtype=cp.int32)
+            d_indices = cp.zeros(n_elements, dtype=cp.int32)
+
+            threads_per_block = (1, 256)
+            blocks_per_grid_x = (d_data_matrix.shape[0] + threads_per_block[0] - 1) // threads_per_block[0]
+            blocks_per_grid_y = (d_data_matrix.shape[1] + threads_per_block[1] - 1) // threads_per_block[1]
+            blocks_per_grid = (blocks_per_grid_x, blocks_per_grid_y)
+
+            create_csr_kernel(
+                (blocks_per_grid_x, blocks_per_grid_y),
+                threads_per_block,
+                (
+                    d_data,
+                    d_indices,
+                    d_data_matrix,
+                    d_indices_matrix,
+                    d_indptr,
+                    d_data_matrix.shape[0],
+                    d_data_matrix.shape[1],
+                    d_data.shape[0],
+                    d_indices_matrix.shape[1],
+                ),
+            )
+
+            data = d_data.get()
+            indices = d_indices.get()
+
+            res = csr_matrix((data, indices, indptr), shape=(seqs_mat1.shape[0], seqs_mat2.shape[0]))
+            return res, buffer_width
+
+        seqs_mat1_blocks = np.array_split(seqs_mat1, n_row_blocks)
+        seqs_L1_blocks = np.array_split(seqs_L1, n_row_blocks)
+        seqs_mat2_blocks = np.array_split(seqs_mat2, n_col_blocks)
+        seqs_L2_blocks = np.array_split(seqs_L2, n_col_blocks)
+
+        possible_lengths = np.arange(max_seq_len + 1)
+        max_length_diff = self.cutoff // self.gap_penalty if self.gap_penalty else max_seq_len
+        min_lengths = np.maximum(possible_lengths - max_length_diff, self.ntrim + self.ctrim + 1)
+        length_bounds_blocks = [
+            (
+                cp.asarray(np.searchsorted(lengths, min_lengths, side="left").astype(np.int32)),
+                cp.asarray(np.searchsorted(lengths, possible_lengths + max_length_diff, side="right").astype(np.int32)),
+            )
+            for lengths in seqs_L2_blocks
+        ]
+
+        logging.info(f"\nStart GPU calculations for {n_row_blocks} row tiles x {n_col_blocks} column tiles:")
+
+        @nb.njit
+        def csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements):
+            data = np.empty(num_elements, dtype=block_data[0].dtype)
+            indices = np.empty(num_elements, dtype=block_indices[0].dtype)
+            indptr = np.zeros(num_rows + 1, dtype=np.int32)
+
+            ptr = 0
+            for row in range(num_rows):
+                for b in range(len(block_indptrs)):
+                    start = block_indptrs[b][row]
+                    end = block_indptrs[b][row + 1]
+                    count = end - start
+
+                    for j in range(count):
+                        data[ptr + j] = block_data[b][start + j]
+                        indices[ptr + j] = block_indices[b][start + j]
+
+                    ptr += count
+                indptr[row + 1] = ptr
+
+            return data, indices, indptr
+
+        def csr_union(blocks):
+            num_rows = blocks[0].shape[0]
+            num_elements = sum(b.nnz for b in blocks)
+
+            block_data = [b.data for b in blocks]
+            block_indices = [b.indices for b in blocks]
+            block_indptrs = [b.indptr for b in blocks]
+
+            data, indices, indptr = csr_union_numba(block_data, block_indices, block_indptrs, num_rows, num_elements)
+
+            shape = blocks[0].shape
+            result = csr_matrix((data, indices, indptr), shape=shape)
+            return result
+
+        def skip_col_block(row_block_idx, col_block_idx):
+            row_start = start_column + seqs_block_starts[row_block_idx]
+            col_end = seqs2_block_starts[col_block_idx] + seqs_mat2_blocks[col_block_idx].shape[0]
+            return is_symmetric and col_end <= row_start
+
+        def count_blocks_to_compute():
+            n_blocks_to_compute = 0
+            for row_block_idx in range(n_row_blocks):
+                for col_block_idx in range(n_col_blocks):
+                    if not skip_col_block(row_block_idx, col_block_idx):
+                        n_blocks_to_compute += 1
+            return n_blocks_to_compute
+
+        def calc_row_block_gpu(
+            row_block_idx,
+            seqs_mat1_block,
+            seqs_L1_block,
+            seqs_original_indices_block,
+            buffer_width,
+        ):
+            result_blocks = []
+            n_calculated_blocks = 0
+
+            for i in range(0, n_col_blocks):
+                # Skip calculation of blocks below the diagonal if the result matrix is symmetric.
+                if skip_col_block(row_block_idx, i):
+                    continue
+
+                result_block, buffer_width = calc_col_block_gpu(
+                    seqs_mat1_block,
+                    seqs_mat2_blocks[i],
+                    seqs_L1_block,
+                    seqs_L2_blocks[i],
+                    length_bounds_blocks[i],
+                    seqs_original_indices_block,
+                    seqs2_original_indices_blocks[i],
+                    buffer_width,
+                )
+                result_blocks.append(result_block)
+                n_calculated_blocks += 1
+
+            if not result_blocks:
+                return (
+                    csr_matrix((seqs_mat1_block.shape[0], seqs_mat2.shape[0]), dtype=np.int32),
+                    n_calculated_blocks,
+                    buffer_width,
+                )
+
+            num_elements = sum(int(block.indptr[-1]) for block in result_blocks)
+
+            if num_elements > np.iinfo(np.int32).max:
+                raise ValueError(
+                    "The overall number of result values is too high to construct the final CSR matrix by combining "
+                    "the already calculated blocks. "
+                    f"Current number: {num_elements}, maximum number: {np.iinfo(np.int32).max}. "
+                    "Consider choosing a smaller cutoff to resolve this issue."
+                )
+
+            result_sparse = csr_union(result_blocks)
+            result_sparse.sort_indices()
+            return result_sparse, n_calculated_blocks, buffer_width
+
+        row_blocks = [None] * n_row_blocks
+        buffer_width = self.gpu_tile_buffer_cols
+        with tqdm(total=count_blocks_to_compute(), desc="Processing", unit="block") as progress_bar:
+            for row_block_idx in range(n_row_blocks):
+                row_blocks[row_block_idx], n_calculated_blocks, buffer_width = calc_row_block_gpu(
+                    row_block_idx,
+                    seqs_mat1_blocks[row_block_idx],
+                    seqs_L1_blocks[row_block_idx],
+                    seqs_original_indices_blocks[row_block_idx],
+                    buffer_width,
+                )
+                progress_bar.update(n_calculated_blocks)
+
+        result_sparse = scipy.sparse.vstack(row_blocks, format="csr")
+
+        row_element_counts_gpu = np.diff(result_sparse.indptr)
+        result_sparse.sort_indices()
+
+        # Returns the results in a way that fits the current interface, could be improved later
+        return [result_sparse.data], [result_sparse.indices], row_element_counts_gpu, np.array([None])
+
+    _metric_mat = _gpu_tcrdist_mat
 
 
 class NeedlemanWunschDistanceCalculator(_MetricDistanceCalculator):
