@@ -51,8 +51,8 @@ jobs:
   test:
     needs: get-environments
     permissions:
-       id-token: write  # for codecov OIDC
-       contents: read
+      id-token: write # for codecov OIDC
+      contents: read
 
     strategy:
       fail-fast: false
@@ -106,6 +106,6 @@ jobs:
       - test
     runs-on: ubuntu-latest
     steps:
-        - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
-          with:
-            jobs: ${{ toJSON(needs) }}
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
