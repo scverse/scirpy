@@ -12,75 +12,75 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
-  - Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.
+- Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.
 
 ## v0.26.0
 
 ### Features
 
-  - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
-    `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
-    deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
+- Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
+  `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
+  deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
 
 ### Performance improvements
 
- - Improve the GPU implementation of the Hamming distance metric with row and column tiling, adaptive result buffers,
-   and other performance optimizations. GPU tiles can be configured
-   with `gpu_tile_rows`, `gpu_tile_cols`, and `gpu_tile_buffer_cols`. The previous `gpu_n_blocks` and `gpu_block_width`
-   parameters are deprecated and ignored; calls using them emit a warning and use the new parameters' defaults
-   unless the new parameters are explicitly provided.
+- Improve the GPU implementation of the Hamming distance metric with row and column tiling, adaptive result buffers,
+  and other performance optimizations. GPU tiles can be configured
+  with `gpu_tile_rows`, `gpu_tile_cols`, and `gpu_tile_buffer_cols`. The previous `gpu_n_blocks` and `gpu_block_width`
+  parameters are deprecated and ignored; calls using them emit a warning and use the new parameters' defaults
+  unless the new parameters are explicitly provided.
 
 ## v0.25.1
 
 ### Fixes
 
- - Compatibility with `mudata >= 0.4`, where `update()` no longer pulls `obs` columns from the individual modalities
-   into the global `obs` by default. Modality-prefixed columns (e.g. `airr:clone_id`) now need to be made available
-   explicitly with `mdata.pull_obs()` ([#743](https://github.com/scverse/scirpy/issues/743)).
+- Compatibility with `mudata >= 0.4`, where `update()` no longer pulls `obs` columns from the individual modalities
+  into the global `obs` by default. Modality-prefixed columns (e.g. `airr:clone_id`) now need to be made available
+  explicitly with `mdata.pull_obs()` ([#743](https://github.com/scverse/scirpy/issues/743)).
 
 ### Chore
 
- - Use the deprecation decorators from [scverse-misc](https://scverse-misc.readthedocs.io/) for deprecated functions
-   and function arguments. `scverse-misc` is now a hard dependency. Deprecated arguments that previously did not
-   emit any warning (`include_fields` and `use_umi_count_col` of the `io.read_*` functions, `cached` and `cache_path`
-   of `datasets.vdjdb` and `datasets.iedb`) now consistently raise a `FutureWarning`, and the API documentation
-   states in which version a function or argument was deprecated ([#704](https://github.com/scverse/scirpy/issues/704)).
-   The undocumented `scirpy.util.deprecated` decorator has been removed in favor of `scverse_misc.deprecated`.
+- Use the deprecation decorators from [scverse-misc](https://scverse-misc.readthedocs.io/) for deprecated functions
+  and function arguments. `scverse-misc` is now a hard dependency. Deprecated arguments that previously did not
+  emit any warning (`include_fields` and `use_umi_count_col` of the `io.read_*` functions, `cached` and `cache_path`
+  of `datasets.vdjdb` and `datasets.iedb`) now consistently raise a `FutureWarning`, and the API documentation
+  states in which version a function or argument was deprecated ([#704](https://github.com/scverse/scirpy/issues/704)).
+  The undocumented `scirpy.util.deprecated` decorator has been removed in favor of `scverse_misc.deprecated`.
 
 ## v0.25.0
 
 ### Fixes
 
-  - Adjust import location of plotting utils for compatibility with scanpy >= 1.13 ([#730](https://github.com/scverse/scirpy/pull/730))
+- Adjust import location of plotting utils for compatibility with scanpy >= 1.13 ([#730](https://github.com/scverse/scirpy/pull/730))
 
 ### Features
 
-  - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
-    `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
+- Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
+  `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
 
 ### Performance improvements
 
- - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
+- Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
 
 ### Chore
 
- - Clean up unneeded dependency constraints in pyproject.toml ([#718](https://github.com/scverse/scirpy/pull/718)).
+- Clean up unneeded dependency constraints in pyproject.toml ([#718](https://github.com/scverse/scirpy/pull/718)).
 
 ## v0.24.0
 
 ### Additions
 
- - Add the [IggyTop receptor reference database](https://iggytop.readthedocs.io/en/latest/index.html),
-   a metadatabase including receptor data from IEDB, VDJdb and others ([#652](https://github.com/scverse/scirpy/pull/652)). IggyTop includes additional data curation steps (e.g. low quality sequences from 10x dataset filtered out,
-   amino acid sequences are now consistently `junction_aa` sequences). It updated bimonthly, pre-built and can
-   be downloaded from GitHub. This is much faster and more reliable than the previous approach of downloading and building AnnData objects from reference database on-the-fly. The previously existing functions `datasets.iedb` and `datasets.vdjdb` are now wrappers around `datasets.iggytop`.
+- Add the [IggyTop receptor reference database](https://iggytop.readthedocs.io/en/latest/index.html),
+  a metadatabase including receptor data from IEDB, VDJdb and others ([#652](https://github.com/scverse/scirpy/pull/652)). IggyTop includes additional data curation steps (e.g. low quality sequences from 10x dataset filtered out,
+  amino acid sequences are now consistently `junction_aa` sequences). It updated bimonthly, pre-built and can
+  be downloaded from GitHub. This is much faster and more reliable than the previous approach of downloading and building AnnData objects from reference database on-the-fly. The previously existing functions `datasets.iedb` and `datasets.vdjdb` are now wrappers around `datasets.iggytop`.
 
 
 ### Fixes
 
- - Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
- - Fix overflow error that occured in `ir.pp.ir_dist` with sequences longer than 127 characters ([#683](https://github.com/scverse/scirpy/pull/680))
- - Remove `distance_key` parameter from `define_clonotypes` and raise warning if it is passed via `kwargs` ([#688](https://github.com/scverse/scirpy/pull/688))
+- Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
+- Fix overflow error that occured in `ir.pp.ir_dist` with sequences longer than 127 characters ([#683](https://github.com/scverse/scirpy/pull/680))
+- Remove `distance_key` parameter from `define_clonotypes` and raise warning if it is passed via `kwargs` ([#688](https://github.com/scverse/scirpy/pull/688))
 
 ## v0.23.0
 
@@ -116,7 +116,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 - Fix that `pp.index_chains` did not work with an AnnData object where gene expression and AIRR data
-  did not  perfectly overlap ([#660](https://github.com/scverse/scirpy/pull/660)).
+  did not perfectly overlap ([#660](https://github.com/scverse/scirpy/pull/660)).
 - Fix that `pl.repertoire_overlap` ignored the `airr_mod` parameter ([#650](https://github.com/scverse/scirpy/pull/650)).
 - Fix that `pl.clonotype_imbalance` ignored the `airr_mod` parameter ([#657](https://github.com/scverse/scirpy/pull/657)).
 
@@ -293,9 +293,9 @@ and this project adheres to [Semantic Versioning][].
   It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
   Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
 
-    ```python
-    adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
-    ```
+  ```python
+  adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
+  ```
 
 ### Other
 
@@ -810,7 +810,7 @@ This update includes the following changes:
 - Fix pythonpublish CI action
 - Update black version (and code style, accordingly)
 - Changes for AIRR-complicance:
-    - Add support level to README
+  - Add support level to README
     - Add Biocontainer instructions to README
     - Add a minimal test suite to be ran on conda CI
 
@@ -844,10 +844,10 @@ This update includes the following changes:
 - Experimental function to assess bias in clonotype abundance between conditions (#92)
 - Scirpy now has a logo (#123)
 - Update default parameters for `clonotype_network`:
-    - Edges are now only automatically displayed if plotting < 1000 nodes
+  - Edges are now only automatically displayed if plotting < 1000 nodes
     - If plotting variables with many categories, the legend is hidden.
 - Update default parameters for alignment-based `tcr_neighbors`
-    - The gap extend penalty now equals the gap open penalty (`11`).
+  - The gap extend penalty now equals the gap open penalty (`11`).
 
 ## v0.1.2
 
