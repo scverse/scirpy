@@ -10,6 +10,27 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Changed
+
+  - Increase the default TCRdist `cutoff` from 20 to 24, allowing two gap positions with the new
+    default gap penalty of 12. Omitting `cutoff` emits a `UserWarning`, combined with the gap-penalty
+    warning when both defaults are used. Set `cutoff=24` explicitly to acknowledge the new default,
+    or `cutoff=20` to retain the previous cutoff. To retain both previous parameter values, also set
+    `gap_penalty=4`. The increased cutoff can add sequence matches and change clonotype clusters.
+
+  - Make the fixed TCRdist gap position depend on `ntrim` and `ctrim` so it stays within the
+    remaining region. Default trimming retains the previous behavior; custom trimming can change
+    distances. The variable gap-position search (`fixed_gappos=False`) is unchanged.
+
+  - Exclude TCRdist comparisons involving sequences with no positions remaining after trimming,
+    including self-comparisons. A warning reports the number of affected input sequences; matrix
+    shape and sequence order are preserved.
+
+  - Increase the default TCRdist `gap_penalty` from 4 to 12 to match the authors' later implementation.
+    This changes distances between sequences of different lengths. Omitting `gap_penalty` now emits a
+    `UserWarning`; explicitly set `gap_penalty=12` to acknowledge the new default, or `gap_penalty=4`
+    to retain the previous behavior.
+
 ### Fixes
 
   - Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.

@@ -84,7 +84,7 @@ cutoff
     matrix. A sensible cutoff depends on the distance metric, you can find
     information in the corresponding docs. If set to `None`, the cutoff
     will be `10` for the `alignment`, `fastalignment`, and `needleman_wunsch` metric,
-    and `2` for `levenshtein` and `hamming`.
+    `24` for `tcrdist`, and `2` for `levenshtein` and `hamming`.
     For the identity metric, the cutoff is ignored and always set to `0`.
 """
 
