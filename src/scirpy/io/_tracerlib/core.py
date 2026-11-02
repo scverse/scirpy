@@ -25,8 +25,6 @@ under the License.
 
 from collections import Counter, defaultdict
 
-import six
-
 # from Bio.Alphabet import generic_dna
 # from Bio.Seq import Seq
 # import pdb
@@ -62,7 +60,7 @@ class Cell:
     def _process_recombinants(self, recombinants, receptor, loci):
         recombinant_dict = defaultdict(dict)
         if recombinants is not None:
-            for r_name, r in six.iteritems(recombinants):
+            for r_name, r in recombinants.items():
                 r_name = r_name.split("_")
                 receptor = r_name[0]
                 locus = r_name[1]
@@ -141,7 +139,7 @@ class Cell:
 
         recombinants = {}
         final_string = '<<FONT POINT-SIZE="16"><B>' + self.name + "</B></FONT>"
-        for locus, recombinant_list in six.iteritems(self.recombinants[receptor]):
+        for locus, recombinant_list in self.recombinants[receptor].items():
             recombinant_set = set()
             if recombinant_list is not None:
                 for recombinant in recombinant_list:
@@ -172,7 +170,7 @@ class Cell:
         recombinants = {}
         final_string = '<<table cellspacing="6px" border="0" cellborder="0">'
         # final_string = "<"
-        for locus, recombinant_list in six.iteritems(self.recombinants[receptor]):
+        for locus, recombinant_list in self.recombinants[receptor].items():
             recombinant_set = []
             if recombinant_list is not None:
                 for recombinant in recombinant_list:
@@ -234,15 +232,15 @@ class Cell:
     def get_fasta_string(self):
         seq_string = []
 
-        for receptor, locus_dict in six.iteritems(self.recombinants):
-            for locus, recombinants in six.iteritems(locus_dict):
+        for receptor, locus_dict in self.recombinants.items():
+            for locus, recombinants in locus_dict.items():
                 if recombinants is not None:
                     for rec in recombinants:
                         name = f">TRACER|{receptor}|{locus}|{rec.contig_name}|{rec.identifier}"
                         seq = rec.dna_seq
                         seq_string.append("\n".join([name, seq]))
 
-        # for locus, recombinants in six.iteritems(self.all_recombinants):
+        # for locus, recombinants in self.all_recombinants.items():
         #    if recombinants is not None:
         #        for rec in recombinants:
         #            name = ">TCR|{contig_name}|{identifier}".format(contig_name=rec.contig_name,
@@ -268,8 +266,8 @@ class Cell:
             return f"{prod_count}/{total_count}"
 
     def filter_recombinants(self):
-        for receptor, locus_dict in six.iteritems(self.recombinants):
-            for locus, recombinants in six.iteritems(locus_dict):
+        for receptor, locus_dict in self.recombinants.items():
+            for locus, recombinants in locus_dict.items():
                 if recombinants is not None:
                     if len(recombinants) > 2:
                         TPM_ranks = Counter()
@@ -308,8 +306,8 @@ class Cell:
         return lengths
 
     def has_excess_recombinants(self, max_r=2):
-        for _receptor, locus_dict in six.iteritems(self.recombinants):
-            for _locus, recs in six.iteritems(locus_dict):
+        for _receptor, locus_dict in self.recombinants.items():
+            for _locus, recs in locus_dict.items():
                 if recs is not None:
                     if len(recs) > max_r:
                         return True
