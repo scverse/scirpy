@@ -3,16 +3,43 @@
 ```
 
 ```{toctree}
+:caption: Getting started
 :hidden: true
 :maxdepth: 1
 
-data-structure
+installation
+quickstart
+```
+
+```{toctree}
+:caption: Guides
+:hidden: true
+:maxdepth: 1
+
 tutorials
+```
+
+```{toctree}
+:caption: Reference
+:hidden: true
+:maxdepth: 1
+
 api
+data-structure
 ir-biology
 glossary
-contributing.md
+```
+
+```{toctree}
+:caption: Project
+:hidden: true
+:maxdepth: 1
+
 changelog.md
-versions
+contributing.md
+citation
 zzz_bibliography
+versions
+GitHub <https://github.com/scverse/scirpy>
+Discourse <https://discourse.scverse.org/c/help/scirpy/33>
 ```
