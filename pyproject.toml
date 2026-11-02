@@ -73,20 +73,14 @@ doc = [
   "jupytext",
   "leidenalg",
   "muon>0.1.6",
-  "myst-nb",
-  "myst-nb>=1.1",
   "nbconvert",
   "pycairo",
   "scirpy[dandelion]",
+  "scverse-doc[full]>=0.3",
   "scverse-misc[sphinx]>=0.1.3",
   "sphinx>=8.1",
   "sphinx-autodoc-typehints",
-  "sphinx-book-theme>=1",
-  "sphinx-copybutton",
-  "sphinx-design",
   "sphinxcontrib-bibtex>=1",
-  "sphinxcontrib-katex",
-  "sphinxext-opengraph",
 ]
 gpu = [ "scirpy[cupy]" ]
 

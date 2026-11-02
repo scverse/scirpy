@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Documentation
+
+  - Move the docs to the shared scverse theme from `scverse-doc` and its sidebar layout: Getting started, Guides, Reference and Project, with new installation, quickstart and citation pages.
+
 ### Fixes
 
   - Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.
