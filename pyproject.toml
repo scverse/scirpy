@@ -76,7 +76,7 @@ doc = [
   "nbconvert",
   "pycairo",
   "scirpy[dandelion]",
-  "scverse-doc[full]>=0.3",
+  "scverse-doc[full]>=0.4",
   "scverse-misc[sphinx]>=0.1.3",
   "sphinx>=8.1",
   "sphinx-autodoc-typehints",
