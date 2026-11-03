@@ -1,5 +1,6 @@
 # pylama:ignore=W0611,W0404
 import itertools
+import logging
 
 import numpy as np
 import numpy.testing as npt
@@ -1093,3 +1094,96 @@ def test_mutational_load(adata_mutation, region_vars, expected):
 def test_mutational_load_adata_not_aligned(adata_not_aligned):
     with npt.assert_raises(ValueError):
         ir.tl.mutational_load(adata_not_aligned, germline_key="germline_alignment")
+
+
+def _adata_from_counts(counts: dict[str, list[int]], mudata: bool = False):
+    """Build a minimal AnnData/MuData whose obs encodes the given per-group clonotype counts.
+
+    ``counts`` maps a group label to a list of clonotype abundances. Each abundance
+    is expanded into that many cells sharing one clonotype id, so that collapsing
+    ``obs`` back by (group, clonotype) recovers the original counts exactly.
+    """
+    records = []
+    for group, abundances in counts.items():
+        for clone_idx, n in enumerate(abundances):
+            for _ in range(n):
+                records.append([f"{group}_ct{clone_idx}", group])
+    obs = pd.DataFrame(records, columns=["clonotype_", "group"])
+    obs.index = [f"cell{i}" for i in range(len(obs))]
+    return _make_adata(obs, mudata)
+
+
+# two well-sampled groups of different depth: comparable at a common coverage < 1
+_HILL_COUNTS = {
+    "A": [30, 20, 14, 10, 7, 5, 4, 3, 2, 2, 1, 1, 1, 1, 1],
+    "B": [90, 60, 42, 30, 22, 16, 12, 9, 7, 5, 4, 3, 2, 2, 1, 1, 1, 1],
+}
+
+
+@pytest.mark.parametrize("mudata", [False, True], ids=["AnnData", "MuData"])
+def test_hill_diversity_profile(mudata):
+    import warnings
+
+    import hillrep
+
+    adata = _adata_from_counts(_HILL_COUNTS, mudata)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # the happy path must not warn
+        profile, assessment = ir.tl.hill_diversity_profile(
+            adata, groupby="group", target_col="clonotype_", q_min=0, q_max=2, q_step=1
+        )
+
+    assert assessment.verdict == "reliable"
+
+    # the adapter must reproduce hillrep's coverage-standardized estimate exactly
+    expected = hillrep.compare(_HILL_COUNTS, level="coverage", q=[0.0, 1.0, 2.0], n_boot=0)
+    pdt.assert_frame_equal(profile, expected)
+
+
+def test_hill_diversity_profile_warns_when_not_comparable():
+    # group "A" is heavily undersampled with no doubletons: a fair comparison is not supported
+    counts = {"A": [3, 1, 1, 1, 1], "B": [120, 60, 40, 30, 20, 12, 8, 5, 3, 2, 1, 1]}
+    adata = _adata_from_counts(counts)
+
+    # scanpy logs through its own root logger, which `caplog` does not see
+    records: list[logging.LogRecord] = []
+    handler = logging.Handler()
+    handler.emit = records.append
+    sc.settings._root_logger.addHandler(handler)
+    try:
+        _, assessment = ir.tl.hill_diversity_profile(adata, groupby="group", target_col="clonotype_")
+    finally:
+        sc.settings._root_logger.removeHandler(handler)
+
+    assert assessment.verdict != "reliable"
+    assert any("cannot be compared" in r.getMessage() for r in records)
+
+
+def test_convert_hill_table():
+    adata = _adata_from_counts(_HILL_COUNTS)
+    profile, _ = ir.tl.hill_diversity_profile(
+        adata, groupby="group", target_col="clonotype_", q_min=0, q_max=2, q_step=1
+    )
+
+    div = ir.tl.convert_hill_table(profile)
+    assert list(div.columns) == ["Observed richness", "Shannon entropy", "Inverse Simpson", "Gini-Simpson"]
+    assert list(div.index) == ["A", "B"]
+
+    qd = profile.pivot(index="assemblage", columns="order_q", values="qD")
+    npt.assert_allclose(div["Observed richness"].to_numpy(dtype=float), qd[0].to_numpy(dtype=float))
+    npt.assert_allclose(div["Shannon entropy"].to_numpy(dtype=float), np.log(qd[1].to_numpy(dtype=float)))
+    npt.assert_allclose(div["Inverse Simpson"].to_numpy(dtype=float), qd[2].to_numpy(dtype=float))
+    npt.assert_allclose(div["Gini-Simpson"].to_numpy(dtype=float), 1 - 1 / qd[2].to_numpy(dtype=float))
+
+
+def test_convert_hill_table_requires_orders_012():
+    profile = pd.DataFrame(
+        {
+            "assemblage": ["A", "A", "B", "B"],
+            "order_q": [0.0, 1.0, 0.0, 1.0],
+            "qD": [10.0, 6.0, 20.0, 12.0],
+        }
+    )
+    with pytest.raises(ValueError, match="missing the diversity order"):
+        ir.tl.convert_hill_table(profile)
