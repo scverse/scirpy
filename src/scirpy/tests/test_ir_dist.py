@@ -199,7 +199,8 @@ def test_ir_dist_gpu_hamming(adata_cdr3):
 
 
 @pytest.mark.parametrize("mudata", [False, True], ids=["AnnData", "MuData"])
-def test_ir_dist_tcrdist_tcrblosum_chain_routing(mudata):
+@pytest.mark.parametrize("metric", ["tcrdist", pytest.param("gpu_tcrdist", marks=pytest.mark.gpu)])
+def test_ir_dist_tcrdist_tcrblosum_chain_routing(mudata, metric):
     # `ir_dist` should automatically route VJ to TCRBLOSUM alpha and VDJ to beta.
     adata = _make_adata(
         pd.DataFrame(
@@ -220,7 +221,7 @@ def test_ir_dist_tcrdist_tcrblosum_chain_routing(mudata):
 
     ir.pp.ir_dist(
         adata,
-        metric="tcrdist",
+        metric=metric,
         sequence="aa",
         cutoff=20,
         base_matrix="tcrblosum",

@@ -297,7 +297,7 @@ class DoubleLookupNeighborFinder:
 
         distance_matrix = self.distance_matrices[distance_matrix_name]
 
-        if np.max(distance_matrix.data) > np.iinfo(np.uint8).max:
+        if np.max(distance_matrix.data, initial=0) > np.iinfo(np.uint8).max:
             raise OverflowError(
                 "The data values in the distance scipy.sparse.csr_matrix exceed the maximum value for uint8 (255)"
             )

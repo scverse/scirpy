@@ -68,6 +68,37 @@ def test_define_clonotypes_diagonal_connectivities(adata_define_clonotype_cluste
     npt.assert_equal(clonotype_size, np.array([1, 1, 1, 1]))
 
 
+@pytest.mark.parametrize("receptor_arms", ["VJ", "VDJ", "all", "any"])
+@pytest.mark.parametrize("dual_ir", ["primary_only", "all", "any"])
+@pytest.mark.parametrize("partitions", ["connected", "leiden", "fastgreedy"])
+@pytest.mark.parametrize("all_trimmed", [False, True])
+def test_clonotype_clusters_fully_trimmed(receptor_arms, dual_ir, partitions, all_trimmed):
+    from .util import _make_adata
+
+    sequences = ["AAA", "AAAAA", "AAAA", "AA"] if all_trimmed else ["AAA", "AAAAA", "AAAAAA", "AAAAAAA"]
+    adata = _make_adata(pd.DataFrame({"IR_VJ_1_junction_aa": sequences, "IR_VDJ_1_junction_aa": sequences}))
+    with pytest.warns(UserWarning, match="no positions remaining"):
+        ir.pp.ir_dist(adata, metric="tcrdist", sequence="aa", gap_penalty=12, n_jobs=1)
+    ir.tl.define_clonotype_clusters(
+        adata,
+        metric="tcrdist",
+        sequence="aa",
+        receptor_arms=receptor_arms,
+        dual_ir=dual_ir,
+        partitions=partitions,
+        within_group=None,
+    )
+    labels = adata.obs["cc_aa_tcrdist"]
+    assert labels.notna().all()
+    assert labels.iloc[0] != labels.iloc[1]
+    if all_trimmed:
+        assert labels.nunique() == 4
+        assert adata.uns["cc_aa_tcrdist"]["distances"].nnz == 0
+    else:
+        assert labels.iloc[2] == labels.iloc[3]
+        assert labels.nunique() == 3
+
+
 def test_clonotypes_end_to_end1(adata_define_clonotypes):
     """Test that default parameters of define_clonotypes yields
     clonotypes based on nt-identity.
