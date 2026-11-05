@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixes
 
+  - Remove the undeclared `six` dependency from the TraCeR reader. `python-dateutil` 4.0 no longer pulls in `six`, so `read_tracer` failed with `ModuleNotFoundError` on a fresh install.
   - Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.
 
 ## v0.26.0
