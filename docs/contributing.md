@@ -73,7 +73,7 @@ This will list “Standalone” environments and a table of “Matrix” environ
 +------------+---------+--------------------------+----------+---------------------------------+-------------+
 | Name       | Type    | Envs                     | Features | Dependencies                    | Scripts     |
 +------------+---------+--------------------------+----------+---------------------------------+-------------+
-| hatch-test | virtual | hatch-test.py3.12-stable | dev      | coverage-enable-subprocess==1.0 | cov-combine |
+| hatch-test | virtual | hatch-test.py3.13-stable | dev      | coverage-enable-subprocess==1.0 | cov-combine |
 |            |         | hatch-test.py3.14-stable | test     | coverage[toml]~=7.4             | cov-report  |
 |            |         | hatch-test.py3.14-pre    |          | pytest-mock~=3.12               | run         |
 |            |         |                          |          | pytest-randomly~=3.15           | run-cov     |

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+### Backwards-incompatible changes
+
+- Require python >= 3.13, in accordance with SPEC0.
+- Raise minimum versions of dependencies to the oldest releases supporting Python 3.13: `anndata>=0.12`, `awkward>=2.6.8`, `igraph>=0.11.9`, `joblib>=1.5`, `mudata>=0.3.2`, `networkx>=3.4`, `numba>=0.61`, `numpy>=2.1`, `python-levenshtein>=0.26`, `scanpy>=1.12`, `scikit-learn>=1.5.2`, `scipy>=1.14.1`, `squarify>=0.2`.
+
 ## v0.26.1
 
 ### Fixes
