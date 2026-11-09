@@ -1296,8 +1296,11 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         Weight applied to the mismatch distances before summing with the gap penalties
     gap_penalty:
         Distance penalty per amino acid of length difference. Defaults to 12.
-        If omitted, emits a warning about the change from the previous default of 4.
-        Set explicitly to 12 to acknowledge the new default, or to 4 to retain the previous behavior.
+
+        .. versionchanged:: 0.27
+            The default changed from 4 to 12. Until then, omitting this argument emits a warning.
+            Set explicitly to 12 to acknowledge the new default, or to 4 to retain the previous behavior.
+
     ntrim/ctrim:
         Positions trimmed off the N-terminus (0) and C-terminus (L-1) ends of the peptide sequence. These symbols will be ignored
         in the distance calculation. Sequences with length <= ntrim + ctrim have no remaining
@@ -1309,8 +1312,11 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         If False, find the "optimal" position for inserting the gaps to make up the difference in length
     cutoff:
         Will eliminate distances > cutoff to make efficient use of sparse matrices. Defaults to 24.
-        If omitted, emits a warning about the change from the previous default of 20.
-        Set explicitly to 24 to acknowledge the new default, or to 20 to retain the previous cutoff.
+
+        .. versionchanged:: 0.27
+            The default changed from 20 to 24. Until then, omitting this argument emits a warning.
+            Set explicitly to 24 to acknowledge the new default, or to 20 to retain the previous cutoff.
+
     n_jobs:
         Number of numba parallel threads to use for the pairwise distance calculation
     n_blocks:
@@ -1335,10 +1341,10 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
 
     def __init__(
         self,
-        cutoff: int | Literal["default"] = "default",  # resolves to 24
+        cutoff: int | None = None,  # resolves to 24
         *,
         dist_weight: int = 3,
-        gap_penalty: int | Literal["default"] = "default",  # resolves to 12
+        gap_penalty: int | None = None,  # resolves to 12
         ntrim: int = 3,
         ctrim: int = 2,
         fixed_gappos: bool = True,
@@ -1352,14 +1358,14 @@ class TCRdistDistanceCalculator(_MetricDistanceCalculator):
         # TODO: Remove the migration warning after a transition period and set
         # cutoff=24 and gap_penalty=12 directly in the signature.
         default_changes = []
-        if cutoff == "default":
+        if cutoff is None:
             default_changes.append(
                 "The default value of `cutoff` has changed from 20 to 24. "
                 "Set `cutoff=24` explicitly to acknowledge the new default, "
                 "or `cutoff=20` to retain the previous cutoff."
             )
             cutoff = 24
-        if gap_penalty == "default":
+        if gap_penalty is None:
             default_changes.append(
                 "The default value of `gap_penalty` has changed from 4 to 12. "
                 "Set `gap_penalty=12` explicitly to acknowledge the new default, "
