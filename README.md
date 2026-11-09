@@ -50,7 +50,7 @@ Please refer to the [documentation][link-docs]. In particular, the
 ## Installation
 
 You need to have Python 3.13 or newer installed on your system. If you don't have
-Python installed, we recommend installing [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
+Python installed, we recommend installing it via [uv](https://docs.astral.sh/uv/).
 
 There are several alternative options to install scirpy:
 
