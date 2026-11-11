@@ -125,7 +125,7 @@ in the tutorial.
 
 def _validate_parameters(
     params: DataHandler,
-    reference: DataHandler,
+    reference: DataHandler | None,
     receptor_arms,
     dual_ir,
     within_group,
@@ -138,6 +138,7 @@ def _validate_parameters(
 
     def _get_db_name():
         try:
+            assert reference is not None
             return reference.adata.uns["DB"]["name"]
         except KeyError:
             raise ValueError(
