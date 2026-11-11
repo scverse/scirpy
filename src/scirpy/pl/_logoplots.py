@@ -32,13 +32,14 @@ def logoplot_cdr3_motif(
     ax: plt.Axes | None = None,
     fig_kws: dict | None = None,
     **kwargs,
-) -> Logo:
+) -> Logo | list[Logo]:
     """
     Generates logoplots of CDR3 sequences
 
     This is a user friendly wrapper function around the logomaker python package.
     Enables the analysis of potential amino acid motifs by displaying logo plots.
-    Subsetting of AnnData/MuData has to be performed manually beforehand (or while calling) and only cells with equal cdr3 sequence lengths are permitted.
+    Subsetting of AnnData/MuData has to be performed manually beforehand (or while calling).
+    If multiple CDR3 sequence lengths are present, separate logo plots are generated for each length.
 
     Parameters
     ----------
@@ -72,6 +73,7 @@ def logoplot_cdr3_motif(
         x coordinate span of each character
     ax
         Add the plot to a predefined Axes object.
+        Can only be used when all selected sequences have the same CDR3 length.
     fig_kws
         Parameters passed to the :func:`matplotlib.pyplot.figure` call
         if no `ax` is specified.
@@ -81,35 +83,75 @@ def logoplot_cdr3_motif(
 
     Returns
     -------
-    Returns a object of class logomaker.Logo (see here for more information https://logomaker.readthedocs.io/en/latest/implementation.html#matrix-functions)
+    Returns one object of class :class:`logomaker.Logo` if all selected sequences have the
+    same length. If multiple sequence lengths are present, returns a list of
+    :class:`logomaker.Logo` objects, one per length.
     """
     params = DataHandler(adata, airr_mod, airr_key, chain_idx_key)
 
     if isinstance(chains, str):
         chains = [chains]
 
-    if ax is None:
-        fig_kws = {} if fig_kws is None else fig_kws
-        if "figsize" not in fig_kws:
-            fig_kws["figsize"] = (6, 2)
-        ax = _init_ax(fig_kws)
-
-    # make sure that sequences are prealigned i.e. they need to have the the same length
+    # sequences need to be aligned for each logo plot, so we split by sequence length
     airr_df = get_airr(params, [cdr3_col], chains)
     sequence_list = []
     for chain in chains:
         for sequence in airr_df[chain + "_" + cdr3_col]:
             if not pd.isnull(sequence):
                 sequence_list.append(sequence)
+    sequences_by_length: dict[int, list[str]] = {}
+    for sequence in sequence_list:
+        sequences_by_length.setdefault(len(sequence), []).append(sequence)
+    n_lengths = len(sequences_by_length)
 
-    motif = alignment_to_matrix(
-        sequence_list, to_type=to_type, pseudocount=pseudocount, background=background, center_weights=center_weights
-    )
-    cdr3_logo = Logo(motif, color_scheme=color_scheme, vpad=vpad, width=width, font_name=font_name, ax=ax, **kwargs)
+    def _make_logo(seq_list: list[str], ax_: plt.Axes, title: str) -> Logo:
+        motif = alignment_to_matrix(
+            seq_list, to_type=to_type, pseudocount=pseudocount, background=background, center_weights=center_weights
+        )
+        cdr3_logo = Logo(
+            motif,
+            color_scheme=color_scheme,
+            vpad=vpad,
+            width=width,
+            font_name=font_name,
+            ax=ax_,
+            **kwargs,
+        )
+        cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
+        cdr3_logo.ax.set_ylabel(f"{to_type}")
+        cdr3_logo.ax.grid(False)
+        cdr3_logo.ax.set_xlim([-1, len(motif)])
+        cdr3_logo.ax.set_title(title)
+        return cdr3_logo
 
-    cdr3_logo.style_xticks(anchor=0, spacing=1, rotation=45)
-    cdr3_logo.ax.set_ylabel(f"{to_type}")
-    cdr3_logo.ax.grid(False)
-    cdr3_logo.ax.set_xlim([-1, len(motif)])
-    cdr3_logo.ax.set_title("/".join(chains))
-    return cdr3_logo
+    chain_label = "/".join(chains)
+    if n_lengths == 1:
+        if ax is None:
+            fig_kws = {} if fig_kws is None else fig_kws
+            if "figsize" not in fig_kws:
+                fig_kws["figsize"] = (6, 2)
+            ax = _init_ax(fig_kws)
+        only_sequences = next(iter(sequences_by_length.values()))
+        return _make_logo(only_sequences, ax, chain_label)
+
+    if ax is not None:
+        raise ValueError(
+            "Selected sequences contain multiple CDR3 lengths, but a single `ax` was provided. "
+            "Please omit `ax` to auto-generate one subplot per length."
+        )
+
+    fig_kws = {} if fig_kws is None else fig_kws
+    if "figsize" not in fig_kws:
+        fig_kws["figsize"] = (6, 2 * n_lengths)
+
+    _, axes = plt.subplots(n_lengths, 1, squeeze=False, **fig_kws)
+    logos = []
+    for ax_, sequence_length in zip(axes.ravel(), sorted(sequences_by_length), strict=False):
+        logos.append(
+            _make_logo(
+                sequences_by_length[sequence_length],
+                ax_,
+                f"{chain_label} (CDR3 length {sequence_length})",
+            )
+        )
+    return logos
