@@ -83,7 +83,6 @@ and this project adheres to [Semantic Versioning][].
   amino acid sequences are now consistently `junction_aa` sequences). It updated bimonthly, pre-built and can
   be downloaded from GitHub. This is much faster and more reliable than the previous approach of downloading and building AnnData objects from reference database on-the-fly. The previously existing functions `datasets.iedb` and `datasets.vdjdb` are now wrappers around `datasets.iggytop`.
 
-
 ### Fixes
 
 - Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
@@ -298,7 +297,7 @@ and this project adheres to [Semantic Versioning][].
 - Use the `umi_count` field instead of `duplicate_count` to store UMI counts. The field `umi_count` has been added to
   the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022) ([#487](https://github.com/scverse/scirpy/pull/487)).
   Use of `duplicate_count` for UMI counts is now discouraged. Scirpy will use `umi_count` in all `scirpy.io` functions.
-  It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
+  It will *not* change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
   Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
 
   ```python
@@ -339,7 +338,7 @@ and this project adheres to [Semantic Versioning][].
 ### Breaking changes
 
 - Reimplement `pp.index_chains` using numba and awkward array functions, achieving a significant speedup. This function
-  behaves exactly like the previous version _except_ that callback functions passed to the `filter` arguments
+  behaves exactly like the previous version *except* that callback functions passed to the `filter` arguments
   must now be vectorized over an awkward array, e.g. to check if a `junction_aa` field is present you could
   previously pass `lambda x: x['junction_aa'] is not None`, now an accepted version would be
   `lambda x: ~ak.is_none(x["junction_aa"], axis=-1)`. To learn more about native awkward array functions, please
@@ -369,7 +368,7 @@ and this project adheres to [Semantic Versioning][].
 ## v0.13.0 - new data structure based on awkward arrays
 
 This update introduces a new datastructure based on [awkward arrays](https://awkward-array.org/doc/main/).
-The new datastructure is described in more detail [in the documentation](https://scirpy.scverse.org/en/latest/data-structure.html) and is considered the "official" way of representing AIRR data for scverse core and ecosystem packages.
+The new datastructure is described in more detail [in the documentation](https://scirpy.scverse.org/en/latest/data-structure.html) and is considered the “official” way of representing AIRR data for scverse core and ecosystem packages.
 
 Benefits of the new data structure include:
 
@@ -461,7 +460,7 @@ Older versions of the documentation are still [accessible from github pages](htt
   of this repository has ben adapted accordingly. Also code was reformatted in accordance with the template defaults.
 - The minimum required Python version is now 3.9 in accordance with NEP 29
 - Increased the minium version of tqdm to 4.63 (See https://github.com/tqdm/tqdm/issues/1082)
-- `pl.repertoire_overlap` now _always_ runs `tl.repertoire_overlap` internally and doesn't rely on cached values.
+- `pl.repertoire_overlap` now *always* runs `tl.repertoire_overlap` internally and doesn't rely on cached values.
 - The mode `dendro_only` in `pl.repertoire_overlap` has been removed.
 - Cells that have a receptor, but no CDR3 sequence have previously received a separate clonotype in `tl.define_clonotypes`. Now they are receiving no clonotype (i.e. `np.nan`) as do cells without a receptor.
 - The function `tl.clonal_expansion` now returns a `pd.Series` instead of a `np.array` with `inplace=False`
@@ -705,7 +704,7 @@ with highly expanded clonotypes (i.e. thousands of cells with exactly the same r
 form dense blocks in the sparse adjacency matrix (see issue #217). Another downside was that expensive alignment-distances had
 to be recomputed every time the parameters of `ir_neighbors` was changed.
 
-The new implementation computes distances between all _unique receptor configurations_, only considering one instance of highly expanded clonotypes.
+The new implementation computes distances between all *unique receptor configurations*, only considering one instance of highly expanded clonotypes.
 
 Closed issues #243, #217, #191, #192, #164.
 
@@ -722,10 +721,10 @@ This update includes the following changes:
 - The API of `clonotype_network` has changed.
 - Clonotype network now visualizes cells with identical receptor configurations. The number of cells with identical receptor configurations is shown as point size (and optionally, as color). Clonotype network does not support plotting multiple colors at the same time any more.
 
-| Clonotype network (previous implementation)                                                                    | Clonotype network (now)                                                                                        |
-| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Each dot represents a cell. Cells with identical receptors form a fully connected subnetwork                   | Each dot represents cells with identical receptors. The dot size refers to the number of cells                 |
-| ![image](https://user-images.githubusercontent.com/7051479/114389098-dff87800-9b94-11eb-8dd8-cc406024eaa6.png) | ![image](https://user-images.githubusercontent.com/7051479/114389105-e2f36880-9b94-11eb-9a58-68a09e67efe7.png) |
+  | Clonotype network (previous implementation)                                                                    | Clonotype network (now)                                                                                        |
+  | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+  | Each dot represents a cell. Cells with identical receptors form a fully connected subnetwork                   | Each dot represents cells with identical receptors. The dot size refers to the number of cells                 |
+  | ![image](https://user-images.githubusercontent.com/7051479/114389098-dff87800-9b94-11eb-8dd8-cc406024eaa6.png) | ![image](https://user-images.githubusercontent.com/7051479/114389105-e2f36880-9b94-11eb-9a58-68a09e67efe7.png) |
 
 #### Drop Support for Python 3.6
 

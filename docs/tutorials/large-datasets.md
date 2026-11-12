@@ -22,14 +22,14 @@ Some distance metrics are significantly faster than others. Here are the distanc
 `identity` > `gpu_hamming` > `hamming` = `normalized_hamming` > `tcrdist` > `levenshtein` > `fastalignment` > `alignment`
 
 TCRdist, fastalignment and alignment produce very similar distance matrices, but tcrdist is by far the fastest. For this
-reason, we'd always recommend to go with `tcrdist`, when looking for a metric taking into account a substitution matrix.
+reason, we’d always recommend to go with `tcrdist`, when looking for a metric taking into account a substitution matrix.
 
 ## Multi-machine parallelization with dask
 
 The `hamming`, `normalized_hamming`, `tcrdist`, `levenshtein`, `fastalignment`, and `alignment` metrics are parallelized
 using [joblib](https://joblib.readthedocs.io/en/stable/). This makes it very easy to switch the backend to
 [dask](https://www.dask.org/) to distribute jobs across a multi machine cluster. Note that this comes with a
-considerable overhead for communication between the workers. It's only worthwhile when processing on a single
+considerable overhead for communication between the workers. It’s only worthwhile when processing on a single
 machine becomes infeasible.
 
 ```python
