@@ -52,7 +52,7 @@ Please refer to the [documentation][link-docs]. In particular, the
 You need to have Python 3.13 or newer installed on your system. If you don't have
 Python installed, we recommend installing it via [uv](https://docs.astral.sh/uv/).
 
-We recommend managing dependencies in project-specific virtual environments to avoid dependency conflicts. 
+We recommend managing dependencies in project-specific virtual environments to avoid dependency conflicts.
 This is most convenient using package managers such as [uv](https://docs.astral.sh/uv/).
 Choose from the options below to install scirpy:
 
