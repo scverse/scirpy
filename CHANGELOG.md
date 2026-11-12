@@ -83,7 +83,6 @@ and this project adheres to [Semantic Versioning][].
   amino acid sequences are now consistently `junction_aa` sequences). It updated bimonthly, pre-built and can
   be downloaded from GitHub. This is much faster and more reliable than the previous approach of downloading and building AnnData objects from reference database on-the-fly. The previously existing functions `datasets.iedb` and `datasets.vdjdb` are now wrappers around `datasets.iggytop`.
 
-
 ### Fixes
 
 - Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
