@@ -85,6 +85,7 @@ doc = [
   "sphinxcontrib-bibtex>=1",
   "sphinxcontrib-katex",
   "sphinxext-opengraph",
+  "umap-learn!=0.6",                 # https://github.com/lmcinnes/umap/issues/1335
 ]
 gpu = [ "scirpy[cupy]" ]
 
