@@ -21,7 +21,7 @@ If you like scverse® and want to support our mission, please consider making a 
   <img
     src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
     width="200"
-  >
+>
 </a>
 </div>
 
@@ -49,7 +49,7 @@ Please refer to the [documentation][link-docs]. In particular, the
 
 ## Installation
 
-You need to have Python 3.11 or newer installed on your system. If you don't have
+You need to have Python 3.11 or newer installed on your system. If you don’t have
 Python installed, we recommend installing [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
 
 There are several alternative options to install scirpy:
@@ -107,7 +107,7 @@ publication as follows:
 > Gregor Sturm, Tamas Szabo, Georgios Fotakis, Marlene Haider, Dietmar
 > Rieder, Zlatko Trajanoski, Francesca Finotello
 >
-> _Bioinformatics_ 2020 Sep 15. doi:
+> *Bioinformatics* 2020 Sep 15. doi:
 > [10.1093/bioinformatics/btaa611](https://doi.org/10.1093/bioinformatics/btaa611).
 
 You can cite the scverse publication as follows:
@@ -121,7 +121,7 @@ You can cite the scverse publication as follows:
 > Finotello, F. Alexander Wolf, Nir Yosef, Oliver Stegle & Fabian J.
 > Theis
 >
-> _Nat Biotechnol._ 2023 Apr 10. doi:
+> *Nat Biotechnol.* 2023 Apr 10. doi:
 > [10.1038/s41587-023-01733-8](https://doi.org/10.1038/s41587-023-01733-8).
 
 [scverse-discourse]: https://discourse.scverse.org/

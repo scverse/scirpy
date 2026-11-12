@@ -1,0 +1,14 @@
+#:schema https://panache.bz/panache.schema.json
+flavor = "myst"
+
+[format]
+wrap = "preserve"
+smart-punctuation = "unicode"
+tab-stops = "preserve"
+
+# MyST syntax extensions from `myst_enable_extensions` in `docs/conf.py`
+[extensions]
+tex-math-dollars = true  # amsmath, dollarmath
+myst-colon-fence = true  # colon_fence
+definition-lists = true  # deflist
+raw-html = true          # html_admonition, html_image
