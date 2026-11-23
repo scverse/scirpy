@@ -1,5 +1,3 @@
-from locale import normalize
-
 import numpy as np
 import pandas as pd
 from scipy.cluster import hierarchy as sc_hierarchy
@@ -61,8 +59,8 @@ def repertoire_overlap(
     """
     params = DataHandler(adata, airr_mod)
     obs = params.get_obs([groupby, target_col])
-    if isinstance(normalize, str):
-        obs[normalize] = params.get_obs(normalize)
+    if isinstance(fraction, str) and fraction not in obs.columns:
+        obs[fraction] = params.get_obs(fraction)
 
     # Remove NA rows
     na_mask = _is_na(obs[groupby]) | _is_na(obs[target_col])
@@ -70,7 +68,9 @@ def repertoire_overlap(
 
     # Normalize to fractions
     df["cell_weights"] = (
-        _normalize_counts(df, fraction) if isinstance(fraction, bool | str) or fraction is None else fraction
+        _normalize_counts(df, fraction, default_col=groupby)
+        if isinstance(fraction, bool | str) or fraction is None
+        else fraction
     )
 
     # Create a weighted matrix of clonotypes
