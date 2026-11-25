@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning][].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 ## Unreleased
+
 ### Documentation
 
 - Move the docs to the shared scverse theme from `scverse-doc` and its sidebar layout: Getting started, Guides, Reference and Project, with new installation, quickstart and citation pages. The bibliography moves to `references.html`.
