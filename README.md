@@ -13,7 +13,7 @@ It seamlessly integrates with [scanpy][] and [mudata][] and provides various mod
 
 [//]: # "numfocus-fiscal-sponsor-attribution"
 
-scirpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
+scirpy is part of the scverse® project ([website](https://scverse.org), [governance](https://scverse.org/about/roles/)) and is fiscally sponsored by [NumFOCUS](https://numfocus.org/).
 If you like scverse® and want to support our mission, please consider making a tax-deductible [donation](https://numfocus.org/donate-to-scverse) to help the project pay for developer time, professional services, travel, workshops, and a variety of other needs.
 
 <div align="center">
@@ -26,19 +26,19 @@ If you like scverse® and want to support our mission, please consider making a 
 </div>
 
 [badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/scirpy/test.yaml?branch=main
-[link-tests]: https://github.com/scverse/scirpy/actions/workflows/test.yml
+[link-tests]: https://github.com/scverse/scirpy/actions/workflows/test.yaml
 [badge-docs]: https://img.shields.io/readthedocs/scirpy
 [badge-pypi]: https://img.shields.io/pypi/v/scirpy?logo=PyPI
 [link-pypi]: https://pypi.org/project/scirpy/
-[link-bioconda]: http://bioconda.github.io/recipes/scirpy/README.html
+[link-bioconda]: https://bioconda.github.io/recipes/scirpy/README.html
 [badge-bioconda]: https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat
 [badge-airr]: https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=flat
 [link-airr]: https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html
 [scverse]: https://scverse.org
-[scanpy]: https://scanpy.readthedocs.io/
+[scanpy]: https://scanpy.scverse.org/en/stable/
 [mudata]: https://github.com/scverse/mudata
 [badge-numfocus]: https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
-[link-numfocus]: http://numfocus.org
+[link-numfocus]: https://numfocus.org/
 
 ## Getting started
 
@@ -97,8 +97,8 @@ You can cite the scverse publication as follows:
 
 [scverse-discourse]: https://discourse.scverse.org/
 [issue-tracker]: https://github.com/scverse/scirpy/issues
-[changelog]: https://scirpy.readthedocs.io/latest/changelog.html
-[link-docs]: https://scirpy.readthedocs.io
-[link-api]: https://scirpy.readthedocs.io/latest/api.html
+[changelog]: https://scirpy.scverse.org/en/latest/changelog.html
+[link-docs]: https://scirpy.scverse.org/en/latest/
+[link-api]: https://scirpy.scverse.org/en/latest/api.html
 [link-tutorial]: https://scirpy.scverse.org/en/latest/tutorials.html
-[installation]: https://scirpy.readthedocs.io/latest/installation.html
+[installation]: https://scirpy.scverse.org/en/latest/installation.html
