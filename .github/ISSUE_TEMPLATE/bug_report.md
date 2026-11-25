@@ -1,5 +1,4 @@
 ---
-
 name: Bug report
 about: Report something that is broken or incorrect
 title: ""
@@ -13,7 +12,7 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behaviour.
 
-Please provide exact steps to reproduce the bug in a clean Python environment. In case it's not clear what's causing this bug, please provide the data or the data generation procedure.
+Please provide exact steps to reproduce the bug in a clean Python environment. In case it’s not clear what’s causing this bug, please provide the data or the data generation procedure.
 Sometimes it is not possible to share the data but usually it is possible to replicate problems on publicly available datasets or to share a subset of your data.
 
 **Expected behaviour**
