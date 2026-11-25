@@ -12,3 +12,6 @@ myst-colon-fence = true  # colon_fence
 definition-lists = true  # deflist
 tex-math-dollars = true  # dollarmath, amsmath
 raw-html = true          # html_image, html_admonition
+# `scverse_doc.config.Defaults.myst_heading_anchors`
+auto-identifiers = true
+gfm-auto-identifiers = true
