@@ -16,6 +16,7 @@ quickstart.md
 :maxdepth: 1
 
 tutorials
+how-to
 ```
 
 ```{toctree}
