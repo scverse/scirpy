@@ -62,6 +62,7 @@ intersphinx_mapping = intersphinx("muon") | {
     "joblib": ("https://joblib.readthedocs.io/en/latest", None),
     "logomaker": ("https://logomaker.readthedocs.io/en/latest/", None),
     "fsspec": ("https://filesystem-spec.readthedocs.io/en/stable/", None),
+    "igraph": ("https://python.igraph.org/en/stable/api", None),
 }
 
 html_static_path = ["_static"]
@@ -74,9 +75,6 @@ xref_overrides = {
 }
 
 nitpick_ignore = [
-    ("py:class", "igraph.Graph"),
-    ("py:class", "igraph.Layout"),
-    ("py:class", "igraph.layout.Layout"),
     # the following entries are because the `MutableMapping` base class does not
     # use type hints.
     ("py:class", "None.  Remove all items from D."),
@@ -90,9 +88,6 @@ nitpick_ignore = [
     ("py:class", "D.get(k,d), also set D[k]=d if k not in D"),
     ("py:class", "None.  Update D from mapping/iterable E and F."),
     ("py:class", "an object providing a view on D's values"),
-    # don't know why these are not working
+    # not part of seaborn's documented API
     ("py:class", "seaborn.matrix.ClusterGrid"),
-    ("py:meth", "mudata.MuData.update"),
-    ("py:class", "awkward.behaviors.string.StringBehavior"),
-    ("py:data", "typing.Union"),
 ]
