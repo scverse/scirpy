@@ -1,5 +1,4 @@
 ```{include} ../README.md
-
 ```
 
 ```{toctree}
@@ -7,8 +6,8 @@
 :hidden: true
 :maxdepth: 1
 
-installation
-quickstart
+installation.md
+quickstart.md
 ```
 
 ```{toctree}
@@ -37,8 +36,8 @@ glossary
 
 changelog.md
 contributing.md
-citation
-zzz_bibliography
+citation.md
+references.md
 versions
 GitHub <https://github.com/scverse/scirpy>
 Discourse <https://discourse.scverse.org/c/help/scirpy/33>

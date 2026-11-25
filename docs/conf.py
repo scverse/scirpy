@@ -1,3 +1,7 @@
+# Configuration file for the Sphinx documentation builder.
+# `scverse_doc` sets the theme and shared defaults, see https://scverse-doc.readthedocs.io
+# For the full list of options, see https://www.sphinx-doc.org/page/usage/configuration.html
+
 import os
 import sys
 from datetime import datetime
@@ -9,14 +13,24 @@ from scverse_doc.registry import intersphinx
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE / "extensions"))
 
+# NOTE: If you installed your project in editable mode, this might be stale.
+#       If this is the case, reinstall it to refresh the metadata
 info = metadata("scirpy")
 project = info["Name"]
 author = info["Author"]
 copyright = f"{datetime.now():%Y}, {author}."
-version = info["Version"]
+version = release = info["Version"]
 urls = dict(pu.split(", ") for pu in info.get_all("Project-URL"))
 source_repository = urls["Source"]
-release = info["Version"]
+
+extensions = [
+    "scverse_doc",
+    "scverse_misc.sphinx_ext",
+    "sphinxcontrib.bibtex",
+    "sphinx_autodoc_typehints",
+    "IPython.sphinxext.ipython_console_highlighting",
+    *[p.stem for p in (HERE / "extensions").glob("*.py")],
+]
 
 bibtex_bibfiles = ["references.bib"]
 templates_path = ["_templates"]
@@ -26,15 +40,6 @@ api_rel_dir = "_static/api"
 
 # Set canonical URL from the Read the Docs Domain
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
-
-extensions = [
-    "scverse_doc",
-    "sphinxcontrib.bibtex",
-    "sphinx_autodoc_typehints",
-    "IPython.sphinxext.ipython_console_highlighting",
-    "scverse_misc.sphinx_ext",
-    *[p.stem for p in (HERE / "extensions").glob("*.py")],
-]
 
 napoleon_use_ivar = True
 napoleon_custom_sections = [("Params", "Parameters")]
@@ -63,6 +68,11 @@ html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
 html_logo = "img/scirpy_logo.png"
 
+xref_overrides = {
+    "awkward.highlevel.Array": "awkward.Array",
+    "logomaker.src.Logo.Logo": "logomaker.Logo",
+}
+
 nitpick_ignore = [
     ("py:class", "igraph.Graph"),
     ("py:class", "igraph.Layout"),
@@ -83,9 +93,6 @@ nitpick_ignore = [
     # don't know why these are not working
     ("py:class", "seaborn.matrix.ClusterGrid"),
     ("py:meth", "mudata.MuData.update"),
-    ("py:class", "awkward.highlevel.Array"),
     ("py:class", "awkward.behaviors.string.StringBehavior"),
-    ("py:class", "logomaker.src.Logo.Logo"),
-    ("py:class", "pathlib._local.Path"),
     ("py:data", "typing.Union"),
 ]

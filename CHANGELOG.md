@@ -9,83 +9,88 @@ and this project adheres to [Semantic Versioning][].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 ## Unreleased
-
 ### Documentation
 
-  - Move the docs to the shared scverse theme from `scverse-doc` and its sidebar layout: Getting started, Guides, Reference and Project, with new installation, quickstart and citation pages.
+- Move the docs to the shared scverse theme from `scverse-doc` and its sidebar layout: Getting started, Guides, Reference and Project, with new installation, quickstart and citation pages. The bibliography moves to `references.html`.
+
+### Chore
+
+- Require python >= 3.13, in accordance with SPEC0.
+- Raise minimum versions of dependencies to the oldest releases supporting Python 3.13: `anndata>=0.12`, `awkward>=2.6.8`, `igraph>=0.11.9`, `joblib>=1.5`, `mudata>=0.3.2`, `networkx>=3.4`, `numba>=0.61`, `numpy>=2.1`, `python-levenshtein>=0.26`, `scanpy>=1.12`, `scikit-learn>=1.5.2`, `scipy>=1.14.1`, `squarify>=0.2`.
+
+## v0.26.1
 
 ### Fixes
 
-  - Reading TraCeR output no longer needs `six`, which scirpy never declared as a dependency.
-  - Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.
+- Remove the undeclared `six` dependency from the TraCeR reader. `python-dateutil` 4.0 no longer pulls in `six`, so `read_tracer` failed with `ModuleNotFoundError` on a fresh install.
+- Avoid deprecated AnnData `obsm_keys()` calls when plotting clonotype networks or exporting them to igraph.
 
 ## v0.26.0
 
 ### Features
 
-  - Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
-    `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
-    deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
+- Add a linear-gap Needleman-Wunsch distance metric for CDR3 amino acid sequences via
+  `metric="needleman_wunsch"`. The `alignment` and `fastalignment` metrics are now
+  deprecated. When `gap_open == gap_extend` (which has always been the default), use `needleman_wunsch` instead.
 
 ### Performance improvements
 
- - Improve the GPU implementation of the Hamming distance metric with row and column tiling, adaptive result buffers,
-   and other performance optimizations. GPU tiles can be configured
-   with `gpu_tile_rows`, `gpu_tile_cols`, and `gpu_tile_buffer_cols`. The previous `gpu_n_blocks` and `gpu_block_width`
-   parameters are deprecated and ignored; calls using them emit a warning and use the new parameters' defaults
-   unless the new parameters are explicitly provided.
+- Improve the GPU implementation of the Hamming distance metric with row and column tiling, adaptive result buffers,
+  and other performance optimizations. GPU tiles can be configured
+  with `gpu_tile_rows`, `gpu_tile_cols`, and `gpu_tile_buffer_cols`. The previous `gpu_n_blocks` and `gpu_block_width`
+  parameters are deprecated and ignored; calls using them emit a warning and use the new parameters' defaults
+  unless the new parameters are explicitly provided.
 
 ## v0.25.1
 
 ### Fixes
 
- - Compatibility with `mudata >= 0.4`, where `update()` no longer pulls `obs` columns from the individual modalities
-   into the global `obs` by default. Modality-prefixed columns (e.g. `airr:clone_id`) now need to be made available
-   explicitly with `mdata.pull_obs()` ([#743](https://github.com/scverse/scirpy/issues/743)).
+- Compatibility with `mudata >= 0.4`, where `update()` no longer pulls `obs` columns from the individual modalities
+  into the global `obs` by default. Modality-prefixed columns (e.g. `airr:clone_id`) now need to be made available
+  explicitly with `mdata.pull_obs()` ([#743](https://github.com/scverse/scirpy/issues/743)).
 
 ### Chore
 
- - Use the deprecation decorators from [scverse-misc](https://scverse-misc.readthedocs.io/) for deprecated functions
-   and function arguments. `scverse-misc` is now a hard dependency. Deprecated arguments that previously did not
-   emit any warning (`include_fields` and `use_umi_count_col` of the `io.read_*` functions, `cached` and `cache_path`
-   of `datasets.vdjdb` and `datasets.iedb`) now consistently raise a `FutureWarning`, and the API documentation
-   states in which version a function or argument was deprecated ([#704](https://github.com/scverse/scirpy/issues/704)).
-   The undocumented `scirpy.util.deprecated` decorator has been removed in favor of `scverse_misc.deprecated`.
+- Use the deprecation decorators from [scverse-misc](https://scverse-misc.readthedocs.io/) for deprecated functions
+  and function arguments. `scverse-misc` is now a hard dependency. Deprecated arguments that previously did not
+  emit any warning (`include_fields` and `use_umi_count_col` of the `io.read_*` functions, `cached` and `cache_path`
+  of `datasets.vdjdb` and `datasets.iedb`) now consistently raise a `FutureWarning`, and the API documentation
+  states in which version a function or argument was deprecated ([#704](https://github.com/scverse/scirpy/issues/704)).
+  The undocumented `scirpy.util.deprecated` decorator has been removed in favor of `scverse_misc.deprecated`.
 
 ## v0.25.0
 
 ### Fixes
 
-  - Adjust import location of plotting utils for compatibility with scanpy >= 1.13 ([#730](https://github.com/scverse/scirpy/pull/730))
+- Adjust import location of plotting utils for compatibility with scanpy >= 1.13 ([#730](https://github.com/scverse/scirpy/pull/730))
 
 ### Features
 
-  - Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
-    `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
+- Add support for TCRBLOSUM alpha/beta substitution matrices in the `tcrdist` distance metric via
+  `base_matrix="tcrblosum"`, and allow configuring the substitution-to-distance cap with `distance_cap`.
 
 ### Performance improvements
 
- - Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
+- Speed up identity distance metric computation for comparisons between two different sequence arrays ([#701](https://github.com/scverse/scirpy/pull/701)).
 
 ### Chore
 
- - Clean up unneeded dependency constraints in pyproject.toml ([#718](https://github.com/scverse/scirpy/pull/718)).
+- Clean up unneeded dependency constraints in pyproject.toml ([#718](https://github.com/scverse/scirpy/pull/718)).
 
 ## v0.24.0
 
 ### Additions
 
- - Add the [IggyTop receptor reference database](https://iggytop.readthedocs.io/en/latest/index.html),
-   a metadatabase including receptor data from IEDB, VDJdb and others ([#652](https://github.com/scverse/scirpy/pull/652)). IggyTop includes additional data curation steps (e.g. low quality sequences from 10x dataset filtered out,
-   amino acid sequences are now consistently `junction_aa` sequences). It updated bimonthly, pre-built and can
-   be downloaded from GitHub. This is much faster and more reliable than the previous approach of downloading and building AnnData objects from reference database on-the-fly. The previously existing functions `datasets.iedb` and `datasets.vdjdb` are now wrappers around `datasets.iggytop`.
-
+- Add the [IggyTop receptor reference database](https://iggytop.readthedocs.io/en/latest/index.html),
+  a metadatabase including receptor data from IEDB, VDJdb and others ([#652](https://github.com/scverse/scirpy/pull/652)). IggyTop includes additional data curation steps (e.g. low quality sequences from 10x dataset filtered out,
+  amino acid sequences are now consistently `junction_aa` sequences). It updated bimonthly, pre-built and can
+  be downloaded from GitHub. This is much faster and more reliable than the previous approach of downloading and building AnnData objects from reference database on-the-fly. The previously existing functions `datasets.iedb` and `datasets.vdjdb` are now wrappers around `datasets.iggytop`.
 
 ### Fixes
 
- - Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
- - Fix overflow error that occured in `ir.pp.ir_dist` with sequences longer than 127 characters ([#683](https://github.com/scverse/scirpy/pull/680))
- - Remove `distance_key` parameter from `define_clonotypes` and raise warning if it is passed via `kwargs` ([#688](https://github.com/scverse/scirpy/pull/688))
+- Filter unused categories from clonotype network legend ([#680](https://github.com/scverse/scirpy/pull/680/)).
+- Fix overflow error that occured in `ir.pp.ir_dist` with sequences longer than 127 characters ([#683](https://github.com/scverse/scirpy/pull/680))
+- Remove `distance_key` parameter from `define_clonotypes` and raise warning if it is passed via `kwargs` ([#688](https://github.com/scverse/scirpy/pull/688))
 
 ## v0.23.0
 
@@ -121,7 +126,7 @@ and this project adheres to [Semantic Versioning][].
 ### Fixes
 
 - Fix that `pp.index_chains` did not work with an AnnData object where gene expression and AIRR data
-  did not  perfectly overlap ([#660](https://github.com/scverse/scirpy/pull/660)).
+  did not perfectly overlap ([#660](https://github.com/scverse/scirpy/pull/660)).
 - Fix that `pl.repertoire_overlap` ignored the `airr_mod` parameter ([#650](https://github.com/scverse/scirpy/pull/650)).
 - Fix that `pl.clonotype_imbalance` ignored the `airr_mod` parameter ([#657](https://github.com/scverse/scirpy/pull/657)).
 
@@ -295,12 +300,12 @@ and this project adheres to [Semantic Versioning][].
 - Use the `umi_count` field instead of `duplicate_count` to store UMI counts. The field `umi_count` has been added to
   the AIRR Rearrangement standard in [version 1.4](https://docs.airr-community.org/en/latest/news.html#version-1-4-1-august-27-2022) ([#487](https://github.com/scverse/scirpy/pull/487)).
   Use of `duplicate_count` for UMI counts is now discouraged. Scirpy will use `umi_count` in all `scirpy.io` functions.
-  It will _not_ change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
+  It will *not* change AIRR data that is read through `scirpy.io.read_airr` that still uses the `duplicate_count` column.
   Scirpy remains compatible with datasets that still use `duplicate_count`. You can update your dataset using
 
-    ```python
-    adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
-    ```
+  ```python
+  adata.obsm["airr"]["umi_count"] = adata.obsm["airr"]["duplicate_count"]
+  ```
 
 ### Other
 
@@ -336,7 +341,7 @@ and this project adheres to [Semantic Versioning][].
 ### Breaking changes
 
 - Reimplement `pp.index_chains` using numba and awkward array functions, achieving a significant speedup. This function
-  behaves exactly like the previous version _except_ that callback functions passed to the `filter` arguments
+  behaves exactly like the previous version *except* that callback functions passed to the `filter` arguments
   must now be vectorized over an awkward array, e.g. to check if a `junction_aa` field is present you could
   previously pass `lambda x: x['junction_aa'] is not None`, now an accepted version would be
   `lambda x: ~ak.is_none(x["junction_aa"], axis=-1)`. To learn more about native awkward array functions, please
@@ -366,7 +371,7 @@ and this project adheres to [Semantic Versioning][].
 ## v0.13.0 - new data structure based on awkward arrays
 
 This update introduces a new datastructure based on [awkward arrays](https://awkward-array.org/doc/main/).
-The new datastructure is described in more detail [in the documentation](https://scirpy.scverse.org/en/latest/data-structure.html) and is considered the "official" way of representing AIRR data for scverse core and ecosystem packages.
+The new datastructure is described in more detail [in the documentation](https://scirpy.scverse.org/en/latest/data-structure.html) and is considered the “official” way of representing AIRR data for scverse core and ecosystem packages.
 
 Benefits of the new data structure include:
 
@@ -458,7 +463,7 @@ Older versions of the documentation are still [accessible from github pages](htt
   of this repository has ben adapted accordingly. Also code was reformatted in accordance with the template defaults.
 - The minimum required Python version is now 3.9 in accordance with NEP 29
 - Increased the minium version of tqdm to 4.63 (See https://github.com/tqdm/tqdm/issues/1082)
-- `pl.repertoire_overlap` now _always_ runs `tl.repertoire_overlap` internally and doesn't rely on cached values.
+- `pl.repertoire_overlap` now *always* runs `tl.repertoire_overlap` internally and doesn't rely on cached values.
 - The mode `dendro_only` in `pl.repertoire_overlap` has been removed.
 - Cells that have a receptor, but no CDR3 sequence have previously received a separate clonotype in `tl.define_clonotypes`. Now they are receiving no clonotype (i.e. `np.nan`) as do cells without a receptor.
 - The function `tl.clonal_expansion` now returns a `pd.Series` instead of a `np.array` with `inplace=False`
@@ -702,7 +707,7 @@ with highly expanded clonotypes (i.e. thousands of cells with exactly the same r
 form dense blocks in the sparse adjacency matrix (see issue #217). Another downside was that expensive alignment-distances had
 to be recomputed every time the parameters of `ir_neighbors` was changed.
 
-The new implementation computes distances between all _unique receptor configurations_, only considering one instance of highly expanded clonotypes.
+The new implementation computes distances between all *unique receptor configurations*, only considering one instance of highly expanded clonotypes.
 
 Closed issues #243, #217, #191, #192, #164.
 
@@ -719,10 +724,10 @@ This update includes the following changes:
 - The API of `clonotype_network` has changed.
 - Clonotype network now visualizes cells with identical receptor configurations. The number of cells with identical receptor configurations is shown as point size (and optionally, as color). Clonotype network does not support plotting multiple colors at the same time any more.
 
-| Clonotype network (previous implementation)                                                                    | Clonotype network (now)                                                                                        |
-| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Each dot represents a cell. Cells with identical receptors form a fully connected subnetwork                   | Each dot represents cells with identical receptors. The dot size refers to the number of cells                 |
-| ![image](https://user-images.githubusercontent.com/7051479/114389098-dff87800-9b94-11eb-8dd8-cc406024eaa6.png) | ![image](https://user-images.githubusercontent.com/7051479/114389105-e2f36880-9b94-11eb-9a58-68a09e67efe7.png) |
+  | Clonotype network (previous implementation)                                                                    | Clonotype network (now)                                                                                        |
+  | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+  | Each dot represents a cell. Cells with identical receptors form a fully connected subnetwork                   | Each dot represents cells with identical receptors. The dot size refers to the number of cells                 |
+  | ![image](https://user-images.githubusercontent.com/7051479/114389098-dff87800-9b94-11eb-8dd8-cc406024eaa6.png) | ![image](https://user-images.githubusercontent.com/7051479/114389105-e2f36880-9b94-11eb-9a58-68a09e67efe7.png) |
 
 #### Drop Support for Python 3.6
 
@@ -815,9 +820,9 @@ This update includes the following changes:
 - Fix pythonpublish CI action
 - Update black version (and code style, accordingly)
 - Changes for AIRR-complicance:
-    - Add support level to README
-    - Add Biocontainer instructions to README
-    - Add a minimal test suite to be ran on conda CI
+  - Add support level to README
+  - Add Biocontainer instructions to README
+  - Add a minimal test suite to be ran on conda CI
 
 ## v0.4
 
@@ -849,10 +854,10 @@ This update includes the following changes:
 - Experimental function to assess bias in clonotype abundance between conditions (#92)
 - Scirpy now has a logo (#123)
 - Update default parameters for `clonotype_network`:
-    - Edges are now only automatically displayed if plotting < 1000 nodes
-    - If plotting variables with many categories, the legend is hidden.
+  - Edges are now only automatically displayed if plotting < 1000 nodes
+  - If plotting variables with many categories, the legend is hidden.
 - Update default parameters for alignment-based `tcr_neighbors`
-    - The gap extend penalty now equals the gap open penalty (`11`).
+  - The gap extend penalty now equals the gap open penalty (`11`).
 
 ## v0.1.2
 
