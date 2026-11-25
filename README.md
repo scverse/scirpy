@@ -49,40 +49,9 @@ Please refer to the [documentation][link-docs]. In particular, the
 
 ## Installation
 
-You need to have Python 3.13 or newer installed on your system. If you don’t have
-Python installed, we recommend installing it via [uv](https://docs.astral.sh/uv/).
+Add `scirpy` to your dependencies, e.g. with `uv add scirpy` or `pip install scirpy`.
 
-We recommend managing dependencies in project-specific virtual environments to avoid dependency conflicts.
-This is most convenient using package managers such as [uv](https://docs.astral.sh/uv/).
-Choose from the options below to install scirpy:
-
-1. Install the latest release of `scirpy` from [PyPI](https://pypi.org/project/scirpy/):
-
-   ```bash
-   pip install scirpy
-   ```
-
-2. Get it from [Bioconda][link-bioconda]:
-
-   First **setup conda channels [as described here](https://bioconda.github.io/#usage)**. Then install scirpy:
-
-   ```bash
-   conda install scirpy
-   ```
-
-3. Install the latest development version:
-
-   ```bash
-   pip install git+https://github.com/scverse/scirpy.git@main
-   ```
-
-4. Run it in a container using [Docker][] or [Podman][]:
-
-   ```bash
-   docker pull quay.io/biocontainers/scirpy:<tag>
-   ```
-
-where `tag` is one of [these tags](https://quay.io/repository/biocontainers/scirpy?tab=tags).
+For more details, including conda and container options, see the [installation][] section in the docs.
 
 ## Release notes
 
@@ -132,5 +101,4 @@ You can cite the scverse publication as follows:
 [link-docs]: https://scirpy.readthedocs.io
 [link-api]: https://scirpy.readthedocs.io/latest/api.html
 [link-tutorial]: https://scirpy.scverse.org/en/latest/tutorials.html
-[Docker]: https://www.docker.com/
-[Podman]: https://podman.io/
+[installation]: https://scirpy.readthedocs.io/latest/installation.html
