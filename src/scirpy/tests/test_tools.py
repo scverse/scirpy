@@ -479,6 +479,20 @@ def test_repertoire_overlap(adata_tra):
     npt.assert_equal(res.values, expected_cnt.values)
 
 
+@pytest.mark.parametrize(("fraction", "expected"), [(True, [0.8, 0.4]), ("batch", [8 / 210, 80 / 210])])
+def test_repertoire_overlap_fraction(fraction, expected):
+    obs = pd.DataFrame(
+        {
+            "sample": ["A"] * 10 + ["B"] * 200,
+            "clone_id": ["X"] * 8 + ["Y"] * 2 + ["X"] * 80 + ["Y"] * 120,
+            "batch": "shared",
+        }
+    )
+    adata = _make_adata(obs)
+    abundance, _, _ = ir.tl.repertoire_overlap(adata, "sample", fraction=fraction, inplace=False)
+    npt.assert_allclose(abundance.loc[["A", "B"], "X"], expected)
+
+
 @pytest.mark.extra
 @pytest.mark.parametrize(
     "permutation_test,fdr_correction,expected_scores,expected_pvalues",
