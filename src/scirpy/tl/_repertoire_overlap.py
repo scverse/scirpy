@@ -37,9 +37,11 @@ def repertoire_overlap(
         Category that overlaps among groups (`clone_id` by default, but can
         in principle be any group or cluster)
     overlap_measure
-        Any distance measure accepted by `scipy.spatial.distance`; by default it is `jaccard`.
+        A SciPy distance measure applied to clonotype presence/absence (default: `"jaccard"`).
+        Use `"morisita_horn"` to compute one minus Morisita–Horn similarity from clonotype
+        abundances. Each group must have finite, nonnegative abundances with a positive total.
     overlap_threshold
-        The minimum required weight to accept presence.
+        The minimum abundance a clonotype must exceed to count as present for SciPy distances.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column
@@ -78,13 +80,17 @@ def repertoire_overlap(
     df = df.pivot(index=groupby, columns=target_col, values="cell_weights")
     df = df.fillna(0)
 
-    # Create a table of clonotype presence
-    if overlap_threshold is None:  # Consider a fuction that finds an optimal threshold...
-        overlap_threshold = 0
-    pr_df = (df > overlap_threshold).astype(int)
-
-    # Compute distances and linkage
-    distM = sc_distance.pdist(pr_df, overlap_measure)  # type:ignore
+    if overlap_measure == "morisita_horn":
+        abundances = df.to_numpy(dtype=float)
+        totals = abundances.sum(axis=1, keepdims=True)
+        if not np.isfinite(totals).all() or np.any(totals <= 0) or np.any(abundances < 0):
+            raise ValueError("Morisita–Horn requires finite, nonnegative abundances and a positive total per group.")
+        proportions = abundances / totals
+        distM = sc_distance.pdist(proportions, _morisita_horn_distance)
+    else:
+        threshold = 0 if overlap_threshold is None else overlap_threshold
+        presence = (df > threshold).astype(int)
+        distM = sc_distance.pdist(presence, overlap_measure)  # type:ignore
     linkage = sc_hierarchy.linkage(distM)
 
     if inplace:
@@ -99,3 +105,9 @@ def repertoire_overlap(
 
     else:
         return df, distM, linkage
+
+
+def _morisita_horn_distance(left: np.ndarray, right: np.ndarray) -> float:
+    # For proportions, 1 - similarity equals the squared difference divided by the sum of squared proportions.
+    difference = left - right
+    return float((difference @ difference) / ((left @ left) + (right @ right)))

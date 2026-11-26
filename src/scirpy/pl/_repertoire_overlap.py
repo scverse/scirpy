@@ -52,9 +52,11 @@ def repertoire_overlap(
     dendro_only
         In case all samples are visualized, sets if a heatmap should be shown or only a dendrogram.
     overlap_measure
-        Any distance measure accepted by `scipy.spatial.distance`; by default it is `jaccard`.
+        A SciPy distance measure applied to clonotype presence/absence (default: `"jaccard"`).
+        Use `"morisita_horn"` to compute one minus Morisita–Horn similarity from clonotype
+        abundances. Each group must have finite, nonnegative abundances with a positive total.
     overlap_threshold
-        The minimum required weight to accept presence.
+        The minimum abundance a clonotype must exceed to count as present for SciPy distances.
     fraction
         If `True`, compute fractions of abundances relative to the `groupby` column
         rather than reporting abosolute numbers. Alternatively, a column

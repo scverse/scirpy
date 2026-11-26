@@ -493,6 +493,23 @@ def test_repertoire_overlap_fraction(fraction, expected):
     npt.assert_allclose(abundance.loc[["A", "B"], "X"], expected)
 
 
+@pytest.mark.parametrize(
+    ("other_clones", "expected_jaccard", "expected_horn"),
+    [(["X"] + ["Y"] * 9, 0, 32 / 41), (["X"] * 9 + ["Y"], 0, 0), (["Z"], 1, 1)],
+)
+def test_repertoire_overlap_morisita_horn(other_clones, expected_jaccard, expected_horn):
+    first_clones = ["X"] * 90 + ["Y"] * 10
+    obs = pd.DataFrame(
+        {"sample": ["A"] * len(first_clones) + ["B"] * len(other_clones), "clone_id": first_clones + other_clones}
+    )
+    adata = _make_adata(obs)
+    _, jaccard, _ = ir.tl.repertoire_overlap(adata, "sample", inplace=False)
+    _, horn, linkage = ir.tl.repertoire_overlap(adata, "sample", overlap_measure="morisita_horn", inplace=False)
+    npt.assert_allclose(jaccard, [expected_jaccard])
+    npt.assert_allclose(horn, [expected_horn])
+    assert linkage[0, 2] == approx(expected_horn)
+
+
 @pytest.mark.extra
 @pytest.mark.parametrize(
     "permutation_test,fdr_correction,expected_scores,expected_pvalues",
